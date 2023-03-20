@@ -14,7 +14,7 @@ using ColorMatrix = Mat<double,3,3>;
 class Pipeline {
 public:
     struct DebayerOptions {
-        const MDCTools::CFADesc cfaDesc;
+        MDCTools::CFADesc cfaDesc;
         
         std::optional<ColorRaw> illum;
         
