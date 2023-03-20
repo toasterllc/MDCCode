@@ -40,7 +40,7 @@ public:
         return _imageCache;
     }
     
-    void visibleThumbs(ImageRecordIter begin, ImageRecordIter end) override {
+    void visibleThumbs(ImageRecordAnyIter begin, ImageRecordAnyIter end) override {
         bool enqueued = false;
         {
             auto lock = std::unique_lock(_renderThumbs.lock);

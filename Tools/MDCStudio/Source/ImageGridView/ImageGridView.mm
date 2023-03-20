@@ -217,8 +217,8 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         return it->val;
     }
     
-    const auto chunkBegin = ImageLibrary::FindChunkBegin(iter, _imageLibrary->begin());
-    const auto chunkEnd = ImageLibrary::FindChunkEnd(iter, _imageLibrary->end());
+    const auto chunkBegin = ImageLibrary::FindChunkBegin(_imageLibrary->begin(), iter);
+    const auto chunkEnd = ImageLibrary::FindChunkEnd(_imageLibrary->end(), iter);
     assert(chunkBegin != chunkEnd);
     
     auto startTime = std::chrono::steady_clock::now();
@@ -244,6 +244,14 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     return ct;
 }
 
+static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordRefConstIter& x) {
+    return x;
+}
+
+static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordRefConstReverseIter& x) {
+    return (x+1).base();
+}
+
 //static void _Display(ImageGridLayer* self, id<MTLTexture> drawableTxt) {
 - (void)_display:(id<MTLTexture>)drawableTxt commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     const CGRect frame = [self frame];
@@ -263,11 +271,11 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    const auto imageRefBegin = _imageLibrary->begin()+indexRange.start;
-    const auto imageRefEnd = _imageLibrary->begin()+indexRange.start+indexRange.count;
+    const auto imageRefBegin = _imageLibrary->rbegin()+indexRange.start;
+    const auto imageRefEnd = _imageLibrary->rbegin()+indexRange.start+indexRange.count;
     
     for (auto it=imageRefBegin; it!=imageRefEnd;) {
-        const auto nextChunkStart = ImageLibrary::FindChunkEnd(it, _imageLibrary->end());
+        const auto nextChunkStart = ImageLibrary::FindChunkEnd(_imageLibrary->rend(), it);
         const auto chunkImageRefBegin = it;
         const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
         
@@ -286,7 +294,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
-            .idx = (uint32_t)(chunkImageRefBegin-_imageLibrary->begin()), // Start index into `imageRefs`
+            .idx = (uint32_t)(chunkImageRefBegin-_imageLibrary->rbegin()), // Start index into `imageRefs`
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
             .selection = {
@@ -299,7 +307,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
         [renderEncoder setVertexBuffer:_selection.buf offset:0 atIndex:2];
         
-        _ChunkTexture& ct = [self _getChunkTexture:it];
+        _ChunkTexture& ct = [self _getChunkTexture:_ForwardIter(it)];
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
         [renderEncoder setFragmentBytes:&ct.loaded length:sizeof(ct.loaded) atIndex:1];
         [renderEncoder setFragmentTexture:ct.txt atIndex:0];

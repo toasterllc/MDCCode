@@ -1,6 +1,7 @@
 #pragma once
 #include <forward_list>
 #include <set>
+#include "Toastbox/AnyIter.h"
 #include "Code/Shared/Time.h"
 #include "Code/Shared/Img.h"
 #include "RecordStore.h"
@@ -178,6 +179,8 @@ private:
 };
 
 using ImageRecordIter = ImageLibrary::RecordRefConstIter;
+using ImageRecordRevIter = ImageLibrary::RecordRefConstReverseIter;
+using ImageRecordAnyIter = Toastbox::AnyIter<ImageRecordIter>;
 using ImageRecordPtr = ImageLibrary::RecordStrongRef;
 using ImageSet = std::set<ImageRecordPtr>;
 

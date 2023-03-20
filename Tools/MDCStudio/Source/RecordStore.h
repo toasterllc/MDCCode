@@ -309,7 +309,8 @@ public:
     using RecordRefConstReverseIter = typename RecordRefs::const_reverse_iterator;
     
     // FindChunkBegin(): finds the iterator for the beginning of iter's chunk
-    static RecordRefConstIter FindChunkBegin(RecordRefConstIter iter, RecordRefConstIter begin) {
+    template<typename T>
+    static T FindChunkBegin(T begin, T iter) {
         if (iter == begin) return begin;
         const ChunkRef iterChunk = *iter;
         return std::lower_bound(begin, iter, 0,
@@ -319,7 +320,8 @@ public:
     }
 
     // FindChunkEnd(): finds the iterator for the end (last+1) of iter's chunk
-    static RecordRefConstIter FindChunkEnd(RecordRefConstIter iter, RecordRefConstIter end) {
+    template<typename T>
+    static T FindChunkEnd(T end, T iter) {
         if (iter == end) return end;
         const ChunkRef iterChunk = *iter;
         return std::lower_bound(iter, end, 0,

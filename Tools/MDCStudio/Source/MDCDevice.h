@@ -178,7 +178,7 @@ public:
     
     ImageCache& imageCache() override { return _imageCache; }
     
-    void visibleThumbs(ImageRecordIter begin, ImageRecordIter end) override {
+    void visibleThumbs(ImageRecordAnyIter begin, ImageRecordAnyIter end) override {
         bool enqueued = false;
         {
             auto lock = _thumbUpdate.signal.lock();
@@ -665,7 +665,7 @@ private:
                             );
                         }
                         
-                        addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.add(addCount);
                     }
