@@ -161,6 +161,19 @@ struct ExposureSettings {
         uint32_t height = 0;
     } _streamImagesThread;
     
+    struct {
+        Img::Pixel pixels[2200*2200];
+        Pipeline::RawImage img = {
+            .cfaDesc = {
+                MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
+                MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
+            },
+            .width = 0,
+            .height = 0,
+            .pixels = pixels,
+        };
+    } _rawImage;
+    
     MDCTools::Color<MDCTools::ColorSpace::Raw> _sampleRaw;
     MDCTools::Color<MDCTools::ColorSpace::XYZD50> _sampleXYZD50;
     MDCTools::Color<MDCTools::ColorSpace::LSRGB> _sampleLSRGB;
@@ -190,18 +203,9 @@ struct ExposureSettings {
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_78.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_64.cfa"}];
     
-    static constexpr MDCTools::CFADesc CFADesc = {
-        MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
-        MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
-    };
     
-    _imagePipelineManager->debayerOptions = {
-        .cfaDesc = CFADesc,
+    _imagePipelineManager->options = {
         .illum = std::nullopt,
-        
-        .defringe = {
-            .en = false,
-        },
         
         .reconstructHighlights = {
             .en = true,
@@ -210,16 +214,10 @@ struct ExposureSettings {
         .debayerLMMSE = {
             .applyGamma = true,
         },
-    };
-    
-    _imagePipelineManager->processOptions = {
-        .illum = std::nullopt,
-        .colorMatrix = std::nullopt,
         
-        .exposure = 0,
-        .saturation = 0,
-        .brightness = 0,
-        .contrast = 0,
+        .defringe = {
+            .en = false,
+        },
         
         .localContrast = {
             .en = true,
@@ -227,6 +225,7 @@ struct ExposureSettings {
             .radius = 50,
         },
     };
+    
     
     [self _updateInspectorUI];
     
@@ -351,38 +350,43 @@ static bool isCFAFile(const fs::path& path) {
     // Support 2 different filetypes:
     // (1) solely raw pixel data
     if (imgData.len() == Img::Full::PixelLen) {
+        _rawImage.img.width = Img::Full::PixelWidth;
+        _rawImage.img.height = Img::Full::PixelHeight;
         
-        _imagePipelineManager->rawImage.width = Img::Full::PixelWidth;
-        _imagePipelineManager->rawImage.height = Img::Full::PixelHeight;
-        memcpy(_imagePipelineManager->rawImage.pixels, imgData.data(), Img::Full::PixelLen);
+        // Copy the image data into _rawImage
+        memcpy(_rawImage.pixels, imgData.data(), Img::Full::PixelLen);
     
     // (2) header + raw pixel data + checksum
     } else if (imgData.len()==Img::Full::ImageLen || imgData.len()==ImgSD::Full::ImagePaddedLen) {
         const Img::Header& header = *(Img::Header*)imgData.data();
+        
+        _rawImage.img.width = header.imageWidth;
+        _rawImage.img.height = header.imageHeight;
+        
+        // Copy the image data into _rawImage
+        memcpy(_rawImage.pixels, imgData.data()+Img::PixelsOffset, Img::Full::PixelLen);
         
         // Validate checksum
         const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), Img::Full::ChecksumOffset);
         uint32_t checksumGot = 0;
         memcpy(&checksumGot, imgData.data()+Img::Full::ChecksumOffset, sizeof(checksumGot));
         assert(checksumExpected == checksumGot);
-        
-        _imagePipelineManager->rawImage.width = header.imageWidth;
-        _imagePipelineManager->rawImage.height = header.imageHeight;
-        memcpy(_imagePipelineManager->rawImage.pixels, imgData.data()+Img::PixelsOffset, Img::Full::PixelLen);
     
     // invaid image
     } else {
         abort();
     }
     
-    // Reset the illuminant so auto-white-balance is enabled again
-    _imagePipelineManager->debayerOptions.illum = std::nullopt;
-    // Reset the sample rect
-//    _imagePipelineManager->options.sampleRect = {};
-//    // Reset the image scale / position
-//    [_mainView reset];
+    _imagePipelineManager->rawImage = _rawImage.img;
     
     [[_mainView imageLayer] setNeedsDisplay];
+    
+    // Reset the illuminant so auto-white-balance is enabled again
+    _imagePipelineManager->options.illum = std::nullopt;
+    // Reset the sample rect
+    _imagePipelineManager->options.sampleRect = {};
+//    // Reset the image scale / position
+//    [_mainView reset];
 }
 
 - (IBAction)_previousImage:(id)sender {
@@ -574,10 +578,11 @@ static void _configureDevice(MDCUSBDevice& dev) {
     
     // Copy the image from `_streamImagesThread` into `_rawImage`
     auto lock = std::unique_lock(_streamImagesThread.lock);
-        _imagePipelineManager->rawImage.width = _streamImagesThread.width;
-        _imagePipelineManager->rawImage.height = _streamImagesThread.height;
-        const size_t len = _streamImagesThread.width*_streamImagesThread.height*sizeof(_streamImagesThread.pixels);
-        memcpy(_imagePipelineManager->rawImage.pixels, _streamImagesThread.pixels, len);
+        _rawImage.img.width = _streamImagesThread.width;
+        _rawImage.img.height = _streamImagesThread.height;
+        const size_t pixelCount = _streamImagesThread.width*_streamImagesThread.height;
+        std::copy(_streamImagesThread.pixels, _streamImagesThread.pixels+pixelCount, _rawImage.pixels);
+        _imagePipelineManager->rawImage = _rawImage.img;
     lock.unlock();
     
     [[_mainView imageLayer] setNeedsDisplay];
@@ -874,26 +879,26 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
 - (void)_updateSampleColorsUI {
     return; // Currently broken
     
-//    const SampleRect rect = _imagePipelineManager->options.sampleRect;
-//    const auto& sampleBufs = _imagePipelineManager->result.sampleBufs;
-//    _sampleRaw = _averageRaw(rect, _rawImage.img.cfaDesc, sampleBufs.raw);
-//    _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
-//    _sampleLSRGB = _averageRGB(rect, sampleBufs.lsrgb);
-//    
-//    [_colorText_Raw setStringValue:
-//        [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
-//    [_colorText_XYZD50 setStringValue:
-//        [NSString stringWithFormat:@"%f %f %f", _sampleXYZD50[0], _sampleXYZD50[1], _sampleXYZD50[2]]];
-//    [_colorText_LSRGB setStringValue:
-//        [NSString stringWithFormat:@"%f %f %f", _sampleLSRGB[0], _sampleLSRGB[1], _sampleLSRGB[2]]];
+    const SampleRect rect = _imagePipelineManager->options.sampleRect;
+    const auto& sampleBufs = _imagePipelineManager->result.sampleBufs;
+    _sampleRaw = _averageRaw(rect, _rawImage.img.cfaDesc, sampleBufs.raw);
+    _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
+    _sampleLSRGB = _averageRGB(rect, sampleBufs.lsrgb);
+    
+    [_colorText_Raw setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
+    [_colorText_XYZD50 setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _sampleXYZD50[0], _sampleXYZD50[1], _sampleXYZD50[2]]];
+    [_colorText_LSRGB setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _sampleLSRGB[0], _sampleLSRGB[1], _sampleLSRGB[2]]];
 }
 
-static Color<ColorSpace::Raw> sampleImageCircle(const ImagePipelineManager* ipm, int x, int y, int radius) {
+static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, int x, int y, int radius) {
     const int left      = std::clamp(x-radius, 0, (int)img.width -1  )   ;
     const int right     = std::clamp(x+radius, 0, (int)img.width -1  )+1 ;
     const int bottom    = std::clamp(y-radius, 0, (int)img.height-1  )   ;
     const int top       = std::clamp(y+radius, 0, (int)img.height-1  )+1 ;
-    const auto sampler = PixelSampler(ipm->rawImage.width, ipm->rawImage.height, ipm->rawImage.pixels);
+    const auto sampler = PixelSampler(img.width, img.height, img.pixels);
     uint32_t vals[3] = {};
     uint32_t counts[3] = {};
     for (int iy=bottom; iy<top; iy++) {
@@ -1305,23 +1310,23 @@ static Color<ColorSpace::Raw> sampleImageCircle(const ImagePipelineManager* ipm,
 // MARK: - MainViewDelegate
 
 - (void)mainViewSampleRectChanged:(MainView*)v {
-//    CGRect rect = [_mainView sampleRect];
-//    rect.origin.x *= _rawImage.img.width;
-//    rect.origin.y *= _rawImage.img.height;
-//    rect.size.width *= _rawImage.img.width;
-//    rect.size.height *= _rawImage.img.height;
-//    SampleRect sampleRect = {
-//        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)_rawImage.img.width),
-//        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)_rawImage.img.width),
-//        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)_rawImage.img.height),
-//        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)_rawImage.img.height),
-//    };
-//    
-//    if (sampleRect.left == sampleRect.right) sampleRect.right++;
-//    if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
-//    
-//    _imagePipelineManager->options.sampleRect = sampleRect;
-//    [_imagePipelineManager render];
+    CGRect rect = [_mainView sampleRect];
+    rect.origin.x *= _rawImage.img.width;
+    rect.origin.y *= _rawImage.img.height;
+    rect.size.width *= _rawImage.img.width;
+    rect.size.height *= _rawImage.img.height;
+    SampleRect sampleRect = {
+        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)_rawImage.img.width),
+        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)_rawImage.img.width),
+        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)_rawImage.img.height),
+        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)_rawImage.img.height),
+    };
+    
+    if (sampleRect.left == sampleRect.right) sampleRect.right++;
+    if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
+    
+    _imagePipelineManager->options.sampleRect = sampleRect;
+    [_imagePipelineManager render];
 }
 
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
@@ -1331,17 +1336,17 @@ static Color<ColorSpace::Raw> sampleImageCircle(const ImagePipelineManager* ipm,
 - (void)_updateColorMatrix {
     assert(_colorCheckersEnabled);
     
-    const size_t w = _imagePipelineManager->rawImage.width;
-    const size_t h = _imagePipelineManager->rawImage.height;
+    auto& opts = _imagePipelineManager->options;
+    
     const std::vector<CGPoint> points = [_mainView colorCheckerPositions];
     assert(points.size() == ColorChecker::Count);
     
     // Sample the white square to get the illuminant
     const CGPoint whitePos = points[ColorChecker::WhiteIdx];
     const Color<ColorSpace::Raw> illum = sampleImageCircle(
-        _imagePipelineManager,
-        round(whitePos.x*w),
-        round(whitePos.y*h),
+        _rawImage.img,
+        round(whitePos.x*_rawImage.img.width),
+        round(whitePos.y*_rawImage.img.height),
         _colorCheckerCircleRadius
     );
     
@@ -1354,9 +1359,9 @@ static Color<ColorSpace::Raw> sampleImageCircle(const ImagePipelineManager* ipm,
         size_t i = 0;
         for (const CGPoint& p : points) {
             const Color<ColorSpace::Raw> rawColor = sampleImageCircle(
-                _imagePipelineManager,
-                round(p.x*w),
-                round(p.y*h),
+                _rawImage.img,
+                round(p.x*_rawImage.img.width),
+                round(p.y*_rawImage.img.height),
                 _colorCheckerCircleRadius
             );
             const Color<ColorSpace::Raw> c = whiteBalance.elmMul(rawColor.m);
@@ -1414,10 +1419,8 @@ static Color<ColorSpace::Raw> sampleImageCircle(const ImagePipelineManager* ipm,
         }
     }
     
-    _imagePipelineManager->debayerOptions.illum = illum;
-    _imagePipelineManager->processOptions.illum = illum;
-    _imagePipelineManager->processOptions.colorMatrix = colorMatrix;
-    
+    opts.illum = illum;
+    opts.colorMatrix = colorMatrix;
     [self _updateInspectorUI];
     [[_mainView imageLayer] setNeedsDisplay];
     

@@ -1,9 +1,7 @@
 #import "ImagePipelineManager.h"
 using namespace MDCTools::ImagePipeline;
 
-@implementation ImagePipelineManager {
-    Renderer::Txt _rawTxt;
-}
+@implementation ImagePipelineManager
 
 - (instancetype)init {
     if (!(self = [super init])) return nil;
@@ -16,27 +14,13 @@ using namespace MDCTools::ImagePipeline;
 }
 
 - (void)render {
-    assert(rawImage.width);
-    assert(rawImage.height);
+    assert(rawImage);
     
-    if (!_rawTxt || [_rawTxt width]!=rawImage.width || [_rawTxt height]!=rawImage.height) {
-        _rawTxt = Pipeline::TextureForRaw(renderer, rawImage.width, rawImage.height, rawImage.pixels);
-    }
-    
-    if (!result.txt) {
-        result.txt = renderer.textureCreate(_rawTxt, MTLPixelFormatRGBA32Float);
-    }
-    
-    result.debayer = Pipeline::Debayer(renderer, debayerOptions, _rawTxt, result.txt);
-    
-    ccm = {
-        .illum = (estimateIlluminant ? debayerResult.illum : ColorRaw(opts.whiteBalance.illum)),
-        .matrix = (estimateIlluminant ? ColorMatrixForIlluminant(debayerResult.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix))
-    };
-    
-    Pipeline::Process(renderer, processOptions, result.txt, result.txt);
-    renderer.sync(result.txt);
-    renderer.commitAndWait();
+    // Clear `result` so that the Renderer::Txt and Renderer::Buf objects that
+    // it contains are destroyed before we render again, so they can be reused
+    // for this render run.
+    result = {};
+    result = MDCTools::ImagePipeline::Pipeline::Run(renderer, *rawImage, options);
     if (renderCallback) renderCallback();
 }
 
