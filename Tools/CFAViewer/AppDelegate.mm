@@ -12,7 +12,6 @@
 #import <set>
 #import <chrono>
 #import "ImageLayer.h"
-//#import "HistogramLayer.h"
 #import "Toastbox/Mmap.h"
 #import "Toastbox/Mac/Util.h"
 #import "Util.h"
@@ -168,9 +167,11 @@ struct RawImage {
         uint32_t height = 0;
     } _streamImagesThread;
     
+    Renderer _renderer;
     id<MTLDevice> _device;
     Pipeline::Options _pipelineOptions;
     Pipeline::Options _pipelineOptionsPost;
+    Renderer::Txt _txt;
     
     struct {
         Img::Pixel pixels[2200*2200];
@@ -197,6 +198,7 @@ struct RawImage {
     __weak auto weakSelf = self;
     
     _device = MTLCreateSystemDefaultDevice();
+    _renderer = Renderer(_device, [_device newDefaultLibrary], [_device newCommandQueue]);
     
     static constexpr MDCTools::CFADesc CFADesc = {
         MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
@@ -228,12 +230,6 @@ struct RawImage {
     _colorCheckerCircleRadius = 5;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
-//    _imagePipelineManager = [ImagePipelineManager new];
-//    _imagePipelineManager->renderCallback = [=]() {
-//        [weakSelf _renderCallback];
-//    };
-//    [[_mainView imageLayer] setImagePipelineManager:_imagePipelineManager];
-    
     // /Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker"}];
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
@@ -242,25 +238,6 @@ struct RawImage {
     [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_78.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_64.cfa"}];
-    
-//    _processOptions = {
-//        .illum = std::nullopt,
-//        .colorMatrix = std::nullopt,
-//        
-//        .exposure = 0,
-//        .saturation = 0,
-//        .brightness = 0,
-//        .contrast = 0,
-//        
-//        .localContrast = {
-//            .en = true,
-//            .amount = .5,
-//            .radius = 50,
-//        },
-//    };
-    
-    
-    [self _updateInspectorUI];
     
     auto points = [self _prefsColorCheckerPositions];
     if (!points.empty()) {
@@ -275,25 +252,6 @@ struct RawImage {
     [NSThread detachNewThreadWithBlock:^{
         [self _threadHandleNewMDCUSBDevices];
     }];
-    
-//    static NSDictionary* MatchingDictionary() {
-//        NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
-//        match[@kIOPropertyMatchKey] = @{
-//            @"idVendor": @1155,
-//            @"idProduct": @57105,
-//        };
-//        return match;
-//    }
-//    
-//    NSDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
-//    _serviceAppearWatcher = IOServiceMatcher(dispatch_get_main_queue(), match,
-//        ^(SendRight&& service) {
-//            [weakSelf _handleNewUSBDevice:std::move(service)];
-//        });
-//    
-//    [NSThread detachNewThreadWithBlock:^{
-//        [self _threadReadInputCommands];
-//    }];
 }
 
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
@@ -410,15 +368,7 @@ static bool isCFAFile(const fs::path& path) {
         abort();
     }
     
-//    _imagePipelineManager->rawImage = _raw.image;
-    // Reset the illuminant so auto-white-balance is enabled again
-//    _imagePipelineManager->illum = std::nullopt;
-    
     [self _render];
-    // Reset the sample rect
-//    _imagePipelineManager->options.sampleRect = {};
-//    // Reset the image scale / position
-//    [_mainView reset];
 }
 
 - (IBAction)_previousImage:(id)sender {
@@ -468,68 +418,34 @@ static void _configureDevice(MDCUSBDevice& dev) {
 //    }
 }
 
-- (void)_renderCompleted {
+- (void)_renderCompleted:(const Pipeline::Options&)opts {
     // Update the estimated illuminant in the inspector UI
-    assert(_pipelineOptionsPost.illum);
-    assert(_pipelineOptionsPost.colorMatrix);
+    assert(opts.illum);
+    assert(opts.colorMatrix);
+    _pipelineOptionsPost = opts;
     [self _updateInspectorUI];
-    [self _updateSampleColorsUI];
 }
 
 - (void)_render {
-
-//    static Renderer::Txt _Render(
-//        Renderer& renderer,
-//        std::optional<ColorRaw> illum,
-//        std::optional<ColorMatrix> colorMatrix,
-//        Pipeline::DebayerOptions dopts,
-//        Pipeline::ProcessOptions popts,
-//        const RawImage& raw
-//    ) {
+    Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
     
-    Renderer renderer(_device, [_device newDefaultLibrary], [_device newCommandQueue]);
-    
-//    std::optional<ColorRaw> illum = _illum;
-//    std::optional<ColorMatrix> colorMatrix = _colorMatrix;
-//    Pipeline::DebayerOptions dopts = _debayerOptions;
-    
-    // resultTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
-    // representation of the pipeline result without clipping to 8-bit components, so we can
-    // render to an HDR display and make use of the depth.
-    Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
-    Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA16Float);
+    if (!_txt || [_txt width]!=_raw.image.width || [_txt height]!=_raw.image.height) {
+        // _txt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
+        // representation of the pipeline result without clipping to 8-bit components, so we can
+        // render to an HDR display and make use of the depth.
+        _txt = _renderer.textureCreate(rawTxt, MTLPixelFormatRGBA16Float);
+    }
     
     Pipeline::Options popts = _pipelineOptions;
-    if (!popts.illum) popts.illum = EstimateIlluminant::Run(renderer, _raw.image.cfaDesc, rawTxt);
+    if (!popts.illum) popts.illum = EstimateIlluminant::Run(_renderer, _raw.image.cfaDesc, rawTxt);
     if (!popts.colorMatrix) popts.colorMatrix = MDCStudio::ColorMatrixForIlluminant(*popts.illum).matrix;
     
     // Run image pipeline
-    Pipeline::Run(renderer, popts, rawTxt, rgbTxt);
-    renderer.sync(rgbTxt);
-    renderer.commitAndWait();
-    [[_mainView imageLayer] setTexture:rgbTxt];
-    
-    _pipelineOptionsPost = popts;
-    [self _renderCompleted];
-    
-    
-    
-//    // Commit and wait so we can read the sample buffers
-//    _imagePipelineManager->renderer.commitAndWait();
-//    
-//    // Update the estimated illuminant in the inspector UI
-//    [self _setIllumText:_imagePipelineManager->result.debayer.illum];
-//    [self _setColorMatrixText:_imagePipelineManager->result.colorMatrix];
-//    [self _updateSampleColorsUI];
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    Pipeline::Run(_renderer, popts, rawTxt, _txt);
+    _renderer.sync(_txt);
+    _renderer.commitAndWait();
+    [[_mainView imageLayer] setTexture:_txt];
+    [self _renderCompleted:popts];
 }
 
 - (void)_threadHandleNewMDCUSBDevices {
@@ -619,29 +535,6 @@ static void _configureDevice(MDCUSBDevice& dev) {
     }
 }
 
-//- (void)_handleNewUSBDevice:(SendRight&&)service {
-//    try {
-//        USBDevice dev(service);
-//        if (!MDCUSBDevice::USBDeviceMatches(dev)) return;
-//        
-//        MDCUSBDevice mdc(std::move(dev));
-//        
-//        const STM::Status status = mdc.statusGet();
-//        // Return the MDC device to the bootloader, if it's not in the bootloader currently
-//        if (status.mode != STM::Status::Mode::STMLoader) {
-//            mdc.bootloaderInvoke();
-//            return;
-//        }
-//        
-//        // 
-//        
-//        [self _setMDCUSBDevice:std::move(mdc)];
-//    
-//    } catch (const std::exception& e) {
-//        // Ignore failures to create USBDevice
-//    }
-//}
-
 - (void)_setMDCUSBDevice:(std::unique_ptr<MDCUSBDevice>)dev {
     // Stop streaming, set switch to off, and enable or disable switch
     [self _streamImagesStop];
@@ -678,7 +571,6 @@ static void _configureDevice(MDCUSBDevice& dev) {
         _raw.image.height = _streamImagesThread.height;
         const size_t len = _streamImagesThread.width*_streamImagesThread.height*sizeof(*_streamImagesThread.pixels);
         memcpy(_raw.pixels, _streamImagesThread.pixels, len);
-//        _imagePipelineManager->rawImage = _raw.image;
     lock.unlock();
     
     [self _render];
@@ -802,38 +694,6 @@ static void _configureDevice(MDCUSBDevice& dev) {
     _streamImagesThread.lock.unlock();
 }
 
-//- (void)_handleInputCommand:(std::vector<std::string>)cmdStrs {
-//    MDCUtil::Args args;
-//    try {
-//        args = MDCUtil::ParseArgs(cmdStrs);
-//    
-//    } catch (const std::exception& e) {
-//        fprintf(stderr, "Bad arguments: %s\n\n", e.what());
-//        MDCUtil::PrintUsage();
-//        return;
-//    }
-//    
-//    if (!_mdcDevice) {
-//        fprintf(stderr, "No MDC device connected\n\n");
-//        return;
-//    }
-//    
-//    // Disable streaming before we talk to the device
-//    bool oldStreamImagesEnabled = [self _streamImagesEnabled];
-//    [self _setStreamImagesEnabled:false];
-//    
-//    try {
-//        MDCUtil::Run(_mdcDevice, args);
-//    
-//    } catch (const std::exception& e) {
-//        fprintf(stderr, "Error: %s\n\n", e.what());
-//        return;
-//    }
-//    
-//    // Re-enable streaming (if it was enabled previously)
-//    if (oldStreamImagesEnabled) [self _setStreamImagesEnabled:true];
-//}
-
 - (bool)_streamImagesEnabled {
     auto lock = std::unique_lock(_streamImagesThread.lock);
     return _streamImagesThread.running;
@@ -874,7 +734,8 @@ static void _configureDevice(MDCUSBDevice& dev) {
 // MARK: - Color Matrix
 
 template<size_t H, size_t W>
-Mat<double,H,W> _matFromString(const std::string& str) {
+Mat<double,H,W> _matFromString(NSString* nsstr) {
+    const std::string& str = [nsstr UTF8String];
     const std::regex floatRegex("[-+]?[0-9]*\\.?[0-9]+");
     auto begin = std::sregex_iterator(str.begin(), str.end(), floatRegex);
     auto end = std::sregex_iterator();
@@ -899,23 +760,18 @@ Mat<double,H,W> _matFromString(const std::string& str) {
     return r;
 }
 
-//template <size_t H, size_t W>
-//Mat<double,H,W> _matFromString(const std::string& str) {
-//    return _matrixFromString<H,W>(str);
-//}
-
 - (void)controlTextDidEndEditing:(NSNotification*)note {
     NSLog(@"controlTextDidEndEditing:");
     NSTextField* textField = Toastbox::CastOrNull<NSTextField*>([note object]);
     if (!textField) return;
     if (textField == _illumTextField) {
         if (!_pipelineOptions.illum) return;
-        _pipelineOptions.illum = _matFromString<3,1>([[_illumTextField stringValue] UTF8String]);
+        _pipelineOptions.illum = _matFromString<3,1>([_illumTextField stringValue]);
         [self _render];
     
     } else if (textField == _colorMatrixTextField) {
         if (!_pipelineOptions.colorMatrix) return;
-        _pipelineOptions.colorMatrix = _matFromString<3,3>([[_colorMatrixTextField stringValue] UTF8String]);
+        _pipelineOptions.colorMatrix = _matFromString<3,3>([_colorMatrixTextField stringValue]);
         [self _render];
     }
 }
@@ -969,23 +825,6 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
     return r;
 }
 
-- (void)_updateSampleColorsUI {
-    return; // Currently broken
-    
-//    const SampleRect rect = _imagePipelineManager->options.sampleRect;
-//    const auto& sampleBufs = _imagePipelineManager->result.sampleBufs;
-//    _sampleRaw = _averageRaw(rect, _raw.image.cfaDesc, sampleBufs.raw);
-//    _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
-//    _sampleLSRGB = _averageRGB(rect, sampleBufs.lsrgb);
-//    
-//    [_colorText_Raw setStringValue:
-//        [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
-//    [_colorText_XYZD50 setStringValue:
-//        [NSString stringWithFormat:@"%f %f %f", _sampleXYZD50[0], _sampleXYZD50[1], _sampleXYZD50[2]]];
-//    [_colorText_LSRGB setStringValue:
-//        [NSString stringWithFormat:@"%f %f %f", _sampleLSRGB[0], _sampleLSRGB[1], _sampleLSRGB[2]]];
-}
-
 static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int y, int radius) {
     const int left      = std::clamp(x-radius, 0, (int)img.width -1  )   ;
     const int right     = std::clamp(x+radius, 0, (int)img.width -1  )+1 ;
@@ -1023,13 +862,13 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
         f.write((char*)_raw.image.pixels, pixelCount*sizeof(*_raw.image.pixels));
     
     } else if (ext == "png") {
-//        id img = _imagePipelineManager->renderer.imageCreate(_imagePipelineManager->result.txt);
-//        Assert(img, return);
-//        
-//        id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
-//            (CFURLRef)[NSURL fileURLWithPath:path], kUTTypePNG, 1, nullptr));
-//        CGImageDestinationAddImage((CGImageDestinationRef)imgDest, (CGImageRef)img, nullptr);
-//        CGImageDestinationFinalize((CGImageDestinationRef)imgDest);
+        id img = _renderer.imageCreate(_txt);
+        Assert(img, return);
+        
+        id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
+            (CFURLRef)[NSURL fileURLWithPath:path], kUTTypePNG, 1, nullptr));
+        CGImageDestinationAddImage((CGImageDestinationRef)imgDest, (CGImageRef)img, nullptr);
+        CGImageDestinationFinalize((CGImageDestinationRef)imgDest);
     }
 }
 
@@ -1321,6 +1160,21 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
         [_localContrastRadiusSlider setFloatValue:opts.localContrast.radius];
         [_localContrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.localContrast.radius]];
     }
+    
+    // Update sample colors
+    // Currently broken -- we remove sampling from the ImagePipeline a long time ago. Need to add back.
+//    const SampleRect rect = _imagePipelineManager->options.sampleRect;
+//    const auto& sampleBufs = _imagePipelineManager->result.sampleBufs;
+//    _sampleRaw = _averageRaw(rect, _raw.image.cfaDesc, sampleBufs.raw);
+//    _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
+//    _sampleLSRGB = _averageRGB(rect, sampleBufs.lsrgb);
+//    
+//    [_colorText_Raw setStringValue:
+//        [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
+//    [_colorText_XYZD50 setStringValue:
+//        [NSString stringWithFormat:@"%f %f %f", _sampleXYZD50[0], _sampleXYZD50[1], _sampleXYZD50[2]]];
+//    [_colorText_LSRGB setStringValue:
+//        [NSString stringWithFormat:@"%f %f %f", _sampleLSRGB[0], _sampleLSRGB[1], _sampleLSRGB[2]]];
 }
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {
@@ -1369,16 +1223,6 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     ]];
 }
 
-//- (void)_renderCallback {
-////    // Commit and wait so we can read the sample buffers
-////    _imagePipelineManager->renderer.commitAndWait();
-////    
-////    // Update the estimated illuminant in the inspector UI
-////    [self _setIllumText:_imagePipelineManager->result.debayer.illum];
-////    [self _setColorMatrixText:_imagePipelineManager->result.colorMatrix];
-////    [self _updateSampleColorsUI];
-//}
-
 // MARK: - MainViewDelegate
 
 - (void)mainViewSampleRectChanged:(MainView*)v {
@@ -1396,9 +1240,6 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     
     if (sampleRect.left == sampleRect.right) sampleRect.right++;
     if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
-    
-//    _imagePipelineManager->options.sampleRect = sampleRect;
-//    [_imagePipelineManager render];
 }
 
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
@@ -1489,11 +1330,11 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
         }
     }
     
+    [self _prefsSetColorCheckerPositions:points];
+    
     _pipelineOptions.illum = illum;
     _pipelineOptions.colorMatrix = colorMatrix;
     [self _render];
-    
-    [self _prefsSetColorCheckerPositions:points];
 }
 
 // MARK: - Prefs
