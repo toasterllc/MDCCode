@@ -370,36 +370,32 @@ private:
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
                 Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
             
-            Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
-            
             ccm.illum = (estimateIlluminant ? EstimateIlluminant::Run(renderer, _CFADesc, rawTxt) : ColorRaw(opts.whiteBalance.illum));
             ccm.matrix = (estimateIlluminant ? ColorMatrixForIlluminant(ccm.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix));
             
-            const Pipeline::DebayerOptions debayerOpts = {
-                .cfaDesc        = _CFADesc,
-                .illum          = ccm.illum,
-                .debayerLMMSE   = { .applyGamma = true, },
-            };
-            
-            Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
-            
-            const Pipeline::ProcessOptions processOpts = {
-                .illum          = ccm.illum,
-                .colorMatrix    = ccm.matrix,
+            const Pipeline::Options popts = {
+                .cfaDesc                = _CFADesc,
                 
-                .exposure   = (float)opts.exposure,
-                .saturation = (float)opts.saturation,
-                .brightness = (float)opts.brightness,
-                .contrast   = (float)opts.contrast,
+                .illum                  = ccm.illum,
+                .colorMatrix            = ccm.matrix,
+                
+                .defringe               = { .en = false, },
+                .reconstructHighlights  = { .en = false, },
+                .debayerLMMSE           = { .applyGamma = true, },
+                
+                .exposure               = (float)opts.exposure,
+                .saturation             = (float)opts.saturation,
+                .brightness             = (float)opts.brightness,
+                .contrast               = (float)opts.contrast,
                 
                 .localContrast = {
-                    .en     = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
-                    .amount = (float)opts.localContrast.amount,
-                    .radius = (float)opts.localContrast.radius,
+                    .en                 = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
+                    .amount             = (float)opts.localContrast.amount,
+                    .radius             = (float)opts.localContrast.radius,
                 },
             };
             
-            Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
+            Pipeline::Run(renderer, popts, rawTxt, thumbTxt);
             renderer.sync(thumbTxt);
             renderer.commitAndWait();
         }

@@ -32,31 +32,50 @@ namespace MDCTools::ImagePipeline {
 //Color<ColorSpace::Raw> Pipeline::EstimateIlluminant(Renderer& renderer, const CFADesc& cfaDesc, id<MTLTexture> srcRaw) {
 //    return EstimateIlluminant::Run(renderer, cfaDesc, srcRaw);
 //}
+//
+//void Pipeline::Debayer(Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb) {
+//    assert(srcRaw);
+//    assert(dstRgb);
+//    assert([srcRaw width] == [dstRgb width]);
+//    assert([srcRaw height] == [dstRgb height]);
+//    
+//    // Reconstruct highlights
+//    if (opts.reconstructHighlights.en) {
+//        ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum.m, srcRaw);
+//    }
+//    
+//    if (opts.defringe.en) {
+//        Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
+//    }
+//    
+//    // LMMSE Debayer
+//    {
+//        DebayerLMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, dstRgb);
+//    }
+//}
 
-void Pipeline::Debayer(Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb) {
+void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb) {
     assert(srcRaw);
     assert(dstRgb);
-    assert([srcRaw width] == [dstRgb width]);
-    assert([srcRaw height] == [dstRgb height]);
     
-    // Reconstruct highlights
-    if (opts.reconstructHighlights.en) {
-        ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum.m, srcRaw);
-    }
-    
-    if (opts.defringe.en) {
-        Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
-    }
-    
-    // LMMSE Debayer
+    // Debayer
+    Renderer::Txt srcRgb = renderer.textureCreate(srcRaw, MTLPixelFormatRGBA32Float);
     {
-        DebayerLMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, dstRgb);
+        // Reconstruct highlights
+        if (opts.reconstructHighlights.en) {
+            assert(opts.illum);
+            ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum->m, srcRaw);
+        }
+        
+        if (opts.defringe.en) {
+            Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
+        }
+        
+        // LMMSE Debayer
+        {
+            DebayerLMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, srcRgb);
+        }
     }
-}
-
-void Pipeline::Process(Renderer& renderer, const ProcessOptions& opts, id<MTLTexture> srcRgb, id<MTLTexture> dstRgb) {
-    assert(srcRgb);
-    assert(dstRgb);
     
     // White balance
     if (opts.illum) {

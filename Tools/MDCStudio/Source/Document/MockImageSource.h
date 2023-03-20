@@ -107,7 +107,7 @@ public:
                0.0983744, 0.8734610, 0.0281647,
                0.0168832, 0.1176725, 0.8654443,
             };
-            const Pipeline::ProcessOptions processOpts = {
+            const Pipeline::Options popts = {
                 .colorMatrix = colorMatrix,
                 .exposure = (float)imageOpts.exposure,
                 .saturation = (float)imageOpts.saturation,
@@ -120,7 +120,7 @@ public:
                 },
             };
             
-            Pipeline::Process(renderer, processOpts, txtRgba32, txtRgba8);
+            Pipeline::Run(renderer, popts, txtRgba32, txtRgba8);
             renderer.sync(txtRgba8);
         }
         

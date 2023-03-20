@@ -130,33 +130,29 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
             _image->width, _image->height, (ImagePixel*)(_image->data.get() + _image->off));
         
-        Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
-        
-        // Debayer raw image
-        const Pipeline::DebayerOptions debayerOpts = {
-            .cfaDesc        = _image->cfaDesc,
-            .debayerLMMSE   = { .applyGamma = true, },
-        };
-        Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
-        
-        // Process rgb image
-        const Pipeline::ProcessOptions processOpts = {
-            .illum       = ColorRaw(opts.whiteBalance.illum),
-            .colorMatrix = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
+        const Pipeline::Options popts = {
+            .cfaDesc                = _image->cfaDesc,
             
-            .exposure   = (float)opts.exposure,
-            .saturation = (float)opts.saturation,
-            .brightness = (float)opts.brightness,
-            .contrast   = (float)opts.contrast,
+            .illum                  = ColorRaw(opts.whiteBalance.illum),
+            .colorMatrix            = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
+            
+            .defringe               = { .en = false, },
+            .reconstructHighlights  = { .en = false, },
+            .debayerLMMSE           = { .applyGamma = true, },
+            
+            .exposure               = (float)opts.exposure,
+            .saturation             = (float)opts.saturation,
+            .brightness             = (float)opts.brightness,
+            .contrast               = (float)opts.contrast,
             
             .localContrast = {
-                .en = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
-                .amount = (float)opts.localContrast.amount,
-                .radius = (float)opts.localContrast.radius,
+                .en                 = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
+                .amount             = (float)opts.localContrast.amount,
+                .radius             = (float)opts.localContrast.radius,
             },
         };
         
-        Pipeline::Process(renderer, processOpts, rgbTxt, _imageTxt);
+        Pipeline::Run(renderer, popts, rawTxt, _imageTxt);
     }
     
     // If we don't have the thumbnail texture yet, create it

@@ -13,9 +13,33 @@ using ColorMatrix = Mat<double,3,3>;
 
 class Pipeline {
 public:
-    struct DebayerOptions {
+//    struct DebayerOptions {
+//        MDCTools::CFADesc cfaDesc;
+//        ColorRaw illum;
+//        
+//        struct {
+//            bool en = false;
+//            Defringe::Options opts;
+//        } defringe;
+//        
+//        struct {
+//            bool en = false;
+//        } reconstructHighlights;
+//        
+//        struct {
+//            bool applyGamma = false;
+//        } debayerLMMSE;
+//    };
+//    
+//    struct DebayerResult {
+//        ColorRaw illum; // Illuminant that was used
+//    };
+    
+    struct Options {
         MDCTools::CFADesc cfaDesc;
-        ColorRaw illum;
+        
+        std::optional<ColorRaw> illum;
+        std::optional<ColorMatrix> colorMatrix;
         
         struct {
             bool en = false;
@@ -29,15 +53,6 @@ public:
         struct {
             bool applyGamma = false;
         } debayerLMMSE;
-    };
-    
-//    struct DebayerResult {
-//        ColorRaw illum; // Illuminant that was used
-//    };
-    
-    struct ProcessOptions {
-        std::optional<ColorRaw> illum;
-        std::optional<ColorMatrix> colorMatrix;
         
         float exposure = 0;
         float saturation = 0;
@@ -63,8 +78,7 @@ public:
 //    static ColorMatrix ColorMatrixForIlluminant(const ColorRaw& illum);
     
 //    static Color<ColorSpace::Raw> EstimateIlluminant(MDCTools::Renderer& renderer, const MDCTools::CFADesc& cfaDesc, id<MTLTexture> srcRaw);
-    static void Debayer(MDCTools::Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
-    static void Process(MDCTools::Renderer& renderer, const ProcessOptions& opts, id<MTLTexture> srcRgb, id<MTLTexture> dstRgb);
+    static void Run(MDCTools::Renderer& renderer, const Options& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
 };
 
 } // namespace MDCTools::ImagePipeline
