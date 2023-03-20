@@ -32,6 +32,7 @@
 #import "ImgAutoExposure.h"
 #import "ChecksumFletcher32.h"
 #import "ELF32Binary.h"
+#import "RawImage.h"
 using namespace CFAViewer;
 using namespace MDCTools::MetalUtil;
 using namespace MDCTools::ImagePipeline;
@@ -163,7 +164,7 @@ struct ExposureSettings {
     
     struct {
         Img::Pixel pixels[2200*2200];
-        Pipeline::RawImage img = {
+        RawImage img = {
             .cfaDesc = {
                 MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
                 MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
@@ -879,21 +880,21 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
 - (void)_updateSampleColorsUI {
     return; // Currently broken
     
-    const SampleRect rect = _imagePipelineManager->options.sampleRect;
-    const auto& sampleBufs = _imagePipelineManager->result.sampleBufs;
-    _sampleRaw = _averageRaw(rect, _rawImage.img.cfaDesc, sampleBufs.raw);
-    _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
-    _sampleLSRGB = _averageRGB(rect, sampleBufs.lsrgb);
-    
-    [_colorText_Raw setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
-    [_colorText_XYZD50 setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _sampleXYZD50[0], _sampleXYZD50[1], _sampleXYZD50[2]]];
-    [_colorText_LSRGB setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _sampleLSRGB[0], _sampleLSRGB[1], _sampleLSRGB[2]]];
+//    const SampleRect rect = _imagePipelineManager->options.sampleRect;
+//    const auto& sampleBufs = _imagePipelineManager->result.sampleBufs;
+//    _sampleRaw = _averageRaw(rect, _rawImage.img.cfaDesc, sampleBufs.raw);
+//    _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
+//    _sampleLSRGB = _averageRGB(rect, sampleBufs.lsrgb);
+//    
+//    [_colorText_Raw setStringValue:
+//        [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
+//    [_colorText_XYZD50 setStringValue:
+//        [NSString stringWithFormat:@"%f %f %f", _sampleXYZD50[0], _sampleXYZD50[1], _sampleXYZD50[2]]];
+//    [_colorText_LSRGB setStringValue:
+//        [NSString stringWithFormat:@"%f %f %f", _sampleLSRGB[0], _sampleLSRGB[1], _sampleLSRGB[2]]];
 }
 
-static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, int x, int y, int radius) {
+static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int y, int radius) {
     const int left      = std::clamp(x-radius, 0, (int)img.width -1  )   ;
     const int right     = std::clamp(x+radius, 0, (int)img.width -1  )+1 ;
     const int bottom    = std::clamp(y-radius, 0, (int)img.height-1  )   ;

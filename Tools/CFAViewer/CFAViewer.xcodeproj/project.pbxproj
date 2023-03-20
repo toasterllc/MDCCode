@@ -60,6 +60,7 @@
 		556E45FF26B13CBD006681FA /* SendRight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		556E460126B1562F006681FA /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
 		5588910D2736258A0004458F /* ImgAutoExposure.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgAutoExposure.h; sourceTree = "<group>"; };
+		558FFC5429C8E6E90022E840 /* RawImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RawImage.h; sourceTree = "<group>"; };
 		559C33E826165B4C001903FD /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
 		559D8E0E2593EAB200836B47 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		559D8E0F2594205300836B47 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -126,7 +127,6 @@
 		55EBCC902589C3570089A441 /* HistogramLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HistogramLayer.mm; sourceTree = "<group>"; };
 		55EBCC912589C3570089A441 /* HistogramLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HistogramLayer.h; sourceTree = "<group>"; };
 		55EBCC932589C3960089A441 /* HistogramLayerShader.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = HistogramLayerShader.metal; sourceTree = "<group>"; };
-		55EBCC9B2589E5A00089A441 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
 		55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HistogramLayerTypes.h; sourceTree = "<group>"; };
 		55EBFD2528C57FDD00B3D1B5 /* MDCUSBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUSBDevice.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -222,9 +222,9 @@
 				55B9745D24C504E2000B2633 /* AppDelegate.mm */,
 				55E98EB525A920030062B458 /* MainView.h */,
 				55E98EB425A920030062B458 /* MainView.mm */,
-				55EBCC9B2589E5A00089A441 /* MetalUtil.h */,
 				55EBCC86258966FE0089A441 /* ImageLayer.h */,
 				55EBCC88258966FE0089A441 /* ImageLayer.mm */,
+				558FFC5429C8E6E90022E840 /* RawImage.h */,
 				55AE80CB262F5B3100BA227C /* ImagePipelineManager.h */,
 				55AE80CC262F5B3100BA227C /* ImagePipelineManager.mm */,
 				55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */,
