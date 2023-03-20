@@ -905,21 +905,19 @@ Mat<double,H,W> _matFromString(const std::string& str) {
 //}
 
 - (void)controlTextDidEndEditing:(NSNotification*)note {
-//    NSLog(@"controlTextDidEndEditing:");
-//    NSTextField* textField = Toastbox::CastOrNull<NSTextField*>([note object]);
-//    if (!textField) return;
-//    if (textField == _illumTextField) {
-//        if (!_imagePipelineManager.illum) return;
-//        _imagePipelineManager.illum = _matFromString<3,1>([[_illumTextField stringValue] UTF8String]);
-//        [self _updateInspectorUI];
-//        [self _render];
-//    
-//    } else if (textField == _colorMatrixTextField) {
-//        if (!opts.colorMatrix) return;
-//        _imagePipelineManager.colorMatrix = _matFromString<3,3>([[_colorMatrixTextField stringValue] UTF8String]);
-//        [self _updateInspectorUI];
-//        [self _render];
-//    }
+    NSLog(@"controlTextDidEndEditing:");
+    NSTextField* textField = Toastbox::CastOrNull<NSTextField*>([note object]);
+    if (!textField) return;
+    if (textField == _illumTextField) {
+        if (!_pipelineOptions.illum) return;
+        _pipelineOptions.illum = _matFromString<3,1>([[_illumTextField stringValue] UTF8String]);
+        [self _render];
+    
+    } else if (textField == _colorMatrixTextField) {
+        if (!_pipelineOptions.colorMatrix) return;
+        _pipelineOptions.colorMatrix = _matFromString<3,3>([[_colorMatrixTextField stringValue] UTF8String]);
+        [self _render];
+    }
 }
 
 // MARK: - Histograms
