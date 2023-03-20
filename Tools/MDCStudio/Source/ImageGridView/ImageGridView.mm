@@ -676,6 +676,13 @@ struct SelectionDelta {
     [_delegate imageGridViewSelectionChanged:self];
 }
 
+- (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
+    std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
+    if (!rect) return;
+    [self scrollRectToVisible:[self convertRect:*rect fromView:[self superview]]];
+    [_delegate imageGridViewSelectionChanged:self];
+}
+
 - (void)_updateDocumentHeight {
     [_imageGridLayer setContainerWidth:[self bounds].size.width];
     [_imageGridLayer recomputeGrid];
@@ -729,87 +736,6 @@ struct SelectionDelta {
     if ([event clickCount] == 2) {
         [_delegate imageGridViewOpenSelectedImage:self];
     }
-}
-
-- (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
-    std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
-    if (!rect) return;
-    
-    [self scrollRectToVisible:[self convertRect:*rect fromView:[self superview]]];
-    [_delegate imageGridViewSelectionChanged:self];
-    
-//    ssize_t newIdx = 0;
-//    ImageRecordPtr newImg;
-//    ImageSet selection = [_imageGridLayer selection];
-//    {
-//        ImageLibrary& imgLib = _imageSource->imageLibrary();
-//        auto lock = std::unique_lock(imgLib);
-//        
-//        const size_t imgCount = imgLib.recordCount();
-//        if (!imgCount) return;
-//        
-//        if (!selection.empty()) {
-//            const auto it = ImageLibrary::Find(imgLib.begin(), imgLib.end(), *std::prev(selection.end()));
-//            if (it == imgLib.end()) {
-//                NSLog(@"Image no longer in library");
-//                return;
-//            }
-//            
-//            const size_t idx = std::distance(imgLib.begin(), it);
-//            const size_t colCount = [_imageGridLayer columnCount];
-//            const size_t rem = (imgCount % colCount);
-//            const size_t lastRowCount = (rem ? rem : colCount);
-//            const bool firstRow = (idx < colCount);
-//            const bool lastRow = (idx >= (imgCount-lastRowCount));
-//            const bool firstCol = !(idx % colCount);
-//            const bool lastCol = ((idx % colCount) == (colCount-1));
-//            const bool lastElm = (idx == (imgCount-1));
-//            
-//            newIdx = idx;
-//            if (delta.x > 0) {
-//                // Right
-//                if (lastCol || lastElm) return;
-//                newIdx += 1;
-//            
-//            } else if (delta.x < 0) {
-//                // Left
-//                if (firstCol) return;
-//                newIdx -= 1;
-//            
-//            } else if (delta.y > 0) {
-//                // Down
-//                if (lastRow) return;
-//                newIdx += colCount;
-//            
-//            } else if (delta.y < 0) {
-//                // Up
-//                if (firstRow) return;
-//                newIdx -= colCount;
-//            }
-//            
-//            newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
-//        
-//        } else {
-//            if (delta.x>0 || delta.y>0) {
-//                // Select first element
-//                newIdx = 0;
-//            } else if (delta.x<0 || delta.y<0) {
-//                // Select last element
-//                newIdx = imgCount-1;
-//            } else {
-//                return;
-//            }
-//        }
-//        
-//    //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-//        newImg = *(imgLib.begin()+newIdx);
-//    }
-//    
-//    [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
-//    
-//    if (!extend) selection.clear();
-//    selection.insert(newImg);
-//    [self _setSelection:std::move(selection)];
 }
 
 - (void)moveDown:(id)sender {
