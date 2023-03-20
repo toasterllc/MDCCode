@@ -19,7 +19,7 @@
 - (MDCStudio::ImageSourcePtr)imageSource;
 - (const MDCStudio::ImageSet&)selection;
 
-- (void)setSortNewestFirst:(bool)sortNewestFirst;
+- (void)setReverse:(bool)reverse;
 
 //- (NSView*)initialFirstResponder;
 

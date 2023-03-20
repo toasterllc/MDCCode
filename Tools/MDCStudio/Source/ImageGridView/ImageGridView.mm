@@ -212,7 +212,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
 // _getChunkTexture: returns a _ChunkTexture& containing all thumbnails for a given chunk
 // ImageLibrary must be locked!
-- (_ChunkTexture&)_getChunkTexture:(ImageRecordIter)iter {
+- (_ChunkTexture&)_getChunkTexture:(ImageRecordAnyIter)iter {
     // If we already have a _ChunkTexture for the iter's chunk, return it.
     // Otherwise we need to create it.
     const ImageLibrary::ChunkStrongRef chunk = iter->chunkRef();
@@ -221,8 +221,8 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         return it->val;
     }
     
-    const auto chunkBegin = ImageLibrary::FindChunkBegin(_imageLibrary->begin(), iter);
-    const auto chunkEnd = ImageLibrary::FindChunkEnd(_imageLibrary->end(), iter);
+    const auto chunkBegin = ImageLibrary::FindChunkBegin([self _begin], iter);
+    const auto chunkEnd = ImageLibrary::FindChunkEnd([self _end], iter);
     assert(chunkBegin != chunkEnd);
     
     auto startTime = std::chrono::steady_clock::now();
