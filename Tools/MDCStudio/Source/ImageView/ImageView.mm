@@ -113,6 +113,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         });
     }
     
+    #warning TODO: keep the renderer as an ivar?
     Renderer renderer(_device, _library, _commandQueue);
     
     // Create _imageTxt if it doesn't exist yet and we have the image

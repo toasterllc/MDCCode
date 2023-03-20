@@ -2,7 +2,9 @@
 #import <Metal/Metal.h>
 #import "Assert.h"
 #import "Util.h"
+#import "Renderer.h"
 using namespace CFAViewer;
+using namespace MDCTools;
 //using namespace MDCTools::MetalUtil;
 //using namespace MDCTools::ImagePipeline;
 
@@ -18,14 +20,22 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 }
 
 @implementation ImageLayer {
+    Renderer _renderer;
+    id<MTLTexture> _txt;
+    
 //    ImagePipelineManager* _ipm;
 }
 
 - (instancetype)init {
     if (!(self = [super init])) return nil;
+    
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    _renderer = Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    
     [self setActions:LayerNullActions()];
     [self setPixelFormat:_PixelFormat];
     [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
+    [self setDevice:device];
     return self;
 }
 
@@ -34,25 +44,37 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 //    [self setDevice:_ipm->renderer.dev];
 //}
 
+- (void)setTexture:(id<MTLTexture>)txt {
+    assert([NSThread isMainThread]);
+    _txt = txt;
+    [self setNeedsDisplay];
+}
+
 - (void)display {
+    if (!_txt) return;
+    assert([_txt width]);
+    assert([_txt height]);
+    
+    
 //    if (!_ipm) return;
 //    if (!_ipm->rawImage) return;
 //    
 //    [_ipm render];
 //    
-//    NSUInteger w = [_ipm->result.txt width];
-//    NSUInteger h = [_ipm->result.txt height];
+    const NSUInteger w = [_txt width];
+    const NSUInteger h = [_txt height];
 //    if (w*h <= 0) return;
-//    
-//    // Update our drawable size using our view size (in pixels)
-//    [self setDrawableSize:{(CGFloat)w, (CGFloat)h}];
-//    
-//    id<CAMetalDrawable> drawable = [self nextDrawable];
-//    Assert(drawable, return);
-//    
-//    _ipm->renderer.copy(_ipm->result.txt, [drawable texture]);
-//    _ipm->renderer.commitAndWait();
-//    [drawable present];
+    
+    // Update our drawable size using our view size (in pixels)
+    [self setDrawableSize:{(CGFloat)w, (CGFloat)h}];
+    
+    id<CAMetalDrawable> drawable = [self nextDrawable];
+    Assert(drawable, return);
+    id<MTLTexture> drawableTxt = [drawable texture];
+    
+    _renderer.copy(_txt, drawableTxt);
+    _renderer.commitAndWait();
+    [drawable present];
     
 //    printf("Display took %f\n", start.durationMs()/1000.);
 }
