@@ -169,7 +169,7 @@ fragment float Transpose(
     return Sample::R(txt, pos.yx);
 }
 
-} // namespace EstimateIlluminantFFCC
+} // namespace EstimateIlluminant
 } // namespace Shader
 } // namespace ImagePipeline
 } // namespace MDCTools

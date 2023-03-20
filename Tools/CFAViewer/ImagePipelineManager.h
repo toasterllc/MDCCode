@@ -9,13 +9,15 @@
 @interface ImagePipelineManager : NSObject {
 @public
     MDCTools::Renderer renderer;
-    std::optional<RawImage> rawImage;
     
+    std::optional<RawImage> rawImage;
+    std::optional<MDCTools::ImagePipeline::ColorRaw> illum;
     MDCTools::ImagePipeline::Pipeline::DebayerOptions debayerOptions;
     MDCTools::ImagePipeline::Pipeline::ProcessOptions processOptions;
     
     struct {
-        MDCTools::ImagePipeline::Pipeline::DebayerResult debayer;
+        MDCTools::ImagePipeline::ColorRaw illum;
+        MDCTools::ImagePipeline::ColorMatrix colorMatrix;
         MDCTools::Renderer::Txt txt;
     } result;
     

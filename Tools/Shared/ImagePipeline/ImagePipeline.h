@@ -16,8 +16,6 @@ public:
     struct DebayerOptions {
         MDCTools::CFADesc cfaDesc;
         
-        std::optional<ColorRaw> illum;
-        
         struct {
             bool en = false;
             Defringe::Options opts;
@@ -25,6 +23,7 @@ public:
         
         struct {
             bool en = false;
+            ColorRaw illum;
         } reconstructHighlights;
         
         struct {
@@ -32,9 +31,9 @@ public:
         } debayerLMMSE;
     };
     
-    struct DebayerResult {
-        ColorRaw illum; // Illuminant that was used
-    };
+//    struct DebayerResult {
+//        ColorRaw illum; // Illuminant that was used
+//    };
     
     struct ProcessOptions {
         std::optional<ColorRaw> illum;
@@ -63,7 +62,8 @@ public:
 //    static ColorRaw IlluminantEstimate(const ColorRaw& illum);
 //    static ColorMatrix ColorMatrixForIlluminant(const ColorRaw& illum);
     
-    static DebayerResult Debayer(MDCTools::Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
+//    static Color<ColorSpace::Raw> EstimateIlluminant(MDCTools::Renderer& renderer, const MDCTools::CFADesc& cfaDesc, id<MTLTexture> srcRaw);
+    static void Debayer(MDCTools::Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
     static void Process(MDCTools::Renderer& renderer, const ProcessOptions& opts, id<MTLTexture> srcRgb, id<MTLTexture> dstRgb);
 };
 

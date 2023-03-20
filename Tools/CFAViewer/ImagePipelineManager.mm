@@ -1,4 +1,5 @@
 #import "ImagePipelineManager.h"
+#import "EstimateIlluminant.h"
 using namespace MDCTools;
 using namespace MDCTools::ImagePipeline;
 
@@ -27,6 +28,13 @@ using namespace MDCTools::ImagePipeline;
     
     if (!result.txt) {
         result.txt = renderer.textureCreate(_rawTxt, MTLPixelFormatRGBA32Float);
+    }
+    
+    ColorRaw i;
+    if (illum) {
+        i = *illum;
+    } else {
+        EstimateIlluminant::Run(renderer, <#const MDCTools::CFADesc &cfaDesc#>, <#id<MTLTexture> raw#>)
     }
     
     // Debayer

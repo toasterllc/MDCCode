@@ -12,7 +12,6 @@
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
 		559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E122598300700836B47 /* ApplicationServices.framework */; };
 		55AC9E0328ACBF7E00D0851E /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55AC9E0228ACBF7E00D0851E /* Renderer.metal */; };
-		55AE80CD262F5B3100BA227C /* ImagePipelineManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80CC262F5B3100BA227C /* ImagePipelineManager.mm */; };
 		55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55B9745D24C504E2000B2633 /* AppDelegate.mm */; };
 		55B9746024C504E2000B2633 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55B9745F24C504E2000B2633 /* Assets.xcassets */; };
 		55B9746324C504E2000B2633 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55B9746124C504E2000B2633 /* MainMenu.xib */; };
@@ -29,7 +28,7 @@
 		55E43FDA28C0104D00FCCEA0 /* DebayerLMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FC628C0104D00FCCEA0 /* DebayerLMMSE.metal */; };
 		55E43FDB28C0104D00FCCEA0 /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FC928C0104D00FCCEA0 /* ReconstructHighlights.metal */; };
 		55E43FDC28C0104D00FCCEA0 /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FCA28C0104D00FCCEA0 /* ImagePipeline.metal */; };
-		55E43FDD28C0104D00FCCEA0 /* EstimateIlluminantFFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FCB28C0104D00FCCEA0 /* EstimateIlluminantFFCC.mm */; };
+		55E43FDD28C0104D00FCCEA0 /* EstimateIlluminant.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FCB28C0104D00FCCEA0 /* EstimateIlluminant.mm */; };
 		55E43FDF28C0104D00FCCEA0 /* DebayerBilinear.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FD028C0104D00FCCEA0 /* DebayerBilinear.metal */; };
 		55E43FE028C0104D00FCCEA0 /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FD128C0104D00FCCEA0 /* RenderThumb.metal */; };
 		55E43FE128C0104D00FCCEA0 /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FD328C0104D00FCCEA0 /* FFCC.mm */; };
@@ -90,7 +89,7 @@
 		55E43FBC28C0104D00FCCEA0 /* ImagePipeline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImagePipeline.h; sourceTree = "<group>"; };
 		55E43FBD28C0104D00FCCEA0 /* Defringe.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Defringe.mm; sourceTree = "<group>"; };
 		55E43FBE28C0104D00FCCEA0 /* LocalContrast.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
-		55E43FBF28C0104D00FCCEA0 /* EstimateIlluminantFFCC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminantFFCC.h; sourceTree = "<group>"; };
+		55E43FBF28C0104D00FCCEA0 /* EstimateIlluminant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminant.h; sourceTree = "<group>"; };
 		55E43FC028C0104D00FCCEA0 /* LocalContrast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
 		55E43FC128C0104D00FCCEA0 /* Saturation.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
 		55E43FC228C0104D00FCCEA0 /* FFCC.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FFCC.metal; sourceTree = "<group>"; };
@@ -102,7 +101,7 @@
 		55E43FC828C0104D00FCCEA0 /* DebayerLMMSE.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DebayerLMMSE.h; sourceTree = "<group>"; };
 		55E43FC928C0104D00FCCEA0 /* ReconstructHighlights.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
 		55E43FCA28C0104D00FCCEA0 /* ImagePipeline.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImagePipeline.metal; sourceTree = "<group>"; };
-		55E43FCB28C0104D00FCCEA0 /* EstimateIlluminantFFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminantFFCC.mm; sourceTree = "<group>"; };
+		55E43FCB28C0104D00FCCEA0 /* EstimateIlluminant.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminant.mm; sourceTree = "<group>"; };
 		55E43FCD28C0104D00FCCEA0 /* RenderThumb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenderThumb.h; sourceTree = "<group>"; };
 		55E43FCE28C0104D00FCCEA0 /* Defringe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
 		55E43FCF28C0104D00FCCEA0 /* ReconstructHighlights.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReconstructHighlights.h; sourceTree = "<group>"; };
@@ -289,8 +288,8 @@
 				55E43FC428C0104D00FCCEA0 /* Defringe.metal */,
 				55E43FBD28C0104D00FCCEA0 /* Defringe.mm */,
 				55E4401828C0574F00FCCEA0 /* DownsampleDiscardRaw.metal */,
-				55E43FBF28C0104D00FCCEA0 /* EstimateIlluminantFFCC.h */,
-				55E43FCB28C0104D00FCCEA0 /* EstimateIlluminantFFCC.mm */,
+				55E43FBF28C0104D00FCCEA0 /* EstimateIlluminant.h */,
+				55E43FCB28C0104D00FCCEA0 /* EstimateIlluminant.mm */,
 				55E43FC328C0104D00FCCEA0 /* FFCC.h */,
 				55E43FC228C0104D00FCCEA0 /* FFCC.metal */,
 				55E43FD328C0104D00FCCEA0 /* FFCC.mm */,
@@ -392,11 +391,10 @@
 				55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */,
 				55E43FDB28C0104D00FCCEA0 /* ReconstructHighlights.metal in Sources */,
 				55E43FDA28C0104D00FCCEA0 /* DebayerLMMSE.metal in Sources */,
-				55AE80CD262F5B3100BA227C /* ImagePipelineManager.mm in Sources */,
 				55E43FD828C0104D00FCCEA0 /* Defringe.metal in Sources */,
 				55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */,
 				55AC9E0328ACBF7E00D0851E /* Renderer.metal in Sources */,
-				55E43FDD28C0104D00FCCEA0 /* EstimateIlluminantFFCC.mm in Sources */,
+				55E43FDD28C0104D00FCCEA0 /* EstimateIlluminant.mm in Sources */,
 				55E43FDC28C0104D00FCCEA0 /* ImagePipeline.metal in Sources */,
 				55E43FD428C0104D00FCCEA0 /* Defringe.mm in Sources */,
 				55E43FE028C0104D00FCCEA0 /* RenderThumb.metal in Sources */,

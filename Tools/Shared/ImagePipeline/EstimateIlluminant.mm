@@ -1,7 +1,7 @@
-#import "EstimateIlluminantFFCC.h"
+#import "EstimateIlluminant.h"
 using namespace MDCTools::ImagePipeline;
 
-const FFCC::Model EstimateIlluminantFFCC::_Model = {
+const FFCC::Model EstimateIlluminant::_Model = {
     .params = {
         .histogram = {
             .binCount       = 64,           // params.HISTOGRAM.NUM_BINS
@@ -18,7 +18,7 @@ const FFCC::Model EstimateIlluminantFFCC::_Model = {
     .B = (double*)_BVals,
 };
 
-const uint64_t EstimateIlluminantFFCC::_F_fft0Vals[] = {
+const uint64_t EstimateIlluminant::_F_fft0Vals[] = {
     0x40d649a2ea7158a8, 0x0000000000000000, 0x41017160adb31555, 0xc0de1f84700f0866,
     0xc09d9b8a7d720cac, 0x40d42877b313a4bb, 0x40c893ac0a968209, 0x40cfc1c3089a4fae,
     0x40ceb0f8474bf469, 0x40c9d8b67cebf770, 0x40b5dfbb63d1bad4, 0x40c68821272f01e5,
@@ -2069,7 +2069,7 @@ const uint64_t EstimateIlluminantFFCC::_F_fft0Vals[] = {
     0x40d3a9775984f6d8, 0x40a710f7002291d9, 0x40eddc0891581807, 0xc0c33d9bab5fd01e,
 };
 
-const uint64_t EstimateIlluminantFFCC::_F_fft1Vals[] = {
+const uint64_t EstimateIlluminant::_F_fft1Vals[] = {
     0x3f1a812ef2ac13ef, 0x0000000000000000, 0xc0ae00ea7482f5b2, 0x40c8f3b1ee358adf,
     0xc0da20095695ad49, 0x40e2c0d21c2975d5, 0x40b168329d054a50, 0x40d6cccfd4f831d4,
     0x40c0ae52d9d17fb0, 0x40cc7e61af24bd34, 0x40c9b9f0ae5a4b9f, 0x40b9d0a4d73b23e7,
@@ -4120,7 +4120,7 @@ const uint64_t EstimateIlluminantFFCC::_F_fft1Vals[] = {
     0x40ce6e83d8fc3fcd, 0x40a8626babe14b22, 0x40e85f0cb6b08f1b, 0x4069af8e3f96f5a6,
 };
 
-const uint64_t EstimateIlluminantFFCC::_BVals[] = {
+const uint64_t EstimateIlluminant::_BVals[] = {
     0x3ff4ba1d7cb5f28a, 0x3ff4f53ed39ff0dc, 0x3ff53369f27b6a2b, 0x3ff573edc5401f34,
     0x3ff5b5d5deb4e378, 0x3ff5f7d94c5f01c2, 0x3ff63846576b9884, 0x3ff674e9e56af31b,
     0x3ff6aaeee80c3944, 0x3ff6d6adcaba2b30, 0x3ff6f360eb0f1979, 0x3ff6fadb5dc19068,

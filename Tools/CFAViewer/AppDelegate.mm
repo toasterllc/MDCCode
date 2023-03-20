@@ -26,7 +26,6 @@
 #import "Assert.h"
 #import "ImagePipelineTypes.h"
 #import "Color.h"
-#import "ImagePipelineManager.h"
 #import "PixelSampler.h"
 #import "Img.h"
 #import "ImgAutoExposure.h"
@@ -149,8 +148,6 @@ struct ExposureSettings {
     std::optional<IOServiceWatcher> _serviceDisappearWatcher;
     std::unique_ptr<MDCUSBDevice> _mdcDevice;
     
-    ImagePipelineManager* _imagePipelineManager;
-    
     struct {
         std::mutex lock; // Protects this struct
         std::condition_variable signal;
@@ -189,11 +186,11 @@ struct ExposureSettings {
     _colorCheckerCircleRadius = 5;
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
-    _imagePipelineManager = [ImagePipelineManager new];
-    _imagePipelineManager->renderCallback = [=]() {
-        [weakSelf _renderCallback];
-    };
-    [[_mainView imageLayer] setImagePipelineManager:_imagePipelineManager];
+//    _imagePipelineManager = [ImagePipelineManager new];
+//    _imagePipelineManager->renderCallback = [=]() {
+//        [weakSelf _renderCallback];
+//    };
+//    [[_mainView imageLayer] setImagePipelineManager:_imagePipelineManager];
     
     // /Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker"}];
@@ -210,38 +207,38 @@ struct ExposureSettings {
         MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
     };
     
-    _imagePipelineManager->debayerOptions = {
-        .cfaDesc = CFADesc,
-        .illum = std::nullopt,
-        
-        .defringe = {
-            .en = false,
-        },
-        
-        .reconstructHighlights = {
-            .en = true,
-        },
-        
-        .debayerLMMSE = {
-            .applyGamma = true,
-        },
-    };
-    
-    _imagePipelineManager->processOptions = {
-        .illum = std::nullopt,
-        .colorMatrix = std::nullopt,
-        
-        .exposure = 0,
-        .saturation = 0,
-        .brightness = 0,
-        .contrast = 0,
-        
-        .localContrast = {
-            .en = true,
-            .amount = .5,
-            .radius = 50,
-        },
-    };
+//    _imagePipelineManager->debayerOptions = {
+//        .cfaDesc = CFADesc,
+//        .illum = {1,1,1},
+//        
+//        .defringe = {
+//            .en = false,
+//        },
+//        
+//        .reconstructHighlights = {
+//            .en = true,
+//        },
+//        
+//        .debayerLMMSE = {
+//            .applyGamma = true,
+//        },
+//    };
+//    
+//    _imagePipelineManager->processOptions = {
+//        .illum = std::nullopt,
+//        .colorMatrix = std::nullopt,
+//        
+//        .exposure = 0,
+//        .saturation = 0,
+//        .brightness = 0,
+//        .contrast = 0,
+//        
+//        .localContrast = {
+//            .en = true,
+//            .amount = .5,
+//            .radius = 50,
+//        },
+//    };
     
     
     [self _updateInspectorUI];
@@ -394,14 +391,13 @@ static bool isCFAFile(const fs::path& path) {
         abort();
     }
     
-    _imagePipelineManager->rawImage = _rawImage.img;
+//    _imagePipelineManager->rawImage = _rawImage.img;
+    // Reset the illuminant so auto-white-balance is enabled again
+//    _imagePipelineManager->illum = std::nullopt;
     
     [[_mainView imageLayer] setNeedsDisplay];
-    
-    // Reset the illuminant so auto-white-balance is enabled again
-    _imagePipelineManager->options.illum = std::nullopt;
     // Reset the sample rect
-    _imagePipelineManager->options.sampleRect = {};
+//    _imagePipelineManager->options.sampleRect = {};
 //    // Reset the image scale / position
 //    [_mainView reset];
 }
@@ -599,7 +595,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
         _rawImage.img.height = _streamImagesThread.height;
         const size_t pixelCount = _streamImagesThread.width*_streamImagesThread.height;
         std::copy(_streamImagesThread.pixels, _streamImagesThread.pixels+pixelCount, _rawImage.pixels);
-        _imagePipelineManager->rawImage = _rawImage.img;
+//        _imagePipelineManager->rawImage = _rawImage.img;
     lock.unlock();
     
     [[_mainView imageLayer] setNeedsDisplay];
@@ -826,22 +822,21 @@ Mat<double,H,W> _matFromString(const std::string& str) {
 }
 
 - (void)controlTextDidEndEditing:(NSNotification*)note {
-    NSLog(@"controlTextDidEndEditing:");
-    auto& opts = _imagePipelineManager->options;
-    NSTextField* textField = Toastbox::CastOrNull<NSTextField*>([note object]);
-    if (!textField) return;
-    if (textField == _illumTextField) {
-        if (!opts.illum) return;
-        opts.illum = _matFromString<3,1>([[_illumTextField stringValue] UTF8String]);
-        [self _updateInspectorUI];
-        [[_mainView imageLayer] setNeedsDisplay];
-    
-    } else if (textField == _colorMatrixTextField) {
-        if (!opts.colorMatrix) return;
-        opts.colorMatrix = _matFromString<3,3>([[_colorMatrixTextField stringValue] UTF8String]);
-        [self _updateInspectorUI];
-        [[_mainView imageLayer] setNeedsDisplay];
-    }
+//    NSLog(@"controlTextDidEndEditing:");
+//    NSTextField* textField = Toastbox::CastOrNull<NSTextField*>([note object]);
+//    if (!textField) return;
+//    if (textField == _illumTextField) {
+//        if (!_imagePipelineManager.illum) return;
+//        _imagePipelineManager.illum = _matFromString<3,1>([[_illumTextField stringValue] UTF8String]);
+//        [self _updateInspectorUI];
+//        [[_mainView imageLayer] setNeedsDisplay];
+//    
+//    } else if (textField == _colorMatrixTextField) {
+//        if (!opts.colorMatrix) return;
+//        _imagePipelineManager.colorMatrix = _matFromString<3,3>([[_colorMatrixTextField stringValue] UTF8String]);
+//        [self _updateInspectorUI];
+//        [[_mainView imageLayer] setNeedsDisplay];
+//    }
 }
 
 // MARK: - Histograms
@@ -947,13 +942,13 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
         f.write((char*)_rawImage.pixels, pixelCount*sizeof(*_rawImage.pixels));
     
     } else if (ext == "png") {
-        id img = _imagePipelineManager->renderer.imageCreate(_imagePipelineManager->result.txt);
-        Assert(img, return);
-        
-        id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
-            (CFURLRef)[NSURL fileURLWithPath:path], kUTTypePNG, 1, nullptr));
-        CGImageDestinationAddImage((CGImageDestinationRef)imgDest, (CGImageRef)img, nullptr);
-        CGImageDestinationFinalize((CGImageDestinationRef)imgDest);
+//        id img = _imagePipelineManager->renderer.imageCreate(_imagePipelineManager->result.txt);
+//        Assert(img, return);
+//        
+//        id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
+//            (CFURLRef)[NSURL fileURLWithPath:path], kUTTypePNG, 1, nullptr));
+//        CGImageDestinationAddImage((CGImageDestinationRef)imgDest, (CGImageRef)img, nullptr);
+//        CGImageDestinationFinalize((CGImageDestinationRef)imgDest);
     }
 }
 
@@ -1071,66 +1066,66 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 //}
 
 - (IBAction)_illumCheckboxAction:(id)sender {
-    auto& opts = _imagePipelineManager->options;
-    const bool en = ([_illumCheckbox state] == NSControlStateValueOn);
-    if (en) opts.illum = _imagePipelineManager->result.illum;
-    else    opts.illum = std::nullopt;
-    [self _updateInspectorUI];
-    [[_mainView imageLayer] setNeedsDisplay];
+//    auto& opts = _imagePipelineManager->options;
+//    const bool en = ([_illumCheckbox state] == NSControlStateValueOn);
+//    if (en) opts.illum = _imagePipelineManager->result.illum;
+//    else    opts.illum = std::nullopt;
+//    [self _updateInspectorUI];
+//    [[_mainView imageLayer] setNeedsDisplay];
 }
 
 - (IBAction)_illumIdentityAction:(id)sender {
-    auto& opts = _imagePipelineManager->options;
-    [_inspectorWindow makeFirstResponder:nil];
-    opts.illum = { 1.,1.,1. };
-    [self _updateInspectorUI];
-    [_inspectorWindow makeFirstResponder:_illumTextField];
-    [[_mainView imageLayer] setNeedsDisplay];
+//    auto& opts = _imagePipelineManager->options;
+//    [_inspectorWindow makeFirstResponder:nil];
+//    opts.illum = { 1.,1.,1. };
+//    [self _updateInspectorUI];
+//    [_inspectorWindow makeFirstResponder:_illumTextField];
+//    [[_mainView imageLayer] setNeedsDisplay];
 }
 
 - (IBAction)_colorMatrixCheckboxAction:(id)sender {
-    auto& opts = _imagePipelineManager->options;
-    const bool en = ([_colorMatrixCheckbox state] == NSControlStateValueOn);
-    if (en) opts.colorMatrix = _imagePipelineManager->result.colorMatrix;
-    else    opts.colorMatrix = std::nullopt;
-    [self _updateInspectorUI];
-    [[_mainView imageLayer] setNeedsDisplay];
+//    auto& opts = _imagePipelineManager->options;
+//    const bool en = ([_colorMatrixCheckbox state] == NSControlStateValueOn);
+//    if (en) opts.colorMatrix = _imagePipelineManager->result.colorMatrix;
+//    else    opts.colorMatrix = std::nullopt;
+//    [self _updateInspectorUI];
+//    [[_mainView imageLayer] setNeedsDisplay];
 }
 
 - (IBAction)_colorMatrixIdentityAction:(id)sender {
-    auto& opts = _imagePipelineManager->options;
-    [_inspectorWindow makeFirstResponder:nil];
-    [self _setColorCheckersEnabled:false];
-    opts.colorMatrix = {
-        1.,0.,0.,
-        0.,1.,0.,
-        0.,0.,1.
-    };
-    [self _updateInspectorUI];
-    [_inspectorWindow makeFirstResponder:_colorMatrixTextField];
-    [[_mainView imageLayer] setNeedsDisplay];
+//    auto& opts = _imagePipelineManager->options;
+//    [_inspectorWindow makeFirstResponder:nil];
+//    [self _setColorCheckersEnabled:false];
+//    opts.colorMatrix = {
+//        1.,0.,0.,
+//        0.,1.,0.,
+//        0.,0.,1.
+//    };
+//    [self _updateInspectorUI];
+//    [_inspectorWindow makeFirstResponder:_colorMatrixTextField];
+//    [[_mainView imageLayer] setNeedsDisplay];
 }
 
 - (IBAction)_colorMatrixClearAction:(id)sender {
-    auto& opts = _imagePipelineManager->options;
-    [self _setColorCheckersEnabled:false];
-    opts.colorMatrix = std::nullopt;
-    [self _updateInspectorUI];
-    [[_mainView imageLayer] setNeedsDisplay];
+//    auto& opts = _imagePipelineManager->options;
+//    [self _setColorCheckersEnabled:false];
+//    opts.colorMatrix = std::nullopt;
+//    [self _updateInspectorUI];
+//    [[_mainView imageLayer] setNeedsDisplay];
 }
 
 - (void)_setColorCheckersEnabled:(bool)en {
-    auto& opts = _imagePipelineManager->options;
-    if (_colorCheckersEnabled == en) return;
-    
-    _colorCheckersEnabled = en;
-    [_colorCheckersCheckbox setState:
-        (_colorCheckersEnabled ? NSControlStateValueOn : NSControlStateValueOff)];
-    [_colorMatrixTextField setEditable:!_colorCheckersEnabled];
-    [_mainView setColorCheckersVisible:_colorCheckersEnabled];
-    [_resetColorCheckersButton setHidden:!_colorCheckersEnabled];
-    opts.illum = std::nullopt;
-    opts.colorMatrix = std::nullopt;
+//    auto& opts = _imagePipelineManager->options;
+//    if (_colorCheckersEnabled == en) return;
+//    
+//    _colorCheckersEnabled = en;
+//    [_colorCheckersCheckbox setState:
+//        (_colorCheckersEnabled ? NSControlStateValueOn : NSControlStateValueOff)];
+//    [_colorMatrixTextField setEditable:!_colorCheckersEnabled];
+//    [_mainView setColorCheckersVisible:_colorCheckersEnabled];
+//    [_resetColorCheckersButton setHidden:!_colorCheckersEnabled];
+//    opts.illum = std::nullopt;
+//    opts.colorMatrix = std::nullopt;
 }
 
 - (IBAction)_resetColorCheckersButtonAction:(id)sender {
@@ -1148,124 +1143,122 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 }
 
 - (IBAction)_imageOptionsAction:(id)sender {
-    auto& opts = _imagePipelineManager->options;
-    opts.defringe.en = ([_defringeCheckbox state]==NSControlStateValueOn);
-    opts.defringe.opts.rounds = (uint32_t)[_defringeRoundsSlider intValue];
-    opts.defringe.opts.αthresh = [_defringeαThresholdSlider floatValue];
-    opts.defringe.opts.γthresh = [_defringeγThresholdSlider floatValue];
-    opts.defringe.opts.γfactor = [_defringeγFactorSlider floatValue];
-    opts.defringe.opts.δfactor = [_defringeδFactorSlider floatValue];
-    
-    opts.reconstructHighlights.en = ([_reconstructHighlightsCheckbox state]==NSControlStateValueOn);
-    
-    opts.debayerLMMSE.applyGamma = ([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn);
-    
-    opts.exposure = [_exposureSlider floatValue];
-    opts.brightness = [_brightnessSlider floatValue];
-    opts.contrast = [_contrastSlider floatValue];
-    opts.saturation = [_saturationSlider floatValue];
-    
-    opts.localContrast.en = ([_localContrastCheckbox state]==NSControlStateValueOn);
-    opts.localContrast.amount = [_localContrastAmountSlider floatValue];
-    opts.localContrast.radius = [_localContrastRadiusSlider floatValue];
-    
-    [[_mainView imageLayer] setNeedsDisplay];
-    [self _updateInspectorUI];
+//    auto& opts = _imagePipelineManager->options;
+//    opts.defringe.en = ([_defringeCheckbox state]==NSControlStateValueOn);
+//    opts.defringe.opts.rounds = (uint32_t)[_defringeRoundsSlider intValue];
+//    opts.defringe.opts.αthresh = [_defringeαThresholdSlider floatValue];
+//    opts.defringe.opts.γthresh = [_defringeγThresholdSlider floatValue];
+//    opts.defringe.opts.γfactor = [_defringeγFactorSlider floatValue];
+//    opts.defringe.opts.δfactor = [_defringeδFactorSlider floatValue];
+//    
+//    opts.reconstructHighlights.en = ([_reconstructHighlightsCheckbox state]==NSControlStateValueOn);
+//    
+//    opts.debayerLMMSE.applyGamma = ([_debayerLMMSEGammaCheckbox state]==NSControlStateValueOn);
+//    
+//    opts.exposure = [_exposureSlider floatValue];
+//    opts.brightness = [_brightnessSlider floatValue];
+//    opts.contrast = [_contrastSlider floatValue];
+//    opts.saturation = [_saturationSlider floatValue];
+//    
+//    opts.localContrast.en = ([_localContrastCheckbox state]==NSControlStateValueOn);
+//    opts.localContrast.amount = [_localContrastAmountSlider floatValue];
+//    opts.localContrast.radius = [_localContrastRadiusSlider floatValue];
+//    
+//    [[_mainView imageLayer] setNeedsDisplay];
+//    [self _updateInspectorUI];
 }
 
 - (void)_updateInspectorUI {
-    const auto& opts = _imagePipelineManager->options;
-    
-    // Defringe
-    {
-        [_defringeCheckbox setState:(opts.defringe.en ? NSControlStateValueOn : NSControlStateValueOff)];
-        
-        [_defringeRoundsSlider setIntValue:opts.defringe.opts.rounds];
-        [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)opts.defringe.opts.rounds]];
-        
-        [_defringeαThresholdSlider setFloatValue:opts.defringe.opts.αthresh];
-        [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.defringe.opts.αthresh]];
-        
-        [_defringeγThresholdSlider setFloatValue:opts.defringe.opts.γthresh];
-        [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.defringe.opts.γthresh]];
-        
-        [_defringeγFactorSlider setFloatValue:opts.defringe.opts.γfactor];
-        [_defringeγFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
-            opts.defringe.opts.γfactor]];
-        
-        [_defringeδFactorSlider setFloatValue:opts.defringe.opts.δfactor];
-        [_defringeδFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
-            opts.defringe.opts.δfactor]];
-    }
-    
-    // Reconstruct Highlights
-    {
-        [_reconstructHighlightsCheckbox setState:(opts.reconstructHighlights.en ?
-            NSControlStateValueOn : NSControlStateValueOff)];
-    }
-    
-    // LMMSE
-    {
-        [_debayerLMMSEGammaCheckbox setState:(opts.debayerLMMSE.applyGamma ?
-            NSControlStateValueOn : NSControlStateValueOff)];
-    }
-    
-    // Illuminant
-    {
-        if (_colorCheckersEnabled) {
-            [_illumCheckbox setState:NSControlStateValueOff];
-            [_illumCheckbox setEnabled:false];
-            [_illumTextField setEditable:false];
-        
-        } else {
-            [_illumCheckbox setState:((bool)opts.illum ? NSControlStateValueOn : NSControlStateValueOff)];
-            [_illumCheckbox setEnabled:true];
-            [_illumTextField setEditable:(bool)opts.illum];
-            [self _setIllumText:opts.illum.value_or(Color<ColorSpace::Raw>{})];
-        }
-    }
-    
-    // Color matrix
-    {
-        if (_colorCheckersEnabled) {
-            [_colorMatrixCheckbox setState:NSControlStateValueOff];
-            [_colorMatrixCheckbox setEnabled:false];
-            [_colorMatrixTextField setEditable:false];
-        
-        } else {
-            [_colorMatrixCheckbox setState:((bool)opts.colorMatrix ? NSControlStateValueOn : NSControlStateValueOff)];
-            [_colorMatrixCheckbox setEnabled:true];
-            [_colorMatrixTextField setEditable:(bool)opts.colorMatrix];
-            [self _setColorMatrixText:opts.colorMatrix.value_or(Mat<double,3,3>{})];
-        }
-    }
-    
-    {
-        [_exposureSlider setFloatValue:opts.exposure];
-        [_exposureLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.exposure]];
-        
-        [_brightnessSlider setFloatValue:opts.brightness];
-        [_brightnessLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.brightness]];
-        
-        [_contrastSlider setFloatValue:opts.contrast];
-        [_contrastLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.contrast]];
-        
-        [_saturationSlider setFloatValue:opts.saturation];
-        [_saturationLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.saturation]];
-    }
-    
-    // Local contrast
-    {
-        [_localContrastCheckbox setState:(opts.localContrast.en ? NSControlStateValueOn : NSControlStateValueOff)];
-        
-        [_localContrastAmountSlider setFloatValue:opts.localContrast.amount];
-        [_localContrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.localContrast.amount]];
-        
-        [_localContrastRadiusSlider setFloatValue:opts.localContrast.radius];
-        [_localContrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.localContrast.radius]];
-    }
-    
-//    [[_mainView imageLayer] setOptions:opts];
+//    const auto& opts = _imagePipelineManager->options;
+//    
+//    // Defringe
+//    {
+//        [_defringeCheckbox setState:(opts.defringe.en ? NSControlStateValueOn : NSControlStateValueOff)];
+//        
+//        [_defringeRoundsSlider setIntValue:opts.defringe.opts.rounds];
+//        [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)opts.defringe.opts.rounds]];
+//        
+//        [_defringeαThresholdSlider setFloatValue:opts.defringe.opts.αthresh];
+//        [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.defringe.opts.αthresh]];
+//        
+//        [_defringeγThresholdSlider setFloatValue:opts.defringe.opts.γthresh];
+//        [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.defringe.opts.γthresh]];
+//        
+//        [_defringeγFactorSlider setFloatValue:opts.defringe.opts.γfactor];
+//        [_defringeγFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
+//            opts.defringe.opts.γfactor]];
+//        
+//        [_defringeδFactorSlider setFloatValue:opts.defringe.opts.δfactor];
+//        [_defringeδFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
+//            opts.defringe.opts.δfactor]];
+//    }
+//    
+//    // Reconstruct Highlights
+//    {
+//        [_reconstructHighlightsCheckbox setState:(opts.reconstructHighlights.en ?
+//            NSControlStateValueOn : NSControlStateValueOff)];
+//    }
+//    
+//    // LMMSE
+//    {
+//        [_debayerLMMSEGammaCheckbox setState:(opts.debayerLMMSE.applyGamma ?
+//            NSControlStateValueOn : NSControlStateValueOff)];
+//    }
+//    
+//    // Illuminant
+//    {
+//        if (_colorCheckersEnabled) {
+//            [_illumCheckbox setState:NSControlStateValueOff];
+//            [_illumCheckbox setEnabled:false];
+//            [_illumTextField setEditable:false];
+//        
+//        } else {
+//            [_illumCheckbox setState:((bool)opts.illum ? NSControlStateValueOn : NSControlStateValueOff)];
+//            [_illumCheckbox setEnabled:true];
+//            [_illumTextField setEditable:(bool)opts.illum];
+//            [self _setIllumText:opts.illum.value_or(Color<ColorSpace::Raw>{})];
+//        }
+//    }
+//    
+//    // Color matrix
+//    {
+//        if (_colorCheckersEnabled) {
+//            [_colorMatrixCheckbox setState:NSControlStateValueOff];
+//            [_colorMatrixCheckbox setEnabled:false];
+//            [_colorMatrixTextField setEditable:false];
+//        
+//        } else {
+//            [_colorMatrixCheckbox setState:((bool)opts.colorMatrix ? NSControlStateValueOn : NSControlStateValueOff)];
+//            [_colorMatrixCheckbox setEnabled:true];
+//            [_colorMatrixTextField setEditable:(bool)opts.colorMatrix];
+//            [self _setColorMatrixText:opts.colorMatrix.value_or(Mat<double,3,3>{})];
+//        }
+//    }
+//    
+//    {
+//        [_exposureSlider setFloatValue:opts.exposure];
+//        [_exposureLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.exposure]];
+//        
+//        [_brightnessSlider setFloatValue:opts.brightness];
+//        [_brightnessLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.brightness]];
+//        
+//        [_contrastSlider setFloatValue:opts.contrast];
+//        [_contrastLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.contrast]];
+//        
+//        [_saturationSlider setFloatValue:opts.saturation];
+//        [_saturationLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.saturation]];
+//    }
+//    
+//    // Local contrast
+//    {
+//        [_localContrastCheckbox setState:(opts.localContrast.en ? NSControlStateValueOn : NSControlStateValueOff)];
+//        
+//        [_localContrastAmountSlider setFloatValue:opts.localContrast.amount];
+//        [_localContrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.localContrast.amount]];
+//        
+//        [_localContrastRadiusSlider setFloatValue:opts.localContrast.radius];
+//        [_localContrastRadiusLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.localContrast.radius]];
+//    }
 }
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {
@@ -1315,13 +1308,13 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 }
 
 - (void)_renderCallback {
-    // Commit and wait so we can read the sample buffers
-    _imagePipelineManager->renderer.commitAndWait();
-    
-    // Update the estimated illuminant in the inspector UI
-    [self _setIllumText:_imagePipelineManager->result.illum];
-    [self _setColorMatrixText:_imagePipelineManager->result.colorMatrix];
-    [self _updateSampleColorsUI];
+//    // Commit and wait so we can read the sample buffers
+//    _imagePipelineManager->renderer.commitAndWait();
+//    
+//    // Update the estimated illuminant in the inspector UI
+//    [self _setIllumText:_imagePipelineManager->result.debayer.illum];
+//    [self _setColorMatrixText:_imagePipelineManager->result.colorMatrix];
+//    [self _updateSampleColorsUI];
 }
 
 // MARK: - MainViewDelegate
@@ -1342,8 +1335,8 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     if (sampleRect.left == sampleRect.right) sampleRect.right++;
     if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
     
-    _imagePipelineManager->options.sampleRect = sampleRect;
-    [_imagePipelineManager render];
+//    _imagePipelineManager->options.sampleRect = sampleRect;
+//    [_imagePipelineManager render];
 }
 
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
@@ -1352,8 +1345,6 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 
 - (void)_updateColorMatrix {
     assert(_colorCheckersEnabled);
-    
-    auto& opts = _imagePipelineManager->options;
     
     const std::vector<CGPoint> points = [_mainView colorCheckerPositions];
     assert(points.size() == ColorChecker::Count);
@@ -1436,8 +1427,10 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
         }
     }
     
-    opts.illum = illum;
-    opts.colorMatrix = colorMatrix;
+//    _imagePipelineManager->debayerOptions.illum = illum;
+//    _imagePipelineManager->processOptions.illum = illum;
+//    _imagePipelineManager->processOptions.colorMatrix = colorMatrix;
+    
     [self _updateInspectorUI];
     [[_mainView imageLayer] setNeedsDisplay];
     
