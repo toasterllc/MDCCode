@@ -16,6 +16,7 @@
 #import "Code/Shared/ImgSD.h"
 #import "Tools/Shared/MDCUSBDevice.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
+#import "Tools/Shared/ImagePipeline/EstimateIlluminant.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/BC7Encoder.h"
 #import "ImageLibrary.h"
@@ -369,38 +370,32 @@ private:
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
                 Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
             
-            Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
+            ccm.illum = (estimateIlluminant ? EstimateIlluminant::Run(renderer, _CFADesc, rawTxt) : ColorRaw(opts.whiteBalance.illum));
+            ccm.matrix = (estimateIlluminant ? ColorMatrixForIlluminant(ccm.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix));
             
-            const Pipeline::DebayerOptions debayerOpts = {
-                .cfaDesc        = _CFADesc,
-                .illum          = (estimateIlluminant ? std::nullopt : std::optional<ColorRaw>(opts.whiteBalance.illum)),
-                .debayerLMMSE   = { .applyGamma = true, },
-            };
-            
-            const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
-            
-            ccm = {
-                .illum = (estimateIlluminant ? debayerResult.illum : ColorRaw(opts.whiteBalance.illum)),
-                .matrix = (estimateIlluminant ? ColorMatrixForIlluminant(debayerResult.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix))
-            };
-            
-            const Pipeline::ProcessOptions processOpts = {
-                .illum          = ccm.illum,
-                .colorMatrix    = ccm.matrix,
+            const Pipeline::Options popts = {
+                .cfaDesc                = _CFADesc,
                 
-                .exposure   = (float)opts.exposure,
-                .saturation = (float)opts.saturation,
-                .brightness = (float)opts.brightness,
-                .contrast   = (float)opts.contrast,
+                .illum                  = ccm.illum,
+                .colorMatrix            = ccm.matrix,
+                
+                .defringe               = { .en = false, },
+                .reconstructHighlights  = { .en = false, },
+                .debayerLMMSE           = { .applyGamma = true, },
+                
+                .exposure               = (float)opts.exposure,
+                .saturation             = (float)opts.saturation,
+                .brightness             = (float)opts.brightness,
+                .contrast               = (float)opts.contrast,
                 
                 .localContrast = {
-                    .en     = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
-                    .amount = (float)opts.localContrast.amount,
-                    .radius = (float)opts.localContrast.radius,
+                    .en                 = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
+                    .amount             = (float)opts.localContrast.amount,
+                    .radius             = (float)opts.localContrast.radius,
                 },
             };
             
-            Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
+            Pipeline::Run(renderer, popts, rawTxt, thumbTxt);
             renderer.sync(thumbTxt);
             renderer.commitAndWait();
         }
@@ -665,7 +660,7 @@ private:
                             );
                         }
                         
-                        addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.add(addCount);
                     }

@@ -1,7 +1,11 @@
 #import "ImagePipelineManager.h"
+#import "EstimateIlluminant.h"
+using namespace MDCTools;
 using namespace MDCTools::ImagePipeline;
 
-@implementation ImagePipelineManager
+@implementation ImagePipelineManager {
+    Renderer::Txt _rawTxt;
+}
 
 - (instancetype)init {
     if (!(self = [super init])) return nil;
@@ -13,14 +17,37 @@ using namespace MDCTools::ImagePipeline;
     return self;
 }
 
-- (void)render {
+ - (void)render {
     assert(rawImage);
+    assert(rawImage->width);
+    assert(rawImage->height);
     
-    // Clear `result` so that the Renderer::Txt and Renderer::Buf objects that
-    // it contains are destroyed before we render again, so they can be reused
-    // for this render run.
-    result = {};
-    result = MDCTools::ImagePipeline::Pipeline::Run(renderer, *rawImage, options);
+    if (!_rawTxt || [_rawTxt width]!=rawImage->width || [_rawTxt height]!=rawImage->height) {
+        _rawTxt = Pipeline::TextureForRaw(renderer, rawImage->width, rawImage->height, rawImage->pixels);
+    }
+    
+    if (!result.txt) {
+        result.txt = renderer.textureCreate(_rawTxt, MTLPixelFormatRGBA32Float);
+    }
+    
+    ColorRaw i;
+    if (illum) {
+        i = *illum;
+    } else {
+        EstimateIlluminant::Run(renderer, <#const MDCTools::CFADesc &cfaDesc#>, <#id<MTLTexture> raw#>)
+    }
+    
+    // Debayer
+    auto dopts = debayerOptions;
+    result.debayer = Pipeline::Debayer(renderer, dopts, _rawTxt, result.txt);
+    
+    // Process
+    auto popts = processOptions;
+    if (!popts.illum) popts.illum = result.debayer.illum;
+    Pipeline::Process(renderer, popts, result.txt, result.txt);
+    
+    renderer.sync(result.txt);
+    renderer.commitAndWait();
     if (renderCallback) renderCallback();
 }
 
