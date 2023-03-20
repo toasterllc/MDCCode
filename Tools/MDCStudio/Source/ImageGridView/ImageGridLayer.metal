@@ -32,8 +32,11 @@ vertex VertexOutput VertexShader(
     uint vidx [[vertex_id]],
     uint iidx [[instance_id]]
 ) {
-    const uint idxGrid = ctx.idx + iidx; // Index in grid
-    const uint idxRec = (ctx.sortNewestFirst ? (ctx.grid.elementCount()-1)-idxGrid : idxGrid); // Index in `recs` 
+    // idxGrid: absolute index in grid
+    const uint idxGrid = ctx.idx + iidx;
+    // idxRec: absolute index in `recs` array
+    const uint idxRec = (ctx.reverse ? (ctx.grid.elementCount()-1)-idxGrid : idxGrid);
+    // idxChunk: relative index in chunk
     const uint idxChunk = recs[idxRec].idx; // Index in chunk
     const Grid::Rect rect = ctx.grid.rectForCellIndex(idxGrid);
     const int2 voff = int2(rect.size.x, rect.size.y) * int2(_Verts[vidx]);
@@ -42,9 +45,9 @@ vertex VertexOutput VertexShader(
     
     const bool selected = (
         !ctx.selection.count || (
-            idxGrid>=ctx.selection.base &&
-            idxGrid<ctx.selection.base+ctx.selection.count &&
-            selectedImages[idxGrid-ctx.selection.base]
+            idxRec>=ctx.selection.base &&
+            idxRec<ctx.selection.base+ctx.selection.count &&
+            selectedImages[idxRec-ctx.selection.base]
         )
     );
     

@@ -6,7 +6,8 @@
 #import "Util.h"
 #import "Grid.h"
 #import "Code/Shared/Img.h"
-#include "Toastbox/LRU.h"
+#import "Toastbox/LRU.h"
+#import "Toastbox/AnyIter.h"
 using namespace MDCStudio;
 
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
@@ -49,7 +50,7 @@ using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture>;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
     Grid _grid;
-    bool _sortNewestFirst;
+    bool _reverse;
     
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
@@ -93,7 +94,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _grid.setCellSpacing({6, 6});
 //    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
-    _sortNewestFirst = true;
+    _reverse = true;
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -247,14 +248,6 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     return ct;
 }
 
-static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordRefConstIter& x) {
-    return x;
-}
-
-static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordRefConstReverseIter& x) {
-    return (x+1).base();
-}
-
 //static void _Display(ImageGridLayer* self, id<MTLTexture> drawableTxt) {
 - (void)_display:(id<MTLTexture>)drawableTxt commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     const CGRect frame = [self frame];
@@ -269,13 +262,45 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
     [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
     [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
     
+    // Recreate _selection properties
+    if (!_selection.buf) {
+        const auto itBegin = (!_selection.images.empty() ?
+            ImageLibrary::Find(_imageLibrary->begin(), _imageLibrary->end(), *_selection.images.begin()) : _imageLibrary->end());
+        const auto itLast = (!_selection.images.empty() ?
+            ImageLibrary::Find(_imageLibrary->begin(), _imageLibrary->end(), *std::prev(_selection.images.end())) : _imageLibrary->end());
+        const auto itEnd = (itLast!=_imageLibrary->end() ? std::next(itLast) : _imageLibrary->end());
+        
+        if (itBegin!=_imageLibrary->end() && itLast!=_imageLibrary->end()) {
+            _selection.base = itBegin-_imageLibrary->begin();
+            _selection.count = itEnd-itBegin;
+            
+            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
+            _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
+            bool* bools = (bool*)[_selection.buf contents];
+            
+            size_t i = 0;
+            for (auto it=itBegin; it!=itEnd; it++) {
+                if (_selection.images.find(*it) != _selection.images.end()) {
+                    bools[i] = true;
+                }
+                i++;
+            }
+        
+        } else {
+            _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
+        }
+        
+        assert(_selection.buf);
+    }
+    
     const uintptr_t imageRefsBegin = (uintptr_t)&*_imageLibrary->begin();
     const uintptr_t imageRefsEnd = (uintptr_t)&*_imageLibrary->end();
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    const auto begin = _imageLibrary->rbegin();
-    const auto end = _imageLibrary->rend();
+    ImageRecordAnyIter begin = [self _begin];
+    ImageRecordAnyIter end = [self _end];
+    
     const auto visibleBegin = begin+indexRange.start;
     const auto visibleEnd = begin+indexRange.start+indexRange.count;
     
@@ -292,15 +317,10 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
         assert(_selection.base <= UINT32_MAX);
         assert(_selection.count <= UINT32_MAX);
         
-        // Make sure _selection.buf != nil
-        if (!_selection.buf) {
-            _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
-        }
-        
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
             .idx = (uint32_t)(chunkImageRefBegin-begin),
-            .sortNewestFirst = _sortNewestFirst,
+            .reverse = _reverse,
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
             .selection = {
@@ -313,7 +333,7 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
         [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
         [renderEncoder setVertexBuffer:_selection.buf offset:0 atIndex:2];
         
-        _ChunkTexture& ct = [self _getChunkTexture:_ForwardIter(it)];
+        _ChunkTexture& ct = [self _getChunkTexture:it.forward(_imageLibrary->rend())];
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
         [renderEncoder setFragmentBytes:&ct.loaded length:sizeof(ct.loaded) atIndex:1];
         [renderEncoder setFragmentTexture:ct.txt atIndex:0];
@@ -369,11 +389,12 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
     auto lock = std::unique_lock(*_imageLibrary);
     const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, [self contentsScale]));
     ImageSet images;
+    auto begin = [self _begin];
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
             if (idx >= _imageLibrary->recordCount()) goto done;
-            images.insert(*(_imageLibrary->begin()+idx));
+            images.insert(*(begin+idx));
         }
     }
 done:
@@ -389,40 +410,109 @@ done:
 }
 
 - (void)setSelection:(ImageSet)images {
-    auto lock = std::unique_lock(*_imageLibrary);
-    const auto itBegin = (!images.empty() ? _imageLibrary->find(*images.begin()) : _imageLibrary->end());
-    const auto itLast = (!images.empty() ? _imageLibrary->find(*std::prev(images.end())) : _imageLibrary->end());
-    const auto itEnd = (itLast!=_imageLibrary->end() ? std::next(itLast) : _imageLibrary->end());
-    
-    if (itBegin!=_imageLibrary->end() &&
-        itLast!=_imageLibrary->end()) {
-        
-        _selection.images = std::move(images);
-        _selection.base = itBegin-_imageLibrary->begin();
-        _selection.count = itEnd-itBegin;
-        
-        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
-        _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
-        bool* bools = (bool*)[_selection.buf contents];
-        
-        size_t i = 0;
-        for (auto it=itBegin; it!=itEnd; it++) {
-            if (_selection.images.find(*it) != _selection.images.end()) {
-                bools[i] = true;
-            }
-            i++;
-        }
-    
-    } else {
-        _selection = {};
-    }
-    
+    // Trigger buffer regeneration
+    _selection = {
+        .images = std::move(images),
+    };
     [self setNeedsDisplay];
 }
 
-- (void)setSortNewestFirst:(bool)x {
-    _sortNewestFirst = x;
+- (void)setReverse:(bool)x {
+    _reverse = x;
+    // Trigger selection update
+    [self setSelection:std::move(_selection.images)];
     [self setNeedsDisplay];
+}
+
+struct SelectionDelta {
+    int x = 0;
+    int y = 0;
+};
+
+- (CGRect)moveSelection:(SelectionDelta)delta extend:(bool)extend {
+    ssize_t newIdx = 0;
+    ImageRecordPtr newImg;
+    ImageSet selection = _selection.images;
+    {
+        auto lock = std::unique_lock(*_imageLibrary);
+        
+        const size_t imgCount = _imageLibrary->recordCount();
+        if (!imgCount) return;
+        
+        if (!selection.empty()) {
+            const auto it = ImageLibrary::Find(_imageLibrary->begin(), _imageLibrary->end(), *std::prev(selection.end()));
+            if (it == _imageLibrary->end()) {
+                NSLog(@"Image no longer in library");
+                return;
+            }
+            
+            const size_t idx = std::abs(&*it - &*[self _begin]);
+            const size_t colCount = _grid.columnCount();
+            const size_t rem = (imgCount % colCount);
+            const size_t lastRowCount = (rem ? rem : colCount);
+            const bool firstRow = (idx < colCount);
+            const bool lastRow = (idx >= (imgCount-lastRowCount));
+            const bool firstCol = !(idx % colCount);
+            const bool lastCol = ((idx % colCount) == (colCount-1));
+            const bool lastElm = (idx == (imgCount-1));
+            
+            newIdx = idx;
+            if (delta.x > 0) {
+                // Right
+                if (lastCol || lastElm) return;
+                newIdx += 1;
+            
+            } else if (delta.x < 0) {
+                // Left
+                if (firstCol) return;
+                newIdx -= 1;
+            
+            } else if (delta.y > 0) {
+                // Down
+                if (lastRow) return;
+                newIdx += colCount;
+            
+            } else if (delta.y < 0) {
+                // Up
+                if (firstRow) return;
+                newIdx -= colCount;
+            }
+            
+            newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
+        
+        } else {
+            if (delta.x>0 || delta.y>0) {
+                // Select first element
+                newIdx = 0;
+            } else if (delta.x<0 || delta.y<0) {
+                // Select last element
+                newIdx = imgCount-1;
+            } else {
+                return;
+            }
+        }
+        
+    //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
+        newImg = *([self _begin]+newIdx);
+    }
+    
+    [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
+    
+    if (!extend) selection.clear();
+    selection.insert(newImg);
+    [self setSelection:std::move(selection)];
+    
+    return 
+}
+
+- (ImageRecordAnyIter)_begin {
+    if (_reverse) return _imageLibrary->rbegin();
+    else          return _imageLibrary->begin();
+}
+
+- (ImageRecordAnyIter)_end {
+    if (_reverse) return _imageLibrary->rend();
+    else          return _imageLibrary->end();
 }
 
 // MARK: - FixedScrollViewDocument
@@ -572,8 +662,8 @@ done:
     return [_imageGridLayer selection];
 }
 
-- (void)setSortNewestFirst:(bool)x {
-    [_imageGridLayer setSortNewestFirst:x];
+- (void)setReverse:(bool)x {
+    [_imageGridLayer setReverse:x];
 }
 
 - (void)_setSelection:(ImageSet)selection {
@@ -636,84 +726,79 @@ done:
     }
 }
 
-struct SelectionDelta {
-    int x = 0;
-    int y = 0;
-};
-
 - (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
-    ssize_t newIdx = 0;
-    ImageRecordPtr newImg;
-    ImageSet selection = [_imageGridLayer selection];
-    {
-        ImageLibrary& imgLib = _imageSource->imageLibrary();
-        auto lock = std::unique_lock(imgLib);
-        
-        const size_t imgCount = imgLib.recordCount();
-        if (!imgCount) return;
-        
-        if (!selection.empty()) {
-            const auto it = imgLib.find(*std::prev(selection.end()));
-            if (it == imgLib.end()) {
-                NSLog(@"Image no longer in library");
-                return;
-            }
-            
-            const size_t idx = std::distance(imgLib.begin(), it);
-            const size_t colCount = [_imageGridLayer columnCount];
-            const size_t rem = (imgCount % colCount);
-            const size_t lastRowCount = (rem ? rem : colCount);
-            const bool firstRow = (idx < colCount);
-            const bool lastRow = (idx >= (imgCount-lastRowCount));
-            const bool firstCol = !(idx % colCount);
-            const bool lastCol = ((idx % colCount) == (colCount-1));
-            const bool lastElm = (idx == (imgCount-1));
-            
-            newIdx = idx;
-            if (delta.x > 0) {
-                // Right
-                if (lastCol || lastElm) return;
-                newIdx += 1;
-            
-            } else if (delta.x < 0) {
-                // Left
-                if (firstCol) return;
-                newIdx -= 1;
-            
-            } else if (delta.y > 0) {
-                // Down
-                if (lastRow) return;
-                newIdx += colCount;
-            
-            } else if (delta.y < 0) {
-                // Up
-                if (firstRow) return;
-                newIdx -= colCount;
-            }
-            
-            newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
-        
-        } else {
-            if (delta.x>0 || delta.y>0) {
-                // Select first element
-                newIdx = 0;
-            } else if (delta.x<0 || delta.y<0) {
-                // Select last element
-                newIdx = imgCount-1;
-            } else {
-                return;
-            }
-        }
-        
-    //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-        newImg = *(imgLib.begin()+newIdx);
-    }
-    
-    [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
-    
-    if (!extend) selection.clear();
-    selection.insert(newImg);
-    [self _setSelection:std::move(selection)];
+//    ssize_t newIdx = 0;
+//    ImageRecordPtr newImg;
+//    ImageSet selection = [_imageGridLayer selection];
+//    {
+//        ImageLibrary& imgLib = _imageSource->imageLibrary();
+//        auto lock = std::unique_lock(imgLib);
+//        
+//        const size_t imgCount = imgLib.recordCount();
+//        if (!imgCount) return;
+//        
+//        if (!selection.empty()) {
+//            const auto it = ImageLibrary::Find(imgLib.begin(), imgLib.end(), *std::prev(selection.end()));
+//            if (it == imgLib.end()) {
+//                NSLog(@"Image no longer in library");
+//                return;
+//            }
+//            
+//            const size_t idx = std::distance(imgLib.begin(), it);
+//            const size_t colCount = [_imageGridLayer columnCount];
+//            const size_t rem = (imgCount % colCount);
+//            const size_t lastRowCount = (rem ? rem : colCount);
+//            const bool firstRow = (idx < colCount);
+//            const bool lastRow = (idx >= (imgCount-lastRowCount));
+//            const bool firstCol = !(idx % colCount);
+//            const bool lastCol = ((idx % colCount) == (colCount-1));
+//            const bool lastElm = (idx == (imgCount-1));
+//            
+//            newIdx = idx;
+//            if (delta.x > 0) {
+//                // Right
+//                if (lastCol || lastElm) return;
+//                newIdx += 1;
+//            
+//            } else if (delta.x < 0) {
+//                // Left
+//                if (firstCol) return;
+//                newIdx -= 1;
+//            
+//            } else if (delta.y > 0) {
+//                // Down
+//                if (lastRow) return;
+//                newIdx += colCount;
+//            
+//            } else if (delta.y < 0) {
+//                // Up
+//                if (firstRow) return;
+//                newIdx -= colCount;
+//            }
+//            
+//            newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
+//        
+//        } else {
+//            if (delta.x>0 || delta.y>0) {
+//                // Select first element
+//                newIdx = 0;
+//            } else if (delta.x<0 || delta.y<0) {
+//                // Select last element
+//                newIdx = imgCount-1;
+//            } else {
+//                return;
+//            }
+//        }
+//        
+//    //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
+//        newImg = *(imgLib.begin()+newIdx);
+//    }
+//    
+//    [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
+//    
+//    if (!extend) selection.clear();
+//    selection.insert(newImg);
+//    [self _setSelection:std::move(selection)];
 }
 
 - (void)moveDown:(id)sender {

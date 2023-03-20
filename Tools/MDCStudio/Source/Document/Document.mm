@@ -397,7 +397,7 @@ using namespace MDCStudio;
             auto lock = std::unique_lock(imageLibrary);
             if (imageLibrary.empty()) return false;
             
-            const auto find = imageLibrary.find(rec);
+            const auto find = ImageLibrary::Find(imageLibrary.begin(), imageLibrary.end(), rec);
             if (find == imageLibrary.end()) return false;
             
             const ssize_t deltaMin = std::distance(find, imageLibrary.begin());
