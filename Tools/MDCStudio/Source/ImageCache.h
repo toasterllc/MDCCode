@@ -107,7 +107,7 @@ private:
                 // Collect the neighboring image ids in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
                 {
                     auto lock = std::unique_lock(_imageLibrary);
-                    auto find = ImageLibrary::Find(_imageLibrary.begin(), _imageLibrary.end(), work.rec);
+                    auto find = _imageLibrary.find(work.rec);
                     auto it = find;
                     auto rit = std::make_reverse_iterator(find); // Points to element before `find`
                     

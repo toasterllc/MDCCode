@@ -29,7 +29,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 - (void)recomputeGrid;
 
 - (ImageSet)imagesForRect:(CGRect)rect;
-- (CGRect)rectForImageAtIndex:(size_t)idx;
+//- (CGRect)rectForImageAtIndex:(size_t)idx;
 
 - (const ImageSet&)selection;
 - (void)setSelection:(ImageSet)selection;
@@ -94,7 +94,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _grid.setCellSpacing({6, 6});
 //    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
-    _reverse = true;
+    _reverse = false;
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -265,9 +265,9 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     // Recreate _selection properties
     if (!_selection.buf) {
         const auto itBegin = (!_selection.images.empty() ?
-            ImageLibrary::Find(_imageLibrary->begin(), _imageLibrary->end(), *_selection.images.begin()) : _imageLibrary->end());
+            _imageLibrary->find(*_selection.images.begin()) : _imageLibrary->end());
         const auto itLast = (!_selection.images.empty() ?
-            ImageLibrary::Find(_imageLibrary->begin(), _imageLibrary->end(), *std::prev(_selection.images.end())) : _imageLibrary->end());
+            _imageLibrary->find(*std::prev(_selection.images.end())) : _imageLibrary->end());
         const auto itEnd = (itLast!=_imageLibrary->end() ? std::next(itLast) : _imageLibrary->end());
         
         if (itBegin!=_imageLibrary->end() && itLast!=_imageLibrary->end()) {
@@ -401,9 +401,17 @@ done:
     return images;
 }
 
-- (CGRect)rectForImageAtIndex:(size_t)idx {
-    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
-}
+//- (CGRect)rectForImages:(ImageSet)images {
+//    CGRect rect = {};
+//    for (const ImageRecordPtr& rec : images) {
+//        
+//    }
+//    return rect;
+//}
+
+//- (CGRect)rectForImageAtIndex:(size_t)idx {
+//    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
+//}
 
 - (const ImageSet&)selection {
     return _selection.images;
@@ -429,7 +437,7 @@ struct SelectionDelta {
     int y = 0;
 };
 
-- (CGRect)moveSelection:(SelectionDelta)delta extend:(bool)extend {
+- (std::optional<CGRect>)moveSelection:(SelectionDelta)delta extend:(bool)extend {
     ssize_t newIdx = 0;
     ImageRecordPtr newImg;
     ImageSet selection = _selection.images;
@@ -437,13 +445,13 @@ struct SelectionDelta {
         auto lock = std::unique_lock(*_imageLibrary);
         
         const size_t imgCount = _imageLibrary->recordCount();
-        if (!imgCount) return;
+        if (!imgCount) return std::nullopt;
         
         if (!selection.empty()) {
-            const auto it = ImageLibrary::Find(_imageLibrary->begin(), _imageLibrary->end(), *std::prev(selection.end()));
+            const auto it = _imageLibrary->find(*std::prev(selection.end()));
             if (it == _imageLibrary->end()) {
                 NSLog(@"Image no longer in library");
-                return;
+                return std::nullopt;
             }
             
             const size_t idx = std::abs(&*it - &*[self _begin]);
@@ -459,22 +467,22 @@ struct SelectionDelta {
             newIdx = idx;
             if (delta.x > 0) {
                 // Right
-                if (lastCol || lastElm) return;
+                if (lastCol || lastElm) return std::nullopt;
                 newIdx += 1;
             
             } else if (delta.x < 0) {
                 // Left
-                if (firstCol) return;
+                if (firstCol) return std::nullopt;
                 newIdx -= 1;
             
             } else if (delta.y > 0) {
                 // Down
-                if (lastRow) return;
+                if (lastRow) return std::nullopt;
                 newIdx += colCount;
             
             } else if (delta.y < 0) {
                 // Up
-                if (firstRow) return;
+                if (firstRow) return std::nullopt;
                 newIdx -= colCount;
             }
             
@@ -488,7 +496,7 @@ struct SelectionDelta {
                 // Select last element
                 newIdx = imgCount-1;
             } else {
-                return;
+                return std::nullopt;
             }
         }
         
@@ -496,13 +504,10 @@ struct SelectionDelta {
         newImg = *([self _begin]+newIdx);
     }
     
-    [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
-    
     if (!extend) selection.clear();
     selection.insert(newImg);
     [self setSelection:std::move(selection)];
-    
-    return 
+    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)newIdx), [self contentsScale]);
 }
 
 - (ImageRecordAnyIter)_begin {
@@ -727,6 +732,12 @@ struct SelectionDelta {
 }
 
 - (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
+    std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
+    if (!rect) return;
+    
+    [self scrollRectToVisible:[self convertRect:*rect fromView:[self superview]]];
+    [_delegate imageGridViewSelectionChanged:self];
+    
 //    ssize_t newIdx = 0;
 //    ImageRecordPtr newImg;
 //    ImageSet selection = [_imageGridLayer selection];
