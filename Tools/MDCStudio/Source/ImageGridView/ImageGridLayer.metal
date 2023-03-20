@@ -27,28 +27,29 @@ static constexpr constant float2 _Verts[6] = {
 
 vertex VertexOutput VertexShader(
     constant RenderContext& ctx [[buffer(0)]],
-    constant ImageRecordRef* imageRecordRefs [[buffer(1)]],
+    constant ImageRecordRef* recs [[buffer(1)]],
     constant const bool* selectedImages [[buffer(2)]],
     uint vidx [[vertex_id]],
     uint iidx [[instance_id]]
 ) {
-    const uint idxAbs = ctx.idx + iidx; // Absolute index in grid
-    const uint idxRel = imageRecordRefs[idxAbs].idx; // Relative idx in chunk
-    const Grid::Rect rect = ctx.grid.rectForCellIndex(idxAbs);
+    const uint idxGrid = ctx.idx + iidx; // Index in grid
+    const uint idxRec = (ctx.sortNewestFirst ? (ctx.grid.elementCount()-1)-idxGrid : idxGrid); // Index in `recs` 
+    const uint idxChunk = recs[idxRec].idx; // Index in chunk
+    const Grid::Rect rect = ctx.grid.rectForCellIndex(idxGrid);
     const int2 voff = int2(rect.size.x, rect.size.y) * int2(_Verts[vidx]);
     const int2 vabs = int2(rect.point.x, rect.point.y) + voff;
     const float2 vnorm = float2(vabs) / ctx.viewSize;
     
     const bool selected = (
         !ctx.selection.count || (
-            idxAbs>=ctx.selection.base &&
-            idxAbs<ctx.selection.base+ctx.selection.count &&
-            selectedImages[idxAbs-ctx.selection.base]
+            idxGrid>=ctx.selection.base &&
+            idxGrid<ctx.selection.base+ctx.selection.count &&
+            selectedImages[idxGrid-ctx.selection.base]
         )
     );
     
     return VertexOutput{
-        .idx = idxRel,
+        .idx = idxChunk,
         .selected = selected,
         .posView = ctx.transform * float4(vnorm, 0, 1),
         .posNorm = _Verts[vidx],

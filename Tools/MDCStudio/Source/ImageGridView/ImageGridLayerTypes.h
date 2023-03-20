@@ -21,6 +21,7 @@ struct ImageRecordRef {
 struct RenderContext {
     Grid grid;
     uint32_t idx = 0;
+    bool sortNewestFirst = false;
     vector_float2 viewSize = {};
     matrix_float4x4 transform = {};
     struct {

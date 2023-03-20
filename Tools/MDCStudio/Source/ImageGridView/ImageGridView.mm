@@ -271,13 +271,16 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    const auto imageRefBegin = _imageLibrary->begin()+indexRange.start;
-    const auto imageRefEnd = _imageLibrary->begin()+indexRange.start+indexRange.count;
+    const bool sortNewestFirst = true;
+    const auto begin = _imageLibrary->rbegin();
+    const auto end = _imageLibrary->rend();
+    const auto visibleBegin = begin+indexRange.start;
+    const auto visibleEnd = begin+indexRange.start+indexRange.count;
     
-    for (auto it=imageRefBegin; it!=imageRefEnd;) {
-        const auto nextChunkStart = ImageLibrary::FindChunkEnd(_imageLibrary->end(), it);
+    for (auto it=visibleBegin; it!=visibleEnd;) {
+        const auto nextChunkStart = ImageLibrary::FindChunkEnd(end, it);
         const auto chunkImageRefBegin = it;
-        const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
+        const auto chunkImageRefEnd = std::min(visibleEnd, nextChunkStart);
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         [renderEncoder setRenderPipelineState:_pipelineState];
@@ -294,7 +297,8 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
         
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
-            .idx = (uint32_t)(chunkImageRefBegin-_imageLibrary->begin()), // Start index into `imageRefs`
+            .idx = (uint32_t)(chunkImageRefBegin-begin),
+            .sortNewestFirst = sortNewestFirst,
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
             .selection = {
@@ -321,7 +325,7 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
     }
     
     // Re-render the visible thumbnails that are marked dirty
-    _imageSource->visibleThumbs(imageRefBegin, imageRefEnd);
+    _imageSource->visibleThumbs(visibleBegin, visibleEnd);
 }
 
 - (void)display {
