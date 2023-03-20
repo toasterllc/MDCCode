@@ -46,9 +46,10 @@ using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture>;
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
     ImageLibrary* _imageLibrary;
-    Grid _grid;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
+    Grid _grid;
+    bool _sortNewestFirst;
     
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
@@ -91,6 +92,8 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
     _grid.setCellSpacing({6, 6});
 //    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
+    
+    _sortNewestFirst = true;
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -271,7 +274,6 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    const bool sortNewestFirst = true;
     const auto begin = _imageLibrary->rbegin();
     const auto end = _imageLibrary->rend();
     const auto visibleBegin = begin+indexRange.start;
@@ -298,7 +300,7 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
             .idx = (uint32_t)(chunkImageRefBegin-begin),
-            .sortNewestFirst = sortNewestFirst,
+            .sortNewestFirst = _sortNewestFirst,
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
             .selection = {
@@ -415,6 +417,11 @@ done:
         _selection = {};
     }
     
+    [self setNeedsDisplay];
+}
+
+- (void)setSortNewestFirst:(bool)x {
+    _sortNewestFirst = x;
     [self setNeedsDisplay];
 }
 
@@ -563,6 +570,10 @@ done:
 
 - (const ImageSet&)selection {
     return [_imageGridLayer selection];
+}
+
+- (void)setSortNewestFirst:(bool)x {
+    [_imageGridLayer setSortNewestFirst:x];
 }
 
 - (void)_setSelection:(ImageSet)selection {
