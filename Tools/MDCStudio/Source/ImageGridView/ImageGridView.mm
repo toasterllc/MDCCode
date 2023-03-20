@@ -94,7 +94,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _grid.setCellSpacing({6, 6});
 //    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
-    _reverse = false;
+    _reverse = true;
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -333,7 +333,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
         [renderEncoder setVertexBuffer:_selection.buf offset:0 atIndex:2];
         
-        _ChunkTexture& ct = [self _getChunkTexture:it.forward(_imageLibrary->rend())];
+        _ChunkTexture& ct = [self _getChunkTexture:it];
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
         [renderEncoder setFragmentBytes:&ct.loaded length:sizeof(ct.loaded) atIndex:1];
         [renderEncoder setFragmentTexture:ct.txt atIndex:0];
