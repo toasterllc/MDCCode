@@ -16,6 +16,7 @@
 #import "Code/Shared/ImgSD.h"
 #import "Tools/Shared/MDCUSBDevice.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
+#import "Tools/Shared/ImagePipeline/EstimateIlluminant.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/BC7Encoder.h"
 #import "ImageLibrary.h"
@@ -371,18 +372,15 @@ private:
             
             Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
             
+            ccm.illum = (estimateIlluminant ? EstimateIlluminant::Run(renderer, _CFADesc, rawTxt) : ColorRaw(opts.whiteBalance.illum));
+            ccm.matrix = (estimateIlluminant ? ColorMatrixForIlluminant(ccm.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix));
+            
             const Pipeline::DebayerOptions debayerOpts = {
                 .cfaDesc        = _CFADesc,
-                .illum          = (estimateIlluminant ? std::nullopt : std::optional<ColorRaw>(opts.whiteBalance.illum)),
                 .debayerLMMSE   = { .applyGamma = true, },
             };
             
-            const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
-            
-            ccm = {
-                .illum = (estimateIlluminant ? debayerResult.illum : ColorRaw(opts.whiteBalance.illum)),
-                .matrix = (estimateIlluminant ? ColorMatrixForIlluminant(debayerResult.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix))
-            };
+            Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
             
             const Pipeline::ProcessOptions processOpts = {
                 .illum          = ccm.illum,

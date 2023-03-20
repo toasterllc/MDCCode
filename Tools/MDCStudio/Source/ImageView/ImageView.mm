@@ -134,14 +134,13 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         // Debayer raw image
         const Pipeline::DebayerOptions debayerOpts = {
             .cfaDesc        = _image->cfaDesc,
-            .illum          = ColorRaw(opts.whiteBalance.illum),
             .debayerLMMSE   = { .applyGamma = true, },
         };
         Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
         
         // Process rgb image
         const Pipeline::ProcessOptions processOpts = {
-            .illum = ColorRaw(opts.whiteBalance.illum),
+            .illum       = ColorRaw(opts.whiteBalance.illum),
             .colorMatrix = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
             
             .exposure   = (float)opts.exposure,
