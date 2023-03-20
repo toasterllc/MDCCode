@@ -41,7 +41,7 @@ void Pipeline::Debayer(Renderer& renderer, const DebayerOptions& opts, id<MTLTex
     
     // Reconstruct highlights
     if (opts.reconstructHighlights.en) {
-        ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.reconstructHighlights.illum.m, srcRaw);
+        ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum.m, srcRaw);
     }
     
     if (opts.defringe.en) {

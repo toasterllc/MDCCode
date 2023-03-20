@@ -45,8 +45,10 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 //}
 
 - (void)setTexture:(id<MTLTexture>)txt {
+    const CGFloat scale = [self contentsScale];
     assert([NSThread isMainThread]);
     _txt = txt;
+    [self setBounds:{0, 0, [_txt width]/scale, [_txt height]/scale}];
     [self setNeedsDisplay];
 }
 
@@ -84,26 +86,26 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     [self setNeedsDisplay];
 }
 
-- (void)setNeedsDisplay {
-    if ([NSThread isMainThread]) {
-//        // Update our bounds
-//        if (_ipm) {
-//            assert(_ipm->rawImage);
-//            const CGFloat scale = [self contentsScale];
-//            [self setBounds:{0, 0, _ipm->rawImage->width/scale, _ipm->rawImage->height/scale}];
-//        }
-        [super setNeedsDisplay];
-    
-    } else {
-        // Call -setNeedsDisplay on the main thread, so that drawing is
-        // sync'd with drawing triggered by the main thread.
-        // Don't use dispatch_async here, because dispatch_async's don't get drained
-        // while the runloop is run recursively, eg during mouse tracking.
-        CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
-            [self setNeedsDisplay];
-        });
-        CFRunLoopWakeUp(CFRunLoopGetMain());
-    }
-}
+//- (void)setNeedsDisplay {
+//    if ([NSThread isMainThread]) {
+////        // Update our bounds
+////        if (_ipm) {
+////            assert(_ipm->rawImage);
+////            const CGFloat scale = [self contentsScale];
+////            [self setBounds:{0, 0, _ipm->rawImage->width/scale, _ipm->rawImage->height/scale}];
+////        }
+//        [super setNeedsDisplay];
+//    
+//    } else {
+//        // Call -setNeedsDisplay on the main thread, so that drawing is
+//        // sync'd with drawing triggered by the main thread.
+//        // Don't use dispatch_async here, because dispatch_async's don't get drained
+//        // while the runloop is run recursively, eg during mouse tracking.
+//        CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
+//            [self setNeedsDisplay];
+//        });
+//        CFRunLoopWakeUp(CFRunLoopGetMain());
+//    }
+//}
 
 @end

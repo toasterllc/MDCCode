@@ -15,6 +15,7 @@ class Pipeline {
 public:
     struct DebayerOptions {
         MDCTools::CFADesc cfaDesc;
+        ColorRaw illum;
         
         struct {
             bool en = false;
@@ -23,7 +24,6 @@ public:
         
         struct {
             bool en = false;
-            ColorRaw illum;
         } reconstructHighlights;
         
         struct {

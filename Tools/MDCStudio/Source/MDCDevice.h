@@ -377,6 +377,7 @@ private:
             
             const Pipeline::DebayerOptions debayerOpts = {
                 .cfaDesc        = _CFADesc,
+                .illum          = ccm.illum,
                 .debayerLMMSE   = { .applyGamma = true, },
             };
             
@@ -663,7 +664,7 @@ private:
                             );
                         }
                         
-                        addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.add(addCount);
                     }
