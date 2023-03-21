@@ -35,7 +35,7 @@ vertex VertexOutput VertexShader(
     // idxGrid: absolute index in grid
     const uint idxGrid = ctx.idx + iidx;
     // idxRec: absolute index in `recs` array
-    const uint idxRec = (ctx.reverse ? (ctx.grid.elementCount()-1)-idxGrid : idxGrid);
+    const uint idxRec = (ctx.sortNewestFirst ? (ctx.grid.elementCount()-1)-idxGrid : idxGrid);
     // idxChunk: relative index in chunk
     const uint idxChunk = recs[idxRec].idx; // Index in chunk
     const Grid::Rect rect = ctx.grid.rectForCellIndex(idxGrid);

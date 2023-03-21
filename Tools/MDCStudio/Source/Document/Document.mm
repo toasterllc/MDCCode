@@ -22,6 +22,8 @@ using namespace MDCStudio;
     
     NSView* _inspectorContainerView;
     InspectorView* _inspectorView;
+    
+    Prefs _prefs;
 }
 
 + (BOOL)autosavesInPlace {

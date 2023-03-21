@@ -50,7 +50,7 @@ using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture>;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
     Grid _grid;
-    bool _reverse;
+    bool _sortNewestFirst;
     
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
@@ -94,7 +94,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _grid.setCellSpacing({6, 6});
 //    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
-    _reverse = true;
+    _sortNewestFirst = true;
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -320,7 +320,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
             .idx = (uint32_t)(chunkImageRefBegin-begin),
-            .reverse = _reverse,
+            .sortNewestFirst = _sortNewestFirst,
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
             .selection = {
@@ -425,8 +425,8 @@ done:
     [self setNeedsDisplay];
 }
 
-- (void)setReverse:(bool)x {
-    _reverse = x;
+- (void)setSortNewestFirst:(bool)x {
+    _sortNewestFirst = x;
     // Trigger selection update
     [self setSelection:std::move(_selection.images)];
     [self setNeedsDisplay];
@@ -663,8 +663,8 @@ struct SelectionDelta {
     return [_imageGridLayer selection];
 }
 
-- (void)setReverse:(bool)x {
-    [_imageGridLayer setReverse:x];
+- (void)setSortNewestFirst:(bool)x {
+    [_imageGridLayer setSortNewestFirst:x];
 }
 
 - (void)_setSelection:(ImageSet)selection {
