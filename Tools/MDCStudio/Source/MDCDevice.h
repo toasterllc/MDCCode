@@ -225,7 +225,7 @@ private:
     
     struct _SDReadOp;
     struct _SDWork {
-        static constexpr size_t BufferThumbCount = 32;
+        static constexpr size_t BufferThumbCount = 512;
         uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
         
         struct {
@@ -233,6 +233,8 @@ private:
             
             struct {
                 _SDWorkCallback callback;
+//                std::chrono::time_point<std::chrono::steady_clock> timeStart;
+//                std::chrono::time_point<std::chrono::steady_clock> timeEnd;
             } read;
             
             struct {
@@ -240,6 +242,8 @@ private:
                 Toastbox::Atomic<size_t> idx = 0;
                 Toastbox::Atomic<size_t> idxDone = 0;
                 _SDWorkCallback callback;
+                std::chrono::time_point<std::chrono::steady_clock> timeStart;
+//                std::chrono::time_point<std::chrono::steady_clock> timeEnd;
             } render;
         } state;
     };
@@ -483,6 +487,9 @@ private:
     }
     
     void _readCompleteCallback(_LoadImagesState& state, _SDWork& work) {
+//        work.state.read.timeEnd = std::chrono::steady_clock::now();
+//        work.state.render.timeStart = std::chrono::steady_clock::now();
+        
         // Enqueue _SDWork into _thumbRender.work
         {
             auto lock = _thumbRender.signal.lock();
@@ -494,6 +501,20 @@ private:
     }
     
     void _renderCompleteCallback(_LoadImagesState& state, _SDWork& work) {
+//        work.state.render.timeEnd = std::chrono::steady_clock::now();
+        
+//        {
+//            using namespace std::chrono;
+//            const milliseconds readDuration = duration_cast<milliseconds>(work.state.read.timeEnd-work.state.read.timeStart);
+//            const milliseconds renderDuration = duration_cast<milliseconds>(work.state.render.timeEnd-work.state.render.timeStart);
+//            const size_t thumbCount = work.state.ops.size();
+//            const double readThroughputMBPerSec = (((double)(thumbCount*ImgSD::Thumb::ImagePaddedLen) / (1024*1024)) / ((double)readDuration.count()/1000));
+//            printf("[_renderCompleteCallback] Read took %ju ms for %ju images (avg %f ms / img, %f MB/sec)\n",
+//                (uintmax_t)readDuration.count(), (uintmax_t)thumbCount, ((double)readDuration.count()/thumbCount), readThroughputMBPerSec);
+//            printf("[_renderCompleteCallback] Render took %ju ms for %ju images (avg %f ms / img)\n",
+//                (uintmax_t)renderDuration.count(), (uintmax_t)thumbCount, ((double)renderDuration.count()/thumbCount));
+//        }
+        
         std::set<ImageRecordPtr> recs;
         for (const _SDReadOp& op : work.state.ops) {
             recs.insert(op.rec);
@@ -518,6 +539,8 @@ private:
         
         // WriteIntervalThumbCount: the number of loaded thumbnails after which we'll write the ImageLibrary to disk
         constexpr size_t WriteIntervalThumbCount = 256;
+        
+        const auto timeStart = std::chrono::steady_clock::now();
         
         // Reset each work
         // This is necessary because our loop below interprets _SDWork.state.ops as the _SDReadOps from its
@@ -544,23 +567,6 @@ private:
             {
                 auto lock = state.signal.wait([&] { return state.underway.find(&work) == state.underway.end(); });
                 state.underway.insert(&work);
-            }
-            
-            // Add the _SDWork's records to the library if the _SDWork is populated from
-            // the previous iteration. (We do that here because at this point we know the
-            // _SDWork is complete, because it's ready to be used again.)
-            // Also write the library if we crossed the WriteIntervalThumbCount threshold.
-            if (initial) {
-                auto lock = std::unique_lock(_imageLibrary);
-                
-                const size_t addCount = work.state.ops.size();
-                writeCount += addCount;
-                
-                if (writeCount >= WriteIntervalThumbCount) {
-                    printf("[_loadImages] Write library (writeCount: %ju)\n", (uintmax_t)writeCount);
-                    writeCount = 0;
-                    _imageLibrary.write();
-                }
             }
             
             // Populate _SDWork
@@ -594,6 +600,8 @@ private:
                         .rec = rec,
                     });
                 }
+//                
+//                work.state.read.timeStart = std::chrono::steady_clock::now();
                 
                 printf("[_loadImages] Enqueued _SDWork:%p ops.size():%ju idx:%zu idxDone:%zu\n",
                     &work, (uintmax_t)work.state.ops.size(), work.state.render.idx.load(), work.state.render.idxDone.load());
@@ -608,6 +616,17 @@ private:
                 }
                 _sdRead.signal.signalOne();
             }
+            
+            // Periodically write the image library
+            if (initial) {
+                auto lock = std::unique_lock(_imageLibrary);
+                writeCount += work.state.ops.size();
+                if (writeCount >= WriteIntervalThumbCount) {
+                    printf("[_loadImages] Write library (writeCount: %ju)\n", (uintmax_t)writeCount);
+                    writeCount = 0;
+                    _imageLibrary.write();
+                }
+            }
         }
         
         // Wait until remaining _SDWorks are complete
@@ -618,6 +637,15 @@ private:
             auto lock = std::unique_lock(_imageLibrary);
             printf("[_loadImages] Write library remainder\n");
             _imageLibrary.write();
+        }
+        
+        // Print profile stats
+        {
+            using namespace std::chrono;
+            const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+            const size_t imageCount = recs.size();
+            printf("[_loadImages] _loadImages() took %ju ms for %ju images (avg %f ms / img)\n",
+                (uintmax_t)duration.count(), (uintmax_t)imageCount, ((double)duration.count()/imageCount));
         }
     }
     
@@ -755,14 +783,21 @@ private:
             const size_t len = (size_t)SD::BlockLen * (size_t)(blockEnd-blockBegin);
             assert(len <= sizeof(work.buffer));
             
-            printf("[_sdRead_handleWork] Reading [%ju,%ju)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd);
+            const auto timeStart = std::chrono::steady_clock::now();
+            {
+                auto lock = std::unique_lock(_dev);
+                _dev.reset();
+                // Verify that blockBegin can be safely cast to SD::Block
+                assert(std::numeric_limits<SD::Block>::max() >= blockBegin);
+                _dev.sdRead((SD::Block)blockBegin);
+                _dev.readout(work.buffer, len);
+            }
             
-            auto lock = std::unique_lock(_dev);
-            _dev.reset();
-            // Verify that blockBegin can be safely cast to SD::Block
-            assert(std::numeric_limits<SD::Block>::max() >= blockBegin);
-            _dev.sdRead((SD::Block)blockBegin);
-            _dev.readout(work.buffer, len);
+            const std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-timeStart);
+            const double throughputMBPerSec = ((double)(len * 1000) / (duration.count() * 1024*1024));
+            printf("[_sdRead_handleWork] Read [%ju,%ju) took %ju ms (avg: %f ms / op, throughput: %.1f MB/sec)\n",
+                (uintmax_t)blockBegin, (uintmax_t)blockEnd, (uintmax_t)duration.count(),
+                ((double)duration.count()/work.state.ops.size()), throughputMBPerSec);
         }
         
         // Update each _SDReadOp with its data address
@@ -816,6 +851,8 @@ private:
                     auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.work.empty(); });
                     work = _thumbRender.work.front();
                     idx = work->state.render.idx.fetch_add(1);
+                    if (!idx) work->state.render.timeStart = std::chrono::steady_clock::now();
+                    
                     // Our logic guarantees that we should never observe a _SDWork in _thumbRender.work
                     // unless it has available indexes (state.render.idx) that need to be handled.
                     // Confirm that's true.
@@ -897,6 +934,13 @@ private:
                 const size_t idxDone = work->state.render.idxDone.fetch_add(1);
                 assert(idxDone < work->state.ops.size());
                 if (idxDone == work->state.ops.size()-1) {
+                    {
+                        using namespace std::chrono;
+                        const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-work->state.render.timeStart);
+                        const size_t thumbCount = work->state.ops.size();
+                        printf("[_thumbRender_thread] Render took %ju ms for %ju images (avg %f ms / img)\n",
+                            (uintmax_t)duration.count(), (uintmax_t)thumbCount, ((double)duration.count()/thumbCount));
+                    }
                     work->state.render.callback();
                 }
             }
