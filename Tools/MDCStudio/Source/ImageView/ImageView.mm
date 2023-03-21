@@ -100,52 +100,52 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     id<MTLTexture> drawableTxt = [drawable texture];
     assert(drawableTxt);
     
-//    // Fetch the image from the cache, if we don't have _image yet
-//    if (!_image) {
-//        __weak auto selfWeak = self;
-//        _image = _imageSource->imageCache().image(_imageRecord, [=] (ImagePtr image) {
-//            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:image]; });
-//        });
-//    }
+    // Fetch the image from the cache, if we don't have _image yet
+    if (!_image) {
+        __weak auto selfWeak = self;
+        _image = _imageSource->imageCache().image(_imageRecord, [=] (ImagePtr image) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:image]; });
+        });
+    }
     
-//    // Create _imageTxt if it doesn't exist yet and we have the image
-//    if ((!_imageTxt || dirty) && _image) {
-//        const ImageOptions& opts = _imageRecord->options;
-//        
-//        if (!_imageTxt) {
-//            // _imageTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
-//            // representation of the pipeline result without clipping to 8-bit components, so we can
-//            // render to an HDR display and make use of the depth.
-//            _imageTxt = _renderer.textureCreate(MTLPixelFormatRGBA16Float, _image->width, _image->height);
-//        }
-//        
-//        Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
-//            _image->width, _image->height, (ImagePixel*)(_image->data.get() + _image->off));
-//        
-//        const Pipeline::Options popts = {
-//            .cfaDesc                = _image->cfaDesc,
-//            
-//            .illum                  = ColorRaw(opts.whiteBalance.illum),
-//            .colorMatrix            = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
-//            
-//            .defringe               = { .en = false, },
-//            .reconstructHighlights  = { .en = false, },
-//            .debayerLMMSE           = { .applyGamma = true, },
-//            
-//            .exposure               = (float)opts.exposure,
-//            .saturation             = (float)opts.saturation,
-//            .brightness             = (float)opts.brightness,
-//            .contrast               = (float)opts.contrast,
-//            
-//            .localContrast = {
-//                .en                 = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
-//                .amount             = (float)opts.localContrast.amount,
-//                .radius             = (float)opts.localContrast.radius,
-//            },
-//        };
-//        
-//        Pipeline::Run(renderer, popts, rawTxt, _imageTxt);
-//    }
+    // Create _imageTxt if it doesn't exist yet and we have the image
+    if ((!_imageTxt || dirty) && _image) {
+        const ImageOptions& opts = _imageRecord->options;
+        
+        if (!_imageTxt) {
+            // _imageTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
+            // representation of the pipeline result without clipping to 8-bit components, so we can
+            // render to an HDR display and make use of the depth.
+            _imageTxt = _renderer.textureCreate(MTLPixelFormatRGBA16Float, _image->width, _image->height);
+        }
+        
+        Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
+            _image->width, _image->height, (ImagePixel*)(_image->data.get() + _image->off));
+        
+        const Pipeline::Options popts = {
+            .cfaDesc                = _image->cfaDesc,
+            
+            .illum                  = ColorRaw(opts.whiteBalance.illum),
+            .colorMatrix            = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
+            
+            .defringe               = { .en = false, },
+            .reconstructHighlights  = { .en = false, },
+            .debayerLMMSE           = { .applyGamma = true, },
+            
+            .exposure               = (float)opts.exposure,
+            .saturation             = (float)opts.saturation,
+            .brightness             = (float)opts.brightness,
+            .contrast               = (float)opts.contrast,
+            
+            .localContrast = {
+                .en                 = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
+                .amount             = (float)opts.localContrast.amount,
+                .radius             = (float)opts.localContrast.radius,
+            },
+        };
+        
+        Pipeline::Run(_renderer, popts, rawTxt, _imageTxt);
+    }
     
     // If we don't have the thumbnail texture yet, create it
     if (!_thumbTxt || dirty) {
