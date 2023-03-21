@@ -225,7 +225,7 @@ private:
     
     struct _SDReadOp;
     struct _SDWork {
-        static constexpr size_t BufferThumbCount = 512;
+        static constexpr size_t BufferThumbCount = 32;
         uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
         
         struct {
