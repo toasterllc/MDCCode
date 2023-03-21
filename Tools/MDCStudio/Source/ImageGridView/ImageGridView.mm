@@ -148,7 +148,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         _imageLibrary->observerAdd([=](const ImageLibrary::Event& ev) {
             auto selfStrong = selfWeak;
             if (!selfStrong) return false;
-            [self _handleImageLibraryEvent:ev];
+            [selfStrong _handleImageLibraryEvent:ev];
             return true;
         });
     }
