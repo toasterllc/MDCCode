@@ -122,6 +122,25 @@ public:
         notify(ev);
     }
     
+    bool sortNewest() const {
+        return _sortNewest;
+    }
+    
+    void sortNewest(bool x) {
+        _sortNewest = x;
+        notifyChange({});
+    }
+    
+    Toastbox::AnyIter<RecordRefConstIter> beginSorted() const {
+        if (_sortNewest) return rbegin();
+        else             return begin();
+    }
+    
+    Toastbox::AnyIter<RecordRefConstIter> endSorted() const {
+        if (_sortNewest) return rbegin();
+        else             return begin();
+    }
+    
 //    RecordRefConstIter find(Img::Id id) {
 //        RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,
 //            [&](const RecordRef& sample, auto) -> bool {

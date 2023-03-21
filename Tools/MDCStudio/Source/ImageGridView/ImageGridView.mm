@@ -510,16 +510,6 @@ struct SelectionDelta {
     return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)newIdx), [self contentsScale]);
 }
 
-- (ImageRecordAnyIter)_begin {
-    if (_reverse) return _imageLibrary->rbegin();
-    else          return _imageLibrary->begin();
-}
-
-- (ImageRecordAnyIter)_end {
-    if (_reverse) return _imageLibrary->rend();
-    else          return _imageLibrary->end();
-}
-
 // MARK: - FixedScrollViewDocument
 - (bool)fixedFlipped {
     return true;

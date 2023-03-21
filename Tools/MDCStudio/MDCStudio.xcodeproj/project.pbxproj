@@ -186,6 +186,7 @@
 		558FFC4629C7EF920022E840 /* AnyIter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnyIter.h; sourceTree = "<group>"; };
 		558FFC5629C8F26F0022E840 /* EstimateIlluminant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminant.h; sourceTree = "<group>"; };
 		558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminant.mm; sourceTree = "<group>"; };
+		558FFC6029CA1E520022E840 /* Prefs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Prefs.h; sourceTree = "<group>"; };
 		55A36A8E27A2951900FD0181 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		55A36AB727A35ABD00FD0181 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -532,6 +533,7 @@
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				55F8D09227C2EE9D00757165 /* ImageSource.h */,
 				552F4BB429AD7ECE000CEAB2 /* ImageRender.h */,
+				558FFC6029CA1E520022E840 /* Prefs.h */,
 				552F4BF529B28543000CEAB2 /* ImageUtil.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55F7556C29BC21B500241672 /* ColorMatrix.h */,
