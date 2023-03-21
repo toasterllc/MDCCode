@@ -7,6 +7,7 @@
 #import "ImageView/ImageView.h"
 #import "FixedScrollView.h"
 #import "MockImageSource.h"
+#import "Prefs.h"
 
 using namespace MDCStudio;
 
@@ -70,6 +71,14 @@ using namespace MDCStudio;
     
     // Handle whatever is first selected
     [self sourceListViewSelectionChanged:_sourceListView];
+    
+    __weak auto selfWeak = self;
+    _prefs.observerAdd([=] () {
+        auto selfStrong = selfWeak;
+        if (!selfStrong) return false;
+        [selfStrong _prefsChanged];
+        return true;
+    });
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
@@ -385,10 +394,18 @@ using namespace MDCStudio;
 
 
 
-
+- (void)_prefsChanged {
+    NSLog(@"prefs changed");
+    if (auto x = Toastbox::CastOrNull<ImageGridScrollView*>(_centerView)) {
+        auto v = Toastbox::Cast<ImageGridView*>([x document]);
+        [v setSortNewestFirst:_prefs.sortNewestFirst()];
+    }
+}
 
 // _openImage: open a particular image id, or an image offset from a particular image id
 - (bool)_openImage:(ImageRecordPtr)rec delta:(ssize_t)delta {
+    const bool sortNewestFirst = _prefs.sortNewestFirst();
+    
     ImageSourcePtr imageSource = [_sourceListView selection];
     if (!imageSource) return false;
     
@@ -402,8 +419,10 @@ using namespace MDCStudio;
             const auto find = imageLibrary.find(rec);
             if (find == imageLibrary.end()) return false;
             
-            const ssize_t deltaMin = std::distance(find, imageLibrary.begin());
-            const ssize_t deltaMax = std::distance(find, std::prev(imageLibrary.end()));
+            const auto begin = ImageLibrary::BeginSorted(imageLibrary, sortNewestFirst);
+            const auto end = ImageLibrary::EndSorted(imageLibrary, sortNewestFirst);
+            const ssize_t deltaMin = std::distance(find, begin);
+            const ssize_t deltaMax = std::distance(find, std::prev(end));
             if (delta<deltaMin || delta>deltaMax) return false;
             
             imageRecord = *(find+delta);

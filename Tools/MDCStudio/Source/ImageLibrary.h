@@ -8,7 +8,6 @@
 #include "ImageOptions.h"
 #include "ImageThumb.h"
 #include "ImageUtil.h"
-#include "Prefs.h"
 
 namespace MDCStudio {
 
@@ -71,14 +70,14 @@ public:
     
     using Observer = std::function<bool(const Event& ev)>;
     
-    static Toastbox::AnyIter<RecordRefConstIter> BeginSorted(const ImageLibrary& lib) {
-        if (PrefsGlobal().sortNewestFirst()) return lib.rbegin();
-        else                                 return lib.begin();
+    static Toastbox::AnyIter<RecordRefConstIter> BeginSorted(const ImageLibrary& lib, bool sortNewestFirst) {
+        if (sortNewestFirst) return lib.rbegin();
+        else                 return lib.begin();
     }
     
-    static Toastbox::AnyIter<RecordRefConstIter> EndSorted(const ImageLibrary& lib) {
-        if (PrefsGlobal().sortNewestFirst()) return lib.rend();
-        else                                 return lib.end();
+    static Toastbox::AnyIter<RecordRefConstIter> EndSorted(const ImageLibrary& lib, bool sortNewestFirst) {
+        if (sortNewestFirst) return lib.rend();
+        else                 return lib.end();
     }
     
     void read() {

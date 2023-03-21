@@ -221,8 +221,8 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         return it->val;
     }
     
-    const auto chunkBegin = ImageLibrary::FindChunkBegin(ImageLibrary::BeginSorted(*_imageLibrary), iter);
-    const auto chunkEnd = ImageLibrary::FindChunkEnd(ImageLibrary::EndSorted(*_imageLibrary), iter);
+    const auto chunkBegin = ImageLibrary::FindChunkBegin(ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst), iter);
+    const auto chunkEnd = ImageLibrary::FindChunkEnd(ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst), iter);
     assert(chunkBegin != chunkEnd);
     
     auto startTime = std::chrono::steady_clock::now();
@@ -298,8 +298,8 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    ImageRecordAnyIter begin = ImageLibrary::BeginSorted(*_imageLibrary);
-    ImageRecordAnyIter end = ImageLibrary::EndSorted(*_imageLibrary);
+    ImageRecordAnyIter begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+    ImageRecordAnyIter end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
     
     const auto visibleBegin = begin+indexRange.start;
     const auto visibleEnd = begin+indexRange.start+indexRange.count;
@@ -389,7 +389,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     auto lock = std::unique_lock(*_imageLibrary);
     const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, [self contentsScale]));
     ImageSet images;
-    auto begin = ImageLibrary::BeginSorted(*_imageLibrary);
+    auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
@@ -444,7 +444,7 @@ struct SelectionDelta {
     {
         auto lock = std::unique_lock(*_imageLibrary);
         
-        auto begin = ImageLibrary::BeginSorted(*_imageLibrary);
+        auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
         const size_t imgCount = _imageLibrary->recordCount();
         if (!imgCount) return std::nullopt;
         
