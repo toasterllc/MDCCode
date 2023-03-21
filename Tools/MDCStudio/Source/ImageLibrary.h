@@ -1,7 +1,7 @@
 #pragma once
 #include <forward_list>
 #include <set>
-#include "Toastbox/AnyIter.h"
+#include "Toastbox/IterAny.h"
 #include "Code/Shared/Time.h"
 #include "Code/Shared/Img.h"
 #include "RecordStore.h"
@@ -56,6 +56,7 @@ static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageRecord is a multi
 class ImageLibrary : public RecordStore<ImageRecord, 128>, public std::mutex {
 public:
     using RecordStore::RecordStore;
+    using IterAny = Toastbox::IterAny<RecordRefConstIter>;
     
     struct Event {
         enum class Type {
@@ -70,12 +71,12 @@ public:
     
     using Observer = std::function<bool(const Event& ev)>;
     
-    static Toastbox::AnyIter<RecordRefConstIter> BeginSorted(const ImageLibrary& lib, bool sortNewestFirst) {
+    static IterAny BeginSorted(const ImageLibrary& lib, bool sortNewestFirst) {
         if (sortNewestFirst) return lib.rbegin();
         else                 return lib.begin();
     }
     
-    static Toastbox::AnyIter<RecordRefConstIter> EndSorted(const ImageLibrary& lib, bool sortNewestFirst) {
+    static IterAny EndSorted(const ImageLibrary& lib, bool sortNewestFirst) {
         if (sortNewestFirst) return lib.rend();
         else                 return lib.end();
     }
@@ -132,6 +133,18 @@ public:
         notify(ev);
     }
     
+    RecordRefConstIter find(const RecordRef& ref) {
+        return RecordStore::Find(begin(), end(), ref);
+    }
+    
+    static IterAny Find(IterAny begin, IterAny end, const RecordRef& ref) {
+        if (begin.fwd()) {
+            return RecordStore::Find<true>(begin.fwdGet(), end.fwdGet(), ref);
+        } else {
+            return RecordStore::Find<false>(begin.revGet(), end.revGet(), ref);
+        }
+    }
+    
 //    bool sortNewest() const {
 //        return _sortNewest;
 //    }
@@ -141,12 +154,12 @@ public:
 //        notifyChange({});
 //    }
 //    
-//    Toastbox::AnyIter<RecordRefConstIter> beginSorted() const {
+//    Toastbox::IterAny<RecordRefConstIter> beginSorted() const {
 //        if (_sortNewest) return rbegin();
 //        else             return begin();
 //    }
 //    
-//    Toastbox::AnyIter<RecordRefConstIter> endSorted() const {
+//    Toastbox::IterAny<RecordRefConstIter> endSorted() const {
 //        if (_sortNewest) return rbegin();
 //        else             return begin();
 //    }
@@ -208,8 +221,7 @@ private:
 };
 
 using ImageRecordIter = ImageLibrary::RecordRefConstIter;
-using ImageRecordRevIter = ImageLibrary::RecordRefConstReverseIter;
-using ImageRecordAnyIter = Toastbox::AnyIter<ImageRecordIter>;
+using ImageRecordIterAny = Toastbox::IterAny<ImageRecordIter>;
 using ImageRecordPtr = ImageLibrary::RecordStrongRef;
 using ImageSet = std::set<ImageRecordPtr>;
 

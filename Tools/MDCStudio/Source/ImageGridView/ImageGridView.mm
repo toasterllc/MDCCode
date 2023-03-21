@@ -7,7 +7,8 @@
 #import "Grid.h"
 #import "Code/Shared/Img.h"
 #import "Toastbox/LRU.h"
-#import "Toastbox/AnyIter.h"
+#import "Toastbox/IterAny.h"
+#import "Toastbox/Mac/Util.h"
 using namespace MDCStudio;
 
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
@@ -212,7 +213,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
 // _getChunkTexture: returns a _ChunkTexture& containing all thumbnails for a given chunk
 // ImageLibrary must be locked!
-- (_ChunkTexture&)_getChunkTexture:(ImageRecordAnyIter)iter {
+- (_ChunkTexture&)_getChunkTexture:(ImageRecordIterAny)iter {
     // If we already have a _ChunkTexture for the iter's chunk, return it.
     // Otherwise we need to create it.
     const ImageLibrary::ChunkStrongRef chunk = iter->chunkRef();
@@ -298,8 +299,8 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    ImageRecordAnyIter begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-    ImageRecordAnyIter end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
+    ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+    ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
     
     const auto visibleBegin = begin+indexRange.start;
     const auto visibleEnd = begin+indexRange.start+indexRange.count;
@@ -445,22 +446,18 @@ struct SelectionDelta {
         auto lock = std::unique_lock(*_imageLibrary);
         
         auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+        auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
         const size_t imgCount = _imageLibrary->recordCount();
         if (!imgCount) return std::nullopt;
         
         if (!selection.empty()) {
-            const auto it = _imageLibrary->find(*std::prev(selection.end()));
-            if (it == _imageLibrary->end()) {
+            const auto it = ImageLibrary::Find(begin, end, *std::prev(selection.end()));
+            if (it == end) {
                 NSLog(@"Image no longer in library");
                 return std::nullopt;
             }
             
-            // idx: the grid index of `it`. We can't just subtract with `it-begin` because the types
-            // don't match (`it` is a forward iterator, `begin` is an AnyIter containing either a
-            // forward or reverse iterator, depending on our current the sort order.) So instead we
-            // do pointer subtraction and find the absolute value, which will work regardless of
-            // whether `begin` is a forward or reverse iterator.
-            const size_t idx = std::abs(&*it - &*begin);
+            const size_t idx = it-begin;
             const size_t colCount = _grid.columnCount();
             const size_t rem = (imgCount % colCount);
             const size_t lastRowCount = (rem ? rem : colCount);
@@ -627,7 +624,7 @@ struct SelectionDelta {
     // Create _selectionRectLayer
     {
         _selectionRectLayer = [CALayer new];
-        [_selectionRectLayer setActions:LayerNullActions];
+        [_selectionRectLayer setActions:Toastbox::LayerNullActions];
         [_selectionRectLayer setBackgroundColor:[[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:.2] CGColor]];
         [_selectionRectLayer setBorderColor:[[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1] CGColor]];
         [_selectionRectLayer setHidden:true];
@@ -710,7 +707,7 @@ struct SelectionDelta {
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
     const ImageSet oldSelection = [_imageGridLayer selection];
-    TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
+    Toastbox::TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
 //        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
         const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});

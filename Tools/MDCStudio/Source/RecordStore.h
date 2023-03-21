@@ -320,11 +320,13 @@ public:
 //        return it;
 //    }
     
-    template<typename T, bool T_Ascending=true>
-    T Find(T begin, T end, const RecordRef& ref) const {
+    // Find(): find `ref` between [begin,end)
+    // T_Ascending=false must be specified when reverse iterators are given.
+    template<bool T_Ascending=true, typename T>
+    static T Find(T begin, T end, const RecordRef& ref) {
         T it = std::lower_bound(begin, end, 0,
             [&](const RecordRef& sample, auto) -> bool {
-                return (T_Ascending ? sample<ref : sample>ref);
+                return (T_Ascending ? sample<ref : ref<sample);
             });
         
         if (it == end) return end;

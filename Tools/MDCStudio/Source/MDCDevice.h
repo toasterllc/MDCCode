@@ -179,7 +179,7 @@ public:
     
     ImageCache& imageCache() override { return _imageCache; }
     
-    void visibleThumbs(ImageRecordAnyIter begin, ImageRecordAnyIter end) override {
+    void visibleThumbs(ImageRecordIterAny begin, ImageRecordIterAny end) override {
         bool enqueued = false;
         {
             auto lock = _thumbUpdate.signal.lock();

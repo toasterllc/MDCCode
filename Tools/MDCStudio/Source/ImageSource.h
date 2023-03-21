@@ -15,7 +15,7 @@ public:
     // visibleThumbs(): notifies the ImageSource which thumbnails are currently visible.
     // Used to asynchronously re-render the thumbnails that have the `thumb.render` flag set.
     // ImageLibrary must be locked!
-    virtual void visibleThumbs(ImageRecordAnyIter begin, ImageRecordAnyIter end) = 0;
+    virtual void visibleThumbs(ImageRecordIterAny begin, ImageRecordIterAny end) = 0;
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;

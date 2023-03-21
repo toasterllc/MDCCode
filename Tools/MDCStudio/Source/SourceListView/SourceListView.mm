@@ -2,6 +2,7 @@
 #import <vector>
 #import "Util.h"
 #import "MDCDevicesManager.h"
+#import "Toastbox/Mac/Util.h"
 using namespace MDCStudio;
 
 // MARK: - Outline View Items
@@ -232,7 +233,7 @@ using namespace MDCStudio;
     const NSInteger selectedRow = [_outlineView selectedRow];
     if (selectedRow < 0) return {};
     
-    if (Device* dev = CastOrNil<Device>([_outlineView itemAtRow:selectedRow])) {
+    if (Device* dev = Toastbox::CastOrNull<Device*>([_outlineView itemAtRow:selectedRow])) {
         return dev->device;
     }
     
@@ -241,7 +242,7 @@ using namespace MDCStudio;
 
 - (id)_createItemWithClass:(Class)itemClass {
     NSParameterAssert(itemClass);
-    Item* view = Cast<Item>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
+    Item* view = Toastbox::Cast<Item*>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
     assert(view);
     return view;
 }
@@ -253,7 +254,7 @@ using namespace MDCStudio;
     std::set<MDCDevicePtr> newDevices;
     {
         for (Item* it : _devicesSection->items) {
-            oldDevices.insert(Cast<Device>(it)->device);
+            oldDevices.insert(Toastbox::Cast<Device*>(it)->device);
         }
         
         std::vector<MDCDevicePtr> newDevicesVec = MDCDevicesManager::Devices();
@@ -262,7 +263,7 @@ using namespace MDCStudio;
     
     // Remove disconnected devices
     for (auto it=_devicesSection->items.begin(); it!=_devicesSection->items.end();) {
-        MDCDevicePtr dev = Cast<Device>(*it)->device;
+        MDCDevicePtr dev = Toastbox::Cast<Device*>(*it)->device;
         if (newDevices.find(dev) == newDevices.end()) {
             it = _devicesSection->items.erase(it);
         } else {
@@ -281,7 +282,7 @@ using namespace MDCStudio;
     
     // Sort devices
     std::sort(_devicesSection->items.begin(), _devicesSection->items.end(), [](Item* a, Item* b) {
-        return [Cast<Device>(a)->name compare:Cast<Device>(b)->name] == NSOrderedDescending;
+        return [Toastbox::Cast<Device*>(a)->name compare:Toastbox::Cast<Device*>(b)->name] == NSOrderedDescending;
     });
 }
 
@@ -346,7 +347,7 @@ using namespace MDCStudio;
     if (item == nullptr) {
         return _outlineItems.size();
     
-    } else if (auto it = CastOrNil<Section>(item)) {
+    } else if (auto it = Toastbox::CastOrNull<Section*>(item)) {
         return it->items.size();
     
     } else {
@@ -358,7 +359,7 @@ using namespace MDCStudio;
     if (item == nullptr) {
         return _outlineItems[index];
     
-    } else if (auto section = CastOrNil<Section>(item)) {
+    } else if (auto section = Toastbox::CastOrNull<Section*>(item)) {
         return section->items.at(index);
     
     } else {
@@ -367,14 +368,14 @@ using namespace MDCStudio;
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView isItemExpandable:(id)item {
-    if (auto it = CastOrNil<Section>(item)) {
+    if (auto it = Toastbox::CastOrNull<Section*>(item)) {
         return true;
     }
     return false;
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView shouldSelectItem:(id)item {
-    if (auto it = CastOrNil<Item>(item)) {
+    if (auto it = Toastbox::CastOrNull<Item*>(item)) {
         return [it selectable];
     }
     return false;
@@ -389,7 +390,7 @@ using namespace MDCStudio;
 }
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
-    [Cast<Item>(item) update];
+    [Toastbox::Cast<Item*>(item) update];
     return item;
 }
 

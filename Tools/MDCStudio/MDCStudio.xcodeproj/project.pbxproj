@@ -183,7 +183,7 @@
 		5562353A27B5086E0008074C /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
-		558FFC4629C7EF920022E840 /* AnyIter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnyIter.h; sourceTree = "<group>"; };
+		558FFC4629C7EF920022E840 /* IterAny.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IterAny.h; sourceTree = "<group>"; };
 		558FFC5629C8F26F0022E840 /* EstimateIlluminant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminant.h; sourceTree = "<group>"; };
 		558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminant.mm; sourceTree = "<group>"; };
 		558FFC6029CA1E520022E840 /* Prefs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Prefs.h; sourceTree = "<group>"; };
@@ -442,7 +442,7 @@
 				55F755C929C2CA4000241672 /* Signal.h */,
 				55F755C829C2C9A900241672 /* Queue.h */,
 				55F755CA29C2CA4000241672 /* SignalQueue.h */,
-				558FFC4629C7EF920022E840 /* AnyIter.h */,
+				558FFC4629C7EF920022E840 /* IterAny.h */,
 				55425B1729A01BE000F25D57 /* Mac */,
 			);
 			path = Toastbox;

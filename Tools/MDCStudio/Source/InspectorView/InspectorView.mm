@@ -5,6 +5,7 @@
 #import "Code/Shared/Time.h"
 #import "Code/Shared/TimeConvert.h"
 #import "Toastbox/DurationString.h"
+#import "Toastbox/Mac/Util.h"
 #import "ImageUtil.h"
 using namespace MDCStudio;
 
@@ -1264,12 +1265,12 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
 // MARK: - Methods
 
 static void _Update(Item* it) {
-    if (auto section = CastOrNil<Item_Section>(it)) {
+    if (auto section = Toastbox::CastOrNull<Item_Section*>(it)) {
         [section updateView];
     }
     
 //    [it updateView];
-//    if (auto section = CastOrNil<Item_Section>(it)) {
+//    if (auto section = Toastbox::CastOrNull<Item_Section*>(it)) {
 //        for (auto it : section->items) {
 //            _UpdateView(it);
 //        }
@@ -1288,7 +1289,7 @@ static void _Update(Item* it) {
 
 - (id)_createItemWithClass:(Class)itemClass {
     NSParameterAssert(itemClass);
-    Item* view = Cast<Item>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
+    Item* view = Toastbox::Cast<Item*>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
     assert(view);
     return view;
 }
@@ -1365,10 +1366,10 @@ static void _Update(Item* it) {
     const CGPoint p = [_outlineView convertPoint:[event locationInWindow] fromView:nil];
     const NSInteger row = [_outlineView rowAtPoint:p];
     if (row < 0) return;
-    Item*const it = CastOrNil<Item>([_outlineView itemAtRow:row]);
+    Item*const it = Toastbox::CastOrNull<Item*>([_outlineView itemAtRow:row]);
     if (!it) return;
-    Item_Section* sec = CastOrNil<Item_Section>(it);
-    if (!sec) sec = CastOrNil<Item_Section>(it->section);
+    Item_Section* sec = Toastbox::CastOrNull<Item_Section*>(it);
+    if (!sec) sec = Toastbox::CastOrNull<Item_Section*>(it->section);
     // Don't allow root item to be mouse section (otherwise all sections become the mouse section)
     if (sec == _rootItem) sec = nil;
     [self _setMouseSection:sec];
@@ -1396,7 +1397,7 @@ static void _Update(Item* it) {
     if (!_rootItem) return 0;
     if (!item) item = _rootItem;
     
-    if (auto it = CastOrNil<Item_Section>(item)) {
+    if (auto it = Toastbox::CastOrNull<Item_Section*>(item)) {
         return [it items].size();
     
     } else {
@@ -1408,7 +1409,7 @@ static void _Update(Item* it) {
     if (!_rootItem) return 0;
     if (!item) item = _rootItem;
     
-    if (auto it = CastOrNil<Item_Section>(item)) {
+    if (auto it = Toastbox::CastOrNull<Item_Section*>(item)) {
         return [it items].at(index);
     
     } else {
@@ -1417,7 +1418,7 @@ static void _Update(Item* it) {
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView isItemExpandable:(id)item {
-    if (auto it = CastOrNil<Item_Section>(item)) {
+    if (auto it = Toastbox::CastOrNull<Item_Section*>(item)) {
         return true;
     }
     return false;
@@ -1432,7 +1433,7 @@ static void _Update(Item* it) {
 }
 
 - (NSTableRowView*)outlineView:(NSOutlineView*)outlineView rowViewForItem:(id)item {
-    auto it = CastOrNil<Item>(item);
+    auto it = Toastbox::CastOrNull<Item*>(item);
     if (it->darkBackground) {
         return [_outlineView makeViewWithIdentifier:NSStringFromClass([InspectorView_DarkRowView class]) owner:nil];
     }
@@ -1440,7 +1441,7 @@ static void _Update(Item* it) {
 }
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
-    [Cast<Item>(item) updateView];
+    [Toastbox::Cast<Item*>(item) updateView];
     return item;
 }
 

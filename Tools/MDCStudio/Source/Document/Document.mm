@@ -416,13 +416,13 @@ using namespace MDCStudio;
             auto lock = std::unique_lock(imageLibrary);
             if (imageLibrary.empty()) return false;
             
-            const auto find = imageLibrary.find(rec);
-            if (find == imageLibrary.end()) return false;
-            
             const auto begin = ImageLibrary::BeginSorted(imageLibrary, sortNewestFirst);
             const auto end = ImageLibrary::EndSorted(imageLibrary, sortNewestFirst);
-            const ssize_t deltaMin = std::distance(find, begin);
-            const ssize_t deltaMax = std::distance(find, std::prev(end));
+            const auto find = ImageLibrary::Find(begin, end, rec);
+            if (find == end) return false;
+            
+            const ssize_t deltaMin = find-begin;
+            const ssize_t deltaMax = find-std::prev(end);
             if (delta<deltaMin || delta>deltaMax) return false;
             
             imageRecord = *(find+delta);
