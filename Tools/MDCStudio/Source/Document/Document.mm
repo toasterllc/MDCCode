@@ -421,8 +421,8 @@ using namespace MDCStudio;
             const auto find = ImageLibrary::Find(begin, end, rec);
             if (find == end) return false;
             
-            const ssize_t deltaMin = find-begin;
-            const ssize_t deltaMax = find-std::prev(end);
+            const ssize_t deltaMin = begin-find;
+            const ssize_t deltaMax = std::prev(end)-find;
             if (delta<deltaMin || delta>deltaMax) return false;
             
             imageRecord = *(find+delta);
