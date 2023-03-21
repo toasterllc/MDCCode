@@ -987,6 +987,7 @@ private:
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
         _SDWorkQueue queues[(size_t)_Priority::Count];
+        Toastbox::LRU<_SDRegion,std::unique_ptr<uint8_t[]>> cache;
     } _sdRead;
     
     struct {

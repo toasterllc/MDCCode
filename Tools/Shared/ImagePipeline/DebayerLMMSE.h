@@ -249,4 +249,4 @@ public:
     }
 };
 
-}; // namespace MDCTools::ImagePipeline
+} // namespace MDCTools::ImagePipeline

@@ -23,4 +23,4 @@ private:
     static const uint64_t _BVals[4096];
 };
 
-}; // namespace MDCTools::ImagePipeline
+} // namespace MDCTools::ImagePipeline
