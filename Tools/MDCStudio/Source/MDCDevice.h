@@ -537,17 +537,10 @@ private:
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
         
-        // WriteIntervalThumbCount: the number of loaded thumbnails after which we'll write the ImageLibrary to disk
-        constexpr size_t WriteIntervalThumbCount = 256;
+        // WriteIntervalCount: write the library after this threshold of operations
+        constexpr size_t WriteIntervalCount = 256;
         
         const auto timeStart = std::chrono::steady_clock::now();
-        
-        // Reset each work
-        // This is necessary because our loop below interprets _SDWork.state.ops as the _SDReadOps from its
-        // previous iteration, so _SDWork.state.ops needs to start off empty for correct operation.
-        for (_SDWork& work : state.works) {
-            work.state = {};
-        }
         
 //        if (initial) {
 //            auto lock = std::unique_lock(_imageLibrary);
@@ -621,7 +614,7 @@ private:
             if (initial) {
                 auto lock = std::unique_lock(_imageLibrary);
                 writeCount += work.state.ops.size();
-                if (writeCount >= WriteIntervalThumbCount) {
+                if (writeCount >= WriteIntervalCount) {
                     printf("[_loadImages] Write library (writeCount: %ju)\n", (uintmax_t)writeCount);
                     writeCount = 0;
                     _imageLibrary.write();
