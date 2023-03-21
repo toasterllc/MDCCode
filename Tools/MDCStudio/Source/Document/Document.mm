@@ -82,10 +82,15 @@ using namespace MDCStudio;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
+    NSLog(@"[Document] validateMenuItem: %@\n", [item title]);
     if ([item action] == @selector(saveDocument:)) {
         return false;
+    } else if ([item action] == @selector(_sortNewestFirst:)) {
+        [item setState:(_prefs.sortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+    } else if ([item action] == @selector(_sortOldestFirst:)) {
+        [item setState:(!_prefs.sortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     }
-    return true;
+    return [super validateMenuItem:item];
 }
 
 - (NSString*)windowNibName {
@@ -211,6 +216,10 @@ using namespace MDCStudio;
 
 
 
+static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* view) {
+    [view setSortNewestFirst:prefs.sortNewestFirst()];
+}
+
 
 
 
@@ -238,6 +247,7 @@ using namespace MDCStudio;
     if (imageSource) {
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [imageGridView setDelegate:self];
+        _UpdateImageGridViewFromPrefs(_prefs, imageGridView);
         
         [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
         [self setInspectorView:[[InspectorView alloc] initWithImageSource:imageSource]];
@@ -398,7 +408,7 @@ using namespace MDCStudio;
     NSLog(@"prefs changed");
     if (auto x = Toastbox::CastOrNull<ImageGridScrollView*>(_centerView)) {
         auto v = Toastbox::Cast<ImageGridView*>([x document]);
-        [v setSortNewestFirst:_prefs.sortNewestFirst()];
+        _UpdateImageGridViewFromPrefs(_prefs, v);
     }
 }
 
@@ -482,6 +492,17 @@ using namespace MDCStudio;
 
 - (BOOL)splitView:(NSSplitView*)splitView canCollapseSubview:(NSView*)subview {
     return true;
+}
+
+// MARK: - Menu Actions
+- (IBAction)_sortNewestFirst:(id)sender {
+    NSLog(@"_sortNewestFirst");
+    _prefs.sortNewestFirst(true);
+}
+
+- (IBAction)_sortOldestFirst:(id)sender {
+    NSLog(@"_sortOldestFirst");
+    _prefs.sortNewestFirst(false);
 }
 
 @end

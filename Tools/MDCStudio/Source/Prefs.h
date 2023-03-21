@@ -26,7 +26,7 @@ public:
 //    };
     
     bool _sortNewestFirst           = _get("SortNewestFirst", true);
-    bool sortNewestFirst()          { return _sortNewestFirst; }
+    bool sortNewestFirst() const    { return _sortNewestFirst; }
     void sortNewestFirst(bool x)    { _set("SortNewestFirst", _sortNewestFirst, x); }
     
     void observerAdd(Observer&& observer) {

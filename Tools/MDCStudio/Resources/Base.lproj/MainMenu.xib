@@ -640,6 +640,26 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="r2t-gp-ECe"/>
+                            <menuItem title="Sort By" id="Qmp-iy-0Kg">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Sort By" id="uAA-Am-dP3">
+                                    <items>
+                                        <menuItem title="Newest First" id="F0d-1V-SEs">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="_sortNewestFirst:" target="-1" id="NEL-ty-uE0"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Oldest First" id="0Ot-h5-h8a">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="_sortOldestFirst:" target="-1" id="6XB-p1-miQ"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="u1Q-F0-yZc"/>
                             <menuItem title="Show Sidebar" keyEquivalent="s" id="kIP-vf-haE">
                                 <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                 <connections>
