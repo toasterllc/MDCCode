@@ -23,8 +23,6 @@ using namespace MDCStudio;
     
     NSView* _inspectorContainerView;
     InspectorView* _inspectorView;
-    
-    Prefs _prefs;
 }
 
 + (BOOL)autosavesInPlace {
@@ -73,7 +71,7 @@ using namespace MDCStudio;
     [self sourceListViewSelectionChanged:_sourceListView];
     
     __weak auto selfWeak = self;
-    _prefs.observerAdd([=] () {
+    PrefsGlobal().observerAdd([=] () {
         auto selfStrong = selfWeak;
         if (!selfStrong) return false;
         [selfStrong _prefsChanged];
@@ -86,9 +84,9 @@ using namespace MDCStudio;
     if ([item action] == @selector(saveDocument:)) {
         return false;
     } else if ([item action] == @selector(_sortNewestFirst:)) {
-        [item setState:(_prefs.sortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        [item setState:(PrefsGlobal().sortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     } else if ([item action] == @selector(_sortOldestFirst:)) {
-        [item setState:(!_prefs.sortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        [item setState:(!PrefsGlobal().sortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     }
     return [super validateMenuItem:item];
 }
@@ -247,7 +245,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     if (imageSource) {
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [imageGridView setDelegate:self];
-        _UpdateImageGridViewFromPrefs(_prefs, imageGridView);
+        _UpdateImageGridViewFromPrefs(PrefsGlobal(), imageGridView);
         
         [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
         [self setInspectorView:[[InspectorView alloc] initWithImageSource:imageSource]];
@@ -408,13 +406,13 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     NSLog(@"prefs changed");
     if (auto x = Toastbox::CastOrNull<ImageGridScrollView*>(_centerView)) {
         auto v = Toastbox::Cast<ImageGridView*>([x document]);
-        _UpdateImageGridViewFromPrefs(_prefs, v);
+        _UpdateImageGridViewFromPrefs(PrefsGlobal(), v);
     }
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id
 - (bool)_openImage:(ImageRecordPtr)rec delta:(ssize_t)delta {
-    const bool sortNewestFirst = _prefs.sortNewestFirst();
+    const bool sortNewestFirst = PrefsGlobal().sortNewestFirst();
     
     ImageSourcePtr imageSource = [_sourceListView selection];
     if (!imageSource) return false;
@@ -497,12 +495,12 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 // MARK: - Menu Actions
 - (IBAction)_sortNewestFirst:(id)sender {
     NSLog(@"_sortNewestFirst");
-    _prefs.sortNewestFirst(true);
+    PrefsGlobal().sortNewestFirst(true);
 }
 
 - (IBAction)_sortOldestFirst:(id)sender {
     NSLog(@"_sortOldestFirst");
-    _prefs.sortNewestFirst(false);
+    PrefsGlobal().sortNewestFirst(false);
 }
 
 @end
