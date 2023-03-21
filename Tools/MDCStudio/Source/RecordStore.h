@@ -320,6 +320,18 @@ public:
 //        return it;
 //    }
     
+    template<typename T, bool T_Ascending=true>
+    T Find(T begin, T end, const RecordRef& ref) const {
+        T it = std::lower_bound(begin, end, 0,
+            [&](const RecordRef& sample, auto) -> bool {
+                return (T_Ascending ? sample<ref : sample>ref);
+            });
+        
+        if (it == end) return end;
+        if (*it != ref) return end;
+        return it;
+    }
+    
     // FindChunkBegin(): finds the iterator for the beginning of iter's chunk
     template<typename T>
     static T FindChunkBegin(T begin, T iter) {
@@ -444,16 +456,16 @@ public:
     
     bool empty() const { return _state.recordRefs.empty(); }
     
-    RecordRefConstIter find(const RecordRef& ref) const {
-        RecordRefConstIter it = std::lower_bound(begin(), end(), 0,
-            [&](const RecordRef& sample, auto) -> bool {
-                return sample < ref;
-            });
-        
-        if (it == end()) return end();
-        if (*it != ref) return end();
-        return it;
-    }
+//    RecordRefConstIter find(const RecordRef& ref) const {
+//        RecordRefConstIter it = std::lower_bound(begin(), end(), 0,
+//            [&](const RecordRef& sample, auto) -> bool {
+//                return sample < ref;
+//            });
+//        
+//        if (it == end()) return end();
+//        if (*it != ref) return end();
+//        return it;
+//    }
     
     const RecordRef& front() const              { return _state.recordRefs.front(); }
     const RecordRef& back() const               { return _state.recordRefs.back(); }
