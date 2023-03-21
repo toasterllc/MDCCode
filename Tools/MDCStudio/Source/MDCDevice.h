@@ -10,6 +10,7 @@
 #import "Toastbox/Queue.h"
 #import "Toastbox/Math.h"
 #import "Toastbox/Signal.h"
+#import "Toastbox/LRU.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/TimeConvert.h"
 #import "Code/Shared/MSP.h"
@@ -248,23 +249,29 @@ private:
         } state;
     };
     
-    struct _SDReadOp {
+    struct _SDRegion {
         _SDBlock block = 0;
-        size_t len = 0;
-        ImageRecordPtr rec;
-        const uint8_t* data = nullptr;
+        size_t len     = 0;
         
-        bool operator<(const _SDReadOp& x) const {
+        bool operator<(const _SDRegion& x) const {
             if (block != x.block) return block < x.block;
             if (len != x.len) return len < x.len;
             return false;
         }
         
-        bool operator==(const _SDReadOp& x) const {
+        bool operator==(const _SDRegion& x) const {
             if (block != x.block) return false;
             if (len != x.len) return false;
             return true;
         }
+    };
+    
+    struct _SDReadOp {
+        _SDRegion region;
+        ImageRecordPtr rec;
+        const uint8_t* data = nullptr;
+        bool operator<(const _SDReadOp& x) const { return region < x.region; }
+        bool operator==(const _SDReadOp& x) const { return region == x.region; }
     };
     
     using _SDWorkQueue = std::queue<_SDWork*>;
@@ -428,8 +435,10 @@ private:
         auto work = std::make_unique<_SDWork>();
         work->state = {
             .ops = {_SDReadOp{
-                .block = addr,
-                .len = Img::Full::ImageLen,
+                .region = {
+                    .block = addr,
+                    .len = Img::Full::ImageLen,
+                },
             }},
             .read = {
                 .callback = [&] {
@@ -588,8 +597,10 @@ private:
                     // Bail if we hit a _SDReadOp that would put us over the capacity of work.buffer
                     if (span > sizeof(work.buffer)) break;
                     work.state.ops.push_back(_SDReadOp{
-                        .block = blockBegin,
-                        .len = ImgSD::Thumb::ImagePaddedLen,
+                        .region = {
+                            .block = blockBegin,
+                            .len = ImgSD::Thumb::ImagePaddedLen,
+                        },
                         .rec = rec,
                     });
                 }
@@ -770,9 +781,9 @@ private:
         assert(!work.state.ops.empty());
         
         // Read the data from the device
-        const _SDBlock blockBegin = work.state.ops.front().block;
+        const _SDBlock blockBegin = work.state.ops.front().region.block;
         {
-            const _SDBlock blockEnd = _SDBlockEnd(work.state.ops.back().block, work.state.ops.back().len);
+            const _SDBlock blockEnd = _SDBlockEnd(work.state.ops.back().region.block, work.state.ops.back().region.len);
             const size_t len = (size_t)SD::BlockLen * (size_t)(blockEnd-blockBegin);
             assert(len <= sizeof(work.buffer));
             
@@ -796,7 +807,7 @@ private:
         // Update each _SDReadOp with its data address
         {
             for (_SDReadOp& op : work.state.ops) {
-                const size_t off = (size_t)SD::BlockLen * (size_t)(op.block-blockBegin);
+                const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
                 op.data = work.buffer + off;
             }
         }
