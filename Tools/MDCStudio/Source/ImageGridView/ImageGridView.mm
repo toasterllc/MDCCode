@@ -221,8 +221,8 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         return it->val;
     }
     
-    const auto chunkBegin = ImageLibrary::FindChunkBegin([self _begin], iter);
-    const auto chunkEnd = ImageLibrary::FindChunkEnd([self _end], iter);
+    const auto chunkBegin = ImageLibrary::FindChunkBegin(ImageLibrary::BeginSorted(*_imageLibrary), iter);
+    const auto chunkEnd = ImageLibrary::FindChunkEnd(ImageLibrary::EndSorted(*_imageLibrary), iter);
     assert(chunkBegin != chunkEnd);
     
     auto startTime = std::chrono::steady_clock::now();
@@ -298,8 +298,8 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    ImageRecordAnyIter begin = [self _begin];
-    ImageRecordAnyIter end = [self _end];
+    ImageRecordAnyIter begin = ImageLibrary::BeginSorted(*_imageLibrary);
+    ImageRecordAnyIter end = ImageLibrary::EndSorted(*_imageLibrary);
     
     const auto visibleBegin = begin+indexRange.start;
     const auto visibleEnd = begin+indexRange.start+indexRange.count;
@@ -389,7 +389,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     auto lock = std::unique_lock(*_imageLibrary);
     const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, [self contentsScale]));
     ImageSet images;
-    auto begin = [self _begin];
+    auto begin = ImageLibrary::BeginSorted(*_imageLibrary);
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
@@ -444,6 +444,7 @@ struct SelectionDelta {
     {
         auto lock = std::unique_lock(*_imageLibrary);
         
+        auto begin = ImageLibrary::BeginSorted(*_imageLibrary);
         const size_t imgCount = _imageLibrary->recordCount();
         if (!imgCount) return std::nullopt;
         
@@ -454,7 +455,12 @@ struct SelectionDelta {
                 return std::nullopt;
             }
             
-            const size_t idx = std::abs(&*it - &*[self _begin]);
+            // idx: the grid index of `it`. We can't just subtract with `it-begin` because the types
+            // don't match (`it` is a forward iterator, `begin` is an AnyIter containing either a
+            // forward or reverse iterator, depending on our current the sort order.) So instead we
+            // do pointer subtraction and find the absolute value, which will work regardless of
+            // whether `begin` is a forward or reverse iterator.
+            const size_t idx = std::abs(&*it - &*begin);
             const size_t colCount = _grid.columnCount();
             const size_t rem = (imgCount % colCount);
             const size_t lastRowCount = (rem ? rem : colCount);
@@ -501,7 +507,7 @@ struct SelectionDelta {
         }
         
     //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-        newImg = *([self _begin]+newIdx);
+        newImg = *(begin+newIdx);
     }
     
     if (!extend) selection.clear();

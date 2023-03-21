@@ -8,6 +8,7 @@
 #include "ImageOptions.h"
 #include "ImageThumb.h"
 #include "ImageUtil.h"
+#include "Prefs.h"
 
 namespace MDCStudio {
 
@@ -70,6 +71,16 @@ public:
     
     using Observer = std::function<bool(const Event& ev)>;
     
+    static Toastbox::AnyIter<RecordRefConstIter> BeginSorted(const ImageLibrary& lib) {
+        if (PrefsGlobal().sortNewestFirst()) return lib.rbegin();
+        else                                 return lib.begin();
+    }
+    
+    static Toastbox::AnyIter<RecordRefConstIter> EndSorted(const ImageLibrary& lib) {
+        if (PrefsGlobal().sortNewestFirst()) return lib.rend();
+        else                                 return lib.end();
+    }
+    
     void read() {
         // Reset our state, as RecordStore::read() does
         _state = {};
@@ -122,24 +133,24 @@ public:
         notify(ev);
     }
     
-    bool sortNewest() const {
-        return _sortNewest;
-    }
-    
-    void sortNewest(bool x) {
-        _sortNewest = x;
-        notifyChange({});
-    }
-    
-    Toastbox::AnyIter<RecordRefConstIter> beginSorted() const {
-        if (_sortNewest) return rbegin();
-        else             return begin();
-    }
-    
-    Toastbox::AnyIter<RecordRefConstIter> endSorted() const {
-        if (_sortNewest) return rbegin();
-        else             return begin();
-    }
+//    bool sortNewest() const {
+//        return _sortNewest;
+//    }
+//    
+//    void sortNewest(bool x) {
+//        _sortNewest = x;
+//        notifyChange({});
+//    }
+//    
+//    Toastbox::AnyIter<RecordRefConstIter> beginSorted() const {
+//        if (_sortNewest) return rbegin();
+//        else             return begin();
+//    }
+//    
+//    Toastbox::AnyIter<RecordRefConstIter> endSorted() const {
+//        if (_sortNewest) return rbegin();
+//        else             return begin();
+//    }
     
 //    RecordRefConstIter find(Img::Id id) {
 //        RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,

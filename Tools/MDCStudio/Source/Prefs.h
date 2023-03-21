@@ -78,4 +78,9 @@ private:
     std::forward_list<Observer> _observers;
 };
 
+inline Prefs& PrefsGlobal() {
+    static Prefs x;
+    return x;
+}
+
 } // namespace MDCStudio
