@@ -298,21 +298,21 @@ private:
         _ThumbBuffer buf;
         _WorkCallback callback;
         
-        bool operator<(const _RenderWork& x) const {
-            if (initial != x.initial) return initial < x.initial;
-            if (rec != x.rec) return rec < x.rec;
-            if (buf != x.buf) return buf < x.buf;
-            return false;
-        }
-        
-        bool operator==(const _RenderWork& x) const {
-            if (initial != x.initial) return false;
-            if (rec != x.rec) return false;
-            if (buf != x.buf) return false;
-            return true;
-        }
-        
-        bool operator!=(const _RenderWork& x) const { return !(*this == x); }
+//        bool operator<(const _RenderWork& x) const {
+//            if (initial != x.initial) return initial < x.initial;
+//            if (rec != x.rec) return rec < x.rec;
+//            if (buf != x.buf) return buf < x.buf;
+//            return false;
+//        }
+//        
+//        bool operator==(const _RenderWork& x) const {
+//            if (initial != x.initial) return false;
+//            if (rec != x.rec) return false;
+//            if (buf != x.buf) return false;
+//            return true;
+//        }
+//        
+//        bool operator!=(const _RenderWork& x) const { return !(*this == x); }
     };
     
     struct _SDReadOp {
@@ -324,16 +324,17 @@ private:
     };
     
     using _SDReadWorkQueue = std::set<_SDReadWork>;
-    using _RenderWorkQueue = std::set<_RenderWork>;
+    using _RenderWorkQueue = std::queue<_RenderWork>;
     
     struct _LoadImagesState {
-        std::mutex lock; // Protects this struct
+        Toastbox::Signal signal; // Protects this struct
         _ThumbPool pool;
         Toastbox::LRU<_SDRegion,_ThumbBuffer> cache;
         struct {
             Toastbox::Atomic<size_t> count = 0;
             std::set<ImageRecordPtr> notify;
         } render;
+        Toastbox::Atomic<size_t> underway;
     };
     
     static int _ThreadCount() {
@@ -553,7 +554,7 @@ private:
     void _readCompleteCallback(_LoadImagesState& state, _SDRegion region, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
         // Insert buffer into our cache
         {
-            auto lock = std::unique_lock(state.lock);
+            auto lock = state.signal.lock();
             state.cache[region] = buf;
         }
         
@@ -622,6 +623,9 @@ private:
             _imageLibrary.notifyChange({ rec });
         }
         
+        size_t count = --state.underway;
+        if (!count) state.signal.signalOne();
+        
         
 //        // Announce that `work` is done
 //        {
@@ -638,7 +642,7 @@ private:
         {
             auto lock = _thumbRender.signal.lock();
             assert(buf);
-            _thumbRender.queue.insert(_RenderWork{
+            _thumbRender.queue.push(_RenderWork{
                 .initial = initial,
                 .rec = rec,
                 .buf = std::move(buf),
@@ -652,21 +656,21 @@ private:
     
     
     
-    void _renderEnqueueNoSignal(_LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
-        state.render.count++;
-        
-        // Enqueue _RenderWork into _thumbRender.queue
-        {
-            auto lock = _thumbRender.signal.lock();
-            assert(buf);
-            _thumbRender.queue.insert(_RenderWork{
-                .initial = initial,
-                .rec = rec,
-                .buf = std::move(buf),
-                .callback = [=, &state] { _renderCompleteCallback(state, rec); },
-            });
-        }
-    }
+//    void _renderEnqueueNoSignal(_LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
+//        state.render.count++;
+//        
+//        // Enqueue _RenderWork into _thumbRender.queue
+//        {
+//            auto lock = _thumbRender.signal.lock();
+//            assert(buf);
+//            _thumbRender.queue.insert(_RenderWork{
+//                .initial = initial,
+//                .rec = rec,
+//                .buf = std::move(buf),
+//                .callback = [=, &state] { _renderCompleteCallback(state, rec); },
+//            });
+//        }
+//    }
     
     
     
@@ -674,6 +678,7 @@ private:
         bool initial, std::set<ImageRecordPtr> recs) {
         
         // Kick off rendering for all the recs that are in our cache
+        #warning TODO: hold _thumbRender.signal.lock() for the duration of this loop
         for (auto it=recs.begin(); it!=recs.end();) {
             const ImageRecordPtr& rec = *it;
             const _SDRegion region = {
@@ -683,20 +688,19 @@ private:
             
             // If the thumbnail is in our cache (state.cache), kick off rendering
             {
-                auto lock = std::unique_lock(state.lock);
+                auto lock = state.signal.lock();
                 auto find = state.cache.find(region);
                 if (find != state.cache.end()) {
                     _ThumbBuffer buf = find->val;
-                    _renderEnqueueNoSignal(state, initial, rec, std::move(buf));
+                    _renderEnqueue(state, initial, rec, std::move(buf));
                     it = recs.erase(it);
+                    state.underway++;
                     continue;
                 }
             }
             
             it++;
         }
-        
-        _thumbRender.signal.signalAll();
         
         // The remaining recs aren't in our cache, so kick of SD reading + rendering
         for (auto it=recs.rbegin(); it!=recs.rend(); it++) {
@@ -714,17 +718,21 @@ private:
                 {
                     auto lock = _sdRead.signal.lock();
                     _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
-                    queue.insert(_SDReadWork{
+                    auto [_,ok] = queue.insert(_SDReadWork{
                         .region = region,
                         .buf = buf,
                         .callback = [=, &state] { _readCompleteCallback(state, region, initial, rec, buf); },
                     });
+                    assert(ok);
                 }
                 
                 #warning TODO: only signal after we've enqueued some number of _SDReadWork's
                 _sdRead.signal.signalOne();
             }
+            state.underway++;
         }
+        
+        state.signal.wait([&] { return !state.underway; });
         
 //        // Print profile stats
 //        {
@@ -966,11 +974,13 @@ private:
                 _RenderWork work;
                 {
                     auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.queue.empty(); });
-                    const size_t idx = rand() % _thumbRender.queue.size();
-                    auto it = _thumbRender.queue.begin();
-                    std::advance(it,idx);
-                    work = *it;
-                    _thumbRender.queue.erase(it);
+//                    const size_t idx = rand() % _thumbRender.queue.size();
+//                    auto it = _thumbRender.queue.begin();
+//                    std::advance(it,idx);
+//                    work = *it;
+//                    _thumbRender.queue.erase(it);
+                    work = _thumbRender.queue.front();
+                    _thumbRender.queue.pop();
                 }
                 
                 ImageRecord& rec = *work.rec;
