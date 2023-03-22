@@ -788,9 +788,21 @@ private:
                     .len = ImgSD::Thumb::ImagePaddedLen,
                 };
                 
-                #warning TODO: if work has ops and we're about to wait, enqueue the work so we don't hold up the existing ops waiting for a buffer
-                #warning TODO: implement waiting on state.pool if the pool is empty
-                _ThumbBuffer buf = _thumbCache.pop();
+                _ThumbBuffer buf;
+                {
+                    auto lock = _thumbCache.lock();
+                    if (!_thumbCache.sizeFree(lock)) {
+                        _thumbCache.evict(lock);
+                        if (!work.ops.empty()) {
+                            break;
+                        }
+                    }
+                    buf = _thumbCache.pop(lock);
+                }
+                
+//                #warning TODO: if work has ops and we're about to wait, enqueue the work so we don't hold up the existing ops waiting for a buffer
+//                #warning TODO: implement waiting on state.pool if the pool is empty
+//                _ThumbBuffer buf = _thumbCache.pop();
                 
                 work.ops.insert(_SDReadOp{
                     .region = region,
@@ -821,13 +833,11 @@ private:
             assert(!work.ops.empty());
             
             {
-                {
-                    auto lock = _sdRead.signal.lock();
-                    _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
-                    queue.push(std::move(work));
-                }
-                _sdRead.signal.signalOne();
+                auto lock = _sdRead.signal.lock();
+                _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
+                queue.push(std::move(work));
             }
+            _sdRead.signal.signalOne();
         }
         
         state.signal.wait([&] { return !state.underway; });
@@ -1026,6 +1036,7 @@ private:
         assert(len <= sizeof(_sdRead.buffer));
         
         {
+            printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
             auto lock = std::unique_lock(_dev);
             _dev.reset();
             // Verify that blockBegin can be safely cast to SD::Block

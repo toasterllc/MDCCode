@@ -28,11 +28,6 @@ public:
     };
     
     Cache() {
-//        _count = count;
-//        _mem = std::make_unique<uint8_t[]>(count * T_BufSize);
-//        for (size_t i=0; i<count; i++) {
-//            _free.push_back(_mem.get() + (i*T_BufSize));
-//        }
         for (size_t i=0; i<T_Cap;i++) {
             _free.list.push_back(i);
         }
@@ -72,6 +67,45 @@ public:
         return Val(*this, idx);
     }
     
+    void evict(std::unique_lock<std::mutex>& lock) {
+        assert(lock);
+        _cache.lru.evict();
+    }
+    
+    size_t size(std::unique_lock<std::mutex>& lock) const {
+        assert(lock);
+        return _cache.lru.size();
+    }
+    
+    size_t sizeFree(std::unique_lock<std::mutex>& lock) {
+        // We need `lock` to be held to prevent removals from the free-list, so that our
+        // return value indicates the minimum free list size as long as the lock is held.
+        // We still need to acquire _free.signal.lock() though to safely access _free.list.
+        assert(lock);
+        auto l = _free.signal.lock();
+        return _free.list.size();
+    }
+    
+//    Wrapper pop() {
+//        auto lock = _free.signal.lock();
+//        for (;;) {
+//            if (!_free.list.empty()) {
+//                const size_t idx = _free.list.back();
+//                _free.list.pop_back();
+//                return Wrapper(*this, idx);
+//            }
+//            lock.unlock();
+//            
+//            {
+//                auto lock = std::unique_lock(_cache.lock);
+//                _cache.lru.evict();
+//            }
+//            
+//            lock.lock();
+//            _free.signal.wait(lock, [&] { return !_free.list.empty(); });
+//        }
+//    }
+    
     Val get(const T_Key& key) {
         auto l = lock();
         return get(l, key);
@@ -85,6 +119,21 @@ public:
     Val pop() {
         auto l = lock();
         return pop(l);
+    }
+    
+    void evict() {
+        auto l = lock();
+        return evict(l);
+    }
+    
+    size_t size() {
+        auto l = lock();
+        return size(l);
+    }
+    
+    size_t sizeFree() {
+        auto l = lock();
+        return sizeFree(l);
     }
     
     void _recycle(size_t idx) {
