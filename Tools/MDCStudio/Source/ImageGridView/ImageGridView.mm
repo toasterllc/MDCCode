@@ -217,7 +217,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     // If we already have a _ChunkTexture for the iter's chunk, return it.
     // Otherwise we need to create it.
     const ImageLibrary::ChunkStrongRef chunk = iter->chunkRef();
-    const auto it = _chunkTxts.get(chunk);
+    const auto it = _chunkTxts.find(chunk);
     if (it != _chunkTxts.end()) {
         return it->val;
     }
@@ -566,7 +566,7 @@ struct SelectionDelta {
     // If we added records or changed records, we need to update the relevent textures
     if (ev.type==ImageLibrary::Event::Type::Add || ev.type==ImageLibrary::Event::Type::Change) {
         for (const ImageRecordPtr& rec : ev.records) {
-            auto it = _chunkTxts.get(rec);
+            auto it = _chunkTxts.find(rec);
             if (it == _chunkTxts.end()) continue;
             _ChunkTexture& ct = it->val;
             _ChunkTextureUpdateSlice(ct, rec);

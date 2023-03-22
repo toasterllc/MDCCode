@@ -780,11 +780,36 @@ private:
     void _sdRead_handleWork(_SDWork& work) {
         assert(!work.state.ops.empty());
         
-        // Read the data from the device
         const _SDBlock blockBegin = work.state.ops.front().region.block;
-        {
-            const _SDBlock blockEnd = _SDBlockEnd(work.state.ops.back().region.block, work.state.ops.back().region.len);
-            const size_t len = (size_t)SD::BlockLen * (size_t)(blockEnd-blockBegin);
+        const _SDBlock blockEnd = _SDBlockEnd(work.state.ops.back().region.block, work.state.ops.back().region.len);
+        
+        auto readBegin = work.state.ops.end();
+        auto readEnd   = work.state.ops.end();
+        
+        for (auto it=work.state.ops.begin(); it!=work.state.ops.end(); it++) {
+            auto find = _sdRead.cache.find(it->region);
+            if (find == _sdRead.cache.end()) {
+                if (readBegin == work.state.ops.end()) readBegin = it;
+                readEnd = std::next(it);
+            }
+        }
+        
+//        for (_SDReadOp& op : work.state.ops) {
+//            auto it = _sdRead.cache.find(op.region);
+//            if (it == _sdRead.cache.end()) {
+//                if (!readBlockBegin) readBlockBegin = op.region.block;
+//                readBlockEnd = _SDBlockEnd(op.region.block, op.region.len);
+//            }
+//        }
+        
+        // Read the data from the device
+        if (readBegin != readEnd) {
+            const _SDReadOp& readFront = *readBegin;
+            const _SDReadOp& readBack = *std::prev(readEnd);
+            const _SDBlock readBlockBegin = readFront.region.block;
+            const _SDBlock readBlockEnd = _SDBlockEnd(readBack.region.block, readBack.region.len);
+            const size_t off = (size_t)SD::BlockLen * (size_t)(readBlockBegin-blockBegin);
+            const size_t len = (size_t)SD::BlockLen * (size_t)(readBlockEnd-readBlockBegin);
             assert(len <= sizeof(work.buffer));
             
             const auto timeStart = std::chrono::steady_clock::now();
@@ -792,16 +817,48 @@ private:
                 auto lock = std::unique_lock(_dev);
                 _dev.reset();
                 // Verify that blockBegin can be safely cast to SD::Block
-                assert(std::numeric_limits<SD::Block>::max() >= blockBegin);
-                _dev.sdRead((SD::Block)blockBegin);
-                _dev.readout(work.buffer, len);
+                assert(std::numeric_limits<SD::Block>::max() >= readBlockBegin);
+                _dev.sdRead((SD::Block)readBlockBegin);
+                _dev.readout(work.buffer+off, len);
+            }
+            
+            // Copy data from work buffer -> cache
+            for (auto it=readBegin; it!=readEnd; it++) {
+                const _SDReadOp& op = *it;
+                const size_t len = op.region.len;
+                const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
+                auto data = std::make_unique<uint8_t[]>(len);
+                memcpy(data.get(), work.buffer+off, len);
+                _sdRead.cache.insert(op.region, std::move(data));
             }
             
             const std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-timeStart);
             const double throughputMBPerSec = ((double)(len * 1000) / (duration.count() * 1024*1024));
             printf("[_sdRead_handleWork] Read [%ju,%ju) took %ju ms (avg: %f ms / op, throughput: %.1f MB/sec)\n",
-                (uintmax_t)blockBegin, (uintmax_t)blockEnd, (uintmax_t)duration.count(),
+                (uintmax_t)readBlockBegin, (uintmax_t)readBlockEnd, (uintmax_t)duration.count(),
                 ((double)duration.count()/work.state.ops.size()), throughputMBPerSec);
+        }
+        
+        // Copy data from cache -> work buffer (left region)
+        for (auto it=work.state.ops.begin(); it!=readBegin; it++) {
+            const _SDReadOp& op = *it;
+            const size_t len = op.region.len;
+            const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
+            auto find = _sdRead.cache.find(op.region);
+            assert(find != _sdRead.cache.end());
+            const auto& data = find->val;
+            memcpy(work.buffer+off, data.get(), len);
+        }
+        
+        // Copy data from cache -> work buffer (right region)
+        for (auto it=readEnd; it!=work.state.ops.end(); it++) {
+            const _SDReadOp& op = *it;
+            const size_t len = op.region.len;
+            const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
+            auto find = _sdRead.cache.find(op.region);
+            assert(find != _sdRead.cache.end());
+            const auto& data = find->val;
+            memcpy(work.buffer+off, data.get(), len);
         }
         
         // Update each _SDReadOp with its data address
@@ -988,6 +1045,7 @@ private:
         std::thread thread;
         _SDWorkQueue queues[(size_t)_Priority::Count];
         Toastbox::LRU<_SDRegion,std::unique_ptr<uint8_t[]>> cache;
+        size_t cacheSize = 0;
     } _sdRead;
     
     struct {
