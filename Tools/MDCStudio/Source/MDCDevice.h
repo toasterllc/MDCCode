@@ -742,8 +742,9 @@ private:
         
         state.underway += recs.size();
         
-        // Kick off rendering for all the recs that are in our cache
+        // Kick off rendering for all the recs that are in the cache
         {
+            bool enqueued = false;
             {
                 auto lock = _thumbRender.signal.lock();
                 
@@ -758,6 +759,7 @@ private:
                     _ThumbBuffer buf = _cacheGet(region);
                     if (buf) {
                         _renderEnqueue(lock, state, initial, rec, std::move(buf));
+                        enqueued = true;
                         it = recs.erase(it);
                     
                     // Otherwise, on to the next one
@@ -768,7 +770,7 @@ private:
             }
             
             // Notify _thumbRender of more work
-            _thumbRender.signal.signalAll();
+            if (enqueued) _thumbRender.signal.signalAll();
         }
         
         // The remaining recs aren't in our cache, so kick of SD reading + rendering
@@ -784,6 +786,7 @@ private:
                     .len = ImgSD::Thumb::ImagePaddedLen,
                 };
                 
+                #warning TODO: if work has ops and we're about to wait, enqueue the work so we don't hold up the existing ops waiting for a buffer
                 #warning TODO: implement waiting on state.pool if the pool is empty
                 _ThumbBuffer buf = _thumbCache.pool.pop();
                 
