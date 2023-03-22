@@ -6,33 +6,20 @@ template<size_t T_BufSize>
 class BufferPool {
 public:
     using Pointer = uint8_t*;
+    
+    struct _Cookie {
+        _Cookie(BufferPool& pool, Pointer ptr) : pool(pool), ptr(ptr) {}
+        ~_Cookie() { pool._recycle(ptr); }
+        BufferPool& pool;
+        const Pointer ptr;
+    };
+    
     struct Buffer {
         Buffer() {}
-        Buffer(BufferPool& pool, Pointer ptr) : _state({.pool=&pool, .ptr=ptr}) {}
-        
-        // Copy
-        Buffer(const Buffer& x) = delete;
-        Buffer& operator=(const Buffer& x) = delete;
-        // Move
-        Buffer(Buffer&& x) { swap(x); }
-        Buffer& operator=(Buffer&& x) { swap(x); return *this; }
-        
-        ~Buffer() {
-            if (_state.pool) {
-                _state.pool->_recycle(_state.ptr);
-            }
-        }
-        
-        operator Pointer() const { return _state.data; }
-        
-        void swap(Buffer& x) {
-            std::swap(_state, x._state);
-        }
-        
-        struct {
-            BufferPool* pool = nullptr;
-            Pointer ptr = nullptr;
-        } _state;
+        Buffer(BufferPool& pool, Pointer ptr) : _ptr(ptr), _cookie(std::make_shared<_Cookie>(pool, ptr)) {}
+        operator Pointer() const { return _ptr; }
+        Pointer _ptr = nullptr;
+        std::shared_ptr<_Cookie> _cookie;
     };
     
     BufferPool(size_t count) {

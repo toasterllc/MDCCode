@@ -223,32 +223,35 @@ private:
     
     enum class _Priority : uint8_t { High, Low, Count };
     
-    using _SDWorkCallback = std::function<void()>;
+    using _WorkCallback = std::function<void()>;
     
-    struct _SDReadOp;
-    struct _SDWork {
-        static constexpr size_t BufferThumbCount = 128;
-        uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
-        
-        struct {
-            std::vector<_SDReadOp> ops; // Sorted by SD block
-            
-            struct {
-                _SDWorkCallback callback;
+//    struct _SDReadOp;
+//    struct _SDWork {
+//        static constexpr size_t BufferThumbCount = 128;
+//        uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
+//        
+//        struct {
+//            std::vector<_SDReadOp> ops; // Sorted by SD block
+//            
+//            struct {
+//                _SDWorkCallback callback;
+////                std::chrono::time_point<std::chrono::steady_clock> timeStart;
+////                std::chrono::time_point<std::chrono::steady_clock> timeEnd;
+//            } read;
+//            
+//            struct {
+//                bool initial = false;
+//                Toastbox::Atomic<size_t> idx = 0;
+//                Toastbox::Atomic<size_t> idxDone = 0;
+//                _SDWorkCallback callback;
 //                std::chrono::time_point<std::chrono::steady_clock> timeStart;
-//                std::chrono::time_point<std::chrono::steady_clock> timeEnd;
-            } read;
-            
-            struct {
-                bool initial = false;
-                Toastbox::Atomic<size_t> idx = 0;
-                Toastbox::Atomic<size_t> idxDone = 0;
-                _SDWorkCallback callback;
-                std::chrono::time_point<std::chrono::steady_clock> timeStart;
-//                std::chrono::time_point<std::chrono::steady_clock> timeEnd;
-            } render;
-        } state;
-    };
+////                std::chrono::time_point<std::chrono::steady_clock> timeEnd;
+//            } render;
+//        } state;
+//    };
+    
+    using _ThumbPool = BufferPool<ImgSD::Thumb::ImagePaddedLen>;
+    using _ThumbBuffer = _ThumbPool::Buffer;
     
     struct _SDRegion {
         _SDBlock block = 0;
@@ -267,6 +270,20 @@ private:
         }
     };
     
+    struct _SDReadWork {
+        _SDRegion region;
+        _ThumbBuffer buf;
+        _WorkCallback callback;
+        bool operator<(const _SDReadWork& x) const { return region < x.region; }
+        bool operator==(const _SDReadWork& x) const { return region == x.region; }
+    };
+    
+    struct _RenderWork {
+        bool initial = false;
+        _ThumbBuffer buf;
+        _WorkCallback callback;
+    };
+    
     struct _SDReadOp {
         _SDRegion region;
         ImageRecordPtr rec;
@@ -275,12 +292,13 @@ private:
         bool operator==(const _SDReadOp& x) const { return region == x.region; }
     };
     
-    using _SDWorkQueue = std::queue<_SDWork*>;
+    using _SDReadWorkQueue = std::set<_SDReadWork>;
+    using _RenderWorkQueue = std::queue<_RenderWork>;
     
     struct _LoadImagesState {
-        Toastbox::Signal signal;
-        std::vector<_SDWork> works;
-        std::set<_SDWork*> underway;
+        std::mutex lock; // Protects this struct
+        _ThumbPool pool;
+        Toastbox::LRU<_SDRegion,_ThumbBuffer> cache;
     };
     
     static int _ThreadCount() {
@@ -432,54 +450,55 @@ private:
     #warning TODO: add priority to this function
     #warning TODO: it'd be nice if we could avoid the memcpy by giving the buffer to _SDWork
     ImagePtr _imageForAddr(uint64_t addr) {
-        bool done = false;
-        auto work = std::make_unique<_SDWork>();
-        work->state = {
-            .ops = {_SDReadOp{
-                .region = {
-                    .block = addr,
-                    .len = Img::Full::ImageLen,
-                },
-            }},
-            .read = {
-                .callback = [&] {
-                    done = true;
-                    _imageForAddrSignal.signalAll();
-                },
-            },
-        };
-        
-        // Enqueue SD read
-        {
-            {
-                auto lock = _sdRead.signal.lock();
-                _SDWorkQueue& queue = _sdRead.queues[(size_t)_Priority::High];
-                queue.push(work.get());
-            }
-            _sdRead.signal.signalOne();
-        }
-        
-        _imageForAddrSignal.wait([&] { return done; });
-        
-        if (_ImageChecksumValid(work->buffer, Img::Size::Full)) {
-//                printf("Checksum valid (full-size)\n");
-        } else {
-            printf("Checksum INVALID (full-size)\n");
-//                abort();
-        }
-        
-        std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
-        memcpy(data.get(), work->buffer, Img::Full::ImageLen);
-        
-        const Img::Header& header = *(const Img::Header*)work->buffer;
-        ImagePtr image = std::make_shared<Image>(Image{
-            .width      = header.imageWidth,
-            .height     = header.imageHeight,
-            .cfaDesc    = _CFADesc,
-            .data       = std::move(data),
-            .off        = sizeof(header),
-        });
-        return image;
+        return nullptr;
+//        bool done = false;
+//        auto work = std::make_unique<_SDWork>();
+//        work->state = {
+//            .ops = {_SDReadOp{
+//                .region = {
+//                    .block = addr,
+//                    .len = Img::Full::ImageLen,
+//                },
+//            }},
+//            .read = {
+//                .callback = [&] {
+//                    done = true;
+//                    _imageForAddrSignal.signalAll();
+//                },
+//            },
+//        };
+//        
+//        // Enqueue SD read
+//        {
+//            {
+//                auto lock = _sdRead.signal.lock();
+//                _SDWorkQueue& queue = _sdRead.queues[(size_t)_Priority::High];
+//                queue.push(work.get());
+//            }
+//            _sdRead.signal.signalOne();
+//        }
+//        
+//        _imageForAddrSignal.wait([&] { return done; });
+//        
+//        if (_ImageChecksumValid(work->buffer, Img::Size::Full)) {
+////                printf("Checksum valid (full-size)\n");
+//        } else {
+//            printf("Checksum INVALID (full-size)\n");
+////                abort();
+//        }
+//        
+//        std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
+//        memcpy(data.get(), work->buffer, Img::Full::ImageLen);
+//        
+//        const Img::Header& header = *(const Img::Header*)work->buffer;
+//        ImagePtr image = std::make_shared<Image>(Image{
+//            .width      = header.imageWidth,
+//            .height     = header.imageHeight,
+//            .cfaDesc    = _CFADesc,
+//            .data       = std::move(data),
+//            .off        = sizeof(header),
+//        });
+//        return image;
     }
     
     void _notifyObservers() {
@@ -544,119 +563,79 @@ private:
         state.signal.signalOne();
     }
     
+    
+    
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
         
-        // WriteIntervalCount: write the library after this threshold of operations
-        constexpr size_t WriteIntervalCount = 256;
-        
-        const auto timeStart = std::chrono::steady_clock::now();
-        
-//        if (initial) {
-//            auto lock = std::unique_lock(_imageLibrary);
-//            printf("[_loadImages] reserving %ju images\n", (uintmax_t)recs.size());
-//            _imageLibrary.reserve(recs.size());
-//        }
-        
-        size_t writeCount = 0;
-        size_t workIdx = 0;
         for (auto it=recs.rbegin(); it!=recs.rend();) {
+            const ImageRecordPtr& rec = *it;
             
+            const _SDBlock blockBegin = rec->info.addrThumb;
+            const _SDRegion region = {
+                .block = blockBegin,
+                .len = ImgSD::Thumb::ImagePaddedLen,
+            };
             
-            
-            
-            
-            // Get a _SDWork
-            _SDWork& work = state.works.at(workIdx);
-            workIdx++;
-            if (workIdx == state.works.size()) workIdx = 0;
-            
-            // Wait until the _SDWork is ready
+            // If the thumbnail is in our cache (_loadImagesState.cache), no need to SDRead it
             {
-                auto lock = state.signal.wait([&] { return state.underway.find(&work) == state.underway.end(); });
-                state.underway.insert(&work);
-            }
-            
-            // Populate _SDWork
-            {
-                // Prepare the _SDWork
-                work.state = {
-                    .read = {
-                        .callback = [&] { _readCompleteCallback(state, work); },
-                    },
-                    
-                    .render = {
-                        .initial = initial,
-                        .callback = [&] { _renderCompleteCallback(state, work); },
-                    },
-                };
-                
-                // Push _SDReadOps until we run out, or we hit the capacity of _SDWork.buffer
-                const _SDBlock workBlockBegin = (*it)->info.addrThumb;
-                for (; it!=recs.rend(); it++) {
-                    const ImageRecordPtr& rec = *it;
-                    const _SDBlock blockBegin = rec->info.addrThumb;
-                    // If the block addresses wrap around, start a new _SDWork
-                    if (blockBegin < workBlockBegin) break;
-                    const _SDBlock blockEnd = _SDBlockEnd(blockBegin, ImgSD::Thumb::ImagePaddedLen);
-                    const size_t span = (size_t)SD::BlockLen * (size_t)(blockEnd-workBlockBegin);
-                    // Bail if we hit a _SDReadOp that would put us over the capacity of work.buffer
-                    if (span > sizeof(work.buffer)) break;
-                    work.state.ops.push_back(_SDReadOp{
-                        .region = {
-                            .block = blockBegin,
-                            .len = ImgSD::Thumb::ImagePaddedLen,
-                        },
-                        .rec = rec,
-                    });
-                }
-//                
-//                work.state.read.timeStart = std::chrono::steady_clock::now();
-                
-                printf("[_loadImages] Enqueued _SDWork:%p ops.size():%ju idx:%zu idxDone:%zu\n",
-                    &work, (uintmax_t)work.state.ops.size(), work.state.render.idx.load(), work.state.render.idxDone.load());
-            }
-            
-            // Enqueue _SDWork into _sdRead.queues
-            {
+                _ThumbBuffer buf;
                 {
-                    auto lock = _sdRead.signal.lock();
-                    _SDWorkQueue& queue = _sdRead.queues[(size_t)priority];
-                    queue.push(&work);
+                    auto lock = std::unique_lock(state.lock);
+                    auto find = state.cache.find(region);
+                    if (find != state.cache.end()) {
+                        buf = find->val;
+                    }
                 }
-                _sdRead.signal.signalOne();
+                
+                if (buf) {
+                    // Enqueue _RenderWork into _thumbRender.queue
+                    {
+                        auto lock = _thumbRender.signal.lock();
+                        _thumbRender.queue.push(_RenderWork{
+                            .initial = initial,
+                            .buf = buf,
+                            .callback = nullptr,
+                        });
+                    }
+                    
+                    // Notify _thumbRender of more work
+                    _thumbRender.signal.signalAll();
+                    // Nothing left to do for this ImageRecordPtr
+                    continue;
+                }
             }
             
-            // Periodically write the image library
-            if (initial) {
-                auto lock = std::unique_lock(_imageLibrary);
-                writeCount += work.state.ops.size();
-                if (writeCount >= WriteIntervalCount) {
-                    printf("[_loadImages] Write library (writeCount: %ju)\n", (uintmax_t)writeCount);
-                    writeCount = 0;
-                    _imageLibrary.write();
+            // If the thumbnail isn't in our cache, SDRead it
+            {
+                #warning TODO: implement waiting on state.pool if the pool is empty
+                _ThumbBuffer buf = state.pool.pop();
+                
+                // Enqueue _SDWork into _sdRead.queues
+                {
+                    {
+                        auto lock = _sdRead.signal.lock();
+                        _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
+                        queue.push(_SDReadWork{
+                            .region = region,
+                            .buf = buf,
+                            .callback = nullptr,
+                        });
+                    }
+                    #warning TODO: only signal after we've enqueued some number of _SDReadWork's
+                    _sdRead.signal.signalOne();
                 }
             }
         }
         
-        // Wait until remaining _SDWorks are complete
-        state.signal.wait([&] { return state.underway.empty(); });
-        
-        // Add remaining images and write library
-        if (initial) {
-            auto lock = std::unique_lock(_imageLibrary);
-            printf("[_loadImages] Write library remainder\n");
-            _imageLibrary.write();
-        }
-        
-        // Print profile stats
-        {
-            using namespace std::chrono;
-            const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
-            const size_t imageCount = recs.size();
-            printf("[_loadImages] _loadImages() took %ju ms for %ju images (avg %f ms / img)\n",
-                (uintmax_t)duration.count(), (uintmax_t)imageCount, ((double)duration.count()/imageCount));
-        }
+//        // Print profile stats
+//        {
+//            using namespace std::chrono;
+//            const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+//            const size_t imageCount = recs.size();
+//            printf("[_loadImages] _loadImages() took %ju ms for %ju images (avg %f ms / img)\n",
+//                (uintmax_t)duration.count(), (uintmax_t)imageCount, ((double)duration.count()/imageCount));
+//        }
     }
     
     // MARK: - Sync
@@ -776,30 +755,27 @@ private:
     // MARK: - SD Read
     
     // _sdRead.lock must be held!
-    _SDWorkQueue* _sdRead_nextWorkQueue() {
-        for (_SDWorkQueue& x : _sdRead.queues) {
+    _SDReadWorkQueue* _sdRead_nextQueue() {
+        for (_SDReadWorkQueue& x : _sdRead.queues) {
             if (!x.empty()) return &x;
         }
         return nullptr;
     }
     
-    void _sdRead_handleWork(_SDWork& work) {
-        assert(!work.state.ops.empty());
+    void _sdRead_handleWork(_SDReadWorkQueue& queue) {
+        assert(!queue.empty());
         
-        // Prune cache if it's above our high-water mark
-        constexpr size_t CacheHighWater = 256*1024*1024;
-        constexpr size_t CacheLowWater = CacheHighWater/2;
+        constexpr size_t ReadChunkSize = 16*1024*1024;
         
-        if (_sdRead.cacheSize > CacheHighWater) {
-            printf("Prunching cache start: %zu\n", _sdRead.cacheSize);
-            while (_sdRead.cacheSize > CacheLowWater) {
-                const auto it = std::prev(_sdRead.cache.end());
-                _sdRead.cacheSize -= it->key.len;
-                _sdRead.cache.erase(it);
-//                _sdRead.cacheSize -= ;
-            }
-            printf("Prunching cache end: %zu\n", _sdRead.cacheSize);
+        for () {
+            
         }
+        
+        _SDBlock blockBegin = readFront.region.block;
+        
+        size_t remSize = ReadChunkSize;
+        
+        
         
         const _SDBlock blockBegin = work.state.ops.front().region.block;
         
@@ -842,46 +818,11 @@ private:
                 _dev.readout(work.buffer+off, len);
             }
             
-            // Copy data from work buffer -> cache
-            for (auto it=readBegin; it!=readEnd; it++) {
-                const _SDReadOp& op = *it;
-                const size_t len = op.region.len;
-                const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
-                auto& data = _sdRead.cache[op.region];
-                if (!data) {
-                    data = std::make_unique<uint8_t[]>(len);
-                    memcpy(data.get(), work.buffer+off, len);
-                    _sdRead.cacheSize += len;
-                }
-            }
-            
             const std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-timeStart);
             const double throughputMBPerSec = ((double)(len * 1000) / (duration.count() * 1024*1024));
             printf("[_sdRead_handleWork] Read [%ju,%ju) took %ju ms (avg: %f ms / op, throughput: %.1f MB/sec)\n",
                 (uintmax_t)readBlockBegin, (uintmax_t)readBlockEnd, (uintmax_t)duration.count(),
                 ((double)duration.count()/work.state.ops.size()), throughputMBPerSec);
-        }
-        
-        // Copy data from cache -> work buffer (left region)
-        for (auto it=work.state.ops.begin(); it!=readBegin; it++) {
-            const _SDReadOp& op = *it;
-            const size_t len = op.region.len;
-            const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
-            auto find = _sdRead.cache.find(op.region);
-            assert(find != _sdRead.cache.end());
-            const auto& data = find->val;
-            memcpy(work.buffer+off, data.get(), len);
-        }
-        
-        // Copy data from cache -> work buffer (right region)
-        for (auto it=readEnd; it!=work.state.ops.end(); it++) {
-            const _SDReadOp& op = *it;
-            const size_t len = op.region.len;
-            const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
-            auto find = _sdRead.cache.find(op.region);
-            assert(find != _sdRead.cache.end());
-            const auto& data = find->val;
-            memcpy(work.buffer+off, data.get(), len);
         }
         
         // Update each _SDReadOp with its data address
@@ -905,7 +846,7 @@ private:
                 {
                     // Wait for work
                     _SDWorkQueue* queue = nullptr;
-                    auto lock = _sdRead.signal.wait([&] { return (queue = _sdRead_nextWorkQueue()); });
+                    auto lock = _sdRead.signal.wait([&] { return (queue = _sdRead_nextQueue()); });
                     work = queue->front();
                     queue->pop();
                 }
@@ -1048,17 +989,10 @@ private:
     Toastbox::Signal _imageForAddrSignal;
     
     struct {
-        std::mutex lock; // Protects this struct
-        using ThumbPool = BufferPool<ImgSD::Thumb::ImagePaddedLen>;
-        using ThumbBuffer = ThumbPool::Buffer;
-        ThumbPool pool = ThumbPool(5);
-        Toastbox::LRU<_SDRegion,ThumbBuffer>> cache;
-    } _loadImagesState;
-    
-    struct {
         std::thread thread;
         _LoadImagesState loadImages = {
-            .works = std::vector<_SDWork>(2),
+             #warning TODO: update pool count
+            .pool = _ThumbPool(5),
         };
     } _sync;
     
@@ -1066,7 +1000,8 @@ private:
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
         _LoadImagesState loadImages = {
-            .works = std::vector<_SDWork>(1),
+             #warning TODO: update pool count
+            .pool = _ThumbPool(2),
         };
         std::set<ImageRecordPtr> recs;
     } _thumbUpdate;
@@ -1074,15 +1009,13 @@ private:
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        _SDWorkQueue queues[(size_t)_Priority::Count];
-        Toastbox::LRU<_SDRegion,std::unique_ptr<uint8_t[]>> cache;
-        size_t cacheSize = 0;
+        _SDReadWorkQueue queues[(size_t)_Priority::Count];
     } _sdRead;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::vector<std::thread> threads;
-        _SDWorkQueue work;
+        _RenderWorkQueue queue;
     } _thumbRender;
 };
 
