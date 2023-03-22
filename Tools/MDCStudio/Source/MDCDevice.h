@@ -328,12 +328,11 @@ private:
     
     struct _LoadImagesState {
         Toastbox::Signal signal; // Protects this struct
-        _ThumbPool pool;
-        Toastbox::LRU<_SDRegion,_ThumbBuffer> cache;
-        struct {
-            Toastbox::Atomic<size_t> count = 0;
-            std::set<ImageRecordPtr> notify;
-        } render;
+//        struct {
+//            Toastbox::Atomic<size_t> count = 0;
+//            std::set<ImageRecordPtr> notify;
+//        } render;
+        std::set<ImageRecordPtr> notify;
         Toastbox::Atomic<size_t> underway;
     };
     
@@ -553,12 +552,15 @@ private:
     
     void _readCompleteCallback(_LoadImagesState& state, _SDRegion region, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
         // Insert buffer into our cache
-        {
-            auto lock = state.signal.lock();
-            state.cache[region] = buf;
-        }
+        _cacheSet(region, buf);
         
-        _renderEnqueue(state, initial, rec, buf);
+        {
+            {
+                auto lock = _thumbRender.signal.lock();
+                _renderEnqueue(lock, state, initial, rec, buf);
+            }
+            _thumbRender.signal.signalOne();
+        }
         
         
 //        work.state.read.timeEnd = std::chrono::steady_clock::now();
@@ -595,19 +597,10 @@ private:
 //        }
 //        
         
-//        constexpr size_t NotifyThreshold = 32;
+        constexpr size_t NotifyThreshold = 32;
 //        
 //        const size_t count = --state.render.count;
 //        
-//        std::set<ImageRecordPtr> notify;
-//        {
-//            auto lock = std::unique_lock(state.lock);
-//            state.render.notify.insert(rec);
-//            printf("COUNT: %ju\n", (uintmax_t)count);
-//            if (state.render.notify.size()>=NotifyThreshold || !count) {
-//                notify = std::move(state.render.notify);
-//            }
-//        }
 //        
 //        #warning TODO: we should coalesce the recs and notify after we hit a threshold
 //        // Post notification
@@ -618,13 +611,27 @@ private:
 //        }
         
         
+//        {
+//            auto lock = std::unique_lock(_imageLibrary);
+//            _imageLibrary.notifyChange({ rec });
+//        }
+        
+        const size_t count = --state.underway;
+        if (!count) state.signal.signalOne();
+        
+        std::set<ImageRecordPtr> notify;
         {
-            auto lock = std::unique_lock(_imageLibrary);
-            _imageLibrary.notifyChange({ rec });
+            auto lock = state.signal.lock();
+            state.notify.insert(rec);
+            if (state.notify.size()>=NotifyThreshold || !count) {
+                notify = std::move(state.notify);
+            }
         }
         
-        size_t count = --state.underway;
-        if (!count) state.signal.signalOne();
+        {
+            auto lock = std::unique_lock(_imageLibrary);
+            _imageLibrary.notifyChange(notify);
+        }
         
         
 //        // Announce that `work` is done
@@ -635,23 +642,14 @@ private:
 //        state.signal.signalOne();
     }
     
-    void _renderEnqueue(_LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
-        state.render.count++;
-        
+    void _renderEnqueue(std::unique_lock<std::mutex>& lock, _LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
         // Enqueue _RenderWork into _thumbRender.queue
-        {
-            auto lock = _thumbRender.signal.lock();
-            assert(buf);
-            _thumbRender.queue.push(_RenderWork{
-                .initial = initial,
-                .rec = rec,
-                .buf = std::move(buf),
-                .callback = [=, &state] { _renderCompleteCallback(state, rec); },
-            });
-        }
-        
-        // Notify _thumbRender of more work
-        _thumbRender.signal.signalAll();
+        _thumbRender.queue.push(_RenderWork{
+            .initial = initial,
+            .rec = rec,
+            .buf = std::move(buf),
+            .callback = [=, &state] { _renderCompleteCallback(state, rec); },
+        });
     }
     
     
@@ -672,34 +670,51 @@ private:
 //        }
 //    }
     
+    _ThumbBuffer _cacheGet(const _SDRegion& region) {
+        auto lock = std::unique_lock(_thumbCache.lock);
+        if (auto find=_thumbCache.cache.find(region); find!=_thumbCache.cache.end()) {
+            return find->val;
+        }
+        return {};
+    }
     
+    void _cacheSet(const _SDRegion& region, _ThumbBuffer buf) {
+        auto lock = std::unique_lock(_thumbCache.lock);
+        _thumbCache.cache[region] = std::move(buf);
+    }
     
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, std::set<ImageRecordPtr> recs) {
         
+        state.underway += recs.size();
+        
         // Kick off rendering for all the recs that are in our cache
-        #warning TODO: hold _thumbRender.signal.lock() for the duration of this loop
-        for (auto it=recs.begin(); it!=recs.end();) {
-            const ImageRecordPtr& rec = *it;
-            const _SDRegion region = {
-                .block = rec->info.addrThumb,
-                .len = ImgSD::Thumb::ImagePaddedLen,
-            };
-            
-            // If the thumbnail is in our cache (state.cache), kick off rendering
+        {
             {
-                auto lock = state.signal.lock();
-                auto find = state.cache.find(region);
-                if (find != state.cache.end()) {
-                    _ThumbBuffer buf = find->val;
-                    _renderEnqueue(state, initial, rec, std::move(buf));
-                    it = recs.erase(it);
-                    state.underway++;
-                    continue;
+                auto lock = _thumbRender.signal.lock();
+                
+                for (auto it=recs.begin(); it!=recs.end();) {
+                    const ImageRecordPtr& rec = *it;
+                    const _SDRegion region = {
+                        .block = rec->info.addrThumb,
+                        .len = ImgSD::Thumb::ImagePaddedLen,
+                    };
+                    
+                    // If the thumbnail is in our cache, kick off rendering
+                    _ThumbBuffer buf = _cacheGet(region);
+                    if (buf) {
+                        _renderEnqueue(lock, state, initial, rec, std::move(buf));
+                        it = recs.erase(it);
+                    
+                    // Otherwise, on to the next one
+                    } else {
+                        it++;
+                    }
                 }
             }
             
-            it++;
+            // Notify _thumbRender of more work
+            _thumbRender.signal.signalAll();
         }
         
         // The remaining recs aren't in our cache, so kick of SD reading + rendering
@@ -711,10 +726,12 @@ private:
             };
             
             #warning TODO: implement waiting on state.pool if the pool is empty
-            _ThumbBuffer buf = state.pool.pop();
+            _ThumbBuffer buf = _thumbCache.pool.pop();
             
             // Enqueue _SDWork into _sdRead.queues
             {
+                printf("[_loadImages] Enqueue _SDReadWork\n");
+                
                 {
                     auto lock = _sdRead.signal.lock();
                     _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
@@ -729,7 +746,6 @@ private:
                 #warning TODO: only signal after we've enqueued some number of _SDReadWork's
                 _sdRead.signal.signalOne();
             }
-            state.underway++;
         }
         
         state.signal.wait([&] { return !state.underway; });
@@ -874,8 +890,6 @@ private:
         _SDBlock blockEnd = 0;
     };
     
-    static constexpr _SDBlock _SDReadCoalesceBudget = 8192;
-    
     template<size_t T_Cap>
     static _SDCoalescedWork _SDRead_CoalesceWork(_SDReadWorkQueue& queue) {
         assert(!queue.empty());
@@ -918,9 +932,12 @@ private:
         };
     }
     
-    void _sdRead_handleWork(_SDCoalescedWork&& coalesced) {
+    void _sdRead_handleWork(const _SDCoalescedWork& coalesced) {
         assert(!coalesced.works.empty());
         const size_t len = (size_t)SD::BlockLen * (size_t)(coalesced.blockEnd-coalesced.blockBegin);
+        // Verify that the length of data that we're reading will fit in our buffer. Our _SDRead_CoalesceWork()
+        // logic guarantees this should be the case, so check that assumption.
+        assert(len <= sizeof(_sdRead.buffer));
         
         {
             auto lock = std::unique_lock(_dev);
@@ -951,7 +968,7 @@ private:
                     auto lock = _sdRead.signal.wait([&] { return (queue = _sdRead_nextQueue()); });
                     coalesced = _SDRead_CoalesceWork<sizeof(_sdRead.buffer)>(*queue);
                 }
-                _sdRead_handleWork(std::move(coalesced));
+                _sdRead_handleWork(coalesced);
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -1083,19 +1100,21 @@ private:
     
     struct {
         std::thread thread;
-        _LoadImagesState loadImages = {
-             #warning TODO: update pool count
-            .pool = _ThumbPool(4096),
-        };
+        _LoadImagesState loadImages;
     } _sync;
+    
+    struct {
+        std::mutex lock;
+        #warning TODO: update pool size
+        _ThumbPool pool = _ThumbPool(4096);
+        #warning TODO: update cache size
+        Toastbox::LRU<_SDRegion,_ThumbBuffer,512> cache;
+    } _thumbCache;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        _LoadImagesState loadImages = {
-             #warning TODO: update pool count
-            .pool = _ThumbPool(4096),
-        };
+        _LoadImagesState loadImages;
         std::set<ImageRecordPtr> recs;
     } _thumbUpdate;
     

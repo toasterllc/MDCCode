@@ -43,7 +43,8 @@ struct _ChunkTexture {
     bool loaded[SliceCount] = {};
 };
 
-using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture>;
+static constexpr size_t _ChunkTexturesCacheCapacity = 128;
+using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,_ChunkTexturesCacheCapacity>;
 
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
