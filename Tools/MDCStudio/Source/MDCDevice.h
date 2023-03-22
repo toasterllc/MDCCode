@@ -314,6 +314,10 @@ private:
         std::mutex lock; // Protects this struct
         _ThumbPool pool;
         Toastbox::LRU<_SDRegion,_ThumbBuffer> cache;
+        struct {
+            Toastbox::Atomic<size_t> count = 0;
+            std::set<ImageRecordPtr> notify;
+        } render;
     };
     
     static int _ThreadCount() {
@@ -537,7 +541,7 @@ private:
             state.cache[region] = buf;
         }
         
-        _enqueueRender(initial, rec, buf);
+        _renderEnqueue(state, initial, rec, buf);
         
         
 //        work.state.read.timeEnd = std::chrono::steady_clock::now();
@@ -553,7 +557,7 @@ private:
 //        _thumbRender.signal.signalAll();
     }
     
-    void _renderCompleteCallback(ImageRecordPtr rec) {
+    void _renderCompleteCallback(_LoadImagesState& state, ImageRecordPtr rec) {
 //        work.state.render.timeEnd = std::chrono::steady_clock::now();
         
 //        {
@@ -573,11 +577,27 @@ private:
 //            recs.insert(op.rec);
 //        }
 //        
+        
+        constexpr size_t NotifyThreshold = 32;
+        
+        const size_t count = --state.render.count;
+        
+        std::set<ImageRecordPtr> notify;
+        {
+            auto lock = std::unique_lock(state.lock);
+            state.render.notify.insert(rec);
+            printf("COUNT: %ju\n", (uintmax_t)count);
+            if (state.render.notify.size()>=NotifyThreshold || !count) {
+                notify = std::move(state.render.notify);
+            }
+        }
+        
         #warning TODO: we should coalesce the recs and notify after we hit a threshold
         // Post notification
-        {
+        if (!notify.empty()) {
             auto lock = std::unique_lock(_imageLibrary);
-            _imageLibrary.notifyChange({ rec });
+            _imageLibrary.notifyChange(notify);
+            printf("NOTIFY: %ju\n", (uintmax_t)notify.size());
         }
         
 //        // Announce that `work` is done
@@ -588,7 +608,9 @@ private:
 //        state.signal.signalOne();
     }
     
-    void _enqueueRender(bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
+    void _renderEnqueue(_LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
+        state.render.count++;
+        
         // Enqueue _RenderWork into _thumbRender.queue
         {
             auto lock = _thumbRender.signal.lock();
@@ -597,7 +619,7 @@ private:
                 .initial = initial,
                 .rec = rec,
                 .buf = std::move(buf),
-                .callback = [=] { _renderCompleteCallback(rec); },
+                .callback = [=, &state] { _renderCompleteCallback(state, rec); },
             });
         }
         
@@ -622,7 +644,7 @@ private:
                 auto find = state.cache.find(region);
                 if (find != state.cache.end()) {
                     _ThumbBuffer buf = find->val;
-                    _enqueueRender(initial, rec, std::move(buf));
+                    _renderEnqueue(state, initial, rec, std::move(buf));
                     it = recs.erase(it);
                     continue;
                 }
