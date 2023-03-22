@@ -238,7 +238,8 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
     assert(txt);
     
-    _ChunkTexture& ct = _chunkTxts.insert(chunk, _ChunkTexture{ .txt=txt })->val;
+    _ChunkTexture& ct = _chunkTxts[chunk];
+    ct.txt = txt;
     for (auto it=chunkBegin; it!=chunkEnd; it++) {
         _ChunkTextureUpdateSlice(ct, *it);
     }

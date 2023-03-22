@@ -226,7 +226,7 @@ private:
     
     struct _SDReadOp;
     struct _SDWork {
-        static constexpr size_t BufferThumbCount = 32;
+        static constexpr size_t BufferThumbCount = 128;
         uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
         
         struct {
@@ -780,8 +780,22 @@ private:
     void _sdRead_handleWork(_SDWork& work) {
         assert(!work.state.ops.empty());
         
+        // Prune cache if it's above our high-water mark
+        constexpr size_t CacheHighWater = 256*1024*1024;
+        constexpr size_t CacheLowWater = CacheHighWater/2;
+        
+        if (_sdRead.cacheSize > CacheHighWater) {
+            printf("Prunching cache start: %zu\n", _sdRead.cacheSize);
+            while (_sdRead.cacheSize > CacheLowWater) {
+                const auto it = std::prev(_sdRead.cache.end());
+                _sdRead.cacheSize -= it->key.len;
+                _sdRead.cache.erase(it);
+//                _sdRead.cacheSize -= ;
+            }
+            printf("Prunching cache end: %zu\n", _sdRead.cacheSize);
+        }
+        
         const _SDBlock blockBegin = work.state.ops.front().region.block;
-        const _SDBlock blockEnd = _SDBlockEnd(work.state.ops.back().region.block, work.state.ops.back().region.len);
         
         auto readBegin = work.state.ops.end();
         auto readEnd   = work.state.ops.end();
@@ -827,9 +841,12 @@ private:
                 const _SDReadOp& op = *it;
                 const size_t len = op.region.len;
                 const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
-                auto data = std::make_unique<uint8_t[]>(len);
-                memcpy(data.get(), work.buffer+off, len);
-                _sdRead.cache.insert(op.region, std::move(data));
+                auto& data = _sdRead.cache[op.region];
+                if (!data) {
+                    data = std::make_unique<uint8_t[]>(len);
+                    memcpy(data.get(), work.buffer+off, len);
+                    _sdRead.cacheSize += len;
+                }
             }
             
             const std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-timeStart);
