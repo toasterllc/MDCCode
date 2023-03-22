@@ -297,6 +297,22 @@ private:
         ImageRecordPtr rec;
         _ThumbBuffer buf;
         _WorkCallback callback;
+        
+        bool operator<(const _RenderWork& x) const {
+            if (initial != x.initial) return initial < x.initial;
+            if (rec != x.rec) return rec < x.rec;
+            if (buf != x.buf) return buf < x.buf;
+            return false;
+        }
+        
+        bool operator==(const _RenderWork& x) const {
+            if (initial != x.initial) return false;
+            if (rec != x.rec) return false;
+            if (buf != x.buf) return false;
+            return true;
+        }
+        
+        bool operator!=(const _RenderWork& x) const { return !(*this == x); }
     };
     
     struct _SDReadOp {
@@ -308,7 +324,7 @@ private:
     };
     
     using _SDReadWorkQueue = std::set<_SDReadWork>;
-    using _RenderWorkQueue = std::queue<_RenderWork>;
+    using _RenderWorkQueue = std::set<_RenderWork>;
     
     struct _LoadImagesState {
         std::mutex lock; // Protects this struct
@@ -578,27 +594,34 @@ private:
 //        }
 //        
         
-        constexpr size_t NotifyThreshold = 32;
+//        constexpr size_t NotifyThreshold = 32;
+//        
+//        const size_t count = --state.render.count;
+//        
+//        std::set<ImageRecordPtr> notify;
+//        {
+//            auto lock = std::unique_lock(state.lock);
+//            state.render.notify.insert(rec);
+//            printf("COUNT: %ju\n", (uintmax_t)count);
+//            if (state.render.notify.size()>=NotifyThreshold || !count) {
+//                notify = std::move(state.render.notify);
+//            }
+//        }
+//        
+//        #warning TODO: we should coalesce the recs and notify after we hit a threshold
+//        // Post notification
+//        if (!notify.empty()) {
+//            auto lock = std::unique_lock(_imageLibrary);
+//            _imageLibrary.notifyChange(notify);
+//            printf("NOTIFY: %ju\n", (uintmax_t)notify.size());
+//        }
         
-        const size_t count = --state.render.count;
         
-        std::set<ImageRecordPtr> notify;
         {
-            auto lock = std::unique_lock(state.lock);
-            state.render.notify.insert(rec);
-            printf("COUNT: %ju\n", (uintmax_t)count);
-            if (state.render.notify.size()>=NotifyThreshold || !count) {
-                notify = std::move(state.render.notify);
-            }
+            auto lock = std::unique_lock(_imageLibrary);
+            _imageLibrary.notifyChange({ rec });
         }
         
-        #warning TODO: we should coalesce the recs and notify after we hit a threshold
-        // Post notification
-        if (!notify.empty()) {
-            auto lock = std::unique_lock(_imageLibrary);
-            _imageLibrary.notifyChange(notify);
-            printf("NOTIFY: %ju\n", (uintmax_t)notify.size());
-        }
         
 //        // Announce that `work` is done
 //        {
@@ -615,7 +638,7 @@ private:
         {
             auto lock = _thumbRender.signal.lock();
             assert(buf);
-            _thumbRender.queue.push(_RenderWork{
+            _thumbRender.queue.insert(_RenderWork{
                 .initial = initial,
                 .rec = rec,
                 .buf = std::move(buf),
@@ -626,6 +649,26 @@ private:
         // Notify _thumbRender of more work
         _thumbRender.signal.signalAll();
     }
+    
+    
+    
+    void _renderEnqueueNoSignal(_LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
+        state.render.count++;
+        
+        // Enqueue _RenderWork into _thumbRender.queue
+        {
+            auto lock = _thumbRender.signal.lock();
+            assert(buf);
+            _thumbRender.queue.insert(_RenderWork{
+                .initial = initial,
+                .rec = rec,
+                .buf = std::move(buf),
+                .callback = [=, &state] { _renderCompleteCallback(state, rec); },
+            });
+        }
+    }
+    
+    
     
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, std::set<ImageRecordPtr> recs) {
@@ -644,7 +687,7 @@ private:
                 auto find = state.cache.find(region);
                 if (find != state.cache.end()) {
                     _ThumbBuffer buf = find->val;
-                    _renderEnqueue(state, initial, rec, std::move(buf));
+                    _renderEnqueueNoSignal(state, initial, rec, std::move(buf));
                     it = recs.erase(it);
                     continue;
                 }
@@ -652,6 +695,8 @@ private:
             
             it++;
         }
+        
+        _thumbRender.signal.signalAll();
         
         // The remaining recs aren't in our cache, so kick of SD reading + rendering
         for (auto it=recs.rbegin(); it!=recs.rend(); it++) {
@@ -675,6 +720,7 @@ private:
                         .callback = [=, &state] { _readCompleteCallback(state, region, initial, rec, buf); },
                     });
                 }
+                
                 #warning TODO: only signal after we've enqueued some number of _SDReadWork's
                 _sdRead.signal.signalOne();
             }
@@ -920,8 +966,11 @@ private:
                 _RenderWork work;
                 {
                     auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.queue.empty(); });
-                    work = _thumbRender.queue.front();
-                    _thumbRender.queue.pop();
+                    const size_t idx = rand() % _thumbRender.queue.size();
+                    auto it = _thumbRender.queue.begin();
+                    std::advance(it,idx);
+                    work = *it;
+                    _thumbRender.queue.erase(it);
                 }
                 
                 ImageRecord& rec = *work.rec;
