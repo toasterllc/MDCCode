@@ -530,9 +530,18 @@ private:
         }
     }
     
-//    void _readCompleteCallback(_LoadImagesState& state, _SDWork& work) {
-////        work.state.read.timeEnd = std::chrono::steady_clock::now();
-////        work.state.render.timeStart = std::chrono::steady_clock::now();
+    void _readCompleteCallback(_LoadImagesState& state, _SDRegion region, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
+        // Insert buffer into our cache
+        {
+            auto lock = std::unique_lock(state.lock);
+            state.cache[region] = buf;
+        }
+        
+        _enqueueRender(initial, rec, buf);
+        
+        
+//        work.state.read.timeEnd = std::chrono::steady_clock::now();
+//        work.state.render.timeStart = std::chrono::steady_clock::now();
 //        
 //        // Enqueue _SDWork into _thumbRender.work
 //        {
@@ -542,7 +551,7 @@ private:
 //        
 //        // Notify _thumbRender of more work
 //        _thumbRender.signal.signalAll();
-//    }
+    }
     
     void _renderCompleteCallback(ImageRecordPtr rec) {
 //        work.state.render.timeEnd = std::chrono::steady_clock::now();
@@ -564,6 +573,7 @@ private:
 //            recs.insert(op.rec);
 //        }
 //        
+        #warning TODO: we should coalesce the recs and notify after we hit a threshold
         // Post notification
         {
             auto lock = std::unique_lock(_imageLibrary);
@@ -582,6 +592,7 @@ private:
         // Enqueue _RenderWork into _thumbRender.queue
         {
             auto lock = _thumbRender.signal.lock();
+            assert(buf);
             _thumbRender.queue.push(_RenderWork{
                 .initial = initial,
                 .rec = rec,
@@ -594,10 +605,11 @@ private:
         _thumbRender.signal.signalAll();
     }
     
+    #warning TODO: 
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
         
-        for (auto it=recs.rbegin(); it!=recs.rend();) {
+        for (auto it=recs.rbegin(); it!=recs.rend(); it++) {
             const ImageRecordPtr& rec = *it;
             const _SDRegion region = {
                 .block = rec->info.addrThumb,
@@ -615,7 +627,10 @@ private:
                     }
                 }
                 
-                _enqueueRender(initial, rec, std::move(buf));
+                if (buf) {
+                    _enqueueRender(initial, rec, std::move(buf));
+                    continue;
+                }
             }
             
             // If the thumbnail isn't in our cache, SDRead it
@@ -631,7 +646,7 @@ private:
                         queue.insert(_SDReadWork{
                             .region = region,
                             .buf = buf,
-                            .callback = [=] { _enqueueRender(initial, rec, buf); },
+                            .callback = [=, &state] { _readCompleteCallback(state, region, initial, rec, buf); },
                         });
                     }
                     #warning TODO: only signal after we've enqueued some number of _SDReadWork's
@@ -787,30 +802,41 @@ private:
         assert(!queue.empty());
         
         // CoalesceBudget: coalesce adjacent blocks until this budget is exceeded
-        _SDCoalescedWork coalesced = { .blockBegin = queue.begin()->region.block };
+        std::vector<_SDReadWork> works;
+        std::optional<_SDBlock> blockBegin;
+        std::optional<_SDBlock> blockEnd;
         size_t budget = T_Cap;
         auto it = queue.begin();
         for (; it!=queue.end(); it++) {
             const _SDReadWork& work = *it;
-            const _SDBlock blockBegin = work.region.block;
-            const _SDBlock blockEnd = _SDBlockEnd(blockBegin, work.region.len);
+            const _SDBlock workBlockBegin = work.region.block;
+            const _SDBlock workBlockEnd = _SDBlockEnd(workBlockBegin, work.region.len);
             
-            // The queue ordering guarantees that the blockBegins are in ascending order.
-            // Check that assumption.
-            assert(coalesced.blockBegin <= work.region.block);
+            size_t cost = 0;
+            if (!blockEnd) {
+                cost = (size_t)SD::BlockLen * (workBlockEnd-workBlockBegin);
+            } else if (workBlockEnd > *blockEnd) {
+                cost = (size_t)SD::BlockLen * (workBlockEnd-*blockEnd);
+            }
             
-            const size_t cost = (size_t)SD::BlockLen * (blockEnd>coalesced.blockEnd ? blockEnd-coalesced.blockEnd : 0);
             // Stop coalescing work once the cost exceeds our budget
             if (cost > budget) break;
             
-            coalesced.blockEnd = std::max(coalesced.blockEnd, blockEnd);
-            coalesced.works.push_back(*it);
+            if (!blockBegin) blockBegin = workBlockBegin;
+            if (!blockEnd || workBlockEnd>*blockEnd) blockEnd = workBlockEnd;
+            
+            works.push_back(*it);
             budget -= cost;
         }
-        queue.erase(queue.begin(), it);
         // Ensure that we enqueued at least one work
-        assert(!coalesced.works.empty());
-        return coalesced;
+        assert(!works.empty());
+        // Remove the coalesced work from `queue`
+        queue.erase(queue.begin(), it);
+        return _SDCoalescedWork{
+            .works = std::move(works),
+            .blockBegin = *blockBegin,
+            .blockEnd = *blockEnd,
+        };
     }
     
     void _sdRead_handleWork(_SDCoalescedWork&& coalesced) {
@@ -975,7 +1001,7 @@ private:
         std::thread thread;
         _LoadImagesState loadImages = {
              #warning TODO: update pool count
-            .pool = _ThumbPool(5),
+            .pool = _ThumbPool(4096),
         };
     } _sync;
     
@@ -984,7 +1010,7 @@ private:
         std::thread thread;
         _LoadImagesState loadImages = {
              #warning TODO: update pool count
-            .pool = _ThumbPool(2),
+            .pool = _ThumbPool(4096),
         };
         std::set<ImageRecordPtr> recs;
     } _thumbUpdate;

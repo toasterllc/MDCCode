@@ -37,6 +37,7 @@ public:
     }
     
     Buffer pop() {
+        printf("POP\n");
         assert(!_free.empty());
         const Pointer ptr = _free.back();
         _free.pop_back();
