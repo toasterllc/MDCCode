@@ -46,7 +46,7 @@ struct _Buf {
     size_t len = 0;
 };
 
-using _BufQueue = Toastbox::Queue<_Buf, 2, _BufQueueAssert>;
+using _BufQueue = Toastbox::Queue<_Buf, 2, false, _BufQueueAssert>;
 
 #warning TODO: were not putting the _BufQueue code in .sram1 too are we?
 [[gnu::section(".sram1")]]
@@ -116,8 +116,13 @@ public:
     
 private:
     static inline uint16_t _RCA = 0;
-    alignas(4) static inline SD::CardId _CardId;
-    alignas(4) static inline SD::CardData _CardData;
+    
+    alignas(alignof(void*)) // Aligned to send via USB
+    static inline SD::CardId _CardId;
+    
+    alignas(alignof(void*)) // Aligned to send via USB
+    static inline SD::CardData _CardData;
+    
     static inline bool _Reading = false;
 };
 
@@ -415,7 +420,7 @@ struct _TaskUSBDataIn {
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataIn")]]
-    alignas(sizeof(void*))
+    alignas(alignof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -462,7 +467,7 @@ struct _TaskUSBDataOut {
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataOut")]]
-    alignas(sizeof(void*))
+    alignas(alignof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -519,7 +524,7 @@ struct _TaskReadout {
     
     // Task stack
     [[gnu::section(".stack._TaskReadout")]]
-    alignas(sizeof(void*))
+    alignas(alignof(void*))
     static inline uint8_t Stack[512];
 };
 
@@ -1004,7 +1009,8 @@ static void _MSPTimeGet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Send time
-    alignas(4) const Time::Instant time = mspResp->arg.TimeGet.time;
+    alignas(alignof(void*)) // Aligned to send via USB
+    const Time::Instant time = mspResp->arg.TimeGet.time;
     _USB::Send(Endpoint::DataIn, &time, sizeof(time));
 }
 
@@ -1259,7 +1265,8 @@ void _SDInit(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Send SD card info
-    alignas(4) const SDCardInfo cardInfo = {
+    alignas(alignof(void*)) // Aligned to send via USB
+    const SDCardInfo cardInfo = {
         .cardId = _SD::CardId(),
         .cardData = _SD::CardData(),
     };
@@ -1338,8 +1345,8 @@ void _ImgCapture(const STM::Cmd& cmd) {
     
     const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstRAMBlock, arg.skipCount);
     
-    // stats: aligned to send via USB
-    alignas(4) const ImgCaptureStats stats = {
+    alignas(alignof(void*)) // Aligned to send via USB
+    const ImgCaptureStats stats = {
         .len            = imagePaddedLen,
         .highlightCount = resp.highlightCount(),
         .shadowCount    = resp.shadowCount(),

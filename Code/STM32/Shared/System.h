@@ -19,7 +19,7 @@
 #define _StackInterruptSize 1024
 
 [[gnu::section(".stack.interrupt")]]
-alignas(sizeof(void*))
+alignas(alignof(void*))
 uint8_t _StackInterrupt[_StackInterruptSize];
 
 asm(".global _StackInterruptEnd");
@@ -141,7 +141,9 @@ public:
     >;
     
     static void USBSendStatus(bool s) {
-        alignas(4) bool status = s; // Aligned to send via USB
+        alignas(alignof(void*)) // Aligned to send via USB
+        bool status = s;
+        
         USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
     }
     
@@ -210,7 +212,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskCmdRecv")]]
-        alignas(sizeof(void*))
+        alignas(alignof(void*))
         static inline uint8_t Stack[512];
     };
     
@@ -246,7 +248,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskCmdHandle")]]
-        alignas(sizeof(void*))
+        alignas(alignof(void*))
         static inline uint8_t Stack[1024];
     };
     
@@ -451,7 +453,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskMSPComms")]]
-        alignas(sizeof(void*))
+        alignas(alignof(void*))
         static inline uint8_t Stack[512];
     };
     
@@ -549,7 +551,8 @@ private:
         USBAcceptCommand(true);
         
         // Send status struct
-        alignas(4) const STM::Status status = { // Aligned to send via USB
+        alignas(alignof(void*)) // Aligned to send via USB
+        const STM::Status status = {
             .magic      = STM::Status::MagicNumber,
             .version    = STM::Version,
             .mode       = T_Mode,
@@ -562,7 +565,7 @@ private:
         // Accept command
         USBAcceptCommand(true);
         
-        alignas(4) // Aligned to send via USB
+        alignas(alignof(void*)) // Aligned to send via USB
         const STM::BatteryStatus status = _TaskMSPComms::BatteryStatus();
         USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
     }

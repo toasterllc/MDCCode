@@ -638,8 +638,8 @@ private:
     }
     
 private:
-    alignas(4)
-    static const inline uint8_t _ResetSentinel = 0; // Aligned to send via USB
+    alignas(alignof(void*)) // Aligned to send via USB
+    static const inline uint8_t _ResetSentinel = 0;
     
     // _DevNullAddr: address that throw-away data can be written to.
     // This must be a region that a packet can be written to without causing
@@ -649,8 +649,8 @@ private:
     // ignored as long as the flash isn't unlocked.
     static constexpr uint32_t _DevNullAddr = 0x08000000;
     
-    alignas(4)
-    static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl]; // Aligned to receive via USB
+    alignas(alignof(void*)) // Aligned to receive via USB
+    static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl];
     
     static inline std::optional<size_t> _CmdRecvLen;
     static inline _EndpointState _EndpointsOut[EndpointCountOut()] = {};

@@ -8,6 +8,7 @@
 #import "Code/Shared/Img.h"
 #import "Toastbox/LRU.h"
 #import "Toastbox/IterAny.h"
+#import "Toastbox/Signal.h"
 #import "Toastbox/Mac/Util.h"
 using namespace MDCStudio;
 
@@ -40,10 +41,18 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 struct _ChunkTexture {
     static constexpr size_t SliceCount = ImageLibrary::ChunkRecordCap;
     id<MTLTexture> txt = nil;
-    bool loaded[SliceCount] = {};
+    uint32_t loadCounts[SliceCount] = {};
 };
 
-using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture>;
+static constexpr size_t _ChunkTexturesCacheCapacity = 4;
+using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,_ChunkTexturesCacheCapacity>;
+
+struct _ThumbRenderThreadState {
+    Toastbox::Signal signal; // Protects this struct
+    ImageSourcePtr imageSource;
+    ImageSource::LoadImagesState loadImages;
+    std::set<ImageRecordPtr> recs;
+};
 
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
@@ -59,6 +68,7 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture>
     id<MTLTexture> _placeholderTexture;
     
     _ChunkTextures _chunkTxts;
+    std::shared_ptr<_ThumbRenderThreadState> _thumbRender;
     
     struct {
         ImageSet images;
@@ -153,7 +163,17 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         });
     }
     
+    // Start our _ThumbRenderThread
+    _thumbRender = std::make_shared<_ThumbRenderThreadState>();
+    _thumbRender->imageSource = _imageSource;
+    std::thread([=] { _ThumbRenderThread(*_thumbRender); }).detach();
+    
     return self;
+}
+
+- (void)dealloc {
+    // Signal our thread to exit
+    _thumbRender->signal.stop();
 }
 
 - (Grid&)grid {
@@ -199,15 +219,28 @@ static CGRect _CGRectFromGridRect(Grid::Rect rect, CGFloat scale) {
     };
 }
 
+// _ChunkTextureUpdateSlice: if _ChunkTexture's slice for an ImageRecord is stale, reloads the compressed
+// thumbnail data from the ImageRecord into the slice
 static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::RecordRef& ref) {
-    const bool loaded = ref->info.flags & ImageFlags::Loaded;
-    if (loaded) {
+    const uint32_t loadCount = ref->status.loadCount;
+    if (loadCount != ct.loadCounts[ref.idx]) {
+//        printf("Update slice\n");
         const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
         [ct.txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
             slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+        
+        ct.loadCounts[ref.idx] = loadCount;
     }
-    
-    ct.loaded[ref.idx] = loaded;
+}
+
+static MTLTextureDescriptor* _TextureDescriptor() {
+    MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+    [desc setTextureType:MTLTextureType2DArray];
+    [desc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm];
+    [desc setWidth:ImageThumb::ThumbWidth];
+    [desc setHeight:ImageThumb::ThumbHeight];
+    [desc setArrayLength:_ChunkTexture::SliceCount];
+    return desc;
 }
 
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
@@ -228,21 +261,12 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     
     auto startTime = std::chrono::steady_clock::now();
     
-    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
-    [txtDesc setTextureType:MTLTextureType2DArray];
-    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm];
-    [txtDesc setWidth:ImageThumb::ThumbWidth];
-    [txtDesc setHeight:ImageThumb::ThumbHeight];
-    [txtDesc setArrayLength:_ChunkTexture::SliceCount];
-    
+    static MTLTextureDescriptor* txtDesc = _TextureDescriptor();
     id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
     assert(txt);
     
     _ChunkTexture& ct = _chunkTxts[chunk];
     ct.txt = txt;
-    for (auto it=chunkBegin; it!=chunkEnd; it++) {
-        _ChunkTextureUpdateSlice(ct, *it);
-    }
     
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
     printf("Texture creation took %ju ms\n", (uintmax_t)durationMs);
@@ -250,14 +274,13 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     return ct;
 }
 
-//static void _Display(ImageGridLayer* self, id<MTLTexture> drawableTxt) {
 - (void)_display:(id<MTLTexture>)drawableTxt commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     const CGRect frame = [self frame];
     const CGFloat contentsScale = [self contentsScale];
     const CGSize superlayerSize = [[self superlayer] bounds].size;
     const CGSize viewSize = {superlayerSize.width*contentsScale, superlayerSize.height*contentsScale};
-    const Grid::IndexRange indexRange = _grid.indexRangeForIndexRect(_grid.indexRectForRect(_GridRectFromCGRect(frame, contentsScale)));
-    if (!indexRange.count) return;
+    const Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
+    if (!visibleIndexRange.count) return;
     
     MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
     [[renderPassDescriptor colorAttachments][0] setTexture:drawableTxt];
@@ -300,16 +323,18 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-    ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
-    
-    const auto visibleBegin = begin+indexRange.start;
-    const auto visibleEnd = begin+indexRange.start+indexRange.count;
+    const auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+    const auto [visibleBegin, visibleEnd] = _VisibleRange(visibleIndexRange, *_imageLibrary, _sortNewestFirst);
     
     for (auto it=visibleBegin; it!=visibleEnd;) {
-        const auto nextChunkStart = ImageLibrary::FindChunkEnd(end, it);
-        const auto chunkImageRefBegin = it;
-        const auto chunkImageRefEnd = std::min(visibleEnd, nextChunkStart);
+        // Update stale _ChunkTexture slices from the ImageRecord's thumbnail data, if needed. (We know whether a
+        // _ChunkTexture slice is stale by using ImageRecord's loadCount.)
+        const auto chunkBegin = it;
+        _ChunkTexture& ct = [self _getChunkTexture:it];
+        for (; it!=visibleEnd && it->chunk==chunkBegin->chunk; it++) {
+            _ChunkTextureUpdateSlice(ct, *it);
+        }
+        const auto chunkEnd = it;
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         [renderEncoder setRenderPipelineState:_pipelineState];
@@ -321,7 +346,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
-            .idx = (uint32_t)(chunkImageRefBegin-begin),
+            .idx = (uint32_t)(chunkBegin-begin),
             .sortNewestFirst = _sortNewestFirst,
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
@@ -335,24 +360,23 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
         [renderEncoder setVertexBuffer:_selection.buf offset:0 atIndex:2];
         
-        _ChunkTexture& ct = [self _getChunkTexture:it];
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-        [renderEncoder setFragmentBytes:&ct.loaded length:sizeof(ct.loaded) atIndex:1];
+        [renderEncoder setFragmentBytes:&ct.loadCounts length:sizeof(ct.loadCounts) atIndex:1];
         [renderEncoder setFragmentTexture:ct.txt atIndex:0];
         [renderEncoder setFragmentTexture:_placeholderTexture atIndex:1];
         
-        const size_t chunkImageCount = chunkImageRefEnd-chunkImageRefBegin;
+        const size_t chunkImageCount = chunkEnd-chunkBegin;
         [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6 instanceCount:chunkImageCount];
         [renderEncoder endEncoding];
-        
-        it = chunkImageRefEnd;
     }
     
     // Re-render the visible thumbnails that are marked dirty
-    _imageSource->visibleThumbs(visibleBegin, visibleEnd);
+    _ThumbRenderIfNeeded(*_thumbRender, { visibleBegin, visibleEnd });
 }
 
 - (void)display {
+//    printf("[ImageGridView] display\n");
+    
 //    auto startTime = std::chrono::steady_clock::now();
     [super display];
     
@@ -420,18 +444,25 @@ done:
 }
 
 - (void)setSelection:(ImageSet)images {
-    // Trigger buffer regeneration
-    _selection = {
-        .images = std::move(images),
-    };
+    // Remove images that aren't loaded
+    // Ie, don't allow placeholder images to be selected
+    for (auto it=images.begin(); it!=images.end();) {
+        if (!(*it)->status.loadCount) {
+            it = images.erase(it);
+        } else {
+            it++;
+        }
+    }
+    
+    // Set the entire _selection struct so that _display recreates the buffer
+    _selection = { .images = std::move(images) };
     [self setNeedsDisplay];
 }
 
 - (void)setSortNewestFirst:(bool)x {
     _sortNewestFirst = x;
-    // Trigger selection update
+    // Trigger selection update (_selection buffer needs to be cleared)
     [self setSelection:std::move(_selection.images)];
-    [self setNeedsDisplay];
 }
 
 struct SelectionDelta {
@@ -551,6 +582,101 @@ struct SelectionDelta {
 
 
 
+// MARK: - Thumb Render
+
+using _IterRange = std::pair<ImageRecordIterAny,ImageRecordIterAny>;
+
+static Grid::IndexRange _VisibleIndexRange(const Grid& grid, CGRect frame, CGFloat scale) {
+    return grid.indexRangeForIndexRect(grid.indexRectForRect(_GridRectFromCGRect(frame, scale)));
+}
+
+static _IterRange _VisibleRange(const Grid::IndexRange& ir, const ImageLibrary& il, bool sortNewestFirst) {
+    ImageRecordIterAny begin = ImageLibrary::BeginSorted(il, sortNewestFirst);
+    const auto visibleBegin = begin+ir.start;
+    const auto visibleEnd = begin+ir.start+ir.count;
+    return std::make_pair(visibleBegin, visibleEnd);
+}
+
+static void _ThumbRenderIfNeeded(_ThumbRenderThreadState& thread, _IterRange range) {
+    bool enqueued = false;
+    {
+        auto lock = thread.signal.lock();
+        thread.recs.clear();
+        for (auto it=range.first; it!=range.second; it++) {
+            if ((*it)->options.thumb.render) {
+                thread.recs.insert(*it);
+                enqueued = true;
+            }
+        }
+    }
+    if (enqueued) thread.signal.signalOne();
+}
+
+static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
+    try {
+        for (;;) {
+            std::set<ImageRecordPtr> recs;
+            {
+                auto lock = state.signal.wait([&] { return !state.recs.empty(); });
+                recs = std::move(state.recs);
+                // Update .thumb.render asap (ie before we've actually rendered) so that the
+                // visibleThumbs() function on the main thread stops enqueuing work asap
+                for (const ImageRecordPtr& rec : recs) {
+                    rec->options.thumb.render = false;
+                }
+            }
+            
+            printf("[_ThumbRenderThread] Enqueueing %ju thumbnails for rendering\n", (uintmax_t)recs.size());
+            state.imageSource->loadImages(state.loadImages, ImageSource::Priority::High, recs);
+            printf("[_ThumbRenderThread] Rendered %ju thumbnails\n", (uintmax_t)recs.size());
+        }
+    
+    } catch (const Toastbox::Signal::Stop&) {
+        printf("[_ThumbRenderThread] Stopping\n");
+    }
+}
+
+// _imageLibrary must be locked!
+- (void)_thumbRenderVisibleIfNeeded {
+    const auto vir = _VisibleIndexRange(_grid, [self frame], [self contentsScale]);
+    const auto vr = _VisibleRange(vir, *_imageLibrary, _sortNewestFirst);
+    _ThumbRenderIfNeeded(*_thumbRender, vr);
+}
+
+//- (_IterRange)_visibleRange {
+//    const Grid::IndexRange indexRange = _VisibleIndexRange(_grid, [self frame], [self contentsScale]);
+//    ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+//    const auto visibleBegin = begin+indexRange.start;
+//    const auto visibleEnd = begin+indexRange.start+indexRange.count;
+//    return std::make_pair(visibleBegin, visibleEnd);
+//}
+//
+//- (_IterRange)_visibleRange {
+//    const CGRect frame = [self frame];
+//    const CGFloat contentsScale = [self contentsScale];
+//    const Grid::IndexRange indexRange = _grid.indexRangeForIndexRect(_grid.indexRectForRect(_GridRectFromCGRect(frame, contentsScale)));
+//    ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+//    const auto visibleBegin = begin+indexRange.start;
+//    const auto visibleEnd = begin+indexRange.start+indexRange.count;
+//    return std::make_pair(visibleBegin, visibleEnd);
+//}
+//
+//- (void)_updateVisibleThumbs {
+//    bool enqueued = false;
+//    {
+////        auto lock = _thumbRender->signal.lock();
+////        _thumbRender->recs.clear();
+////        for (auto it=begin; it!=end; it++) {
+////            ImageRecordPtr rec = *it;
+////            if (rec->options.thumb.render) {
+////                _thumbRender->recs.insert(rec);
+////                enqueued = true;
+////            }
+////        }
+//    }
+//    if (enqueued) _thumbRender->signal.signalOne();
+//}
+
 // MARK: - ImageLibrary Observer
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
 // and with the ImageLibrary lock held!
@@ -559,22 +685,89 @@ struct SelectionDelta {
     if (![NSThread isMainThread]) {
         ImageLibrary::Event evCopy = ev;
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self _handleImageLibraryEvent:evCopy];
+            auto lock = std::unique_lock(*self->_imageLibrary);
+            [self __handleImageLibraryEvent:evCopy];
         });
         return;
     }
     
-    // If we added records or changed records, we need to update the relevent textures
-    if (ev.type==ImageLibrary::Event::Type::Add || ev.type==ImageLibrary::Event::Type::Change) {
-        for (const ImageRecordPtr& rec : ev.records) {
-            auto it = _chunkTxts.find(rec);
-            if (it == _chunkTxts.end()) continue;
-            _ChunkTexture& ct = it->val;
-            _ChunkTextureUpdateSlice(ct, rec);
-        }
-    }
+    [self __handleImageLibraryEvent:ev];
     
-    [self setNeedsDisplay];
+    
+//    switch (ev.type) {
+//    
+//    }
+//    
+//    if (ev.type == ImageLibrary::Event::Type::Add) {
+//        [self setNeedsDisplay];
+//    
+//    } else if (ev.type == ImageLibrary::Event::Type::ChangeProperty) {
+////        // Re-render the visible thumbnails that are marked dirty
+////        _imageSource->visibleThumbs(visibleBegin, visibleEnd);
+//    } else {
+//        
+//    }
+    
+//    // If we added records or changed records, we need to update the relevent textures
+//    if (ev.type==ImageLibrary::Event::Type::Add || ev.type==ImageLibrary::Event::Type::Change) {
+//        for (const ImageRecordPtr& rec : ev.records) {
+//            if (auto find=_chunkTxts.find(rec); find!=_chunkTxts.end()) {
+////                printf("Update slice\n");
+////                _chunkTxts.erase(find);
+//                _ChunkTexture& ct = find->val;
+//                _ChunkTextureUpdateSlice(ct, rec);
+//            }
+//        }
+//    }
+//    
+//    [self setNeedsDisplay];
+}
+
+
+// _imageLibrary must be locked!
+- (bool)_recordsIntersectVisibleRange:(const std::set<ImageRecordPtr>&)changed {
+    if (changed.empty()) return false;
+    const auto visibleRange = _VisibleRange(_VisibleIndexRange(_grid, [self frame], [self contentsScale]), *_imageLibrary, _sortNewestFirst);
+    if (visibleRange.first == visibleRange.second) return false;
+    
+    ImageRecordPtr vl = *visibleRange.first;
+    ImageRecordPtr vr = *std::prev(visibleRange.second);
+    ImageRecordPtr cl = *changed.begin();
+    ImageRecordPtr cr = *std::prev(changed.end());
+    
+    if (vr < vl) std::swap(vl, vr);
+    if (cr < cl) std::swap(cl, cr);
+    if (vr < cl) return false;
+    if (cr < vl) return false;
+    return true;
+}
+
+
+// _imageLibrary must be locked!
+- (void)__handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
+    assert([NSThread isMainThread]);
+    
+    switch (ev.type) {
+    case ImageLibrary::Event::Type::Add:
+        [self setNeedsDisplay];
+        break;
+    case ImageLibrary::Event::Type::Remove:
+        [self setNeedsDisplay];
+        break;
+    case ImageLibrary::Event::Type::ChangeProperty:
+        if ([self _recordsIntersectVisibleRange:ev.records]) {
+            // Re-render visible thumbs that are dirty
+            // We don't check if any of `ev` intersect the visible range, because _thumbRenderVisibleIfNeeded
+            // should be cheap and reduces to a no-op if none of the visible thumbs are dirty.
+            [self _thumbRenderVisibleIfNeeded];
+        }
+        break;
+    case ImageLibrary::Event::Type::ChangeThumbnail:
+        if ([self _recordsIntersectVisibleRange:ev.records]) {
+            [self setNeedsDisplay];
+        }
+        break;
+    }
 }
 
 @end

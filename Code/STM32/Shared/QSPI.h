@@ -112,7 +112,9 @@ public:
         //       ...
         //       Len = DummyCycles
         if (cmd.DummyCycles) {
-            alignas(4) static uint8_t buf[32]; // Dummy cycles (DCYC) register is 5 bits == up to 31 cycles
+            alignas(alignof(uint32_t)) // Aligned for DMA
+            static uint8_t buf[32]; // Dummy cycles (DCYC) register is 5 bits == up to 31 cycles
+            
             size_t readLen = 0;
             
             if (_Config->mode == Mode::Single) {
