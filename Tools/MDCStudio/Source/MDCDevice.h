@@ -23,6 +23,7 @@
 #import "ImageLibrary.h"
 #import "ImageCache.h"
 #import "ImageSource.h"
+#import "BufferPool.h"
 
 namespace MDCStudio {
 
@@ -560,6 +561,11 @@ private:
         size_t writeCount = 0;
         size_t workIdx = 0;
         for (auto it=recs.rbegin(); it!=recs.rend();) {
+            
+            
+            
+            
+            
             // Get a _SDWork
             _SDWork& work = state.works.at(workIdx);
             workIdx++;
@@ -1040,6 +1046,14 @@ private:
     std::string _name;
     std::forward_list<Observer> _observers;
     Toastbox::Signal _imageForAddrSignal;
+    
+    struct {
+        std::mutex lock; // Protects this struct
+        using ThumbPool = BufferPool<ImgSD::Thumb::ImagePaddedLen>;
+        using ThumbBuffer = ThumbPool::Buffer;
+        ThumbPool pool = ThumbPool(5);
+        Toastbox::LRU<_SDRegion,ThumbBuffer>> cache;
+    } _loadImagesState;
     
     struct {
         std::thread thread;
