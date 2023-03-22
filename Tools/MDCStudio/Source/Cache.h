@@ -1,8 +1,8 @@
 #pragma once
 #include <memory>
 #include <vector>
-#include "LRU.h"
-#include "Signal.h"
+#include "Toastbox/LRU.h"
+#include "Toastbox/Signal.h"
 
 template<typename T_Key, typename T_Val, size_t T_Cap>
 class Cache {
@@ -14,10 +14,13 @@ public:
         const size_t idx = 0;
     };
     
-    struct Wrapper {
-        Wrapper() {}
-        Wrapper(Cache& cache, size_t idx) : _val(&cache._mem[idx]), _cookie(std::make_shared<_Cookie>(cache, idx)) {}
+    struct Val {
+        Val() {}
+        Val(Cache& cache, size_t idx) : _val(&cache._mem[idx]), _cookie(std::make_shared<_Cookie>(cache, idx)) {}
         operator bool() { return _val; }
+        bool operator<(const Val& x) const { return _cookie < x._cookie; }
+        bool operator==(const Val& x) const { return _cookie == x._cookie; }
+        bool operator!=(const Val& x) const { return _cookie != x._cookie; }
         T_Val* operator->() const { return _val; }
         T_Val& operator*() const { return *_val; }
         T_Val* _val = nullptr;
@@ -40,10 +43,14 @@ public:
         assert(_free.list.size()+_cache.lru.size() == T_Cap);
     }
     
+    std::unique_lock<std::mutex> lock() {
+        return std::unique_lock(_cache.lock);
+    }
+    
     // get(): find an existing entry for a key
-    // If the entry didn't exist, (bool)Wrapper == false
-    Wrapper get(const T_Key& key) {
-        auto lock = std::unique_lock(_cache.lock);
+    // If the entry didn't exist, (bool)Val == false
+    Val get(std::unique_lock<std::mutex>& lock, const T_Key& key) {
+        assert(lock);
         if (auto find=_cache.lru.find(key); find!=_cache.lru.end()) {
             return find->val;
         }
@@ -51,67 +58,33 @@ public:
     }
     
     // set(): set an entry for a key
-    void set(const T_Key& key, Wrapper val) {
-        auto lock = std::unique_lock(_cache.lock);
+    void set(std::unique_lock<std::mutex>& lock, const T_Key& key, Val val) {
+        assert(lock);
         _cache.lru[key] = val;
     }
     
-    Wrapper pop() {
-        auto lock = _free.signal.wait([&] { return !_free.list.empty(); });
+    // pop(): return an empty entry
+    Val pop(std::unique_lock<std::mutex>& lock) {
+        assert(lock);
+        _free.signal.wait(lock, [&] { return !_free.list.empty(); });
         const size_t idx = _free.list.back();
         _free.list.pop_back();
-        return Wrapper(*this, idx);
+        return Val(*this, idx);
     }
     
+    Val get(const T_Key& key) {
+        auto l = lock();
+        return get(l, key);
+    }
     
+    void set(const T_Key& key, Val val) {
+        auto l = lock();
+        set(l, key, val);
+    }
     
-    
-    
-    
-    
-    
-    
-//    #warning TODO: pop(): there's potential for deadlock here if the free list is empty and all outstanding Wrapper aren't in the cache.
-//    Wrapper pop() {
-//        auto lock = _free.signal.lock();
-//        for (;;) {
-//            if (!_free.list.empty()) {
-//                const size_t idx = _free.list.back();
-//                _free.list.pop_back();
-//                return Wrapper(*this, idx);
-//            }
-//            lock.unlock();
-//            
-//            {
-//                auto lock = std::unique_lock(_cache.lock);
-//                _cache.lru.evict();
-//            }
-//            
-//            lock.lock();
-//            _free.signal.wait(lock, [&] { return !_free.list.empty(); });
-//        }
-//    }
-    
-    
-    
-//    #warning TODO: pop(): there's potential for deadlock here if the free list is empty and all
-//    Wrapper pop() {
-//        if (_freeListEmpty()) {
-//            {
-//                auto lock = std::unique_lock(_cache.lock);
-//                _cache.lru.evict();
-//            }
-//        }
-//        
-//        auto lock = _free.signal.wait([&] { return !_free.list.empty(); });
-//        const size_t idx = _free.list.back();
-//        _free.list.pop_back();
-//        return Wrapper(*this, idx);
-//    }
-    
-    bool _freeListEmpty() {
-        auto lock = _free.signal.lock();
-        return _free.list.empty();
+    Val pop() {
+        auto l = lock();
+        return pop(l);
     }
     
     void _recycle(size_t idx) {
@@ -122,19 +95,12 @@ public:
         _free.signal.signalOne();
     }
     
-    
-    
-    
-    
-    
-    
-    
 //private:
     
     T_Val _mem[T_Cap];
     
-    // _free: needs to be decalred before _cache, so that upon destruction, _free persists longer
-    // than _cache, since the Wrappers that are destroyed as a part of _cache.lru being destroyed
+    // _free: needs to be declared before _cache, so that upon destruction, _free persists longer
+    // than _cache, since the Vals that are destroyed as a part of _cache.lru being destroyed
     // need _free to exist for _recycle() to work properly.
     struct {
         Toastbox::Signal signal; // Protects this struct
@@ -143,6 +109,6 @@ public:
     
     struct {
         std::mutex lock; // Protects this struct;
-        Toastbox::LRU<T_Key,Wrapper,T_Cap-8> lru;
+        Toastbox::LRU<T_Key,Val,T_Cap-8> lru;
     } _cache;
 };

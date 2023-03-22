@@ -24,6 +24,7 @@
 #import "ImageCache.h"
 #import "ImageSource.h"
 #import "BufferPool.h"
+#import "Cache.h"
 
 namespace MDCStudio {
 
@@ -250,9 +251,6 @@ private:
 //        } state;
 //    };
     
-    using _ThumbPool = BufferPool<ImgSD::Thumb::ImagePaddedLen>;
-    using _ThumbBuffer = _ThumbPool::Buffer;
-    
     struct _SDRegion {
         _SDBlock block = 0;
         size_t len     = 0;
@@ -271,6 +269,10 @@ private:
         
         bool operator!=(const _SDRegion& x) const { return !(*this == x); }
     };
+    
+    using __ThumbBuffer = uint8_t[ImgSD::Thumb::ImagePaddedLen];
+    using _ThumbCache = Cache<_SDRegion,__ThumbBuffer,512>;
+    using _ThumbBuffer = _ThumbCache::Val;
     
     struct _SDReadOp {
         _SDRegion region;
@@ -559,9 +561,9 @@ private:
     void _readCompleteCallback(_LoadImagesState& state, const _SDReadWork& work, bool initial) {
         // Insert buffers into our cache
         {
-            auto lock = std::unique_lock(_thumbCache.lock);
+            auto lock = _thumbCache.lock();
             for (const _SDReadOp& op : work.ops) {
-                _cacheSet(lock, op.region, op.buf);
+                _thumbCache.set(lock, op.region, op.buf);
             }
         }
         
@@ -719,23 +721,23 @@ private:
 //        }
 //    }
     
-    _ThumbBuffer _cacheGet(const _SDRegion& region) {
-        auto lock = std::unique_lock(_thumbCache.lock);
-        if (auto find=_thumbCache.cache.find(region); find!=_thumbCache.cache.end()) {
-            return find->val;
-        }
-        return {};
-    }
-    
-    void _cacheSet(std::unique_lock<std::mutex>& lock, const _SDRegion& region, _ThumbBuffer buf) {
-        assert(lock);
-        _thumbCache.cache[region] = std::move(buf);
-    }
-    
-    void _cacheSet(const _SDRegion& region, _ThumbBuffer buf) {
-        auto lock = std::unique_lock(_thumbCache.lock);
-        _cacheSet(lock, region, buf);
-    }
+//    _ThumbBuffer _cacheGet(const _SDRegion& region) {
+//        auto lock = std::unique_lock(_thumbCache.lock);
+//        if (auto find=_thumbCache.cache.find(region); find!=_thumbCache.cache.end()) {
+//            return find->val;
+//        }
+//        return {};
+//    }
+//    
+//    void _cacheSet(std::unique_lock<std::mutex>& lock, const _SDRegion& region, _ThumbBuffer buf) {
+//        assert(lock);
+//        _thumbCache.cache[region] = std::move(buf);
+//    }
+//    
+//    void _cacheSet(const _SDRegion& region, _ThumbBuffer buf) {
+//        auto lock = std::unique_lock(_thumbCache.lock);
+//        _cacheSet(lock, region, buf);
+//    }
     
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, std::set<ImageRecordPtr> recs) {
@@ -756,7 +758,7 @@ private:
                     };
                     
                     // If the thumbnail is in our cache, kick off rendering
-                    _ThumbBuffer buf = _cacheGet(region);
+                    _ThumbBuffer buf = _thumbCache.get(region);
                     if (buf) {
                         _renderEnqueue(lock, state, initial, rec, std::move(buf));
                         enqueued = true;
@@ -788,7 +790,7 @@ private:
                 
                 #warning TODO: if work has ops and we're about to wait, enqueue the work so we don't hold up the existing ops waiting for a buffer
                 #warning TODO: implement waiting on state.pool if the pool is empty
-                _ThumbBuffer buf = _thumbCache.pool.pop();
+                _ThumbBuffer buf = _thumbCache.pop();
                 
                 work.ops.insert(_SDReadOp{
                     .region = region,
@@ -1036,7 +1038,7 @@ private:
         for (auto it=begin; it!=end; it++) {
             const _SDReadOp& op = *it;
             const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
-            memcpy(op.buf, _sdRead.buffer+off, op.region.len);
+            memcpy(*op.buf, _sdRead.buffer+off, op.region.len);
         }
     }
     
@@ -1130,7 +1132,7 @@ private:
                 ImageRecord& rec = *work.rec;
                 
                 // Validate checksum
-                if (_ImageChecksumValid(work.buf, Img::Size::Thumb)) {
+                if (_ImageChecksumValid(*work.buf, Img::Size::Thumb)) {
     //                printf("Checksum valid (thumb)\n");
                 } else {
                     printf("Checksum INVALID (thumb)\n");
@@ -1140,7 +1142,7 @@ private:
                 if (work.initial) {
                     // Populate .info
                     {
-                        const Img::Header& imgHeader = *(const Img::Header*)work.buf.data();
+                        const Img::Header& imgHeader = *(const Img::Header*)(*work.buf);
                         
                         if (imgHeader.id != rec.info.id) {
                             #warning TODO: how do we properly handle this?
@@ -1166,7 +1168,7 @@ private:
                 
                 // Render the thumbnail into rec.thumb
                 {
-                    const void* thumbSrc = work.buf+Img::PixelsOffset;
+                    const void* thumbSrc = (*work.buf)+Img::PixelsOffset;
                     void* thumbDst = rec.thumb.data;
                     
                     // estimateIlluminant: only perform illuminant estimation upon our initial import
@@ -1224,19 +1226,12 @@ private:
     std::string _name;
     std::forward_list<Observer> _observers;
     Toastbox::Signal _imageForAddrSignal;
+    _ThumbCache _thumbCache;
     
     struct {
         std::thread thread;
         _LoadImagesState loadImages;
     } _sync;
-    
-    struct {
-        std::mutex lock;
-        #warning TODO: update pool size
-        _ThumbPool pool = _ThumbPool(4096);
-        #warning TODO: update cache size
-        Toastbox::LRU<_SDRegion,_ThumbBuffer,512> cache;
-    } _thumbCache;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
