@@ -605,11 +605,11 @@ private:
         _thumbRender.signal.signalAll();
     }
     
-    #warning TODO: 
     void _loadImages(_LoadImagesState& state, _Priority priority,
-        bool initial, const std::set<ImageRecordPtr>& recs) {
+        bool initial, std::set<ImageRecordPtr> recs) {
         
-        for (auto it=recs.rbegin(); it!=recs.rend(); it++) {
+        // Kick off rendering for all the recs that are in our cache
+        for (auto it=recs.begin(); it!=recs.end();) {
             const ImageRecordPtr& rec = *it;
             const _SDRegion region = {
                 .block = rec->info.addrThumb,
@@ -618,40 +618,43 @@ private:
             
             // If the thumbnail is in our cache (state.cache), kick off rendering
             {
-                _ThumbBuffer buf;
-                {
-                    auto lock = std::unique_lock(state.lock);
-                    auto find = state.cache.find(region);
-                    if (find != state.cache.end()) {
-                        buf = find->val;
-                    }
-                }
-                
-                if (buf) {
+                auto lock = std::unique_lock(state.lock);
+                auto find = state.cache.find(region);
+                if (find != state.cache.end()) {
+                    _ThumbBuffer buf = find->val;
                     _enqueueRender(initial, rec, std::move(buf));
+                    it = recs.erase(it);
                     continue;
                 }
             }
             
-            // If the thumbnail isn't in our cache, SDRead it
+            it++;
+        }
+        
+        // The remaining recs aren't in our cache, so kick of SD reading + rendering
+        for (auto it=recs.rbegin(); it!=recs.rend(); it++) {
+            const ImageRecordPtr& rec = *it;
+            const _SDRegion region = {
+                .block = rec->info.addrThumb,
+                .len = ImgSD::Thumb::ImagePaddedLen,
+            };
+            
+            #warning TODO: implement waiting on state.pool if the pool is empty
+            _ThumbBuffer buf = state.pool.pop();
+            
+            // Enqueue _SDWork into _sdRead.queues
             {
-                #warning TODO: implement waiting on state.pool if the pool is empty
-                _ThumbBuffer buf = state.pool.pop();
-                
-                // Enqueue _SDWork into _sdRead.queues
                 {
-                    {
-                        auto lock = _sdRead.signal.lock();
-                        _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
-                        queue.insert(_SDReadWork{
-                            .region = region,
-                            .buf = buf,
-                            .callback = [=, &state] { _readCompleteCallback(state, region, initial, rec, buf); },
-                        });
-                    }
-                    #warning TODO: only signal after we've enqueued some number of _SDReadWork's
-                    _sdRead.signal.signalOne();
+                    auto lock = _sdRead.signal.lock();
+                    _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
+                    queue.insert(_SDReadWork{
+                        .region = region,
+                        .buf = buf,
+                        .callback = [=, &state] { _readCompleteCallback(state, region, initial, rec, buf); },
+                    });
                 }
+                #warning TODO: only signal after we've enqueued some number of _SDReadWork's
+                _sdRead.signal.signalOne();
             }
         }
         
