@@ -295,8 +295,10 @@ private:
     };
     
     struct _SDReadWork {
-        using Callback = std::function<void(const _SDReadWork&)>;
-        std::set<_SDReadOp> ops;
+        using Ops = std::set<_SDReadOp>;
+        using OpsIter = std::set<_SDReadOp>::const_iterator;
+        using Callback = std::function<void(const _SDReadWork&, OpsIter begin, OpsIter end)>;
+        Ops ops;
         Callback callback;
     };
     
@@ -558,11 +560,12 @@ private:
         }
     }
     
-    void _readCompleteCallback(_LoadImagesState& state, const _SDReadWork& work, bool initial) {
+    void _readCompleteCallback(_LoadImagesState& state, const _SDReadWork& work, _SDReadWork::OpsIter begin, _SDReadWork::OpsIter end, bool initial) {
         // Insert buffers into our cache
         {
             auto lock = _thumbCache.lock();
-            for (const _SDReadOp& op : work.ops) {
+            for (auto it=begin; it!=end; it++) {
+                const _SDReadOp& op = *it;
                 _thumbCache.set(lock, op.region, op.buf);
             }
         }
@@ -571,7 +574,9 @@ private:
         {
             {
                 auto lock = _thumbRender.signal.lock();
-                for (const _SDReadOp& op : work.ops) {
+                for (auto it=begin; it!=end; it++) {
+                    const _SDReadOp& op = *it;
+                    printf("Enqueueing rendering for %ju\n", (uintmax_t)op.rec->info.id);
                     _renderEnqueue(lock, state, initial, op.rec, op.buf);
                 }
             }
@@ -778,7 +783,7 @@ private:
         // The remaining recs aren't in our cache, so kick of SD reading + rendering
         for (auto it=recs.rbegin(); it!=recs.rend();) {
             _SDReadWork work = {
-                .callback = [=, &state] (const _SDReadWork& work) { _readCompleteCallback(state, work, initial); },
+                .callback = [=, &state] (const _SDReadWork& work, _SDReadWork::OpsIter begin, _SDReadWork::OpsIter end) { _readCompleteCallback(state, work, begin, end, initial); },
             };
             
             for (; it!=recs.rend(); it++) {
@@ -1068,9 +1073,8 @@ private:
                 blockEnd = blockEndCandidate;
             }
             __sdRead_handleWork(begin, it);
+            work.callback(work, begin, it);
         }
-        
-        work.callback(work);
         
 //        assert(!coalesced.works.empty());
 //        const size_t len = (size_t)SD::BlockLen * (size_t)(coalesced.blockEnd-coalesced.blockBegin);
