@@ -18,6 +18,7 @@ public:
         Buffer() {}
         Buffer(BufferPool& pool, Pointer ptr) : _ptr(ptr), _cookie(std::make_shared<_Cookie>(pool, ptr)) {}
         operator Pointer() const { return _ptr; }
+        Pointer data() { return _ptr; }
         Pointer _ptr = nullptr;
         std::shared_ptr<_Cookie> _cookie;
     };
