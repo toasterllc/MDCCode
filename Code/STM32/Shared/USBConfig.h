@@ -21,7 +21,7 @@ public:
         (uint8_t)STM::Endpoint::DataIn,
     };
     
-    alignas(4)
+    alignas(alignof(void*)) // Aligned to send via USB
     static constexpr inline _Data Descriptor = {
         .configDesc = {
             .bLength                        = _LFH_U8(sizeof(Toastbox::USB::ConfigurationDescriptor)),   // bLength: configuration descriptor length
