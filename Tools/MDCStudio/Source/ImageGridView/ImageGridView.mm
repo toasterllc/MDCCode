@@ -444,18 +444,25 @@ done:
 }
 
 - (void)setSelection:(ImageSet)images {
-    // Trigger buffer regeneration
-    _selection = {
-        .images = std::move(images),
-    };
+    // Remove images that aren't loaded
+    // Ie, don't allow placeholder images to be selected
+    for (auto it=images.begin(); it!=images.end();) {
+        if (!(*it)->status.loadCount) {
+            it = images.erase(it);
+        } else {
+            it++;
+        }
+    }
+    
+    // Set the entire _selection struct so that _display recreates the buffer
+    _selection = { .images = std::move(images) };
     [self setNeedsDisplay];
 }
 
 - (void)setSortNewestFirst:(bool)x {
     _sortNewestFirst = x;
-    // Trigger selection update
+    // Trigger selection update (_selection buffer needs to be cleared)
     [self setSelection:std::move(_selection.images)];
-    [self setNeedsDisplay];
 }
 
 struct SelectionDelta {
