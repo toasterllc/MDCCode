@@ -799,7 +799,10 @@ private:
                     if (!_thumbCache.sizeFree(lock)) {
                         _thumbCache.evict(lock);
                         if (!work.ops.empty()) {
+                            printf("[_loadImages] No free buffer, enqueueing %ju read ops\n", (uintmax_t)work.ops.size());
                             break;
+                        } else {
+                            printf("[_loadImages] No free buffer, waiting...\n");
                         }
                     }
                     buf = _thumbCache.pop(lock);
@@ -956,23 +959,14 @@ private:
                 {
                     auto lock = _thumbUpdate.signal.wait([&] { return !_thumbUpdate.recs.empty(); });
                     recs = std::move(_thumbUpdate.recs);
+                    // Update .thumb.render asap (ie before we've actually rendered) so that the
+                    // visibleThumbs() function on the main thread stops enqueuing work asap
+                    for (const ImageRecordPtr& rec : recs) {
+                        rec->options.thumb.render = false;
+                    }
                 }
                 
-                constexpr size_t ChunkSize = 32;
-                for (auto it=recs.rbegin(); it!=recs.rend();) {
-                    {
-                        auto lock = _thumbUpdate.signal.lock();
-                        if (!_thumbUpdate.recs.empty()) break;
-                    }
-                    
-                    std::set<ImageRecordPtr> chunk;
-                    for (size_t i=0; i<ChunkSize && it!=recs.rend(); i++, it++) {
-                        const ImageRecordPtr& rec = *it;
-                        rec->options.thumb.render = false;
-                        chunk.insert(rec);
-                    }
-                    _loadImages(_thumbUpdate.loadImages, _Priority::High, false, chunk);
-                }
+                _loadImages(_thumbUpdate.loadImages, _Priority::High, false, recs);
             }
         
         } catch (const Toastbox::Signal::Stop&) {
