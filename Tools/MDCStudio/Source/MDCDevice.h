@@ -811,11 +811,11 @@ private:
                     auto lock = _thumbCache.lock();
                     if (!_thumbCache.sizeFree(lock)) {
                         _thumbCache.evict(lock);
-                        if (!work.ops.empty()) {
-                            printf("[_loadImages] No free buffer, enqueueing %ju read ops\n", (uintmax_t)work.ops.size());
-                            break;
-                        } else {
-                            printf("[_loadImages] No free buffer, waiting...\n");
+                        if (!_thumbCache.sizeFree(lock)) {
+                            if (!work.ops.empty()) {
+                                printf("[_loadImages] No free buffer, enqueueing %ju read ops\n", (uintmax_t)work.ops.size());
+                                break;
+                            }
                         }
                     }
                     buf = _thumbCache.pop(lock);
@@ -1267,7 +1267,7 @@ private:
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
         _SDReadWorkQueue queues[(size_t)_Priority::Count];
-        uint8_t buffer[16*1024*1024];
+        uint8_t buffer[8*1024*1024];
     } _sdRead;
     
     struct {

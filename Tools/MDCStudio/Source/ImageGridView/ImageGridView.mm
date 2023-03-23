@@ -359,6 +359,8 @@ static MTLTextureDescriptor* _TextureDescriptor() {
 }
 
 - (void)display {
+//    printf("[ImageGridView] display\n");
+    
 //    auto startTime = std::chrono::steady_clock::now();
     [super display];
     
@@ -574,7 +576,7 @@ struct SelectionDelta {
     if (ev.type==ImageLibrary::Event::Type::Add || ev.type==ImageLibrary::Event::Type::Change) {
         for (const ImageRecordPtr& rec : ev.records) {
             if (auto find=_chunkTxts.find(rec); find!=_chunkTxts.end()) {
-                printf("Update slice\n");
+//                printf("Update slice\n");
 //                _chunkTxts.erase(find);
                 _ChunkTexture& ct = find->val;
                 _ChunkTextureUpdateSlice(ct, rec);
