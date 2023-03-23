@@ -748,36 +748,16 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         break;
     case ImageLibrary::Event::Type::ChangeProperty:
         if ([self _recordsIntersectVisibleRange:ev.records]) {
-            printf("_recordsIntersectVisibleRange: YES\n");
             // Re-render visible thumbs that are dirty
             // We don't check if any of `ev` intersect the visible range, because _thumbRenderVisibleIfNeeded
             // should be cheap and reduces to a no-op if none of the visible thumbs are dirty.
             [self _thumbRenderVisibleIfNeeded];
-        } else {
-            printf("_recordsIntersectVisibleRange: NO\n");
         }
         break;
     case ImageLibrary::Event::Type::ChangeThumbnail:
         if ([self _recordsIntersectVisibleRange:ev.records]) {
-            printf("_recordsIntersectVisibleRange: YES\n");
             [self setNeedsDisplay];
-        } else {
-            printf("_recordsIntersectVisibleRange: NO\n");
         }
-//        if (!ev.records.empty() && [self _meowmix:{ev.records.begin(),}])
-//        if ([self _meowmix:{}])
-//        for (const ImageRecordPtr& rec : ev.records) {
-//            if (auto find=_chunkTxts.find(rec); find!=_chunkTxts.end()) {
-////                printf("Update slice\n");
-////                _chunkTxts.erase(find);
-//                _ChunkTexture& ct = find->val;
-//                _ChunkTextureUpdateSlice(ct, rec);
-//            }
-//        }
-//        
-//        
-//        #warning TODO: only display if a changed thumbnail is visible
-//        [self setNeedsDisplay];
         break;
     }
 }
