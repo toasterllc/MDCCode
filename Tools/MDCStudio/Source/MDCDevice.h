@@ -695,7 +695,7 @@ private:
             }
         }
         
-        {
+        if (!notify.empty()) {
             auto lock = std::unique_lock(_imageLibrary);
             _imageLibrary.notifyChange(notify);
         }
@@ -757,6 +757,8 @@ private:
     
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, std::set<ImageRecordPtr> recs) {
+        
+        printf("[_loadImages] Loading %ju images\n", (uintmax_t)recs.size());
         
         state.underway += recs.size();
         

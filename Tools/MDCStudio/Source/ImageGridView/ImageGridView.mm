@@ -43,7 +43,7 @@ struct _ChunkTexture {
     bool loaded[SliceCount] = {};
 };
 
-static constexpr size_t _ChunkTexturesCacheCapacity = 32;
+static constexpr size_t _ChunkTexturesCacheCapacity = 4;
 using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,_ChunkTexturesCacheCapacity>;
 
 @implementation ImageGridLayer {
@@ -203,12 +203,23 @@ static CGRect _CGRectFromGridRect(Grid::Rect rect, CGFloat scale) {
 static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::RecordRef& ref) {
     const bool loaded = ref->info.flags & ImageFlags::Loaded;
     if (loaded) {
+//        printf("Update slice\n");
         const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
         [ct.txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
             slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
     }
     
     ct.loaded[ref.idx] = loaded;
+}
+
+static MTLTextureDescriptor* _TextureDescriptor() {
+    MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+    [desc setTextureType:MTLTextureType2DArray];
+    [desc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm];
+    [desc setWidth:ImageThumb::ThumbWidth];
+    [desc setHeight:ImageThumb::ThumbHeight];
+    [desc setArrayLength:_ChunkTexture::SliceCount];
+    return desc;
 }
 
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
@@ -229,13 +240,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     
     auto startTime = std::chrono::steady_clock::now();
     
-    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
-    [txtDesc setTextureType:MTLTextureType2DArray];
-    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm];
-    [txtDesc setWidth:ImageThumb::ThumbWidth];
-    [txtDesc setHeight:ImageThumb::ThumbHeight];
-    [txtDesc setArrayLength:_ChunkTexture::SliceCount];
-    
+    static MTLTextureDescriptor* txtDesc = _TextureDescriptor();
     id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
     assert(txt);
     
@@ -568,10 +573,12 @@ struct SelectionDelta {
     // If we added records or changed records, we need to update the relevent textures
     if (ev.type==ImageLibrary::Event::Type::Add || ev.type==ImageLibrary::Event::Type::Change) {
         for (const ImageRecordPtr& rec : ev.records) {
-            auto it = _chunkTxts.find(rec);
-            if (it == _chunkTxts.end()) continue;
-            _ChunkTexture& ct = it->val;
-            _ChunkTextureUpdateSlice(ct, rec);
+            if (auto find=_chunkTxts.find(rec); find!=_chunkTxts.end()) {
+                printf("Update slice\n");
+//                _chunkTxts.erase(find);
+                _ChunkTexture& ct = find->val;
+                _ChunkTextureUpdateSlice(ct, rec);
+            }
         }
     }
     
