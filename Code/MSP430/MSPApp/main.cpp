@@ -404,7 +404,7 @@ struct _TaskSD {
     
     // Task stack
     [[gnu::section(".stack._TaskSD")]]
-    alignas(sizeof(void*))
+    alignas(alignof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -508,7 +508,7 @@ struct _TaskImg {
     
     // Task stack
     [[gnu::section(".stack._TaskImg")]]
-    alignas(sizeof(void*))
+    alignas(alignof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -748,7 +748,7 @@ struct _TaskMain {
     
     // Task stack
     [[gnu::section(".stack._TaskMain")]]
-    alignas(sizeof(void*))
+    alignas(alignof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -866,7 +866,7 @@ struct _TaskI2C {
     
     // Task stack
     [[gnu::section(".stack._TaskI2C")]]
-    alignas(sizeof(void*))
+    alignas(alignof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -952,7 +952,7 @@ struct _TaskButton {
     
     // Task stack
     [[gnu::section(".stack._TaskButton")]]
-    alignas(sizeof(void*))
+    alignas(alignof(void*))
     static inline uint8_t Stack[128];
 };
 
