@@ -561,6 +561,17 @@ private:
     }
     
     void _readCompleteCallback(_LoadImagesState& state, const _SDReadWork& work, _SDReadWork::OpsIter begin, _SDReadWork::OpsIter end, bool initial) {
+        // Validate checksums
+        for (auto it=begin; it!=end; it++) {
+            const _SDReadOp& op = *it;
+            if (_ImageChecksumValid(*op.buf, Img::Size::Thumb)) {
+//                printf("Checksum valid (thumb)\n");
+            } else {
+                printf("Checksum INVALID (thumb)\n");
+//                abort();
+            }
+        }
+        
         // Insert buffers into our cache
         {
             auto lock = _thumbCache.lock();
@@ -1148,14 +1159,6 @@ private:
                 }
                 
                 ImageRecord& rec = *work.rec;
-                
-                // Validate checksum
-                if (_ImageChecksumValid(*work.buf, Img::Size::Thumb)) {
-    //                printf("Checksum valid (thumb)\n");
-                } else {
-                    printf("Checksum INVALID (thumb)\n");
-    //                abort();
-                }
                 
                 if (work.initial) {
                     // Populate .info
