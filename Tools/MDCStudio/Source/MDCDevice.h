@@ -252,9 +252,13 @@ private:
         bool operator!=(const _SDRegion& x) const { return !(*this == x); }
     };
     
-    using __ThumbBuffer = uint8_t[ImgSD::Thumb::ImagePaddedLen];
+    using __ThumbBuffer = uint8_t[Img::Thumb::ImageLen];
     using _ThumbCache = Cache<_SDRegion,__ThumbBuffer,512>;
     using _ThumbBuffer = _ThumbCache::Val;
+    
+    using __ImageBuffer = uint8_t[Img::Full::ImageLen];
+    using _ImageCache = Cache<_SDRegion,__ImageBuffer,8>;
+    using _ImageBuffer = _ImageCache::Val;
     
     struct _SDReadOp {
         _SDRegion region;
@@ -744,7 +748,7 @@ private:
                     const ImageRecordPtr& rec = *it;
                     const _SDRegion region = {
                         .block = rec->info.addrThumb,
-                        .len = ImgSD::Thumb::ImagePaddedLen,
+                        .len = Img::Thumb::ImageLen,
                     };
                     
                     // If the thumbnail is in our cache, kick off rendering
@@ -775,7 +779,7 @@ private:
                 const ImageRecordPtr& rec = *it;
                 const _SDRegion region = {
                     .block = rec->info.addrThumb,
-                    .len = ImgSD::Thumb::ImagePaddedLen,
+                    .len = Img::Thumb::ImageLen,
                 };
                 
                 _ThumbBuffer buf;

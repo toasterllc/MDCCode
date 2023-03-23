@@ -150,6 +150,13 @@ public:
     
 //private:
     
+    // _Headroom: set the capacity of our LRU to slightly smaller than T_Cap, to ensure that
+    // if the LRU is full, we still have available slots for pop() to use without blocking.
+    // This ensures that pop() doesn't need eviction logic to guarantee that it can return a
+    // slot without blocking, provided the headroom isn't exhausted due to outstanding Val's
+    // held by the client.
+    static constexpr size_t _Headroom = std::max((size_t)1, T_Cap/64);
+    
     T_Val _mem[T_Cap];
     
     // _free: needs to be declared before _cache, so that upon destruction, _free persists longer
@@ -162,6 +169,6 @@ public:
     
     struct {
         std::mutex lock; // Protects this struct;
-        Toastbox::LRU<T_Key,Val,T_Cap-8> lru;
+        Toastbox::LRU<T_Key,Val,T_Cap-_Headroom> lru;
     } _cache;
 };
