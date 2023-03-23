@@ -40,20 +40,20 @@ public:
         return _imageCache;
     }
     
-    void visibleThumbs(ImageRecordIterAny begin, ImageRecordIterAny end) override {
-        bool enqueued = false;
-        {
-            auto lock = std::unique_lock(_renderThumbs.lock);
-            for (auto it=begin; it!=end; it++) {
-                ImageRecordPtr ref = *it;
-                if (ref->options.thumb.render) {
-                    _renderThumbs.recs.insert(ref);
-                    enqueued = true;
-                }
-            }
-        }
-        if (enqueued) _renderThumbs.signal.notify_one();
-    }
+//    void visibleThumbs(ImageRecordIterAny begin, ImageRecordIterAny end) override {
+//        bool enqueued = false;
+//        {
+//            auto lock = std::unique_lock(_renderThumbs.lock);
+//            for (auto it=begin; it!=end; it++) {
+//                ImageRecordPtr ref = *it;
+//                if (ref->options.thumb.render) {
+//                    _renderThumbs.recs.insert(ref);
+//                    enqueued = true;
+//                }
+//            }
+//        }
+//        if (enqueued) _renderThumbs.signal.notify_one();
+//    }
     
     static constexpr size_t TmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
     using TmpStorage = std::array<uint8_t, TmpStorageLen>;
@@ -177,7 +177,7 @@ public:
             // Notify image library that the image changed
             {
                 auto lock = std::unique_lock(_imageLibrary);
-                _imageLibrary.notifyChange({ rec });
+                _imageLibrary.notify(ImageLibrary::Event::Type::ChangeProperty, { rec });
             }
         }
     }

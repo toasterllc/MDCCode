@@ -2,6 +2,8 @@
 #include <memory>
 #include "ImageLibrary.h"
 #include "ImageCache.h"
+#include "Toastbox/Signal.h"
+#include "Toastbox/Atomic.h"
 
 namespace MDCStudio {
 
@@ -12,10 +14,14 @@ public:
     virtual ImageLibrary& imageLibrary() = 0;
     virtual ImageCache& imageCache() = 0;
     
-    // visibleThumbs(): notifies the ImageSource which thumbnails are currently visible.
-    // Used to asynchronously re-render the thumbnails that have the `thumb.render` flag set.
-    // ImageLibrary must be locked!
-    virtual void visibleThumbs(ImageRecordIterAny begin, ImageRecordIterAny end) = 0;
+    struct LoadImagesState {
+        Toastbox::Signal signal; // Protects this struct
+        std::set<ImageRecordPtr> notify;
+        Toastbox::Atomic<size_t> underway;
+    };
+    
+    enum class Priority : uint8_t { High, Low, Count };
+    virtual void loadImages(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) = 0;
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;

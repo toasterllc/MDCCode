@@ -1240,7 +1240,7 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
         break;
     case ImageLibrary::Event::Type::Remove:
         break;
-    case ImageLibrary::Event::Type::Change:
+    case ImageLibrary::Event::Type::ChangeProperty:
         if ([NSThread isMainThread]) {
             [self _handleImagesChanged:ev.records];
         } else {
@@ -1249,6 +1249,8 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
                 [self _handleImagesChanged:recordsCopy];
             });
         }
+        break;
+    case ImageLibrary::Event::Type::ChangeThumbnail:
         break;
     }
 }
@@ -1327,7 +1329,7 @@ static void _Update(Item* it) {
         auto lock = std::unique_lock(*_imageLibrary);
         std::set<ImageRecordPtr> records;
         for (const ImageRecordPtr& x : _selection) records.insert(x);
-        _imageLibrary->notifyChange(std::move(records));
+        _imageLibrary->notify(ImageLibrary::Event::Type::ChangeProperty, std::move(records));
     }
     _notifying = false;
 }

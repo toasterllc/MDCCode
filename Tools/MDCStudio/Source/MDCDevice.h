@@ -119,8 +119,6 @@ public:
         {
             _sync.thread = std::thread([&] { _sync_thread(); });
             
-            _thumbUpdate.thread = std::thread([&] { _thumbUpdate_thread(); });
-            
             _sdRead.thread = std::thread([&] { _sdRead_thread(); });
             
             for (int i=0; i<_ThreadCount(); i++) {
@@ -130,13 +128,11 @@ public:
     }
     
     ~MDCDevice() {
-        _thumbUpdate.signal.stop();
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
         
         // Wait for threads to stop
         _sync.thread.join();
-        _thumbUpdate.thread.join();
         _sdRead.thread.join();
         for (std::thread& t : _thumbRender.threads) t.join();
     }
@@ -182,20 +178,8 @@ public:
     
     ImageCache& imageCache() override { return _imageCache; }
     
-    void visibleThumbs(ImageRecordIterAny begin, ImageRecordIterAny end) override {
-        bool enqueued = false;
-        {
-            auto lock = _thumbUpdate.signal.lock();
-            _thumbUpdate.recs.clear();
-            for (auto it=begin; it!=end; it++) {
-                ImageRecordPtr rec = *it;
-                if (rec->options.thumb.render) {
-                    _thumbUpdate.recs.insert(rec);
-                    enqueued = true;
-                }
-            }
-        }
-        if (enqueued) _thumbUpdate.signal.signalOne();
+    void loadImages(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) override {
+        _loadImages(state, priority, false, recs);
     }
     
 private:
@@ -221,8 +205,6 @@ private:
         uint32_t version = 0;
         char name[128] = {}; // UTF-8 with NULL byte
     };
-    
-    enum class _Priority : uint8_t { High, Low, Count };
     
     using _WorkCallback = std::function<void()>;
     
@@ -335,16 +317,6 @@ private:
     
     using _SDReadWorkQueue = std::queue<_SDReadWork>;
     using _RenderWorkQueue = std::queue<_RenderWork>;
-    
-    struct _LoadImagesState {
-        Toastbox::Signal signal; // Protects this struct
-//        struct {
-//            Toastbox::Atomic<size_t> count = 0;
-//            std::set<ImageRecordPtr> notify;
-//        } render;
-        std::set<ImageRecordPtr> notify;
-        Toastbox::Atomic<size_t> underway;
-    };
     
     static int _ThreadCount() {
         static int ThreadCount = std::max(1, (int)std::thread::hardware_concurrency());
@@ -517,7 +489,7 @@ private:
 //        {
 //            {
 //                auto lock = _sdRead.signal.lock();
-//                _SDWorkQueue& queue = _sdRead.queues[(size_t)_Priority::High];
+//                _SDWorkQueue& queue = _sdRead.queues[(size_t)Priority::High];
 //                queue.push(work.get());
 //            }
 //            _sdRead.signal.signalOne();
@@ -560,7 +532,7 @@ private:
         }
     }
     
-    void _readCompleteCallback(_LoadImagesState& state, const _SDReadWork& work, _SDReadWork::OpsIter begin, _SDReadWork::OpsIter end, bool initial) {
+    void _readCompleteCallback(LoadImagesState& state, const _SDReadWork& work, _SDReadWork::OpsIter begin, _SDReadWork::OpsIter end, bool initial) {
         // Validate checksums
         for (auto it=begin; it!=end; it++) {
             const _SDReadOp& op = *it;
@@ -617,7 +589,7 @@ private:
     }
     
     
-//    void _readCompleteCallback(_LoadImagesState& state, _SDRegion region, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
+//    void _readCompleteCallback(LoadImagesState& state, _SDRegion region, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
 //        // Insert buffer into our cache
 //        _cacheSet(region, buf);
 //        
@@ -643,7 +615,7 @@ private:
 ////        _thumbRender.signal.signalAll();
 //    }
     
-    void _renderCompleteCallback(_LoadImagesState& state, ImageRecordPtr rec) {
+    void _renderCompleteCallback(LoadImagesState& state, ImageRecordPtr rec) {
 //        work.state.render.timeEnd = std::chrono::steady_clock::now();
         
 //        {
@@ -697,7 +669,7 @@ private:
         
         if (!notify.empty()) {
             auto lock = std::unique_lock(_imageLibrary);
-            _imageLibrary.notifyChange(notify);
+            _imageLibrary.notify(ImageLibrary::Event::Type::ChangeThumbnail, notify);
         }
         
         
@@ -709,7 +681,7 @@ private:
 //        state.signal.signalOne();
     }
     
-    void _renderEnqueue(std::unique_lock<std::mutex>& lock, _LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
+    void _renderEnqueue(std::unique_lock<std::mutex>& lock, LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
         // Enqueue _RenderWork into _thumbRender.queue
         _thumbRender.queue.push(_RenderWork{
             .initial = initial,
@@ -721,7 +693,7 @@ private:
     
     
     
-//    void _renderEnqueueNoSignal(_LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
+//    void _renderEnqueueNoSignal(LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
 //        state.render.count++;
 //        
 //        // Enqueue _RenderWork into _thumbRender.queue
@@ -755,7 +727,7 @@ private:
 //        _cacheSet(lock, region, buf);
 //    }
     
-    void _loadImages(_LoadImagesState& state, _Priority priority,
+    void _loadImages(LoadImagesState& state, Priority priority,
         bool initial, std::set<ImageRecordPtr> recs) {
         
         printf("[_loadImages] Loading %ju images\n", (uintmax_t)recs.size());
@@ -951,7 +923,7 @@ private:
                     }
                     
                     printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
-                    _loadImages(_sync.loadImages, _Priority::Low, true, recs);
+                    _loadImages(_sync.loadImages, Priority::Low, true, recs);
                 }
             }
         
@@ -960,30 +932,6 @@ private:
         
         } catch (const std::exception& e) {
             printf("[_sync_thread] Failed to update image library: %s", e.what());
-        }
-    }
-    
-    // MARK: - Thumb Update
-    
-    void _thumbUpdate_thread() {
-        try {
-            for (;;) {
-                std::set<ImageRecordPtr> recs;
-                {
-                    auto lock = _thumbUpdate.signal.wait([&] { return !_thumbUpdate.recs.empty(); });
-                    recs = std::move(_thumbUpdate.recs);
-                    // Update .thumb.render asap (ie before we've actually rendered) so that the
-                    // visibleThumbs() function on the main thread stops enqueuing work asap
-                    for (const ImageRecordPtr& rec : recs) {
-                        rec->options.thumb.render = false;
-                    }
-                }
-                
-                _loadImages(_thumbUpdate.loadImages, _Priority::High, false, recs);
-            }
-        
-        } catch (const Toastbox::Signal::Stop&) {
-            printf("[_thumbUpdate_thread] Stopping\n");
         }
     }
     
@@ -1253,20 +1201,13 @@ private:
     
     struct {
         std::thread thread;
-        _LoadImagesState loadImages;
+        LoadImagesState loadImages;
     } _sync;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        _LoadImagesState loadImages;
-        std::set<ImageRecordPtr> recs;
-    } _thumbUpdate;
-    
-    struct {
-        Toastbox::Signal signal; // Protects this struct
-        std::thread thread;
-        _SDReadWorkQueue queues[(size_t)_Priority::Count];
+        _SDReadWorkQueue queues[(size_t)Priority::Count];
         uint8_t buffer[8*1024*1024];
     } _sdRead;
     

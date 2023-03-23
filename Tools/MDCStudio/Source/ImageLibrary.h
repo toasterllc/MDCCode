@@ -62,7 +62,8 @@ public:
         enum class Type {
             Add,
             Remove,
-            Change,
+            ChangeProperty,
+            ChangeThumbnail,
         };
         
         Type type = Type::Add;
@@ -202,8 +203,8 @@ public:
         }
     }
     
-    void notifyChange(std::set<RecordStrongRef> records) {
-        Event ev = { .type = Event::Type::Change };
+    void notify(Event::Type type, std::set<RecordStrongRef> records) {
+        Event ev = { .type = type };
         ev.records = std::move(records);
         notify(ev);
     }

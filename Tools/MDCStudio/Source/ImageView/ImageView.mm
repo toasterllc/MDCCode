@@ -188,11 +188,13 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         break;
     case ImageLibrary::Event::Type::Remove:
         break;
-    case ImageLibrary::Event::Type::Change:
+    case ImageLibrary::Event::Type::ChangeProperty:
         if (ev.records.count(_imageRecord)) {
             _dirty = true;
             dispatch_async(dispatch_get_main_queue(), ^{ [self setNeedsDisplay]; });
         }
+        break;
+    case ImageLibrary::Event::Type::ChangeThumbnail:
         break;
     }
 }
