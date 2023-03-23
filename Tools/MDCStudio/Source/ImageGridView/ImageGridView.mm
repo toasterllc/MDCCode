@@ -282,7 +282,6 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     const CGSize viewSize = {superlayerSize.width*contentsScale, superlayerSize.height*contentsScale};
     const Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
     if (!visibleIndexRange.count) return;
-    const auto [visibleBegin, visibleEnd] = _VisibleRange(visibleIndexRange, *_imageLibrary, _sortNewestFirst);
     
     MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
     [[renderPassDescriptor colorAttachments][0] setTexture:drawableTxt];
@@ -325,8 +324,9 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-    ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
+    const ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+    const ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
+    const auto [visibleBegin, visibleEnd] = _VisibleRange(visibleIndexRange, *_imageLibrary, _sortNewestFirst);
     
     for (auto it=visibleBegin; it!=visibleEnd;) {
         const auto nextChunkStart = ImageLibrary::FindChunkEnd(end, it);
@@ -715,6 +715,26 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 //    [self setNeedsDisplay];
 }
 
+
+// _imageLibrary must be locked!
+- (bool)_recordsIntersectVisibleRange:(const std::set<ImageRecordPtr>&)changed {
+    if (changed.empty()) return false;
+    const auto visibleRange = _VisibleRange(_VisibleIndexRange(_grid, [self frame], [self contentsScale]), *_imageLibrary, _sortNewestFirst);
+    if (visibleRange.first == visibleRange.second) return false;
+    
+    ImageRecordPtr vl = *visibleRange.first;
+    ImageRecordPtr vr = *std::prev(visibleRange.second);
+    ImageRecordPtr cl = *changed.begin();
+    ImageRecordPtr cr = *std::prev(changed.end());
+    
+    if (vr < vl) std::swap(vl, vr);
+    if (cr < cl) std::swap(cl, cr);
+    if (vr < cl) return false;
+    if (cr < vl) return false;
+    return true;
+}
+
+
 // _imageLibrary must be locked!
 - (void)__handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
     assert([NSThread isMainThread]);
@@ -727,24 +747,37 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         [self setNeedsDisplay];
         break;
     case ImageLibrary::Event::Type::ChangeProperty:
-        // Re-render visible thumbs that are dirty
-        // We don't check if any of `ev` intersect the visible range, because _thumbRenderVisibleIfNeeded
-        // should be cheap and reduces to a no-op if none of the visible thumbs are dirty.
-        [self _thumbRenderVisibleIfNeeded];
+        if ([self _recordsIntersectVisibleRange:ev.records]) {
+            printf("_recordsIntersectVisibleRange: YES\n");
+            // Re-render visible thumbs that are dirty
+            // We don't check if any of `ev` intersect the visible range, because _thumbRenderVisibleIfNeeded
+            // should be cheap and reduces to a no-op if none of the visible thumbs are dirty.
+            [self _thumbRenderVisibleIfNeeded];
+        } else {
+            printf("_recordsIntersectVisibleRange: NO\n");
+        }
         break;
     case ImageLibrary::Event::Type::ChangeThumbnail:
-        for (const ImageRecordPtr& rec : ev.records) {
-            if (auto find=_chunkTxts.find(rec); find!=_chunkTxts.end()) {
-//                printf("Update slice\n");
-//                _chunkTxts.erase(find);
-                _ChunkTexture& ct = find->val;
-                _ChunkTextureUpdateSlice(ct, rec);
-            }
+        if ([self _recordsIntersectVisibleRange:ev.records]) {
+            printf("_recordsIntersectVisibleRange: YES\n");
+            [self setNeedsDisplay];
+        } else {
+            printf("_recordsIntersectVisibleRange: NO\n");
         }
-        
-        
-        #warning TODO: only display if a changed thumbnail is visible
-        [self setNeedsDisplay];
+//        if (!ev.records.empty() && [self _meowmix:{ev.records.begin(),}])
+//        if ([self _meowmix:{}])
+//        for (const ImageRecordPtr& rec : ev.records) {
+//            if (auto find=_chunkTxts.find(rec); find!=_chunkTxts.end()) {
+////                printf("Update slice\n");
+////                _chunkTxts.erase(find);
+//                _ChunkTexture& ct = find->val;
+//                _ChunkTextureUpdateSlice(ct, rec);
+//            }
+//        }
+//        
+//        
+//        #warning TODO: only display if a changed thumbnail is visible
+//        [self setNeedsDisplay];
         break;
     }
 }
