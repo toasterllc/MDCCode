@@ -11,15 +11,10 @@
 
 namespace MDCStudio {
 
-struct ImageFlags {
-    static constexpr uint64_t Loaded = 1<<0;
-};
-
 struct [[gnu::packed]] ImageInfo {
     Img::Id id = 0;
     uint64_t addrFull = 0;
     uint64_t addrThumb = 0;
-    uint64_t flags = 0;
     
     Time::Instant timestamp = 0;
     
@@ -38,10 +33,24 @@ struct [[gnu::packed]] ImageInfo {
 
 static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple of 8 bytes
 
+struct [[gnu::packed]] ImageStatus {
+    uint32_t flags = 0;
+    // renderCount: indicator for when the thumbnail has been re-rendered
+    // Used to determine whether a cache is stale relative to the ImageRecord's thumbnail
+    // 0 indicates that the thumbnail hasn't been loaded yet
+    uint32_t renderCount = 0;
+    
+    // _reserved: so we can add fields in the future without doing a data migration
+    uint8_t _reserved[128];
+};
+
+static_assert(!(sizeof(ImageStatus) % 8)); // Ensure that ImageStatus is a multiple of 8 bytes
+
 struct [[gnu::packed]] ImageRecord {
     static constexpr uint32_t Version = 0;
     
     ImageInfo info;
+    ImageStatus status;
     ImageOptions options;
 //    // _pad: necessary for our thumbnail compression to keep our `thumb` member aligned
 //    // to a 4-pixel boundary. Each row of the thumbnail is ThumbWidth bytes, and info+options consume 1 row  (where each row is 512 bytes)

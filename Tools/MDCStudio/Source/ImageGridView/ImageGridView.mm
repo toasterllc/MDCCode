@@ -41,7 +41,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 struct _ChunkTexture {
     static constexpr size_t SliceCount = ImageLibrary::ChunkRecordCap;
     id<MTLTexture> txt = nil;
-    bool loaded[SliceCount] = {};
+    uint32_t renderCounts[SliceCount] = {};
 };
 
 static constexpr size_t _ChunkTexturesCacheCapacity = 4;
@@ -219,16 +219,18 @@ static CGRect _CGRectFromGridRect(Grid::Rect rect, CGFloat scale) {
     };
 }
 
+// _ChunkTextureUpdateSlice: if _ChunkTexture's slice for an ImageRecord is stale, reloads the compressed
+// thumbnail data from the ImageRecord into the slice
 static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::RecordRef& ref) {
-    const bool loaded = ref->info.flags & ImageFlags::Loaded;
-    if (loaded) {
+    const uint32_t renderCount = ref->status.renderCount;
+    if (renderCount != ct.renderCounts[ref.idx]) {
 //        printf("Update slice\n");
         const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
         [ct.txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
             slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+        
+        ct.renderCounts[ref.idx] = renderCount;
     }
-    
-    ct.loaded[ref.idx] = loaded;
 }
 
 static MTLTextureDescriptor* _TextureDescriptor() {
@@ -265,9 +267,6 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     
     _ChunkTexture& ct = _chunkTxts[chunk];
     ct.txt = txt;
-    for (auto it=chunkBegin; it!=chunkEnd; it++) {
-        _ChunkTextureUpdateSlice(ct, *it);
-    }
     
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
     printf("Texture creation took %ju ms\n", (uintmax_t)durationMs);
@@ -324,14 +323,18 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    const ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-    const ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
+    const auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
     const auto [visibleBegin, visibleEnd] = _VisibleRange(visibleIndexRange, *_imageLibrary, _sortNewestFirst);
     
     for (auto it=visibleBegin; it!=visibleEnd;) {
-        const auto nextChunkStart = ImageLibrary::FindChunkEnd(end, it);
-        const auto chunkImageRefBegin = it;
-        const auto chunkImageRefEnd = std::min(visibleEnd, nextChunkStart);
+        // Update stale _ChunkTexture slices from the ImageRecord's thumbnail data, if needed. (We know whether a
+        // _ChunkTexture slice is stale by using ImageRecord's renderCount.)
+        const auto chunkBegin = it;
+        _ChunkTexture& ct = [self _getChunkTexture:it];
+        for (; it!=visibleEnd && it->chunk==chunkBegin->chunk; it++) {
+            _ChunkTextureUpdateSlice(ct, *it);
+        }
+        const auto chunkEnd = it;
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         [renderEncoder setRenderPipelineState:_pipelineState];
@@ -343,7 +346,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
-            .idx = (uint32_t)(chunkImageRefBegin-begin),
+            .idx = (uint32_t)(chunkBegin-begin),
             .sortNewestFirst = _sortNewestFirst,
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
@@ -357,17 +360,14 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
         [renderEncoder setVertexBuffer:_selection.buf offset:0 atIndex:2];
         
-        _ChunkTexture& ct = [self _getChunkTexture:it];
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-        [renderEncoder setFragmentBytes:&ct.loaded length:sizeof(ct.loaded) atIndex:1];
+        [renderEncoder setFragmentBytes:&ct.renderCounts length:sizeof(ct.renderCounts) atIndex:1];
         [renderEncoder setFragmentTexture:ct.txt atIndex:0];
         [renderEncoder setFragmentTexture:_placeholderTexture atIndex:1];
         
-        const size_t chunkImageCount = chunkImageRefEnd-chunkImageRefBegin;
+        const size_t chunkImageCount = chunkEnd-chunkBegin;
         [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6 instanceCount:chunkImageCount];
         [renderEncoder endEncoding];
-        
-        it = chunkImageRefEnd;
     }
     
     // Re-render the visible thumbnails that are marked dirty

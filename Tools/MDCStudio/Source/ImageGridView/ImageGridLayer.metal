@@ -64,13 +64,13 @@ vertex VertexOutput VertexShader(
 
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
-    constant bool* loaded [[buffer(1)]],
+    constant uint32_t* renderCounts [[buffer(1)]],
     texture2d_array<float> txt [[texture(0)]],
     texture2d<float> placeholderTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos = uint2(in.posPx);
-    if (!loaded[in.idx]) return placeholderTxt.sample({}, in.posNorm);
+    if (!renderCounts[in.idx]) return placeholderTxt.sample({}, in.posNorm);
     
     float3 c = txt.read(pos, in.idx).rgb;
     if (!in.selected) c /= 32;
