@@ -58,14 +58,62 @@ public:
         _cache.lru[key] = val;
     }
     
+    
     // pop(): return an empty entry
     Val pop(std::unique_lock<std::mutex>& lock) {
         assert(lock);
-        _free.signal.wait(lock, [&] { return !_free.list.empty(); });
-        const size_t idx = _free.list.back();
-        _free.list.pop_back();
-        return Val(*this, idx);
+        Val v;
+        {
+            for (;;) {
+                auto l = _free.signal.lock();
+                if (!_free.list.empty()) {
+                    const size_t idx = _free.list.back();
+                    _free.list.pop_back();
+                    v = Val(*this, idx);
+                    break;
+                }
+            }
+        }
+        return v;
     }
+    
+    
+//    // lock must be from _free.signal.lock() (not _cache.lock!)
+//    Val _freeListPop(std::unique_lock<std::mutex>& lock) {
+//        if (_free.list.empty()) return {};
+//        const size_t idx = _free.list.back();
+//        _free.list.pop_back();
+//        return Val(*this, idx);
+//    }
+//    
+//    // lock must be from _free.signal.lock() (not _cache.lock!)
+//    Val _freeListPop(std::unique_lock<std::mutex>& lock) {
+//        assert(lock);
+//        assert(!_free.list.empty());
+//        const size_t idx = _free.list.back();
+//        _free.list.pop_back();
+//        return Val(*this, idx);
+//    }
+//    
+//    // pop(): return an empty entry
+//    Val pop(std::unique_lock<std::mutex>& lock) {
+//        auto l = _free.signal.lock();
+//        return _freeListPop(l);
+//    }
+//    
+//    // pop(): return an empty entry
+//    Val pop(std::unique_lock<std::mutex>& lock) {
+//        // We don't use `lock` but it allows the caller to implement atomicity across
+//        // multiple operations.
+//        // We do need to acquire _free.signal.lock() though to safely access _free.list.
+//        assert(lock);
+//        {
+//            auto l = _free.signal.wait[&] { return !_free.list.empty(); });
+//            const size_t idx = _free.list.back();
+//            _free.list.pop_back();
+//        }
+//        return Val(*this, idx);
+//    }
     
     // evict(): tells the underlying LRU to evict the oldest entries
     void evict(std::unique_lock<std::mutex>& lock) {
@@ -82,9 +130,10 @@ public:
     // sizeFree(): returns the number of unoccupied entries in the cache
     // This indicates the number of times that pop() can be called without blocking.
     size_t sizeFree(std::unique_lock<std::mutex>& lock) {
-        // We need `lock` to be held to prevent removals from the free-list, so that our
-        // return value indicates the minimum free list size as long as the lock is held.
-        // We still need to acquire _free.signal.lock() though to safely access _free.list.
+        // We need `lock` to be held even though we don't use it, because it prevents
+        // removals from the free-list (via pop), so that our return value indicates the
+        // minimum free list size as long as the lock is held. We still need to acquire
+        // _free.signal.lock() though to safely access _free.list.
         assert(lock);
         auto l = _free.signal.lock();
         return _free.list.size();
@@ -141,6 +190,7 @@ public:
     }
     
     void _recycle(size_t idx) {
+        printf("[_recycle] %p\n", &_mem[idx]);
         {
             auto lock = _free.signal.lock();
             _free.list.push_back(idx);

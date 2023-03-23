@@ -736,6 +736,7 @@ private:
         
         printf("[_loadImages] Loading %ju images\n", (uintmax_t)recs.size());
         
+        const auto timeStart = std::chrono::steady_clock::now();
         state.underway += recs.size();
         
         // Kick off rendering for all the recs that are in the cache
@@ -791,11 +792,15 @@ private:
                             if (!work.ops.empty()) {
                                 printf("[_loadImages] No free buffer, enqueueing %ju read ops\n", (uintmax_t)work.ops.size());
                                 break;
+                            } else {
+                                printf("[_loadImages] No free buffer, blocking...\n");
                             }
                         }
                     }
                     buf = _thumbCache.pop(lock);
                 }
+                
+                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
                 
 //                #warning TODO: if work has ops and we're about to wait, enqueue the work so we don't hold up the existing ops waiting for a buffer
 //                #warning TODO: implement waiting on state.pool if the pool is empty
@@ -829,6 +834,7 @@ private:
             
             assert(!work.ops.empty());
             
+            printf("[_loadImages] Enqueuing %ju ops\n", (uintmax_t)work.ops.size());
             {
                 auto lock = _sdRead.signal.lock();
                 _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
@@ -839,14 +845,14 @@ private:
         
         state.signal.wait([&] { return !state.underway; });
         
-//        // Print profile stats
-//        {
-//            using namespace std::chrono;
-//            const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
-//            const size_t imageCount = recs.size();
-//            printf("[_loadImages] _loadImages() took %ju ms for %ju images (avg %f ms / img)\n",
-//                (uintmax_t)duration.count(), (uintmax_t)imageCount, ((double)duration.count()/imageCount));
-//        }
+        // Print profile stats
+        {
+            using namespace std::chrono;
+            const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+            const size_t imageCount = recs.size();
+            printf("[_loadImages] _loadImages() took %ju ms for %ju images (avg %f ms / img)\n",
+                (uintmax_t)duration.count(), (uintmax_t)imageCount, ((double)duration.count()/imageCount));
+        }
     }
     
     // MARK: - Sync
@@ -1024,6 +1030,9 @@ private:
         for (auto it=begin; it!=end; it++) {
             const _SDReadOp& op = *it;
             const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
+            
+            const Img::Header& header = *(const Img::Header*)(_sdRead.buffer+off);
+            printf("[__sdRead_handleWork] Writing image id %ju into %p\n", (uintmax_t)header.id, &*op.buf);
             memcpy(*op.buf, _sdRead.buffer+off, op.region.len);
         }
     }
