@@ -576,7 +576,7 @@ private:
                 auto lock = _thumbRender.signal.lock();
                 for (auto it=begin; it!=end; it++) {
                     const _SDReadOp& op = *it;
-                    printf("Enqueueing rendering for %ju\n", (uintmax_t)op.rec->info.id);
+//                    printf("Enqueueing rendering for %ju\n", (uintmax_t)op.rec->info.id);
                     _renderEnqueue(lock, state, initial, op.rec, op.buf);
                 }
             }
@@ -653,7 +653,7 @@ private:
 //        }
 //        
         
-        constexpr size_t NotifyThreshold = 32;
+        constexpr size_t NotifyThreshold = 8;
 //        
 //        const size_t count = --state.render.count;
 //        
@@ -956,14 +956,23 @@ private:
                 {
                     auto lock = _thumbUpdate.signal.wait([&] { return !_thumbUpdate.recs.empty(); });
                     recs = std::move(_thumbUpdate.recs);
-                    // Update .thumb.render asap (ie before we've actually rendered) so that the
-                    // visibleThumbs() function on the main thread stops enqueuing work asap
-                    for (const ImageRecordPtr& rec : recs) {
-                        rec->options.thumb.render = false;
-                    }
                 }
                 
-                _loadImages(_thumbUpdate.loadImages, _Priority::High, false, recs);
+                constexpr size_t ChunkSize = 32;
+                for (auto it=recs.rbegin(); it!=recs.rend();) {
+                    {
+                        auto lock = _thumbUpdate.signal.lock();
+                        if (!_thumbUpdate.recs.empty()) break;
+                    }
+                    
+                    std::set<ImageRecordPtr> chunk;
+                    for (size_t i=0; i<ChunkSize && it!=recs.rend(); i++, it++) {
+                        const ImageRecordPtr& rec = *it;
+                        rec->options.thumb.render = false;
+                        chunk.insert(rec);
+                    }
+                    _loadImages(_thumbUpdate.loadImages, _Priority::High, false, chunk);
+                }
             }
         
         } catch (const Toastbox::Signal::Stop&) {
