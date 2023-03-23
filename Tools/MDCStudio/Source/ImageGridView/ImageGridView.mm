@@ -629,7 +629,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 // _imageLibrary must be locked!
-- (void)_thumbRenderIfNeeded {
+- (void)_thumbRenderVisibleIfNeeded {
     const auto vir = _VisibleIndexRange(_grid, [self frame], [self contentsScale]);
     const auto vr = _VisibleRange(vir, *_imageLibrary, _sortNewestFirst);
     _ThumbRenderIfNeeded(*_thumbRender, vr);
@@ -727,8 +727,10 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         [self setNeedsDisplay];
         break;
     case ImageLibrary::Event::Type::ChangeProperty:
-        #warning TODO: only do this if one of the changed recs is visible?
-        [self _thumbRenderIfNeeded];
+        // Re-render visible thumbs that are dirty
+        // We don't check if any of `ev` intersect the visible range, because _thumbRenderVisibleIfNeeded
+        // should be cheap and reduces to a no-op if none of the visible thumbs are dirty.
+        [self _thumbRenderVisibleIfNeeded];
         break;
     case ImageLibrary::Event::Type::ChangeThumbnail:
         for (const ImageRecordPtr& rec : ev.records) {
