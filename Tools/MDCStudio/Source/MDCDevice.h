@@ -904,6 +904,8 @@ private:
                             rec->info.id = id;
                             rec->info.addrFull = MSP::SDBlockFull(_mspState.sd.baseFull, idx);
                             rec->info.addrThumb = MSP::SDBlockThumb(_mspState.sd.baseThumb, idx);
+                            
+                            rec->status.loadCount = 0;
                         }
                     }
                     
@@ -917,7 +919,7 @@ private:
                 {
                     std::set<ImageRecordPtr> recs;
                     for (const ImageLibrary::RecordRef& rec : _imageLibrary) {
-                        if (!rec->status.renderCount) {
+                        if (!rec->status.loadCount) {
                             recs.insert(rec);
                         }
                     }
@@ -1161,25 +1163,25 @@ private:
 //                    std::atomic_thread_fence(std::memory_order_seq_cst);
 //                }
                 
-                // Atomically increment renderCount, ensuring that we never write a value of 0, since 0 is a
-                // special value that renderCount is initialized to that indicates that we've never rendered.
+                // Atomically increment loadCount, ensuring that we never write a value of 0, since 0 is a
+                // special value that loadCount is initialized to that indicates that we've never rendered.
                 // We're using an atomic store here, so there's an implicit seq_cst memory barrier that ensures
-                // that the thumbnail update is complete before the renderCount change can be observed.
+                // that the thumbnail update is complete before the loadCount change can be observed.
                 {
-                    // Verify that we can safely cast our renderCount field to a std::atomic<uint32_t>
-                    // by checking renderCount's type and alignment.
+                    // Verify that we can safely cast our loadCount field to a std::atomic<uint32_t>
+                    // by checking loadCount's type and alignment.
                     using Atomic32 = std::atomic<uint32_t>;
-                    static_assert(std::is_same_v<uint32_t, decltype(rec.status.renderCount)>);
-                    static_assert(!(offsetof(ImageRecord, status.renderCount) % alignof(Atomic32)));
-                    Atomic32& renderCount = reinterpret_cast<Atomic32&>(rec.status.renderCount);
-                    uint32_t renderCountCopy = renderCount;
-                    renderCountCopy++;
-                    if (!renderCountCopy) renderCountCopy++; // Skip 0
-                    renderCount = renderCountCopy;
+                    static_assert(std::is_same_v<uint32_t, decltype(rec.status.loadCount)>);
+                    static_assert(!(offsetof(ImageRecord, status.loadCount) % alignof(Atomic32)));
+                    Atomic32& loadCount = reinterpret_cast<Atomic32&>(rec.status.loadCount);
+                    uint32_t loadCountCopy = loadCount;
+                    loadCountCopy++;
+                    if (!loadCountCopy) loadCountCopy++; // Skip 0
+                    loadCount = loadCountCopy;
                 }
                 
 //                static_cast<std::atomic<uint32_t>>
-//                &rec.info.renderCount
+//                &rec.info.loadCount
                 
                 work.callback();
                 

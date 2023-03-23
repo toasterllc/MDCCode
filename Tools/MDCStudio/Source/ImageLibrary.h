@@ -35,10 +35,10 @@ static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple 
 
 struct [[gnu::packed]] ImageStatus {
     uint32_t flags = 0;
-    // renderCount: indicator for when the thumbnail has been re-rendered
+    // loadCount: indicator for when the thumbnail has been re-rendered
     // Used to determine whether a cache is stale relative to the ImageRecord's thumbnail
     // 0 indicates that the thumbnail hasn't been loaded yet
-    uint32_t renderCount = 0;
+    uint32_t loadCount = 0;
     
     // _reserved: so we can add fields in the future without doing a data migration
     uint8_t _reserved[128];

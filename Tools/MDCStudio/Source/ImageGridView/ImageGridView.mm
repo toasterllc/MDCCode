@@ -41,7 +41,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 struct _ChunkTexture {
     static constexpr size_t SliceCount = ImageLibrary::ChunkRecordCap;
     id<MTLTexture> txt = nil;
-    uint32_t renderCounts[SliceCount] = {};
+    uint32_t loadCounts[SliceCount] = {};
 };
 
 static constexpr size_t _ChunkTexturesCacheCapacity = 4;
@@ -222,14 +222,14 @@ static CGRect _CGRectFromGridRect(Grid::Rect rect, CGFloat scale) {
 // _ChunkTextureUpdateSlice: if _ChunkTexture's slice for an ImageRecord is stale, reloads the compressed
 // thumbnail data from the ImageRecord into the slice
 static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::RecordRef& ref) {
-    const uint32_t renderCount = ref->status.renderCount;
-    if (renderCount != ct.renderCounts[ref.idx]) {
+    const uint32_t loadCount = ref->status.loadCount;
+    if (loadCount != ct.loadCounts[ref.idx]) {
 //        printf("Update slice\n");
         const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
         [ct.txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
             slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
         
-        ct.renderCounts[ref.idx] = renderCount;
+        ct.loadCounts[ref.idx] = loadCount;
     }
 }
 
@@ -328,7 +328,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     
     for (auto it=visibleBegin; it!=visibleEnd;) {
         // Update stale _ChunkTexture slices from the ImageRecord's thumbnail data, if needed. (We know whether a
-        // _ChunkTexture slice is stale by using ImageRecord's renderCount.)
+        // _ChunkTexture slice is stale by using ImageRecord's loadCount.)
         const auto chunkBegin = it;
         _ChunkTexture& ct = [self _getChunkTexture:it];
         for (; it!=visibleEnd && it->chunk==chunkBegin->chunk; it++) {
@@ -361,7 +361,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         [renderEncoder setVertexBuffer:_selection.buf offset:0 atIndex:2];
         
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-        [renderEncoder setFragmentBytes:&ct.renderCounts length:sizeof(ct.renderCounts) atIndex:1];
+        [renderEncoder setFragmentBytes:&ct.loadCounts length:sizeof(ct.loadCounts) atIndex:1];
         [renderEncoder setFragmentTexture:ct.txt atIndex:0];
         [renderEncoder setFragmentTexture:_placeholderTexture atIndex:1];
         
