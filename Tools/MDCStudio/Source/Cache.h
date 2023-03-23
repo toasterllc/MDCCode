@@ -67,16 +67,20 @@ public:
         return Val(*this, idx);
     }
     
+    // evict(): tells the underlying LRU to evict the oldest entries
     void evict(std::unique_lock<std::mutex>& lock) {
         assert(lock);
         _cache.lru.evict();
     }
     
+    // size(): returns the current number of entries stored in the cache
     size_t size(std::unique_lock<std::mutex>& lock) const {
         assert(lock);
         return _cache.lru.size();
     }
     
+    // sizeFree(): returns the number of unoccupied entries in the cache
+    // This indicates the number of times that pop() can be called without blocking.
     size_t sizeFree(std::unique_lock<std::mutex>& lock) {
         // We need `lock` to be held to prevent removals from the free-list, so that our
         // return value indicates the minimum free list size as long as the lock is held.
