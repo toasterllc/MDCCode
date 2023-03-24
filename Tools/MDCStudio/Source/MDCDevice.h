@@ -765,7 +765,7 @@ private:
             if (enqueued) _thumbRender.signal.signalAll();
         }
         
-        // The remaining recs aren't in our cache, so kick of SD reading + rendering
+        // The remaining recs aren't in our cache, so kick off SD reading + rendering
         for (auto it=recs.rbegin(); it!=recs.rend();) {
             _SDReadWork work = {
                 .callback = [=, &state] (const _SDReadWork& work, _SDReadWork::OpsIter begin, _SDReadWork::OpsIter end) {
@@ -773,7 +773,7 @@ private:
                 },
             };
             
-            for (; it!=recs.rend() && work.ops.size()<32; it++) {
+            for (; it!=recs.rend(); it++) {
                 const ImageRecordPtr& rec = *it;
                 const _SDRegion region = {
                     .block = rec->info.addrThumb,
