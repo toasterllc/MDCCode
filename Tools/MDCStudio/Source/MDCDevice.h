@@ -774,7 +774,7 @@ private:
                 },
             };
             
-            for (; it!=recs.rend(); it++) {
+            for (; it!=recs.rend() && work.ops.empty(); it++) {
                 const ImageRecordPtr& rec = *it;
                 const _SDRegion region = {
                     .block = rec->info.addrThumb,
@@ -792,10 +792,10 @@ private:
                         // That will at least free up some entries once the work's done.
                         if (!_thumbCache.sizeFree(lock, (uint8_t)priority)) {
                             if (!work.ops.empty()) {
-                                printf("[_loadImages:p%ju] No free buffer, enqueueing %ju read ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
+//                                printf("[_loadImages:p%ju] No free buffer, enqueueing %ju read ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
                                 break;
                             } else {
-                                printf("[_loadImages:p%ju] No free buffer, blocking...\n", (uintmax_t)priority);
+//                                printf("[_loadImages:p%ju] No free buffer, blocking...\n", (uintmax_t)priority);
                             }
                         }
                     }
@@ -836,7 +836,7 @@ private:
             
             assert(!work.ops.empty());
             
-            printf("[_loadImages:p%ju] Enqueuing %ju ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
+//            printf("[_loadImages:p%ju] Enqueuing %ju ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
             {
                 auto lock = _sdRead.signal.lock();
                 _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
@@ -1021,15 +1021,15 @@ private:
         const auto timeStart = std::chrono::steady_clock::now();
         
         {
-            printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
+//            printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
             _deviceSDRead(blockBegin, len, _sdRead.buffer);
         }
         
         const std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-timeStart);
         const double throughputMBPerSec = ((double)(len * 1000) / (duration.count() * 1024*1024));
         const float mb = (float)len / (1024*1024);
-        printf("[_sdRead_handleWork] Read [%ju,%ju) (%.1f MB) took %ju ms (throughput: %.1f MB/sec)\n",
-            (uintmax_t)blockBegin, (uintmax_t)blockEnd, mb, (uintmax_t)duration.count(), throughputMBPerSec);
+//        printf("[_sdRead_handleWork] Read [%ju,%ju) (%.1f MB) took %ju ms (throughput: %.1f MB/sec)\n",
+//            (uintmax_t)blockBegin, (uintmax_t)blockEnd, mb, (uintmax_t)duration.count(), throughputMBPerSec);
         
         // Copy data into each _SDReadOp
         for (auto it=begin; it!=end; it++) {
@@ -1257,7 +1257,7 @@ private:
             _device.device.readout(dst, len);
         
         } else {
-            printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
+//            printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
             _device.device.readout(dst, len);
         }
         _device.sdReadEnd = _SDBlockEnd(block, len);
