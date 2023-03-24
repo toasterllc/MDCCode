@@ -773,7 +773,7 @@ private:
                 },
             };
             
-            for (; it!=recs.rend(); it++) {
+            for (; it!=recs.rend() && work.ops.size()<32; it++) {
                 const ImageRecordPtr& rec = *it;
                 const _SDRegion region = {
                     .block = rec->info.addrThumb,
@@ -783,8 +783,12 @@ private:
                 _ThumbBuffer buf;
                 {
                     auto lock = _thumbCache.lock();
+                    // If the cache doesn't have any free entries (and therefore we're about to block to wait for one),
+                    // evict entries from the cache to try get more available entries.
                     if (!_thumbCache.sizeFree(lock)) {
                         _thumbCache.evict(lock);
+                        // If eviction didn't work, enqueue the work that we've already accumulated.
+                        // That will at least free up some entries once the work's done.
                         if (!_thumbCache.sizeFree(lock)) {
                             if (!work.ops.empty()) {
                                 printf("[_loadImages] No free buffer, enqueueing %ju read ops\n", (uintmax_t)work.ops.size());
