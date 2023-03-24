@@ -1026,6 +1026,8 @@ private:
         // Verify that the length of data that we're reading will fit in our buffer
         assert(len <= sizeof(_sdRead.buffer));
         
+        const auto timeStart = std::chrono::steady_clock::now();
+        
         {
             printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
             auto lock = std::unique_lock(_dev);
@@ -1035,6 +1037,12 @@ private:
             _dev.sdRead((SD::Block)blockBegin);
             _dev.readout(_sdRead.buffer, len);
         }
+        
+        const std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-timeStart);
+        const double throughputMBPerSec = ((double)(len * 1000) / (duration.count() * 1024*1024));
+        const float mb = (float)len / (1024*1024);
+        printf("[_sdRead_handleWork] Read [%ju,%ju) (%.1f MB) took %ju ms (throughput: %.1f MB/sec)\n",
+            (uintmax_t)blockBegin, (uintmax_t)blockEnd, mb, (uintmax_t)duration.count(), throughputMBPerSec);
         
 //        // Copy data into each _SDReadOp
 //        for (auto it=begin; it!=end; it++) {
