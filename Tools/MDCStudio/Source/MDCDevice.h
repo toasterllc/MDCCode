@@ -798,7 +798,7 @@ private:
                     buf = _thumbCache.pop(lock);
                 }
                 
-                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
+//                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
                 
 //                #warning TODO: if work has ops and we're about to wait, enqueue the work so we don't hold up the existing ops waiting for a buffer
 //                #warning TODO: implement waiting on state.pool if the pool is empty
