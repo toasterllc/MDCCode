@@ -20,7 +20,7 @@ public:
         Toastbox::Atomic<size_t> underway;
     };
     
-    enum class Priority : uint8_t { High, Low, Count };
+    enum class Priority : uint8_t { High, Low, Last=Low };
     virtual void loadImages(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) = 0;
 };
 

@@ -4,32 +4,52 @@
 #include "Toastbox/LRU.h"
 #include "Toastbox/Signal.h"
 
-template<typename T_Key, typename T_Val, size_t T_Cap>
+template<typename T_Key, typename T_Val, size_t T_Cap, uint8_t T_PriorityLast=0>
 class Cache {
 public:
-    struct _Cookie {
-        _Cookie(Cache& cache, size_t idx) : cache(cache), idx(idx) {}
-        ~_Cookie() { cache._recycle(idx); }
+    struct _Entry {
+        _Entry(Cache& cache, size_t idx) : cache(cache), idx(idx) {}
+        ~_Entry() { cache._destroy(*this); }
         Cache& cache;
         const size_t idx = 0;
     };
     
-    struct Val {
-        Val() {}
-        Val(Cache& cache, size_t idx) : _val(&cache._mem[idx]), _cookie(std::make_shared<_Cookie>(cache, idx)) {}
-        operator bool() { return _val; }
-        bool operator<(const Val& x) const { return _cookie < x._cookie; }
-        bool operator==(const Val& x) const { return _cookie == x._cookie; }
-        bool operator!=(const Val& x) const { return _cookie != x._cookie; }
-        T_Val* operator->() const { return _val; }
-        T_Val& operator*() const { return *_val; }
-        T_Val* _val = nullptr;
-        std::shared_ptr<_Cookie> _cookie;
+    struct Entry {
+        Entry() {}
+        Entry(Cache& cache, size_t idx) : val(&cache._mem[idx]), shared(std::make_shared<_Entry>(cache, idx)) {}
+        operator bool() { return val; }
+        bool operator<(const Entry& x) const { return shared < x.shared; }
+        bool operator==(const Entry& x) const { return shared == x.shared; }
+        bool operator!=(const Entry& x) const { return shared != x.shared; }
+        T_Val* operator->() const { return val; }
+        T_Val& operator*() const { return *val; }
+        T_Val* val = nullptr;
+        std::shared_ptr<_Entry> shared;
+    };
+    
+    struct Reserved : Entry {
+        Reserved() {}
+        Reserved(Cache& cache, size_t idx, uint8_t priority) : Entry(cache, idx), priority(priority) {}
+        // Copy
+        Reserved(const Reserved& x) = delete;
+        Reserved& operator=(const Reserved& x) = delete;
+        // Move
+        Reserved(Reserved&& x) = default;
+        Reserved& operator=(Reserved&& x) = default;
+        ~Reserved() {
+            if (Entry::shared) {
+                Entry::shared->cache._destroy(*this);
+            }
+        }
+        size_t priority = 0;
     };
     
     Cache() {
-        for (size_t i=0; i<T_Cap;i++) {
+        uint8_t priority = 0;
+        for (size_t i=0; i<T_Cap; i++, priority++) {
+            if (priority > T_PriorityLast) priority = 0;
             _free.list.push_back(i);
+            _free.counter[priority]++;
         }
     }
     
@@ -44,7 +64,7 @@ public:
     
     // get(): find an existing entry for a key
     // If the entry didn't exist, (bool)Val == false
-    Val get(std::unique_lock<std::mutex>& lock, const T_Key& key) {
+    Entry get(std::unique_lock<std::mutex>& lock, const T_Key& key) {
         assert(lock);
         if (auto find=_cache.lru.find(key); find!=_cache.lru.end()) {
             return find->val;
@@ -53,13 +73,15 @@ public:
     }
     
     // set(): set an entry for a key
-    void set(std::unique_lock<std::mutex>& lock, const T_Key& key, Val val) {
+    Entry set(std::unique_lock<std::mutex>& lock, const T_Key& key, Reserved&& reserved) {
         assert(lock);
-        _cache.lru[key] = val;
+        Entry& entry = _cache.lru[key];
+        entry = std::move(reserved);
+        return entry;
     }
     
     // pop(): return an empty entry
-    Val pop(std::unique_lock<std::mutex>& lock) {
+    Reserved pop(std::unique_lock<std::mutex>& lock, uint8_t priority=0) {
         // We don't use `lock` but it allows the caller to implement atomicity across
         // multiple operations.
         // We do need to acquire _free.signal.lock() though to safely access _free.list.
@@ -67,10 +89,12 @@ public:
         for (;;) {
             {
                 auto l = _free.signal.lock();
-                if (!_free.list.empty()) {
+                auto& counter = _free.counter[priority];
+                if (!_free.list.empty() && counter) {
                     const size_t idx = _free.list.back();
                     _free.list.pop_back();
-                    return Val(*this, idx);
+                    counter--;
+                    return Reserved(*this, idx, priority);
                 }
             }
             
@@ -101,29 +125,29 @@ public:
     
     // sizeFree(): returns the number of unoccupied entries in the cache
     // This indicates the number of times that pop() can be called without blocking.
-    size_t sizeFree(std::unique_lock<std::mutex>& lock) {
+    size_t sizeFree(std::unique_lock<std::mutex>& lock, uint8_t priority=0) {
         // We need `lock` to be held even though we don't use it, because it prevents
         // removals from the free-list (via pop), so that our return value indicates the
         // minimum free list size as long as the lock is held. We still need to acquire
         // _free.signal.lock() though to safely access _free.list.
         assert(lock);
         auto l = _free.signal.lock();
-        return _free.list.size();
+        return _free.counter[priority];
     }
     
-    Val get(const T_Key& key) {
+    Entry get(const T_Key& key) {
         auto l = lock();
         return get(l, key);
     }
     
-    void set(const T_Key& key, Val val) {
+    Entry set(const T_Key& key, Reserved&& reserved) {
         auto l = lock();
-        set(l, key, val);
+        return set(l, key, std::move(reserved));
     }
     
-    Val pop() {
+    Reserved pop(uint8_t priority=0) {
         auto l = lock();
-        return pop(l);
+        return pop(l, priority);
     }
     
     void evict() {
@@ -136,15 +160,23 @@ public:
         return size(l);
     }
     
-    size_t sizeFree() {
+    size_t sizeFree(uint8_t priority=0) {
         auto l = lock();
-        return sizeFree(l);
+        return sizeFree(l, priority);
     }
     
-    void _recycle(size_t idx) {
+    void _destroy(const _Entry& x) {
         {
             auto lock = _free.signal.lock();
-            _free.list.push_back(idx);
+            _free.list.push_back(x.idx);
+        }
+        _free.signal.signalOne();
+    }
+    
+    void _destroy(const Reserved& x) {
+        {
+            auto lock = _free.signal.lock();
+            _free.counter[x.priority]++;
         }
         _free.signal.signalOne();
     }
@@ -166,10 +198,11 @@ public:
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::vector<size_t> list;
+        size_t counter[T_PriorityLast+1] = {};
     } _free;
     
     struct {
         std::mutex lock; // Protects this struct;
-        Toastbox::LRU<T_Key,Val,T_Cap-_Headroom> lru;
+        Toastbox::LRU<T_Key,Entry,T_Cap-_Headroom> lru;
     } _cache;
 };

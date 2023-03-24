@@ -252,16 +252,17 @@ private:
     };
     
     using __ThumbBuffer = uint8_t[Img::Thumb::ImageLen];
-    using _ThumbCache = Cache<_SDRegion,__ThumbBuffer,512>;
-    using _ThumbBuffer = _ThumbCache::Val;
+    using _ThumbCache = Cache<_SDRegion,__ThumbBuffer,512,(uint8_t)Priority::Last>;
+    using _ThumbBuffer = _ThumbCache::Entry;
+    using _ThumbBufferReserved = _ThumbCache::Reserved;
     
     using __ImageBuffer = uint8_t[Img::Full::ImageLen];
     using _ImageCache = Cache<_SDRegion,__ImageBuffer,8>;
-    using _ImageBuffer = _ImageCache::Val;
+    using _ImageBuffer = _ImageCache::Entry;
     
     struct _SDReadOp {
         _SDRegion region;
-        _ThumbBuffer buf;
+        _ThumbBufferReserved buf;
         ImageRecordPtr rec;
         
         bool operator<(const _SDReadOp& x) const {
@@ -280,8 +281,8 @@ private:
     };
     
     struct _SDReadWork {
-        using Ops = std::set<_SDReadOp>;
-        using OpsIter = std::set<_SDReadOp>::const_iterator;
+        using Ops = std::vector<_SDReadOp>;
+        using OpsIter = std::vector<_SDReadOp>::iterator;
         using Callback = std::function<void(const _SDReadWork&, OpsIter begin, OpsIter end)>;
         Ops ops;
         Callback callback;
@@ -537,18 +538,6 @@ private:
     }
     
     void _readCompleteCallback(LoadImagesState& state, const _SDReadWork& work, _SDReadWork::OpsIter begin, _SDReadWork::OpsIter end, bool initial) {
-        // Insert buffers into our cache, if this isn't the initial load.
-        // We don't want to populate the cache on the initial load because we want the Cache buffers to
-        // be available for SDReads, but if we store them in the cache, we have fewer buffers available
-        // for use during initial import, which slows down the importing process.
-        if (!initial) {
-            auto lock = _thumbCache.lock();
-            for (auto it=begin; it!=end; it++) {
-                const _SDReadOp& op = *it;
-                _thumbCache.set(lock, op.region, op.buf);
-            }
-        }
-        
         // Enqueue rendering
         {
             {
@@ -560,6 +549,18 @@ private:
                 }
             }
             _thumbRender.signal.signalAll();
+        }
+        
+        // Insert buffers into our cache, if this isn't the initial load.
+        // We don't want to populate the cache on the initial load because we want the Cache buffers to
+        // be available for SDReads, but if we store them in the cache, we have fewer buffers available
+        // for use during initial import, which slows down the importing process.
+        if (!initial) {
+            auto lock = _thumbCache.lock();
+            for (auto it=begin; it!=end; it++) {
+                _SDReadOp& op = *it;
+                _thumbCache.set(lock, op.region, std::move(op.buf));
+            }
         }
         
 //        {
@@ -729,7 +730,7 @@ private:
         bool initial, std::set<ImageRecordPtr> recs) {
         
         const size_t imageCount = recs.size();
-        printf("[_loadImages] Loading %ju images\n", (uintmax_t)recs.size());
+        printf("[_loadImages:p%ju]] Loading %ju images\n", (uintmax_t)priority, (uintmax_t)recs.size());
         
         const auto timeStart = std::chrono::steady_clock::now();
         state.underway += recs.size();
@@ -780,25 +781,25 @@ private:
                     .len = Img::Thumb::ImageLen,
                 };
                 
-                _ThumbBuffer buf;
+                _ThumbBufferReserved buf;
                 {
                     auto lock = _thumbCache.lock();
                     // If the cache doesn't have any free entries (and therefore we're about to block to wait for one),
                     // evict entries from the cache to try get more available entries.
-                    if (!_thumbCache.sizeFree(lock)) {
+                    if (!_thumbCache.sizeFree(lock, (uint8_t)priority)) {
                         _thumbCache.evict(lock);
                         // If eviction didn't work, enqueue the work that we've already accumulated.
                         // That will at least free up some entries once the work's done.
-                        if (!_thumbCache.sizeFree(lock)) {
+                        if (!_thumbCache.sizeFree(lock, (uint8_t)priority)) {
                             if (!work.ops.empty()) {
-                                printf("[_loadImages] No free buffer, enqueueing %ju read ops\n", (uintmax_t)work.ops.size());
+                                printf("[_loadImages:p%ju] No free buffer, enqueueing %ju read ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
                                 break;
                             } else {
-                                printf("[_loadImages] No free buffer, blocking...\n");
+                                printf("[_loadImages:p%ju] No free buffer, blocking...\n", (uintmax_t)priority);
                             }
                         }
                     }
-                    buf = _thumbCache.pop(lock);
+                    buf = _thumbCache.pop(lock, (uint8_t)priority);
                 }
                 
 //                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
@@ -807,9 +808,9 @@ private:
 //                #warning TODO: implement waiting on state.pool if the pool is empty
 //                _ThumbBuffer buf = _thumbCache.pop();
                 
-                work.ops.insert(_SDReadOp{
+                work.ops.push_back(_SDReadOp{
                     .region = region,
-                    .buf = buf,
+                    .buf = std::move(buf),
                     .rec = rec,
                 });
                 
@@ -835,7 +836,7 @@ private:
             
             assert(!work.ops.empty());
             
-            printf("[_loadImages] Enqueuing %ju ops\n", (uintmax_t)work.ops.size());
+            printf("[_loadImages:p%ju] Enqueuing %ju ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
             {
                 auto lock = _sdRead.signal.lock();
                 _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
@@ -850,7 +851,8 @@ private:
         {
             using namespace std::chrono;
             const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
-            printf("[_loadImages] _loadImages() took %ju ms for %ju images (avg %f ms / img)\n",
+            printf("[_loadImages:p%ju] _loadImages() took %ju ms for %ju images (avg %f ms / img)\n",
+                (uintmax_t)priority,
                 (uintmax_t)duration.count(), (uintmax_t)imageCount, ((double)duration.count()/imageCount));
         }
     }
@@ -1006,8 +1008,7 @@ private:
 //        };
 //    }
     
-    using _SDReadOpIter = std::set<_SDReadOp>::const_iterator;
-    void __sdRead_handleWork(_SDReadOpIter begin, _SDReadOpIter end) {
+    void __sdRead_handleWork(_SDReadWork::OpsIter begin, _SDReadWork::OpsIter end) {
         assert(begin != end);
         const _SDReadOp& front = *begin;
         const _SDReadOp& back = *std::prev(end);
@@ -1041,12 +1042,16 @@ private:
         }
     }
     
-    void _sdRead_handleWork(const _SDReadWork& work) {
+    void _sdRead_handleWork(_SDReadWork& work) {
         for (auto it=work.ops.begin(); it!=work.ops.end();) {
             const auto begin = it;
             const _SDBlock blockBegin = begin->region.block;
             _SDBlock blockEnd = 0;
             for (; it!=work.ops.end(); it++) {
+                // If this _SDReadOp wants to read a region that starts before the previous _SDReadOp,
+                // stop coalescing here. (It's the caller's responsibility to sort the _SDReadOps by
+                // block for optimal performance.)
+                if (it->region.block < blockBegin) break;
                 // blockEndCandidate: std::max() is necessary because this op's blockEnd could be less
                 // than our accumulated blockEnd, because this op is allowed to read data that stops
                 // before the previous op's blockEnd.
@@ -1285,7 +1290,7 @@ private:
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        _SDReadWorkQueue queues[(size_t)Priority::Count];
+        _SDReadWorkQueue queues[(size_t)Priority::Last+1];
         uint8_t buffer[8*1024*1024];
     } _sdRead;
     
