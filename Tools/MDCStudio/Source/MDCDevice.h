@@ -290,6 +290,7 @@ private:
     
     struct _RenderWork {
         bool initial = false;
+        bool validateChecksum = false;
         ImageRecordPtr rec;
         _ThumbBuffer buf;
         _WorkCallback callback;
@@ -537,17 +538,6 @@ private:
     }
     
     void _readCompleteCallback(LoadImagesState& state, const _SDReadWork& work, _SDReadWork::OpsIter begin, _SDReadWork::OpsIter end, bool initial) {
-        // Validate checksums
-        for (auto it=begin; it!=end; it++) {
-            const _SDReadOp& op = *it;
-            if (_ImageChecksumValid(*op.buf, Img::Size::Thumb)) {
-//                printf("Checksum valid (thumb)\n");
-            } else {
-                printf("Checksum INVALID (thumb)\n");
-//                abort();
-            }
-        }
-        
         // Insert buffers into our cache, if this isn't the initial load.
         // We don't want to populate the cache on the initial load because we want the Cache buffers to
         // be available for SDReads, but if we store them in the cache, we have fewer buffers available
@@ -567,7 +557,7 @@ private:
                 for (auto it=begin; it!=end; it++) {
                     const _SDReadOp& op = *it;
 //                    printf("Enqueueing rendering for %ju\n", (uintmax_t)op.rec->info.id);
-                    _renderEnqueue(lock, state, initial, op.rec, op.buf);
+                    _renderEnqueue(lock, state, initial, true, op.rec, op.buf);
                 }
             }
             _thumbRender.signal.signalAll();
@@ -689,10 +679,11 @@ private:
 //        state.signal.signalOne();
     }
     
-    void _renderEnqueue(std::unique_lock<std::mutex>& lock, LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
+    void _renderEnqueue(std::unique_lock<std::mutex>& lock, LoadImagesState& state, bool initial, bool validateChecksum, ImageRecordPtr rec, _ThumbBuffer buf) {
         // Enqueue _RenderWork into _thumbRender.queue
         _thumbRender.queue.push(_RenderWork{
             .initial = initial,
+            .validateChecksum = validateChecksum,
             .rec = rec,
             .buf = std::move(buf),
             .callback = [=, &state] { _renderCompleteCallback(state, rec); },
@@ -760,7 +751,7 @@ private:
                     // If the thumbnail is in our cache, kick off rendering
                     _ThumbBuffer buf = _thumbCache.get(region);
                     if (buf) {
-                        _renderEnqueue(lock, state, initial, rec, std::move(buf));
+                        _renderEnqueue(lock, state, initial, false, rec, std::move(buf));
                         enqueued = true;
                         it = recs.erase(it);
                     
@@ -1047,7 +1038,7 @@ private:
             const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
             
             const Img::Header& header = *(const Img::Header*)(_sdRead.buffer+off);
-            printf("[__sdRead_handleWork] Writing image id %ju into %p\n", (uintmax_t)header.id, &*op.buf);
+//            printf("[__sdRead_handleWork] Writing image id %ju into %p\n", (uintmax_t)header.id, &*op.buf);
             memcpy(*op.buf, _sdRead.buffer+off, op.region.len);
         }
     }
@@ -1139,6 +1130,15 @@ private:
                 }
                 
                 ImageRecord& rec = *work.rec;
+                
+                if (work.validateChecksum) {
+                    if (_ImageChecksumValid(*work.buf, Img::Size::Thumb)) {
+//                        printf("Checksum valid (thumb)\n");
+                    } else {
+                        printf("Checksum INVALID (thumb)\n");
+//                        abort();
+                    }
+                }
                 
                 if (work.initial) {
                     // Populate .info
