@@ -60,11 +60,31 @@ public:
     
     // pop(): return an empty entry
     Val pop(std::unique_lock<std::mutex>& lock) {
+        // We don't use `lock` but it allows the caller to implement atomicity across
+        // multiple operations.
+        // We do need to acquire _free.signal.lock() though to safely access _free.list.
         assert(lock);
-        _free.signal.wait(lock, [&] { return !_free.list.empty(); });
-        const size_t idx = _free.list.back();
-        _free.list.pop_back();
-        return Val(*this, idx);
+        for (;;) {
+            {
+                auto l = _free.signal.lock();
+                if (!_free.list.empty()) {
+                    const size_t idx = _free.list.back();
+                    _free.list.pop_back();
+                    return Val(*this, idx);
+                }
+            }
+            
+            // Don't hold _cache.lock while we block waiting for a free slot, because we don't
+            // want to prevent the cache from being used while we block.
+            // Note that we can't use the lock returned from wait() because we have to re-acquire
+            // _cache.lock, and if we used the lock returned by wait() we'd be prone to deadlock
+            // due to acquiring the two locks out of order. (Ie we normally acquire _cache.lock
+            // first, followed by _free.signal, but in this case we'd be acquiring _free.signal
+            // first, followed by _cache.lock.)
+            lock.unlock();
+            _free.signal.wait([&] { return !_free.list.empty(); });
+            lock.lock();
+        }
     }
     
     // evict(): tells the underlying LRU to evict the oldest entries
@@ -90,26 +110,6 @@ public:
         auto l = _free.signal.lock();
         return _free.list.size();
     }
-    
-//    Wrapper pop() {
-//        auto lock = _free.signal.lock();
-//        for (;;) {
-//            if (!_free.list.empty()) {
-//                const size_t idx = _free.list.back();
-//                _free.list.pop_back();
-//                return Wrapper(*this, idx);
-//            }
-//            lock.unlock();
-//            
-//            {
-//                auto lock = std::unique_lock(_cache.lock);
-//                _cache.lru.evict();
-//            }
-//            
-//            lock.lock();
-//            _free.signal.wait(lock, [&] { return !_free.list.empty(); });
-//        }
-//    }
     
     Val get(const T_Key& key) {
         auto l = lock();
