@@ -49,7 +49,12 @@ public:
         _mode = status.mode;
     }
     
-    MDCUSBDevice(MDCUSBDevice&&) = default;
+    // Copy
+    MDCUSBDevice(const MDCUSBDevice& x) = delete;
+    MDCUSBDevice& operator=(const MDCUSBDevice& x) = delete;
+    // Move
+    MDCUSBDevice(MDCUSBDevice&& x) = default;
+    MDCUSBDevice& operator=(MDCUSBDevice&& x) = default;
     
     bool operator==(const MDCUSBDevice& x) const {
         return _dev == x._dev;

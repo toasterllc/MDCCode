@@ -34,18 +34,17 @@ private:
     
 public:
     using Observer = std::function<bool()>;
-    using Device = MDCTools::Lockable<MDCUSBDevice>;
     
     MDCDevice(MDCUSBDevice&& dev) :
-    _dev(std::move(dev)),
-    _dir(_DirForSerial(_dev.serial())),
+    _device(decltype(_device){ .device = std::move(dev) }),
+    _dir(_DirForSerial(_device.device.serial())),
     _imageLibrary(_dir / "ImageLibrary"),
     _imageCache(_imageLibrary, _imageProvider()) {
         printf("MDCDevice()\n");
         
         // Give device a default name
         char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", _dev.serial().c_str());
+        snprintf(name, sizeof(name), "MDC Device %s", _device.device.serial().c_str());
         _name = std::string(name);
         
         // Read state from disk
@@ -56,24 +55,24 @@ public:
         
         // Perform device IO
         {
-            auto lock = std::unique_lock(_dev);
+            auto lock = _deviceLock();
             
             // Update our _mspState from the device
-            _mspState = _dev.mspStateRead();
+            _mspState = _device.device.mspStateRead();
             
             // Enter host mode
-            _dev.mspHostModeSet(true);
+            _device.device.mspHostModeSet(true);
             
             // Update the device's time
             {
                 using namespace std::chrono;
                 using namespace date;
                 
-                const Time::Instant mdcTime = _dev.mspTimeGet();
+                const Time::Instant mdcTime = _device.device.mspTimeGet();
                 const Time::Instant actualTime = Time::Current();
                 
                 auto startTime = steady_clock::now();
-                _dev.mspTimeSet(actualTime);
+                _device.device.mspTimeSet(actualTime);
                 const milliseconds timeSetDuration = duration_cast<milliseconds>(steady_clock::now()-startTime);
                 
                 if (Time::Absolute(mdcTime)) {
@@ -90,11 +89,11 @@ public:
             }
             
             // Load ICE40 with our app
-            _ICEConfigure(_dev);
+            _ICEConfigure(_device.device);
             
             // Init SD card
             #warning TODO: how should we handle sdInit() failing (throwing)?
-            _sdCardInfo = _dev.sdInit();
+            _sdCardInfo = _device.device.sdInit();
             
             if (!_mspState.sd.valid) {
                 // MSPApp state isn't valid -- ignore
@@ -150,7 +149,7 @@ public:
     }
     
     const Toastbox::SendRight& service() const {
-        return _dev.dev().service();
+        return _device.device.dev().service();
     }
     
     void observerAdd(Observer&& observer) {
@@ -951,7 +950,7 @@ private:
         for (_SDReadWorkQueue& x : _sdRead.queues) {
             if (!x.empty()) return &x;
         }
-        printf("[_sdRead_nextQueue] STALL\n");
+        printf("[_sdRead_nextQueue] Stalled\n");
         return nullptr;
     }
     
@@ -1018,12 +1017,7 @@ private:
         
         {
             printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
-            auto lock = std::unique_lock(_dev);
-            _dev.reset();
-            // Verify that blockBegin can be safely cast to SD::Block
-            assert(std::numeric_limits<SD::Block>::max() >= blockBegin);
-            _dev.sdRead((SD::Block)blockBegin);
-            _dev.readout(_sdRead.buffer, len);
+            _deviceSDRead(blockBegin, len, _sdRead.buffer);
         }
         
         const std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-timeStart);
@@ -1037,7 +1031,7 @@ private:
             const _SDReadOp& op = *it;
             const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
             
-            const Img::Header& header = *(const Img::Header*)(_sdRead.buffer+off);
+//            const Img::Header& header = *(const Img::Header*)(_sdRead.buffer+off);
 //            printf("[__sdRead_handleWork] Writing image id %ju into %p\n", (uintmax_t)header.id, &*op.buf);
             memcpy(*op.buf, _sdRead.buffer+off, op.region.len);
         }
@@ -1234,9 +1228,40 @@ private:
         }
     }
     
+    std::unique_lock<std::mutex> _deviceLock() {
+        auto lock = std::unique_lock(_device.lock);
+        // We're locking the device for unknown purposes, so clear sdReadEnd so we don't try to continue SD readout
+        // from where we left off, because we have to assume readout was cancelled by whatever the client did with
+        // the device
+        _device.sdReadEnd = std::nullopt;
+        return lock;
+    }
+    
+    void _deviceSDRead(_SDBlock block, size_t len, void* dst) {
+        auto lock = std::unique_lock(_device.lock);
+        if (!_device.sdReadEnd || *_device.sdReadEnd!=block) {
+            printf("[_deviceSDRead] Starting readout at %ju\n", (uintmax_t)block);
+            _device.device.reset();
+            // Verify that blockBegin can be safely cast to SD::Block
+            assert(std::numeric_limits<SD::Block>::max() >= block);
+            _device.device.sdRead((SD::Block)block);
+            _device.device.readout(dst, len);
+        
+        } else {
+            printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
+            _device.device.readout(dst, len);
+        }
+        _device.sdReadEnd = _SDBlockEnd(block, len);
+    }
+    
     // MARK: - Members
     
-    Device _dev;
+    struct {
+        std::mutex lock; // Protects this struct
+        MDCUSBDevice device;
+        std::optional<_SDBlock> sdReadEnd;
+    } _device;
+    
     const _Path _dir;
     ImageLibrary _imageLibrary;
     ImageCache _imageCache;
