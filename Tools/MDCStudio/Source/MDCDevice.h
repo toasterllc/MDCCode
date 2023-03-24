@@ -668,7 +668,7 @@ private:
         {
             auto lock = state.signal.lock();
             state.notify.insert(rec);
-            if (!count) {
+            if (state.notify.size()>=NotifyThreshold || !count) {
                 notify = std::move(state.notify);
             }
         }
@@ -690,16 +690,13 @@ private:
     }
     
     void _renderEnqueue(std::unique_lock<std::mutex>& lock, LoadImagesState& state, bool initial, ImageRecordPtr rec, _ThumbBuffer buf) {
-        const size_t count = --state.underway;
-        if (!count) state.signal.signalOne();
-        
-//        // Enqueue _RenderWork into _thumbRender.queue
-//        _thumbRender.queue.push(_RenderWork{
-//            .initial = initial,
-//            .rec = rec,
-//            .buf = std::move(buf),
-//            .callback = [=, &state] { _renderCompleteCallback(state, rec); },
-//        });
+        // Enqueue _RenderWork into _thumbRender.queue
+        _thumbRender.queue.push(_RenderWork{
+            .initial = initial,
+            .rec = rec,
+            .buf = std::move(buf),
+            .callback = [=, &state] { _renderCompleteCallback(state, rec); },
+        });
     }
     
     
@@ -786,31 +783,31 @@ private:
                 },
             };
             
-            for (; it!=recs.rend() && work.ops.size()<32; it++) {
+            for (; it!=recs.rend(); it++) {
                 const ImageRecordPtr& rec = *it;
                 const _SDRegion region = {
                     .block = rec->info.addrThumb,
                     .len = Img::Thumb::ImageLen,
                 };
                 
-                _ThumbBuffer buf = _thumbCache.pop();
-//                {
-//                    auto lock = _thumbCache.lock();
-//                    if (!_thumbCache.sizeFree(lock)) {
-//                        _thumbCache.evict(lock);
-//                        if (!_thumbCache.sizeFree(lock)) {
-//                            if (!work.ops.empty()) {
-//                                printf("[_loadImages] No free buffer, enqueueing %ju read ops\n", (uintmax_t)work.ops.size());
-//                                break;
-//                            } else {
-//                                printf("[_loadImages] No free buffer, blocking...\n");
-//                            }
-//                        }
-//                    }
-//                    buf = _thumbCache.pop(lock);
-//                }
+                _ThumbBuffer buf;
+                {
+                    auto lock = _thumbCache.lock();
+                    if (!_thumbCache.sizeFree(lock)) {
+                        _thumbCache.evict(lock);
+                        if (!_thumbCache.sizeFree(lock)) {
+                            if (!work.ops.empty()) {
+                                printf("[_loadImages] No free buffer, enqueueing %ju read ops\n", (uintmax_t)work.ops.size());
+                                break;
+                            } else {
+                                printf("[_loadImages] No free buffer, blocking...\n");
+                            }
+                        }
+                    }
+                    buf = _thumbCache.pop(lock);
+                }
                 
-//                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
+                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
                 
 //                #warning TODO: if work has ops and we're about to wait, enqueue the work so we don't hold up the existing ops waiting for a buffer
 //                #warning TODO: implement waiting on state.pool if the pool is empty
@@ -1044,15 +1041,15 @@ private:
         printf("[_sdRead_handleWork] Read [%ju,%ju) (%.1f MB) took %ju ms (throughput: %.1f MB/sec)\n",
             (uintmax_t)blockBegin, (uintmax_t)blockEnd, mb, (uintmax_t)duration.count(), throughputMBPerSec);
         
-//        // Copy data into each _SDReadOp
-//        for (auto it=begin; it!=end; it++) {
-//            const _SDReadOp& op = *it;
-//            const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
-//            
-////            const Img::Header& header = *(const Img::Header*)(_sdRead.buffer+off);
-////            printf("[__sdRead_handleWork] Writing image id %ju into %p\n", (uintmax_t)header.id, &*op.buf);
-//            memcpy(*op.buf, _sdRead.buffer+off, op.region.len);
-//        }
+        // Copy data into each _SDReadOp
+        for (auto it=begin; it!=end; it++) {
+            const _SDReadOp& op = *it;
+            const size_t off = (size_t)SD::BlockLen * (size_t)(op.region.block-blockBegin);
+            
+            const Img::Header& header = *(const Img::Header*)(_sdRead.buffer+off);
+            printf("[__sdRead_handleWork] Writing image id %ju into %p\n", (uintmax_t)header.id, &*op.buf);
+            memcpy(*op.buf, _sdRead.buffer+off, op.region.len);
+        }
     }
     
     void _sdRead_handleWork(const _SDReadWork& work) {
@@ -1260,7 +1257,7 @@ private:
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
         _SDReadWorkQueue queues[(size_t)Priority::Count];
-        uint8_t buffer[128*1024*1024];
+        uint8_t buffer[8*1024*1024];
     } _sdRead;
     
     struct {
