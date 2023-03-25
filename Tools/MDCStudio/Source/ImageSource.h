@@ -22,6 +22,15 @@ public:
     
     enum class Priority : uint8_t { High, Low, Last=Low };
     virtual void loadImages(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) = 0;
+    
+    struct Image {
+        size_t width = 0;
+        size_t height = 0;
+        MDCTools::CFADesc cfaDesc;
+        std::unique_ptr<uint8_t[]> data;
+    };
+    
+    virtual Image imageGet(Priority priority, const ImageRecordPtr& rec) = 0;
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;

@@ -200,12 +200,12 @@ public:
 //        return image;
 //    }
     
-    
-    
-    
-    
     void loadImages(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) override {
         _loadImages(state, priority, false, recs);
+    }
+    
+    Image imageGet(Priority priority, const ImageRecordPtr& rec) override {
+        return _imageGet(priority, rec);
     }
     
 private:
@@ -274,6 +274,12 @@ private:
             else                     abort();
         }
         
+//        operator bool() const {
+//            if (auto x=thumb())      return (bool)x->entry();
+//            else if (auto x=image()) return (bool)x->entry();
+//            else                     abort();
+//        }
+        
         bool operator<(const _BufferReserved& b) const {
             if (auto x=thumb())      return x->entry() < b.thumb()->entry();
             else if (auto x=image()) return x->entry() < b.image()->entry();
@@ -294,6 +300,9 @@ private:
         
         const _ThumbBufferReserved* thumb() const { return std::get_if<_ThumbBufferReserved>(this); }
         const _ImageBufferReserved* image() const { return std::get_if<_ImageBufferReserved>(this); }
+        
+        _ThumbBufferReserved* thumb() { return std::get_if<_ThumbBufferReserved>(this); }
+        _ImageBufferReserved* image() { return std::get_if<_ImageBufferReserved>(this); }
     };
     
     struct _SDReadWork {
@@ -475,16 +484,6 @@ private:
 //        };
     }
     
-    
-    
-    struct Image {
-        size_t width = 0;
-        size_t height = 0;
-        MDCTools::CFADesc cfaDesc;
-        std::unique_ptr<uint8_t[]> data;
-        size_t off = 0;
-    };
-    
     Image _imageCreate(void* src, size_t len) {
         assert(len >= Img::Full::ImageLen);
         auto data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
@@ -497,191 +496,58 @@ private:
         };
     }
     
-    #warning TODO: add priority to this function
-    #warning TODO: it'd be nice if we could avoid the memcpy by giving the buffer to _SDWork
     Image _imageGet(Priority priority, const ImageRecordPtr& rec) {
-        return {};
+        const _SDRegion region = _SDRegionForImage(rec);
         
-//        const _SDRegion region = _SDRegionForImage(rec);
-//        Toastbox::Signal signal;
-//        bool done = false;
-//        
-//        // If the image is in our cache, we're done
-//        _ImageBuffer buf = _imageCache.get(region);
-//        if (buf) {
-//            return _imageCreate(&*buf, sizeof(*buf));
-//        
-//        } else {
-//            _ImageBufferReserved buf;
-//            {
-//                auto lock = _imageCache.lock();
-//                // If the cache doesn't have any free entries (and therefore we're about to block to wait for one),
-//                // evict entries from the cache to try get more available entries.
-//                if (!_imageCache.sizeFree(lock, (uint8_t)priority)) {
-//                    _imageCache.evict(lock);
-//                }
-//                buf = _imageCache.pop(lock, (uint8_t)priority);
-//            }
-//            
-////                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
-//            
-//            _SDReadWork work = {
-//                .region = region,
-//                .buf = std::move(buf),
-//                .rec = rec,
-//                .callback = [&] (_SDReadWork&& work) {
-//                    {
-//                        auto lock = signal.lock();
-//                        done = true;
-//                    }
-//                    signal.signalOne();
-//                },
-//            };
-//            
-////            printf("[_loadImages:p%ju] Enqueuing %ju ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
-//            {
-//                auto lock = _sdRead.signal.lock();
-//                _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
-//                queue.push(std::move(work));
-//            }
-//            _sdRead.signal.signalOne();
-//            
-//            Image image = _imageCreate(buf.get(), sizeof(*buf));
-//            
-//            // Put image into cache
-//            
-//            return _imageCreate(&*buf, sizeof(*buf));
-//        }
-//        
-//        signal.wait([&] { return done; });
-//        
-//        return 
-//        
-//        // The remaining recs aren't in our cache, so kick off SD reading + rendering
-//        for (auto it=recs.rbegin(); it!=recs.rend(); it++) {
-//            const ImageRecordPtr& rec = *it;
-//            const _SDRegion region = _SDRegionForThumb(rec);
-//            
-//            _ThumbBufferReserved buf;
-//            {
-//                auto lock = _thumbCache.lock();
-//                // If the cache doesn't have any free entries (and therefore we're about to block to wait for one),
-//                // evict entries from the cache to try get more available entries.
-//                if (!_thumbCache.sizeFree(lock, (uint8_t)priority)) {
-//                    _thumbCache.evict(lock);
-//                }
-//                buf = _thumbCache.pop(lock, (uint8_t)priority);
-//            }
-//            
-////                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
-//            
-//            _SDReadWork work = {
-//                .region = region,
-//                .buf = std::move(buf),
-//                .rec = rec,
-//                .callback = [=, &state] (_SDReadWork&& work) {
-//                    _readCompleteCallback(state, std::move(work), initial);
-//                },
-//            };
-//            
-////            printf("[_loadImages:p%ju] Enqueuing %ju ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
-//            {
-//                auto lock = _sdRead.signal.lock();
-//                _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
-//                queue.push(std::move(work));
-//            }
-//            _sdRead.signal.signalOne();
-//        }
-//        
-//        
-//        
-//        
-//        
-//        
-//        
-//        
-//        
-//        
-//        // Kick off rendering for all the recs that are in the cache
-//        {
-//            bool enqueued = false;
-//            {
-//                auto lock = _thumbRender.signal.lock();
-//                
-//                for (auto it=recs.begin(); it!=recs.end();) {
-//                    const ImageRecordPtr& rec = *it;
-//                    const _SDRegion region = _SDRegionForImage(rec);
-//                    
-//                    // If the thumbnail is in our cache, kick off rendering
-//                    _ThumbBuffer buf = _thumbCache.get(region);
-//                    if (buf) {
-//                        _renderEnqueue(lock, state, initial, false, rec, std::move(buf));
-//                        enqueued = true;
-//                        it = recs.erase(it);
-//                    
-//                    // Otherwise, on to the next one
-//                    } else {
-//                        it++;
-//                    }
-//                }
-//            }
-//            
-//            // Notify _thumbRender of more work
-//            if (enqueued) _thumbRender.signal.signalAll();
-//        }
-//        
-//        
-//        
-//        
-//        
-//        bool done = false;
-//        auto work = std::make_unique<_SDWork>();
-//        work->state = {
-//            .ops = {_SDReadOp{
-//                .region = {
-//                    .block = addr,
-//                    .len = Img::Full::ImageLen,
-//                },
-//            }},
-//            .read = {
-//                .callback = [&] {
-//                    done = true;
-//                    _imageForAddrSignal.signalAll();
-//                },
-//            },
-//        };
-//        
-//        // Enqueue SD read
-//        {
-//            {
-//                auto lock = _sdRead.signal.lock();
-//                _SDWorkQueue& queue = _sdRead.queues[(size_t)Priority::High];
-//                queue.push(work.get());
-//            }
-//            _sdRead.signal.signalOne();
-//        }
-//        
-//        _imageForAddrSignal.wait([&] { return done; });
-//        
-//        if (_ImageChecksumValid(work->buffer, Img::Size::Full)) {
-////                printf("Checksum valid (full-size)\n");
-//        } else {
-//            printf("Checksum INVALID (full-size)\n");
-////                abort();
-//        }
-//        
-//        std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
-//        memcpy(data.get(), work->buffer, Img::Full::ImageLen);
-//        
-//        const Img::Header& header = *(const Img::Header*)work->buffer;
-//        ImagePtr image = std::make_shared<Image>(Image{
-//            .width      = header.imageWidth,
-//            .height     = header.imageHeight,
-//            .cfaDesc    = _CFADesc,
-//            .data       = std::move(data),
-//            .off        = sizeof(header),
-//        });
-//        return image;
+        // If the image is in our cache, return it
+        _ImageBuffer buf = _imageCache.get(region);
+        if (buf) {
+            return _imageCreate(&*buf, sizeof(*buf));
+        
+        // Otherwise, load the image from the device
+        } else {
+            Toastbox::Signal signal;
+            _ImageBufferReserved buf;
+            {
+                auto lock = _imageCache.lock();
+                // If the cache doesn't have any free entries (and therefore we're about to block to wait for one),
+                // evict entries from the cache to try get more available entries.
+                if (!_imageCache.sizeFree(lock, (uint8_t)priority)) {
+                    _imageCache.evict(lock);
+                }
+                buf = _imageCache.pop(lock, (uint8_t)priority);
+            }
+            
+//                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
+            
+            _SDReadWork work = {
+                .region = region,
+                .buf = std::move(buf),
+                .rec = rec,
+                .callback = [&] (_SDReadWork&& work) {
+                    {
+                        auto lock = signal.lock();
+                        buf = std::move(*work.buf.image());
+                    }
+                    signal.signalOne();
+                },
+            };
+            
+//            printf("[_loadImages:p%ju] Enqueuing %ju ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
+            {
+                auto lock = _sdRead.signal.lock();
+                _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
+                queue.push(std::move(work));
+            }
+            _sdRead.signal.signalOne();
+            
+            signal.wait([&] { return buf.entry(); });
+            
+            Image image = _imageCreate(&*buf.entry(), sizeof(*buf.entry()));
+            // Put the image in our cache
+            _imageCache.set(region, std::move(buf));
+            return image;
+        }
     }
     
     void _notifyObservers() {
@@ -699,7 +565,7 @@ private:
     }
     
     void _readCompleteCallback(LoadImagesState& state, _SDReadWork&& work, bool initial) {
-        _ThumbBufferReserved& buf = std::get<_ThumbBufferReserved>(work.buf);
+        _ThumbBufferReserved& buf = *work.buf.thumb();
         
         // Enqueue rendering
         {
