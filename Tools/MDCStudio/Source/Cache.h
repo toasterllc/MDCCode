@@ -98,16 +98,31 @@ public:
         // We do need to acquire _free.signal.lock() though to safely access _free.list.
         assert(lock);
         for (;;) {
+            auto& counter = _free.counter[priority];
+            
+            bool evikt = false;
             {
                 auto l = _free.signal.lock();
-                auto& counter = _free.counter[priority];
-                if (!_free.list.empty() && counter) {
-                    const size_t idx = _free.list.back();
-                    _free.list.pop_back();
-                    counter--;
-                    return Reserved(*this, idx, priority);
+                // If the priority has slots available, and the free list isn't empty, return a Reserved.
+                // If the priority has slots available, but the free list is empty, evict entries to try
+                // to free up slots.
+                if (counter) {
+                    if (!_free.list.empty()) {
+                        const size_t idx = _free.list.back();
+                        _free.list.pop_back();
+                        counter--;
+                        return Reserved(*this, idx, priority);
+                    } else {
+                        evikt = true;
+                    }
                 }
             }
+            
+            // Try to free up space
+            // We say try because we can evict an Entry from the LRU, but the client may still hold
+            // a reference to the Entry, so the slot won't be added to the free list until the
+            // client loses its reference to the Entry.
+            if (evikt) evict(lock);
             
             // Don't hold _cache.lock while we block waiting for a free slot, because we don't
             // want to prevent the cache from being used while we block.
@@ -117,7 +132,7 @@ public:
             // first, followed by _free.signal, but in this case we'd be acquiring _free.signal
             // first, followed by _cache.lock.)
             lock.unlock();
-            _free.signal.wait([&] { return !_free.list.empty(); });
+            _free.signal.wait([&] { return counter && !_free.list.empty(); });
             lock.lock();
         }
     }

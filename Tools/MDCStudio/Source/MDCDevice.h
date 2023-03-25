@@ -685,16 +685,7 @@ private:
             const ImageRecordPtr& rec = *it;
             const _SDRegion region = _SDRegionForThumb(rec);
             
-            _ThumbBufferReserved buf;
-            {
-                auto lock = _thumbCache.lock();
-                // If the cache doesn't have any free entries (and therefore we're about to block to wait for one),
-                // evict entries from the cache to try get more available entries.
-                if (!_thumbCache.sizeFree(lock, (uint8_t)priority)) {
-                    _thumbCache.evict(lock);
-                }
-                buf = _thumbCache.pop(lock, (uint8_t)priority);
-            }
+            _ThumbBufferReserved buf = _thumbCache.pop((uint8_t)priority);
             
 //                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
             
