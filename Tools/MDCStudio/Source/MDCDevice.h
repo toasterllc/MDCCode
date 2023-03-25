@@ -647,7 +647,7 @@ private:
         bool initial, std::set<ImageRecordPtr> recs) {
         
         const size_t imageCount = recs.size();
-        printf("[_loadImages:p%ju]] Loading %ju images\n", (uintmax_t)priority, (uintmax_t)recs.size());
+        printf("[_loadImages:p%ju] Loading %ju images\n", (uintmax_t)priority, (uintmax_t)recs.size());
         
         const auto timeStart = std::chrono::steady_clock::now();
         state.underway += recs.size();

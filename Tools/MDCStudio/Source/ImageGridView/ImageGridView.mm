@@ -165,14 +165,16 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     }
     
     // Start our _ThumbRenderThread
-    _thumbRender = std::make_shared<_ThumbRenderThreadState>();
-    _thumbRender->imageSource = _imageSource;
-    std::thread([=] { _ThumbRenderThread(*_thumbRender); }).detach();
+    auto thumbRender = std::make_shared<_ThumbRenderThreadState>();
+    thumbRender->imageSource = _imageSource;
+    std::thread([=] { _ThumbRenderThread(*thumbRender); }).detach();
+    _thumbRender = thumbRender;
     
     return self;
 }
 
 - (void)dealloc {
+    NSLog(@"~ImageGridLayer");
     // Signal our thread to exit
     _thumbRender->signal.stop();
 }
@@ -841,6 +843,10 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     }
     
     return self;
+}
+
+- (void)dealloc {
+    NSLog(@"~ImageGridView");
 }
 
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate {
