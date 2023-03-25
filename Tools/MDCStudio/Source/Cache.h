@@ -106,6 +106,7 @@ public:
                 // If the priority has slots available, and the free list isn't empty, return a Reserved.
                 // If the priority has slots available, but the free list is empty, evict entries to try
                 // to free up slots.
+                // If the priority doesn't have slots available, wait until it does.
                 if (counter) {
                     if (!_free.list.empty()) {
                         const size_t idx = _free.list.back();
