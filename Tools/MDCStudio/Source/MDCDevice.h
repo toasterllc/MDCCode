@@ -198,7 +198,7 @@ public:
 //        return image;
 //    }
     
-    void loadThumbs(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) override {
+    void renderThumbs(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) override {
         _loadImages(state, priority, false, recs);
     }
     
