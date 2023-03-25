@@ -26,7 +26,6 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
     Renderer _renderer;
     
     std::atomic<bool> _dirty;
-    ImageSource::LoadImagesState _loadImageState;
     Image _image;
     Renderer::Txt _thumbTxt;
     Renderer::Txt _imageTxt;
@@ -103,7 +102,12 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     // Fetch the image if we don't have it yet
     if (!_image) {
-        _image = _imageSource->getImage(_loadImageState, ImageSource::Priority::High, _imageRecord);
+        _image = _imageSource->getCachedImage(_imageRecord);
+        if (!_image) {
+            _imageSource->loadImage(ImageSource::Priority::High, _imageRecord, [] (Image&& image) {
+            
+            });
+        }
     }
     
     // Create _imageTxt if it doesn't exist yet and we have the image
