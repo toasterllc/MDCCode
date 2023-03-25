@@ -261,47 +261,40 @@ private:
     using _ImageBuffer = _ImageCache::Entry;
     using _ImageBufferReserved = _ImageCache::Reserved;
     
-    using _BufferReserved = std::variant<_ThumbBufferReserved,_ImageBufferReserved>;
-    
-    static size_t _BufferReservedCapacity(const _BufferReserved& buf) {
-        if (const _ThumbBufferReserved* x = std::get_if<_ThumbBufferReserved>(&buf)) {
-            return sizeof(*(x->entry()));
-        } else if (const _ImageBufferReserved* x = std::get_if<_ImageBufferReserved>(&buf)) {
-            return sizeof(*(x->entry()));
-        } else {
-            abort();
+    struct _BufferReserved : std::variant<_ThumbBufferReserved,_ImageBufferReserved> {
+        size_t cap() const {
+            if (auto x=thumb())      return sizeof(*(x->entry()));
+            else if (auto x =image()) return sizeof(*(x->entry()));
+            else                     abort();
         }
-    }
-    
-    static void* _BufferReservedStorage(const _BufferReserved& buf) {
-        if (const _ThumbBufferReserved* x = std::get_if<_ThumbBufferReserved>(&buf)) {
-            return &*(x->entry());
-        } else if (const _ImageBufferReserved* x = std::get_if<_ImageBufferReserved>(&buf)) {
-            return &*(x->entry());
-        } else {
-            abort();
+        
+        void* storage() const {
+            if (auto x=thumb())      return &*(x->entry());
+            else if (auto x=image()) return &*(x->entry());
+            else                     abort();
         }
-    }
-    
-    static bool _BufferReservedEqual(const _BufferReserved& a, const _BufferReserved& b) {
-        if (const _ThumbBufferReserved* x = std::get_if<_ThumbBufferReserved>(&a)) {
-            return x->entry() == std::get<_ThumbBufferReserved>(b).entry();
-        } else if (const _ImageBufferReserved* x = std::get_if<_ImageBufferReserved>(&a)) {
-            return x->entry() == std::get<_ThumbBufferReserved>(b).entry();
-        } else {
-            abort();
+        
+        bool operator<(const _BufferReserved& b) const {
+            if (auto x=thumb())      return x->entry() < b.thumb()->entry();
+            else if (auto x=image()) return x->entry() < b.image()->entry();
+            else                     abort();
         }
-    }
-    
-    static bool _BufferReservedLess(const _BufferReserved& a, const _BufferReserved& b) {
-        if (const _ThumbBufferReserved* x = std::get_if<_ThumbBufferReserved>(&a)) {
-            return x->entry() < std::get<_ThumbBufferReserved>(b).entry();
-        } else if (const _ImageBufferReserved* x = std::get_if<_ImageBufferReserved>(&a)) {
-            return x->entry() < std::get<_ThumbBufferReserved>(b).entry();
-        } else {
-            abort();
+        
+        bool operator==(const _BufferReserved& b) const {
+            if (auto x=thumb())      return x->entry() == b.thumb()->entry();
+            else if (auto x=image()) return x->entry() == b.image()->entry();
+            else                     abort();
         }
-    }
+        
+        bool operator!=(const _BufferReserved& b) const {
+            if (auto x=thumb())      return x->entry() != b.thumb()->entry();
+            else if (auto x=image()) return x->entry() != b.image()->entry();
+            else                     abort();
+        }
+        
+        const _ThumbBufferReserved* thumb() const { return std::get_if<_ThumbBufferReserved>(this); }
+        const _ImageBufferReserved* image() const { return std::get_if<_ImageBufferReserved>(this); }
+    };
     
     struct _SDReadWork {
         _SDRegion region;
@@ -311,13 +304,13 @@ private:
         
         bool operator<(const _SDReadWork& x) const {
             if (region != x.region) return region < x.region;
-            if (!_BufferReservedEqual(buf, x.buf)) return _BufferReservedLess(buf, x.buf);
+            if (buf != x.buf) return buf < x.buf;
             return false;
         }
         
         bool operator==(const _SDReadWork& x) const {
             if (region != x.region) return false;
-            if (!_BufferReservedEqual(buf, x.buf)) return false;
+            if (buf != x.buf) return false;
             return true;
         }
         
@@ -966,13 +959,13 @@ private:
         const _SDBlock blockBegin = work.region.begin;
         const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
         // Verify that the length of data that we're reading will fit in our buffer
-        assert(len <= _BufferReservedCapacity(work.buf));
+        assert(len <= work.buf.cap());
         
         const auto timeStart = std::chrono::steady_clock::now();
         
         {
 //            printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
-            _deviceSDRead(blockBegin, len, _BufferReservedStorage(work.buf));
+            _deviceSDRead(blockBegin, len, work.buf.storage());
         }
         
         work.callback(std::move(work));
