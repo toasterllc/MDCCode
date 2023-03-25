@@ -26,7 +26,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
     Renderer _renderer;
     
     std::atomic<bool> _dirty;
-    ImagePtr _image;
+    ImageSource::LoadImagesState _loadImageState;
+    Image _image;
     Renderer::Txt _thumbTxt;
     Renderer::Txt _imageTxt;
 }
@@ -100,12 +101,9 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     id<MTLTexture> drawableTxt = [drawable texture];
     assert(drawableTxt);
     
-    // Fetch the image from the cache, if we don't have _image yet
+    // Fetch the image if we don't have it yet
     if (!_image) {
-        __weak auto selfWeak = self;
-        _image = _imageSource->imageCache().image(_imageRecord, [=] (ImagePtr image) {
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:image]; });
-        });
+        _image = _imageSource->imageGet(_loadImageState, ImageSource::Priority::High, _imageRecord);
     }
     
     // Create _imageTxt if it doesn't exist yet and we have the image
@@ -116,14 +114,14 @@ static CGColorSpaceRef _LSRGBColorSpace() {
             // _imageTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
             // representation of the pipeline result without clipping to 8-bit components, so we can
             // render to an HDR display and make use of the depth.
-            _imageTxt = _renderer.textureCreate(MTLPixelFormatRGBA16Float, _image->width, _image->height);
+            _imageTxt = _renderer.textureCreate(MTLPixelFormatRGBA16Float, _image.width, _image.height);
         }
         
         Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
-            _image->width, _image->height, (ImagePixel*)(_image->data.get() + _image->off));
+            _image.width, _image.height, (ImagePixel*)(_image.data.get()));
         
         const Pipeline::Options popts = {
-            .cfaDesc                = _image->cfaDesc,
+            .cfaDesc                = _image.cfaDesc,
             
             .illum                  = ColorRaw(opts.whiteBalance.illum),
             .colorMatrix            = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
@@ -175,10 +173,10 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     }
 }
 
-- (void)_handleImageLoaded:(ImagePtr)image {
-    _image = image;
-    [self setNeedsDisplay];
-}
+//- (void)_handleImageLoaded:(ImagePtr)image {
+//    _image = image;
+//    [self setNeedsDisplay];
+//}
 
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
 // and with the ImageLibrary lock held!

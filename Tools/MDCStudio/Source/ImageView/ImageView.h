@@ -1,5 +1,4 @@
 #import <Cocoa/Cocoa.h>
-#import "Image.h"
 #import "ImageSource.h"
 #import "FixedDocumentView.h"
 @class ImageView;

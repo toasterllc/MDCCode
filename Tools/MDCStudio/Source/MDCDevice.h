@@ -173,8 +173,6 @@ public:
     
     ImageLibrary& imageLibrary() override { return _imageLibrary; }
     
-    ImageCache& imageCache() override { abort(); }
-    
     
     
     
@@ -204,8 +202,8 @@ public:
         _loadImages(state, priority, false, recs);
     }
     
-    Image imageGet(Priority priority, const ImageRecordPtr& rec) override {
-        return _imageGet(priority, rec);
+    Image imageGet(LoadImagesState& state, Priority priority, const ImageRecordPtr& rec) override {
+        return _imageGet(state, priority, rec);
     }
     
 private:
@@ -477,17 +475,17 @@ private:
         return ccm;
     }
     
-    ImageCache::ImageProvider _imageProvider() {
-        return nullptr;
-//        return [&] (uint64_t addr) -> ImagePtr {
-//            return _imageForAddr(addr);
-//        };
-    }
+//    ImageCache::ImageProvider _imageProvider() {
+//        return nullptr;
+////        return [&] (uint64_t addr) -> ImagePtr {
+////            return _imageForAddr(addr);
+////        };
+//    }
     
-    Image _imageCreate(void* src, size_t len) {
-        assert(len >= Img::Full::ImageLen);
-        auto data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
-        memcpy(data.get(), src, Img::Full::ImageLen);
+    Image _imageCreate(const _ImageBuffer& buf) {
+//        assert(len >= Img::Full::ImageLen);
+        auto data = std::make_unique<uint8_t[]>(Img::Full::PixelLen);
+        memcpy(data.get(), *buf+Img::PixelsOffset, Img::Full::ImageLen);
         return Image{
             .width = Img::Full::PixelWidth,
             .height = Img::Full::PixelHeight,
@@ -496,17 +494,28 @@ private:
         };
     }
     
-    Image _imageGet(Priority priority, const ImageRecordPtr& rec) {
+//    Image _imageCreate(void* src, size_t len) {
+//        assert(len >= Img::Full::ImageLen);
+//        auto data = std::make_unique<uint8_t[]>(Img::Full::PixelLen);
+//        memcpy(data.get(), (uint8_t*)src+Img::PixelsOffset, Img::Full::ImageLen);
+//        return Image{
+//            .width = Img::Full::PixelWidth,
+//            .height = Img::Full::PixelHeight,
+//            .cfaDesc = _CFADesc,
+//            .data = std::move(data),
+//        };
+//    }
+    
+    Image _imageGet(LoadImagesState& state, Priority priority, const ImageRecordPtr& rec) {
         const _SDRegion region = _SDRegionForImage(rec);
         
         // If the image is in our cache, return it
         _ImageBuffer buf = _imageCache.get(region);
         if (buf) {
-            return _imageCreate(&*buf, sizeof(*buf));
+            return _imageCreate(buf);
         
         // Otherwise, load the image from the device
         } else {
-            Toastbox::Signal signal;
             _ImageBufferReserved buf;
             {
                 auto lock = _imageCache.lock();
@@ -526,10 +535,10 @@ private:
                 .rec = rec,
                 .callback = [&] (_SDReadWork&& work) {
                     {
-                        auto lock = signal.lock();
+                        auto lock = state.signal.lock();
                         buf = std::move(*work.buf.image());
                     }
-                    signal.signalOne();
+                    state.signal.signalOne();
                 },
             };
             
@@ -541,9 +550,10 @@ private:
             }
             _sdRead.signal.signalOne();
             
-            signal.wait([&] { return buf.entry(); });
+            // Wait until the buffer is returned to us by our SDRead callback
+            state.signal.wait([&] { return buf.entry(); });
             
-            Image image = _imageCreate(&*buf.entry(), sizeof(*buf.entry()));
+            Image image = _imageCreate(buf.entry());
             // Put the image in our cache
             _imageCache.set(region, std::move(buf));
             return image;

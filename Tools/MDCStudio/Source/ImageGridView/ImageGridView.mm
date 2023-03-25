@@ -1,6 +1,7 @@
 #import "ImageGridView.h"
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
+#import <thread>
 #import "FixedMetalDocumentLayer.h"
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
