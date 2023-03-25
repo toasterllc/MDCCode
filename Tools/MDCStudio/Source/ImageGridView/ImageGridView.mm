@@ -174,7 +174,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 }
 
 - (void)dealloc {
-    NSLog(@"~ImageGridLayer");
+    printf("~ImageGridLayer\n");
     // Signal our thread to exit
     _thumbRender->signal.stop();
 }
@@ -616,6 +616,7 @@ static void _ThumbRenderIfNeeded(_ThumbRenderThreadState& thread, _IterRange ran
 }
 
 static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
+    printf("[_ThumbRenderThread] Starting\n");
     try {
         for (;;) {
             std::set<ImageRecordPtr> recs;
@@ -635,8 +636,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         }
     
     } catch (const Toastbox::Signal::Stop&) {
-        printf("[_ThumbRenderThread] Stopping\n");
     }
+    printf("[_ThumbRenderThread] Exiting\n");
 }
 
 // _imageLibrary must be locked!
@@ -846,7 +847,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 - (void)dealloc {
-    NSLog(@"~ImageGridView");
+    printf("~ImageGridView\n");
 }
 
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate {
