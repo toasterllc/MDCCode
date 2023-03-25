@@ -241,13 +241,13 @@ private:
         
         bool operator<(const _SDReadWork& x) const {
             if (region != x.region) return region < x.region;
-            if (buf != x.buf) return buf < x.buf;
+            if (buf.entry() != x.buf.entry()) return buf.entry() < x.buf.entry();
             return false;
         }
         
         bool operator==(const _SDReadWork& x) const {
             if (region != x.region) return false;
-            if (buf != x.buf) return false;
+            if (buf.entry() != x.buf.entry()) return false;
             return true;
         }
         
@@ -484,7 +484,7 @@ private:
         {
             {
                 auto lock = _thumbRender.signal.lock();
-                _renderEnqueue(lock, state, initial, true, work.rec, work.buf);
+                _renderEnqueue(lock, state, initial, true, work.rec, work.buf.entry());
             }
             _thumbRender.signal.signalAll();
         }
@@ -731,13 +731,13 @@ private:
         const _SDBlock blockBegin = work.region.begin;
         const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
         // Verify that the length of data that we're reading will fit in our buffer
-        assert(len <= sizeof(*work.buf));
+        assert(len <= sizeof(*work.buf.entry()));
         
         const auto timeStart = std::chrono::steady_clock::now();
         
         {
 //            printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
-            _deviceSDRead(blockBegin, len, &*work.buf);
+            _deviceSDRead(blockBegin, len, &*work.buf.entry());
         }
         
         work.callback(std::move(work));

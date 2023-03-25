@@ -17,7 +17,7 @@ public:
     struct Entry {
         Entry() {}
         Entry(Cache& cache, size_t idx) : val(&cache._mem[idx]), shared(std::make_shared<_Entry>(cache, idx)) {}
-        operator bool() { return val; }
+        operator bool() const { return val; }
         bool operator<(const Entry& x) const { return shared < x.shared; }
         bool operator==(const Entry& x) const { return shared == x.shared; }
         bool operator!=(const Entry& x) const { return shared != x.shared; }
@@ -27,22 +27,32 @@ public:
         std::shared_ptr<_Entry> shared;
     };
     
-    struct Reserved : Entry {
+    struct Reserved {
         Reserved() {}
-        Reserved(Cache& cache, size_t idx, uint8_t priority) : Entry(cache, idx), shared(Entry::shared), priority(priority) {}
+        Reserved(Cache& cache, size_t idx, uint8_t priority) : _state{.entry=Entry(cache, idx), .priority=priority} {}
         // Copy
         Reserved(const Reserved& x) = delete;
         Reserved& operator=(const Reserved& x) = delete;
         // Move
-        Reserved(Reserved&& x) = default;
-        Reserved& operator=(Reserved&& x) = default;
-        ~Reserved() { if (shared) shared->cache._destroy(*this); }
-        // shared: we need our copy of `shared` in addition to our superclass' `shared` member,
-        // because we allow our superclass to be std::move()'d out from under us. Therefore to
-        // maintain the correct RAII behavior of calling cache._destroy(*this) upon ~Reserved(),
-        // we need our own copy of `shared`.
-        std::shared_ptr<_Entry> shared;
-        size_t priority = 0;
+        Reserved(Reserved&& x) { swap(x); }
+        Reserved& operator=(Reserved&& x) { swap(x); return *this; }
+        ~Reserved() { if (_state.entry) _state.entry.shared->cache._destroy(*this); }
+        
+        const Entry& entry() const { return _state.entry; }
+        
+//        operator const Entry&() const { return _state.entry; }
+//        bool operator<(const Reserved& x) const { return _state.entry < x._state.entry; }
+//        bool operator==(const Reserved& x) const { return _state.entry == x._state.entry; }
+//        bool operator!=(const Reserved& x) const { return _state.entry != x._state.entry; }
+        
+        void swap(Reserved& x) {
+            std::swap(_state, x._state);
+        }
+        
+        struct {
+            Entry entry;
+            size_t priority = 0;
+        } _state;
     };
     
     Cache() {
@@ -77,7 +87,7 @@ public:
     Entry set(std::unique_lock<std::mutex>& lock, const T_Key& key, Reserved&& reserved) {
         assert(lock);
         Entry& entry = _cache.lru[key];
-        entry = std::move(reserved);
+        entry = reserved.entry();
         return entry;
     }
     
@@ -177,7 +187,7 @@ public:
     void _destroy(const Reserved& x) {
         {
             auto lock = _free.signal.lock();
-            _free.counter[x.priority]++;
+            _free.counter[x._state.priority]++;
         }
         _free.signal.signalOne();
     }
