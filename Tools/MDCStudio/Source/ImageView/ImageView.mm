@@ -103,7 +103,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     // Fetch the image if we don't have it yet
     if (!_image) {
-        _image = _imageSource->imageGet(_loadImageState, ImageSource::Priority::High, _imageRecord);
+        _image = _imageSource->getImage(_loadImageState, ImageSource::Priority::High, _imageRecord);
     }
     
     // Create _imageTxt if it doesn't exist yet and we have the image

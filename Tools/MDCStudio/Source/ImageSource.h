@@ -27,9 +27,9 @@ public:
     };
     
     enum class Priority : uint8_t { High, Low, Last=Low };
-    virtual void loadImages(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) = 0;
+    virtual void loadThumbs(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) = 0;
     
-    virtual Image imageGet(LoadImagesState& state, Priority priority, const ImageRecordPtr& rec) = 0;
+    virtual Image getImage(LoadImagesState& state, Priority priority, const ImageRecordPtr& rec) = 0;
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;

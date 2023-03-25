@@ -198,12 +198,12 @@ public:
 //        return image;
 //    }
     
-    void loadImages(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) override {
+    void loadThumbs(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) override {
         _loadImages(state, priority, false, recs);
     }
     
-    Image imageGet(LoadImagesState& state, Priority priority, const ImageRecordPtr& rec) override {
-        return _imageGet(state, priority, rec);
+    Image getImage(LoadImagesState& state, Priority priority, const ImageRecordPtr& rec) override {
+        return _getImage(state, priority, rec);
     }
     
 private:
@@ -506,7 +506,7 @@ private:
 //        };
 //    }
     
-    Image _imageGet(LoadImagesState& state, Priority priority, const ImageRecordPtr& rec) {
+    Image _getImage(LoadImagesState& state, Priority priority, const ImageRecordPtr& rec) {
         const _SDRegion region = _SDRegionForImage(rec);
         
         // If the image is in our cache, return it

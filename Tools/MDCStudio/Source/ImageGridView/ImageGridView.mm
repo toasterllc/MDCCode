@@ -631,7 +631,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
             }
             
             printf("[_ThumbRenderThread] Enqueueing %ju thumbnails for rendering\n", (uintmax_t)recs.size());
-            state.imageSource->loadImages(state.loadImages, ImageSource::Priority::High, recs);
+            state.imageSource->loadThumbs(state.loadImages, ImageSource::Priority::High, recs);
             printf("[_ThumbRenderThread] Rendered %ju thumbnails\n", (uintmax_t)recs.size());
         }
     
