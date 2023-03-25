@@ -1,6 +1,7 @@
 #import "ImageGridView.h"
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
+#import <thread>
 #import "FixedMetalDocumentLayer.h"
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
@@ -50,7 +51,6 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
 struct _ThumbRenderThreadState {
     Toastbox::Signal signal; // Protects this struct
     ImageSourcePtr imageSource;
-    ImageSource::LoadImagesState loadImages;
     std::set<ImageRecordPtr> recs;
 };
 
@@ -164,14 +164,16 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     }
     
     // Start our _ThumbRenderThread
-    _thumbRender = std::make_shared<_ThumbRenderThreadState>();
-    _thumbRender->imageSource = _imageSource;
-    std::thread([=] { _ThumbRenderThread(*_thumbRender); }).detach();
+    auto thumbRender = std::make_shared<_ThumbRenderThreadState>();
+    thumbRender->imageSource = _imageSource;
+    std::thread([=] { _ThumbRenderThread(*thumbRender); }).detach();
+    _thumbRender = thumbRender;
     
     return self;
 }
 
 - (void)dealloc {
+    printf("~ImageGridLayer\n");
     // Signal our thread to exit
     _thumbRender->signal.stop();
 }
@@ -613,6 +615,7 @@ static void _ThumbRenderIfNeeded(_ThumbRenderThreadState& thread, _IterRange ran
 }
 
 static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
+    printf("[_ThumbRenderThread] Starting\n");
     try {
         for (;;) {
             std::set<ImageRecordPtr> recs;
@@ -627,13 +630,13 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
             }
             
             printf("[_ThumbRenderThread] Enqueueing %ju thumbnails for rendering\n", (uintmax_t)recs.size());
-            state.imageSource->loadImages(state.loadImages, ImageSource::Priority::High, recs);
+            state.imageSource->renderThumbs(ImageSource::Priority::High, recs);
             printf("[_ThumbRenderThread] Rendered %ju thumbnails\n", (uintmax_t)recs.size());
         }
     
     } catch (const Toastbox::Signal::Stop&) {
-        printf("[_ThumbRenderThread] Stopping\n");
     }
+    printf("[_ThumbRenderThread] Exiting\n");
 }
 
 // _imageLibrary must be locked!
@@ -840,6 +843,10 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     }
     
     return self;
+}
+
+- (void)dealloc {
+    printf("~ImageGridView\n");
 }
 
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate {

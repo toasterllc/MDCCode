@@ -262,8 +262,6 @@
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
 		55F8D01627BEF97200757165 /* ImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageView.metal; sourceTree = "<group>"; };
 		55F8D01827BEF97200757165 /* ImageViewTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageViewTypes.h; sourceTree = "<group>"; };
-		55F8D01B27BF5F0700757165 /* Image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Image.h; sourceTree = "<group>"; };
-		55F8D03027BF9F8000757165 /* ImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageCache.h; sourceTree = "<group>"; };
 		55F8D05827C0E07900757165 /* Lockable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lockable.h; sourceTree = "<group>"; };
 		55F8D09227C2EE9D00757165 /* ImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSource.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -530,8 +528,6 @@
 				558FFC8D29CAB3AF0022E840 /* BufferPool.h */,
 				55A36A8E27A2951900FD0181 /* MDCDevice.h */,
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
-				55F8D01B27BF5F0700757165 /* Image.h */,
-				55F8D03027BF9F8000757165 /* ImageCache.h */,
 				55C90B9229B58283007CC97E /* ImageThumb.h */,
 				552F4BF629B306DB000CEAB2 /* ImageOptions.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,

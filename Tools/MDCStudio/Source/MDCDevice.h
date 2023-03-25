@@ -21,7 +21,6 @@
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/BC7Encoder.h"
 #import "ImageLibrary.h"
-#import "ImageCache.h"
 #import "ImageSource.h"
 #import "BufferPool.h"
 #import "Cache.h"
@@ -38,8 +37,7 @@ public:
     MDCDevice(MDCUSBDevice&& dev) :
     _device(decltype(_device){ .device = std::move(dev) }),
     _dir(_DirForSerial(_device.device.serial())),
-    _imageLibrary(_dir / "ImageLibrary"),
-    _imageCache(_imageLibrary, _imageProvider()) {
+    _imageLibrary(_dir / "ImageLibrary") {
         printf("MDCDevice()\n");
         
         // Give device a default name
@@ -175,10 +173,44 @@ public:
     
     ImageLibrary& imageLibrary() override { return _imageLibrary; }
     
-    ImageCache& imageCache() override { return _imageCache; }
     
-    void loadImages(LoadImagesState& state, Priority priority, std::set<ImageRecordPtr> recs) override {
-        _loadImages(state, priority, false, recs);
+    
+    
+//    ImagePtr image(ImageRecordPtr rec, ImageLoadedHandler handler) {
+//        auto lock = std::unique_lock(_state.lock);
+//        
+//        // If the image is already in the cache, return it
+//        ImagePtr image;
+//        auto find = _state.images.find(rec->info.id);
+//        if (find != _state.images.end()) {
+//            image = find->second;
+//        }
+//        
+//        // Schedule the image/neighbors to be loaded asynchronously
+//        _state.work = _Work{
+//            .rec = rec,
+//            .handler = handler,
+//            .loadImage = !image,
+//            .loadNeighbors = true,
+//        };
+//        
+//        _state.threadSignal.notify_all();
+//        return image;
+//    }
+    
+    void renderThumbs(Priority priority, std::set<ImageRecordPtr> recs) override {
+        _loadImages(priority, false, recs);
+    }
+    
+    Image getCachedImage(const ImageRecordPtr& rec) override {
+        // If the image is in our cache, return it
+        _ImageBuffer buf = _imageCache.get(_SDRegionForImage(rec));
+        if (!buf) return {};
+        return _imageCreate(buf);
+    }
+    
+    Image loadImage(Priority priority, const ImageRecordPtr& rec) override {
+        return _loadImage(priority, rec);
     }
     
 private:
@@ -224,30 +256,88 @@ private:
         bool operator!=(const _SDRegion& x) const { return !(*this == x); }
     };
     
+    struct _LoadState {
+        Toastbox::Signal signal; // Protects this struct
+        std::set<ImageRecordPtr> notify;
+        Toastbox::Atomic<size_t> underway = 0;
+//        struct {
+//            Priority priority = Priority::High;
+//            size_t imageCount = 0;
+//            std::chrono::time_point<std::chrono::steady_clock> timeStart;
+//        } stats;
+    };
+    
+    using _LoadStatePool = Cache<int,_LoadState,4>;
+    
     using __ThumbBuffer = uint8_t[ImgSD::Thumb::ImagePaddedLen];
     using _ThumbCache = Cache<_SDRegion,__ThumbBuffer,512,(uint8_t)Priority::Last>;
     using _ThumbBuffer = _ThumbCache::Entry;
     using _ThumbBufferReserved = _ThumbCache::Reserved;
     
     using __ImageBuffer = uint8_t[ImgSD::Full::ImagePaddedLen];
-    using _ImageCache = Cache<_SDRegion,__ImageBuffer,8>;
+    using _ImageCache = Cache<_SDRegion,__ImageBuffer,8,(uint8_t)Priority::Last>;
     using _ImageBuffer = _ImageCache::Entry;
+    using _ImageBufferReserved = _ImageCache::Reserved;
+    
+    struct _BufferReserved : std::variant<_ThumbBufferReserved,_ImageBufferReserved> {
+        size_t cap() const {
+            if (auto x=thumb())      return sizeof(*(x->entry()));
+            else if (auto x =image()) return sizeof(*(x->entry()));
+            else                     abort();
+        }
+        
+        void* storage() const {
+            if (auto x=thumb())      return &*(x->entry());
+            else if (auto x=image()) return &*(x->entry());
+            else                     abort();
+        }
+        
+//        operator bool() const {
+//            if (auto x=thumb())      return (bool)x->entry();
+//            else if (auto x=image()) return (bool)x->entry();
+//            else                     abort();
+//        }
+        
+        bool operator<(const _BufferReserved& b) const {
+            if (auto x=thumb())      return x->entry() < b.thumb()->entry();
+            else if (auto x=image()) return x->entry() < b.image()->entry();
+            else                     abort();
+        }
+        
+        bool operator==(const _BufferReserved& b) const {
+            if (auto x=thumb())      return x->entry() == b.thumb()->entry();
+            else if (auto x=image()) return x->entry() == b.image()->entry();
+            else                     abort();
+        }
+        
+        bool operator!=(const _BufferReserved& b) const {
+            if (auto x=thumb())      return x->entry() != b.thumb()->entry();
+            else if (auto x=image()) return x->entry() != b.image()->entry();
+            else                     abort();
+        }
+        
+        const _ThumbBufferReserved* thumb() const { return std::get_if<_ThumbBufferReserved>(this); }
+        const _ImageBufferReserved* image() const { return std::get_if<_ImageBufferReserved>(this); }
+        
+        _ThumbBufferReserved* thumb() { return std::get_if<_ThumbBufferReserved>(this); }
+        _ImageBufferReserved* image() { return std::get_if<_ImageBufferReserved>(this); }
+    };
     
     struct _SDReadWork {
         _SDRegion region;
-        _ThumbBufferReserved buf;
+        _BufferReserved buf;
         ImageRecordPtr rec;
         std::function<void(_SDReadWork&&)> callback;
         
         bool operator<(const _SDReadWork& x) const {
             if (region != x.region) return region < x.region;
-            if (buf.entry() != x.buf.entry()) return buf.entry() < x.buf.entry();
+            if (buf != x.buf) return buf < x.buf;
             return false;
         }
         
         bool operator==(const _SDReadWork& x) const {
             if (region != x.region) return false;
-            if (buf.entry() != x.buf.entry()) return false;
+            if (buf != x.buf) return false;
             return true;
         }
         
@@ -264,6 +354,7 @@ private:
     
     using _SDReadWorkQueue = std::queue<_SDReadWork>;
     using _RenderWorkQueue = std::queue<_RenderWork>;
+//    using _ImageLoadQueue = std::queue<_RenderWork>;
     
     static int _ThreadCount() {
         static int ThreadCount = std::max(1, (int)std::thread::hardware_concurrency());
@@ -405,64 +496,90 @@ private:
         return ccm;
     }
     
-    ImageCache::ImageProvider _imageProvider() {
-        return [&] (uint64_t addr) -> ImagePtr {
-            return _imageForAddr(addr);
+//    ImageCache::ImageProvider _imageProvider() {
+//        return nullptr;
+////        return [&] (uint64_t addr) -> ImagePtr {
+////            return _imageForAddr(addr);
+////        };
+//    }
+    
+    Image _imageCreate(const _ImageBuffer& buf) {
+//        assert(len >= Img::Full::ImageLen);
+        auto data = std::make_unique<uint8_t[]>(Img::Full::PixelLen);
+        memcpy(data.get(), *buf+Img::PixelsOffset, Img::Full::ImageLen);
+        return Image{
+            .width = Img::Full::PixelWidth,
+            .height = Img::Full::PixelHeight,
+            .cfaDesc = _CFADesc,
+            .data = std::move(data),
         };
     }
     
-    #warning TODO: add priority to this function
-    #warning TODO: it'd be nice if we could avoid the memcpy by giving the buffer to _SDWork
-    ImagePtr _imageForAddr(uint64_t addr) {
-        return nullptr;
-//        bool done = false;
-//        auto work = std::make_unique<_SDWork>();
-//        work->state = {
-//            .ops = {_SDReadOp{
-//                .region = {
-//                    .block = addr,
-//                    .len = Img::Full::ImageLen,
-//                },
-//            }},
-//            .read = {
-//                .callback = [&] {
-//                    done = true;
-//                    _imageForAddrSignal.signalAll();
-//                },
-//            },
+//    Image _imageCreate(void* src, size_t len) {
+//        assert(len >= Img::Full::ImageLen);
+//        auto data = std::make_unique<uint8_t[]>(Img::Full::PixelLen);
+//        memcpy(data.get(), (uint8_t*)src+Img::PixelsOffset, Img::Full::ImageLen);
+//        return Image{
+//            .width = Img::Full::PixelWidth,
+//            .height = Img::Full::PixelHeight,
+//            .cfaDesc = _CFADesc,
+//            .data = std::move(data),
 //        };
+//    }
+    
+    Image _getImage(_LoadState& state, Priority priority, const ImageRecordPtr& rec) {
+        return {};
+//        const _SDRegion region = _SDRegionForImage(rec);
 //        
-//        // Enqueue SD read
-//        {
+//        // If the image is in our cache, return it
+//        _ImageBuffer buf = _imageCache.get(region);
+//        if (buf) {
+//            return _imageCreate(buf);
+//        
+//        // Otherwise, load the image from the device
+//        } else {
+//            _ImageBufferReserved buf;
+//            {
+//                auto lock = _imageCache.lock();
+//                // If the cache doesn't have any free entries (and therefore we're about to block to wait for one),
+//                // evict entries from the cache to try get more available entries.
+//                if (!_imageCache.sizeFree(lock, (uint8_t)priority)) {
+//                    _imageCache.evict(lock);
+//                }
+//                buf = _imageCache.pop(lock, (uint8_t)priority);
+//            }
+//            
+////                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
+//            
+//            _SDReadWork work = {
+//                .region = region,
+//                .buf = std::move(buf),
+//                .rec = rec,
+//                .callback = [&] (_SDReadWork&& work) {
+//                    {
+//                        auto lock = state.signal.lock();
+//                        buf = std::move(*work.buf.image());
+//                    }
+//                    state.signal.signalOne();
+//                },
+//            };
+//            
+////            printf("[_loadImages:p%ju] Enqueuing %ju ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
 //            {
 //                auto lock = _sdRead.signal.lock();
-//                _SDWorkQueue& queue = _sdRead.queues[(size_t)Priority::High];
-//                queue.push(work.get());
+//                _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
+//                queue.push(std::move(work));
 //            }
 //            _sdRead.signal.signalOne();
+//            
+//            // Wait until the buffer is returned to us by our SDRead callback
+//            state.signal.wait([&] { return buf.entry(); });
+//            
+//            Image image = _imageCreate(buf.entry());
+//            // Put the image in our cache
+//            _imageCache.set(region, std::move(buf));
+//            return image;
 //        }
-//        
-//        _imageForAddrSignal.wait([&] { return done; });
-//        
-//        if (_ImageChecksumValid(work->buffer, Img::Size::Full)) {
-////                printf("Checksum valid (full-size)\n");
-//        } else {
-//            printf("Checksum INVALID (full-size)\n");
-////                abort();
-//        }
-//        
-//        std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
-//        memcpy(data.get(), work->buffer, Img::Full::ImageLen);
-//        
-//        const Img::Header& header = *(const Img::Header*)work->buffer;
-//        ImagePtr image = std::make_shared<Image>(Image{
-//            .width      = header.imageWidth,
-//            .height     = header.imageHeight,
-//            .cfaDesc    = _CFADesc,
-//            .data       = std::move(data),
-//            .off        = sizeof(header),
-//        });
-//        return image;
     }
     
     void _notifyObservers() {
@@ -479,12 +596,14 @@ private:
         }
     }
     
-    void _readCompleteCallback(LoadImagesState& state, _SDReadWork&& work, bool initial) {
+    void _readCompleteCallback(_LoadState& state, _SDReadWork&& work, bool initial) {
+        _ThumbBufferReserved& buf = *work.buf.thumb();
+        
         // Enqueue rendering
         {
             {
                 auto lock = _thumbRender.signal.lock();
-                _renderEnqueue(lock, state, initial, true, work.rec, work.buf.entry());
+                _renderEnqueue(lock, state, initial, true, work.rec, buf.entry());
             }
             _thumbRender.signal.signalAll();
         }
@@ -493,13 +612,10 @@ private:
         // We don't want to populate the cache on the initial load because we want the Cache buffers to
         // be available for SDReads, but if we store them in the cache, we have fewer buffers available
         // for use during initial import, which slows down the importing process.
-        if (!initial) {
-            auto lock = _thumbCache.lock();
-            _thumbCache.set(lock, work.region, std::move(work.buf));
-        }
+        if (!initial) _thumbCache.set(work.region, std::move(buf));
     }
     
-    void _renderCompleteCallback(LoadImagesState& state, ImageRecordPtr rec) {
+    void _renderCompleteCallback(_LoadState& state, ImageRecordPtr rec) {
         constexpr size_t NotifyThreshold = 8;
         
         const size_t count = --state.underway;
@@ -521,7 +637,7 @@ private:
         if (!count) state.signal.signalOne();
     }
     
-    void _renderEnqueue(std::unique_lock<std::mutex>& lock, LoadImagesState& state, bool initial, bool validateChecksum, ImageRecordPtr rec, _ThumbBuffer buf) {
+    void _renderEnqueue(std::unique_lock<std::mutex>& lock, _LoadState& state, bool initial, bool validateChecksum, ImageRecordPtr rec, _ThumbBuffer buf) {
         // Enqueue _RenderWork into _thumbRender.queue
         _thumbRender.queue.push(_RenderWork{
             .initial = initial,
@@ -539,14 +655,20 @@ private:
         };
     }
     
-    void _loadImages(LoadImagesState& state, Priority priority,
-        bool initial, std::set<ImageRecordPtr> recs) {
-        
+    static _SDRegion _SDRegionForImage(const ImageRecordPtr& rec) {
+        return {
+            .begin = rec->info.addrFull,
+            .end = _SDBlockEnd(rec->info.addrFull, ImgSD::Full::ImagePaddedLen),
+        };
+    }
+    
+    void _loadImages(Priority priority, bool initial, std::set<ImageRecordPtr> recs) {
         const size_t imageCount = recs.size();
-        printf("[_loadImages:p%ju]] Loading %ju images\n", (uintmax_t)priority, (uintmax_t)recs.size());
+        auto timeStart = std::chrono::steady_clock::now();
         
-        const auto timeStart = std::chrono::steady_clock::now();
-        state.underway += recs.size();
+        auto state = _loadStates.pop().entry();
+        assert(!state->underway);
+        state->underway += recs.size();
         
         // Kick off rendering for all the recs that are in the cache
         {
@@ -561,7 +683,7 @@ private:
                     // If the thumbnail is in our cache, kick off rendering
                     _ThumbBuffer buf = _thumbCache.get(region);
                     if (buf) {
-                        _renderEnqueue(lock, state, initial, false, rec, std::move(buf));
+                        _renderEnqueue(lock, *state, initial, false, rec, std::move(buf));
                         enqueued = true;
                         it = recs.erase(it);
                     
@@ -581,16 +703,7 @@ private:
             const ImageRecordPtr& rec = *it;
             const _SDRegion region = _SDRegionForThumb(rec);
             
-            _ThumbBufferReserved buf;
-            {
-                auto lock = _thumbCache.lock();
-                // If the cache doesn't have any free entries (and therefore we're about to block to wait for one),
-                // evict entries from the cache to try get more available entries.
-                if (!_thumbCache.sizeFree(lock, (uint8_t)priority)) {
-                    _thumbCache.evict(lock);
-                }
-                buf = _thumbCache.pop(lock, (uint8_t)priority);
-            }
+            _ThumbBufferReserved buf = _thumbCache.pop((uint8_t)priority);
             
 //                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
             
@@ -598,8 +711,8 @@ private:
                 .region = region,
                 .buf = std::move(buf),
                 .rec = rec,
-                .callback = [=, &state] (_SDReadWork&& work) {
-                    _readCompleteCallback(state, std::move(work), initial);
+                .callback = [&] (_SDReadWork&& work) {
+                    _readCompleteCallback(*state, std::move(work), initial);
                 },
             };
             
@@ -612,7 +725,8 @@ private:
             _sdRead.signal.signalOne();
         }
         
-        state.signal.wait([&] { return !state.underway; });
+        // Wait until everything's done
+        state->signal.wait([&] { return !state->underway; });
         
         // Print profile stats
         {
@@ -622,6 +736,44 @@ private:
                 (uintmax_t)priority,
                 (uintmax_t)duration.count(), (uintmax_t)imageCount, ((double)duration.count()/imageCount));
         }
+    }
+    
+//    void _loadImageCompleteCallback(_SDReadWork&& work, const _SDRegion& region) {
+//        _imageCache.set(region, std::move(*work.buf.image()));
+//    }
+    
+    Image _loadImage(Priority priority, const ImageRecordPtr& rec) {
+        const _SDRegion region = _SDRegionForImage(rec);
+        auto state = _loadStates.pop().entry();
+        _ImageBufferReserved buf = _imageCache.pop((uint8_t)priority);
+        
+        _SDReadWork work = {
+            .region = region,
+            .buf = std::move(buf),
+            .rec = rec,
+            .callback = [&] (_SDReadWork&& work) {
+                buf = std::move(*work.buf.image());
+                state->signal.signalOne();
+                
+//                auto buf = _imageCache.set(region, std::move(*work.buf.image()));
+//                Image image = _imageCreate(buf);
+//                callback(std::move(image));
+//                _loadImageCompleteCallback(std::move(work), region);
+            },
+        };
+        
+        {
+            auto lock = _sdRead.signal.lock();
+            _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
+            queue.push(std::move(work));
+        }
+        _sdRead.signal.signalOne();
+        
+        // Wait until the buffer is returned to us by our SDRead callback
+        state->signal.wait([&] { return buf.entry(); });
+        Image image = _imageCreate(buf.entry());
+        _imageCache.set(region, std::move(buf));
+        return image;
     }
     
     // MARK: - Sync
@@ -704,7 +856,7 @@ private:
                     }
                     
                     printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
-                    _loadImages(_sync.loadImages, Priority::Low, true, recs);
+                    _loadImages(Priority::Low, true, recs);
                 }
             }
         
@@ -731,13 +883,13 @@ private:
         const _SDBlock blockBegin = work.region.begin;
         const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
         // Verify that the length of data that we're reading will fit in our buffer
-        assert(len <= sizeof(*work.buf.entry()));
+        assert(len <= work.buf.cap());
         
-        const auto timeStart = std::chrono::steady_clock::now();
+//        const auto timeStart = std::chrono::steady_clock::now();
         
         {
 //            printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
-            _deviceSDRead(blockBegin, len, &*work.buf.entry());
+            _deviceSDRead(blockBegin, len, work.buf.storage());
         }
         
         work.callback(std::move(work));
@@ -904,7 +1056,7 @@ private:
     
     const _Path _dir;
     ImageLibrary _imageLibrary;
-    ImageCache _imageCache;
+//    ImageCache _imageCache;
     MSP::State _mspState;
     STM::SDCardInfo _sdCardInfo;
     
@@ -912,10 +1064,11 @@ private:
     std::forward_list<Observer> _observers;
     Toastbox::Signal _imageForAddrSignal;
     _ThumbCache _thumbCache;
+    _ImageCache _imageCache;
+    _LoadStatePool _loadStates;
     
     struct {
         std::thread thread;
-        LoadImagesState loadImages;
     } _sync;
     
     struct {
@@ -929,6 +1082,12 @@ private:
         std::vector<std::thread> threads;
         _RenderWorkQueue queue;
     } _thumbRender;
+    
+//    struct {
+//        Toastbox::Signal signal; // Protects this struct
+//        std::thread thread;
+//        _RenderWorkQueue queue;
+//    } _imageLoad;
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;

@@ -2,6 +2,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
+#import <thread>
 #import "Util.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
@@ -17,18 +18,38 @@ using namespace MDCTools;
 // (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
+struct _ImageLoadThreadState {
+    Toastbox::Signal signal; // Protects this struct
+    ImageSourcePtr imageSource;
+    ImageRecordPtr work;
+    ImageRecordPtr workNeighbors;
+    std::function<void(ImageRecordPtr, Image&&)> callback;
+};
+
 @interface ImageLayer : FixedMetalDocumentLayer
 @end
 
 @implementation ImageLayer {
-    ImageRecordPtr _imageRecord;
+    NSLayoutConstraint* _width;
+    NSLayoutConstraint* _height;
+    
     ImageSourcePtr _imageSource;
     Renderer _renderer;
     
-    std::atomic<bool> _dirty;
-    ImagePtr _image;
-    Renderer::Txt _thumbTxt;
-    Renderer::Txt _imageTxt;
+    ImageRecordPtr _imageRecord;
+    
+    struct {
+        Renderer::Txt txt;
+        bool txtValid = false;
+    } _thumb;
+    
+    struct {
+        Image image;
+        Renderer::Txt txt;
+        bool txtValid = false;
+    } _image;
+    
+    std::shared_ptr<_ImageLoadThreadState> _imageLoad;
 }
 
 static CGColorSpaceRef _LSRGBColorSpace() {
@@ -36,14 +57,18 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     return cs;
 }
 
-- (instancetype)initWithImageRecord:(ImageRecordPtr)imageRecord imageSource:(ImageSourcePtr)imageSource {
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
+    NSParameterAssert(imageSource);
     if (!(self = [super init])) return nil;
     
-    _imageRecord = imageRecord;
     _imageSource = imageSource;
     
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     _renderer = Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    
+    [self setDevice:device];
+    [self setPixelFormat:_PixelFormat];
+    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
     
     // Add ourself as an observer of the image library
     {
@@ -57,14 +82,57 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         });
     }
     
-    [self setDevice:device];
-    [self setPixelFormat:_PixelFormat];
-    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
+    // Start our _ImageLoadThread
+    {
+        __weak auto selfWeak = self;
+        auto imageLoad = std::make_shared<_ImageLoadThreadState>();
+        imageLoad->imageSource = _imageSource;
+        imageLoad->callback = [=] (ImageRecordPtr rec, Image&& image) {
+            __block Image img = std::move(image);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [selfWeak _handleImage:rec loaded:std::move(img)];
+            });
+        };
+        std::thread([=] { _ImageLoadThread(*imageLoad); }).detach();
+        _imageLoad = imageLoad;
+    }
+    
     return self;
+}
+
+- (void)dealloc {
+    printf("~ImageLayer\n");
 }
 
 - (ImageRecordPtr)imageRecord {
     return _imageRecord;
+}
+
+- (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec {
+    NSParameterAssert(rec);
+    
+    _imageRecord = rec;
+    _image.txtValid = false;
+    _thumb.txtValid = false;
+    
+    // Fetch the image from the cache
+    _image.image = _imageSource->getCachedImage(_imageRecord);
+    // Load the image / neighbors from our thread
+    {
+        {
+            auto lock = _imageLoad->signal.lock();
+            _imageLoad->work = (_image.image ? ImageRecordPtr{} : _imageRecord);
+            _imageLoad->workNeighbors = _imageRecord;
+        }
+        _imageLoad->signal.signalOne();
+    }
+    
+    assert(_width);
+    assert(_height);
+    [_width setConstant:_imageRecord->info.imageWidth*2];
+    [_height setConstant:_imageRecord->info.imageHeight*2];
+    
+    [self setNeedsDisplay];
 }
 
 //static id<MTLTexture> _ThumbRender(Renderer& renderer, const ImageRecord& thumb) {
@@ -94,36 +162,31 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     [super display];
     
-    const bool dirty = _dirty.exchange(false);
+    // Nothing to do if we haven't been given an ImageRecord yet
+    if (!_imageRecord) return;
+    
     id<CAMetalDrawable> drawable = [self nextDrawable];
     assert(drawable);
     id<MTLTexture> drawableTxt = [drawable texture];
     assert(drawableTxt);
     
-    // Fetch the image from the cache, if we don't have _image yet
-    if (!_image) {
-        __weak auto selfWeak = self;
-        _image = _imageSource->imageCache().image(_imageRecord, [=] (ImagePtr image) {
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:image]; });
-        });
-    }
-    
-    // Create _imageTxt if it doesn't exist yet and we have the image
-    if ((!_imageTxt || dirty) && _image) {
+    // Create _image.txt if it doesn't exist yet and we have the image
+    if (_image.image && !_image.txtValid) {
         const ImageOptions& opts = _imageRecord->options;
         
-        if (!_imageTxt) {
-            // _imageTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
+        if (!_image.txt) {
+            // _image.txt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
             // representation of the pipeline result without clipping to 8-bit components, so we can
             // render to an HDR display and make use of the depth.
-            _imageTxt = _renderer.textureCreate(MTLPixelFormatRGBA16Float, _image->width, _image->height);
+            _image.txt = _renderer.textureCreate(MTLPixelFormatRGBA16Float,
+                _image.image.width, _image.image.height);
         }
         
         Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
-            _image->width, _image->height, (ImagePixel*)(_image->data.get() + _image->off));
+            _image.image.width, _image.image.height, (ImagePixel*)(_image.image.data.get()));
         
         const Pipeline::Options popts = {
-            .cfaDesc                = _image->cfaDesc,
+            .cfaDesc                = _image.image.cfaDesc,
             
             .illum                  = ColorRaw(opts.whiteBalance.illum),
             .colorMatrix            = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
@@ -144,23 +207,27 @@ static CGColorSpaceRef _LSRGBColorSpace() {
             },
         };
         
-        Pipeline::Run(_renderer, popts, rawTxt, _imageTxt);
+        Pipeline::Run(_renderer, popts, rawTxt, _image.txt);
+        _image.txtValid = true;
     }
     
     // If we don't have the thumbnail texture yet, create it
-    if (!_thumbTxt || dirty) {
-        if (!_thumbTxt) {
-            _thumbTxt = _renderer.textureCreate(MTLPixelFormatBC7_RGBAUnorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight);
+    if (!_thumb.txtValid) {
+        const size_t w = ImageThumb::ThumbWidth;
+        const size_t h = ImageThumb::ThumbHeight;
+        if (!_thumb.txt) {
+            _thumb.txt = _renderer.textureCreate(MTLPixelFormatBC7_RGBAUnorm, w, h);
         }
         
-        [_thumbTxt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
-            slice:0 withBytes:_imageRecord->thumb.data bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+        [_thumb.txt replaceRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0
+            slice:0 withBytes:_imageRecord->thumb.data bytesPerRow:w*4 bytesPerImage:0];
+        _thumb.txtValid = true;
     }
     
     // Finally render into `drawableTxt`, from the full-size image if it
     // exists, or the thumbnail otherwise.
     {
-        id<MTLTexture> srcTxt = (_imageTxt ? _imageTxt : _thumbTxt);
+        id<MTLTexture> srcTxt = (_image.txtValid ? _image.txt : _thumb.txt);
         
         _renderer.clear(drawableTxt, {0,0,0,0});
         
@@ -175,14 +242,28 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     }
 }
 
-- (void)_handleImageLoaded:(ImagePtr)image {
-    _image = image;
+- (void)_handleImage:(ImageRecordPtr)rec loaded:(Image&&)image {
+    if (rec != _imageRecord) return;
+    _image.image = std::move(image);
+    _image.txtValid = false;
     [self setNeedsDisplay];
 }
 
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
 // and with the ImageLibrary lock held!
 - (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
+    // Trampoline the event to our main thread, if we're not on the main thread
+    if (![NSThread isMainThread]) {
+        ImageLibrary::Event evCopy = ev;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _handleImageLibraryEvent:evCopy];
+        });
+        return;
+    }
+    
+    // Ignore if we don't have an ImageRecord
+    if (!_imageRecord) return;
+    
     switch (ev.type) {
     case ImageLibrary::Event::Type::Add:
         break;
@@ -190,8 +271,9 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         break;
     case ImageLibrary::Event::Type::ChangeProperty:
         if (ev.records.count(_imageRecord)) {
-            _dirty = true;
-            dispatch_async(dispatch_get_main_queue(), ^{ [self setNeedsDisplay]; });
+            _thumb.txtValid = false;
+            _image.txtValid = false;
+            [self setNeedsDisplay];
         }
         break;
     case ImageLibrary::Event::Type::ChangeThumbnail:
@@ -203,8 +285,89 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     return true;
 }
 
-- (CGSize)preferredFrameSize {
-    return {(CGFloat)_imageRecord->info.imageWidth*2, (CGFloat)_imageRecord->info.imageHeight*2};
+- (void)fixedCreateConstraintsForContainer:(NSView*)container {
+    _width = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeWidth
+        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+        constant:0];
+    
+    _height = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
+        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+        constant:0];
+    
+    [NSLayoutConstraint activateConstraints:@[_width, _height]];
+}
+
+//- (CGSize)preferredFrameSize {
+//    if (!_imageRecord) return {};
+//    return {(CGFloat)_imageRecord->info.imageWidth*2, (CGFloat)_imageRecord->info.imageHeight*2};
+//}
+
+static ImageSet _NeighborsGet(ImageLibrary& lib, ImageRecordPtr rec, size_t count) {
+    // Collect the neighboring image ids in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
+    auto lock = std::unique_lock(lib);
+    auto find = lib.find(rec);
+    auto it = find;
+    auto rit = std::make_reverse_iterator(find); // Points to element before `find`
+    ImageSet images;
+    for (size_t i=0; i<count/2; i++) {
+        if (it != lib.end()) it++;
+        if (it != lib.end()) images.insert(*it);
+        if (rit != lib.rend()) images.insert(*rit);
+        // make_reverse_iterator() returns an iterator that points to the element _before_ the
+        // forward iterator (`find`), so we increment `rit` at the end of the loop, instead of
+        // at the beginning (where we increment the forward iterator `it`)
+        if (rit != lib.rend()) rit++;
+    }
+    return images;
+}
+
+static void _ImageLoadThread(_ImageLoadThreadState& state) {
+    printf("[_ImageLoadThread] Starting\n");
+    try {
+        ImageSource& is = *state.imageSource;
+        ImageLibrary& il = is.imageLibrary();
+        
+        for (;;) {
+            ImageRecordPtr work;
+            ImageRecordPtr workNeighbors;
+            {
+                auto lock = state.signal.wait([&] { return state.work || state.workNeighbors; });
+                work = std::move(state.work);
+                workNeighbors = std::move(state.workNeighbors);
+            }
+            
+            if (work) {
+                printf("[_ImageLoadThread] Load image start\n");
+                {
+                    Image image = state.imageSource->loadImage(ImageSource::Priority::High, work);
+                    state.callback(work, std::move(image));
+                }
+                printf("[_ImageLoadThread] Load image end\n");
+            }
+            
+            if (workNeighbors) {
+                printf("[_ImageLoadThread] Load neighbors start\n");
+                {
+                    constexpr size_t NeighborLoadCount = 4;
+                    const ImageSet neighbors = _NeighborsGet(il, workNeighbors, NeighborLoadCount);
+                    for (const ImageRecordPtr& rec : neighbors) {
+                        {
+                            auto lock = state.signal.lock();
+                            if (state.work || state.workNeighbors) break;
+                        }
+                        
+                        if (!state.imageSource->getCachedImage(rec)) {
+                            state.imageSource->loadImage(ImageSource::Priority::Low, rec);
+                        }
+                    }
+                }
+                printf("[_ImageLoadThread] Load neighbors end\n");
+            }
+        }
+    
+    } catch (const Toastbox::Signal::Stop&) {
+    }
+    printf("[_ImageLoadThread] Exiting\n");
 }
 
 @end
@@ -371,9 +534,9 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     __weak id<ImageViewDelegate> _delegate;
 }
 
-- (instancetype)initWithImageRecord:(ImageRecordPtr)imageRecord imageSource:(ImageSourcePtr)imageSource {
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
     
-    ImageLayer* imageLayer = [[ImageLayer alloc] initWithImageRecord:imageRecord imageSource:imageSource];
+    ImageLayer* imageLayer = [[ImageLayer alloc] initWithImageSource:imageSource];
     
     if (!(self = [super initWithFixedLayer:imageLayer])) return nil;
     
@@ -405,8 +568,16 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     return self;
 }
 
+- (void)dealloc {
+    printf("~ImageView\n");
+}
+
 - (ImageRecordPtr)imageRecord {
     return [_imageLayer imageRecord];
+}
+
+- (void)setImageRecord:(ImageRecordPtr)rec {
+    [_imageLayer setImageRecord:rec];
 }
 
 - (void)setDelegate:(id<ImageViewDelegate>)delegate {
@@ -447,6 +618,10 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     [[self window] makeFirstResponder:self];
 }
+
+//- (void)fixedCreateConstraintsForContainer:(NSView*)container {
+//    NSLog(@"fixedCreateConstraintsForContainer");
+//}
 
 //// MARK: - NSView Overrides
 //- (void)fixedCreateConstraintsForContainer:(NSView*)container {

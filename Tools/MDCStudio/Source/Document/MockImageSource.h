@@ -16,8 +16,7 @@ public:
     
     MockImageSource(const std::filesystem::path& path) :
     _path(path),
-    _imageLibrary(_path),
-    _imageCache(_imageLibrary, _ImageProvider()) {
+    _imageLibrary(_path) {
         _imageLibrary.read();
         _renderThumbs.thread = std::thread([&] { _threadRenderThumbs(); });
     }
@@ -36,9 +35,9 @@ public:
         return _imageLibrary;
     }
     
-    ImageCache& imageCache() override {
-        return _imageCache;
-    }
+//    ImageCache& imageCache() override {
+//        return _imageCache;
+//    }
     
 //    void visibleThumbs(ImageRecordIterAny begin, ImageRecordIterAny end) override {
 //        bool enqueued = false;
@@ -136,11 +135,11 @@ public:
     }
     
     
-    static ImageCache::ImageProvider _ImageProvider() {
-        return [=] (uint64_t addr) -> ImagePtr {
-            return nullptr;
-        };
-    }
+//    static ImageCache::ImageProvider _ImageProvider() {
+//        return [=] (uint64_t addr) -> ImagePtr {
+//            return nullptr;
+//        };
+//    }
     
     void _threadRenderThumbs() {
         using namespace MDCStudio;
@@ -189,7 +188,7 @@ private:
     
     std::filesystem::path _path;
     ImageLibrary _imageLibrary;
-    ImageCache _imageCache;
+//    ImageCache _imageCache;
     
     struct {
         std::mutex lock; // Protects this struct
