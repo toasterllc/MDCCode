@@ -29,18 +29,19 @@ public:
     
     struct Reserved : Entry {
         Reserved() {}
-        Reserved(Cache& cache, size_t idx, uint8_t priority) : Entry(cache, idx), priority(priority) {}
+        Reserved(Cache& cache, size_t idx, uint8_t priority) : Entry(cache, idx), shared(Entry::shared), priority(priority) {}
         // Copy
         Reserved(const Reserved& x) = delete;
         Reserved& operator=(const Reserved& x) = delete;
         // Move
         Reserved(Reserved&& x) = default;
         Reserved& operator=(Reserved&& x) = default;
-        ~Reserved() {
-            if (Entry::shared) {
-                Entry::shared->cache._destroy(*this);
-            }
-        }
+        ~Reserved() { if (shared) shared->cache._destroy(*this); }
+        // shared: we need our copy of `shared` in addition to our superclass' `shared` member,
+        // because we allow our superclass to be std::move()'d out from under us. Therefore to
+        // maintain the correct RAII behavior of calling cache._destroy(*this) upon ~Reserved(),
+        // we need our own copy of `shared`.
+        std::shared_ptr<_Entry> shared;
         size_t priority = 0;
     };
     
