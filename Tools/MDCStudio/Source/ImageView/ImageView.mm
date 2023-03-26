@@ -296,17 +296,36 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 static void _ImageLoadThread(_ImageLoadThreadState& state) {
     printf("[_ImageLoadThread] Starting\n");
     try {
+        auto lock = state.signal.lock();
+        
         for (;;) {
             ImageRecordPtr rec;
-            {
-                auto lock = state.signal.wait([&] { return state.work; });
-                rec = std::move(state.work);
-            }
+            
+            state.signal.wait(lock, [&] { return state.work; });
+            rec = std::move(state.work);
+            lock.unlock();
             
             printf("[_ImageLoadThread] Load image start\n");
             Image image = state.imageSource->loadImage(ImageSource::Priority::High, rec);
             state.callback(rec, std::move(image));
             printf("[_ImageLoadThread] Load image end\n");
+            
+            {
+                lock.lock();
+                if (state.work) continue;
+                lock.unlock();
+                
+                
+            }
+            
+            
+            {
+                auto lock = state.signal.wait([&] { return state.work; });
+                
+                rec = std::move(state.work);
+            }
+            
+            
         }
     
     } catch (const Toastbox::Signal::Stop&) {
