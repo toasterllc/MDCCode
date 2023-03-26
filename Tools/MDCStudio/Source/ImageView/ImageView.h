@@ -10,9 +10,10 @@
 @end
 
 @interface ImageView : FixedDocumentView
-- (instancetype)initWithImageRecord:(MDCStudio::ImageRecordPtr)imageRecord imageSource:(MDCStudio::ImageSourcePtr)imageSource;
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
 
 - (MDCStudio::ImageRecordPtr)imageRecord;
+- (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec;
 
 - (void)setDelegate:(id<ImageViewDelegate>)delegate;
 

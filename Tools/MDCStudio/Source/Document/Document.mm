@@ -16,12 +16,28 @@ using namespace MDCStudio;
 
 @implementation Document {
     IBOutlet NSSplitView* _splitView;
+    
+    struct {
+        NSView* containerView;
+        NSView* view;
+    } _left;
+    
+    struct {
+        NSView* containerView;
+        NSView* view;
+    } _center;
+    
+    struct {
+        NSView* containerView;
+        NSView* view;
+    } _right;
+    
+    NSView* _rightContainerView;
+    NSView* _rightView;
+    
     SourceListView* _sourceListView;
-    
-    NSView* _centerContainerView;
-    NSView* _centerView;
-    
-    NSView* _inspectorContainerView;
+    ImageScrollView* _imageScrollView;
+    ImageGridScrollView* _imageGridScrollView;
     InspectorView* _inspectorView;
 }
 
@@ -29,43 +45,38 @@ using namespace MDCStudio;
     return false;
 }
 
-- (void)setCenterView:(NSView*)centerView {
-    if (_centerView) [_centerView removeFromSuperview];
-    _centerView = centerView;
-    [_centerContainerView addSubview:_centerView];
-    [_centerContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_centerView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_centerView)]];
-    [_centerContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_centerView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_centerView)]];
-}
-
-- (void)setInspectorView:(InspectorView*)inspectorView {
-    if (_inspectorView) [_inspectorView removeFromSuperview];
-    _inspectorView = inspectorView;
-    [_inspectorContainerView addSubview:_inspectorView];
-    [_inspectorContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_inspectorView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_inspectorView)]];
-    [_inspectorContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_inspectorView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_inspectorView)]];
+template<typename T>
+static void _SetView(T& x, NSView* y) {
+    if (x.view) [x.view removeFromSuperview];
+    x.view = y;
+    [x.containerView addSubview:x.view];
+    [x.containerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|"
+        options:0 metrics:nil views:@{@"v":x.view}]];
+    [x.containerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|"
+        options:0 metrics:nil views:@{@"v":x.view}]];
 }
 
 - (void)awakeFromNib {
-    _sourceListView = [[SourceListView alloc] initWithFrame:{}];
-    [_sourceListView setDelegate:self];
+    _left.containerView = [[NSView alloc] initWithFrame:{}];
+    [_left.containerView setTranslatesAutoresizingMaskIntoConstraints:false];
     
-    _centerContainerView = [[NSView alloc] initWithFrame:{}];
-    [_centerContainerView setTranslatesAutoresizingMaskIntoConstraints:false];
+    _center.containerView = [[NSView alloc] initWithFrame:{}];
+    [_center.containerView setTranslatesAutoresizingMaskIntoConstraints:false];
     
-    _inspectorContainerView = [[NSView alloc] initWithFrame:{}];
-    [_inspectorContainerView setTranslatesAutoresizingMaskIntoConstraints:false];
+    _right.containerView = [[NSView alloc] initWithFrame:{}];
+    [_right.containerView setTranslatesAutoresizingMaskIntoConstraints:false];
     
-    [_splitView addArrangedSubview:_sourceListView];
-    [_splitView addArrangedSubview:_centerContainerView];
-    [_splitView addArrangedSubview:_inspectorContainerView];
+    [_splitView addArrangedSubview:_left.containerView];
+    [_splitView addArrangedSubview:_center.containerView];
+    [_splitView addArrangedSubview:_right.containerView];
     
     [_splitView setHoldingPriority:NSLayoutPriorityDefaultLow forSubviewAtIndex:0];
     [_splitView setHoldingPriority:NSLayoutPriorityFittingSizeCompression forSubviewAtIndex:1];
     [_splitView setHoldingPriority:NSLayoutPriorityDefaultLow forSubviewAtIndex:2];
+    
+    _sourceListView = [[SourceListView alloc] initWithFrame:{}];
+    [_sourceListView setDelegate:self];
+    _SetView(_left, _sourceListView);
     
     // Handle whatever is first selected
     [self sourceListViewSelectionChanged:_sourceListView];
@@ -243,14 +254,28 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     
     ImageSourcePtr imageSource = [_sourceListView selection];
     if (imageSource) {
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
-        [imageGridView setDelegate:self];
-        _UpdateImageGridViewFromPrefs(PrefsGlobal(), imageGridView);
+        {
+            ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
+            [imageGridView setDelegate:self];
+            _UpdateImageGridViewFromPrefs(PrefsGlobal(), imageGridView);
+            _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
+        }
         
-        [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
-        [self setInspectorView:[[InspectorView alloc] initWithImageSource:imageSource]];
+        {
+            ImageView* imageView = [[ImageView alloc] initWithImageSource:imageSource];
+            [imageView setDelegate:self];
+            _imageScrollView = [[ImageScrollView alloc] initWithFixedDocument:imageView];
+            [_imageScrollView setMagnifyToFit:true animate:false];
+        }
         
-        [[_splitView window] makeFirstResponder:imageGridView];
+        {
+            _inspectorView = [[InspectorView alloc] initWithImageSource:imageSource];
+        }
+        
+        _SetView(_center, _imageGridScrollView);
+        _SetView(_right, _inspectorView);
+        
+        [[_splitView window] makeFirstResponder:[_imageGridScrollView document]];
 //        [_mainView setContentView:sv animation:MainViewAnimation::None];
     
     } else {
@@ -404,10 +429,8 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 
 - (void)_prefsChanged {
     NSLog(@"prefs changed");
-    if (auto x = Toastbox::CastOrNull<ImageGridScrollView*>(_centerView)) {
-        auto v = Toastbox::Cast<ImageGridView*>([x document]);
-        _UpdateImageGridViewFromPrefs(PrefsGlobal(), v);
-    }
+    auto v = Toastbox::Cast<ImageGridView*>([_imageGridScrollView document]);
+    _UpdateImageGridViewFromPrefs(PrefsGlobal(), v);
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id
@@ -436,20 +459,10 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
             imageRecord = *(find+delta);
         }
         
-        ImageView* imageView = [[ImageView alloc] initWithImageRecord:imageRecord imageSource:imageSource];
-        [imageView setDelegate:self];
-        
-        ImageScrollView* sv = [[ImageScrollView alloc] initWithFixedDocument:imageView];
-        [sv setMagnifyToFit:true animate:false];
-        
-//        if (delta) {
-//            [_mainView setContentView:imageView animation:(delta>0 ? MainViewAnimation::SlideToLeft : MainViewAnimation::SlideToRight)];
-//        } else {
-//            [_mainView setContentView:imageView animation:MainViewAnimation::None];
-//        }
-        
-        [self setCenterView:sv];
-        [[_splitView window] makeFirstResponder:[sv document]];
+        _SetView(_center, _imageScrollView);
+        ImageView* imageView = Toastbox::Cast<ImageView*>([_imageScrollView document]);
+        [imageView setImageRecord:imageRecord];
+        [[_splitView window] makeFirstResponder:imageView];
         
         ImageSet selection;
         selection.insert(imageRecord);
