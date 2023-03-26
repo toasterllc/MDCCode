@@ -76,7 +76,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         _imageSource->imageLibrary().observerAdd([=](const ImageLibrary::Event& ev) {
             auto selfStrong = selfWeak;
             if (!selfStrong) return false;
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong _handleImageLibraryEvent:ev]; });
+            [selfStrong _handleImageLibraryEvent:ev];
             return true;
         });
     }
@@ -246,7 +246,15 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
 // and with the ImageLibrary lock held!
 - (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
-    assert([NSThread isMainThread]);
+    // Trampoline the event to our main thread, if we're not on the main thread
+    if (![NSThread isMainThread]) {
+        ImageLibrary::Event evCopy = ev;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _handleImageLibraryEvent:evCopy];
+        });
+        return;
+    }
+    
     switch (ev.type) {
     case ImageLibrary::Event::Type::Add:
         break;
