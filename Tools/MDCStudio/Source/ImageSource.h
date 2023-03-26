@@ -19,12 +19,11 @@ struct Image {
 class ImageSource {
 public:
     enum class Priority : uint8_t { High, Low, Last=Low };
-    using LoadImageCallback = std::function<void(Image&&)>;
     
     virtual ImageLibrary& imageLibrary() = 0;
     virtual void renderThumbs(Priority priority, std::set<ImageRecordPtr> recs) = 0;
     virtual Image getCachedImage(const ImageRecordPtr& rec) = 0;
-    virtual void loadImage(Priority priority, const ImageRecordPtr& rec, LoadImageCallback callback) = 0;
+    virtual Image loadImage(Priority priority, const ImageRecordPtr& rec) = 0;
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;

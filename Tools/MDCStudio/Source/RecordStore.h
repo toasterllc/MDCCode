@@ -60,6 +60,8 @@ public:
         
         bool operator!=(const ChunkRef& x) const { return !(*this == x); }
         
+        explicit operator bool() const { return chunk; }
+        
         Chunk* operator->() const { return &get(); }
         Chunk& operator*() const { return get(); }
         Chunk& get() const { return *chunk; }

@@ -2,6 +2,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
+#import <thread>
 #import "Util.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
@@ -17,6 +18,12 @@ using namespace MDCTools;
 // (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
+struct _ImageLoadThreadState {
+    Toastbox::Signal signal; // Protects this struct
+    ImageSourcePtr imageSource;
+    ImageRecordPtr rec;
+};
+
 @interface ImageLayer : FixedMetalDocumentLayer
 @end
 
@@ -29,6 +36,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
     Image _image;
     Renderer::Txt _thumbTxt;
     Renderer::Txt _imageTxt;
+    std::shared_ptr<_ImageLoadThreadState> _imageLoad;
 }
 
 static CGColorSpaceRef _LSRGBColorSpace() {
@@ -45,6 +53,10 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     _renderer = Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
+    [self setDevice:device];
+    [self setPixelFormat:_PixelFormat];
+    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
+    
     // Add ourself as an observer of the image library
     {
         auto lock = std::unique_lock(_imageSource->imageLibrary());
@@ -57,9 +69,12 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         });
     }
     
-    [self setDevice:device];
-    [self setPixelFormat:_PixelFormat];
-    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
+    // Start our _ImageLoadThread
+    auto imageLoad = std::make_shared<_ImageLoadThreadState>();
+    imageLoad->imageSource = _imageSource;
+    std::thread([=] { _ImageLoadThread(*imageLoad); }).detach();
+    _imageLoad = imageLoad;
+    
     return self;
 }
 
@@ -103,13 +118,13 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     // Fetch the image if we don't have it yet
     if (!_image) {
         _image = _imageSource->getCachedImage(_imageRecord);
-        if (!_image) {
-            __weak auto selfWeak = self;
-            _imageSource->loadImage(ImageSource::Priority::High, _imageRecord, [=] (Image&& image) {
-                __block Image img = std::move(image);
-                dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:std::move(img)]; });
-            });
-        }
+//        if (!_image) {
+//            __weak auto selfWeak = self;
+//            _imageSource->loadImage(ImageSource::Priority::High, _imageRecord, [=] (Image&& image) {
+//                __block Image img = std::move(image);
+//                dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:std::move(img)]; });
+//            });
+//        }
     }
     
     // Create _imageTxt if it doesn't exist yet and we have the image
@@ -209,6 +224,26 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 
 - (CGSize)preferredFrameSize {
     return {(CGFloat)_imageRecord->info.imageWidth*2, (CGFloat)_imageRecord->info.imageHeight*2};
+}
+
+static void _ImageLoadThread(_ImageLoadThreadState& state) {
+    printf("[_ImageLoadThread] Starting\n");
+    try {
+        for (;;) {
+            ImageRecordPtr rec;
+            {
+                auto lock = state.signal.wait([&] { return state.rec; });
+                rec = std::move(state.rec);
+            }
+            
+            printf("[_ImageLoadThread] Load image start\n");
+            
+            printf("[_ImageLoadThread] Load image end\n");
+        }
+    
+    } catch (const Toastbox::Signal::Stop&) {
+    }
+    printf("[_ImageLoadThread] Exiting\n");
 }
 
 @end
