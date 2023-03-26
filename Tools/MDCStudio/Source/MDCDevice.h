@@ -275,7 +275,7 @@ private:
     using _ThumbBufferReserved = _ThumbCache::Reserved;
     
     using __ImageBuffer = uint8_t[ImgSD::Full::ImagePaddedLen];
-    using _ImageCache = Cache<_SDRegion,__ImageBuffer,8>;
+    using _ImageCache = Cache<_SDRegion,__ImageBuffer,8,(uint8_t)Priority::Last>;
     using _ImageBuffer = _ImageCache::Entry;
     using _ImageBufferReserved = _ImageCache::Reserved;
     
@@ -772,7 +772,7 @@ private:
         // Wait until the buffer is returned to us by our SDRead callback
         state->signal.wait([&] { return buf.entry(); });
         Image image = _imageCreate(buf.entry());
-        _imageCache.set(region, std::move(*work.buf.image()));
+        _imageCache.set(region, std::move(buf));
         return image;
     }
     

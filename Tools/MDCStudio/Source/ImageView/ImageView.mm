@@ -22,6 +22,7 @@ struct _ImageLoadThreadState {
     Toastbox::Signal signal; // Protects this struct
     ImageSourcePtr imageSource;
     ImageRecordPtr work;
+    ImageRecordPtr workNeighbors;
     std::function<void(ImageRecordPtr, Image&&)> callback;
 };
 
@@ -99,6 +100,10 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     return self;
 }
 
+- (void)dealloc {
+    printf("~ImageLayer\n");
+}
+
 - (ImageRecordPtr)imageRecord {
     return _imageRecord;
 }
@@ -112,11 +117,12 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     // Fetch the image from the cache
     _image.image = _imageSource->getCachedImage(_imageRecord);
-    // Load the image from our thread if it doesn't exist in the cache
-    if (!_image.image) {
+    // Load the image / neighbors from our thread
+    {
         {
             auto lock = _imageLoad->signal.lock();
-            _imageLoad->work = _imageRecord;
+            _imageLoad->work = (_image.image ? ImageRecordPtr{} : _imageRecord);
+            _imageLoad->workNeighbors = _imageRecord;
         }
         _imageLoad->signal.signalOne();
     }
@@ -255,6 +261,9 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         return;
     }
     
+    // Ignore if we don't have an ImageRecord
+    if (!_imageRecord) return;
+    
     switch (ev.type) {
     case ImageLibrary::Event::Type::Add:
         break;
@@ -293,39 +302,67 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 //    return {(CGFloat)_imageRecord->info.imageWidth*2, (CGFloat)_imageRecord->info.imageHeight*2};
 //}
 
+static ImageSet _NeighborsGet(ImageLibrary& lib, ImageRecordPtr rec, size_t count) {
+    // Collect the neighboring image ids in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
+    auto lock = std::unique_lock(lib);
+    auto find = lib.find(rec);
+    auto it = find;
+    auto rit = std::make_reverse_iterator(find); // Points to element before `find`
+    ImageSet images;
+    for (size_t i=0; i<count/2; i++) {
+        if (it != lib.end()) it++;
+        if (it != lib.end()) images.insert(*it);
+        if (rit != lib.rend()) images.insert(*rit);
+        // make_reverse_iterator() returns an iterator that points to the element _before_ the
+        // forward iterator (`find`), so we increment `rit` at the end of the loop, instead of
+        // at the beginning (where we increment the forward iterator `it`)
+        if (rit != lib.rend()) rit++;
+    }
+    return images;
+}
+
 static void _ImageLoadThread(_ImageLoadThreadState& state) {
     printf("[_ImageLoadThread] Starting\n");
     try {
-        auto lock = state.signal.lock();
+        ImageSource& is = *state.imageSource;
+        ImageLibrary& il = is.imageLibrary();
         
         for (;;) {
-            ImageRecordPtr rec;
-            
-            state.signal.wait(lock, [&] { return state.work; });
-            rec = std::move(state.work);
-            lock.unlock();
-            
-            printf("[_ImageLoadThread] Load image start\n");
-            Image image = state.imageSource->loadImage(ImageSource::Priority::High, rec);
-            state.callback(rec, std::move(image));
-            printf("[_ImageLoadThread] Load image end\n");
-            
+            ImageRecordPtr work;
+            ImageRecordPtr workNeighbors;
             {
-                lock.lock();
-                if (state.work) continue;
-                lock.unlock();
-                
-                
+                auto lock = state.signal.wait([&] { return state.work || state.workNeighbors; });
+                work = std::move(state.work);
+                workNeighbors = std::move(state.workNeighbors);
             }
             
-            
-            {
-                auto lock = state.signal.wait([&] { return state.work; });
-                
-                rec = std::move(state.work);
+            if (work) {
+                printf("[_ImageLoadThread] Load image start\n");
+                {
+                    Image image = state.imageSource->loadImage(ImageSource::Priority::High, work);
+                    state.callback(work, std::move(image));
+                }
+                printf("[_ImageLoadThread] Load image end\n");
             }
             
-            
+            if (workNeighbors) {
+                printf("[_ImageLoadThread] Load neighbors start\n");
+                {
+                    constexpr size_t NeighborLoadCount = 4;
+                    const ImageSet neighbors = _NeighborsGet(il, workNeighbors, NeighborLoadCount);
+                    for (const ImageRecordPtr& rec : neighbors) {
+                        {
+                            auto lock = state.signal.lock();
+                            if (state.work || state.workNeighbors) break;
+                        }
+                        
+                        if (!state.imageSource->getCachedImage(rec)) {
+                            state.imageSource->loadImage(ImageSource::Priority::Low, rec);
+                        }
+                    }
+                }
+                printf("[_ImageLoadThread] Load neighbors end\n");
+            }
         }
     
     } catch (const Toastbox::Signal::Stop&) {
@@ -529,6 +566,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 //    }];
     
     return self;
+}
+
+- (void)dealloc {
+    printf("~ImageView\n");
 }
 
 - (ImageRecordPtr)imageRecord {

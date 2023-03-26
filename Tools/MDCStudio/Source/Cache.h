@@ -97,6 +97,7 @@ public:
         // multiple operations.
         // We do need to acquire _free.signal.lock() though to safely access _free.list.
         assert(lock);
+        assert(priority <= T_PriorityLast);
         for (;;) {
             auto& counter = _free.counter[priority];
             
@@ -158,6 +159,7 @@ public:
         // minimum free list size as long as the lock is held. We still need to acquire
         // _free.signal.lock() though to safely access _free.list.
         assert(lock);
+        assert(priority <= T_PriorityLast);
         auto l = _free.signal.lock();
         return _free.counter[priority];
     }
