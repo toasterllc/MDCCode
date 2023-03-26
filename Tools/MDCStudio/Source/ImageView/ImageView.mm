@@ -104,8 +104,10 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     if (!_image) {
         _image = _imageSource->getCachedImage(_imageRecord);
         if (!_image) {
-            _imageSource->loadImage(ImageSource::Priority::High, _imageRecord, [] (Image&& image) {
-            
+            __weak auto selfWeak = self;
+            _imageSource->loadImage(ImageSource::Priority::High, _imageRecord, [=] (Image&& image) {
+                __block Image img = std::move(image);
+                dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:std::move(img)]; });
             });
         }
     }
@@ -177,10 +179,10 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     }
 }
 
-//- (void)_handleImageLoaded:(ImagePtr)image {
-//    _image = image;
-//    [self setNeedsDisplay];
-//}
+- (void)_handleImageLoaded:(Image&&)image {
+    _image = std::move(image);
+    [self setNeedsDisplay];
+}
 
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
 // and with the ImageLibrary lock held!

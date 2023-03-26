@@ -210,7 +210,7 @@ public:
     }
     
     void loadImage(Priority priority, const ImageRecordPtr& rec, LoadImageCallback callback) override {
-        
+        _loadImage(priority, rec, callback);
     }
     
 private:
@@ -355,6 +355,7 @@ private:
     
     using _SDReadWorkQueue = std::queue<_SDReadWork>;
     using _RenderWorkQueue = std::queue<_RenderWork>;
+//    using _ImageLoadQueue = std::queue<_RenderWork>;
     
     static int _ThreadCount() {
         static int ThreadCount = std::max(1, (int)std::thread::hardware_concurrency());
@@ -612,10 +613,7 @@ private:
         // We don't want to populate the cache on the initial load because we want the Cache buffers to
         // be available for SDReads, but if we store them in the cache, we have fewer buffers available
         // for use during initial import, which slows down the importing process.
-        if (!initial) {
-            auto lock = _thumbCache.lock();
-            _thumbCache.set(lock, work.region, std::move(buf));
-        }
+        if (!initial) _thumbCache.set(work.region, std::move(buf));
     }
     
     void _renderCompleteCallback(_LoadState state, ImageRecordPtr rec) {
@@ -740,6 +738,34 @@ private:
         }
     }
     
+//    void _loadImageCompleteCallback(_SDReadWork&& work, const _SDRegion& region) {
+//        _imageCache.set(region, std::move(*work.buf.image()));
+//    }
+    
+    void _loadImage(Priority priority, const ImageRecordPtr& rec, LoadImageCallback callback) {
+        const _SDRegion region = _SDRegionForImage(rec);
+        _ImageBufferReserved buf = _imageCache.pop((uint8_t)priority);
+        
+        _SDReadWork work = {
+            .region = region,
+            .buf = std::move(buf),
+            .rec = rec,
+            .callback = [=] (_SDReadWork&& work) {
+                auto buf = _imageCache.set(region, std::move(*work.buf.image()));
+                Image image = _imageCreate(buf);
+                callback(std::move(image));
+//                _loadImageCompleteCallback(std::move(work), region);
+            },
+        };
+        
+        {
+            auto lock = _sdRead.signal.lock();
+            _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
+            queue.push(std::move(work));
+        }
+        _sdRead.signal.signalOne();
+    }
+    
     // MARK: - Sync
     
     void _sync_thread() {
@@ -849,7 +875,7 @@ private:
         // Verify that the length of data that we're reading will fit in our buffer
         assert(len <= work.buf.cap());
         
-        const auto timeStart = std::chrono::steady_clock::now();
+//        const auto timeStart = std::chrono::steady_clock::now();
         
         {
 //            printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
@@ -1047,11 +1073,11 @@ private:
         _RenderWorkQueue queue;
     } _thumbRender;
     
-    struct {
-        Toastbox::Signal signal; // Protects this struct
-        std::thread thread;
-        _RenderWorkQueue queue;
-    } _imageLoad;
+//    struct {
+//        Toastbox::Signal signal; // Protects this struct
+//        std::thread thread;
+//        _RenderWorkQueue queue;
+//    } _imageLoad;
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;
