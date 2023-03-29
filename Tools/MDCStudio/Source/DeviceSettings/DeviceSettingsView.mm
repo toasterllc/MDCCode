@@ -1,18 +1,29 @@
 #import "DeviceSettingsView.h"
 
+@interface DeviceSettingsView_DetailView : NSView
+@end
+
+@implementation DeviceSettingsView_DetailView {
+@public
+    IBOutlet NSView* alignLeadingView;
+    IBOutlet NSView* alignTrailingView;
+}
+@end
+
 @implementation DeviceSettingsView {
     IBOutlet NSView* _nibView;
     
     IBOutlet NSView* _timeContainerView;
     IBOutlet NSView* _repeatIntervalContainerView;
     
-    IBOutlet NSView* _timeView;
-    IBOutlet NSView* _timeRangeView;
-    IBOutlet NSView* _weeklyDaySelectorView;
-    IBOutlet NSView* _monthlyDaySelectorView;
-    IBOutlet NSView* _yearlyDaySelectorView;
+    IBOutlet DeviceSettingsView_DetailView* _timeView;
+    IBOutlet DeviceSettingsView_DetailView* _timeRangeView;
+    IBOutlet DeviceSettingsView_DetailView* _weeklyDaySelectorView;
+    IBOutlet DeviceSettingsView_DetailView* _monthlyDaySelectorView;
+    IBOutlet DeviceSettingsView_DetailView* _yearlyDaySelectorView;
     
     // Time
+//    IBOutlet NSTextField* _repeatIntervalLabel;
     IBOutlet NSPopUpButton* _repeatIntervalButton;
     
     // Capture
@@ -63,28 +74,33 @@ static void _Init(DeviceSettingsView* self) {
 - (IBAction)_action_repeatInterval:(id)sender {
     NSInteger idx = [_repeatIntervalButton indexOfSelectedItem];
     switch (idx) {
-    case 0:     _ShowView(_repeatIntervalContainerView, nil); break;
-    case 1:     _ShowView(_repeatIntervalContainerView, _weeklyDaySelectorView); break;
-    case 2:     _ShowView(_repeatIntervalContainerView, _monthlyDaySelectorView); break;
-    case 3:     _ShowView(_repeatIntervalContainerView, _yearlyDaySelectorView); break;
+    case 0:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, nil); break;
+    case 1:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDaySelectorView); break;
+    case 2:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDaySelectorView); break;
+    case 3:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDaySelectorView); break;
     default:    abort();
     }
     
-    _ShowView(_timeContainerView, _timeView);
+    _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeView);
 }
 
-static void _ShowView(NSView* container, NSView* subview) {
-    [subview removeFromSuperview];
+static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceSettingsView_DetailView* detailView) {
+    [detailView removeFromSuperview];
     [container setSubviews:@[]];
-    if (!subview) return;
+    if (!detailView) return;
     
-    [container addSubview:subview];
+    [container addSubview:detailView];
     
     NSMutableArray* constraints = [NSMutableArray new];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[subview]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[subview]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[detailView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(detailView)]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[detailView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(detailView)]];
+    
+    if (detailView->alignLeadingView) {
+        [constraints addObject:[[detailView->alignLeadingView leadingAnchor] constraintEqualToAnchor:[alignLeadingView leadingAnchor]]];
+    }
+    
     [NSLayoutConstraint activateConstraints:constraints];
 }
 

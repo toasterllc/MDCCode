@@ -21,6 +21,7 @@
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
                 <outlet property="_repeatIntervalButton" destination="Q3l-kg-ZnT" id="ZLx-Sx-dxO"/>
                 <outlet property="_repeatIntervalContainerView" destination="OJP-qc-DX6" id="byI-Th-iIc"/>
+                <outlet property="_repeatIntervalLabel" destination="BHX-Gx-CcZ" id="GZF-a7-v0R"/>
                 <outlet property="_timeContainerView" destination="4R1-In-Kbb" id="z7v-tj-rSs"/>
                 <outlet property="_timeRangeView" destination="ZTq-dS-LMW" id="gbG-oL-NDD"/>
                 <outlet property="_timeView" destination="bvu-Ek-Vhq" id="mj7-ht-CBg"/>
@@ -59,7 +60,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr">
-                                                <rect key="frame" x="0.0" y="0.0" width="555" height="30"/>
+                                                <rect key="frame" x="1" y="1" width="555" height="30"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zlV-f1-E5g">
                                                         <rect key="frame" x="128" y="7" width="93" height="16"/>
@@ -444,7 +445,7 @@
             </constraints>
             <point key="canvasLocation" x="251" y="141.5"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Time range">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Time range" customClass="DeviceSettingsView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="247" height="61"/>
             <subviews>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="j28-bM-XnS">
@@ -455,10 +456,10 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                 </button>
-                <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
-                    <rect key="frame" x="187" y="20" width="40" height="21"/>
+                <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
+                    <rect key="frame" x="118" y="20" width="40" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="fTw-Eo-1h9">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="gNc-VD-gYh">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -473,19 +474,23 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
-                    <rect key="frame" x="118" y="20" width="40" height="21"/>
+                <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
+                    <rect key="frame" x="187" y="20" width="40" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="gNc-VD-gYh">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="fTw-Eo-1h9">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
             </subviews>
+            <connections>
+                <outlet property="alignLeadingView" destination="35D-kR-T9a" id="IU9-3x-bgf"/>
+                <outlet property="alignTrailingView" destination="j28-bM-XnS" id="DDK-Kj-MhS"/>
+            </connections>
             <point key="canvasLocation" x="456" y="638"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Time">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Time" customClass="DeviceSettingsView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="209" height="61"/>
             <subviews>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PfN-UJ-gre">
@@ -507,9 +512,13 @@
                     </textFieldCell>
                 </textField>
             </subviews>
+            <connections>
+                <outlet property="alignLeadingView" destination="Vfd-bm-n7h" id="dDb-EE-Jqk"/>
+                <outlet property="alignTrailingView" destination="PfN-UJ-gre" id="KCc-N8-X42"/>
+            </connections>
             <point key="canvasLocation" x="-19" y="782"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Weekly: day selector">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Weekly: day selector" customClass="DeviceSettingsView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="338" height="38"/>
             <subviews>
                 <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
@@ -533,12 +542,15 @@
                 <constraint firstItem="WO9-Yi-XDc" firstAttribute="leading" secondItem="YrJ-S7-rqE" secondAttribute="leading" id="FOb-pC-CCd"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="WO9-Yi-XDc" secondAttribute="trailing" id="lwe-Xl-Wfn"/>
             </constraints>
+            <connections>
+                <outlet property="alignLeadingView" destination="WO9-Yi-XDc" id="Hpv-zL-Xi0"/>
+            </connections>
             <point key="canvasLocation" x="8" y="618"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="SVc-di-VTv" userLabel="Monthly: day selector">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="SVc-di-VTv" userLabel="Monthly: day selector" customClass="DeviceSettingsView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="338" height="41"/>
             <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qYh-A4-SCy">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qYh-A4-SCy">
                     <rect key="frame" x="-2" y="13" width="38" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Days:" id="lnB-iI-HHy">
                         <font key="font" usesAppearanceFont="YES"/>
@@ -562,12 +574,16 @@
                 <constraint firstItem="qYh-A4-SCy" firstAttribute="leading" secondItem="SVc-di-VTv" secondAttribute="leading" id="bUs-yQ-r0Z"/>
                 <constraint firstItem="YQ1-gj-xVe" firstAttribute="firstBaseline" secondItem="qYh-A4-SCy" secondAttribute="firstBaseline" id="cGv-S1-HCh"/>
             </constraints>
+            <connections>
+                <outlet property="alignLeadingView" destination="YQ1-gj-xVe" id="7Tc-GO-fqT"/>
+                <outlet property="alignTrailingView" destination="qYh-A4-SCy" id="0iP-Lr-Qzo"/>
+            </connections>
             <point key="canvasLocation" x="354" y="782"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Yearly: day selector">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Yearly: day selector" customClass="DeviceSettingsView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="338" height="61"/>
             <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ZRY-hR-dS5">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZRY-hR-dS5">
                     <rect key="frame" x="-2" y="23" width="43" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Dates:" id="Wp2-lN-gFZ">
                         <font key="font" usesAppearanceFont="YES"/>
@@ -591,6 +607,10 @@
                 <constraint firstItem="ZRY-hR-dS5" firstAttribute="leading" secondItem="U49-dv-RHU" secondAttribute="leading" id="j1B-G7-IoQ"/>
                 <constraint firstItem="NJO-gj-szB" firstAttribute="firstBaseline" secondItem="ZRY-hR-dS5" secondAttribute="firstBaseline" id="y9m-be-c4F"/>
             </constraints>
+            <connections>
+                <outlet property="alignLeadingView" destination="NJO-gj-szB" id="TCa-cC-NQ1"/>
+                <outlet property="alignTrailingView" destination="ZRY-hR-dS5" id="yp4-XI-MvF"/>
+            </connections>
             <point key="canvasLocation" x="46" y="910"/>
         </customView>
     </objects>
