@@ -720,7 +720,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="179" y="218" width="672" height="531"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
             <view key="contentView" id="U52-Ez-6UZ">
                 <rect key="frame" x="0.0" y="0.0" width="672" height="494"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -781,7 +781,7 @@
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                             <prototypeCellViews>
                                                 <tableCellView translatesAutoresizingMaskIntoConstraints="NO" id="4Wv-0Y-lw6">
-                                                    <rect key="frame" x="0.0" y="0.0" width="627" height="30"/>
+                                                    <rect key="frame" x="1" y="1" width="627" height="30"/>
                                                     <subviews>
                                                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="q3Q-02-Fqf">
                                                             <rect key="frame" x="6" y="7" width="96" height="16"/>
@@ -833,6 +833,22 @@
                             <font key="font" metaFont="system"/>
                         </buttonCell>
                     </button>
+                    <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="z1C-Wm-8sJ">
+                        <rect key="frame" x="270" y="395" width="300" height="20"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <segmentedCell key="cell" borderStyle="border" alignment="left" style="roundRect" trackingMode="selectAny" id="Fnn-DQ-UEo">
+                            <font key="font" metaFont="label" size="12"/>
+                            <segments>
+                                <segment label="Mon"/>
+                                <segment label="Tue" selected="YES" tag="1"/>
+                                <segment label="Wed"/>
+                                <segment label="Thu"/>
+                                <segment label="Fri"/>
+                                <segment label="Sat"/>
+                                <segment label="Sun"/>
+                            </segments>
+                        </segmentedCell>
+                    </segmentedControl>
                 </subviews>
                 <constraints>
                     <constraint firstItem="Lpf-Sr-AYA" firstAttribute="leading" secondItem="U52-Ez-6UZ" secondAttribute="leading" constant="20" id="59T-5p-8dr"/>
@@ -850,7 +866,7 @@
                     <constraint firstItem="Lpf-Sr-AYA" firstAttribute="top" secondItem="aIR-DD-ua0" secondAttribute="bottom" constant="8" id="yKd-6x-sBU"/>
                 </constraints>
             </view>
-            <point key="canvasLocation" x="233" y="474.5"/>
+            <point key="canvasLocation" x="233" y="474"/>
         </window>
     </objects>
 </document>
