@@ -140,7 +140,7 @@
                     </textFieldCell>
                 </textField>
                 <box verticalHuggingPriority="750" ambiguous="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="gJ9-mx-gRD">
-                    <rect key="frame" x="58" y="494" width="522" height="9"/>
+                    <rect key="frame" x="58" y="619" width="522" height="9"/>
                 </box>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oIx-Tj-uov">
                     <rect key="frame" x="18" y="490" width="34" height="16"/>
@@ -151,10 +151,10 @@
                     </textFieldCell>
                 </textField>
                 <box verticalHuggingPriority="750" ambiguous="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="u1N-yv-zO7">
-                    <rect key="frame" x="77" y="207" width="503" height="5"/>
+                    <rect key="frame" x="77" y="332" width="503" height="5"/>
                 </box>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UR7-ZS-KAS">
-                    <rect key="frame" x="18" y="202" width="53" height="16"/>
+                    <rect key="frame" x="18" y="327" width="53" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Capture" id="ktr-2v-cCc">
                         <font key="font" usesAppearanceFont="YES"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -286,7 +286,7 @@
                     </popUpButtonCell>
                 </popUpButton>
                 <popUpButton verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Q3l-kg-ZnT">
-                    <rect key="frame" x="38" y="297" width="87" height="25"/>
+                    <rect key="frame" x="38" y="412" width="87" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="Daily" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="dIl-i2-RmB" id="6Tg-Cw-8eF">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -300,11 +300,11 @@
                         </menu>
                     </popUpButtonCell>
                 </popUpButton>
-                <customView ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OJP-qc-DX6">
-                    <rect key="frame" x="40" y="238" width="540" height="54"/>
-                </customView>
                 <customView ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4R1-In-Kbb">
-                    <rect key="frame" x="40" y="329" width="540" height="35"/>
+                    <rect key="frame" x="40" y="447" width="540" height="35"/>
+                </customView>
+                <customView ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OJP-qc-DX6">
+                    <rect key="frame" x="40" y="353" width="540" height="54"/>
                 </customView>
             </subviews>
             <constraints>
