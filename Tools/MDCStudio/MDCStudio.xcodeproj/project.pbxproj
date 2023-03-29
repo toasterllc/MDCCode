@@ -72,6 +72,7 @@
 		55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */; };
 		55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */; };
 		55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */; };
+		55F8877F29D3A7110075593F /* DeviceSettings.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55F8877E29D3A7100075593F /* DeviceSettings.xib */; };
 		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
 		55F8D01427BEF3E500757165 /* ImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* ImageView.mm */; };
 		55F8D01927BEF97200757165 /* ImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageView.metal */; };
@@ -257,6 +258,7 @@
 		55F755C929C2CA4000241672 /* Signal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Signal.h; sourceTree = "<group>"; };
 		55F755CA29C2CA4000241672 /* SignalQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SignalQueue.h; sourceTree = "<group>"; };
 		55F755DE29C3D9D700241672 /* Atomic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atomic.h; sourceTree = "<group>"; };
+		55F8877E29D3A7100075593F /* DeviceSettings.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceSettings.xib; sourceTree = "<group>"; };
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
@@ -518,6 +520,7 @@
 				55425B1C29A02F6500F25D57 /* InspectorView */,
 				5544AE5927B6EE04006AB473 /* Document */,
 				55425B5A29A2B8C900F25D57 /* ImageCornerButton */,
+				55F8877C29D3A6E30075593F /* DeviceSettings */,
 				55C456802955A1AE00A20363 /* FixedDocumentView.h */,
 				55C456852955A1AE00A20363 /* FixedDocumentView.mm */,
 				55C456812955A1AE00A20363 /* FixedMetalDocumentLayer.h */,
@@ -642,6 +645,14 @@
 			path = ImagePipeline;
 			sourceTree = "<group>";
 		};
+		55F8877C29D3A6E30075593F /* DeviceSettings */ = {
+			isa = PBXGroup;
+			children = (
+				55F8877E29D3A7100075593F /* DeviceSettings.xib */,
+			);
+			path = DeviceSettings;
+			sourceTree = "<group>";
+		};
 		55F8D01127BEF3E500757165 /* ImageView */ = {
 			isa = PBXGroup;
 			children = (
@@ -727,6 +738,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55F8877F29D3A7110075593F /* DeviceSettings.xib in Resources */,
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
 				55425B9129A3F39700F25D57 /* Inspector-Exposure-Min.pdf in Resources */,
 				552F4BB629AE6E84000CEAB2 /* Inspector-Clear.pdf in Resources */,
