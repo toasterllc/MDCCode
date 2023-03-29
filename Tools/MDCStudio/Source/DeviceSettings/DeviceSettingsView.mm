@@ -1,12 +1,82 @@
 #import "DeviceSettingsView.h"
 
+#warning TODO: add version, or is the version specified by whatever contains Trigger instances?
+
+struct [[gnu::packed]] Trigger {
+    enum class Type : uint8_t {
+        Time,
+        Motion,
+        Button,
+    };
+    
+    enum class RepeatInterval : uint8_t {
+        Daily,
+        Weekly,
+        Monthly,
+        Yearly,
+    };
+    
+    using WeekDays = uint8_t;
+    struct WeekDays_ {
+        static constexpr WeekDays Mon = 1<<0;
+        static constexpr WeekDays Tue = 1<<1;
+        static constexpr WeekDays Wed = 1<<2;
+        static constexpr WeekDays Thu = 1<<3;
+        static constexpr WeekDays Fri = 1<<4;
+        static constexpr WeekDays Sat = 1<<5;
+        static constexpr WeekDays Sun = 1<<6;
+    };
+    
+    using MonthDays = uint32_t;
+    using YearDays = uint32_t[12];
+    
+    using LEDs = uint8_t;
+    struct LEDs_ {
+        static constexpr LEDs Green = 1<<0;
+        static constexpr LEDs Red = 1<<1;
+    };
+    
+    enum class LimitPeriod : uint8_t {
+        Activation,
+        Minute,
+        Hour,
+        Day,
+    };
+    
+    Type type = Type::Time;
+    
+    struct [[gnu::packed]] {
+        uint32_t start = 0;
+        uint32_t end = 0;
+        RepeatInterval repeatInterval = RepeatInterval::Daily;
+        union {
+            WeekDays weekDays;
+            MonthDays monthDays;
+            YearDays yearDays;
+        };
+    } time;
+    
+    struct [[gnu::packed]] {
+        uint32_t count = 0;
+        uint32_t interval = 0;
+        LEDs flashLEDs = 0;
+    } capture;
+    
+    struct [[gnu::packed]] {
+        uint32_t triggerCount = 0;
+        LimitPeriod triggerCountPeriod = LimitPeriod::Activation;
+        uint32_t triggerCountTotal = 0;
+    } limits;
+};
+
+
+
 @interface DeviceSettingsView_DetailView : NSView
 @end
 
 @implementation DeviceSettingsView_DetailView {
 @public
     IBOutlet NSView* alignLeadingView;
-    IBOutlet NSView* alignTrailingView;
 }
 @end
 
@@ -92,7 +162,7 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceS
     [container addSubview:detailView];
     
     NSMutableArray* constraints = [NSMutableArray new];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[detailView]|"
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(>=0)-[detailView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(detailView)]];
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[detailView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(detailView)]];
