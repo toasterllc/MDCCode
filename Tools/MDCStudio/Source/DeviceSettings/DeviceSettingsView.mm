@@ -61,7 +61,27 @@ static void _Init(DeviceSettingsView* self) {
 }
 
 - (IBAction)_action_repeatInterval:(id)sender {
+    NSInteger idx = [_repeatIntervalButton indexOfSelectedItem];
+    switch (idx) {
+    case 0:     _ShowView(_repeatIntervalContainerView, nil); break;
+    case 1:     _ShowView(_repeatIntervalContainerView, _weeklyDaySelectorView); break;
+    case 2:     _ShowView(_repeatIntervalContainerView, _monthlyDaySelectorView); break;
+    case 3:     _ShowView(_repeatIntervalContainerView, _yearlyDaySelectorView); break;
+    default:    abort();
+    }
+}
+
+static void _ShowView(NSView* container, NSView* subview) {
+    [subview removeFromSuperview];
+    [container setSubviews:@[]];
+    [container addSubview:subview];
     
+    NSMutableArray* constraints = [NSMutableArray new];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[subview]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[subview]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
+    [NSLayoutConstraint activateConstraints:constraints];
 }
 
 - (IBAction)_action_captureCount:(id)sender {
