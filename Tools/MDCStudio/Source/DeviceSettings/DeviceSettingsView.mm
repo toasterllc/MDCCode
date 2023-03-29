@@ -69,11 +69,15 @@ static void _Init(DeviceSettingsView* self) {
     case 3:     _ShowView(_repeatIntervalContainerView, _yearlyDaySelectorView); break;
     default:    abort();
     }
+    
+    _ShowView(_timeContainerView, _timeView);
 }
 
 static void _ShowView(NSView* container, NSView* subview) {
     [subview removeFromSuperview];
     [container setSubviews:@[]];
+    if (!subview) return;
+    
     [container addSubview:subview];
     
     NSMutableArray* constraints = [NSMutableArray new];
