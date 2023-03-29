@@ -7,8 +7,21 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="DeviceSettingsView">
             <connections>
+                <outlet property="_captureCountField" destination="Yym-4z-PG4" id="aUm-3a-YvK"/>
+                <outlet property="_captureIntervalField" destination="WTE-Pb-dq9" id="JNC-FL-uMV"/>
+                <outlet property="_captureIntervalUnitButton" destination="i1A-N3-hrL" id="hVp-b6-b5i"/>
+                <outlet property="_flashLEDButton" destination="bd2-cb-0qM" id="l0Z-3V-DnY"/>
+                <outlet property="_flashLEDCheckbox" destination="4vQ-IW-SoU" id="X5L-s7-HIi"/>
+                <outlet property="_limitTotalTriggerCountCheckbox" destination="MFX-Ck-e2M" id="Rc6-c8-ez3"/>
+                <outlet property="_limitTotalTriggerCountField" destination="dmd-uc-OsP" id="jKe-Ig-CnO"/>
+                <outlet property="_limitTriggerCountCheckbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
+                <outlet property="_limitTriggerCountField" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
+                <outlet property="_limitTriggerCountPeriodButton" destination="w5P-1L-nqP" id="GlP-4p-Pph"/>
                 <outlet property="_monthlyDaySelectorView" destination="SVc-di-VTv" id="BLO-uD-Mof"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
+                <outlet property="_repeatIntervalButton" destination="Q3l-kg-ZnT" id="ZLx-Sx-dxO"/>
+                <outlet property="_repeatIntervalContainerView" destination="OJP-qc-DX6" id="byI-Th-iIc"/>
+                <outlet property="_timeContainerView" destination="4R1-In-Kbb" id="z7v-tj-rSs"/>
                 <outlet property="_timeRangeView" destination="ZTq-dS-LMW" id="gbG-oL-NDD"/>
                 <outlet property="_timeView" destination="bvu-Ek-Vhq" id="mj7-ht-CBg"/>
                 <outlet property="_weeklyDaySelectorView" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
@@ -46,7 +59,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr">
-                                                <rect key="frame" x="0.0" y="0.0" width="555" height="30"/>
+                                                <rect key="frame" x="1" y="1" width="555" height="30"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zlV-f1-E5g">
                                                         <rect key="frame" x="128" y="7" width="93" height="16"/>
@@ -119,6 +132,9 @@
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
+                    <connections>
+                        <action selector="_action_flashLED:" target="-2" id="Kqy-gY-sfS"/>
+                    </connections>
                 </button>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="9iW-US-9Nz">
                     <rect key="frame" x="38" y="161" width="95" height="16"/>
@@ -138,6 +154,9 @@
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
+                    <connections>
+                        <action selector="_action_captureCount:" target="-2" id="h53-Mo-9IX"/>
+                    </connections>
                 </textField>
                 <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="gJ9-mx-gRD">
                     <rect key="frame" x="58" y="388" width="522" height="5"/>
@@ -178,6 +197,9 @@
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
+                    <connections>
+                        <action selector="_action_limitTriggerCount:" target="-2" id="aTF-Ga-t0i"/>
+                    </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0mw-Q8-nb7">
                     <rect key="frame" x="213" y="53" width="40" height="21"/>
@@ -212,6 +234,9 @@
                             </items>
                         </menu>
                     </popUpButtonCell>
+                    <connections>
+                        <action selector="_action_limitTriggerCount:" target="-2" id="goz-CO-dgR"/>
+                    </connections>
                 </popUpButton>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="MFX-Ck-e2M">
                     <rect key="frame" x="38" y="22" width="169" height="18"/>
@@ -219,6 +244,9 @@
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
+                    <connections>
+                        <action selector="_action_limitTotalTriggerCount:" target="-2" id="bq2-Gn-6Mf"/>
+                    </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dmd-uc-OsP">
                     <rect key="frame" x="213" y="20" width="40" height="21"/>
@@ -230,6 +258,9 @@
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
+                    <connections>
+                        <action selector="_action_limitTotalTriggerCount:" target="-2" id="r7K-VG-VxK"/>
+                    </connections>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0cY-aD-cNx">
                     <rect key="frame" x="259" y="23" width="323" height="16"/>
@@ -249,6 +280,9 @@
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
+                    <connections>
+                        <action selector="_action_captureInterval:" target="-2" id="x4W-L9-26v"/>
+                    </connections>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="i1A-N3-hrL">
                     <rect key="frame" x="302" y="155" width="90" height="25"/>
@@ -263,6 +297,9 @@
                             </items>
                         </menu>
                     </popUpButtonCell>
+                    <connections>
+                        <action selector="_action_captureInterval:" target="-2" id="CET-BM-aiI"/>
+                    </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uDa-XG-QN2">
                     <rect key="frame" x="197" y="161" width="53" height="16"/>
@@ -281,9 +318,13 @@
                             <items>
                                 <menuItem title="Green" state="on" id="l9b-3u-p4m"/>
                                 <menuItem title="Red" id="x9Y-UV-tSP"/>
+                                <menuItem title="Both" id="O9g-dd-tGM"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
+                    <connections>
+                        <action selector="_action_flashLED:" target="-2" id="WAM-vC-8mF"/>
+                    </connections>
                 </popUpButton>
                 <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Q3l-kg-ZnT">
                     <rect key="frame" x="38" y="285" width="87" height="25"/>
@@ -299,6 +340,9 @@
                             </items>
                         </menu>
                     </popUpButtonCell>
+                    <connections>
+                        <action selector="_action_repeatInterval:" target="-2" id="t2h-ir-qgB"/>
+                    </connections>
                 </popUpButton>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="4R1-In-Kbb">
                     <rect key="frame" x="40" y="317" width="540" height="50"/>
