@@ -3,6 +3,7 @@
 #import "Util.h"
 #import "MDCDevicesManager.h"
 #import "Toastbox/Mac/Util.h"
+#import "DeviceSettings/DeviceSettingsView.h"
 using namespace MDCStudio;
 
 // MARK: - Outline View Items
@@ -59,7 +60,7 @@ using namespace MDCStudio;
 }
 - (NSString*)name { return name; }
 - (bool)selectable { return true; }
-- (CGFloat)height { return 25; }
+- (CGFloat)height { return 50; }
 - (CGFloat)indent { return [super indent]+5; }
 @end
 
@@ -93,6 +94,25 @@ using namespace MDCStudio;
 
 - (IBAction)textFieldAction:(id)sender {
     device->name([[[self textField] stringValue] UTF8String]);
+}
+
+- (IBAction)settingsAction:(id)sender {
+    NSLog(@"SETTINGS");
+    NSWindow* parentWindow = [self window];
+    
+    DeviceSettingsView* view = [[DeviceSettingsView alloc] initWithFrame:{}];
+    
+    NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
+        styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
+        backing:NSBackingStoreBuffered defer:false];
+    NSView* contentView = [sheetWindow contentView];
+    [contentView addSubview:view];
+    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
+    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
+    
+    [parentWindow beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {
+        NSLog(@"sheet complete");
+    }];
 }
 
 @end

@@ -6,7 +6,7 @@
 #include "Toastbox/FileDescriptor.h"
 #include "Toastbox/RuntimeError.h"
 #include "Toastbox/Mmap.h"
-#include "Toastbox/IntForStr.h"
+#include "Toastbox/NumForStr.h"
 
 // RecordStore: a persistent data structure designed with the following properties:
 //          storage amount: many gigabytes of data

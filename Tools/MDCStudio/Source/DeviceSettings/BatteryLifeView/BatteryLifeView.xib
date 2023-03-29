@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="BatteryLifeView">
+            <connections>
+                <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
+            </connections>
+        </customObject>
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
+            <rect key="frame" x="0.0" y="0.0" width="600" height="444"/>
+            <point key="canvasLocation" x="12" y="-537.5"/>
+        </customView>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+    </objects>
+</document>

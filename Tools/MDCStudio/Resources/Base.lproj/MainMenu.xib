@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -713,7 +714,18 @@
                     </menu>
                 </menuItem>
             </items>
-            <point key="canvasLocation" x="140" y="154"/>
+            <point key="canvasLocation" x="128" y="53"/>
         </menu>
+        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="" animationBehavior="default" id="hF9-ie-DpS">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="179" y="218" width="672" height="531"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
+            <view key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="U52-Ez-6UZ" customClass="DeviceSettingsView">
+                <rect key="frame" x="0.0" y="0.0" width="672" height="531"/>
+                <autoresizingMask key="autoresizingMask"/>
+            </view>
+            <point key="canvasLocation" x="233" y="473.5"/>
+        </window>
     </objects>
 </document>
