@@ -112,9 +112,12 @@ struct [[gnu::packed]] Triggers {
     IBOutlet NSPopUpButton* _flashLEDButton;
     
     // Limits
+    IBOutlet NSButton* _ignoreTriggerCheckbox;
+    IBOutlet NSTextField* _ignoreTriggerIntervalField;
+    IBOutlet NSPopUpButton* _ignoreTriggerIntervalUnitButton;
+    
     IBOutlet NSButton* _limitTriggerCountCheckbox;
     IBOutlet NSTextField* _limitTriggerCountField;
-    IBOutlet NSPopUpButton* _limitTriggerCountPeriodButton;
     
     IBOutlet NSButton* _limitTotalTriggerCountCheckbox;
     IBOutlet NSTextField* _limitTotalTriggerCountField;
