@@ -63,9 +63,9 @@ struct [[gnu::packed]] Trigger {
     } capture;
     
     struct [[gnu::packed]] {
-        uint32_t triggerCount = 0;
-        LimitPeriod triggerCountPeriod = LimitPeriod::Activation;
-        uint32_t triggerCountTotal = 0;
+        uint32_t ignoreTriggerDurationMs = 0;
+        uint32_t maxTriggerCount = 0;
+        uint32_t maxTotalTriggerCount = 0;
     } limits;
 };
 
@@ -246,7 +246,6 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceS
         default:
             abort();
         }
-        
         
         [_limitTriggerCountCheckbox setState:(trigger.limits.triggerCount ? NSControlStateValueOn : NSControlStateValueOff)];
         [_limitTriggerCountField setObjectValue:@(trigger.limits.triggerCount)];
