@@ -88,17 +88,15 @@ struct [[gnu::packed]] Triggers {
 @implementation DeviceSettingsView {
     IBOutlet NSView* _nibView;
     
-    IBOutlet NSView* _timeContainerView;
-    IBOutlet NSView* _repeatIntervalContainerView;
-    
-    IBOutlet DeviceSettingsView_DetailView* _timeView;
-    IBOutlet DeviceSettingsView_DetailView* _timeRangeView;
-    IBOutlet DeviceSettingsView_DetailView* _weeklyDaySelectorView;
-    IBOutlet DeviceSettingsView_DetailView* _monthlyDaySelectorView;
-    IBOutlet DeviceSettingsView_DetailView* _yearlyDaySelectorView;
-    
     // Time
+    IBOutlet NSView* _timeContainerView;
+    IBOutlet DeviceSettingsView_DetailView* _timeDetailView;
+    IBOutlet DeviceSettingsView_DetailView* _timeRangeDetailView;
     IBOutlet NSPopUpButton* _repeatIntervalButton;
+    IBOutlet NSView* _repeatIntervalContainerView;
+    IBOutlet DeviceSettingsView_DetailView* _weeklyDetailView;
+    IBOutlet DeviceSettingsView_DetailView* _monthlyDetailView;
+    IBOutlet DeviceSettingsView_DetailView* _yearlyDetailView;
     IBOutlet NSTextField* _timeField;
     IBOutlet NSTextField* _timeStartField;
     IBOutlet NSTextField* _timeEndField;
@@ -112,6 +110,8 @@ struct [[gnu::packed]] Triggers {
     IBOutlet NSPopUpButton* _flashLEDButton;
     
     // Limits
+    IBOutlet NSView* _limitsContainerView;
+    IBOutlet DeviceSettingsView_DetailView* _limitsDetailView;
     IBOutlet NSButton* _ignoreTriggerCheckbox;
     IBOutlet NSTextField* _ignoreTriggerIntervalField;
     IBOutlet NSPopUpButton* _ignoreTriggerIntervalUnitButton;
@@ -159,13 +159,13 @@ static void _Init(DeviceSettingsView* self) {
     NSInteger idx = [_repeatIntervalButton indexOfSelectedItem];
     switch (idx) {
     case 0:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, nil); break;
-    case 1:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDaySelectorView); break;
-    case 2:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDaySelectorView); break;
-    case 3:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDaySelectorView); break;
+    case 1:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDetailView); break;
+    case 2:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDetailView); break;
+    case 3:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDetailView); break;
     default:    abort();
     }
     
-    _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeView);
+    _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
 }
 
 static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceSettingsView_DetailView* detailView) {
@@ -193,12 +193,12 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceS
     {
         switch (trigger.type) {
         case Trigger::Type::Time:
-            _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeView);
+            _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
             [_timeField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]]; 
             break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
-            _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeRangeView);
+            _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeRangeDetailView);
             [_timeStartField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]]; 
             [_timeEndField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.end)]]; 
             break;
@@ -235,13 +235,26 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceS
     
     // Limits
     {
+        switch (trigger.type) {
+        case Trigger::Type::Time:
+//            _ShowDetailView(_limitsContainerView, _limitTotalTriggerCountField, nil);
+//            break;
+        case Trigger::Type::Motion:
+        case Trigger::Type::Button:
+            _ShowDetailView(_limitsContainerView, _limitTotalTriggerCountField, _limitsDetailView);
+            break;
+        default:
+            abort();
+        }
+        
+        
         [_limitTriggerCountCheckbox setState:(trigger.limits.triggerCount ? NSControlStateValueOn : NSControlStateValueOff)];
         [_limitTriggerCountField setObjectValue:@(trigger.limits.triggerCount)];
         
         [_limitTotalTriggerCountCheckbox setState:(trigger.limits.triggerCountTotal ? NSControlStateValueOn : NSControlStateValueOff)];
         [_limitTotalTriggerCountField setObjectValue:@(trigger.limits.triggerCountTotal)];
         
-        [_limitTriggerCountPeriodButton selectItemAtIndex:(NSInteger)trigger.limits.triggerCountPeriod];
+//        [_limitTriggerCountPeriodButton selectItemAtIndex:(NSInteger)trigger.limits.triggerCountPeriod];
     }
 }
 
