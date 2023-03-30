@@ -58,7 +58,7 @@ struct [[gnu::packed]] Trigger {
     
     struct [[gnu::packed]] {
         uint32_t count = 0;
-        uint32_t interval = 0;
+        uint32_t intervalMs = 0;
         LEDs flashLEDs = 0;
     } capture;
     
@@ -67,6 +67,11 @@ struct [[gnu::packed]] Trigger {
         LimitPeriod triggerCountPeriod = LimitPeriod::Activation;
         uint32_t triggerCountTotal = 0;
     } limits;
+};
+
+struct [[gnu::packed]] Triggers {
+    Trigger triggers[32];
+    uint8_t triggersCount = 0;
 };
 
 
@@ -93,8 +98,10 @@ struct [[gnu::packed]] Trigger {
     IBOutlet DeviceSettingsView_DetailView* _yearlyDaySelectorView;
     
     // Time
-//    IBOutlet NSTextField* _repeatIntervalLabel;
     IBOutlet NSPopUpButton* _repeatIntervalButton;
+    IBOutlet NSTextField* _timeField;
+    IBOutlet NSTextField* _timeStartField;
+    IBOutlet NSTextField* _timeEndField;
     
     // Capture
     IBOutlet NSTextField* _captureCountField;
@@ -111,6 +118,8 @@ struct [[gnu::packed]] Trigger {
     
     IBOutlet NSButton* _limitTotalTriggerCountCheckbox;
     IBOutlet NSTextField* _limitTotalTriggerCountField;
+    
+    Triggers _triggers;
 }
 
 static void _Init(DeviceSettingsView* self) {
@@ -127,6 +136,8 @@ static void _Init(DeviceSettingsView* self) {
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
+    
+    [self _updateViewFromModel:self->_triggers.triggers[0]];
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
@@ -172,6 +183,67 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceS
     }
     
     [NSLayoutConstraint activateConstraints:constraints];
+}
+
+- (void)_loadViewForModel:(const Trigger&)trigger {
+    // Time
+    {
+        switch (trigger.type) {
+        case Trigger::Type::Time:
+            _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeView);
+            [_timeField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]]; 
+            break;
+        case Trigger::Type::Motion:
+        case Trigger::Type::Button:
+            _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeRangeView);
+            [_timeStartField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]]; 
+            [_timeEndField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.end)]]; 
+            break;
+        default:
+            abort();
+        }
+        
+        [_repeatIntervalButton selectItemAtIndex:(NSInteger)trigger.time.repeatInterval];
+    }
+    
+    // Capture
+    {
+        [_captureCountField setObjectValue:@(trigger.capture.count)];
+        [_captureIntervalField setObjectValue:@(trigger.capture.intervalMs)];
+        #warning TODO: convert trigger.capture.interval to the appropriate unit (seconds/minutes/hours), and select the respective item in _captureIntervalUnitButton
+        [_captureIntervalUnitButton selectItemAtIndex:0];
+        
+        const bool green = trigger.capture.flashLEDs & Trigger::LEDs_::Green;
+        const bool red = trigger.capture.flashLEDs & Trigger::LEDs_::Red;
+        if (green && red) {
+            [_flashLEDCheckbox setState:NSControlStateValueOn];
+            [_flashLEDButton selectItemWithTitle:@"Both"];
+        } else if (green) {
+            [_flashLEDCheckbox setState:NSControlStateValueOn];
+            [_flashLEDButton selectItemWithTitle:@"Green"];
+        } else if (red) {
+            [_flashLEDCheckbox setState:NSControlStateValueOn];
+            [_flashLEDButton selectItemWithTitle:@"Red"];
+        } else {
+            [_flashLEDCheckbox setState:NSControlStateValueOff];
+            [_flashLEDButton selectItemWithTitle:@"Green"];
+        }
+    }
+    
+    // Limits
+    {
+        [_limitTriggerCountCheckbox setState:(trigger.limits.triggerCount ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_limitTriggerCountField setObjectValue:@(trigger.limits.triggerCount)];
+        
+        [_limitTotalTriggerCountCheckbox setState:(trigger.limits.triggerCountTotal ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_limitTotalTriggerCountField setObjectValue:@(trigger.limits.triggerCountTotal)];
+        
+        [_limitTriggerCountPeriodButton selectItemAtIndex:(NSInteger)trigger.limits.triggerCountPeriod];
+    }
+}
+
+- (void)_storeViewToModel:(Trigger&)trigger {
+    
 }
 
 - (IBAction)_action_captureCount:(id)sender {

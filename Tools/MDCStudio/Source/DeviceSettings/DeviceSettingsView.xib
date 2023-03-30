@@ -21,9 +21,11 @@
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
                 <outlet property="_repeatIntervalButton" destination="Q3l-kg-ZnT" id="ZLx-Sx-dxO"/>
                 <outlet property="_repeatIntervalContainerView" destination="OJP-qc-DX6" id="byI-Th-iIc"/>
-                <outlet property="_repeatIntervalLabel" destination="BHX-Gx-CcZ" id="GZF-a7-v0R"/>
                 <outlet property="_timeContainerView" destination="4R1-In-Kbb" id="z7v-tj-rSs"/>
+                <outlet property="_timeEndField" destination="gGO-69-NDw" id="lWJ-3y-Q04"/>
+                <outlet property="_timeField" destination="Vfd-bm-n7h" id="hHH-4i-GdL"/>
                 <outlet property="_timeRangeView" destination="ZTq-dS-LMW" id="gbG-oL-NDD"/>
+                <outlet property="_timeStartField" destination="35D-kR-T9a" id="xog-sm-S9q"/>
                 <outlet property="_timeView" destination="bvu-Ek-Vhq" id="mj7-ht-CBg"/>
                 <outlet property="_weeklyDaySelectorView" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
                 <outlet property="_yearlyDaySelectorView" destination="U49-dv-RHU" id="lCm-Lj-O6f"/>
@@ -35,13 +37,13 @@
             <rect key="frame" x="0.0" y="0.0" width="600" height="791"/>
             <subviews>
                 <scrollView autohidesScrollers="YES" horizontalLineScroll="32" horizontalPageScroll="10" verticalLineScroll="32" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RYD-Tl-az2">
-                    <rect key="frame" x="20" y="399" width="560" height="348"/>
+                    <rect key="frame" x="20" y="386" width="560" height="361"/>
                     <clipView key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
-                        <rect key="frame" x="1" y="1" width="558" height="346"/>
+                        <rect key="frame" x="1" y="1" width="558" height="359"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" rowHeight="30" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
-                                <rect key="frame" x="0.0" y="0.0" width="558" height="346"/>
+                            <tableView verticalHuggingPriority="750" misplaced="YES" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" rowHeight="30" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
+                                <rect key="frame" x="0.0" y="0.0" width="558" height="359"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -106,7 +108,7 @@
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gM0-RU-QRz">
-                    <rect key="frame" x="556" y="371" width="24" height="20"/>
+                    <rect key="frame" x="556" y="358" width="24" height="20"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="20" id="21u-GX-syF"/>
                         <constraint firstAttribute="width" constant="24" id="dDc-A4-sym"/>
@@ -117,7 +119,7 @@
                     </buttonCell>
                 </button>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sv3-nB-qTo">
-                    <rect key="frame" x="536" y="369" width="20" height="24"/>
+                    <rect key="frame" x="536" y="356" width="20" height="24"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="20" id="0Xu-8A-4nq"/>
                         <constraint firstAttribute="height" constant="24" id="2UC-X9-spL"/>
@@ -389,7 +391,7 @@
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="20" id="Jcp-3s-WDp"/>
                 <constraint firstItem="4vQ-IW-SoU" firstAttribute="trailing" secondItem="9iW-US-9Nz" secondAttribute="trailing" id="L8Z-hs-2uX"/>
                 <constraint firstItem="bd2-cb-0qM" firstAttribute="top" secondItem="Yym-4z-PG4" secondAttribute="bottom" constant="12" id="LR7-8K-FHb"/>
-                <constraint firstItem="oIx-Tj-uov" firstAttribute="top" secondItem="gM0-RU-QRz" secondAttribute="bottom" constant="13" id="MTd-tG-une"/>
+                <constraint firstItem="oIx-Tj-uov" firstAttribute="top" secondItem="gM0-RU-QRz" secondAttribute="bottom" id="MTd-tG-une"/>
                 <constraint firstItem="0cY-aD-cNx" firstAttribute="firstBaseline" secondItem="dmd-uc-OsP" secondAttribute="firstBaseline" id="MUs-Mn-bIn"/>
                 <constraint firstAttribute="trailing" secondItem="u1N-yv-zO7" secondAttribute="trailing" constant="20" id="Mvp-Uo-CSX"/>
                 <constraint firstItem="1RP-5M-ifT" firstAttribute="firstBaseline" secondItem="0mw-Q8-nb7" secondAttribute="firstBaseline" id="OUn-ft-Bdq"/>
