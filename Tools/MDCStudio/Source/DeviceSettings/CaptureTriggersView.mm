@@ -1,5 +1,6 @@
 #import "CaptureTriggersView.h"
 #import <vector>
+#import "Toastbox/Mac/Util.h"
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
@@ -17,31 +18,25 @@ struct [[gnu::packed]] Trigger {
         Yearly,
     };
     
-    using WeekDays = uint8_t;
-    struct WeekDays_ {
-        static constexpr WeekDays Mon = 1<<0;
-        static constexpr WeekDays Tue = 1<<1;
-        static constexpr WeekDays Wed = 1<<2;
-        static constexpr WeekDays Thu = 1<<3;
-        static constexpr WeekDays Fri = 1<<4;
-        static constexpr WeekDays Sat = 1<<5;
-        static constexpr WeekDays Sun = 1<<6;
+    enum class WeekDays : uint8_t {
+        None = 0,
+        Mon  = 1<<0,
+        Tue  = 1<<1,
+        Wed  = 1<<2,
+        Thu  = 1<<3,
+        Fri  = 1<<4,
+        Sat  = 1<<5,
+        Sun  = 1<<6,
     };
     
-    using MonthDays = uint32_t;
+    enum class MonthDays : uint8_t {};
+    
     using YearDays = uint32_t[12];
     
-    using LEDs = uint8_t;
-    struct LEDs_ {
-        static constexpr LEDs Green = 1<<0;
-        static constexpr LEDs Red = 1<<1;
-    };
-    
-    enum class LimitPeriod : uint8_t {
-        Activation,
-        Minute,
-        Hour,
-        Day,
+    enum class LEDs : uint8_t {
+        None  = 0,
+        Green = 1<<0,
+        Red   = 1<<1,
     };
     
     Type type = Type::Time;
@@ -60,7 +55,7 @@ struct [[gnu::packed]] Trigger {
     struct [[gnu::packed]] {
         uint32_t count = 0;
         uint32_t intervalMs = 0;
-        LEDs flashLEDs = 0;
+        LEDs flashLEDs = LEDs::None;
     } capture;
     
     struct [[gnu::packed]] {
@@ -167,8 +162,11 @@ struct [[gnu::packed]] Triggers {
     IBOutlet NSPopUpButton* _repeatIntervalButton;
     IBOutlet NSView* _repeatIntervalContainerView;
     IBOutlet CaptureTriggersView_DetailView* _weeklyDetailView;
+    IBOutlet NSSegmentedControl* _weekDaysControl;
     IBOutlet CaptureTriggersView_DetailView* _monthlyDetailView;
+    IBOutlet NSTextField* _monthDaysField;
     IBOutlet CaptureTriggersView_DetailView* _yearlyDetailView;
+    IBOutlet NSTextField* _yearDaysField;
     IBOutlet NSTextField* _timeField;
     IBOutlet NSTextField* _timeStartField;
     IBOutlet NSTextField* _timeEndField;
@@ -178,15 +176,14 @@ struct [[gnu::packed]] Triggers {
     IBOutlet NSTextField* _captureIntervalField;
     IBOutlet NSPopUpButton* _captureIntervalUnitButton;
     
-    IBOutlet NSButton* _flashLEDCheckbox;
-    IBOutlet NSPopUpButton* _flashLEDButton;
+    IBOutlet NSSegmentedControl* _flashLEDsControl;
     
     // Constraints
     IBOutlet NSView* _constraintsContainerView;
     IBOutlet CaptureTriggersView_DetailView* _constraintsDetailView;
     IBOutlet NSButton* _ignoreTriggerCheckbox;
-    IBOutlet NSTextField* _ignoreTriggerIntervalField;
-    IBOutlet NSPopUpButton* _ignoreTriggerIntervalUnitButton;
+    IBOutlet NSTextField* _ignoreTriggerDurationField;
+    IBOutlet NSPopUpButton* _ignoreTriggerDurationUnitButton;
     
     IBOutlet NSButton* _maxTriggerCountCheckbox;
     IBOutlet NSTextField* _maxTriggerCountField;
@@ -256,7 +253,7 @@ static void _Init(CaptureTriggersView* self) {
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
     if (!(self = [super initWithCoder:coder])) return nil;
-    _Init(self);    
+    _Init(self);   
     return self;
 }
 
@@ -286,13 +283,13 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
         switch (trigger.type) {
         case Trigger::Type::Time:
             _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
-            [_timeField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]]; 
+            [_timeField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]];
             break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
             _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeRangeDetailView);
-            [_timeStartField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]]; 
-            [_timeEndField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.end)]]; 
+            [_timeStartField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]];
+            [_timeEndField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.end)]];
             break;
         default:
             abort();
@@ -301,31 +298,19 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
         [_repeatIntervalButton selectItemAtIndex:(NSInteger)trigger.time.repeatInterval];
         switch (trigger.time.repeatInterval) {
         case Trigger::RepeatInterval::Daily:
-            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, nil); break;
+            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, nil);
             break;
         case Trigger::RepeatInterval::Weekly:
-            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDetailView); break;
+            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDetailView);
+            _Load(trigger.time.weekDays, _weekDaysControl);
             break;
         case Trigger::RepeatInterval::Monthly:
-            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDetailView); break;
+            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDetailView);
             break;
         case Trigger::RepeatInterval::Yearly:
-            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDetailView); break;
+            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDetailView);
             break;
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     }
     
     // Capture
@@ -335,21 +320,7 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
         #warning TODO: _captureIntervalUnitButton: select correct element depending on value
         [_captureIntervalUnitButton selectItemAtIndex:0];
         
-        const bool green = trigger.capture.flashLEDs & Trigger::LEDs_::Green;
-        const bool red = trigger.capture.flashLEDs & Trigger::LEDs_::Red;
-        if (green && red) {
-            [_flashLEDCheckbox setState:NSControlStateValueOn];
-            [_flashLEDButton selectItemWithTitle:@"Both"];
-        } else if (green) {
-            [_flashLEDCheckbox setState:NSControlStateValueOn];
-            [_flashLEDButton selectItemWithTitle:@"Green"];
-        } else if (red) {
-            [_flashLEDCheckbox setState:NSControlStateValueOn];
-            [_flashLEDButton selectItemWithTitle:@"Red"];
-        } else {
-            [_flashLEDCheckbox setState:NSControlStateValueOff];
-            [_flashLEDButton selectItemWithTitle:@"Green"];
-        }
+        _Load(trigger.capture.flashLEDs, _flashLEDsControl);
     }
     
     // Limits
@@ -367,9 +338,9 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
         }
         
         [_ignoreTriggerCheckbox setState:(trigger.constraints.ignoreTriggerDurationMs ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_ignoreTriggerIntervalField setObjectValue:@(trigger.constraints.ignoreTriggerDurationMs)];
-        #warning TODO: _ignoreTriggerIntervalUnitButton: select correct element depending on value
-        [_ignoreTriggerIntervalUnitButton selectItemAtIndex:0];
+        [_ignoreTriggerDurationField setObjectValue:@(trigger.constraints.ignoreTriggerDurationMs)];
+        #warning TODO: _ignoreTriggerDurationUnitButton: select correct element depending on value
+        [_ignoreTriggerDurationUnitButton selectItemAtIndex:0];
         
         [_maxTriggerCountCheckbox setState:(trigger.constraints.maxTriggerCount ? NSControlStateValueOn : NSControlStateValueOff)];
         [_maxTriggerCountField setObjectValue:@(trigger.constraints.maxTriggerCount)];
@@ -381,11 +352,148 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
     }
 }
 
+static void _Load(const Trigger::WeekDays& x, NSSegmentedControl* control) {
+    using X = std::remove_reference_t<decltype(x)>;
+    size_t idx = 0;
+    for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
+        [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
+        idx++;
+    }
+}
+
+static void _Store(Trigger::WeekDays& x, NSSegmentedControl* control) {
+    using X = std::remove_reference_t<decltype(x)>;
+    std::underlying_type_t<X> r = 0;
+    size_t idx = 0;
+    for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
+        r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
+        idx++;
+    }
+    x = static_cast<X>(r);
+}
+
+static void _Load(const Trigger::LEDs& x, NSSegmentedControl* control) {
+    using X = std::remove_reference_t<decltype(x)>;
+    size_t idx = 0;
+    for (auto y : { X::Green, X::Red }) {
+        [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
+        idx++;
+    }
+}
+
+static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
+    using X = std::remove_reference_t<decltype(x)>;
+    std::underlying_type_t<X> r = 0;
+    size_t idx = 0;
+    for (auto y : { X::Green, X::Red }) {
+        r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
+        idx++;
+    }
+    x = static_cast<X>(r);
+}
+
+
+//static void _MonthDaysLoad(const Trigger::MonthDays& days, NSSegmentedControl* control) {
+//    using D = Trigger::WeekDays_;
+//    size_t idx = 0;
+//    for (Trigger::WeekDays day : { D::Mon, D::Tue, D::Wed, D::Thu, D::Fri, D::Sat, D::Sun }) {
+//        [control setSelected:(days & day) forSegment:idx];
+//        idx++;
+//    }
+//}
+//
+//static void _MonthDaysStore(Trigger::MonthDays& days, NSSegmentedControl* control) {
+//    using D = Trigger::WeekDays_;
+//    size_t idx = 0;
+//    for (Trigger::WeekDays day : { D::Mon, D::Tue, D::Wed, D::Thu, D::Fri, D::Sat, D::Sun }) {
+//        days |= ([control isSelectedForSegment:idx] ? day : 0);
+//        idx++;
+//    }
+//}
+
 - (void)_storeViewToModel:(Trigger&)trigger {
+//    Type type = Type::Time;
+//    
+//    struct [[gnu::packed]] {
+//        uint32_t start = 0;
+//        uint32_t end = 0;
+//        RepeatInterval repeatInterval = RepeatInterval::Daily;
+//        union {
+//            WeekDays weekDays;
+//            MonthDays monthDays;
+//            YearDays yearDays;
+//        };
+//    } time;
+//    
+//    struct [[gnu::packed]] {
+//        uint32_t count = 0;
+//        uint32_t intervalMs = 0;
+//        LEDs flashLEDs = 0;
+//    } capture;
+//    
+//    struct [[gnu::packed]] {
+//        uint32_t ignoreTriggerDurationMs = 0;
+//        uint32_t maxTriggerCount = 0;
+//        uint32_t maxTotalTriggerCount = 0;
+//    } constraints;
     
+    
+    switch (trigger.type) {
+    case Trigger::Type::Time:
+        trigger.time.start = (uint32_t)[_timeField integerValue];
+        break;
+    case Trigger::Type::Motion:
+    case Trigger::Type::Button:
+        trigger.time.start = (uint32_t)[_timeStartField integerValue];
+        trigger.time.end = (uint32_t)[_timeEndField integerValue];
+        break;
+    default:
+        abort();
+    }
+    
+    trigger.time.repeatInterval = (Trigger::RepeatInterval)[_repeatIntervalButton indexOfSelectedItem];
+    
+    switch (trigger.time.repeatInterval) {
+    case Trigger::RepeatInterval::Daily:
+        break;
+    case Trigger::RepeatInterval::Weekly:
+        _Store(trigger.time.weekDays, _weekDaysControl);
+        break;
+    case Trigger::RepeatInterval::Monthly:
+//        trigger.time.monthDays = XXX;
+        break;
+    case Trigger::RepeatInterval::Yearly:
+//        trigger.time.yearDays = XXX;
+        break;
+    default:
+        abort();
+    }
+    
+    trigger.capture.count = (uint32_t)[_captureCountField integerValue];
+    trigger.capture.intervalMs = (uint32_t)[_captureIntervalField integerValue];
+    #warning TODO: trigger.capture.intervalMs: consider unit popup button!
+    _Store(trigger.capture.flashLEDs, _flashLEDsControl);
+    
+    #warning TODO: ignoreTriggerDurationMs: consider unit popup button!
+    trigger.constraints.ignoreTriggerDurationMs = (uint32_t)[_ignoreTriggerDurationField integerValue];
+    trigger.constraints.maxTriggerCount = (uint32_t)[_maxTriggerCountField integerValue];
+    trigger.constraints.maxTotalTriggerCount = (uint32_t)[_maxTotalTriggerCountField integerValue];
 }
 
 // MARK: - Actions
+
+- (ListItem*)_selectedItem {
+    NSInteger idx = [_tableView selectedRow];
+    if (idx < 0) return nil;
+    return _items.at(idx);
+}
+
+- (IBAction)_viewChangedAction:(id)sender {
+    ListItem* item = [self _selectedItem];
+    if (!item) return;
+    [self _storeViewToModel:item->trigger];
+    [self _loadViewForModel:item->trigger];
+}
 
 - (IBAction)_action_repeatInterval:(id)sender {
     NSInteger idx = [_repeatIntervalButton indexOfSelectedItem];
