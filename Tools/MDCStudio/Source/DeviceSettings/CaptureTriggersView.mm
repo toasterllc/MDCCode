@@ -39,11 +39,30 @@ struct [[gnu::packed]] Trigger {
         Red   = 1<<1,
     };
     
+    struct [[gnu::packed]] Duration {
+        enum class Unit : uint8_t {
+            Seconds,
+            Minutes,
+            Hours,
+            Days,
+        };
+        
+        uint32_t value = 0;
+        Unit unit = Unit::Seconds;
+    };
+    
     Type type = Type::Time;
     
     struct [[gnu::packed]] {
-        uint32_t start = 0;
-        uint32_t end = 0;
+        union {
+            uint32_t time;
+            
+            struct [[gnu::packed]] {
+                bool enable;
+                uint32_t start;
+                uint32_t end;
+            } timeRange;
+        };
         RepeatInterval repeatInterval = RepeatInterval::Daily;
         union {
             WeekDays weekDays;
@@ -54,14 +73,25 @@ struct [[gnu::packed]] Trigger {
     
     struct [[gnu::packed]] {
         uint32_t count = 0;
-        uint32_t intervalMs = 0;
+        Duration interval;
         LEDs flashLEDs = LEDs::None;
     } capture;
     
     struct [[gnu::packed]] {
-        uint32_t ignoreTriggerDurationMs = 0;
-        uint32_t maxTriggerCount = 0;
-        uint32_t maxTotalTriggerCount = 0;
+        struct [[gnu::packed]] {
+            bool enable = false;
+            Duration duration;
+        } ignoreTriggerDuration;
+        
+        struct [[gnu::packed]] {
+            bool enable = false;
+            uint32_t count = 0;
+        } maxTriggerCount;
+        
+        struct [[gnu::packed]] {
+            bool enable = false;
+            uint32_t count = 0;
+        } maxTotalTriggerCount;
     } constraints;
 };
 
@@ -283,13 +313,13 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
         switch (trigger.type) {
         case Trigger::Type::Time:
             _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
-            [_timeField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]];
+            [_timeField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.time)]];
             break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
             _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeRangeDetailView);
-            [_timeStartField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.start)]];
-            [_timeEndField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.end)]];
+            [_timeStartField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.timeRange.start)]];
+            [_timeEndField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.timeRange.end)]];
             break;
         default:
             abort();
@@ -316,9 +346,8 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
     // Capture
     {
         [_captureCountField setObjectValue:@(trigger.capture.count)];
-        [_captureIntervalField setObjectValue:@(trigger.capture.intervalMs)];
-        #warning TODO: _captureIntervalUnitButton: select correct element depending on value
-        [_captureIntervalUnitButton selectItemAtIndex:0];
+        [_captureIntervalField setObjectValue:@(trigger.capture.interval.value)];
+        [_captureIntervalUnitButton selectItemAtIndex:(NSInteger)trigger.capture.interval.unit];
         
         _Load(trigger.capture.flashLEDs, _flashLEDsControl);
     }
@@ -337,16 +366,14 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
             abort();
         }
         
-        [_ignoreTriggerCheckbox setState:(trigger.constraints.ignoreTriggerDurationMs ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_ignoreTriggerDurationField setObjectValue:@(trigger.constraints.ignoreTriggerDurationMs)];
-        #warning TODO: _ignoreTriggerDurationUnitButton: select correct element depending on value
-        [_ignoreTriggerDurationUnitButton selectItemAtIndex:0];
+        [_ignoreTriggerCheckbox setState:(trigger.constraints.ignoreTriggerDuration.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+        _Load(trigger.constraints.ignoreTriggerDuration.duration, _ignoreTriggerDurationField, _ignoreTriggerDurationUnitButton);
         
-        [_maxTriggerCountCheckbox setState:(trigger.constraints.maxTriggerCount ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_maxTriggerCountField setObjectValue:@(trigger.constraints.maxTriggerCount)];
+        [_maxTriggerCountCheckbox setState:(trigger.constraints.maxTriggerCount.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_maxTriggerCountField setObjectValue:@(trigger.constraints.maxTriggerCount.count)];
         
-        [_maxTotalTriggerCountCheckbox setState:(trigger.constraints.maxTotalTriggerCount ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_maxTotalTriggerCountField setObjectValue:@(trigger.constraints.maxTotalTriggerCount)];
+        [_maxTotalTriggerCountCheckbox setState:(trigger.constraints.maxTotalTriggerCount.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_maxTotalTriggerCountField setObjectValue:@(trigger.constraints.maxTotalTriggerCount.count)];
         
 //        [_maxTriggerCountPeriodButton selectItemAtIndex:(NSInteger)trigger.constraints.triggerCountPeriod];
     }
@@ -391,6 +418,28 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
     }
     x = static_cast<X>(r);
 }
+
+
+
+
+
+static void _Load(const Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
+    using X = std::remove_reference_t<decltype(x)>;
+    [field setObjectValue:@(x.value)];
+    [menu selectItemAtIndex:(NSInteger)x.unit];
+}
+
+static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
+    using X = std::remove_reference_t<decltype(x)>;
+    x.value = (uint32_t)[field integerValue];
+    x.unit = (Trigger::Duration::Unit)[menu indexOfSelectedItem];
+}
+
+
+
+
+
+
 
 
 //static void _MonthDaysLoad(const Trigger::MonthDays& days, NSSegmentedControl* control) {
@@ -440,12 +489,12 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
     
     switch (trigger.type) {
     case Trigger::Type::Time:
-        trigger.time.start = (uint32_t)[_timeField integerValue];
+        trigger.time.time = (uint32_t)[_timeField integerValue];
         break;
     case Trigger::Type::Motion:
     case Trigger::Type::Button:
-        trigger.time.start = (uint32_t)[_timeStartField integerValue];
-        trigger.time.end = (uint32_t)[_timeEndField integerValue];
+        trigger.time.timeRange.start = (uint32_t)[_timeStartField integerValue];
+        trigger.time.timeRange.end = (uint32_t)[_timeEndField integerValue];
         break;
     default:
         abort();
@@ -470,14 +519,18 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
     }
     
     trigger.capture.count = (uint32_t)[_captureCountField integerValue];
-    trigger.capture.intervalMs = (uint32_t)[_captureIntervalField integerValue];
-    #warning TODO: trigger.capture.intervalMs: consider unit popup button!
+    _Store(trigger.capture.interval, _captureIntervalField, _captureIntervalUnitButton);
     _Store(trigger.capture.flashLEDs, _flashLEDsControl);
     
     #warning TODO: ignoreTriggerDurationMs: consider unit popup button!
-    trigger.constraints.ignoreTriggerDurationMs = (uint32_t)[_ignoreTriggerDurationField integerValue];
-    trigger.constraints.maxTriggerCount = (uint32_t)[_maxTriggerCountField integerValue];
-    trigger.constraints.maxTotalTriggerCount = (uint32_t)[_maxTotalTriggerCountField integerValue];
+    trigger.constraints.ignoreTriggerDuration.enable = [_ignoreTriggerCheckbox state]==NSControlStateValueOn;
+    _Store(trigger.constraints.ignoreTriggerDuration.duration, _ignoreTriggerDurationField, _ignoreTriggerDurationUnitButton);
+    
+    trigger.constraints.maxTriggerCount.enable = [_maxTriggerCountCheckbox state]==NSControlStateValueOn;
+    trigger.constraints.maxTriggerCount.count = (uint32_t)[_maxTriggerCountField integerValue];
+    
+    trigger.constraints.maxTotalTriggerCount.enable = [_maxTotalTriggerCountCheckbox state]==NSControlStateValueOn;
+    trigger.constraints.maxTotalTriggerCount.count = (uint32_t)[_maxTotalTriggerCountField integerValue];
 }
 
 // MARK: - Actions
