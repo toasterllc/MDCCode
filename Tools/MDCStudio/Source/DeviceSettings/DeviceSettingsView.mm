@@ -137,7 +137,7 @@ static void _Init(DeviceSettingsView* self) {
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
-    [self _updateViewFromModel:self->_triggers.triggers[0]];
+    [self _loadViewForModel:self->_triggers.triggers[0]];
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
