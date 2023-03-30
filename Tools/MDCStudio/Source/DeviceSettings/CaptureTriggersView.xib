@@ -5,7 +5,7 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="DeviceSettingsView">
+        <customObject id="-2" userLabel="File's Owner" customClass="CaptureTriggersView">
             <connections>
                 <outlet property="_captureCountField" destination="Yym-4z-PG4" id="aUm-3a-YvK"/>
                 <outlet property="_captureIntervalField" destination="WTE-Pb-dq9" id="JNC-FL-uMV"/>
@@ -413,7 +413,7 @@
             </constraints>
             <point key="canvasLocation" x="251" y="141.5"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Time Range Detail View" customClass="DeviceSettingsView_DetailView">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Time Range Detail View" customClass="CaptureTriggersView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="247" height="21"/>
             <subviews>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="j28-bM-XnS">
@@ -471,7 +471,7 @@
             </connections>
             <point key="canvasLocation" x="456" y="638"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Time Detail View" customClass="DeviceSettingsView_DetailView">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Time Detail View" customClass="CaptureTriggersView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="212" height="21"/>
             <subviews>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PfN-UJ-gre">
@@ -505,7 +505,7 @@
             </connections>
             <point key="canvasLocation" x="-19" y="782"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Weekly Detail View" customClass="DeviceSettingsView_DetailView">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Weekly Detail View" customClass="CaptureTriggersView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="338" height="18"/>
             <subviews>
                 <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
@@ -536,7 +536,7 @@
             </connections>
             <point key="canvasLocation" x="8" y="618"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="SVc-di-VTv" userLabel="Monthly Detail View" customClass="DeviceSettingsView_DetailView">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="SVc-di-VTv" userLabel="Monthly Detail View" customClass="CaptureTriggersView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qYh-A4-SCy">
@@ -570,7 +570,7 @@
             </connections>
             <point key="canvasLocation" x="354" y="782"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Yearly Detail View" customClass="DeviceSettingsView_DetailView">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Yearly Detail View" customClass="CaptureTriggersView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZRY-hR-dS5">
@@ -604,7 +604,7 @@
             </connections>
             <point key="canvasLocation" x="46" y="910"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ihD-Oq-dCa" userLabel="Limits Detail View" customClass="DeviceSettingsView_DetailView">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ihD-Oq-dCa" userLabel="Limits Detail View" customClass="CaptureTriggersView_DetailView">
             <rect key="frame" x="0.0" y="0.0" width="451" height="66"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="8w2-7N-QIg">

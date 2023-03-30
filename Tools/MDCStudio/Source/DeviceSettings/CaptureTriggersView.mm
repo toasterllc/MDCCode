@@ -1,4 +1,4 @@
-#import "DeviceSettingsView.h"
+#import "CaptureTriggersView.h"
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
@@ -76,27 +76,27 @@ struct [[gnu::packed]] Triggers {
 
 
 
-@interface DeviceSettingsView_DetailView : NSView
+@interface CaptureTriggersView_DetailView : NSView
 @end
 
-@implementation DeviceSettingsView_DetailView {
+@implementation CaptureTriggersView_DetailView {
 @public
     IBOutlet NSView* alignLeadingView;
 }
 @end
 
-@implementation DeviceSettingsView {
+@implementation CaptureTriggersView {
     IBOutlet NSView* _nibView;
     
     // Time
     IBOutlet NSView* _timeContainerView;
-    IBOutlet DeviceSettingsView_DetailView* _timeDetailView;
-    IBOutlet DeviceSettingsView_DetailView* _timeRangeDetailView;
+    IBOutlet CaptureTriggersView_DetailView* _timeDetailView;
+    IBOutlet CaptureTriggersView_DetailView* _timeRangeDetailView;
     IBOutlet NSPopUpButton* _repeatIntervalButton;
     IBOutlet NSView* _repeatIntervalContainerView;
-    IBOutlet DeviceSettingsView_DetailView* _weeklyDetailView;
-    IBOutlet DeviceSettingsView_DetailView* _monthlyDetailView;
-    IBOutlet DeviceSettingsView_DetailView* _yearlyDetailView;
+    IBOutlet CaptureTriggersView_DetailView* _weeklyDetailView;
+    IBOutlet CaptureTriggersView_DetailView* _monthlyDetailView;
+    IBOutlet CaptureTriggersView_DetailView* _yearlyDetailView;
     IBOutlet NSTextField* _timeField;
     IBOutlet NSTextField* _timeStartField;
     IBOutlet NSTextField* _timeEndField;
@@ -111,7 +111,7 @@ struct [[gnu::packed]] Triggers {
     
     // Constraints
     IBOutlet NSView* _constraintsContainerView;
-    IBOutlet DeviceSettingsView_DetailView* _constraintsDetailView;
+    IBOutlet CaptureTriggersView_DetailView* _constraintsDetailView;
     IBOutlet NSButton* _ignoreTriggerCheckbox;
     IBOutlet NSTextField* _ignoreTriggerIntervalField;
     IBOutlet NSPopUpButton* _ignoreTriggerIntervalUnitButton;
@@ -125,7 +125,7 @@ struct [[gnu::packed]] Triggers {
     Triggers _triggers;
 }
 
-static void _Init(DeviceSettingsView* self) {
+static void _Init(CaptureTriggersView* self) {
     // Load view from nib
     {
         [self setTranslatesAutoresizingMaskIntoConstraints:false];
@@ -168,7 +168,7 @@ static void _Init(DeviceSettingsView* self) {
     _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
 }
 
-static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceSettingsView_DetailView* detailView) {
+static void _ShowDetailView(NSView* container, NSView* alignLeadingView, CaptureTriggersView_DetailView* detailView) {
     [detailView removeFromSuperview];
     [container setSubviews:@[]];
     if (!detailView) return;

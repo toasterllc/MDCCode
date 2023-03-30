@@ -721,7 +721,7 @@
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="179" y="218" width="672" height="531"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
-            <view key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="U52-Ez-6UZ" customClass="DeviceSettingsView">
+            <view key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="U52-Ez-6UZ" customClass="CaptureTriggersView">
                 <rect key="frame" x="0.0" y="0.0" width="672" height="531"/>
                 <autoresizingMask key="autoresizingMask"/>
             </view>

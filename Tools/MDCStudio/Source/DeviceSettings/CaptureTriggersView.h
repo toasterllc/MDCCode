@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
 
-@interface DeviceSettingsView : NSView
+@interface CaptureTriggersView : NSView
 - (instancetype)initWithFrame:(NSRect)frame;
 @end
