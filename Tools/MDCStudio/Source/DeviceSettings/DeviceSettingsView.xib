@@ -10,17 +10,17 @@
                 <outlet property="_captureCountField" destination="Yym-4z-PG4" id="aUm-3a-YvK"/>
                 <outlet property="_captureIntervalField" destination="WTE-Pb-dq9" id="JNC-FL-uMV"/>
                 <outlet property="_captureIntervalUnitButton" destination="i1A-N3-hrL" id="hVp-b6-b5i"/>
+                <outlet property="_constraintsContainerView" destination="2Xg-db-P6E" id="mRX-N0-xTW"/>
+                <outlet property="_constraintsDetailView" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
                 <outlet property="_flashLEDButton" destination="bd2-cb-0qM" id="l0Z-3V-DnY"/>
                 <outlet property="_flashLEDCheckbox" destination="4vQ-IW-SoU" id="X5L-s7-HIi"/>
                 <outlet property="_ignoreTriggerCheckbox" destination="xue-BB-gUz" id="FC5-OI-RhZ"/>
                 <outlet property="_ignoreTriggerIntervalField" destination="Ucp-vv-qKL" id="ngp-hK-RhZ"/>
                 <outlet property="_ignoreTriggerIntervalUnitButton" destination="0dn-kG-M5l" id="hj3-47-De7"/>
-                <outlet property="_limitTotalTriggerCountCheckbox" destination="MFX-Ck-e2M" id="Rc6-c8-ez3"/>
-                <outlet property="_limitTotalTriggerCountField" destination="dmd-uc-OsP" id="jKe-Ig-CnO"/>
-                <outlet property="_limitTriggerCountCheckbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
-                <outlet property="_limitTriggerCountField" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
-                <outlet property="_limitsContainerView" destination="2Xg-db-P6E" id="mRX-N0-xTW"/>
-                <outlet property="_limitsDetailView" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
+                <outlet property="_maxTotalTriggerCountCheckbox" destination="MFX-Ck-e2M" id="Rc6-c8-ez3"/>
+                <outlet property="_maxTotalTriggerCountField" destination="dmd-uc-OsP" id="jKe-Ig-CnO"/>
+                <outlet property="_maxTriggerCountCheckbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
+                <outlet property="_maxTriggerCountField" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
                 <outlet property="_monthlyDetailView" destination="SVc-di-VTv" id="BLO-uD-Mof"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
                 <outlet property="_repeatIntervalButton" destination="Q3l-kg-ZnT" id="ZLx-Sx-dxO"/>
@@ -205,7 +205,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="_action_limitTotalTriggerCount:" target="-2" id="bq2-Gn-6Mf"/>
+                        <action selector="_action_maxTotalTriggerCount:" target="-2" id="bq2-Gn-6Mf"/>
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dmd-uc-OsP">
@@ -219,7 +219,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="_action_limitTotalTriggerCount:" target="-2" id="r7K-VG-VxK"/>
+                        <action selector="_action_maxTotalTriggerCount:" target="-2" id="r7K-VG-VxK"/>
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0cY-aD-cNx">
@@ -639,7 +639,7 @@
                         </menu>
                     </popUpButtonCell>
                     <connections>
-                        <action selector="_action_limitTriggerCount:" target="-2" id="1RJ-rZ-1Na"/>
+                        <action selector="_action_maxTriggerCount:" target="-2" id="1RJ-rZ-1Na"/>
                     </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="IXU-RQ-Nel">
@@ -657,7 +657,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="_action_limitTriggerCount:" target="-2" id="aTF-Ga-t0i"/>
+                        <action selector="_action_maxTriggerCount:" target="-2" id="aTF-Ga-t0i"/>
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ucp-vv-qKL">
@@ -678,7 +678,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="_action_limitTriggerCount:" target="-2" id="37W-GV-ve7"/>
+                        <action selector="_action_maxTriggerCount:" target="-2" id="37W-GV-ve7"/>
                     </connections>
                 </button>
             </subviews>

@@ -66,7 +66,7 @@ struct [[gnu::packed]] Trigger {
         uint32_t ignoreTriggerDurationMs = 0;
         uint32_t maxTriggerCount = 0;
         uint32_t maxTotalTriggerCount = 0;
-    } limits;
+    } constraints;
 };
 
 struct [[gnu::packed]] Triggers {
@@ -109,18 +109,18 @@ struct [[gnu::packed]] Triggers {
     IBOutlet NSButton* _flashLEDCheckbox;
     IBOutlet NSPopUpButton* _flashLEDButton;
     
-    // Limits
-    IBOutlet NSView* _limitsContainerView;
-    IBOutlet DeviceSettingsView_DetailView* _limitsDetailView;
+    // Constraints
+    IBOutlet NSView* _constraintsContainerView;
+    IBOutlet DeviceSettingsView_DetailView* _constraintsDetailView;
     IBOutlet NSButton* _ignoreTriggerCheckbox;
     IBOutlet NSTextField* _ignoreTriggerIntervalField;
     IBOutlet NSPopUpButton* _ignoreTriggerIntervalUnitButton;
     
-    IBOutlet NSButton* _limitTriggerCountCheckbox;
-    IBOutlet NSTextField* _limitTriggerCountField;
+    IBOutlet NSButton* _maxTriggerCountCheckbox;
+    IBOutlet NSTextField* _maxTriggerCountField;
     
-    IBOutlet NSButton* _limitTotalTriggerCountCheckbox;
-    IBOutlet NSTextField* _limitTotalTriggerCountField;
+    IBOutlet NSButton* _maxTotalTriggerCountCheckbox;
+    IBOutlet NSTextField* _maxTotalTriggerCountField;
     
     Triggers _triggers;
 }
@@ -213,7 +213,7 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceS
     {
         [_captureCountField setObjectValue:@(trigger.capture.count)];
         [_captureIntervalField setObjectValue:@(trigger.capture.intervalMs)];
-        #warning TODO: convert trigger.capture.interval to the appropriate unit (seconds/minutes/hours), and select the respective item in _captureIntervalUnitButton
+        #warning TODO: _captureIntervalUnitButton: select correct element depending on value
         [_captureIntervalUnitButton selectItemAtIndex:0];
         
         const bool green = trigger.capture.flashLEDs & Trigger::LEDs_::Green;
@@ -237,23 +237,28 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceS
     {
         switch (trigger.type) {
         case Trigger::Type::Time:
-//            _ShowDetailView(_limitsContainerView, _limitTotalTriggerCountField, nil);
+//            _ShowDetailView(_constraintsContainerView, _maxTotalTriggerCountField, nil);
 //            break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
-            _ShowDetailView(_limitsContainerView, _limitTotalTriggerCountField, _limitsDetailView);
+            _ShowDetailView(_constraintsContainerView, _maxTotalTriggerCountField, _constraintsDetailView);
             break;
         default:
             abort();
         }
         
-        [_limitTriggerCountCheckbox setState:(trigger.limits.triggerCount ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_limitTriggerCountField setObjectValue:@(trigger.limits.triggerCount)];
+        [_ignoreTriggerCheckbox setState:(trigger.constraints.ignoreTriggerDurationMs ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_ignoreTriggerIntervalField setObjectValue:@(trigger.constraints.ignoreTriggerDurationMs)];
+        #warning TODO: _ignoreTriggerIntervalUnitButton: select correct element depending on value
+        [_ignoreTriggerIntervalUnitButton selectItemAtIndex:0];
         
-        [_limitTotalTriggerCountCheckbox setState:(trigger.limits.triggerCountTotal ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_limitTotalTriggerCountField setObjectValue:@(trigger.limits.triggerCountTotal)];
+        [_maxTriggerCountCheckbox setState:(trigger.constraints.maxTriggerCount ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_maxTriggerCountField setObjectValue:@(trigger.constraints.maxTriggerCount)];
         
-//        [_limitTriggerCountPeriodButton selectItemAtIndex:(NSInteger)trigger.limits.triggerCountPeriod];
+        [_maxTotalTriggerCountCheckbox setState:(trigger.constraints.maxTotalTriggerCount ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_maxTotalTriggerCountField setObjectValue:@(trigger.constraints.maxTotalTriggerCount)];
+        
+//        [_maxTriggerCountPeriodButton selectItemAtIndex:(NSInteger)trigger.constraints.triggerCountPeriod];
     }
 }
 
@@ -273,11 +278,11 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, DeviceS
     
 }
 
-- (IBAction)_action_limitTriggerCount:(id)sender {
+- (IBAction)_action_maxTriggerCount:(id)sender {
     
 }
 
-- (IBAction)_action_limitTotalTriggerCount:(id)sender {
+- (IBAction)_action_maxTotalTriggerCount:(id)sender {
     
 }
 
