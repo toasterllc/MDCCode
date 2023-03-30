@@ -1,4 +1,5 @@
 #import "CaptureTriggersView.h"
+#import <vector>
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
@@ -76,6 +77,75 @@ struct [[gnu::packed]] Triggers {
 
 
 
+
+
+
+
+
+
+
+@interface CaptureTriggersView_ListItem : NSTableCellView
+@end
+
+@implementation CaptureTriggersView_ListItem {
+@private
+    IBOutlet NSImageView* _imageView;
+    IBOutlet NSTextField* _label;
+@public
+    Trigger trigger;
+}
+
+- (void)updateView {
+    switch (trigger.type) {
+    case Trigger::Type::Time:
+        [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
+        break;
+    case Trigger::Type::Motion:
+        [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion"]];
+        break;
+    case Trigger::Type::Button:
+        [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Button"]];
+        break;
+    default:
+        abort();
+    }
+}
+
+@end
+
+
+#define ListItem CaptureTriggersView_ListItem
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @interface CaptureTriggersView_DetailView : NSView
 @end
 
@@ -87,6 +157,8 @@ struct [[gnu::packed]] Triggers {
 
 @implementation CaptureTriggersView {
     IBOutlet NSView* _nibView;
+    
+    IBOutlet NSTableView* _tableView;
     
     // Time
     IBOutlet NSView* _timeContainerView;
@@ -122,7 +194,12 @@ struct [[gnu::packed]] Triggers {
     IBOutlet NSButton* _maxTotalTriggerCountCheckbox;
     IBOutlet NSTextField* _maxTotalTriggerCountField;
     
-    Triggers _triggers;
+    std::vector<ListItem*> _items;
+}
+
+static ListItem* _ListItemCreate(NSTableView* v) {
+    assert(v);
+    return [v makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
 }
 
 static void _Init(CaptureTriggersView* self) {
@@ -140,8 +217,36 @@ static void _Init(CaptureTriggersView* self) {
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
-    [self _loadViewForModel:self->_triggers.triggers[0]];
+    {
+        ListItem* item = _ListItemCreate(self->_tableView);
+        Trigger& t = item->trigger;
+        t.type = Trigger::Type::Time;
+        [item updateView];
+        self->_items.push_back(item);
+    }
+    
+    {
+        ListItem* item = _ListItemCreate(self->_tableView);
+        Trigger& t = item->trigger;
+        t.type = Trigger::Type::Motion;
+        [item updateView];
+        self->_items.push_back(item);
+    }
+    
+    {
+        ListItem* item = _ListItemCreate(self->_tableView);
+        Trigger& t = item->trigger;
+        t.type = Trigger::Type::Button;
+        [item updateView];
+        self->_items.push_back(item);
+    }
+    
+    [self->_tableView reloadData];
+    
+//    [self _loadViewForModel:self->_triggers.triggers[0]];
 }
+
+// MARK: - Creation
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
@@ -153,19 +258,6 @@ static void _Init(CaptureTriggersView* self) {
     if (!(self = [super initWithCoder:coder])) return nil;
     _Init(self);    
     return self;
-}
-
-- (IBAction)_action_repeatInterval:(id)sender {
-    NSInteger idx = [_repeatIntervalButton indexOfSelectedItem];
-    switch (idx) {
-    case 0:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, nil); break;
-    case 1:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDetailView); break;
-    case 2:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDetailView); break;
-    case 3:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDetailView); break;
-    default:    abort();
-    }
-    
-    _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
 }
 
 static void _ShowDetailView(NSView* container, NSView* alignLeadingView, CaptureTriggersView_DetailView* detailView) {
@@ -207,6 +299,33 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
         }
         
         [_repeatIntervalButton selectItemAtIndex:(NSInteger)trigger.time.repeatInterval];
+        switch (trigger.time.repeatInterval) {
+        case Trigger::RepeatInterval::Daily:
+            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, nil); break;
+            break;
+        case Trigger::RepeatInterval::Weekly:
+            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDetailView); break;
+            break;
+        case Trigger::RepeatInterval::Monthly:
+            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDetailView); break;
+            break;
+        case Trigger::RepeatInterval::Yearly:
+            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDetailView); break;
+            break;
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     }
     
     // Capture
@@ -237,8 +356,8 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
     {
         switch (trigger.type) {
         case Trigger::Type::Time:
-//            _ShowDetailView(_constraintsContainerView, _maxTotalTriggerCountField, nil);
-//            break;
+            _ShowDetailView(_constraintsContainerView, _maxTotalTriggerCountField, nil);
+            break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
             _ShowDetailView(_constraintsContainerView, _maxTotalTriggerCountField, _constraintsDetailView);
@@ -266,6 +385,21 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
     
 }
 
+// MARK: - Actions
+
+- (IBAction)_action_repeatInterval:(id)sender {
+    NSInteger idx = [_repeatIntervalButton indexOfSelectedItem];
+    switch (idx) {
+    case 0:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, nil); break;
+    case 1:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDetailView); break;
+    case 2:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDetailView); break;
+    case 3:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDetailView); break;
+    default:    abort();
+    }
+    
+    _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
+}
+
 - (IBAction)_action_captureCount:(id)sender {
     
 }
@@ -284,6 +418,30 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
 
 - (IBAction)_action_maxTotalTriggerCount:(id)sender {
     
+}
+
+// MARK: - Table View Data Source / Delegate
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView*)tableView {
+    NSLog(@"numberOfRowsInTableView: %@", @(_items.size()));
+    return _items.size();
+}
+
+- (NSView*)tableView:(NSTableView*)tableView viewForTableColumn:(NSTableColumn*)tableColumn row:(NSInteger)row {
+    NSLog(@"viewForTableColumn: %@", _items.at(row));
+    return _items.at(row);
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification*)note {
+    NSInteger idx = [_tableView selectedRow];
+    if (idx < 0) return;
+    ListItem* item = _items.at(idx);
+    
+    [self _loadViewForModel:item->trigger];
+    
+//    item->trigger;
+//    
+//    NSLog(@"tableViewSelectionDidChange");
 }
 
 @end
