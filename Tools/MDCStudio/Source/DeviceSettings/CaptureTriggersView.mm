@@ -217,7 +217,7 @@ static _TimeFormatState& _TimeFormatStateGet() {
 }
 
 // 56789 -> 3:46:29 PM / 15:46:29 (depending on locale)
-static NSString* _TimeOfDayStringFromSeconds(uint32_t x, bool full=false) {
+static std::string _TimeOfDayStringFromSeconds(uint32_t x, bool full=false) {
 //    uint32_t second = x%60;
 //    uint32_t minute = x/60*60;
     const uint32_t h = x/(60*60);
@@ -235,23 +235,23 @@ static NSString* _TimeOfDayStringFromSeconds(uint32_t x, bool full=false) {
     [comp setSecond:s];
     NSDate* date = [_TimeFormatStateGet().calendar dateFromComponents:comp];
     
-    if (full) return [_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date];
+    if (full) return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
     
     if (!s && !m) {
-        return [_TimeFormatStateGet().dateFormatterHH stringFromDate:date];
+        return [[_TimeFormatStateGet().dateFormatterHH stringFromDate:date] UTF8String];
     } else if (!s) {
-        return [_TimeFormatStateGet().dateFormatterHHMM stringFromDate:date];
+        return [[_TimeFormatStateGet().dateFormatterHHMM stringFromDate:date] UTF8String];
     } else {
-        return [_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date];
+        return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
     }
 }
 
 // 3:46:29 PM / 15:46:29 -> 56789
-static uint32_t _SecondsFromTimeOfDayString(NSString* x) {
-    NSDate* date = [_TimeFormatStateGet().dateFormatterHHMMSS dateFromString:x];
-    if (!date) date = [_TimeFormatStateGet().dateFormatterHHMM dateFromString:x];
-    if (!date) date = [_TimeFormatStateGet().dateFormatterHH dateFromString:x];
-    if (!date) throw Toastbox::RuntimeError("invalid time of day: %s", [x UTF8String]);
+static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
+    NSDate* date = [_TimeFormatStateGet().dateFormatterHHMMSS dateFromString:@(x.c_str())];
+    if (!date) date = [_TimeFormatStateGet().dateFormatterHHMM dateFromString:@(x.c_str())];
+    if (!date) date = [_TimeFormatStateGet().dateFormatterHH dateFromString:@(x.c_str())];
+    if (!date) throw Toastbox::RuntimeError("invalid time of day: %s", x.c_str());
     
     NSDateComponents* comp = [_TimeFormatStateGet().calendar
         components:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond fromDate:date];
@@ -305,7 +305,6 @@ static std::string _StringForWeekDays(const Trigger::WeekDays& x) {
     using X = Trigger::WeekDays;
     // Only one day set
     switch (x) {
-    case X::None: return "Never";
     case X::Mon:  return "Mondays";
     case X::Tue:  return "Tuesdays";
     case X::Wed:  return "Wednesdays";
@@ -313,6 +312,7 @@ static std::string _StringForWeekDays(const Trigger::WeekDays& x) {
     case X::Fri:  return "Fridays";
     case X::Sat:  return "Saturdays";
     case X::Sun:  return "Sundays";
+    default:      break;
     }
     
     constexpr auto MF = (X)(std::to_underlying(X::Mon) |
@@ -336,7 +336,7 @@ static std::string _StringForWeekDays(const Trigger::WeekDays& x) {
         i++;
     }
     
-    if (count <= 3) return r;
+    if (count>0 && count<4) return r;
     return std::to_string(count) + " days per week";
 }
 
@@ -367,8 +367,7 @@ static std::string _StringForYearDays(const Trigger::YearDays& x) {
     switch (trigger.type) {
     case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
-        [_titleLabel setStringValue:[NSString stringWithFormat:@"At %@",
-            _TimeOfDayStringFromSeconds(trigger.time.schedule.time)]];
+        [_titleLabel setStringValue: @(("At " + _TimeOfDayStringFromSeconds(trigger.time.schedule.time)).c_str())];
         break;
     case Trigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion"]];
@@ -397,18 +396,31 @@ static std::string _StringForYearDays(const Trigger::YearDays& x) {
         default:                        abort();
         }
         [_subtitleLabel setStringValue:@(subtitle.c_str())];
-        
-//        NSMutableString* subtitle = [NSMutableString new];
-//        std::string cadence = StringFromCadence(x.schedule.cadence);
-//        cadence[0] = std::toupper(cadence[0]);
-//        [subtitle appendString:@(cadence.c_str())];
-//        [_subtitleLabel setStringValue:subtitle];
         break;
     }
     
     case Trigger::Type::Motion:
     case Trigger::Type::Button: {
+        auto& x = trigger.motionButton;
         
+        std::string subtitle;
+        if (x.schedule.dayLimit.enable) {
+            switch (x.schedule.dayLimit.cadence) {
+            case Trigger::Cadence::Weekly:  subtitle = _StringForWeekDays(x.schedule.dayLimit.weekDays); break;
+            case Trigger::Cadence::Monthly: subtitle = _StringForMonthDays(x.schedule.dayLimit.monthDays); break;
+            case Trigger::Cadence::Yearly:  subtitle = _StringForYearDays(x.schedule.dayLimit.yearDays); break;
+            default:                        abort();
+            }
+        }
+        
+        if (x.schedule.timeLimit.enable) {
+            if (!subtitle.empty()) subtitle += ", ";
+            subtitle += _TimeOfDayStringFromSeconds(x.schedule.timeLimit.start);
+            subtitle += " – ";
+            subtitle += _TimeOfDayStringFromSeconds(x.schedule.timeLimit.end);
+        }
+        
+        [_subtitleLabel setStringValue:@(subtitle.c_str())];
         break;
     }
     default:
@@ -671,9 +683,9 @@ static void _Copy(Trigger::Cadence& x, NSPopUpButton* menu) {
 template<bool T_Forward>
 static void _CopyTime(uint32_t& x, NSTextField* field) {
     if constexpr (T_Forward) {
-        [field setStringValue:_TimeOfDayStringFromSeconds(x)];
+        [field setStringValue:@(_TimeOfDayStringFromSeconds(x).c_str())];
     } else {
-        x = _SecondsFromTimeOfDayString([field stringValue]);
+        x = _SecondsFromTimeOfDayString([[field stringValue] UTF8String]);
     }
 }
 
