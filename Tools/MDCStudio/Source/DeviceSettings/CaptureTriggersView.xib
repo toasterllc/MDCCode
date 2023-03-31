@@ -70,7 +70,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="0.0" y="0.0" width="456" height="50"/>
+                                                <rect key="frame" x="1" y="1" width="456" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="8" y="13" width="24" height="24"/>
