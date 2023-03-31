@@ -27,12 +27,12 @@
                 <outlet property="_schedule_Motion_DaySelectorContainerView" destination="Jd9-lQ-a3S" id="ugZ-xT-TRK"/>
                 <outlet property="_schedule_Motion_LimitDays_Checkbox" destination="WpU-LG-czv" id="oGZ-Kn-4wu"/>
                 <outlet property="_schedule_Motion_LimitDays_Menu" destination="RN5-cz-MIP" id="TO7-Su-VdB"/>
-                <outlet property="_schedule_Motion_LimitTimeOfDay_Checkbox" destination="j28-bM-XnS" id="oat-UX-D3g"/>
-                <outlet property="_schedule_Motion_LimitTimeOfDay_TimeEndField" destination="gGO-69-NDw" id="lWJ-3y-Q04"/>
-                <outlet property="_schedule_Motion_LimitTimeOfDay_TimeStartField" destination="35D-kR-T9a" id="xog-sm-S9q"/>
+                <outlet property="_schedule_Motion_LimitTime_Checkbox" destination="j28-bM-XnS" id="oat-UX-D3g"/>
+                <outlet property="_schedule_Motion_LimitTime_TimeEndField" destination="gGO-69-NDw" id="lWJ-3y-Q04"/>
+                <outlet property="_schedule_Motion_LimitTime_TimeStartField" destination="35D-kR-T9a" id="xog-sm-S9q"/>
                 <outlet property="_schedule_Motion_View" destination="ZTq-dS-LMW" id="1gL-1a-8fb"/>
+                <outlet property="_schedule_Time_CadenceMenu" destination="Aqh-R6-EdY" id="sNy-bb-Kbh"/>
                 <outlet property="_schedule_Time_DaySelectorContainerView" destination="5tK-cV-igO" id="Ov6-YM-bWB"/>
-                <outlet property="_schedule_Time_RepeatIntervalMenu" destination="Aqh-R6-EdY" id="sNy-bb-Kbh"/>
                 <outlet property="_schedule_Time_TimeField" destination="Vfd-bm-n7h" id="hHH-4i-GdL"/>
                 <outlet property="_schedule_Time_View" destination="bvu-Ek-Vhq" id="Sbb-1d-ZG7"/>
                 <outlet property="_tableView" destination="RfV-Mq-Pvl" id="hYB-B3-xIy"/>

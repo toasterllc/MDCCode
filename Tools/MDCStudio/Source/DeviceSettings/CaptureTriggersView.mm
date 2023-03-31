@@ -12,7 +12,7 @@ struct [[gnu::packed]] Trigger {
         Button,
     };
     
-    enum class RepeatInterval : uint8_t {
+    enum class Cadence : uint8_t {
         Daily,
         Weekly,
         Monthly,
@@ -54,47 +54,57 @@ struct [[gnu::packed]] Trigger {
     
     Type type = Type::Time;
     
-    struct [[gnu::packed]] {
-        union {
+    union {
+        struct [[gnu::packed]] {
             struct [[gnu::packed]] {
                 uint32_t time;
-                RepeatInterval repeatInterval;
+                Cadence cadence;
                 union {
                     WeekDays weekDays;
                     MonthDays monthDays;
                     YearDays yearDays;
                 };
-            } time;
+            } schedule;
             
+            struct [[gnu::packed]] {
+                uint32_t count;
+                Duration interval;
+                LEDs flashLEDs;
+            } capture;
+            
+            struct [[gnu::packed]] {
+                struct [[gnu::packed]] {
+                    bool enable;
+                    uint32_t count;
+                } maxTotalTriggerCount;
+            } constraints;
+        } time;
+        
+        struct [[gnu::packed]] {
             struct [[gnu::packed]] {
                 struct [[gnu::packed]] {
                     bool enable;
                     uint32_t start;
                     uint32_t end;
-                } timeOfDayLimit;
+                } timeLimit;
                 
                 struct [[gnu::packed]] {
                     bool enable;
-                    RepeatInterval interval;
-                    
+                    Cadence cadence;
                     union {
                         WeekDays weekDays;
                         MonthDays monthDays;
                         YearDays yearDays;
                     };
                 } dayLimit;
-            } motionButton;
-        };
-    } schedule;
-    
-    struct [[gnu::packed]] {
-        uint32_t count = 0;
-        Duration interval;
-        LEDs flashLEDs = LEDs::None;
-    } capture;
-    
-    struct [[gnu::packed]] {
-        union {
+            } schedule;
+            
+            struct [[gnu::packed]] {
+                uint32_t count;
+                Duration interval;
+                LEDs flashLEDs;
+            } capture;
+            
             struct [[gnu::packed]] {
                 struct [[gnu::packed]] {
                     bool enable;
@@ -105,14 +115,14 @@ struct [[gnu::packed]] Trigger {
                     bool enable;
                     uint32_t count;
                 } maxTriggerCount;
-            } motionButton;
-        };
-        
-        struct [[gnu::packed]] {
-            bool enable = false;
-            uint32_t count = 0;
-        } maxTotalTriggerCount;
-    } constraints;
+                
+                struct [[gnu::packed]] {
+                    bool enable;
+                    uint32_t count;
+                } maxTotalTriggerCount;
+            } constraints;
+        } motionButton;
+    };
 };
 
 struct [[gnu::packed]] Triggers {
@@ -121,9 +131,47 @@ struct [[gnu::packed]] Triggers {
 };
 
 
+static std::string StringFromUnit(const Trigger::Duration::Unit& x) {
+    using X = std::remove_reference_t<decltype(x)>;
+    switch (x) {
+    case X::Seconds: return "seconds";
+    case X::Minutes: return "minutes";
+    case X::Hours:   return "hours";
+    case X::Days:    return "days";
+    default:         abort();
+    }
+}
 
+static Trigger::Duration::Unit UnitFromString(std::string x) {
+    using X = Trigger::Duration::Unit;
+    for (auto& c : x) c = std::tolower(c);
+         if (x == "seconds") return X::Seconds;
+    else if (x == "minutes") return X::Minutes;
+    else if (x == "hours")   return X::Hours;
+    else if (x == "days")    return X::Days;
+    else abort();
+}
 
+static std::string StringFromCadence(const Trigger::Cadence& x) {
+    using X = std::remove_reference_t<decltype(x)>;
+    switch (x) {
+    case X::Daily:   return "daily";
+    case X::Weekly:  return "weekly";
+    case X::Monthly: return "monthly";
+    case X::Yearly:  return "yearly";
+    default:         abort();
+    }
+}
 
+static Trigger::Cadence CadenceFromString(std::string x) {
+    using X = Trigger::Cadence;
+    for (auto& c : x) c = std::tolower(c);
+         if (x == "daily")   return X::Daily;
+    else if (x == "weekly")  return X::Weekly;
+    else if (x == "monthly") return X::Monthly;
+    else if (x == "yearly")  return X::Yearly;
+    else abort();
+}
 
 struct _TimeFormatState {
     NSCalendar* calendar = nil;
@@ -247,7 +295,7 @@ static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
     }
 }
 
-//        RepeatInterval repeatInterval = RepeatInterval::Daily;
+//        Cadence cadence = Cadence::Daily;
 //        union {
 //            WeekDays weekDays;
 //            MonthDays monthDays;
@@ -300,7 +348,7 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
         [_titleLabel setStringValue:[NSString stringWithFormat:@"At %@",
-            _TimeOfDayStringFromSeconds(trigger.schedule.time.time)]];
+            _TimeOfDayStringFromSeconds(trigger.time.schedule.time)]];
         break;
     case Trigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion"]];
@@ -318,11 +366,11 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
 //    {
 //        NSMutableString* subtitle = [NSMutableString new];
 //        
-//        switch (trigger.schedule.repeatInterval) {
-//        case Trigger::RepeatInterval::Daily:   [subtitle appendString:@"Daily"]; break;
-//        case Trigger::RepeatInterval::Weekly:  [subtitle appendString:_WeeklyString(trigger.schedule.weekDays)]; break;
-//        case Trigger::RepeatInterval::Monthly: [subtitle appendString:@"Monthly"]; break;
-//        case Trigger::RepeatInterval::Yearly:  [subtitle appendString:@"Yearly"]; break;
+//        switch (trigger.schedule.cadence) {
+//        case Trigger::Cadence::Daily:   [subtitle appendString:@"Daily"]; break;
+//        case Trigger::Cadence::Weekly:  [subtitle appendString:_WeeklyString(trigger.schedule.weekDays)]; break;
+//        case Trigger::Cadence::Monthly: [subtitle appendString:@"Monthly"]; break;
+//        case Trigger::Cadence::Yearly:  [subtitle appendString:@"Yearly"]; break;
 //        }
 //        
 //        switch (trigger.type) {
@@ -330,10 +378,10 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
 //            break;
 //        case Trigger::Type::Motion:
 //        case Trigger::Type::Button:
-//            if (trigger.schedule.timeOfDayRange.enable) {
+//            if (trigger.schedule.timeLimit.enable) {
 //                [subtitle appendFormat:@", %@ – %@",
-//                    _TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.start),
-//                    _TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.end)];
+//                    _TimeOfDayStringFromSeconds(trigger.schedule.timeLimit.start),
+//                    _TimeOfDayStringFromSeconds(trigger.schedule.timeLimit.end)];
 //            }
 //            break;
 //        default:
@@ -343,17 +391,17 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
 //        [_subtitleLabel setStringValue:subtitle];
 //    }
     
-    // Description
-    {
-        NSMutableString* desc = [NSMutableString stringWithFormat:@"capture %ju image%s",
-            (uintmax_t)trigger.capture.count, (trigger.capture.count!=1 ? "s" : "")];
-        if (trigger.capture.count>1 && trigger.capture.interval.value) {
-            [desc appendFormat:@" (%ju%s interval)",
-                (uintmax_t)trigger.capture.interval.value,
-                _SuffixForDurationUnit(trigger.capture.interval.unit)];
-        }
-        [_descriptionLabel setStringValue:desc];
-    }
+//    // Description
+//    {
+//        NSMutableString* desc = [NSMutableString stringWithFormat:@"capture %ju image%s",
+//            (uintmax_t)trigger.capture.count, (trigger.capture.count!=1 ? "s" : "")];
+//        if (trigger.capture.count>1 && trigger.capture.interval.value) {
+//            [desc appendFormat:@" (%ju%s interval)",
+//                (uintmax_t)trigger.capture.interval.value,
+//                _SuffixForDurationUnit(trigger.capture.interval.unit)];
+//        }
+//        [_descriptionLabel setStringValue:desc];
+//    }
 }
 
 @end
@@ -401,12 +449,12 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     IBOutlet NSView*        _schedule_Time_View;
     IBOutlet NSTextField*   _schedule_Time_TimeField;
     IBOutlet NSView*        _schedule_Time_DaySelectorContainerView;
-    IBOutlet NSPopUpButton* _schedule_Time_RepeatIntervalMenu;
+    IBOutlet NSPopUpButton* _schedule_Time_CadenceMenu;
     
     IBOutlet NSView*        _schedule_Motion_View;
-    IBOutlet NSButton*      _schedule_Motion_LimitTimeOfDay_Checkbox;
-    IBOutlet NSTextField*   _schedule_Motion_LimitTimeOfDay_TimeStartField;
-    IBOutlet NSTextField*   _schedule_Motion_LimitTimeOfDay_TimeEndField;
+    IBOutlet NSButton*      _schedule_Motion_LimitTime_Checkbox;
+    IBOutlet NSTextField*   _schedule_Motion_LimitTime_TimeStartField;
+    IBOutlet NSTextField*   _schedule_Motion_LimitTime_TimeEndField;
     IBOutlet NSButton*      _schedule_Motion_LimitDays_Checkbox;
     IBOutlet NSPopUpButton* _schedule_Motion_LimitDays_Menu;
     IBOutlet NSView*        _schedule_Motion_DaySelectorContainerView;
@@ -525,98 +573,51 @@ static void _SetContainerSubview(NSView* container, NSView* subview) {
     [NSLayoutConstraint activateConstraints:constraints];
 }
 
-static void _Load(const Trigger::RepeatInterval& x, NSPopUpButton* menu) {
-    using X = Trigger::RepeatInterval;
-    switch (x) {
-    case X::Daily:   [menu selectItemWithTitle:@"Daily"]; break;
-    case X::Weekly:  [menu selectItemWithTitle:@"Weekly"]; break;
-    case X::Monthly: [menu selectItemWithTitle:@"Monthly"]; break;
-    case X::Yearly:  [menu selectItemWithTitle:@"Yearly"]; break;
-    }
+static void _Load(const bool& x, NSButton* checkbox) {
+    [checkbox setState:(x ? NSControlStateValueOn : NSControlStateValueOff)];
 }
 
-- (void)_loadViewFromModel:(const Trigger&)trigger {
-    // Time
-    {
-        switch (trigger.type) {
-        case Trigger::Type::Time:
-            _SetContainerSubview(_schedule_ContainerView, _schedule_Time_View);
-            [_schedule_Time_TimeField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.time)];
-            
-            _Load(trigger.schedule.repeatInterval, _schedule_Time_RepeatIntervalMenu);
-            switch (trigger.schedule.repeatInterval) {
-            case Trigger::RepeatInterval::Daily:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, nil);
-                break;
-            case Trigger::RepeatInterval::Weekly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _weeklyDaySelector_View);
-                _Load(trigger.schedule.weekDays, _weeklyDaySelector_Control);
-                break;
-            case Trigger::RepeatInterval::Monthly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _monthlyDaySelector_View);
-                break;
-            case Trigger::RepeatInterval::Yearly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _yearlyDaySelector_View);
-                break;
-            }
-            
-            break;
-        case Trigger::Type::Motion:
-        case Trigger::Type::Button:
-            _SetContainerSubview(_schedule_ContainerView, _schedule_Motion_View);
-            
-            
-            
-            [_schedule_Motion_LimitTimeOfDay_Checkbox setState:(trigger.schedule.timeOfDayRange.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-            [_schedule_Motion_LimitTimeOfDay_TimeStartField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.start)];
-            [_schedule_Motion_LimitTimeOfDay_TimeEndField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.end)];
-            
-            [_schedule_Motion_LimitDays_Checkbox setState:(trigger.schedule.timeOfDayRange.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-            [_schedule_Motion_LimitTimeOfDay_TimeStartField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.start)];
-            [_schedule_Motion_LimitTimeOfDay_TimeEndField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.end)];
-            
-            
-            
-            break;
-        default:
-            abort();
-        }
-    }
-    
-    // Capture
-    {
-        [_capture_CountField setObjectValue:@(trigger.capture.count)];
-        [_capture_IntervalField setObjectValue:@(trigger.capture.interval.value)];
-        [_capture_IntervalUnitMenu selectItemAtIndex:(NSInteger)trigger.capture.interval.unit];
-        
-        _Load(trigger.capture.flashLEDs, _capture_FlashLEDsControl);
-    }
-    
-    // Limits
-    {
-        switch (trigger.type) {
-        case Trigger::Type::Time:
-            _SetContainerSubview(_constraints_ContainerView, _constraints_MaxTotalTriggerCount_Field, nil);
-            break;
-        case Trigger::Type::Motion:
-        case Trigger::Type::Button:
-            _SetContainerSubview(_constraints_ContainerView, _constraints_MaxTotalTriggerCount_Field, _constraints_MotionDetailView);
-            break;
-        default:
-            abort();
-        }
-        
-        [_constraints_IgnoreTrigger_Checkbox setState:(trigger.constraints.ignoreTriggerDuration.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-        _Load(trigger.constraints.ignoreTriggerDuration.duration, _constraints_IgnoreTrigger_DurationField, _constraints_IgnoreTrigger_DurationUnitMenu);
-        
-        [_constraints_MaxTriggerCount_Checkbox setState:(trigger.constraints.maxTriggerCount.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_constraints_MaxTriggerCount_Field setObjectValue:@(trigger.constraints.maxTriggerCount.count)];
-        
-        [_constraints_MaxTotalTriggerCount_Checkbox setState:(trigger.constraints.maxTotalTriggerCount.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_constraints_MaxTotalTriggerCount_Field setObjectValue:@(trigger.constraints.maxTotalTriggerCount.count)];
-        
-//        [_maxTriggerCountPeriodButton selectItemAtIndex:(NSInteger)trigger.constraints.triggerCountPeriod];
-    }
+static void _Store(bool& x, NSButton* checkbox) {
+    x = ([checkbox state] == NSControlStateValueOn);
+}
+
+static void _Load(const Trigger::Cadence& x, NSPopUpButton* menu) {
+    using X = std::remove_reference_t<decltype(x)>;
+    std::string xstr = StringFromCadence(x);
+    xstr[0] = std::toupper(xstr[0]);
+    [menu selectItemWithTitle:@(xstr.c_str())];
+}
+
+static void _Store(Trigger::Cadence& x, NSPopUpButton* menu) {
+    using X = std::remove_reference_t<decltype(x)>;
+    x = CadenceFromString([[menu titleOfSelectedItem] UTF8String]);
+}
+
+static void _LoadTime(const uint32_t& x, NSTextField* field) {
+    [field setStringValue:_TimeOfDayStringFromSeconds(x)];
+}
+
+static void _StoreTime(uint32_t& x, NSTextField* field) {
+    x = _SecondsFromTimeOfDayString([field stringValue]);
+}
+
+static void _Load(const uint32_t& x, NSTextField* field) {
+    [field setObjectValue:@(x)];
+}
+
+static void _Store(uint32_t& x, NSTextField* field) {
+    x = (uint32_t)[field integerValue];
+}
+
+static void _Load(const Trigger::Duration::Unit& x, NSPopUpButton* menu) {
+    using X = std::remove_reference_t<decltype(x)>;
+    [menu selectItemWithTitle:@(StringFromUnit(x).c_str())];
+}
+
+static void _Store(Trigger::Duration::Unit& x, NSPopUpButton* menu) {
+    using X = std::remove_reference_t<decltype(x)>;
+    const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
+    x = UnitFromString([[menu titleOfSelectedItem] UTF8String]);
 }
 
 static void _Load(const Trigger::WeekDays& x, NSSegmentedControl* control) {
@@ -639,6 +640,26 @@ static void _Store(Trigger::WeekDays& x, NSSegmentedControl* control) {
     x = static_cast<X>(r);
 }
 
+static void _Load(const Trigger::MonthDays& x, NSTextField* field) {
+    using X = std::remove_reference_t<decltype(x)>;
+    #warning TODO: implement
+}
+
+static void _Store(Trigger::MonthDays& x, NSTextField* control) {
+    using X = std::remove_reference_t<decltype(x)>;
+    #warning TODO: implement
+}
+
+static void _Load(const Trigger::YearDays& x, NSTextField* field) {
+    using X = std::remove_reference_t<decltype(x)>;
+    #warning TODO: implement
+}
+
+static void _Store(Trigger::YearDays& x, NSTextField* control) {
+    using X = std::remove_reference_t<decltype(x)>;
+    #warning TODO: implement
+}
+
 static void _Load(const Trigger::LEDs& x, NSSegmentedControl* control) {
     using X = std::remove_reference_t<decltype(x)>;
     size_t idx = 0;
@@ -659,21 +680,112 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
     x = static_cast<X>(r);
 }
 
-
-
-
-
-static void _Load(const Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
-    using X = std::remove_reference_t<decltype(x)>;
-    [field setObjectValue:@(x.value)];
-    [menu selectItemAtIndex:(NSInteger)x.unit];
+- (void)_loadViewFromModel:(const Trigger&)trigger {
+    switch (trigger.type) {
+    case Trigger::Type::Time: {
+        auto& x = trigger.time;
+        
+        // Schedule
+        {
+            _SetContainerSubview(_schedule_ContainerView, _schedule_Time_View);
+            _LoadTime(x.schedule.time, _schedule_Time_TimeField);
+            _Load(x.schedule.cadence, _schedule_Time_CadenceMenu);
+            switch (x.schedule.cadence) {
+            case Trigger::Cadence::Daily:
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, nil);
+                break;
+            case Trigger::Cadence::Weekly:
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _weeklyDaySelector_View);
+                _Load(x.schedule.weekDays, _weeklyDaySelector_Control);
+                break;
+            case Trigger::Cadence::Monthly:
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _monthlyDaySelector_View);
+                break;
+            case Trigger::Cadence::Yearly:
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _yearlyDaySelector_View);
+                break;
+            }
+        }
+        
+        // Capture
+        {
+            _Load(x.capture.count, _capture_CountField);
+            _Load(x.capture.interval.value, _capture_IntervalField);
+            _Load(x.capture.interval.unit, _capture_IntervalUnitMenu);
+            _Load(x.capture.flashLEDs, _capture_FlashLEDsControl);
+        }
+        
+        // Limits
+        {
+            _SetContainerSubview(_constraints_ContainerView, nil);
+            _Load(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
+            _Load(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);
+        }
+        
+        break;
+    }
+    
+    case Trigger::Type::Motion:
+    case Trigger::Type::Button: {
+        auto& x = trigger.motionButton;
+        
+        // Schedule
+        {
+            _SetContainerSubview(_schedule_ContainerView, _schedule_Motion_View);
+            
+            _Load(x.schedule.timeLimit.enable, _schedule_Motion_LimitTime_Checkbox);
+            _LoadTime(x.schedule.timeLimit.start, _schedule_Motion_LimitTime_TimeStartField);
+            _LoadTime(x.schedule.timeLimit.end, _schedule_Motion_LimitTime_TimeEndField);
+            _Load(x.schedule.dayLimit.enable, _schedule_Motion_LimitDays_Checkbox);
+            _Load(x.schedule.dayLimit.cadence, _schedule_Time_CadenceMenu);
+        }
+        
+        // Capture
+        {
+            _Load(x.capture.count, _capture_CountField);
+            _Load(x.capture.interval.value, _capture_IntervalField);
+            _Load(x.capture.interval.unit, _capture_IntervalUnitMenu);
+            _Load(x.capture.flashLEDs, _capture_FlashLEDsControl);
+        }
+        
+        // Limits
+        {
+            _SetContainerSubview(_constraints_ContainerView, _constraints_MotionDetailView);
+            
+            _Load(x.constraints.ignoreTriggerDuration.enable, _constraints_IgnoreTrigger_Checkbox);
+            _Load(x.constraints.ignoreTriggerDuration.duration.value, _constraints_IgnoreTrigger_DurationField);
+            _Load(x.constraints.ignoreTriggerDuration.duration.unit, _constraints_IgnoreTrigger_DurationUnitMenu);
+            
+            _Load(x.constraints.maxTriggerCount.enable, _constraints_MaxTriggerCount_Checkbox);
+            _Load(x.constraints.maxTriggerCount.count, _constraints_MaxTriggerCount_Field);
+            
+            _Load(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
+            _Load(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);
+        }
+        
+        break;
+    }
+    
+    default:
+        abort();
+    }
 }
 
-static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
-    using X = std::remove_reference_t<decltype(x)>;
-    x.value = (uint32_t)[field integerValue];
-    x.unit = (Trigger::Duration::Unit)[menu indexOfSelectedItem];
-}
+
+
+
+
+//static void _Load(const Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
+//    using X = std::remove_reference_t<decltype(x)>;
+//    [field setObjectValue:@(x.value)];
+//    [menu selectItemAtIndex:(NSInteger)x.unit];
+//}
+//
+//static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
+//    using X = std::remove_reference_t<decltype(x)>;
+//    x.value = (uint32_t)[field integerValue];
+//    x.unit = (Trigger::Duration::Unit)[menu indexOfSelectedItem];
+//}
 
 
 
@@ -701,84 +813,86 @@ static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu
 //}
 
 - (void)_storeViewToModel:(Trigger&)trigger {
-//    Type type = Type::Time;
-//    
-//    struct [[gnu::packed]] {
-//        uint32_t start = 0;
-//        uint32_t end = 0;
-//        RepeatInterval repeatInterval = RepeatInterval::Daily;
-//        union {
-//            WeekDays weekDays;
-//            MonthDays monthDays;
-//            YearDays yearDays;
-//        };
-//    } time;
-//    
-//    struct [[gnu::packed]] {
-//        uint32_t count = 0;
-//        uint32_t intervalMs = 0;
-//        LEDs flashLEDs = 0;
-//    } capture;
-//    
-//    struct [[gnu::packed]] {
-//        uint32_t ignoreTriggerDurationMs = 0;
-//        uint32_t maxTriggerCount = 0;
-//        uint32_t maxTotalTriggerCount = 0;
-//    } constraints;
-    
-    
     switch (trigger.type) {
-    case Trigger::Type::Time:
-        try {
-            trigger.schedule.time = _SecondsFromTimeOfDayString([_schedule_Time_TimeField stringValue]);
-        } catch (...) {}
+    case Trigger::Type::Time: {
+        auto& x = trigger.time;
+        
+        // Schedule
+        {
+            _StoreTime(x.schedule.time, _schedule_Time_TimeField);
+            _Store(x.schedule.cadence, _schedule_Time_CadenceMenu);
+            switch (x.schedule.cadence) {
+            case Trigger::Cadence::Daily:
+                break;
+            case Trigger::Cadence::Weekly:
+                _Store(x.schedule.weekDays, _weeklyDaySelector_Control);
+                break;
+            case Trigger::Cadence::Monthly:
+                _Store(x.schedule.monthDays, _monthlyDaySelector_Field);
+                break;
+            case Trigger::Cadence::Yearly:
+                _Store(x.schedule.yearDays, _yearlyDaySelector_Field);
+                break;
+            }
+        }
+        
+        // Capture
+        {
+            _Store(x.capture.count, _capture_CountField);
+            _Store(x.capture.interval.value, _capture_IntervalField);
+            _Store(x.capture.interval.unit, _capture_IntervalUnitMenu);
+            _Store(x.capture.flashLEDs, _capture_FlashLEDsControl);
+        }
+        
+        // Limits
+        {
+            _Store(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
+            _Store(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);
+        }
+        
         break;
+    }
     
     case Trigger::Type::Motion:
-    case Trigger::Type::Button:
-        trigger.schedule.timeOfDayRange.enable = [_schedule_Motion_LimitTimeOfDay_Checkbox state]==NSControlStateValueOn;
-        try {
-            trigger.schedule.timeOfDayRange.start = _SecondsFromTimeOfDayString([_schedule_Motion_LimitTimeOfDay_TimeStartField stringValue]);
-        } catch (...) {}
-        try {
-            trigger.schedule.timeOfDayRange.end = _SecondsFromTimeOfDayString([_schedule_Motion_LimitTimeOfDay_TimeEndField stringValue]);
-        } catch (...) {}
+    case Trigger::Type::Button: {
+        auto& x = trigger.motionButton;
+        
+        // Schedule
+        {
+            _Store(x.schedule.timeLimit.enable, _schedule_Motion_LimitTime_Checkbox);
+            _StoreTime(x.schedule.timeLimit.start, _schedule_Motion_LimitTime_TimeStartField);
+            _StoreTime(x.schedule.timeLimit.end, _schedule_Motion_LimitTime_TimeEndField);
+            _Store(x.schedule.dayLimit.enable, _schedule_Motion_LimitDays_Checkbox);
+            _Store(x.schedule.dayLimit.cadence, _schedule_Time_CadenceMenu);
+        }
+        
+        // Capture
+        {
+            _Store(x.capture.count, _capture_CountField);
+            _Store(x.capture.interval.value, _capture_IntervalField);
+            _Store(x.capture.interval.unit, _capture_IntervalUnitMenu);
+            _Store(x.capture.flashLEDs, _capture_FlashLEDsControl);
+        }
+        
+        // Limits
+        {
+            _Store(x.constraints.ignoreTriggerDuration.enable, _constraints_IgnoreTrigger_Checkbox);
+            _Store(x.constraints.ignoreTriggerDuration.duration.value, _constraints_IgnoreTrigger_DurationField);
+            _Store(x.constraints.ignoreTriggerDuration.duration.unit, _constraints_IgnoreTrigger_DurationUnitMenu);
+            
+            _Store(x.constraints.maxTriggerCount.enable, _constraints_MaxTriggerCount_Checkbox);
+            _Store(x.constraints.maxTriggerCount.count, _constraints_MaxTriggerCount_Field);
+            
+            _Store(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
+            _Store(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);
+        }
+        
         break;
+    }
+    
     default:
         abort();
     }
-    
-    trigger.schedule.repeatInterval = (Trigger::RepeatInterval)[_repeatIntervalButton indexOfSelectedItem];
-    
-    switch (trigger.schedule.repeatInterval) {
-    case Trigger::RepeatInterval::Daily:
-        break;
-    case Trigger::RepeatInterval::Weekly:
-        _Store(trigger.schedule.weekDays, _weeklyDaySelector_Control);
-        break;
-    case Trigger::RepeatInterval::Monthly:
-//        trigger.schedule.monthDays = XXX;
-        break;
-    case Trigger::RepeatInterval::Yearly:
-//        trigger.schedule.yearDays = XXX;
-        break;
-    default:
-        abort();
-    }
-    
-    trigger.capture.count = (uint32_t)[_capture_CountField integerValue];
-    _Store(trigger.capture.interval, _capture_IntervalField, _capture_IntervalUnitMenu);
-    _Store(trigger.capture.flashLEDs, _capture_FlashLEDsControl);
-    
-    #warning TODO: ignoreTriggerDurationMs: consider unit popup button!
-    trigger.constraints.ignoreTriggerDuration.enable = [_constraints_IgnoreTrigger_Checkbox state]==NSControlStateValueOn;
-    _Store(trigger.constraints.ignoreTriggerDuration.duration, _constraints_IgnoreTrigger_DurationField, _constraints_IgnoreTrigger_DurationUnitMenu);
-    
-    trigger.constraints.maxTriggerCount.enable = [_constraints_MaxTriggerCount_Checkbox state]==NSControlStateValueOn;
-    trigger.constraints.maxTriggerCount.count = (uint32_t)[_constraints_MaxTriggerCount_Field integerValue];
-    
-    trigger.constraints.maxTotalTriggerCount.enable = [_constraints_MaxTotalTriggerCount_Checkbox state]==NSControlStateValueOn;
-    trigger.constraints.maxTotalTriggerCount.count = (uint32_t)[_constraints_MaxTotalTriggerCount_Field integerValue];
 }
 
 // MARK: - Actions
@@ -797,17 +911,8 @@ static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu
     [item updateView];
 }
 
-- (IBAction)_action_repeatInterval:(id)sender {
-    NSInteger idx = [_repeatIntervalButton indexOfSelectedItem];
-    switch (idx) {
-    case 0:     _SetContainerSubview(_repeatIntervalContainerView, _repeatIntervalButton, nil); break;
-    case 1:     _SetContainerSubview(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDaySelector_View); break;
-    case 2:     _SetContainerSubview(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDaySelector_View); break;
-    case 3:     _SetContainerSubview(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDaySelector_View); break;
-    default:    abort();
-    }
+- (IBAction)_action_cadence:(id)sender {
     
-    _SetContainerSubview(_timeContainerView, _repeatIntervalButton, _timeDetailView);
 }
 
 - (IBAction)_action_captureCount:(id)sender {
