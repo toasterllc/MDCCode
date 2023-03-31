@@ -436,6 +436,16 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
 
 
 
+@interface CaptureTriggersView_ContainerSubview : NSView
+@end
+
+@implementation CaptureTriggersView_ContainerSubview {
+@public
+    IBOutlet NSView* alignView;
+}
+@end
+
+#define ContainerSubview CaptureTriggersView_ContainerSubview
 
 
 @implementation CaptureTriggersView {
@@ -444,29 +454,29 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     IBOutlet NSTableView* _tableView;
     
     // Schedule
-    IBOutlet NSView*        _schedule_ContainerView;
+    IBOutlet NSView*            _schedule_ContainerView;
     
-    IBOutlet NSView*        _schedule_Time_View;
-    IBOutlet NSTextField*   _schedule_Time_TimeField;
-    IBOutlet NSView*        _schedule_Time_DaySelectorContainerView;
-    IBOutlet NSPopUpButton* _schedule_Time_CadenceMenu;
+    IBOutlet ContainerSubview*  _schedule_Time_View;
+    IBOutlet NSTextField*       _schedule_Time_TimeField;
+    IBOutlet NSView*            _schedule_Time_DaySelectorContainerView;
+    IBOutlet NSPopUpButton*     _schedule_Time_CadenceMenu;
     
-    IBOutlet NSView*        _schedule_Motion_View;
-    IBOutlet NSButton*      _schedule_Motion_LimitTime_Checkbox;
-    IBOutlet NSTextField*   _schedule_Motion_LimitTime_TimeStartField;
-    IBOutlet NSTextField*   _schedule_Motion_LimitTime_TimeEndField;
-    IBOutlet NSButton*      _schedule_Motion_LimitDays_Checkbox;
-    IBOutlet NSPopUpButton* _schedule_Motion_LimitDays_Menu;
-    IBOutlet NSView*        _schedule_Motion_DaySelectorContainerView;
+    IBOutlet ContainerSubview*  _schedule_Motion_View;
+    IBOutlet NSButton*          _schedule_Motion_LimitTime_Checkbox;
+    IBOutlet NSTextField*       _schedule_Motion_LimitTime_TimeStartField;
+    IBOutlet NSTextField*       _schedule_Motion_LimitTime_TimeEndField;
+    IBOutlet NSButton*          _schedule_Motion_LimitDays_Checkbox;
+    IBOutlet NSPopUpButton*     _schedule_Motion_LimitDays_Menu;
+    IBOutlet NSView*            _schedule_Motion_DaySelectorContainerView;
     
-    IBOutlet NSView*             _weeklyDaySelector_View;
+    IBOutlet ContainerSubview*   _weeklyDaySelector_View;
     IBOutlet NSSegmentedControl* _weeklyDaySelector_Control;
     
-    IBOutlet NSView*        _monthlyDaySelector_View;
-    IBOutlet NSTextField*   _monthlyDaySelector_Field;
+    IBOutlet ContainerSubview*  _monthlyDaySelector_View;
+    IBOutlet NSTextField*       _monthlyDaySelector_Field;
     
-    IBOutlet NSView*        _yearlyDaySelector_View;
-    IBOutlet NSTextField*   _yearlyDaySelector_Field;
+    IBOutlet ContainerSubview*  _yearlyDaySelector_View;
+    IBOutlet NSTextField*       _yearlyDaySelector_Field;
     
     // Capture
     IBOutlet NSTextField*        _capture_CountField;
@@ -475,14 +485,14 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     IBOutlet NSSegmentedControl* _capture_FlashLEDsControl;
     
     // Constraints
-    IBOutlet NSView*        _constraints_ContainerView;
-    IBOutlet NSView*        _constraints_MotionDetailView;
-    IBOutlet NSButton*      _constraints_IgnoreTrigger_Checkbox;
-    IBOutlet NSTextField*   _constraints_IgnoreTrigger_DurationField;
-    IBOutlet NSPopUpButton* _constraints_IgnoreTrigger_DurationUnitMenu;
+    IBOutlet NSView*            _constraints_ContainerView;
     
-    IBOutlet NSButton*      _constraints_MaxTriggerCount_Checkbox;
-    IBOutlet NSTextField*   _constraints_MaxTriggerCount_Field;
+    IBOutlet ContainerSubview*  _constraints_Motion_View;
+    IBOutlet NSButton*          _constraints_Motion_IgnoreTrigger_Checkbox;
+    IBOutlet NSTextField*       _constraints_Motion_IgnoreTrigger_DurationField;
+    IBOutlet NSPopUpButton*     _constraints_Motion_IgnoreTrigger_DurationUnitMenu;
+    IBOutlet NSButton*          _constraints_Motion_MaxTriggerCount_Checkbox;
+    IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_Field;
     
     IBOutlet NSButton*      _constraints_MaxTotalTriggerCount_Checkbox;
     IBOutlet NSTextField*   _constraints_MaxTotalTriggerCount_Field;
@@ -553,7 +563,10 @@ static void _Init(CaptureTriggersView* self) {
     return self;
 }
 
-static void _SetContainerSubview(NSView* container, NSView* subview) {
+static void _SetContainerSubview(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
+    // Either subview==nil, or existence of `alignView` matches existence of `subview->alignView`
+    assert(!subview || ((bool)alignView == (bool)subview->alignView));
+    
     [subview removeFromSuperview];
     [container setSubviews:@[]];
     if (!subview) return;
@@ -561,14 +574,14 @@ static void _SetContainerSubview(NSView* container, NSView* subview) {
     [container addSubview:subview];
     
     NSMutableArray* constraints = [NSMutableArray new];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(>=0)-[subview]|"
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[subview]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[subview]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
     
-//    if (subview->alignLeadingView) {
-//        [constraints addObject:[[subview->alignLeadingView leadingAnchor] constraintEqualToAnchor:[alignLeadingView leadingAnchor]]];
-//    }
+    if (alignView) {
+        [constraints addObject:[[subview->alignView leadingAnchor] constraintEqualToAnchor:[alignView leadingAnchor]]];
+    }
     
     [NSLayoutConstraint activateConstraints:constraints];
 }
@@ -695,14 +708,14 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
                 _SetContainerSubview(_schedule_Time_DaySelectorContainerView, nil);
                 break;
             case Trigger::Cadence::Weekly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _weeklyDaySelector_View);
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _weeklyDaySelector_View, _schedule_Time_CadenceMenu);
                 _Load(x.schedule.weekDays, _weeklyDaySelector_Control);
                 break;
             case Trigger::Cadence::Monthly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _monthlyDaySelector_View);
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _monthlyDaySelector_View, _schedule_Time_CadenceMenu);
                 break;
             case Trigger::Cadence::Yearly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _yearlyDaySelector_View);
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _yearlyDaySelector_View, _schedule_Time_CadenceMenu);
                 break;
             }
         }
@@ -750,14 +763,14 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
         
         // Limits
         {
-            _SetContainerSubview(_constraints_ContainerView, _constraints_MotionDetailView);
+            _SetContainerSubview(_constraints_ContainerView, _constraints_Motion_View, _constraints_MaxTotalTriggerCount_Field);
             
-            _Load(x.constraints.ignoreTriggerDuration.enable, _constraints_IgnoreTrigger_Checkbox);
-            _Load(x.constraints.ignoreTriggerDuration.duration.value, _constraints_IgnoreTrigger_DurationField);
-            _Load(x.constraints.ignoreTriggerDuration.duration.unit, _constraints_IgnoreTrigger_DurationUnitMenu);
+            _Load(x.constraints.ignoreTriggerDuration.enable, _constraints_Motion_IgnoreTrigger_Checkbox);
+            _Load(x.constraints.ignoreTriggerDuration.duration.value, _constraints_Motion_IgnoreTrigger_DurationField);
+            _Load(x.constraints.ignoreTriggerDuration.duration.unit, _constraints_Motion_IgnoreTrigger_DurationUnitMenu);
             
-            _Load(x.constraints.maxTriggerCount.enable, _constraints_MaxTriggerCount_Checkbox);
-            _Load(x.constraints.maxTriggerCount.count, _constraints_MaxTriggerCount_Field);
+            _Load(x.constraints.maxTriggerCount.enable, _constraints_Motion_MaxTriggerCount_Checkbox);
+            _Load(x.constraints.maxTriggerCount.count, _constraints_Motion_MaxTriggerCount_Field);
             
             _Load(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
             _Load(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);
@@ -876,12 +889,12 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
         
         // Limits
         {
-            _Store(x.constraints.ignoreTriggerDuration.enable, _constraints_IgnoreTrigger_Checkbox);
-            _Store(x.constraints.ignoreTriggerDuration.duration.value, _constraints_IgnoreTrigger_DurationField);
-            _Store(x.constraints.ignoreTriggerDuration.duration.unit, _constraints_IgnoreTrigger_DurationUnitMenu);
+            _Store(x.constraints.ignoreTriggerDuration.enable, _constraints_Motion_IgnoreTrigger_Checkbox);
+            _Store(x.constraints.ignoreTriggerDuration.duration.value, _constraints_Motion_IgnoreTrigger_DurationField);
+            _Store(x.constraints.ignoreTriggerDuration.duration.unit, _constraints_Motion_IgnoreTrigger_DurationUnitMenu);
             
-            _Store(x.constraints.maxTriggerCount.enable, _constraints_MaxTriggerCount_Checkbox);
-            _Store(x.constraints.maxTriggerCount.count, _constraints_MaxTriggerCount_Field);
+            _Store(x.constraints.maxTriggerCount.enable, _constraints_Motion_MaxTriggerCount_Checkbox);
+            _Store(x.constraints.maxTriggerCount.count, _constraints_Motion_MaxTriggerCount_Field);
             
             _Store(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
             _Store(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);

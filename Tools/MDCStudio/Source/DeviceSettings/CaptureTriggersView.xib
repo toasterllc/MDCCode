@@ -12,14 +12,14 @@
                 <outlet property="_capture_IntervalField" destination="WTE-Pb-dq9" id="JNC-FL-uMV"/>
                 <outlet property="_capture_IntervalUnitMenu" destination="i1A-N3-hrL" id="hVp-b6-b5i"/>
                 <outlet property="_constraints_ContainerView" destination="2Xg-db-P6E" id="mRX-N0-xTW"/>
-                <outlet property="_constraints_IgnoreTrigger_Checkbox" destination="xue-BB-gUz" id="FC5-OI-RhZ"/>
-                <outlet property="_constraints_IgnoreTrigger_DurationField" destination="Ucp-vv-qKL" id="ngp-hK-RhZ"/>
-                <outlet property="_constraints_IgnoreTrigger_DurationUnitMenu" destination="0dn-kG-M5l" id="hj3-47-De7"/>
                 <outlet property="_constraints_MaxTotalTriggerCount_Checkbox" destination="MFX-Ck-e2M" id="Rc6-c8-ez3"/>
                 <outlet property="_constraints_MaxTotalTriggerCount_Field" destination="dmd-uc-OsP" id="jKe-Ig-CnO"/>
-                <outlet property="_constraints_MaxTriggerCount_Checkbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
-                <outlet property="_constraints_MaxTriggerCount_Field" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
-                <outlet property="_constraints_MotionDetailView" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
+                <outlet property="_constraints_Motion_IgnoreTrigger_Checkbox" destination="xue-BB-gUz" id="FC5-OI-RhZ"/>
+                <outlet property="_constraints_Motion_IgnoreTrigger_DurationField" destination="Ucp-vv-qKL" id="ngp-hK-RhZ"/>
+                <outlet property="_constraints_Motion_IgnoreTrigger_DurationUnitMenu" destination="0dn-kG-M5l" id="hj3-47-De7"/>
+                <outlet property="_constraints_Motion_MaxTriggerCount_Checkbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
+                <outlet property="_constraints_Motion_MaxTriggerCount_Field" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
+                <outlet property="_constraints_Motion_View" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
                 <outlet property="_monthlyDaySelector_Field" destination="YQ1-gj-xVe" id="4T4-lz-PVv"/>
                 <outlet property="_monthlyDaySelector_View" destination="SVc-di-VTv" id="BLO-uD-Mof"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
@@ -413,7 +413,7 @@
             </constraints>
             <point key="canvasLocation" x="250.5" y="58.5"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Schedule - Motion / Button">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Schedule - Motion" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="572" height="96"/>
             <subviews>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="j28-bM-XnS">
@@ -463,7 +463,7 @@
                     </connections>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Jd9-lQ-a3S" userLabel="Repeat Interval Container View">
-                    <rect key="frame" x="92" y="0.0" width="480" height="30"/>
+                    <rect key="frame" x="0.0" y="0.0" width="572" height="30"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="30" placeholder="YES" id="PC3-jA-aCM"/>
                         <constraint firstAttribute="height" priority="250" id="RgM-qq-SGC"/>
@@ -502,8 +502,8 @@
                 <constraint firstItem="RN5-cz-MIP" firstAttribute="top" secondItem="35D-kR-T9a" secondAttribute="bottom" constant="12" id="4lS-CD-PAB"/>
                 <constraint firstItem="j28-bM-XnS" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="DKJ-6h-Af1"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="leading" secondItem="j28-bM-XnS" secondAttribute="trailing" constant="8" id="EX1-wZ-nbH"/>
-                <constraint firstItem="Jd9-lQ-a3S" firstAttribute="leading" secondItem="RN5-cz-MIP" secondAttribute="leading" id="Ge8-3k-S5v"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="gGO-69-NDw" secondAttribute="trailing" id="LjE-Gt-nq5"/>
+                <constraint firstItem="Jd9-lQ-a3S" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="MN6-zV-gDL"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="top" secondItem="ZTq-dS-LMW" secondAttribute="top" id="OIl-bK-M2M"/>
                 <constraint firstItem="RN5-cz-MIP" firstAttribute="leading" secondItem="WpU-LG-czv" secondAttribute="trailing" constant="8" id="Od7-mV-ufi"/>
                 <constraint firstItem="RN5-cz-MIP" firstAttribute="firstBaseline" secondItem="WpU-LG-czv" secondAttribute="firstBaseline" id="Q7W-C7-T0n"/>
@@ -519,12 +519,9 @@
                 <constraint firstItem="WpU-LG-czv" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" priority="750" id="qqB-yQ-Idd"/>
                 <constraint firstItem="j28-bM-XnS" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" priority="750" id="uVK-Og-56V"/>
             </constraints>
-            <connections>
-                <outlet property="alignLeadingView" destination="35D-kR-T9a" id="IU9-3x-bgf"/>
-            </connections>
             <point key="canvasLocation" x="694" y="485"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Schedule - Time">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Schedule - Time" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="491" height="96"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="PfN-UJ-gre">
@@ -573,7 +570,7 @@
                     </connections>
                 </popUpButton>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="5tK-cV-igO" userLabel="Repeat Interval Container View">
-                    <rect key="frame" x="55" y="0.0" width="436" height="30"/>
+                    <rect key="frame" x="0.0" y="0.0" width="491" height="30"/>
                     <constraints>
                         <constraint firstAttribute="height" priority="250" id="9il-d4-0qM"/>
                         <constraint firstAttribute="height" constant="30" placeholder="YES" id="AU6-W7-yJm"/>
@@ -584,12 +581,12 @@
                 <constraint firstAttribute="trailing" secondItem="Vfd-bm-n7h" secondAttribute="trailing" id="0QH-ko-015"/>
                 <constraint firstItem="Aqh-R6-EdY" firstAttribute="leading" secondItem="Vfd-bm-n7h" secondAttribute="leading" id="6U1-qo-Lcr"/>
                 <constraint firstItem="Aqh-R6-EdY" firstAttribute="leading" secondItem="e2p-19-VKE" secondAttribute="trailing" constant="8" id="9ch-Dq-aRO"/>
-                <constraint firstItem="5tK-cV-igO" firstAttribute="leading" secondItem="Aqh-R6-EdY" secondAttribute="leading" id="BEh-en-0Pj"/>
                 <constraint firstItem="Aqh-R6-EdY" firstAttribute="top" secondItem="Vfd-bm-n7h" secondAttribute="bottom" constant="12" id="Cdc-pK-YT3"/>
                 <constraint firstAttribute="trailing" secondItem="5tK-cV-igO" secondAttribute="trailing" id="LoD-15-0xs"/>
                 <constraint firstItem="PfN-UJ-gre" firstAttribute="leading" secondItem="bvu-Ek-Vhq" secondAttribute="leading" priority="750" id="MJx-8D-2I6"/>
                 <constraint firstItem="PfN-UJ-gre" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="bvu-Ek-Vhq" secondAttribute="leading" id="NdV-nh-hBs"/>
                 <constraint firstItem="e2p-19-VKE" firstAttribute="leading" secondItem="bvu-Ek-Vhq" secondAttribute="leading" priority="750" id="QAv-aK-ZgG"/>
+                <constraint firstItem="5tK-cV-igO" firstAttribute="leading" secondItem="bvu-Ek-Vhq" secondAttribute="leading" id="ZN3-24-5DD"/>
                 <constraint firstItem="Vfd-bm-n7h" firstAttribute="firstBaseline" secondItem="PfN-UJ-gre" secondAttribute="firstBaseline" id="eAs-ZG-TKN"/>
                 <constraint firstItem="Vfd-bm-n7h" firstAttribute="top" secondItem="bvu-Ek-Vhq" secondAttribute="top" id="f3k-g5-g7w"/>
                 <constraint firstItem="Aqh-R6-EdY" firstAttribute="firstBaseline" secondItem="e2p-19-VKE" secondAttribute="firstBaseline" id="f5d-xe-jNj"/>
@@ -598,12 +595,9 @@
                 <constraint firstAttribute="bottom" secondItem="5tK-cV-igO" secondAttribute="bottom" id="oBu-bD-hKD"/>
                 <constraint firstItem="e2p-19-VKE" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="bvu-Ek-Vhq" secondAttribute="leading" id="rep-HE-dww"/>
             </constraints>
-            <connections>
-                <outlet property="alignLeadingView" destination="Vfd-bm-n7h" id="dDb-EE-Jqk"/>
-            </connections>
             <point key="canvasLocation" x="25" y="530"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Weekly Detail View">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Weekly Detail View" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="338" height="18"/>
             <subviews>
                 <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
@@ -628,16 +622,17 @@
             <constraints>
                 <constraint firstItem="WO9-Yi-XDc" firstAttribute="centerY" secondItem="YrJ-S7-rqE" secondAttribute="centerY" id="5yg-ku-hnO"/>
                 <constraint firstItem="WO9-Yi-XDc" firstAttribute="top" secondItem="YrJ-S7-rqE" secondAttribute="top" id="EHd-EF-Wbr"/>
-                <constraint firstItem="WO9-Yi-XDc" firstAttribute="leading" secondItem="YrJ-S7-rqE" secondAttribute="leading" id="FOb-pC-CCd"/>
+                <constraint firstItem="WO9-Yi-XDc" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="YrJ-S7-rqE" secondAttribute="leading" id="FN0-Jp-7Me"/>
+                <constraint firstItem="WO9-Yi-XDc" firstAttribute="leading" secondItem="YrJ-S7-rqE" secondAttribute="leading" priority="750" id="FOb-pC-CCd"/>
                 <constraint firstAttribute="bottom" secondItem="WO9-Yi-XDc" secondAttribute="bottom" id="Iw8-9t-p5w"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="WO9-Yi-XDc" secondAttribute="trailing" id="lwe-Xl-Wfn"/>
             </constraints>
             <connections>
-                <outlet property="alignLeadingView" destination="WO9-Yi-XDc" id="Hpv-zL-Xi0"/>
+                <outlet property="alignView" destination="WO9-Yi-XDc" id="d1n-Q4-rJf"/>
             </connections>
             <point key="canvasLocation" x="24" y="634"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="SVc-di-VTv" userLabel="Monthly Detail View">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="SVc-di-VTv" userLabel="Monthly Detail View" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qYh-A4-SCy">
@@ -663,18 +658,19 @@
             <constraints>
                 <constraint firstItem="YQ1-gj-xVe" firstAttribute="top" secondItem="SVc-di-VTv" secondAttribute="top" id="1pa-ve-lWk"/>
                 <constraint firstItem="YQ1-gj-xVe" firstAttribute="centerY" secondItem="SVc-di-VTv" secondAttribute="centerY" id="2bz-sg-90L"/>
+                <constraint firstItem="qYh-A4-SCy" firstAttribute="leading" secondItem="SVc-di-VTv" secondAttribute="leading" priority="750" id="3O6-ub-IBI"/>
                 <constraint firstAttribute="bottom" secondItem="YQ1-gj-xVe" secondAttribute="bottom" id="4Y7-Wu-VLu"/>
                 <constraint firstAttribute="trailing" secondItem="YQ1-gj-xVe" secondAttribute="trailing" id="JVg-px-jGy"/>
                 <constraint firstItem="YQ1-gj-xVe" firstAttribute="leading" secondItem="qYh-A4-SCy" secondAttribute="trailing" constant="8" id="TFG-8K-Bjq"/>
-                <constraint firstItem="qYh-A4-SCy" firstAttribute="leading" secondItem="SVc-di-VTv" secondAttribute="leading" id="bUs-yQ-r0Z"/>
+                <constraint firstItem="qYh-A4-SCy" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="SVc-di-VTv" secondAttribute="leading" id="bUs-yQ-r0Z"/>
                 <constraint firstItem="YQ1-gj-xVe" firstAttribute="firstBaseline" secondItem="qYh-A4-SCy" secondAttribute="firstBaseline" id="cGv-S1-HCh"/>
             </constraints>
             <connections>
-                <outlet property="alignLeadingView" destination="YQ1-gj-xVe" id="7Tc-GO-fqT"/>
+                <outlet property="alignView" destination="YQ1-gj-xVe" id="4EE-n9-Kqa"/>
             </connections>
             <point key="canvasLocation" x="24" y="694"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Yearly Detail View">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Yearly Detail View" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZRY-hR-dS5">
@@ -699,19 +695,20 @@
             </subviews>
             <constraints>
                 <constraint firstItem="NJO-gj-szB" firstAttribute="centerY" secondItem="U49-dv-RHU" secondAttribute="centerY" id="6VQ-IE-gP2"/>
+                <constraint firstItem="ZRY-hR-dS5" firstAttribute="leading" secondItem="U49-dv-RHU" secondAttribute="leading" priority="750" id="8Lp-ez-bhI"/>
                 <constraint firstItem="NJO-gj-szB" firstAttribute="leading" secondItem="ZRY-hR-dS5" secondAttribute="trailing" constant="8" id="Lyk-Pc-AXx"/>
                 <constraint firstAttribute="trailing" secondItem="NJO-gj-szB" secondAttribute="trailing" id="ZSH-44-Ocs"/>
                 <constraint firstItem="NJO-gj-szB" firstAttribute="top" secondItem="U49-dv-RHU" secondAttribute="top" id="f9C-JQ-UyI"/>
-                <constraint firstItem="ZRY-hR-dS5" firstAttribute="leading" secondItem="U49-dv-RHU" secondAttribute="leading" id="j1B-G7-IoQ"/>
+                <constraint firstItem="ZRY-hR-dS5" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="U49-dv-RHU" secondAttribute="leading" id="j1B-G7-IoQ"/>
                 <constraint firstAttribute="bottom" secondItem="NJO-gj-szB" secondAttribute="bottom" id="uaY-hh-kXg"/>
                 <constraint firstItem="NJO-gj-szB" firstAttribute="firstBaseline" secondItem="ZRY-hR-dS5" secondAttribute="firstBaseline" id="y9m-be-c4F"/>
             </constraints>
             <connections>
-                <outlet property="alignLeadingView" destination="NJO-gj-szB" id="TCa-cC-NQ1"/>
+                <outlet property="alignView" destination="NJO-gj-szB" id="KgA-Pd-alb"/>
             </connections>
             <point key="canvasLocation" x="24" y="759"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ihD-Oq-dCa" userLabel="Limits Detail View">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ihD-Oq-dCa" userLabel="Limits Detail View" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="451" height="66"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="8w2-7N-QIg">
@@ -830,7 +827,7 @@
                 <constraint firstItem="ftt-2x-C2n" firstAttribute="leading" secondItem="ihD-Oq-dCa" secondAttribute="leading" priority="750" id="ybO-Zj-HZu"/>
             </constraints>
             <connections>
-                <outlet property="alignLeadingView" destination="Ucp-vv-qKL" id="Ln1-p3-EKq"/>
+                <outlet property="alignView" destination="Ucp-vv-qKL" id="Jeh-sp-TQl"/>
             </connections>
             <point key="canvasLocation" x="25" y="867"/>
         </customView>
