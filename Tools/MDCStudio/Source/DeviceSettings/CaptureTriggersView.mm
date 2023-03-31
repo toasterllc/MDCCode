@@ -121,6 +121,7 @@ static _TimeFormatState _TimeFormatStateCreate() {
         [x.dateFormatterHH setLocale:[NSLocale autoupdatingCurrentLocale]];
         [x.dateFormatterHH setTimeZone:[x.calendar timeZone]];
         [x.dateFormatterHH setLocalizedDateFormatFromTemplate:@"hh"];
+        [x.dateFormatterHH setLenient:true];
     }
     
     {
@@ -128,6 +129,7 @@ static _TimeFormatState _TimeFormatStateCreate() {
         [x.dateFormatterHHMM setLocale:[NSLocale autoupdatingCurrentLocale]];
         [x.dateFormatterHHMM setTimeZone:[x.calendar timeZone]];
         [x.dateFormatterHHMM setLocalizedDateFormatFromTemplate:@"hh:mm"];
+        [x.dateFormatterHHMM setLenient:true];
     }
     
     {
@@ -135,6 +137,7 @@ static _TimeFormatState _TimeFormatStateCreate() {
         [x.dateFormatterHHMMSS setLocale:[NSLocale autoupdatingCurrentLocale]];
         [x.dateFormatterHHMMSS setTimeZone:[x.calendar timeZone]];
         [x.dateFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hh:mm:ss"];
+        [x.dateFormatterHHMMSS setLenient:true];
     }
     
     return x;
