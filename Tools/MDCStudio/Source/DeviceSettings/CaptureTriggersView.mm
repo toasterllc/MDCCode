@@ -449,6 +449,7 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
 
 
 @implementation CaptureTriggersView {
+@public
     IBOutlet NSView* _nibView;
     
     IBOutlet NSTableView* _tableView;
@@ -586,143 +587,153 @@ static void _SetContainerSubview(NSView* container, ContainerSubview* subview, N
     [NSLayoutConstraint activateConstraints:constraints];
 }
 
-static void _Load(const bool& x, NSButton* checkbox) {
-    [checkbox setState:(x ? NSControlStateValueOn : NSControlStateValueOff)];
-}
-
-static void _Store(bool& x, NSButton* checkbox) {
-    x = ([checkbox state] == NSControlStateValueOn);
-}
-
-static void _Load(const Trigger::Cadence& x, NSPopUpButton* menu) {
-    using X = std::remove_reference_t<decltype(x)>;
-    std::string xstr = StringFromCadence(x);
-    xstr[0] = std::toupper(xstr[0]);
-    NSMenuItem* item = [menu itemWithTitle:@(xstr.c_str())];
-    #warning TODO: is this a good behavior?
-    if (!item) item = [menu itemAtIndex:0];
-    [menu selectItem:item];
-}
-
-static void _Store(Trigger::Cadence& x, NSPopUpButton* menu) {
-    using X = std::remove_reference_t<decltype(x)>;
-    NSString* str = [menu titleOfSelectedItem];
-    assert(str);
-    x = CadenceFromString([str UTF8String]);
-}
-
-static void _LoadTime(const uint32_t& x, NSTextField* field) {
-    [field setStringValue:_TimeOfDayStringFromSeconds(x)];
-}
-
-static void _StoreTime(uint32_t& x, NSTextField* field) {
-    x = _SecondsFromTimeOfDayString([field stringValue]);
-}
-
-static void _Load(const uint32_t& x, NSTextField* field) {
-    [field setObjectValue:@(x)];
-}
-
-static void _Store(uint32_t& x, NSTextField* field) {
-    x = (uint32_t)[field integerValue];
-}
-
-static void _Load(const Trigger::Duration::Unit& x, NSPopUpButton* menu) {
-    using X = std::remove_reference_t<decltype(x)>;
-    [menu selectItemWithTitle:@(StringFromUnit(x).c_str())];
-}
-
-static void _Store(Trigger::Duration::Unit& x, NSPopUpButton* menu) {
-    using X = std::remove_reference_t<decltype(x)>;
-    const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
-    x = UnitFromString([[menu titleOfSelectedItem] UTF8String]);
-}
-
-static void _Load(const Trigger::WeekDays& x, NSSegmentedControl* control) {
-    using X = std::remove_reference_t<decltype(x)>;
-    size_t idx = 0;
-    for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
-        [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
-        idx++;
+template<bool T_Forward>
+static void _Copy(bool& x, NSButton* checkbox) {
+    if constexpr (T_Forward) {
+        [checkbox setState:(x ? NSControlStateValueOn : NSControlStateValueOff)];
+    } else {
+        x = ([checkbox state] == NSControlStateValueOn);
     }
 }
 
-static void _Store(Trigger::WeekDays& x, NSSegmentedControl* control) {
+template<bool T_Forward>
+static void _Copy(Trigger::Cadence& x, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
-    std::underlying_type_t<X> r = 0;
-    size_t idx = 0;
-    for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
-        r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
-        idx++;
+    if constexpr (T_Forward) {
+        std::string xstr = StringFromCadence(x);
+        xstr[0] = std::toupper(xstr[0]);
+        NSMenuItem* item = [menu itemWithTitle:@(xstr.c_str())];
+        #warning TODO: is this a good behavior?
+        if (!item) item = [menu itemAtIndex:0];
+        [menu selectItem:item];
+    
+    } else {
+        NSString* str = [menu titleOfSelectedItem];
+        assert(str);
+        x = CadenceFromString([str UTF8String]);
     }
-    x = static_cast<X>(r);
 }
 
-static void _Load(const Trigger::MonthDays& x, NSTextField* field) {
+template<bool T_Forward>
+static void _CopyTime(uint32_t& x, NSTextField* field) {
+    if constexpr (T_Forward) {
+        [field setStringValue:_TimeOfDayStringFromSeconds(x)];
+    } else {
+        x = _SecondsFromTimeOfDayString([field stringValue]);
+    }
+}
+
+template<bool T_Forward>
+static void _Copy(uint32_t& x, NSTextField* field) {
+    if constexpr (T_Forward) {
+        [field setObjectValue:@(x)];
+    } else {
+        x = (uint32_t)[field integerValue];
+    }
+}
+
+
+
+template<bool T_Forward>
+static void _Copy(Trigger::Duration::Unit& x, NSPopUpButton* menu) {
+    using X = std::remove_reference_t<decltype(x)>;
+    if constexpr (T_Forward) {
+        [menu selectItemWithTitle:@(StringFromUnit(x).c_str())];
+    } else {
+        const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
+        x = UnitFromString([[menu titleOfSelectedItem] UTF8String]);
+    }
+}
+
+
+
+
+template<bool T_Forward>
+static void _Copy(Trigger::WeekDays& x, NSSegmentedControl* control) {
+    using X = std::remove_reference_t<decltype(x)>;
+    if constexpr (T_Forward) {
+        size_t idx = 0;
+        for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
+            [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
+            idx++;
+        }
+    } else {
+        std::underlying_type_t<X> r = 0;
+        size_t idx = 0;
+        for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
+            r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
+            idx++;
+        }
+        x = static_cast<X>(r);
+    }
+}
+
+template<bool T_Forward>
+static void _Copy(Trigger::MonthDays& x, NSTextField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     #warning TODO: implement
 }
 
-static void _Store(Trigger::MonthDays& x, NSTextField* control) {
+
+template<bool T_Forward>
+static void _Copy(Trigger::YearDays& x, NSTextField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     #warning TODO: implement
 }
 
-static void _Load(const Trigger::YearDays& x, NSTextField* field) {
-    using X = std::remove_reference_t<decltype(x)>;
-    #warning TODO: implement
-}
 
-static void _Store(Trigger::YearDays& x, NSTextField* control) {
-    using X = std::remove_reference_t<decltype(x)>;
-    #warning TODO: implement
-}
 
-static void _Load(const Trigger::LEDs& x, NSSegmentedControl* control) {
+
+template<bool T_Forward>
+static void _Copy(Trigger::LEDs& x, NSSegmentedControl* control) {
     using X = std::remove_reference_t<decltype(x)>;
-    size_t idx = 0;
-    for (auto y : { X::Green, X::Red }) {
-        [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
-        idx++;
+    if constexpr (T_Forward) {
+        size_t idx = 0;
+        for (auto y : { X::Green, X::Red }) {
+            [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
+            idx++;
+        }
+    } else {
+        std::underlying_type_t<X> r = 0;
+        size_t idx = 0;
+        for (auto y : { X::Green, X::Red }) {
+            r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
+            idx++;
+        }
+        x = static_cast<X>(r);
     }
 }
 
-static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
-    using X = std::remove_reference_t<decltype(x)>;
-    std::underlying_type_t<X> r = 0;
-    size_t idx = 0;
-    for (auto y : { X::Green, X::Red }) {
-        r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
-        idx++;
-    }
-    x = static_cast<X>(r);
-}
 
-- (void)_loadViewFromModel:(const Trigger&)trigger {
+
+template<bool T_Forward>
+static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
+    auto& y = *view;
     switch (trigger.type) {
     case Trigger::Type::Time: {
         auto& x = trigger.time;
         
         // Schedule
         {
-            _SetContainerSubview(_schedule_ContainerView, _schedule_Time_View);
-            _LoadTime(x.schedule.time, _schedule_Time_TimeField);
-            _Load(x.schedule.cadence, _schedule_Time_CadenceMenu);
+            if constexpr (T_Forward) _SetContainerSubview(y._schedule_ContainerView, y._schedule_Time_View);
+            
+            _CopyTime<T_Forward>(x.schedule.time, y._schedule_Time_TimeField);
+            _Copy<T_Forward>(x.schedule.cadence, y._schedule_Time_CadenceMenu);
             switch (x.schedule.cadence) {
             case Trigger::Cadence::Daily:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, nil);
+                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Time_DaySelectorContainerView, nil);
                 break;
             case Trigger::Cadence::Weekly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _weekDaySelector_View, _schedule_Time_CadenceMenu);
-                _Load(x.schedule.weekDays, _weekDaySelector_Control);
+                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Time_DaySelectorContainerView, y._weekDaySelector_View, y._schedule_Time_CadenceMenu);
+                _Copy<T_Forward>(x.schedule.weekDays, y._weekDaySelector_Control);
                 break;
             case Trigger::Cadence::Monthly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _monthDaySelector_View, _schedule_Time_CadenceMenu);
-                _Load(x.schedule.monthDays, _monthDaySelector_Field);
+                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Time_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Time_CadenceMenu);
+                _Copy<T_Forward>(x.schedule.monthDays, y._monthDaySelector_Field);
                 break;
             case Trigger::Cadence::Yearly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _yearDaySelector_View, _schedule_Time_CadenceMenu);
-                _Load(x.schedule.yearDays, _yearDaySelector_Field);
+                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Time_DaySelectorContainerView, y._yearDaySelector_View, y._schedule_Time_CadenceMenu);
+                _Copy<T_Forward>(x.schedule.yearDays, y._yearDaySelector_Field);
                 break;
             default:
                 abort();
@@ -731,17 +742,17 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
         
         // Capture
         {
-            _Load(x.capture.count, _capture_CountField);
-            _Load(x.capture.interval.value, _capture_IntervalField);
-            _Load(x.capture.interval.unit, _capture_IntervalUnitMenu);
-            _Load(x.capture.flashLEDs, _capture_FlashLEDsControl);
+            _Copy<T_Forward>(x.capture.count, y._capture_CountField);
+            _Copy<T_Forward>(x.capture.interval.value, y._capture_IntervalField);
+            _Copy<T_Forward>(x.capture.interval.unit, y._capture_IntervalUnitMenu);
+            _Copy<T_Forward>(x.capture.flashLEDs, y._capture_FlashLEDsControl);
         }
         
         // Limits
         {
-            _SetContainerSubview(_constraints_ContainerView, nil);
-            _Load(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
-            _Load(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _SetContainerSubview(y._constraints_ContainerView, nil);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, y._constraints_MaxTotalTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, y._constraints_MaxTotalTriggerCount_Field);
         }
         
         break;
@@ -753,27 +764,27 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
         
         // Schedule
         {
-            _SetContainerSubview(_schedule_ContainerView, _schedule_Motion_View);
+            if constexpr (T_Forward) _SetContainerSubview(y._schedule_ContainerView, y._schedule_Motion_View);
             
-            _Load(x.schedule.timeLimit.enable, _schedule_Motion_LimitTime_Checkbox);
-            _LoadTime(x.schedule.timeLimit.start, _schedule_Motion_LimitTime_TimeStartField);
-            _LoadTime(x.schedule.timeLimit.end, _schedule_Motion_LimitTime_TimeEndField);
-            _Load(x.schedule.dayLimit.enable, _schedule_Motion_LimitDays_Checkbox);
-            _Load(x.schedule.dayLimit.cadence, _schedule_Motion_LimitDays_CadenceMenu);
+            _Copy<T_Forward>(x.schedule.timeLimit.enable, y._schedule_Motion_LimitTime_Checkbox);
+            _CopyTime<T_Forward>(x.schedule.timeLimit.start, y._schedule_Motion_LimitTime_TimeStartField);
+            _CopyTime<T_Forward>(x.schedule.timeLimit.end, y._schedule_Motion_LimitTime_TimeEndField);
+            _Copy<T_Forward>(x.schedule.dayLimit.enable, y._schedule_Motion_LimitDays_Checkbox);
+            _Copy<T_Forward>(x.schedule.dayLimit.cadence, y._schedule_Motion_LimitDays_CadenceMenu);
             
             switch (x.schedule.dayLimit.cadence) {
             case Trigger::Cadence::Daily:
             case Trigger::Cadence::Weekly:
-                _SetContainerSubview(_schedule_Motion_DaySelectorContainerView, _weekDaySelector_View, _schedule_Motion_LimitTime_TimeStartField);
-                _Load(x.schedule.dayLimit.weekDays, _weekDaySelector_Control);
+                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Motion_DaySelectorContainerView, y._weekDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
+                _Copy<T_Forward>(x.schedule.dayLimit.weekDays, y._weekDaySelector_Control);
                 break;
             case Trigger::Cadence::Monthly:
-                _SetContainerSubview(_schedule_Motion_DaySelectorContainerView, _monthDaySelector_View, _schedule_Motion_LimitTime_TimeStartField);
-                _Load(x.schedule.dayLimit.monthDays, _monthDaySelector_Field);
+                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Motion_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
+                _Copy<T_Forward>(x.schedule.dayLimit.monthDays, y._monthDaySelector_Field);
                 break;
             case Trigger::Cadence::Yearly:
-                _SetContainerSubview(_schedule_Motion_DaySelectorContainerView, _yearDaySelector_View, _schedule_Motion_LimitTime_TimeStartField);
-                _Load(x.schedule.dayLimit.yearDays, _yearDaySelector_Field);
+                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Motion_DaySelectorContainerView, y._yearDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
+                _Copy<T_Forward>(x.schedule.dayLimit.yearDays, y._yearDaySelector_Field);
                 break;
             default:
                 abort();
@@ -782,25 +793,25 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
         
         // Capture
         {
-            _Load(x.capture.count, _capture_CountField);
-            _Load(x.capture.interval.value, _capture_IntervalField);
-            _Load(x.capture.interval.unit, _capture_IntervalUnitMenu);
-            _Load(x.capture.flashLEDs, _capture_FlashLEDsControl);
+            _Copy<T_Forward>(x.capture.count, y._capture_CountField);
+            _Copy<T_Forward>(x.capture.interval.value, y._capture_IntervalField);
+            _Copy<T_Forward>(x.capture.interval.unit, y._capture_IntervalUnitMenu);
+            _Copy<T_Forward>(x.capture.flashLEDs, y._capture_FlashLEDsControl);
         }
         
         // Limits
         {
-            _SetContainerSubview(_constraints_ContainerView, _constraints_Motion_View, _constraints_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _SetContainerSubview(y._constraints_ContainerView, y._constraints_Motion_View, y._constraints_MaxTotalTriggerCount_Field);
             
-            _Load(x.constraints.ignoreTriggerDuration.enable, _constraints_Motion_IgnoreTrigger_Checkbox);
-            _Load(x.constraints.ignoreTriggerDuration.duration.value, _constraints_Motion_IgnoreTrigger_DurationField);
-            _Load(x.constraints.ignoreTriggerDuration.duration.unit, _constraints_Motion_IgnoreTrigger_DurationUnitMenu);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, y._constraints_Motion_IgnoreTrigger_Checkbox);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.value, y._constraints_Motion_IgnoreTrigger_DurationField);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.unit, y._constraints_Motion_IgnoreTrigger_DurationUnitMenu);
             
-            _Load(x.constraints.maxTriggerCount.enable, _constraints_Motion_MaxTriggerCount_Checkbox);
-            _Load(x.constraints.maxTriggerCount.count, _constraints_Motion_MaxTriggerCount_Field);
+            _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, y._constraints_Motion_MaxTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTriggerCount.count, y._constraints_Motion_MaxTriggerCount_Field);
             
-            _Load(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
-            _Load(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, y._constraints_MaxTotalTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, y._constraints_MaxTotalTriggerCount_Field);
         }
         
         break;
@@ -811,11 +822,15 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
     }
 }
 
+- (void)_loadViewFromModel:(Trigger&)trigger {
+    _Copy<true>(trigger, self);
+}
 
 
 
 
-//static void _Load(const Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
+
+//static void _Copy(const Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
 //    using X = std::remove_reference_t<decltype(x)>;
 //    [field setObjectValue:@(x.value)];
 //    [menu selectItemAtIndex:(NSInteger)x.unit];
@@ -853,104 +868,7 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
 //}
 
 - (void)_storeViewToModel:(Trigger&)trigger {
-    switch (trigger.type) {
-    case Trigger::Type::Time: {
-        auto& x = trigger.time;
-        
-        // Schedule
-        {
-            _StoreTime(x.schedule.time, _schedule_Time_TimeField);
-            _Store(x.schedule.cadence, _schedule_Time_CadenceMenu);
-            switch (x.schedule.cadence) {
-            case Trigger::Cadence::Daily:
-                break;
-            case Trigger::Cadence::Weekly:
-                _Store(x.schedule.weekDays, _weekDaySelector_Control);
-                break;
-            case Trigger::Cadence::Monthly:
-                _Store(x.schedule.monthDays, _monthDaySelector_Field);
-                break;
-            case Trigger::Cadence::Yearly:
-                _Store(x.schedule.yearDays, _yearDaySelector_Field);
-                break;
-            default:
-                abort();
-            }
-        }
-        
-        // Capture
-        {
-            _Store(x.capture.count, _capture_CountField);
-            _Store(x.capture.interval.value, _capture_IntervalField);
-            _Store(x.capture.interval.unit, _capture_IntervalUnitMenu);
-            _Store(x.capture.flashLEDs, _capture_FlashLEDsControl);
-        }
-        
-        // Limits
-        {
-            _Store(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
-            _Store(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);
-        }
-        
-        break;
-    }
-    
-    case Trigger::Type::Motion:
-    case Trigger::Type::Button: {
-        auto& x = trigger.motionButton;
-        
-        // Schedule
-        {
-            _Store(x.schedule.timeLimit.enable, _schedule_Motion_LimitTime_Checkbox);
-            _StoreTime(x.schedule.timeLimit.start, _schedule_Motion_LimitTime_TimeStartField);
-            _StoreTime(x.schedule.timeLimit.end, _schedule_Motion_LimitTime_TimeEndField);
-            _Store(x.schedule.dayLimit.enable, _schedule_Motion_LimitDays_Checkbox);
-            _Store(x.schedule.dayLimit.cadence, _schedule_Motion_LimitDays_CadenceMenu);
-            
-            switch (x.schedule.dayLimit.cadence) {
-            case Trigger::Cadence::Daily:
-                break;
-            case Trigger::Cadence::Weekly:
-                _Store(x.schedule.dayLimit.weekDays, _weekDaySelector_Control);
-                break;
-            case Trigger::Cadence::Monthly:
-                _Store(x.schedule.dayLimit.monthDays, _monthDaySelector_Field);
-                break;
-            case Trigger::Cadence::Yearly:
-                _Store(x.schedule.dayLimit.yearDays, _yearDaySelector_Field);
-                break;
-            default:
-                abort();
-            }
-        }
-        
-        // Capture
-        {
-            _Store(x.capture.count, _capture_CountField);
-            _Store(x.capture.interval.value, _capture_IntervalField);
-            _Store(x.capture.interval.unit, _capture_IntervalUnitMenu);
-            _Store(x.capture.flashLEDs, _capture_FlashLEDsControl);
-        }
-        
-        // Limits
-        {
-            _Store(x.constraints.ignoreTriggerDuration.enable, _constraints_Motion_IgnoreTrigger_Checkbox);
-            _Store(x.constraints.ignoreTriggerDuration.duration.value, _constraints_Motion_IgnoreTrigger_DurationField);
-            _Store(x.constraints.ignoreTriggerDuration.duration.unit, _constraints_Motion_IgnoreTrigger_DurationUnitMenu);
-            
-            _Store(x.constraints.maxTriggerCount.enable, _constraints_Motion_MaxTriggerCount_Checkbox);
-            _Store(x.constraints.maxTriggerCount.count, _constraints_Motion_MaxTriggerCount_Field);
-            
-            _Store(x.constraints.maxTotalTriggerCount.enable, _constraints_MaxTotalTriggerCount_Checkbox);
-            _Store(x.constraints.maxTotalTriggerCount.count, _constraints_MaxTotalTriggerCount_Field);
-        }
-        
-        break;
-    }
-    
-    default:
-        abort();
-    }
+    _Copy<false>(trigger, self);
 }
 
 // MARK: - Actions
