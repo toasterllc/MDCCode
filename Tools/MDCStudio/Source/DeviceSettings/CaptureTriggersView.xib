@@ -83,10 +83,18 @@
                                                         </constraints>
                                                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" id="w44-RA-Kh1"/>
                                                     </imageView>
+                                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="n8U-Uc-9fw">
+                                                        <rect key="frame" x="50" y="28" width="64" height="15"/>
+                                                        <textFieldCell key="cell" lineBreakMode="clipping" title="Title Prefix" id="vwX-Nl-AIs">
+                                                            <font key="font" metaFont="systemLight" size="12"/>
+                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        </textFieldCell>
+                                                    </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QhX-Pl-rlK">
-                                                        <rect key="frame" x="50" y="28" width="30" height="15"/>
+                                                        <rect key="frame" x="114" y="28" width="31" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Title" id="qQv-Q5-INr">
-                                                            <font key="font" metaFont="systemMedium" size="12"/>
+                                                            <font key="font" metaFont="systemSemibold" size="12"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -100,7 +108,7 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="Suo-7y-kvg">
-                                                        <rect key="frame" x="84" y="28" width="69" height="15"/>
+                                                        <rect key="frame" x="145" y="28" width="69" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Description" id="GIs-LG-n68">
                                                             <font key="font" metaFont="systemLight" size="12"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -112,14 +120,16 @@
                                                     <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Suo-7y-kvg" secondAttribute="trailing" constant="12" id="Eec-Oa-IXO"/>
                                                     <constraint firstItem="Suo-7y-kvg" firstAttribute="top" secondItem="QhX-Pl-rlK" secondAttribute="top" id="EiS-r6-CB6"/>
                                                     <constraint firstItem="l0s-ak-E4D" firstAttribute="leading" secondItem="IYl-4H-9xr" secondAttribute="leading" constant="8" id="G76-vu-Cnf"/>
-                                                    <constraint firstItem="QhX-Pl-rlK" firstAttribute="leading" secondItem="l0s-ak-E4D" secondAttribute="trailing" constant="20" id="IlD-XV-V7v"/>
+                                                    <constraint firstItem="n8U-Uc-9fw" firstAttribute="leading" secondItem="l0s-ak-E4D" secondAttribute="trailing" constant="20" id="IlD-XV-V7v"/>
                                                     <constraint firstItem="xRA-1R-gxT" firstAttribute="top" secondItem="QhX-Pl-rlK" secondAttribute="bottom" constant="4" id="JVs-ZX-iAd"/>
-                                                    <constraint firstItem="xRA-1R-gxT" firstAttribute="leading" secondItem="QhX-Pl-rlK" secondAttribute="leading" id="OKF-T2-OBz"/>
+                                                    <constraint firstItem="xRA-1R-gxT" firstAttribute="leading" secondItem="n8U-Uc-9fw" secondAttribute="leading" id="OKF-T2-OBz"/>
+                                                    <constraint firstItem="QhX-Pl-rlK" firstAttribute="top" secondItem="n8U-Uc-9fw" secondAttribute="top" id="RdX-wr-CTY"/>
                                                     <constraint firstAttribute="height" constant="50" id="Ubg-VR-E68"/>
                                                     <constraint firstItem="QhX-Pl-rlK" firstAttribute="centerY" secondItem="IYl-4H-9xr" secondAttribute="centerY" priority="250" id="WWz-Mm-cRO"/>
                                                     <constraint firstItem="QhX-Pl-rlK" firstAttribute="centerY" secondItem="IYl-4H-9xr" secondAttribute="centerY" priority="750" constant="-10" id="kIs-5O-hVa"/>
                                                     <constraint firstItem="l0s-ak-E4D" firstAttribute="centerY" secondItem="IYl-4H-9xr" secondAttribute="centerY" id="ok2-Bl-JIh"/>
-                                                    <constraint firstItem="Suo-7y-kvg" firstAttribute="leading" secondItem="QhX-Pl-rlK" secondAttribute="trailing" constant="8" id="tRv-MK-xGR"/>
+                                                    <constraint firstItem="Suo-7y-kvg" firstAttribute="leading" secondItem="QhX-Pl-rlK" secondAttribute="trailing" constant="4" id="tRv-MK-xGR"/>
+                                                    <constraint firstItem="QhX-Pl-rlK" firstAttribute="leading" secondItem="n8U-Uc-9fw" secondAttribute="trailing" constant="4" id="zFr-2Z-2aa"/>
                                                 </constraints>
                                                 <connections>
                                                     <outlet property="_descriptionLabel" destination="Suo-7y-kvg" id="Hju-SL-8sE"/>
@@ -127,6 +137,7 @@
                                                     <outlet property="_subtitleLabel" destination="xRA-1R-gxT" id="03h-UF-hBC"/>
                                                     <outlet property="_titleCenterYConstraint" destination="WWz-Mm-cRO" id="KXc-Yu-ytR"/>
                                                     <outlet property="_titleLabel" destination="QhX-Pl-rlK" id="JI3-wJ-nf7"/>
+                                                    <outlet property="_titlePrefixLabel" destination="n8U-Uc-9fw" id="DZ4-xH-6Jz"/>
                                                 </connections>
                                             </tableCellView>
                                         </prototypeCellViews>

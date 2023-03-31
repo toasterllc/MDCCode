@@ -277,6 +277,7 @@ static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
 @implementation CaptureTriggersView_ListItem {
 @private
     IBOutlet NSImageView* _imageView;
+    IBOutlet NSTextField* _titlePrefixLabel;
     IBOutlet NSTextField* _titleLabel;
     IBOutlet NSTextField* _subtitleLabel;
     IBOutlet NSTextField* _descriptionLabel;
@@ -377,15 +378,18 @@ static std::string _DescriptionString(const T& x) {
     switch (trigger.type) {
     case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
-        [_titleLabel setStringValue: @(("At " + _TimeOfDayStringFromSeconds(trigger.time.schedule.time)).c_str())];
+        [_titlePrefixLabel setStringValue: @"At"];
+        [_titleLabel setStringValue: @((_TimeOfDayStringFromSeconds(trigger.time.schedule.time) + ",").c_str())];
         break;
     case Trigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion"]];
-        [_titleLabel setStringValue:@"On motion"];
+        [_titlePrefixLabel setStringValue: @"On"];
+        [_titleLabel setStringValue:@"motion,"];
         break;
     case Trigger::Type::Button:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Button"]];
-        [_titleLabel setStringValue:@"On button press"];
+        [_titlePrefixLabel setStringValue: @"On"];
+        [_titleLabel setStringValue:@"button press,"];
         break;
     default:
         abort();
