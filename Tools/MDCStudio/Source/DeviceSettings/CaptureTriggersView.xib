@@ -452,12 +452,12 @@
             </constraints>
             <point key="canvasLocation" x="250.5" y="141.5"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Time Range Detail View" customClass="CaptureTriggersView_DetailView">
-            <rect key="frame" x="0.0" y="0.0" width="327" height="21"/>
+        <customView misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Time Range Detail View" customClass="CaptureTriggersView_DetailView">
+            <rect key="frame" x="0.0" y="0.0" width="400" height="21"/>
             <subviews>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="j28-bM-XnS">
-                    <rect key="frame" x="-2" y="1" width="124" height="19"/>
-                    <buttonCell key="cell" type="check" title="Limit time range:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="c5g-Ey-HFI">
+                    <rect key="frame" x="-2" y="1" width="127" height="19"/>
+                    <buttonCell key="cell" type="check" title="Limit time of day:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="c5g-Ey-HFI">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -466,7 +466,7 @@
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
-                    <rect key="frame" x="128" y="0.0" width="100" height="21"/>
+                    <rect key="frame" x="131" y="0.0" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="bIP-5H-5pa"/>
                     </constraints>
@@ -480,7 +480,7 @@
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
-                    <rect key="frame" x="234" y="3" width="17" height="16"/>
+                    <rect key="frame" x="237" y="3" width="17" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="to" id="Qdg-p5-o0x">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -488,7 +488,7 @@
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
-                    <rect key="frame" x="257" y="0.0" width="100" height="21"/>
+                    <rect key="frame" x="260" y="0.0" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="ocG-Lr-SSl"/>
                     </constraints>
@@ -510,6 +510,7 @@
                 <constraint firstItem="gGO-69-NDw" firstAttribute="leading" secondItem="qtR-4H-6GP" secondAttribute="trailing" constant="8" id="esP-6i-Aau"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="firstBaseline" secondItem="j28-bM-XnS" secondAttribute="firstBaseline" id="jR5-vj-EHx"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="leading" secondItem="j28-bM-XnS" secondAttribute="trailing" constant="8" id="mId-we-uhc"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="gGO-69-NDw" secondAttribute="trailing" constant="20" id="mZw-OK-n7R"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="top" secondItem="ZTq-dS-LMW" secondAttribute="top" id="qf4-5D-OYu"/>
                 <constraint firstItem="qtR-4H-6GP" firstAttribute="firstBaseline" secondItem="j28-bM-XnS" secondAttribute="firstBaseline" id="rCt-oO-ITi"/>
                 <constraint firstAttribute="bottom" secondItem="35D-kR-T9a" secondAttribute="bottom" id="rsS-AL-tGr"/>

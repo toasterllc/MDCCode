@@ -259,16 +259,20 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     
     NSMutableString* r = [NSMutableString new];
     size_t i = 0;
+    size_t count = 0;
     bool first = true;
     for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
         if (std::to_underlying(x) & std::to_underlying(y)) {
             if (!first) [r appendString:@", "];
             [r appendFormat:@"%s", Names[i]];
             first = false;
+            count++;
         }
         i++;
     }
-    return r;
+    
+    if (count <= 3) return r;
+    return [NSString stringWithFormat:@"%ju days per week", (uintmax_t)count];
 }
 
 - (void)updateView {
@@ -308,7 +312,7 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
             if (trigger.time.timeRange.enable) {
-                [subtitle appendFormat:@" %@ – %@",
+                [subtitle appendFormat:@", %@ – %@",
                     _TimeOfDayStringFromSeconds(trigger.time.timeRange.start),
                     _TimeOfDayStringFromSeconds(trigger.time.timeRange.end)];
             }
