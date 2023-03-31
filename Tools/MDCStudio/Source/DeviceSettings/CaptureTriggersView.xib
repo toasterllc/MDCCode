@@ -20,13 +20,13 @@
                 <outlet property="_constraints_Motion_MaxTriggerCount_Checkbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
                 <outlet property="_constraints_Motion_MaxTriggerCount_Field" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
                 <outlet property="_constraints_Motion_View" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
-                <outlet property="_monthlyDaySelector_Field" destination="YQ1-gj-xVe" id="4T4-lz-PVv"/>
-                <outlet property="_monthlyDaySelector_View" destination="SVc-di-VTv" id="BLO-uD-Mof"/>
+                <outlet property="_monthDaySelector_Field" destination="YQ1-gj-xVe" id="4T4-lz-PVv"/>
+                <outlet property="_monthDaySelector_View" destination="SVc-di-VTv" id="BLO-uD-Mof"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
                 <outlet property="_schedule_ContainerView" destination="4R1-In-Kbb" id="cwH-BJ-Tmv"/>
                 <outlet property="_schedule_Motion_DaySelectorContainerView" destination="Jd9-lQ-a3S" id="ugZ-xT-TRK"/>
+                <outlet property="_schedule_Motion_LimitDays_CadenceMenu" destination="RN5-cz-MIP" id="TO7-Su-VdB"/>
                 <outlet property="_schedule_Motion_LimitDays_Checkbox" destination="WpU-LG-czv" id="oGZ-Kn-4wu"/>
-                <outlet property="_schedule_Motion_LimitDays_Menu" destination="RN5-cz-MIP" id="TO7-Su-VdB"/>
                 <outlet property="_schedule_Motion_LimitTime_Checkbox" destination="j28-bM-XnS" id="oat-UX-D3g"/>
                 <outlet property="_schedule_Motion_LimitTime_TimeEndField" destination="gGO-69-NDw" id="lWJ-3y-Q04"/>
                 <outlet property="_schedule_Motion_LimitTime_TimeStartField" destination="35D-kR-T9a" id="xog-sm-S9q"/>
@@ -36,10 +36,10 @@
                 <outlet property="_schedule_Time_TimeField" destination="Vfd-bm-n7h" id="hHH-4i-GdL"/>
                 <outlet property="_schedule_Time_View" destination="bvu-Ek-Vhq" id="Sbb-1d-ZG7"/>
                 <outlet property="_tableView" destination="RfV-Mq-Pvl" id="hYB-B3-xIy"/>
-                <outlet property="_weeklyDaySelector_Control" destination="WO9-Yi-XDc" id="aX8-O8-AU4"/>
-                <outlet property="_weeklyDaySelector_View" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
-                <outlet property="_yearlyDaySelector_Field" destination="NJO-gj-szB" id="bp2-ho-ggH"/>
-                <outlet property="_yearlyDaySelector_View" destination="U49-dv-RHU" id="lCm-Lj-O6f"/>
+                <outlet property="_weekDaySelector_Control" destination="WO9-Yi-XDc" id="aX8-O8-AU4"/>
+                <outlet property="_weekDaySelector_View" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
+                <outlet property="_yearDaySelector_Field" destination="NJO-gj-szB" id="bp2-ho-ggH"/>
+                <outlet property="_yearDaySelector_View" destination="U49-dv-RHU" id="lCm-Lj-O6f"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>

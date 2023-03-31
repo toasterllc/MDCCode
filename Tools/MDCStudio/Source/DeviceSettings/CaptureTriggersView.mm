@@ -466,17 +466,17 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     IBOutlet NSTextField*       _schedule_Motion_LimitTime_TimeStartField;
     IBOutlet NSTextField*       _schedule_Motion_LimitTime_TimeEndField;
     IBOutlet NSButton*          _schedule_Motion_LimitDays_Checkbox;
-    IBOutlet NSPopUpButton*     _schedule_Motion_LimitDays_Menu;
+    IBOutlet NSPopUpButton*     _schedule_Motion_LimitDays_CadenceMenu;
     IBOutlet NSView*            _schedule_Motion_DaySelectorContainerView;
     
-    IBOutlet ContainerSubview*   _weeklyDaySelector_View;
-    IBOutlet NSSegmentedControl* _weeklyDaySelector_Control;
+    IBOutlet ContainerSubview*   _weekDaySelector_View;
+    IBOutlet NSSegmentedControl* _weekDaySelector_Control;
     
-    IBOutlet ContainerSubview*  _monthlyDaySelector_View;
-    IBOutlet NSTextField*       _monthlyDaySelector_Field;
+    IBOutlet ContainerSubview*  _monthDaySelector_View;
+    IBOutlet NSTextField*       _monthDaySelector_Field;
     
-    IBOutlet ContainerSubview*  _yearlyDaySelector_View;
-    IBOutlet NSTextField*       _yearlyDaySelector_Field;
+    IBOutlet ContainerSubview*  _yearDaySelector_View;
+    IBOutlet NSTextField*       _yearDaySelector_Field;
     
     // Capture
     IBOutlet NSTextField*        _capture_CountField;
@@ -598,12 +598,17 @@ static void _Load(const Trigger::Cadence& x, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     std::string xstr = StringFromCadence(x);
     xstr[0] = std::toupper(xstr[0]);
-    [menu selectItemWithTitle:@(xstr.c_str())];
+    NSMenuItem* item = [menu itemWithTitle:@(xstr.c_str())];
+    #warning TODO: is this a good behavior?
+    if (!item) item = [menu itemAtIndex:0];
+    [menu selectItem:item];
 }
 
 static void _Store(Trigger::Cadence& x, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
-    x = CadenceFromString([[menu titleOfSelectedItem] UTF8String]);
+    NSString* str = [menu titleOfSelectedItem];
+    assert(str);
+    x = CadenceFromString([str UTF8String]);
 }
 
 static void _LoadTime(const uint32_t& x, NSTextField* field) {
@@ -708,15 +713,19 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
                 _SetContainerSubview(_schedule_Time_DaySelectorContainerView, nil);
                 break;
             case Trigger::Cadence::Weekly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _weeklyDaySelector_View, _schedule_Time_CadenceMenu);
-                _Load(x.schedule.weekDays, _weeklyDaySelector_Control);
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _weekDaySelector_View, _schedule_Time_CadenceMenu);
+                _Load(x.schedule.weekDays, _weekDaySelector_Control);
                 break;
             case Trigger::Cadence::Monthly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _monthlyDaySelector_View, _schedule_Time_CadenceMenu);
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _monthDaySelector_View, _schedule_Time_CadenceMenu);
+                _Load(x.schedule.monthDays, _monthDaySelector_Field);
                 break;
             case Trigger::Cadence::Yearly:
-                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _yearlyDaySelector_View, _schedule_Time_CadenceMenu);
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _yearDaySelector_View, _schedule_Time_CadenceMenu);
+                _Load(x.schedule.yearDays, _yearDaySelector_Field);
                 break;
+            default:
+                abort();
             }
         }
         
@@ -750,7 +759,25 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
             _LoadTime(x.schedule.timeLimit.start, _schedule_Motion_LimitTime_TimeStartField);
             _LoadTime(x.schedule.timeLimit.end, _schedule_Motion_LimitTime_TimeEndField);
             _Load(x.schedule.dayLimit.enable, _schedule_Motion_LimitDays_Checkbox);
-            _Load(x.schedule.dayLimit.cadence, _schedule_Time_CadenceMenu);
+            _Load(x.schedule.dayLimit.cadence, _schedule_Motion_LimitDays_CadenceMenu);
+            
+            switch (x.schedule.dayLimit.cadence) {
+            case Trigger::Cadence::Daily:
+            case Trigger::Cadence::Weekly:
+                _SetContainerSubview(_schedule_Motion_DaySelectorContainerView, _weekDaySelector_View, _schedule_Motion_LimitTime_TimeStartField);
+                _Load(x.schedule.dayLimit.weekDays, _weekDaySelector_Control);
+                break;
+            case Trigger::Cadence::Monthly:
+                _SetContainerSubview(_schedule_Motion_DaySelectorContainerView, _monthDaySelector_View, _schedule_Motion_LimitTime_TimeStartField);
+                _Load(x.schedule.dayLimit.monthDays, _monthDaySelector_Field);
+                break;
+            case Trigger::Cadence::Yearly:
+                _SetContainerSubview(_schedule_Motion_DaySelectorContainerView, _yearDaySelector_View, _schedule_Motion_LimitTime_TimeStartField);
+                _Load(x.schedule.dayLimit.yearDays, _yearDaySelector_Field);
+                break;
+            default:
+                abort();
+            }
         }
         
         // Capture
@@ -838,14 +865,16 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
             case Trigger::Cadence::Daily:
                 break;
             case Trigger::Cadence::Weekly:
-                _Store(x.schedule.weekDays, _weeklyDaySelector_Control);
+                _Store(x.schedule.weekDays, _weekDaySelector_Control);
                 break;
             case Trigger::Cadence::Monthly:
-                _Store(x.schedule.monthDays, _monthlyDaySelector_Field);
+                _Store(x.schedule.monthDays, _monthDaySelector_Field);
                 break;
             case Trigger::Cadence::Yearly:
-                _Store(x.schedule.yearDays, _yearlyDaySelector_Field);
+                _Store(x.schedule.yearDays, _yearDaySelector_Field);
                 break;
+            default:
+                abort();
             }
         }
         
@@ -876,7 +905,23 @@ static void _Store(Trigger::LEDs& x, NSSegmentedControl* control) {
             _StoreTime(x.schedule.timeLimit.start, _schedule_Motion_LimitTime_TimeStartField);
             _StoreTime(x.schedule.timeLimit.end, _schedule_Motion_LimitTime_TimeEndField);
             _Store(x.schedule.dayLimit.enable, _schedule_Motion_LimitDays_Checkbox);
-            _Store(x.schedule.dayLimit.cadence, _schedule_Time_CadenceMenu);
+            _Store(x.schedule.dayLimit.cadence, _schedule_Motion_LimitDays_CadenceMenu);
+            
+            switch (x.schedule.dayLimit.cadence) {
+            case Trigger::Cadence::Daily:
+                break;
+            case Trigger::Cadence::Weekly:
+                _Store(x.schedule.dayLimit.weekDays, _weekDaySelector_Control);
+                break;
+            case Trigger::Cadence::Monthly:
+                _Store(x.schedule.dayLimit.monthDays, _monthDaySelector_Field);
+                break;
+            case Trigger::Cadence::Yearly:
+                _Store(x.schedule.dayLimit.yearDays, _yearDaySelector_Field);
+                break;
+            default:
+                abort();
+            }
         }
         
         // Capture
