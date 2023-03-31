@@ -69,7 +69,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="1" y="1" width="456" height="50"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="456" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="8" y="13" width="24" height="24"/>
@@ -87,10 +87,10 @@
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
                                                     </textField>
-                                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xRA-1R-gxT">
-                                                        <rect key="frame" x="50" y="9" width="48" height="15"/>
+                                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xRA-1R-gxT">
+                                                        <rect key="frame" x="50" y="9" width="47" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Subtitle" id="TsS-dG-2bw">
-                                                            <font key="font" metaFont="system" size="12"/>
+                                                            <font key="font" metaFont="systemLight" size="12"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -98,7 +98,7 @@
                                                     <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="Suo-7y-kvg">
                                                         <rect key="frame" x="86" y="28" width="69" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Description" id="GIs-LG-n68">
-                                                            <font key="font" metaFont="system" size="12"/>
+                                                            <font key="font" metaFont="systemLight" size="12"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -110,6 +110,7 @@
                                                     <constraint firstItem="l0s-ak-E4D" firstAttribute="leading" secondItem="IYl-4H-9xr" secondAttribute="leading" constant="8" id="G76-vu-Cnf"/>
                                                     <constraint firstItem="QhX-Pl-rlK" firstAttribute="leading" secondItem="l0s-ak-E4D" secondAttribute="trailing" constant="20" id="IlD-XV-V7v"/>
                                                     <constraint firstItem="xRA-1R-gxT" firstAttribute="top" secondItem="QhX-Pl-rlK" secondAttribute="bottom" constant="4" id="JVs-ZX-iAd"/>
+                                                    <constraint firstItem="xRA-1R-gxT" firstAttribute="leading" secondItem="QhX-Pl-rlK" secondAttribute="leading" id="OKF-T2-OBz"/>
                                                     <constraint firstAttribute="height" constant="50" id="Ubg-VR-E68"/>
                                                     <constraint firstItem="QhX-Pl-rlK" firstAttribute="centerY" secondItem="IYl-4H-9xr" secondAttribute="centerY" constant="-10" id="kIs-5O-hVa"/>
                                                     <constraint firstItem="l0s-ak-E4D" firstAttribute="centerY" secondItem="IYl-4H-9xr" secondAttribute="centerY" id="ok2-Bl-JIh"/>
@@ -451,7 +452,7 @@
             <point key="canvasLocation" x="250.5" y="141.5"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Time Range Detail View" customClass="CaptureTriggersView_DetailView">
-            <rect key="frame" x="0.0" y="0.0" width="247" height="21"/>
+            <rect key="frame" x="0.0" y="0.0" width="327" height="21"/>
             <subviews>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="j28-bM-XnS">
                     <rect key="frame" x="-2" y="1" width="94" height="19"/>
@@ -464,9 +465,9 @@
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
-                    <rect key="frame" x="98" y="0.0" width="50" height="21"/>
+                    <rect key="frame" x="98" y="0.0" width="100" height="21"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="50" id="bIP-5H-5pa"/>
+                        <constraint firstAttribute="width" constant="100" id="bIP-5H-5pa"/>
                     </constraints>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="gNc-VD-gYh">
                         <font key="font" metaFont="system"/>
@@ -478,7 +479,7 @@
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
-                    <rect key="frame" x="154" y="3" width="17" height="16"/>
+                    <rect key="frame" x="204" y="3" width="17" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="to" id="Qdg-p5-o0x">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -486,9 +487,9 @@
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
-                    <rect key="frame" x="177" y="0.0" width="50" height="21"/>
+                    <rect key="frame" x="227" y="0.0" width="100" height="21"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="50" id="ocG-Lr-SSl"/>
+                        <constraint firstAttribute="width" constant="100" id="ocG-Lr-SSl"/>
                     </constraints>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="fTw-Eo-1h9">
                         <font key="font" metaFont="system"/>

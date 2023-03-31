@@ -1,6 +1,7 @@
 #import "CaptureTriggersView.h"
 #import <vector>
 #import "Toastbox/Mac/Util.h"
+#import "Toastbox/RuntimeError.h"
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
@@ -183,7 +184,7 @@ static uint32_t _SecondsFromTimeOfDayString(NSString* x) {
     NSDate* date = [_TimeFormatStateGet().dateFormatterHHMMSS dateFromString:x];
     if (!date) date = [_TimeFormatStateGet().dateFormatterHHMM dateFromString:x];
     if (!date) date = [_TimeFormatStateGet().dateFormatterHH dateFromString:x];
-    if (!date) return 0;
+    if (!date) throw Toastbox::RuntimeError("invalid time of day: %s", [x UTF8String]);
     
     NSDateComponents* comp = [_TimeFormatStateGet().calendar
         components:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond fromDate:date];
@@ -216,6 +217,17 @@ static uint32_t _SecondsFromTimeOfDayString(NSString* x) {
     Trigger trigger;
 }
 
+static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
+    using X = Trigger::Duration::Unit;
+    switch (x) {
+    case X::Seconds: return "s";
+    case X::Minutes: return "m";
+    case X::Hours:   return "h";
+    case X::Days:    return "d";
+    default:         abort();
+    }
+}
+
 - (void)updateView {
     
     
@@ -227,13 +239,24 @@ static uint32_t _SecondsFromTimeOfDayString(NSString* x) {
         break;
     case Trigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion"]];
+        [_titleLabel setStringValue:@"On motion"];
         break;
     case Trigger::Type::Button:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Button"]];
+        [_titleLabel setStringValue:@"On button press"];
         break;
     default:
         abort();
     }
+    
+    NSMutableString* desc = [NSMutableString stringWithFormat:@"capture %ju image%s",
+        (uintmax_t)trigger.capture.count, (trigger.capture.count!=1 ? "s" : "")];
+    if (trigger.capture.count>1 && trigger.capture.interval.value) {
+        [desc appendFormat:@" (%ju%s interval)",
+            (uintmax_t)trigger.capture.interval.value,
+            _SuffixForDurationUnit(trigger.capture.interval.unit)];
+    }
+    [_descriptionLabel setStringValue:desc];
     
     
 }
@@ -415,13 +438,13 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
         switch (trigger.type) {
         case Trigger::Type::Time:
             _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
-            [_timeField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.time, true)];
+            [_timeField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.time)];
             break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
             _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeRangeDetailView);
-            [_timeStartField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.start, true)];
-            [_timeEndField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.end, true)];
+            [_timeStartField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.start)];
+            [_timeEndField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.end)];
             break;
         default:
             abort();
@@ -591,12 +614,18 @@ static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu
     
     switch (trigger.type) {
     case Trigger::Type::Time:
-        trigger.time.time = _SecondsFromTimeOfDayString([_timeField stringValue]);
+        try {
+            trigger.time.time = _SecondsFromTimeOfDayString([_timeField stringValue]);
+        } catch (...) {}
         break;
     case Trigger::Type::Motion:
     case Trigger::Type::Button:
-        trigger.time.timeRange.start = _SecondsFromTimeOfDayString([_timeStartField stringValue]);
-        trigger.time.timeRange.end = _SecondsFromTimeOfDayString([_timeEndField stringValue]);
+        try {
+            trigger.time.timeRange.start = _SecondsFromTimeOfDayString([_timeStartField stringValue]);
+        } catch (...) {}
+        try {
+            trigger.time.timeRange.end = _SecondsFromTimeOfDayString([_timeEndField stringValue]);
+        } catch (...) {}
         break;
     default:
         abort();
