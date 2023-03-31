@@ -30,9 +30,9 @@ struct [[gnu::packed]] Trigger {
         Sun  = 1<<6,
     };
     
-    enum class MonthDays : uint8_t {};
+    enum class MonthDays : uint32_t {};
     
-    using YearDays = uint32_t[12];
+    using YearDays = MonthDays[12];
     
     enum class LEDs : uint8_t {
         None  = 0,
@@ -301,18 +301,18 @@ static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
 //            MonthDays monthDays;
 //            YearDays yearDays;
 
-static NSString* _WeeklyString(const Trigger::WeekDays& x) {
+static std::string _StringForWeekDays(const Trigger::WeekDays& x) {
     using X = Trigger::WeekDays;
     // Only one day set
     switch (x) {
-    case X::None: return @"Never";
-    case X::Mon:  return @"Mondays";
-    case X::Tue:  return @"Tuesdays";
-    case X::Wed:  return @"Wednesdays";
-    case X::Thu:  return @"Thursdays";
-    case X::Fri:  return @"Fridays";
-    case X::Sat:  return @"Saturdays";
-    case X::Sun:  return @"Sundays";
+    case X::None: return "Never";
+    case X::Mon:  return "Mondays";
+    case X::Tue:  return "Tuesdays";
+    case X::Wed:  return "Wednesdays";
+    case X::Thu:  return "Thursdays";
+    case X::Fri:  return "Fridays";
+    case X::Sat:  return "Saturdays";
+    case X::Sun:  return "Sundays";
     }
     
     constexpr auto MF = (X)(std::to_underlying(X::Mon) |
@@ -320,26 +320,46 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
                             std::to_underlying(X::Wed) |
                             std::to_underlying(X::Thu) |
                             std::to_underlying(X::Fri));
-    if (x == MF) return @"Mon-Fri";
+    if (x == MF) return "Mon-Fri";
     
     static const char* Names[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
     
-    NSMutableString* r = [NSMutableString new];
+    std::string r;
     size_t i = 0;
     size_t count = 0;
-    bool first = true;
     for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
         if (std::to_underlying(x) & std::to_underlying(y)) {
-            if (!first) [r appendString:@", "];
-            [r appendFormat:@"%s", Names[i]];
-            first = false;
+            if (!r.empty()) r.append(", ");
+            r.append(Names[i]);
             count++;
         }
         i++;
     }
     
     if (count <= 3) return r;
-    return [NSString stringWithFormat:@"%ju days per week", (uintmax_t)count];
+    return std::to_string(count) + " days per week";
+}
+
+static std::string _StringForMonthDays(const Trigger::MonthDays& x) {
+    size_t count = 0;
+    auto y = std::to_underlying(x);
+    while (y) {
+        count += y&1;
+        y >>= 1;
+    }
+    return std::to_string(count) + " days per month";
+}
+
+static std::string _StringForYearDays(const Trigger::YearDays& x) {
+    size_t count = 0;
+    for (auto y : x) {
+        auto z = std::to_underlying(y);
+        while (z) {
+            count += z&1;
+            z >>= 1;
+        }
+    }
+    return std::to_string(count) + " days per year";
 }
 
 - (void)updateView {
@@ -362,13 +382,47 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
         abort();
     }
     
+    
+    // Subtitle
+    switch (trigger.type) {
+    case Trigger::Type::Time: {
+        auto& x = trigger.time;
+        
+        std::string subtitle;
+        switch (x.schedule.cadence) {
+        case Trigger::Cadence::Daily:   subtitle = "Daily"; break;
+        case Trigger::Cadence::Weekly:  subtitle = _StringForWeekDays(x.schedule.weekDays); break;
+        case Trigger::Cadence::Monthly: subtitle = _StringForMonthDays(x.schedule.monthDays); break;
+        case Trigger::Cadence::Yearly:  subtitle = _StringForYearDays(x.schedule.yearDays); break;
+        default:                        abort();
+        }
+        [_subtitleLabel setStringValue:@(subtitle.c_str())];
+        
+//        NSMutableString* subtitle = [NSMutableString new];
+//        std::string cadence = StringFromCadence(x.schedule.cadence);
+//        cadence[0] = std::toupper(cadence[0]);
+//        [subtitle appendString:@(cadence.c_str())];
+//        [_subtitleLabel setStringValue:subtitle];
+        break;
+    }
+    
+    case Trigger::Type::Motion:
+    case Trigger::Type::Button: {
+        
+        break;
+    }
+    default:
+        abort();
+    }
+    
+    
 //    // Subtitle
 //    {
 //        NSMutableString* subtitle = [NSMutableString new];
 //        
 //        switch (trigger.schedule.cadence) {
 //        case Trigger::Cadence::Daily:   [subtitle appendString:@"Daily"]; break;
-//        case Trigger::Cadence::Weekly:  [subtitle appendString:_WeeklyString(trigger.schedule.weekDays)]; break;
+//        case Trigger::Cadence::Weekly:  [subtitle appendString:_StringForWeekDays(trigger.schedule.weekDays)]; break;
 //        case Trigger::Cadence::Monthly: [subtitle appendString:@"Monthly"]; break;
 //        case Trigger::Cadence::Yearly:  [subtitle appendString:@"Yearly"]; break;
 //        }
@@ -632,8 +686,6 @@ static void _Copy(uint32_t& x, NSTextField* field) {
     }
 }
 
-
-
 template<bool T_Forward>
 static void _Copy(Trigger::Duration::Unit& x, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
@@ -644,9 +696,6 @@ static void _Copy(Trigger::Duration::Unit& x, NSPopUpButton* menu) {
         x = UnitFromString([[menu titleOfSelectedItem] UTF8String]);
     }
 }
-
-
-
 
 template<bool T_Forward>
 static void _Copy(Trigger::WeekDays& x, NSSegmentedControl* control) {
@@ -674,15 +723,11 @@ static void _Copy(Trigger::MonthDays& x, NSTextField* field) {
     #warning TODO: implement
 }
 
-
 template<bool T_Forward>
 static void _Copy(Trigger::YearDays& x, NSTextField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     #warning TODO: implement
 }
-
-
-
 
 template<bool T_Forward>
 static void _Copy(Trigger::LEDs& x, NSSegmentedControl* control) {
@@ -703,8 +748,6 @@ static void _Copy(Trigger::LEDs& x, NSSegmentedControl* control) {
         x = static_cast<X>(r);
     }
 }
-
-
 
 template<bool T_Forward>
 static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
