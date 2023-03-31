@@ -371,16 +371,6 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
 
 
 
-
-@interface CaptureTriggersView_DetailView : NSView
-@end
-
-@implementation CaptureTriggersView_DetailView {
-@public
-    IBOutlet NSView* alignLeadingView;
-}
-@end
-
 @implementation CaptureTriggersView {
     IBOutlet NSView* _nibView;
     
@@ -388,19 +378,19 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     
     // Time
     IBOutlet NSView* _timeContainerView;
-    IBOutlet CaptureTriggersView_DetailView* _timeDetailView;
+    IBOutlet NSView* _timeDetailView;
     IBOutlet NSTextField* _timeField;
-    IBOutlet CaptureTriggersView_DetailView* _timeRangeDetailView;
+    IBOutlet NSView* _timeRangeDetailView;
     IBOutlet NSButton* _timeRangeCheckbox;
     IBOutlet NSTextField* _timeStartField;
     IBOutlet NSTextField* _timeEndField;
     IBOutlet NSPopUpButton* _repeatIntervalButton;
     IBOutlet NSView* _repeatIntervalContainerView;
-    IBOutlet CaptureTriggersView_DetailView* _weeklyDetailView;
+    IBOutlet NSView* _weeklyDetailView;
     IBOutlet NSSegmentedControl* _weekDaysControl;
-    IBOutlet CaptureTriggersView_DetailView* _monthlyDetailView;
+    IBOutlet NSView* _monthlyDetailView;
     IBOutlet NSTextField* _monthDaysField;
-    IBOutlet CaptureTriggersView_DetailView* _yearlyDetailView;
+    IBOutlet NSView* _yearlyDetailView;
     IBOutlet NSTextField* _yearDaysField;
     
     // Capture
@@ -412,7 +402,7 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     
     // Constraints
     IBOutlet NSView* _constraintsContainerView;
-    IBOutlet CaptureTriggersView_DetailView* _constraintsDetailView;
+    IBOutlet NSView* _constraintsDetailView;
     IBOutlet NSButton* _ignoreTriggerCheckbox;
     IBOutlet NSTextField* _ignoreTriggerDurationField;
     IBOutlet NSPopUpButton* _ignoreTriggerDurationUnitButton;
@@ -489,7 +479,7 @@ static void _Init(CaptureTriggersView* self) {
     return self;
 }
 
-static void _ShowDetailView(NSView* container, NSView* alignLeadingView, CaptureTriggersView_DetailView* detailView) {
+static void _ShowDetailView(NSView* container, NSView* alignLeadingView, NSView* detailView) {
     [detailView removeFromSuperview];
     [container setSubviews:@[]];
     if (!detailView) return;
