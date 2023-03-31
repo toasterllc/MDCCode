@@ -362,6 +362,15 @@ static std::string _StringForYearDays(const Trigger::YearDays& x) {
     return std::to_string(count) + " days per year";
 }
 
+template<typename T>
+static std::string _DescriptionString(const T& x) {
+    std::string str = "capture " + std::to_string(x.count) + " image" + (x.count!=1 ? "s" : "");
+    if (x.count>1 && x.interval.value) {
+        str += " (" + std::to_string(x.interval.value) + _SuffixForDurationUnit(x.interval.unit) + " interval)";
+    }
+    return str;
+}
+
 - (void)updateView {
     // Image, title
     switch (trigger.type) {
@@ -380,7 +389,6 @@ static std::string _StringForYearDays(const Trigger::YearDays& x) {
     default:
         abort();
     }
-    
     
     // Subtitle
     switch (trigger.type) {
@@ -427,47 +435,23 @@ static std::string _StringForYearDays(const Trigger::YearDays& x) {
         abort();
     }
     
+    // Description
+    switch (trigger.type) {
+    case Trigger::Type::Time: {
+        auto& x = trigger.time;
+        [_descriptionLabel setStringValue:@(_DescriptionString(x.capture).c_str())];
+        break;
+    }
     
-//    // Subtitle
-//    {
-//        NSMutableString* subtitle = [NSMutableString new];
-//        
-//        switch (trigger.schedule.cadence) {
-//        case Trigger::Cadence::Daily:   [subtitle appendString:@"Daily"]; break;
-//        case Trigger::Cadence::Weekly:  [subtitle appendString:_StringForWeekDays(trigger.schedule.weekDays)]; break;
-//        case Trigger::Cadence::Monthly: [subtitle appendString:@"Monthly"]; break;
-//        case Trigger::Cadence::Yearly:  [subtitle appendString:@"Yearly"]; break;
-//        }
-//        
-//        switch (trigger.type) {
-//        case Trigger::Type::Time:
-//            break;
-//        case Trigger::Type::Motion:
-//        case Trigger::Type::Button:
-//            if (trigger.schedule.timeLimit.enable) {
-//                [subtitle appendFormat:@", %@ – %@",
-//                    _TimeOfDayStringFromSeconds(trigger.schedule.timeLimit.start),
-//                    _TimeOfDayStringFromSeconds(trigger.schedule.timeLimit.end)];
-//            }
-//            break;
-//        default:
-//            abort();
-//        }
-//        
-//        [_subtitleLabel setStringValue:subtitle];
-//    }
-    
-//    // Description
-//    {
-//        NSMutableString* desc = [NSMutableString stringWithFormat:@"capture %ju image%s",
-//            (uintmax_t)trigger.capture.count, (trigger.capture.count!=1 ? "s" : "")];
-//        if (trigger.capture.count>1 && trigger.capture.interval.value) {
-//            [desc appendFormat:@" (%ju%s interval)",
-//                (uintmax_t)trigger.capture.interval.value,
-//                _SuffixForDurationUnit(trigger.capture.interval.unit)];
-//        }
-//        [_descriptionLabel setStringValue:desc];
-//    }
+    case Trigger::Type::Motion:
+    case Trigger::Type::Button: {
+        auto& x = trigger.motionButton;
+        [_descriptionLabel setStringValue:@(_DescriptionString(x.capture).c_str())];
+        break;
+    }
+    default:
+        abort();
+    }
 }
 
 @end
