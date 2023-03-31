@@ -228,9 +228,50 @@ static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
     }
 }
 
+//        RepeatInterval repeatInterval = RepeatInterval::Daily;
+//        union {
+//            WeekDays weekDays;
+//            MonthDays monthDays;
+//            YearDays yearDays;
+
+static NSString* _WeeklyString(const Trigger::WeekDays& x) {
+    using X = Trigger::WeekDays;
+    // Only one day set
+    switch (x) {
+    case X::None: return @"Never";
+    case X::Mon:  return @"Weekly on Mondays";
+    case X::Tue:  return @"Weekly on Tuesdays";
+    case X::Wed:  return @"Weekly on Wednesdays";
+    case X::Thu:  return @"Weekly on Thursdays";
+    case X::Fri:  return @"Weekly on Fridays";
+    case X::Sat:  return @"Weekly on Saturdays";
+    case X::Sun:  return @"Weekly on Sundays";
+    }
+    
+    constexpr auto MF = (X)(std::to_underlying(X::Mon) |
+                            std::to_underlying(X::Tue) |
+                            std::to_underlying(X::Wed) |
+                            std::to_underlying(X::Thu) |
+                            std::to_underlying(X::Fri));
+    if (x == MF) return @"Weekly Mon-Fri";
+    
+    static const char* Names[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+    
+    NSMutableString* r = [@"Weekly " mutableCopy];
+    size_t i = 0;
+    bool first = true;
+    for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
+        if (std::to_underlying(x) & std::to_underlying(y)) {
+            if (!first) [r appendString:@", "];
+            [r appendFormat:@"%s", Names[i]];
+            first = false;
+        }
+        i++;
+    }
+    return r;
+}
+
 - (void)updateView {
-    
-    
     switch (trigger.type) {
     case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
@@ -247,6 +288,13 @@ static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
         break;
     default:
         abort();
+    }
+    
+    switch (trigger.time.repeatInterval) {
+    case Trigger::RepeatInterval::Daily:   [_subtitleLabel setStringValue:@"Daily"]; break;
+    case Trigger::RepeatInterval::Weekly:  [_subtitleLabel setStringValue:_WeeklyString(trigger.time.weekDays)]; break;
+    case Trigger::RepeatInterval::Monthly: [_subtitleLabel setStringValue:@"Monthly"]; break;
+    case Trigger::RepeatInterval::Yearly:  [_subtitleLabel setStringValue:@"Yearly"]; break;
     }
     
     NSMutableString* desc = [NSMutableString stringWithFormat:@"capture %ju image%s",
