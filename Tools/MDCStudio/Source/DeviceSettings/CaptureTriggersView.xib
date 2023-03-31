@@ -10,6 +10,7 @@
                 <outlet property="_capture_CountField" destination="Yym-4z-PG4" id="aUm-3a-YvK"/>
                 <outlet property="_capture_FlashLEDsControl" destination="Rsa-ll-JvR" id="KDt-px-fvg"/>
                 <outlet property="_capture_IntervalField" destination="WTE-Pb-dq9" id="JNC-FL-uMV"/>
+                <outlet property="_capture_IntervalLabel" destination="uDa-XG-QN2" id="JdT-Ls-hAH"/>
                 <outlet property="_capture_IntervalUnitMenu" destination="i1A-N3-hrL" id="hVp-b6-b5i"/>
                 <outlet property="_constraints_ContainerView" destination="2Xg-db-P6E" id="mRX-N0-xTW"/>
                 <outlet property="_constraints_MaxTotalTriggerCount_Checkbox" destination="MFX-Ck-e2M" id="Rc6-c8-ez3"/>
@@ -73,7 +74,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="0.0" y="0.0" width="455" height="50"/>
+                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="8" y="13" width="24" height="24"/>
@@ -279,6 +280,14 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uDa-XG-QN2">
+                    <rect key="frame" x="197" y="153" width="53" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="interval:" id="I4u-vb-OAa">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="WTE-Pb-dq9">
                     <rect key="frame" x="256" y="150" width="40" height="21"/>
                     <constraints>
@@ -310,14 +319,6 @@
                         <action selector="_viewChangedAction:" target="-2" id="P39-MF-07N"/>
                     </connections>
                 </popUpButton>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uDa-XG-QN2">
-                    <rect key="frame" x="197" y="153" width="53" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="interval:" id="I4u-vb-OAa">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="4R1-In-Kbb" userLabel="Time Container View">
                     <rect key="frame" x="40" y="217" width="440" height="30"/>
                     <constraints>

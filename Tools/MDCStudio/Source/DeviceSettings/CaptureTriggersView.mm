@@ -542,6 +542,7 @@ static std::string _DescriptionString(const T& x) {
     
     // Capture
     IBOutlet NSTextField*        _capture_CountField;
+    IBOutlet NSTextField*        _capture_IntervalLabel;
     IBOutlet NSTextField*        _capture_IntervalField;
     IBOutlet NSPopUpButton*      _capture_IntervalUnitMenu;
     IBOutlet NSSegmentedControl* _capture_FlashLEDsControl;
@@ -795,6 +796,13 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             _Copy<T_Forward>(x.capture.count, y._capture_CountField);
             _Copy<T_Forward>(x.capture.interval.value, y._capture_IntervalField);
             _Copy<T_Forward>(x.capture.interval.unit, y._capture_IntervalUnitMenu);
+            
+            if constexpr (T_Forward) {
+                [y._capture_IntervalLabel setHidden:x.capture.count<2];
+                [y._capture_IntervalField setHidden:x.capture.count<2];
+                [y._capture_IntervalUnitMenu setHidden:x.capture.count<2];
+            }
+            
             _Copy<T_Forward>(x.capture.flashLEDs, y._capture_FlashLEDsControl);
         }
         
@@ -846,6 +854,13 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             _Copy<T_Forward>(x.capture.count, y._capture_CountField);
             _Copy<T_Forward>(x.capture.interval.value, y._capture_IntervalField);
             _Copy<T_Forward>(x.capture.interval.unit, y._capture_IntervalUnitMenu);
+            
+            if constexpr (T_Forward) {
+                [y._capture_IntervalLabel setHidden:x.capture.count<2];
+                [y._capture_IntervalField setHidden:x.capture.count<2];
+                [y._capture_IntervalUnitMenu setHidden:x.capture.count<2];
+            }
+            
             _Copy<T_Forward>(x.capture.flashLEDs, y._capture_FlashLEDsControl);
         }
         
