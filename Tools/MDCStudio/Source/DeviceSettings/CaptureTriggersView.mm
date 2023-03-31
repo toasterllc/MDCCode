@@ -105,6 +105,97 @@ struct [[gnu::packed]] Triggers {
 
 
 
+struct _TimeFormatState {
+    NSCalendar* calendar = nil;
+    NSDateFormatter* dateFormatterHH = nil;
+    NSDateFormatter* dateFormatterHHMM = nil;
+    NSDateFormatter* dateFormatterHHMMSS = nil;
+};
+
+static _TimeFormatState _TimeFormatStateCreate() {
+    _TimeFormatState x;
+    x.calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    
+    {
+        x.dateFormatterHH = [[NSDateFormatter alloc] init];
+        [x.dateFormatterHH setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.dateFormatterHH setTimeZone:[x.calendar timeZone]];
+        [x.dateFormatterHH setLocalizedDateFormatFromTemplate:@"hh"];
+    }
+    
+    {
+        x.dateFormatterHHMM = [[NSDateFormatter alloc] init];
+        [x.dateFormatterHHMM setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.dateFormatterHHMM setTimeZone:[x.calendar timeZone]];
+        [x.dateFormatterHHMM setLocalizedDateFormatFromTemplate:@"hh:mm"];
+    }
+    
+    {
+        x.dateFormatterHHMMSS = [[NSDateFormatter alloc] init];
+        [x.dateFormatterHHMMSS setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.dateFormatterHHMMSS setTimeZone:[x.calendar timeZone]];
+        [x.dateFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hh:mm:ss"];
+    }
+    
+    return x;
+}
+
+static _TimeFormatState& _TimeFormatStateGet() {
+    static _TimeFormatState x = _TimeFormatStateCreate();
+    return x;
+}
+
+// 56789 -> 3:46:29 PM / 15:46:29 (depending on locale)
+static NSString* _TimeOfDayStringFromSeconds(uint32_t x, bool full=false) {
+//    uint32_t second = x%60;
+//    uint32_t minute = x/60*60;
+    const uint32_t h = x/(60*60);
+    x -= h*60*60;
+    const uint32_t m = x/60;
+    x -= m*60;
+    const uint32_t s = x;
+    
+    NSDateComponents* comp = [NSDateComponents new];
+    [comp setYear:2022];
+    [comp setMonth:1];
+    [comp setDay:1];
+    [comp setHour:h];
+    [comp setMinute:m];
+    [comp setSecond:s];
+    NSDate* date = [_TimeFormatStateGet().calendar dateFromComponents:comp];
+    
+    if (full) return [_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date];
+    
+    if (!s && !m) {
+        return [_TimeFormatStateGet().dateFormatterHH stringFromDate:date];
+    } else if (!s) {
+        return [_TimeFormatStateGet().dateFormatterHHMM stringFromDate:date];
+    } else {
+        return [_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date];
+    }
+}
+
+// 3:46:29 PM / 15:46:29 -> 56789
+static uint32_t _SecondsFromTimeOfDayString(NSString* x) {
+    NSDate* date = [_TimeFormatStateGet().dateFormatterHHMMSS dateFromString:x];
+    if (!date) date = [_TimeFormatStateGet().dateFormatterHHMM dateFromString:x];
+    if (!date) date = [_TimeFormatStateGet().dateFormatterHH dateFromString:x];
+    if (!date) return 0;
+    
+    NSDateComponents* comp = [_TimeFormatStateGet().calendar
+        components:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond fromDate:date];
+    return (uint32_t)[comp hour]*60*60 + (uint32_t)[comp minute]*60 + (uint32_t)[comp second];
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -115,15 +206,21 @@ struct [[gnu::packed]] Triggers {
 @implementation CaptureTriggersView_ListItem {
 @private
     IBOutlet NSImageView* _imageView;
-    IBOutlet NSTextField* _label;
+    IBOutlet NSTextField* _titleLabel;
+    IBOutlet NSTextField* _subtitleLabel;
+    IBOutlet NSTextField* _descriptionLabel;
 @public
     Trigger trigger;
 }
 
 - (void)updateView {
+    
+    
     switch (trigger.type) {
     case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
+        [_titleLabel setStringValue:[NSString stringWithFormat:@"At %@",
+            _TimeOfDayStringFromSeconds(trigger.time.time)]];
         break;
     case Trigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion"]];
@@ -134,6 +231,8 @@ struct [[gnu::packed]] Triggers {
     default:
         abort();
     }
+    
+    
 }
 
 @end
@@ -270,7 +369,7 @@ static void _Init(CaptureTriggersView* self) {
     
     [self->_tableView reloadData];
     
-//    [self _loadViewForModel:self->_triggers.triggers[0]];
+//    [self _loadViewFromModel:self->_triggers.triggers[0]];
 }
 
 // MARK: - Creation
@@ -307,19 +406,19 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
     [NSLayoutConstraint activateConstraints:constraints];
 }
 
-- (void)_loadViewForModel:(const Trigger&)trigger {
+- (void)_loadViewFromModel:(const Trigger&)trigger {
     // Time
     {
         switch (trigger.type) {
         case Trigger::Type::Time:
             _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
-            [_timeField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.time)]];
+            [_timeField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.time, true)];
             break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
             _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeRangeDetailView);
-            [_timeStartField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.timeRange.start)]];
-            [_timeEndField setStringValue:[NSString stringWithFormat:@"%@", @(trigger.time.timeRange.end)]];
+            [_timeStartField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.start, true)];
+            [_timeEndField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.end, true)];
             break;
         default:
             abort();
@@ -489,12 +588,12 @@ static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu
     
     switch (trigger.type) {
     case Trigger::Type::Time:
-        trigger.time.time = (uint32_t)[_timeField integerValue];
+        trigger.time.time = _SecondsFromTimeOfDayString([_timeField stringValue]);
         break;
     case Trigger::Type::Motion:
     case Trigger::Type::Button:
-        trigger.time.timeRange.start = (uint32_t)[_timeStartField integerValue];
-        trigger.time.timeRange.end = (uint32_t)[_timeEndField integerValue];
+        trigger.time.timeRange.start = _SecondsFromTimeOfDayString([_timeStartField stringValue]);
+        trigger.time.timeRange.end = _SecondsFromTimeOfDayString([_timeEndField stringValue]);
         break;
     default:
         abort();
@@ -545,7 +644,8 @@ static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu
     ListItem* item = [self _selectedItem];
     if (!item) return;
     [self _storeViewToModel:item->trigger];
-    [self _loadViewForModel:item->trigger];
+    [self _loadViewFromModel:item->trigger];
+    [item updateView];
 }
 
 - (IBAction)_action_repeatInterval:(id)sender {
@@ -598,7 +698,7 @@ static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu
     if (idx < 0) return;
     ListItem* item = _items.at(idx);
     
-    [self _loadViewForModel:item->trigger];
+    [self _loadViewFromModel:item->trigger];
     
 //    item->trigger;
 //    
