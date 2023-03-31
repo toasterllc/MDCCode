@@ -70,7 +70,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="1" y="1" width="456" height="50"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="456" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="8" y="13" width="24" height="24"/>
@@ -199,11 +199,11 @@
                     </connections>
                 </textField>
                 <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="gJ9-mx-gRD">
-                    <rect key="frame" x="58" y="340" width="423" height="5"/>
+                    <rect key="frame" x="85" y="340" width="396" height="5"/>
                 </box>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oIx-Tj-uov">
-                    <rect key="frame" x="18" y="334" width="34" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Time" id="HLc-23-609">
+                    <rect key="frame" x="18" y="334" width="61" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Schedule" id="HLc-23-609">
                         <font key="font" usesAppearanceFont="YES"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -358,8 +358,8 @@
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="dgh-l6-oxS">
-                    <rect key="frame" x="58" y="122" width="75" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Flash LEDs:" id="6yc-Uk-oUh">
+                    <rect key="frame" x="65" y="122" width="68" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Flash LED:" id="6yc-Uk-oUh">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -456,8 +456,8 @@
             <rect key="frame" x="0.0" y="0.0" width="327" height="21"/>
             <subviews>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="j28-bM-XnS">
-                    <rect key="frame" x="-2" y="1" width="94" height="19"/>
-                    <buttonCell key="cell" type="check" title="Time range:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="c5g-Ey-HFI">
+                    <rect key="frame" x="-2" y="1" width="124" height="19"/>
+                    <buttonCell key="cell" type="check" title="Limit time range:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="c5g-Ey-HFI">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -466,7 +466,7 @@
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
-                    <rect key="frame" x="98" y="0.0" width="100" height="21"/>
+                    <rect key="frame" x="128" y="0.0" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="bIP-5H-5pa"/>
                     </constraints>
@@ -480,7 +480,7 @@
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
-                    <rect key="frame" x="204" y="3" width="17" height="16"/>
+                    <rect key="frame" x="234" y="3" width="17" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="to" id="Qdg-p5-o0x">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -488,7 +488,7 @@
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
-                    <rect key="frame" x="227" y="0.0" width="100" height="21"/>
+                    <rect key="frame" x="257" y="0.0" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="ocG-Lr-SSl"/>
                     </constraints>

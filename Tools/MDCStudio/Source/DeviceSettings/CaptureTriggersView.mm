@@ -295,26 +295,26 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     {
         NSMutableString* subtitle = [NSMutableString new];
         
+        switch (trigger.time.repeatInterval) {
+        case Trigger::RepeatInterval::Daily:   [subtitle appendString:@"Daily"]; break;
+        case Trigger::RepeatInterval::Weekly:  [subtitle appendString:_WeeklyString(trigger.time.weekDays)]; break;
+        case Trigger::RepeatInterval::Monthly: [subtitle appendString:@"Monthly"]; break;
+        case Trigger::RepeatInterval::Yearly:  [subtitle appendString:@"Yearly"]; break;
+        }
+        
         switch (trigger.type) {
         case Trigger::Type::Time:
             break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
             if (trigger.time.timeRange.enable) {
-                [subtitle appendFormat:@"%@–%@ ",
+                [subtitle appendFormat:@" %@ – %@",
                     _TimeOfDayStringFromSeconds(trigger.time.timeRange.start),
                     _TimeOfDayStringFromSeconds(trigger.time.timeRange.end)];
             }
             break;
         default:
             abort();
-        }
-        
-        switch (trigger.time.repeatInterval) {
-        case Trigger::RepeatInterval::Daily:   [subtitle appendString:@"Daily"]; break;
-        case Trigger::RepeatInterval::Weekly:  [subtitle appendString:_WeeklyString(trigger.time.weekDays)]; break;
-        case Trigger::RepeatInterval::Monthly: [subtitle appendString:@"Monthly"]; break;
-        case Trigger::RepeatInterval::Yearly:  [subtitle appendString:@"Yearly"]; break;
         }
         
         [_subtitleLabel setStringValue:subtitle];
