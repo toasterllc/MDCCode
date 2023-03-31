@@ -7,55 +7,60 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="CaptureTriggersView">
             <connections>
-                <outlet property="_captureCountField" destination="Yym-4z-PG4" id="aUm-3a-YvK"/>
-                <outlet property="_captureIntervalField" destination="WTE-Pb-dq9" id="JNC-FL-uMV"/>
-                <outlet property="_captureIntervalUnitButton" destination="i1A-N3-hrL" id="hVp-b6-b5i"/>
-                <outlet property="_constraintsContainerView" destination="2Xg-db-P6E" id="mRX-N0-xTW"/>
-                <outlet property="_constraintsDetailView" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
-                <outlet property="_flashLEDsControl" destination="Rsa-ll-JvR" id="KDt-px-fvg"/>
-                <outlet property="_ignoreTriggerCheckbox" destination="xue-BB-gUz" id="FC5-OI-RhZ"/>
-                <outlet property="_ignoreTriggerDurationField" destination="Ucp-vv-qKL" id="ngp-hK-RhZ"/>
-                <outlet property="_ignoreTriggerDurationUnitButton" destination="0dn-kG-M5l" id="hj3-47-De7"/>
-                <outlet property="_maxTotalTriggerCountCheckbox" destination="MFX-Ck-e2M" id="Rc6-c8-ez3"/>
-                <outlet property="_maxTotalTriggerCountField" destination="dmd-uc-OsP" id="jKe-Ig-CnO"/>
-                <outlet property="_maxTriggerCountCheckbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
-                <outlet property="_maxTriggerCountField" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
-                <outlet property="_monthDaysField" destination="YQ1-gj-xVe" id="4T4-lz-PVv"/>
-                <outlet property="_monthlyDetailView" destination="SVc-di-VTv" id="BLO-uD-Mof"/>
+                <outlet property="_capture_CountField" destination="Yym-4z-PG4" id="aUm-3a-YvK"/>
+                <outlet property="_capture_FlashLEDsControl" destination="Rsa-ll-JvR" id="KDt-px-fvg"/>
+                <outlet property="_capture_IntervalField" destination="WTE-Pb-dq9" id="JNC-FL-uMV"/>
+                <outlet property="_capture_IntervalUnitMenu" destination="i1A-N3-hrL" id="hVp-b6-b5i"/>
+                <outlet property="_constraints_ContainerView" destination="2Xg-db-P6E" id="mRX-N0-xTW"/>
+                <outlet property="_constraints_IgnoreTrigger_Checkbox" destination="xue-BB-gUz" id="FC5-OI-RhZ"/>
+                <outlet property="_constraints_IgnoreTrigger_DurationField" destination="Ucp-vv-qKL" id="ngp-hK-RhZ"/>
+                <outlet property="_constraints_IgnoreTrigger_DurationUnitMenu" destination="0dn-kG-M5l" id="hj3-47-De7"/>
+                <outlet property="_constraints_MaxTotalTriggerCount_Checkbox" destination="MFX-Ck-e2M" id="Rc6-c8-ez3"/>
+                <outlet property="_constraints_MaxTotalTriggerCount_Field" destination="dmd-uc-OsP" id="jKe-Ig-CnO"/>
+                <outlet property="_constraints_MaxTriggerCount_Checkbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
+                <outlet property="_constraints_MaxTriggerCount_Field" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
+                <outlet property="_constraints_MotionDetailView" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
+                <outlet property="_monthlyDaySelector_Field" destination="YQ1-gj-xVe" id="4T4-lz-PVv"/>
+                <outlet property="_monthlyDaySelector_View" destination="SVc-di-VTv" id="BLO-uD-Mof"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
+                <outlet property="_schedule_ContainerView" destination="4R1-In-Kbb" id="cwH-BJ-Tmv"/>
+                <outlet property="_schedule_Motion_DaySelectorContainerView" destination="Jd9-lQ-a3S" id="ugZ-xT-TRK"/>
+                <outlet property="_schedule_Motion_LimitDays_Checkbox" destination="WpU-LG-czv" id="oGZ-Kn-4wu"/>
+                <outlet property="_schedule_Motion_LimitDays_Menu" destination="RN5-cz-MIP" id="TO7-Su-VdB"/>
+                <outlet property="_schedule_Motion_LimitTimeOfDay_Checkbox" destination="j28-bM-XnS" id="oat-UX-D3g"/>
+                <outlet property="_schedule_Motion_LimitTimeOfDay_TimeEndField" destination="gGO-69-NDw" id="lWJ-3y-Q04"/>
+                <outlet property="_schedule_Motion_LimitTimeOfDay_TimeStartField" destination="35D-kR-T9a" id="xog-sm-S9q"/>
+                <outlet property="_schedule_Motion_View" destination="ZTq-dS-LMW" id="1gL-1a-8fb"/>
+                <outlet property="_schedule_Time_DaySelectorContainerView" destination="5tK-cV-igO" id="Ov6-YM-bWB"/>
+                <outlet property="_schedule_Time_RepeatIntervalMenu" destination="Aqh-R6-EdY" id="sNy-bb-Kbh"/>
+                <outlet property="_schedule_Time_TimeField" destination="Vfd-bm-n7h" id="hHH-4i-GdL"/>
+                <outlet property="_schedule_Time_View" destination="bvu-Ek-Vhq" id="Sbb-1d-ZG7"/>
                 <outlet property="_tableView" destination="RfV-Mq-Pvl" id="hYB-B3-xIy"/>
-                <outlet property="_timeContainerView" destination="4R1-In-Kbb" id="z7v-tj-rSs"/>
-                <outlet property="_timeDetailView" destination="bvu-Ek-Vhq" id="mj7-ht-CBg"/>
-                <outlet property="_timeEndField" destination="gGO-69-NDw" id="lWJ-3y-Q04"/>
-                <outlet property="_timeField" destination="Vfd-bm-n7h" id="hHH-4i-GdL"/>
-                <outlet property="_timeRangeCheckbox" destination="j28-bM-XnS" id="oat-UX-D3g"/>
-                <outlet property="_timeRangeDetailView" destination="ZTq-dS-LMW" id="gbG-oL-NDD"/>
-                <outlet property="_timeStartField" destination="35D-kR-T9a" id="xog-sm-S9q"/>
-                <outlet property="_weekDaysControl" destination="WO9-Yi-XDc" id="aX8-O8-AU4"/>
-                <outlet property="_weeklyDetailView" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
-                <outlet property="_yearDaysField" destination="NJO-gj-szB" id="bp2-ho-ggH"/>
-                <outlet property="_yearlyDetailView" destination="U49-dv-RHU" id="lCm-Lj-O6f"/>
+                <outlet property="_weeklyDaySelector_Control" destination="WO9-Yi-XDc" id="aX8-O8-AU4"/>
+                <outlet property="_weeklyDaySelector_View" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
+                <outlet property="_yearlyDaySelector_Field" destination="NJO-gj-szB" id="bp2-ho-ggH"/>
+                <outlet property="_yearlyDaySelector_View" destination="U49-dv-RHU" id="lCm-Lj-O6f"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
-            <rect key="frame" x="0.0" y="0.0" width="501" height="791"/>
+            <rect key="frame" x="0.0" y="0.0" width="500" height="600"/>
             <subviews>
                 <scrollView autohidesScrollers="YES" horizontalLineScroll="52" horizontalPageScroll="10" verticalLineScroll="52" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RYD-Tl-az2">
-                    <rect key="frame" x="20" y="306" width="461" height="441"/>
+                    <rect key="frame" x="20" y="306" width="460" height="250"/>
                     <clipView key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
-                        <rect key="frame" x="1" y="1" width="459" height="439"/>
+                        <rect key="frame" x="1" y="1" width="458" height="248"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" rowHeight="50" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
-                                <rect key="frame" x="0.0" y="0.0" width="459" height="439"/>
+                                <rect key="frame" x="0.0" y="0.0" width="458" height="248"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn width="456" minWidth="40" maxWidth="1000" id="GfJ-4C-MOX">
+                                    <tableColumn width="455" minWidth="40" maxWidth="1000" id="GfJ-4C-MOX">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
@@ -68,7 +73,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="0.0" y="0.0" width="456" height="50"/>
+                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="8" y="13" width="24" height="24"/>
@@ -136,7 +141,7 @@
                         <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="100" id="C8G-lq-B4Y"/>
                     </constraints>
                     <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="F2D-sw-at7">
-                        <rect key="frame" x="1" y="347" width="459" height="16"/>
+                        <rect key="frame" x="1" y="233" width="458" height="16"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                     <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="WfM-O4-Nlt">
@@ -145,7 +150,7 @@
                     </scroller>
                 </scrollView>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2b6-Qj-SMN">
-                    <rect key="frame" x="18" y="755" width="107" height="16"/>
+                    <rect key="frame" x="18" y="564" width="107" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Capture triggers:" id="7Mh-wt-Jg4">
                         <font key="font" usesAppearanceFont="YES"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -153,7 +158,7 @@
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gM0-RU-QRz">
-                    <rect key="frame" x="457" y="278" width="24" height="20"/>
+                    <rect key="frame" x="456" y="278" width="24" height="20"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="20" id="21u-GX-syF"/>
                         <constraint firstAttribute="width" constant="24" id="dDc-A4-sym"/>
@@ -164,7 +169,7 @@
                     </buttonCell>
                 </button>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sv3-nB-qTo">
-                    <rect key="frame" x="437" y="276" width="20" height="24"/>
+                    <rect key="frame" x="436" y="276" width="20" height="24"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="20" id="0Xu-8A-4nq"/>
                         <constraint firstAttribute="height" constant="24" id="2UC-X9-spL"/>
@@ -197,7 +202,7 @@
                     </connections>
                 </textField>
                 <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="gJ9-mx-gRD">
-                    <rect key="frame" x="85" y="268" width="396" height="5"/>
+                    <rect key="frame" x="85" y="268" width="395" height="5"/>
                 </box>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oIx-Tj-uov">
                     <rect key="frame" x="18" y="262" width="61" height="16"/>
@@ -208,7 +213,7 @@
                     </textFieldCell>
                 </textField>
                 <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="u1N-yv-zO7">
-                    <rect key="frame" x="77" y="192" width="404" height="5"/>
+                    <rect key="frame" x="77" y="192" width="403" height="5"/>
                 </box>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="UR7-ZS-KAS">
                     <rect key="frame" x="18" y="186" width="53" height="16"/>
@@ -219,7 +224,7 @@
                     </textFieldCell>
                 </textField>
                 <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="tdX-ug-CKv">
-                    <rect key="frame" x="98" y="92" width="383" height="5"/>
+                    <rect key="frame" x="98" y="92" width="382" height="5"/>
                 </box>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pjC-Tk-6eR">
                     <rect key="frame" x="18" y="86" width="74" height="16"/>
@@ -301,13 +306,13 @@
                     </textFieldCell>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="4R1-In-Kbb" userLabel="Time Container View">
-                    <rect key="frame" x="40" y="217" width="441" height="30"/>
+                    <rect key="frame" x="40" y="217" width="440" height="30"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="30" placeholder="YES" id="ctV-RE-SeS"/>
                     </constraints>
                 </customView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="2Xg-db-P6E" userLabel="Limits Container View">
-                    <rect key="frame" x="40" y="41" width="441" height="30"/>
+                    <rect key="frame" x="40" y="41" width="440" height="30"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="30" placeholder="YES" id="0pN-eW-sEB"/>
                         <constraint firstAttribute="height" priority="250" id="zHO-Fb-PUI"/>
@@ -406,9 +411,9 @@
                 <constraint firstItem="2b6-Qj-SMN" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="20" id="xYy-K8-Vgc"/>
                 <constraint firstItem="9iW-US-9Nz" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="40" id="zbv-XM-TNF"/>
             </constraints>
-            <point key="canvasLocation" x="250.5" y="141.5"/>
+            <point key="canvasLocation" x="250.5" y="58.5"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Time Range Detail View">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Schedule - Motion / Button">
             <rect key="frame" x="0.0" y="0.0" width="572" height="96"/>
             <subviews>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="j28-bM-XnS">
@@ -519,7 +524,7 @@
             </connections>
             <point key="canvasLocation" x="716" y="690"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Time Detail View">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Schedule - Time">
             <rect key="frame" x="0.0" y="0.0" width="491" height="96"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="PfN-UJ-gre">
@@ -596,7 +601,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="Vfd-bm-n7h" id="dDb-EE-Jqk"/>
             </connections>
-            <point key="canvasLocation" x="37.5" y="698"/>
+            <point key="canvasLocation" x="47" y="735"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Weekly Detail View">
             <rect key="frame" x="0.0" y="0.0" width="338" height="18"/>
@@ -630,7 +635,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="WO9-Yi-XDc" id="Hpv-zL-Xi0"/>
             </connections>
-            <point key="canvasLocation" x="8" y="618"/>
+            <point key="canvasLocation" x="46" y="839"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="SVc-di-VTv" userLabel="Monthly Detail View">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
@@ -667,7 +672,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="YQ1-gj-xVe" id="7Tc-GO-fqT"/>
             </connections>
-            <point key="canvasLocation" x="456" y="856"/>
+            <point key="canvasLocation" x="46" y="899"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Yearly Detail View">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
@@ -704,7 +709,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="NJO-gj-szB" id="TCa-cC-NQ1"/>
             </connections>
-            <point key="canvasLocation" x="46" y="910"/>
+            <point key="canvasLocation" x="46" y="964"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="ihD-Oq-dCa" userLabel="Limits Detail View">
             <rect key="frame" x="0.0" y="0.0" width="451" height="66"/>
@@ -827,7 +832,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="Ucp-vv-qKL" id="Ln1-p3-EKq"/>
             </connections>
-            <point key="canvasLocation" x="794.5" y="473"/>
+            <point key="canvasLocation" x="47" y="1072"/>
         </customView>
     </objects>
     <resources>

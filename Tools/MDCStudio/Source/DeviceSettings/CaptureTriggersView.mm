@@ -62,15 +62,26 @@ struct [[gnu::packed]] Trigger {
                 bool enable;
                 uint32_t start;
                 uint32_t end;
-            } timeRange;
+            } timeOfDayRange;
         };
-        RepeatInterval repeatInterval = RepeatInterval::Daily;
+        
+        union {
+            struct [[gnu::packed]] {
+                RepeatInterval interval = RepeatInterval::Daily;
+            } repeat;
+            
+            struct [[gnu::packed]] {
+                bool enable;
+                RepeatInterval interval = RepeatInterval::Daily;
+            } limit;
+        };
+        
         union {
             WeekDays weekDays;
             MonthDays monthDays;
             YearDays yearDays;
         };
-    } time;
+    } schedule;
     
     struct [[gnu::packed]] {
         uint32_t count = 0;
@@ -281,7 +292,7 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
         [_titleLabel setStringValue:[NSString stringWithFormat:@"At %@",
-            _TimeOfDayStringFromSeconds(trigger.time.time)]];
+            _TimeOfDayStringFromSeconds(trigger.schedule.time)]];
         break;
     case Trigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion"]];
@@ -299,9 +310,9 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     {
         NSMutableString* subtitle = [NSMutableString new];
         
-        switch (trigger.time.repeatInterval) {
+        switch (trigger.schedule.repeatInterval) {
         case Trigger::RepeatInterval::Daily:   [subtitle appendString:@"Daily"]; break;
-        case Trigger::RepeatInterval::Weekly:  [subtitle appendString:_WeeklyString(trigger.time.weekDays)]; break;
+        case Trigger::RepeatInterval::Weekly:  [subtitle appendString:_WeeklyString(trigger.schedule.weekDays)]; break;
         case Trigger::RepeatInterval::Monthly: [subtitle appendString:@"Monthly"]; break;
         case Trigger::RepeatInterval::Yearly:  [subtitle appendString:@"Yearly"]; break;
         }
@@ -311,10 +322,10 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
             break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
-            if (trigger.time.timeRange.enable) {
+            if (trigger.schedule.timeOfDayRange.enable) {
                 [subtitle appendFormat:@", %@ – %@",
-                    _TimeOfDayStringFromSeconds(trigger.time.timeRange.start),
-                    _TimeOfDayStringFromSeconds(trigger.time.timeRange.end)];
+                    _TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.start),
+                    _TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.end)];
             }
             break;
         default:
@@ -376,42 +387,49 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     
     IBOutlet NSTableView* _tableView;
     
-    // Time
-    IBOutlet NSView* _timeContainerView;
-    IBOutlet NSView* _timeDetailView;
-    IBOutlet NSTextField* _timeField;
-    IBOutlet NSView* _timeRangeDetailView;
-    IBOutlet NSButton* _timeRangeCheckbox;
-    IBOutlet NSTextField* _timeStartField;
-    IBOutlet NSTextField* _timeEndField;
-    IBOutlet NSPopUpButton* _repeatIntervalButton;
-    IBOutlet NSView* _repeatIntervalContainerView;
-    IBOutlet NSView* _weeklyDetailView;
-    IBOutlet NSSegmentedControl* _weekDaysControl;
-    IBOutlet NSView* _monthlyDetailView;
-    IBOutlet NSTextField* _monthDaysField;
-    IBOutlet NSView* _yearlyDetailView;
-    IBOutlet NSTextField* _yearDaysField;
+    // Schedule
+    IBOutlet NSView*        _schedule_ContainerView;
+    
+    IBOutlet NSView*        _schedule_Time_View;
+    IBOutlet NSTextField*   _schedule_Time_TimeField;
+    IBOutlet NSView*        _schedule_Time_DaySelectorContainerView;
+    IBOutlet NSPopUpButton* _schedule_Time_RepeatIntervalMenu;
+    
+    IBOutlet NSView*        _schedule_Motion_View;
+    IBOutlet NSButton*      _schedule_Motion_LimitTimeOfDay_Checkbox;
+    IBOutlet NSTextField*   _schedule_Motion_LimitTimeOfDay_TimeStartField;
+    IBOutlet NSTextField*   _schedule_Motion_LimitTimeOfDay_TimeEndField;
+    IBOutlet NSButton*      _schedule_Motion_LimitDays_Checkbox;
+    IBOutlet NSPopUpButton* _schedule_Motion_LimitDays_Menu;
+    IBOutlet NSView*        _schedule_Motion_DaySelectorContainerView;
+    
+    IBOutlet NSView*             _weeklyDaySelector_View;
+    IBOutlet NSSegmentedControl* _weeklyDaySelector_Control;
+    
+    IBOutlet NSView*        _monthlyDaySelector_View;
+    IBOutlet NSTextField*   _monthlyDaySelector_Field;
+    
+    IBOutlet NSView*        _yearlyDaySelector_View;
+    IBOutlet NSTextField*   _yearlyDaySelector_Field;
     
     // Capture
-    IBOutlet NSTextField* _captureCountField;
-    IBOutlet NSTextField* _captureIntervalField;
-    IBOutlet NSPopUpButton* _captureIntervalUnitButton;
-    
-    IBOutlet NSSegmentedControl* _flashLEDsControl;
+    IBOutlet NSTextField*        _capture_CountField;
+    IBOutlet NSTextField*        _capture_IntervalField;
+    IBOutlet NSPopUpButton*      _capture_IntervalUnitMenu;
+    IBOutlet NSSegmentedControl* _capture_FlashLEDsControl;
     
     // Constraints
-    IBOutlet NSView* _constraintsContainerView;
-    IBOutlet NSView* _constraintsDetailView;
-    IBOutlet NSButton* _ignoreTriggerCheckbox;
-    IBOutlet NSTextField* _ignoreTriggerDurationField;
-    IBOutlet NSPopUpButton* _ignoreTriggerDurationUnitButton;
+    IBOutlet NSView*        _constraints_ContainerView;
+    IBOutlet NSView*        _constraints_MotionDetailView;
+    IBOutlet NSButton*      _constraints_IgnoreTrigger_Checkbox;
+    IBOutlet NSTextField*   _constraints_IgnoreTrigger_DurationField;
+    IBOutlet NSPopUpButton* _constraints_IgnoreTrigger_DurationUnitMenu;
     
-    IBOutlet NSButton* _maxTriggerCountCheckbox;
-    IBOutlet NSTextField* _maxTriggerCountField;
+    IBOutlet NSButton*      _constraints_MaxTriggerCount_Checkbox;
+    IBOutlet NSTextField*   _constraints_MaxTriggerCount_Field;
     
-    IBOutlet NSButton* _maxTotalTriggerCountCheckbox;
-    IBOutlet NSTextField* _maxTotalTriggerCountField;
+    IBOutlet NSButton*      _constraints_MaxTotalTriggerCount_Checkbox;
+    IBOutlet NSTextField*   _constraints_MaxTotalTriggerCount_Field;
     
     std::vector<ListItem*> _items;
 }
@@ -479,24 +497,34 @@ static void _Init(CaptureTriggersView* self) {
     return self;
 }
 
-static void _ShowDetailView(NSView* container, NSView* alignLeadingView, NSView* detailView) {
-    [detailView removeFromSuperview];
+static void _SetContainerSubview(NSView* container, NSView* subview) {
+    [subview removeFromSuperview];
     [container setSubviews:@[]];
-    if (!detailView) return;
+    if (!subview) return;
     
-    [container addSubview:detailView];
+    [container addSubview:subview];
     
     NSMutableArray* constraints = [NSMutableArray new];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(>=0)-[detailView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(detailView)]];
-    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[detailView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(detailView)]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(>=0)-[subview]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
+    [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[subview]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
     
-    if (detailView->alignLeadingView) {
-        [constraints addObject:[[detailView->alignLeadingView leadingAnchor] constraintEqualToAnchor:[alignLeadingView leadingAnchor]]];
-    }
+//    if (subview->alignLeadingView) {
+//        [constraints addObject:[[subview->alignLeadingView leadingAnchor] constraintEqualToAnchor:[alignLeadingView leadingAnchor]]];
+//    }
     
     [NSLayoutConstraint activateConstraints:constraints];
+}
+
+static void _Load(const Trigger::RepeatInterval& x, NSPopUpButton* menu) {
+    using X = Trigger::RepeatInterval;
+    switch (x) {
+    case X::Daily:   [menu selectItemWithTitle:@"Daily"]; break;
+    case X::Weekly:  [menu selectItemWithTitle:@"Weekly"]; break;
+    case X::Monthly: [menu selectItemWithTitle:@"Monthly"]; break;
+    case X::Yearly:  [menu selectItemWithTitle:@"Yearly"]; break;
+    }
 }
 
 - (void)_loadViewFromModel:(const Trigger&)trigger {
@@ -504,69 +532,80 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, NSView*
     {
         switch (trigger.type) {
         case Trigger::Type::Time:
-            _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
-            [_timeField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.time)];
+            _SetContainerSubview(_schedule_ContainerView, _schedule_Time_View);
+            [_schedule_Time_TimeField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.time)];
+            
+            _Load(trigger.schedule.repeatInterval, _schedule_Time_RepeatIntervalMenu);
+            switch (trigger.schedule.repeatInterval) {
+            case Trigger::RepeatInterval::Daily:
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, nil);
+                break;
+            case Trigger::RepeatInterval::Weekly:
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _weeklyDaySelector_View);
+                _Load(trigger.schedule.weekDays, _weeklyDaySelector_Control);
+                break;
+            case Trigger::RepeatInterval::Monthly:
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _monthlyDaySelector_View);
+                break;
+            case Trigger::RepeatInterval::Yearly:
+                _SetContainerSubview(_schedule_Time_DaySelectorContainerView, _yearlyDaySelector_View);
+                break;
+            }
+            
             break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
-            _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeRangeDetailView);
-            [_timeRangeCheckbox setState:(trigger.time.timeRange.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-            [_timeStartField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.start)];
-            [_timeEndField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.end)];
+            _SetContainerSubview(_schedule_ContainerView, _schedule_Motion_View);
+            
+            
+            
+            [_schedule_Motion_LimitTimeOfDay_Checkbox setState:(trigger.schedule.timeOfDayRange.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+            [_schedule_Motion_LimitTimeOfDay_TimeStartField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.start)];
+            [_schedule_Motion_LimitTimeOfDay_TimeEndField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.end)];
+            
+            [_schedule_Motion_LimitDays_Checkbox setState:(trigger.schedule.timeOfDayRange.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+            [_schedule_Motion_LimitTimeOfDay_TimeStartField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.start)];
+            [_schedule_Motion_LimitTimeOfDay_TimeEndField setStringValue:_TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.end)];
+            
+            
+            
             break;
         default:
             abort();
-        }
-        
-        [_repeatIntervalButton selectItemAtIndex:(NSInteger)trigger.time.repeatInterval];
-        switch (trigger.time.repeatInterval) {
-        case Trigger::RepeatInterval::Daily:
-            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, nil);
-            break;
-        case Trigger::RepeatInterval::Weekly:
-            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDetailView);
-            _Load(trigger.time.weekDays, _weekDaysControl);
-            break;
-        case Trigger::RepeatInterval::Monthly:
-            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDetailView);
-            break;
-        case Trigger::RepeatInterval::Yearly:
-            _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDetailView);
-            break;
         }
     }
     
     // Capture
     {
-        [_captureCountField setObjectValue:@(trigger.capture.count)];
-        [_captureIntervalField setObjectValue:@(trigger.capture.interval.value)];
-        [_captureIntervalUnitButton selectItemAtIndex:(NSInteger)trigger.capture.interval.unit];
+        [_capture_CountField setObjectValue:@(trigger.capture.count)];
+        [_capture_IntervalField setObjectValue:@(trigger.capture.interval.value)];
+        [_capture_IntervalUnitMenu selectItemAtIndex:(NSInteger)trigger.capture.interval.unit];
         
-        _Load(trigger.capture.flashLEDs, _flashLEDsControl);
+        _Load(trigger.capture.flashLEDs, _capture_FlashLEDsControl);
     }
     
     // Limits
     {
         switch (trigger.type) {
         case Trigger::Type::Time:
-            _ShowDetailView(_constraintsContainerView, _maxTotalTriggerCountField, nil);
+            _SetContainerSubview(_constraints_ContainerView, _constraints_MaxTotalTriggerCount_Field, nil);
             break;
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
-            _ShowDetailView(_constraintsContainerView, _maxTotalTriggerCountField, _constraintsDetailView);
+            _SetContainerSubview(_constraints_ContainerView, _constraints_MaxTotalTriggerCount_Field, _constraints_MotionDetailView);
             break;
         default:
             abort();
         }
         
-        [_ignoreTriggerCheckbox setState:(trigger.constraints.ignoreTriggerDuration.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-        _Load(trigger.constraints.ignoreTriggerDuration.duration, _ignoreTriggerDurationField, _ignoreTriggerDurationUnitButton);
+        [_constraints_IgnoreTrigger_Checkbox setState:(trigger.constraints.ignoreTriggerDuration.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+        _Load(trigger.constraints.ignoreTriggerDuration.duration, _constraints_IgnoreTrigger_DurationField, _constraints_IgnoreTrigger_DurationUnitMenu);
         
-        [_maxTriggerCountCheckbox setState:(trigger.constraints.maxTriggerCount.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_maxTriggerCountField setObjectValue:@(trigger.constraints.maxTriggerCount.count)];
+        [_constraints_MaxTriggerCount_Checkbox setState:(trigger.constraints.maxTriggerCount.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_constraints_MaxTriggerCount_Field setObjectValue:@(trigger.constraints.maxTriggerCount.count)];
         
-        [_maxTotalTriggerCountCheckbox setState:(trigger.constraints.maxTotalTriggerCount.enable ? NSControlStateValueOn : NSControlStateValueOff)];
-        [_maxTotalTriggerCountField setObjectValue:@(trigger.constraints.maxTotalTriggerCount.count)];
+        [_constraints_MaxTotalTriggerCount_Checkbox setState:(trigger.constraints.maxTotalTriggerCount.enable ? NSControlStateValueOn : NSControlStateValueOff)];
+        [_constraints_MaxTotalTriggerCount_Field setObjectValue:@(trigger.constraints.maxTotalTriggerCount.count)];
         
 //        [_maxTriggerCountPeriodButton selectItemAtIndex:(NSInteger)trigger.constraints.triggerCountPeriod];
     }
@@ -683,55 +722,55 @@ static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu
     switch (trigger.type) {
     case Trigger::Type::Time:
         try {
-            trigger.time.time = _SecondsFromTimeOfDayString([_timeField stringValue]);
+            trigger.schedule.time = _SecondsFromTimeOfDayString([_schedule_Time_TimeField stringValue]);
         } catch (...) {}
         break;
     
     case Trigger::Type::Motion:
     case Trigger::Type::Button:
-        trigger.time.timeRange.enable = [_timeRangeCheckbox state]==NSControlStateValueOn;
+        trigger.schedule.timeOfDayRange.enable = [_schedule_Motion_LimitTimeOfDay_Checkbox state]==NSControlStateValueOn;
         try {
-            trigger.time.timeRange.start = _SecondsFromTimeOfDayString([_timeStartField stringValue]);
+            trigger.schedule.timeOfDayRange.start = _SecondsFromTimeOfDayString([_schedule_Motion_LimitTimeOfDay_TimeStartField stringValue]);
         } catch (...) {}
         try {
-            trigger.time.timeRange.end = _SecondsFromTimeOfDayString([_timeEndField stringValue]);
+            trigger.schedule.timeOfDayRange.end = _SecondsFromTimeOfDayString([_schedule_Motion_LimitTimeOfDay_TimeEndField stringValue]);
         } catch (...) {}
         break;
     default:
         abort();
     }
     
-    trigger.time.repeatInterval = (Trigger::RepeatInterval)[_repeatIntervalButton indexOfSelectedItem];
+    trigger.schedule.repeatInterval = (Trigger::RepeatInterval)[_repeatIntervalButton indexOfSelectedItem];
     
-    switch (trigger.time.repeatInterval) {
+    switch (trigger.schedule.repeatInterval) {
     case Trigger::RepeatInterval::Daily:
         break;
     case Trigger::RepeatInterval::Weekly:
-        _Store(trigger.time.weekDays, _weekDaysControl);
+        _Store(trigger.schedule.weekDays, _weeklyDaySelector_Control);
         break;
     case Trigger::RepeatInterval::Monthly:
-//        trigger.time.monthDays = XXX;
+//        trigger.schedule.monthDays = XXX;
         break;
     case Trigger::RepeatInterval::Yearly:
-//        trigger.time.yearDays = XXX;
+//        trigger.schedule.yearDays = XXX;
         break;
     default:
         abort();
     }
     
-    trigger.capture.count = (uint32_t)[_captureCountField integerValue];
-    _Store(trigger.capture.interval, _captureIntervalField, _captureIntervalUnitButton);
-    _Store(trigger.capture.flashLEDs, _flashLEDsControl);
+    trigger.capture.count = (uint32_t)[_capture_CountField integerValue];
+    _Store(trigger.capture.interval, _capture_IntervalField, _capture_IntervalUnitMenu);
+    _Store(trigger.capture.flashLEDs, _capture_FlashLEDsControl);
     
     #warning TODO: ignoreTriggerDurationMs: consider unit popup button!
-    trigger.constraints.ignoreTriggerDuration.enable = [_ignoreTriggerCheckbox state]==NSControlStateValueOn;
-    _Store(trigger.constraints.ignoreTriggerDuration.duration, _ignoreTriggerDurationField, _ignoreTriggerDurationUnitButton);
+    trigger.constraints.ignoreTriggerDuration.enable = [_constraints_IgnoreTrigger_Checkbox state]==NSControlStateValueOn;
+    _Store(trigger.constraints.ignoreTriggerDuration.duration, _constraints_IgnoreTrigger_DurationField, _constraints_IgnoreTrigger_DurationUnitMenu);
     
-    trigger.constraints.maxTriggerCount.enable = [_maxTriggerCountCheckbox state]==NSControlStateValueOn;
-    trigger.constraints.maxTriggerCount.count = (uint32_t)[_maxTriggerCountField integerValue];
+    trigger.constraints.maxTriggerCount.enable = [_constraints_MaxTriggerCount_Checkbox state]==NSControlStateValueOn;
+    trigger.constraints.maxTriggerCount.count = (uint32_t)[_constraints_MaxTriggerCount_Field integerValue];
     
-    trigger.constraints.maxTotalTriggerCount.enable = [_maxTotalTriggerCountCheckbox state]==NSControlStateValueOn;
-    trigger.constraints.maxTotalTriggerCount.count = (uint32_t)[_maxTotalTriggerCountField integerValue];
+    trigger.constraints.maxTotalTriggerCount.enable = [_constraints_MaxTotalTriggerCount_Checkbox state]==NSControlStateValueOn;
+    trigger.constraints.maxTotalTriggerCount.count = (uint32_t)[_constraints_MaxTotalTriggerCount_Field integerValue];
 }
 
 // MARK: - Actions
@@ -753,14 +792,14 @@ static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu
 - (IBAction)_action_repeatInterval:(id)sender {
     NSInteger idx = [_repeatIntervalButton indexOfSelectedItem];
     switch (idx) {
-    case 0:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, nil); break;
-    case 1:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDetailView); break;
-    case 2:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDetailView); break;
-    case 3:     _ShowDetailView(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDetailView); break;
+    case 0:     _SetContainerSubview(_repeatIntervalContainerView, _repeatIntervalButton, nil); break;
+    case 1:     _SetContainerSubview(_repeatIntervalContainerView, _repeatIntervalButton, _weeklyDaySelector_View); break;
+    case 2:     _SetContainerSubview(_repeatIntervalContainerView, _repeatIntervalButton, _monthlyDaySelector_View); break;
+    case 3:     _SetContainerSubview(_repeatIntervalContainerView, _repeatIntervalButton, _yearlyDaySelector_View); break;
     default:    abort();
     }
     
-    _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeDetailView);
+    _SetContainerSubview(_timeContainerView, _repeatIntervalButton, _timeDetailView);
 }
 
 - (IBAction)_action_captureCount:(id)sender {
