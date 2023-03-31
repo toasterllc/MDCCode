@@ -417,8 +417,8 @@
             <rect key="frame" x="0.0" y="0.0" width="572" height="96"/>
             <subviews>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="j28-bM-XnS">
-                    <rect key="frame" x="-2" y="77" width="127" height="18"/>
-                    <buttonCell key="cell" type="check" title="Limit time of day:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="c5g-Ey-HFI">
+                    <rect key="frame" x="0.0" y="77" width="86" height="18"/>
+                    <buttonCell key="cell" type="check" title="Limit time:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="c5g-Ey-HFI">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -427,7 +427,7 @@
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
-                    <rect key="frame" x="131" y="75" width="100" height="21"/>
+                    <rect key="frame" x="92" y="75" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="bIP-5H-5pa"/>
                     </constraints>
@@ -441,7 +441,7 @@
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
-                    <rect key="frame" x="237" y="78" width="17" height="16"/>
+                    <rect key="frame" x="198" y="78" width="17" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="to" id="Qdg-p5-o0x">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -449,7 +449,7 @@
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
-                    <rect key="frame" x="260" y="75" width="100" height="21"/>
+                    <rect key="frame" x="221" y="75" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="ocG-Lr-SSl"/>
                     </constraints>
@@ -463,14 +463,14 @@
                     </connections>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Jd9-lQ-a3S" userLabel="Repeat Interval Container View">
-                    <rect key="frame" x="131" y="0.0" width="441" height="30"/>
+                    <rect key="frame" x="92" y="0.0" width="480" height="30"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="30" placeholder="YES" id="PC3-jA-aCM"/>
                         <constraint firstAttribute="height" priority="250" id="RgM-qq-SGC"/>
                     </constraints>
                 </customView>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WpU-LG-czv">
-                    <rect key="frame" x="37" y="44" width="88" height="18"/>
+                    <rect key="frame" x="-2" y="44" width="88" height="18"/>
                     <buttonCell key="cell" type="check" title="Limit days:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Osh-cb-jmn">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -480,7 +480,7 @@
                     </connections>
                 </button>
                 <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="RN5-cz-MIP">
-                    <rect key="frame" x="129" y="39" width="87" height="25"/>
+                    <rect key="frame" x="90" y="39" width="87" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="Weekly" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="czL-8b-ksL" id="6OU-7c-MaS">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -522,7 +522,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="35D-kR-T9a" id="IU9-3x-bgf"/>
             </connections>
-            <point key="canvasLocation" x="716" y="690"/>
+            <point key="canvasLocation" x="694" y="485"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Schedule - Time">
             <rect key="frame" x="0.0" y="0.0" width="491" height="96"/>
@@ -601,7 +601,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="Vfd-bm-n7h" id="dDb-EE-Jqk"/>
             </connections>
-            <point key="canvasLocation" x="47" y="735"/>
+            <point key="canvasLocation" x="25" y="530"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Weekly Detail View">
             <rect key="frame" x="0.0" y="0.0" width="338" height="18"/>
@@ -635,7 +635,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="WO9-Yi-XDc" id="Hpv-zL-Xi0"/>
             </connections>
-            <point key="canvasLocation" x="46" y="839"/>
+            <point key="canvasLocation" x="24" y="634"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="SVc-di-VTv" userLabel="Monthly Detail View">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
@@ -672,7 +672,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="YQ1-gj-xVe" id="7Tc-GO-fqT"/>
             </connections>
-            <point key="canvasLocation" x="46" y="899"/>
+            <point key="canvasLocation" x="24" y="694"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Yearly Detail View">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
@@ -709,7 +709,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="NJO-gj-szB" id="TCa-cC-NQ1"/>
             </connections>
-            <point key="canvasLocation" x="46" y="964"/>
+            <point key="canvasLocation" x="24" y="759"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="ihD-Oq-dCa" userLabel="Limits Detail View">
             <rect key="frame" x="0.0" y="0.0" width="451" height="66"/>
@@ -832,7 +832,7 @@
             <connections>
                 <outlet property="alignLeadingView" destination="Ucp-vv-qKL" id="Ln1-p3-EKq"/>
             </connections>
-            <point key="canvasLocation" x="47" y="1072"/>
+            <point key="canvasLocation" x="25" y="867"/>
         </customView>
     </objects>
     <resources>

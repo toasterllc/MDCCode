@@ -48,38 +48,42 @@ struct [[gnu::packed]] Trigger {
             Days,
         };
         
-        uint32_t value = 0;
-        Unit unit = Unit::Seconds;
+        uint32_t value;
+        Unit unit;
     };
     
     Type type = Type::Time;
     
     struct [[gnu::packed]] {
         union {
-            uint32_t time;
+            struct [[gnu::packed]] {
+                uint32_t time;
+                RepeatInterval repeatInterval;
+                union {
+                    WeekDays weekDays;
+                    MonthDays monthDays;
+                    YearDays yearDays;
+                };
+            } time;
             
             struct [[gnu::packed]] {
-                bool enable;
-                uint32_t start;
-                uint32_t end;
-            } timeOfDayRange;
-        };
-        
-        union {
-            struct [[gnu::packed]] {
-                RepeatInterval interval = RepeatInterval::Daily;
-            } repeat;
-            
-            struct [[gnu::packed]] {
-                bool enable;
-                RepeatInterval interval = RepeatInterval::Daily;
-            } limit;
-        };
-        
-        union {
-            WeekDays weekDays;
-            MonthDays monthDays;
-            YearDays yearDays;
+                struct [[gnu::packed]] {
+                    bool enable;
+                    uint32_t start;
+                    uint32_t end;
+                } timeOfDayLimit;
+                
+                struct [[gnu::packed]] {
+                    bool enable;
+                    RepeatInterval interval;
+                    
+                    union {
+                        WeekDays weekDays;
+                        MonthDays monthDays;
+                        YearDays yearDays;
+                    };
+                } dayLimit;
+            } motionButton;
         };
     } schedule;
     
@@ -90,15 +94,19 @@ struct [[gnu::packed]] Trigger {
     } capture;
     
     struct [[gnu::packed]] {
-        struct [[gnu::packed]] {
-            bool enable = false;
-            Duration duration;
-        } ignoreTriggerDuration;
-        
-        struct [[gnu::packed]] {
-            bool enable = false;
-            uint32_t count = 0;
-        } maxTriggerCount;
+        union {
+            struct [[gnu::packed]] {
+                struct [[gnu::packed]] {
+                    bool enable;
+                    Duration duration;
+                } ignoreTriggerDuration;
+                
+                struct [[gnu::packed]] {
+                    bool enable;
+                    uint32_t count;
+                } maxTriggerCount;
+            } motionButton;
+        };
         
         struct [[gnu::packed]] {
             bool enable = false;
@@ -292,7 +300,7 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
         [_titleLabel setStringValue:[NSString stringWithFormat:@"At %@",
-            _TimeOfDayStringFromSeconds(trigger.schedule.time)]];
+            _TimeOfDayStringFromSeconds(trigger.schedule.time.time)]];
         break;
     case Trigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion"]];
@@ -306,34 +314,34 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
         abort();
     }
     
-    // Subtitle
-    {
-        NSMutableString* subtitle = [NSMutableString new];
-        
-        switch (trigger.schedule.repeatInterval) {
-        case Trigger::RepeatInterval::Daily:   [subtitle appendString:@"Daily"]; break;
-        case Trigger::RepeatInterval::Weekly:  [subtitle appendString:_WeeklyString(trigger.schedule.weekDays)]; break;
-        case Trigger::RepeatInterval::Monthly: [subtitle appendString:@"Monthly"]; break;
-        case Trigger::RepeatInterval::Yearly:  [subtitle appendString:@"Yearly"]; break;
-        }
-        
-        switch (trigger.type) {
-        case Trigger::Type::Time:
-            break;
-        case Trigger::Type::Motion:
-        case Trigger::Type::Button:
-            if (trigger.schedule.timeOfDayRange.enable) {
-                [subtitle appendFormat:@", %@ – %@",
-                    _TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.start),
-                    _TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.end)];
-            }
-            break;
-        default:
-            abort();
-        }
-        
-        [_subtitleLabel setStringValue:subtitle];
-    }
+//    // Subtitle
+//    {
+//        NSMutableString* subtitle = [NSMutableString new];
+//        
+//        switch (trigger.schedule.repeatInterval) {
+//        case Trigger::RepeatInterval::Daily:   [subtitle appendString:@"Daily"]; break;
+//        case Trigger::RepeatInterval::Weekly:  [subtitle appendString:_WeeklyString(trigger.schedule.weekDays)]; break;
+//        case Trigger::RepeatInterval::Monthly: [subtitle appendString:@"Monthly"]; break;
+//        case Trigger::RepeatInterval::Yearly:  [subtitle appendString:@"Yearly"]; break;
+//        }
+//        
+//        switch (trigger.type) {
+//        case Trigger::Type::Time:
+//            break;
+//        case Trigger::Type::Motion:
+//        case Trigger::Type::Button:
+//            if (trigger.schedule.timeOfDayRange.enable) {
+//                [subtitle appendFormat:@", %@ – %@",
+//                    _TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.start),
+//                    _TimeOfDayStringFromSeconds(trigger.schedule.timeOfDayRange.end)];
+//            }
+//            break;
+//        default:
+//            abort();
+//        }
+//        
+//        [_subtitleLabel setStringValue:subtitle];
+//    }
     
     // Description
     {
