@@ -280,6 +280,7 @@ static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
     IBOutlet NSTextField* _titleLabel;
     IBOutlet NSTextField* _subtitleLabel;
     IBOutlet NSTextField* _descriptionLabel;
+    IBOutlet NSLayoutConstraint* _titleCenterYConstraint;
 @public
     Trigger trigger;
 }
@@ -391,11 +392,11 @@ static std::string _DescriptionString(const T& x) {
     }
     
     // Subtitle
+    std::string subtitle;
     switch (trigger.type) {
     case Trigger::Type::Time: {
         auto& x = trigger.time;
         
-        std::string subtitle;
         switch (x.schedule.cadence) {
         case Trigger::Cadence::Daily:   subtitle = "Daily"; break;
         case Trigger::Cadence::Weekly:  subtitle = _StringForWeekDays(x.schedule.weekDays); break;
@@ -403,7 +404,6 @@ static std::string _DescriptionString(const T& x) {
         case Trigger::Cadence::Yearly:  subtitle = _StringForYearDays(x.schedule.yearDays); break;
         default:                        abort();
         }
-        [_subtitleLabel setStringValue:@(subtitle.c_str())];
         break;
     }
     
@@ -411,7 +411,6 @@ static std::string _DescriptionString(const T& x) {
     case Trigger::Type::Button: {
         auto& x = trigger.motionButton;
         
-        std::string subtitle;
         if (x.schedule.dayLimit.enable) {
             switch (x.schedule.dayLimit.cadence) {
             case Trigger::Cadence::Weekly:  subtitle = _StringForWeekDays(x.schedule.dayLimit.weekDays); break;
@@ -428,11 +427,19 @@ static std::string _DescriptionString(const T& x) {
             subtitle += _TimeOfDayStringFromSeconds(x.schedule.timeLimit.end);
         }
         
-        [_subtitleLabel setStringValue:@(subtitle.c_str())];
         break;
     }
     default:
         abort();
+    }
+    if (!subtitle.empty()) {
+        [_subtitleLabel setStringValue:@(subtitle.c_str())];
+        // When we have a subtitle, center title+subtitle as a group by allowing _titleCenterYConstraint to be overridden
+        [_titleCenterYConstraint setPriority:NSLayoutPriorityDefaultLow];
+    } else {
+        [_subtitleLabel setStringValue:@""];
+        // When we don't have a subtitle, center title by making _titleCenterYConstraint required
+        [_titleCenterYConstraint setPriority:NSLayoutPriorityRequired];
     }
     
     // Description

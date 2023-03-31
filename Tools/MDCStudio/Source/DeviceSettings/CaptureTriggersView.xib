@@ -116,7 +116,8 @@
                                                     <constraint firstItem="xRA-1R-gxT" firstAttribute="top" secondItem="QhX-Pl-rlK" secondAttribute="bottom" constant="4" id="JVs-ZX-iAd"/>
                                                     <constraint firstItem="xRA-1R-gxT" firstAttribute="leading" secondItem="QhX-Pl-rlK" secondAttribute="leading" id="OKF-T2-OBz"/>
                                                     <constraint firstAttribute="height" constant="50" id="Ubg-VR-E68"/>
-                                                    <constraint firstItem="QhX-Pl-rlK" firstAttribute="centerY" secondItem="IYl-4H-9xr" secondAttribute="centerY" constant="-10" id="kIs-5O-hVa"/>
+                                                    <constraint firstItem="QhX-Pl-rlK" firstAttribute="centerY" secondItem="IYl-4H-9xr" secondAttribute="centerY" priority="250" id="WWz-Mm-cRO"/>
+                                                    <constraint firstItem="QhX-Pl-rlK" firstAttribute="centerY" secondItem="IYl-4H-9xr" secondAttribute="centerY" priority="750" constant="-10" id="kIs-5O-hVa"/>
                                                     <constraint firstItem="l0s-ak-E4D" firstAttribute="centerY" secondItem="IYl-4H-9xr" secondAttribute="centerY" id="ok2-Bl-JIh"/>
                                                     <constraint firstItem="Suo-7y-kvg" firstAttribute="leading" secondItem="QhX-Pl-rlK" secondAttribute="trailing" constant="8" id="tRv-MK-xGR"/>
                                                 </constraints>
@@ -124,6 +125,7 @@
                                                     <outlet property="_descriptionLabel" destination="Suo-7y-kvg" id="Hju-SL-8sE"/>
                                                     <outlet property="_imageView" destination="l0s-ak-E4D" id="YPv-XO-MZb"/>
                                                     <outlet property="_subtitleLabel" destination="xRA-1R-gxT" id="03h-UF-hBC"/>
+                                                    <outlet property="_titleCenterYConstraint" destination="WWz-Mm-cRO" id="KXc-Yu-ytR"/>
                                                     <outlet property="_titleLabel" destination="QhX-Pl-rlK" id="JI3-wJ-nf7"/>
                                                 </connections>
                                             </tableCellView>
