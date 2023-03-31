@@ -409,7 +409,7 @@
             <point key="canvasLocation" x="250.5" y="141.5"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Time Range Detail View" customClass="CaptureTriggersView_DetailView">
-            <rect key="frame" x="0.0" y="0.0" width="572" height="177"/>
+            <rect key="frame" x="0.0" y="0.0" width="572" height="96"/>
             <subviews>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="j28-bM-XnS">
                     <rect key="frame" x="-2" y="77" width="127" height="18"/>
@@ -499,13 +499,13 @@
                 <constraint firstItem="j28-bM-XnS" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="DKJ-6h-Af1"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="leading" secondItem="j28-bM-XnS" secondAttribute="trailing" constant="8" id="EX1-wZ-nbH"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="gGO-69-NDw" secondAttribute="trailing" id="LjE-Gt-nq5"/>
+                <constraint firstItem="35D-kR-T9a" firstAttribute="top" secondItem="ZTq-dS-LMW" secondAttribute="top" id="OIl-bK-M2M"/>
                 <constraint firstItem="RN5-cz-MIP" firstAttribute="leading" secondItem="WpU-LG-czv" secondAttribute="trailing" constant="8" id="Od7-mV-ufi"/>
                 <constraint firstItem="RN5-cz-MIP" firstAttribute="firstBaseline" secondItem="WpU-LG-czv" secondAttribute="firstBaseline" id="Q7W-C7-T0n"/>
                 <constraint firstItem="WpU-LG-czv" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="RIn-T7-nTV"/>
                 <constraint firstItem="RN5-cz-MIP" firstAttribute="leading" secondItem="35D-kR-T9a" secondAttribute="leading" id="SAc-e7-kfE"/>
                 <constraint firstItem="qtR-4H-6GP" firstAttribute="firstBaseline" secondItem="j28-bM-XnS" secondAttribute="firstBaseline" id="Sy6-bF-CzY"/>
                 <constraint firstItem="qtR-4H-6GP" firstAttribute="leading" secondItem="35D-kR-T9a" secondAttribute="trailing" constant="8" id="WUF-fF-MHy"/>
-                <constraint firstAttribute="height" constant="177" id="cFo-eG-Frb"/>
                 <constraint firstItem="Jd9-lQ-a3S" firstAttribute="top" secondItem="RN5-cz-MIP" secondAttribute="bottom" constant="12" id="cHX-WX-k5B"/>
                 <constraint firstAttribute="trailing" secondItem="Jd9-lQ-a3S" secondAttribute="trailing" id="jnR-o6-5lH"/>
                 <constraint firstItem="gGO-69-NDw" firstAttribute="leading" secondItem="qtR-4H-6GP" secondAttribute="trailing" constant="8" id="mjn-YN-xAs"/>
@@ -513,7 +513,6 @@
                 <constraint firstItem="gGO-69-NDw" firstAttribute="firstBaseline" secondItem="j28-bM-XnS" secondAttribute="firstBaseline" id="plr-FH-fkj"/>
                 <constraint firstItem="WpU-LG-czv" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" priority="750" id="qqB-yQ-Idd"/>
                 <constraint firstItem="j28-bM-XnS" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" priority="750" id="uVK-Og-56V"/>
-                <constraint firstAttribute="width" constant="572" id="zEj-JW-08O"/>
             </constraints>
             <connections>
                 <outlet property="alignLeadingView" destination="35D-kR-T9a" id="IU9-3x-bgf"/>
