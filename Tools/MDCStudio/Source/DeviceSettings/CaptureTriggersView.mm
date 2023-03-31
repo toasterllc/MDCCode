@@ -239,13 +239,13 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     // Only one day set
     switch (x) {
     case X::None: return @"Never";
-    case X::Mon:  return @"Weekly on Mondays";
-    case X::Tue:  return @"Weekly on Tuesdays";
-    case X::Wed:  return @"Weekly on Wednesdays";
-    case X::Thu:  return @"Weekly on Thursdays";
-    case X::Fri:  return @"Weekly on Fridays";
-    case X::Sat:  return @"Weekly on Saturdays";
-    case X::Sun:  return @"Weekly on Sundays";
+    case X::Mon:  return @"Mondays";
+    case X::Tue:  return @"Tuesdays";
+    case X::Wed:  return @"Wednesdays";
+    case X::Thu:  return @"Thursdays";
+    case X::Fri:  return @"Fridays";
+    case X::Sat:  return @"Saturdays";
+    case X::Sun:  return @"Sundays";
     }
     
     constexpr auto MF = (X)(std::to_underlying(X::Mon) |
@@ -253,11 +253,11 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
                             std::to_underlying(X::Wed) |
                             std::to_underlying(X::Thu) |
                             std::to_underlying(X::Fri));
-    if (x == MF) return @"Weekly Mon-Fri";
+    if (x == MF) return @"Mon-Fri";
     
     static const char* Names[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
     
-    NSMutableString* r = [@"Weekly " mutableCopy];
+    NSMutableString* r = [NSMutableString new];
     size_t i = 0;
     bool first = true;
     for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
@@ -272,6 +272,7 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
 }
 
 - (void)updateView {
+    // Image, title
     switch (trigger.type) {
     case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
@@ -290,23 +291,46 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
         abort();
     }
     
-    switch (trigger.time.repeatInterval) {
-    case Trigger::RepeatInterval::Daily:   [_subtitleLabel setStringValue:@"Daily"]; break;
-    case Trigger::RepeatInterval::Weekly:  [_subtitleLabel setStringValue:_WeeklyString(trigger.time.weekDays)]; break;
-    case Trigger::RepeatInterval::Monthly: [_subtitleLabel setStringValue:@"Monthly"]; break;
-    case Trigger::RepeatInterval::Yearly:  [_subtitleLabel setStringValue:@"Yearly"]; break;
+    // Subtitle
+    {
+        NSMutableString* subtitle = [NSMutableString new];
+        
+        switch (trigger.type) {
+        case Trigger::Type::Time:
+            break;
+        case Trigger::Type::Motion:
+        case Trigger::Type::Button:
+            if (trigger.time.timeRange.enable) {
+                [subtitle appendFormat:@"%@–%@ ",
+                    _TimeOfDayStringFromSeconds(trigger.time.timeRange.start),
+                    _TimeOfDayStringFromSeconds(trigger.time.timeRange.end)];
+            }
+            break;
+        default:
+            abort();
+        }
+        
+        switch (trigger.time.repeatInterval) {
+        case Trigger::RepeatInterval::Daily:   [subtitle appendString:@"Daily"]; break;
+        case Trigger::RepeatInterval::Weekly:  [subtitle appendString:_WeeklyString(trigger.time.weekDays)]; break;
+        case Trigger::RepeatInterval::Monthly: [subtitle appendString:@"Monthly"]; break;
+        case Trigger::RepeatInterval::Yearly:  [subtitle appendString:@"Yearly"]; break;
+        }
+        
+        [_subtitleLabel setStringValue:subtitle];
     }
     
-    NSMutableString* desc = [NSMutableString stringWithFormat:@"capture %ju image%s",
-        (uintmax_t)trigger.capture.count, (trigger.capture.count!=1 ? "s" : "")];
-    if (trigger.capture.count>1 && trigger.capture.interval.value) {
-        [desc appendFormat:@" (%ju%s interval)",
-            (uintmax_t)trigger.capture.interval.value,
-            _SuffixForDurationUnit(trigger.capture.interval.unit)];
+    // Description
+    {
+        NSMutableString* desc = [NSMutableString stringWithFormat:@"capture %ju image%s",
+            (uintmax_t)trigger.capture.count, (trigger.capture.count!=1 ? "s" : "")];
+        if (trigger.capture.count>1 && trigger.capture.interval.value) {
+            [desc appendFormat:@" (%ju%s interval)",
+                (uintmax_t)trigger.capture.interval.value,
+                _SuffixForDurationUnit(trigger.capture.interval.unit)];
+        }
+        [_descriptionLabel setStringValue:desc];
     }
-    [_descriptionLabel setStringValue:desc];
-    
-    
 }
 
 @end
@@ -361,7 +385,11 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     // Time
     IBOutlet NSView* _timeContainerView;
     IBOutlet CaptureTriggersView_DetailView* _timeDetailView;
+    IBOutlet NSTextField* _timeField;
     IBOutlet CaptureTriggersView_DetailView* _timeRangeDetailView;
+    IBOutlet NSButton* _timeRangeCheckbox;
+    IBOutlet NSTextField* _timeStartField;
+    IBOutlet NSTextField* _timeEndField;
     IBOutlet NSPopUpButton* _repeatIntervalButton;
     IBOutlet NSView* _repeatIntervalContainerView;
     IBOutlet CaptureTriggersView_DetailView* _weeklyDetailView;
@@ -370,9 +398,6 @@ static NSString* _WeeklyString(const Trigger::WeekDays& x) {
     IBOutlet NSTextField* _monthDaysField;
     IBOutlet CaptureTriggersView_DetailView* _yearlyDetailView;
     IBOutlet NSTextField* _yearDaysField;
-    IBOutlet NSTextField* _timeField;
-    IBOutlet NSTextField* _timeStartField;
-    IBOutlet NSTextField* _timeEndField;
     
     // Capture
     IBOutlet NSTextField* _captureCountField;
@@ -491,6 +516,7 @@ static void _ShowDetailView(NSView* container, NSView* alignLeadingView, Capture
         case Trigger::Type::Motion:
         case Trigger::Type::Button:
             _ShowDetailView(_timeContainerView, _repeatIntervalButton, _timeRangeDetailView);
+            [_timeRangeCheckbox setState:(trigger.time.timeRange.enable ? NSControlStateValueOn : NSControlStateValueOff)];
             [_timeStartField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.start)];
             [_timeEndField setStringValue:_TimeOfDayStringFromSeconds(trigger.time.timeRange.end)];
             break;
@@ -666,8 +692,10 @@ static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu
             trigger.time.time = _SecondsFromTimeOfDayString([_timeField stringValue]);
         } catch (...) {}
         break;
+    
     case Trigger::Type::Motion:
     case Trigger::Type::Button:
+        trigger.time.timeRange.enable = [_timeRangeCheckbox state]==NSControlStateValueOn;
         try {
             trigger.time.timeRange.start = _SecondsFromTimeOfDayString([_timeStartField stringValue]);
         } catch (...) {}
