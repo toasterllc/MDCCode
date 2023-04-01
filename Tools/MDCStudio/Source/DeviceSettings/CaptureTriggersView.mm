@@ -1,5 +1,6 @@
 #import "CaptureTriggersView.h"
 #import <vector>
+#import <optional>
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/IntForStr.h"
@@ -262,6 +263,15 @@ static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
 
 
 
+
+static std::optional<Trigger::MonthDays> _MonthDaysForString(std::string_view x) {
+    uint32_t val = 0;
+    try {
+        Toastbox::IntForStr(val, x);
+    } catch (...) { return std::nullopt; }
+    if (val<1 || val>31) return std::nullopt;
+    return (Trigger::MonthDays)(1<<val);
+}
 
 
 
@@ -733,13 +743,38 @@ static void _Copy(Trigger::WeekDays& x, NSSegmentedControl* control) {
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::MonthDays& x, NSTextField* field) {
+static void _Copy(Trigger::MonthDays& x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
-    #warning TODO: implement
+    if constexpr (T_Forward) {
+        NSMutableArray* tokens = [NSMutableArray new];
+        
+        auto y = std::to_underlying(x);
+        size_t i = 0;
+        while (y) {
+            if (y & 1) [tokens addObject:@(std::to_string(i).c_str())];
+            y >>= 1;
+            i++;
+        }
+        [field setObjectValue:tokens];
+        
+        
+//        [field setObjectValue:@[@"hello", @"goodbye"]];
+    
+    } else {
+        NSArray* tokens = Toastbox::CastOrNull<NSArray*>([field objectValue]);
+        x = {};
+        for (id t : tokens) {
+            NSString* str = Toastbox::CastOrNull<NSString*>(t);
+            if (!str) continue;
+            auto y = _MonthDaysForString([str UTF8String]);
+            if (!y) continue;
+            x = (Trigger::MonthDays)(std::to_underlying(x) | std::to_underlying(*y));
+        }
+    }
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::YearDays& x, NSTextField* field) {
+static void _Copy(Trigger::YearDays& x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     #warning TODO: implement
 }
@@ -1003,22 +1038,6 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 
 
 
-static bool _MonthDayValid(std::string_view x) {
-    uint8_t val = 0;
-    NSLog(@"_MonthDayValid: AAA %s", x.data());
-    try {
-        NSLog(@"_MonthDayValid: BBB");
-        val = Toastbox::IntForStr<uint8_t>(x);
-        NSLog(@"_MonthDayValid: CCC");
-    } catch (...) {
-        NSLog(@"_MonthDayValid: DDD");
-        return false;
-    }
-    if (val<1 || val>31) return false;
-    NSLog(@"_MonthDayValid: AAA");
-    return true;
-}
-
 - (NSArray*)tokenField:(NSTokenField*)field shouldAddObjects:(NSArray*)tokens atIndex:(NSUInteger)index {
 //    NSLog(@"%@", NSStringFromSelector(_cmd));
 //    return nil;
@@ -1028,7 +1047,7 @@ static bool _MonthDayValid(std::string_view x) {
         
         NSMutableArray* filtered = [NSMutableArray new];
         for (NSString* t : tokens) {
-            if (_MonthDayValid([t UTF8String])) [filtered addObject:t];
+            if (_MonthDaysForString([t UTF8String])) [filtered addObject:t];
         }
         return filtered;
     
