@@ -659,7 +659,7 @@
                 </textField>
                 <tokenField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Eie-m1-O4i" customClass="CaptureTriggersView_TokenField">
                     <rect key="frame" x="42" y="0.0" width="296" height="21"/>
-                    <tokenFieldCell key="cell" selectable="YES" editable="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" allowsEditingTextAttributes="YES" id="AIG-q7-roy">
+                    <tokenFieldCell key="cell" selectable="YES" editable="YES" borderStyle="bezel" alignment="left" placeholderString="1 – 31" drawsBackground="YES" allowsEditingTextAttributes="YES" id="AIG-q7-roy">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>

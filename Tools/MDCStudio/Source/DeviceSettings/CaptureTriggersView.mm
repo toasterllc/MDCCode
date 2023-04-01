@@ -1012,12 +1012,15 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 //    return nil;
     
     if (field == _monthDaySelector_Field) {
-        NSMutableArray* t = [NSMutableArray new];
-        for (NSString* tok : tokens) {
-            NSLog(@"%@", tok);
-        }
         NSLog(@"_monthDaySelector_Field");
-        return tokens;
+        
+        NSMutableArray* filtered = [NSMutableArray new];
+        for (NSString* t : tokens) {
+            NSDate* d = [_TimeFormatStateGet().dateFormatterD dateFromString:t];
+            NSLog(@"%@", d);
+            if (d) [filtered addObject:t];
+        }
+        return filtered;
     
     } else if (field == _yearDaySelector_Field) {
         NSLog(@"_yearDaySelector_Field");
