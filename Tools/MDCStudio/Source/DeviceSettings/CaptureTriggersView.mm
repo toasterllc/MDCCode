@@ -535,10 +535,10 @@ static std::string _DescriptionString(const T& x) {
     IBOutlet NSSegmentedControl* _weekDaySelector_Control;
     
     IBOutlet ContainerSubview*  _monthDaySelector_View;
-    IBOutlet NSTextField*       _monthDaySelector_Field;
+    IBOutlet NSTokenField*      _monthDaySelector_Field;
     
     IBOutlet ContainerSubview*  _yearDaySelector_View;
-    IBOutlet NSTextField*       _yearDaySelector_Field;
+    IBOutlet NSTokenField*      _yearDaySelector_Field;
     
     // Capture
     IBOutlet NSTextField*        _capture_CountField;
@@ -945,35 +945,19 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 }
 
 - (IBAction)_viewChangedAction:(id)sender {
+    NSLog(@"_viewChangedAction");
     ListItem* item = [self _selectedItem];
     if (!item) return;
+//    NSResponder* responder = [[self window] firstResponder];
+//    NSLog(@"BEFORE: %@", responder);
     [self _storeViewToModel:item->trigger];
     [self _loadViewFromModel:item->trigger];
+//    if ([[self window] firstResponder] != responder) {
+//        [[self window] makeFirstResponder:responder];
+//    }
+//    NSLog(@"AFTER: %@", [[self window] firstResponder]);
+//    [[self window] makeFirstResponder:responder];
     [item updateView];
-}
-
-- (IBAction)_action_cadence:(id)sender {
-    
-}
-
-- (IBAction)_action_captureCount:(id)sender {
-    
-}
-
-- (IBAction)_action_captureInterval:(id)sender {
-    
-}
-
-- (IBAction)_action_flashLED:(id)sender {
-    
-}
-
-- (IBAction)_action_maxTriggerCount:(id)sender {
-    
-}
-
-- (IBAction)_action_maxTotalTriggerCount:(id)sender {
-    
 }
 
 // MARK: - Table View Data Source / Delegate
@@ -999,5 +983,19 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 //    
 //    NSLog(@"tableViewSelectionDidChange");
 }
+
+//- (NSArray*)tokenField:(NSTokenField*)field shouldAddObjects:(NSArray*)tokens atIndex:(NSUInteger)index {
+//    if (field == _monthDaySelector_Field) {
+//        NSLog(@"_monthDaySelector_Field");
+//        return tokens;
+//    
+//    } else if (field == _yearDaySelector_Field) {
+//        NSLog(@"_yearDaySelector_Field");
+//        return tokens;
+//    
+//    } else {
+//        abort();
+//    }
+//}
 
 @end
