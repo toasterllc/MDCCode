@@ -894,6 +894,11 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
     }
 }
 
+
+- (void)_storeViewToModel:(Trigger&)trigger {
+    _Copy<false>(trigger, self);
+}
+
 - (void)_loadViewFromModel:(Trigger&)trigger {
     _Copy<true>(trigger, self);
 }
@@ -938,10 +943,6 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 //        idx++;
 //    }
 //}
-
-- (void)_storeViewToModel:(Trigger&)trigger {
-    _Copy<false>(trigger, self);
-}
 
 // MARK: - Actions
 
