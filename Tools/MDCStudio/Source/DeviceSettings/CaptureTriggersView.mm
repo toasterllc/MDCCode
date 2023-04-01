@@ -620,9 +620,11 @@ static void _Init(CaptureTriggersView* self) {
     
     [self->_tableView reloadData];
     
-//    [NSCharacterSet newlineCharacterSet]
-//    
-//    [self->_monthDaySelector_Field tokenizingCharacterSet];
+    {
+        NSMutableCharacterSet* set = [[self->_monthDaySelector_Field tokenizingCharacterSet] mutableCopy];
+        [set addCharactersInString:@" "];
+        [self->_monthDaySelector_Field setTokenizingCharacterSet:set];
+    }
     
 //    [self _loadViewFromModel:self->_triggers.triggers[0]];
 }
