@@ -622,7 +622,7 @@ static void _Init(CaptureTriggersView* self) {
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
     if (!(self = [super initWithCoder:coder])) return nil;
-    _Init(self);   
+    _Init(self);
     return self;
 }
 

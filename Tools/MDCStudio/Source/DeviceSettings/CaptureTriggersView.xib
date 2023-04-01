@@ -21,7 +21,7 @@
                 <outlet property="_constraints_Motion_MaxTriggerCount_Checkbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
                 <outlet property="_constraints_Motion_MaxTriggerCount_Field" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
                 <outlet property="_constraints_Motion_View" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
-                <outlet property="_monthDaySelector_Field" destination="YQ1-gj-xVe" id="4T4-lz-PVv"/>
+                <outlet property="_monthDaySelector_Field" destination="Eie-m1-O4i" id="cI6-qE-1H7"/>
                 <outlet property="_monthDaySelector_View" destination="SVc-di-VTv" id="BLO-uD-Mof"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
                 <outlet property="_schedule_ContainerView" destination="4R1-In-Kbb" id="cwH-BJ-Tmv"/>
@@ -39,7 +39,7 @@
                 <outlet property="_tableView" destination="RfV-Mq-Pvl" id="hYB-B3-xIy"/>
                 <outlet property="_weekDaySelector_Control" destination="WO9-Yi-XDc" id="aX8-O8-AU4"/>
                 <outlet property="_weekDaySelector_View" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
-                <outlet property="_yearDaySelector_Field" destination="NJO-gj-szB" id="bp2-ho-ggH"/>
+                <outlet property="_yearDaySelector_Field" destination="38b-nv-tEn" id="pe6-UW-ghG"/>
                 <outlet property="_yearDaySelector_View" destination="U49-dv-RHU" id="lCm-Lj-O6f"/>
             </connections>
         </customObject>
@@ -74,7 +74,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="0.0" y="0.0" width="455" height="50"/>
+                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="12" y="14" width="28" height="22"/>
@@ -657,30 +657,26 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="YQ1-gj-xVe">
+                <tokenField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Eie-m1-O4i">
                     <rect key="frame" x="42" y="0.0" width="296" height="21"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="1, 2, 31" drawsBackground="YES" id="ah0-4u-7QU">
+                    <tokenFieldCell key="cell" selectable="YES" editable="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" allowsEditingTextAttributes="YES" id="AIG-q7-roy">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="GIg-Sz-S3Q"/>
-                    </connections>
-                </textField>
+                    </tokenFieldCell>
+                </tokenField>
             </subviews>
             <constraints>
-                <constraint firstItem="YQ1-gj-xVe" firstAttribute="top" secondItem="SVc-di-VTv" secondAttribute="top" id="1pa-ve-lWk"/>
-                <constraint firstItem="YQ1-gj-xVe" firstAttribute="centerY" secondItem="SVc-di-VTv" secondAttribute="centerY" id="2bz-sg-90L"/>
+                <constraint firstAttribute="bottom" secondItem="Eie-m1-O4i" secondAttribute="bottom" id="1xL-Er-eCy"/>
                 <constraint firstItem="qYh-A4-SCy" firstAttribute="leading" secondItem="SVc-di-VTv" secondAttribute="leading" priority="750" id="3O6-ub-IBI"/>
-                <constraint firstAttribute="bottom" secondItem="YQ1-gj-xVe" secondAttribute="bottom" id="4Y7-Wu-VLu"/>
-                <constraint firstAttribute="trailing" secondItem="YQ1-gj-xVe" secondAttribute="trailing" id="JVg-px-jGy"/>
-                <constraint firstItem="YQ1-gj-xVe" firstAttribute="leading" secondItem="qYh-A4-SCy" secondAttribute="trailing" constant="8" id="TFG-8K-Bjq"/>
+                <constraint firstItem="Eie-m1-O4i" firstAttribute="firstBaseline" secondItem="qYh-A4-SCy" secondAttribute="firstBaseline" id="AU5-7R-6lD"/>
+                <constraint firstItem="Eie-m1-O4i" firstAttribute="top" secondItem="SVc-di-VTv" secondAttribute="top" id="BCj-j3-H8P"/>
+                <constraint firstItem="Eie-m1-O4i" firstAttribute="leading" secondItem="qYh-A4-SCy" secondAttribute="trailing" constant="8" id="O2b-CC-Ikl"/>
                 <constraint firstItem="qYh-A4-SCy" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="SVc-di-VTv" secondAttribute="leading" id="bUs-yQ-r0Z"/>
-                <constraint firstItem="YQ1-gj-xVe" firstAttribute="firstBaseline" secondItem="qYh-A4-SCy" secondAttribute="firstBaseline" id="cGv-S1-HCh"/>
+                <constraint firstAttribute="trailing" secondItem="Eie-m1-O4i" secondAttribute="trailing" id="yb9-x3-etX"/>
             </constraints>
             <connections>
-                <outlet property="alignView" destination="YQ1-gj-xVe" id="4EE-n9-Kqa"/>
+                <outlet property="alignView" destination="Eie-m1-O4i" id="BTR-ui-3oG"/>
             </connections>
             <point key="canvasLocation" x="24" y="694"/>
         </customView>
@@ -695,30 +691,26 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="NJO-gj-szB">
+                <tokenField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="38b-nv-tEn">
                     <rect key="frame" x="47" y="0.0" width="291" height="21"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="Z9F-ue-CrV">
+                    <tokenFieldCell key="cell" selectable="YES" editable="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" allowsEditingTextAttributes="YES" id="hVd-3E-HAr">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="M5Y-c2-1DM"/>
-                    </connections>
-                </textField>
+                    </tokenFieldCell>
+                </tokenField>
             </subviews>
             <constraints>
-                <constraint firstItem="NJO-gj-szB" firstAttribute="centerY" secondItem="U49-dv-RHU" secondAttribute="centerY" id="6VQ-IE-gP2"/>
+                <constraint firstItem="38b-nv-tEn" firstAttribute="leading" secondItem="ZRY-hR-dS5" secondAttribute="trailing" constant="8" id="5gA-ae-Quy"/>
                 <constraint firstItem="ZRY-hR-dS5" firstAttribute="leading" secondItem="U49-dv-RHU" secondAttribute="leading" priority="750" id="8Lp-ez-bhI"/>
-                <constraint firstItem="NJO-gj-szB" firstAttribute="leading" secondItem="ZRY-hR-dS5" secondAttribute="trailing" constant="8" id="Lyk-Pc-AXx"/>
-                <constraint firstAttribute="trailing" secondItem="NJO-gj-szB" secondAttribute="trailing" id="ZSH-44-Ocs"/>
-                <constraint firstItem="NJO-gj-szB" firstAttribute="top" secondItem="U49-dv-RHU" secondAttribute="top" id="f9C-JQ-UyI"/>
+                <constraint firstItem="38b-nv-tEn" firstAttribute="top" secondItem="U49-dv-RHU" secondAttribute="top" id="AHY-N9-B31"/>
+                <constraint firstItem="38b-nv-tEn" firstAttribute="firstBaseline" secondItem="ZRY-hR-dS5" secondAttribute="firstBaseline" id="DDW-QQ-BN3"/>
+                <constraint firstAttribute="trailing" secondItem="38b-nv-tEn" secondAttribute="trailing" id="VXe-jg-40w"/>
                 <constraint firstItem="ZRY-hR-dS5" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="U49-dv-RHU" secondAttribute="leading" id="j1B-G7-IoQ"/>
-                <constraint firstAttribute="bottom" secondItem="NJO-gj-szB" secondAttribute="bottom" id="uaY-hh-kXg"/>
-                <constraint firstItem="NJO-gj-szB" firstAttribute="firstBaseline" secondItem="ZRY-hR-dS5" secondAttribute="firstBaseline" id="y9m-be-c4F"/>
+                <constraint firstAttribute="bottom" secondItem="38b-nv-tEn" secondAttribute="bottom" id="jTy-Sd-CX0"/>
             </constraints>
             <connections>
-                <outlet property="alignView" destination="NJO-gj-szB" id="KgA-Pd-alb"/>
+                <outlet property="alignView" destination="38b-nv-tEn" id="Pls-et-TTB"/>
             </connections>
             <point key="canvasLocation" x="24" y="759"/>
         </customView>
