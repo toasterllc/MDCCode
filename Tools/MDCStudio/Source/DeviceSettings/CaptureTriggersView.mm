@@ -32,6 +32,12 @@ struct [[gnu::packed]] Trigger {
         Sun  = 1<<6,
     };
     
+    using Day = uint8_t;
+//    struct YearDay {
+//        Month
+//        MonthDay day = 0;
+//    }
+    
     enum class MonthDays : uint32_t {};
     
     using YearDays = MonthDays[12];
@@ -262,30 +268,30 @@ static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
 
 
 
-static std::vector<uint8_t> _VectorFromMonthDays(const Trigger::MonthDays& x) {
-    std::vector<uint8_t> r;
+static std::vector<Trigger::Day> _VectorFromMonthDays(const Trigger::MonthDays& x) {
+    std::vector<Trigger::Day> r;
     auto y = std::to_underlying(x);
-    for (uint8_t day=0; y; y>>=1, day++) {
+    for (Trigger::Day day=0; y; y>>=1, day++) {
         if (y & 1) r.push_back(day);
     }
     return r;
 }
 
-static Trigger::MonthDays _MonthDaysFromVector(const std::vector<uint8_t>& days) {
+static Trigger::MonthDays _MonthDaysFromVector(const std::vector<Trigger::Day>& days) {
     std::underlying_type_t<Trigger::MonthDays> r = 0;
-    for (uint8_t day : days) {
+    for (Trigger::Day day : days) {
         r |= 1<<day;
     }
     return (Trigger::MonthDays)r;
 }
 
-static std::optional<uint8_t> _MonthDayForString(std::string_view x) {
+static std::optional<Trigger::Day> _DayForString(std::string_view x) {
     uint32_t val = 0;
     try {
         Toastbox::IntForStr(val, x);
     } catch (...) { return std::nullopt; }
     if (val<1 || val>31) return std::nullopt;
-    return (uint8_t)val;
+    return (Trigger::Day)val;
 }
 
 //static std::optional<Trigger::MonthDays> _MonthDaysForString(std::string_view x) {
@@ -338,7 +344,7 @@ static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
 //            MonthDays monthDays;
 //            YearDays yearDays;
 
-static std::string _StringForWeekDays(const Trigger::WeekDays& x) {
+static std::string _WeekDaysDescription(const Trigger::WeekDays& x) {
     using X = Trigger::WeekDays;
     // Only one day set
     switch (x) {
@@ -377,13 +383,13 @@ static std::string _StringForWeekDays(const Trigger::WeekDays& x) {
     return std::to_string(count) + " days per week";
 }
 
-static std::string _StringForMonthDays(const Trigger::MonthDays& x) {
+static std::string _MonthDaysDescription(const Trigger::MonthDays& x) {
     const size_t count = _VectorFromMonthDays(x).size();
     if (count == 1) return "1 day per month";
     return std::to_string(count) + " days per month";
 }
 
-static std::string _StringForYearDays(const Trigger::YearDays& x) {
+static std::string _YearDaysDescription(const Trigger::YearDays& x) {
     size_t count = 0;
     for (auto y : x) {
         auto z = std::to_underlying(y);
@@ -396,7 +402,7 @@ static std::string _StringForYearDays(const Trigger::YearDays& x) {
 }
 
 template<typename T>
-static std::string _DescriptionString(const T& x) {
+static std::string _CaptureDescription(const T& x) {
     std::string str = "capture " + std::to_string(x.count) + " image" + (x.count!=1 ? "s" : "");
     if (x.count>1 && x.interval.value) {
         str += " (" + std::to_string(x.interval.value) + _SuffixForDurationUnit(x.interval.unit) + " interval)";
@@ -434,9 +440,9 @@ static std::string _DescriptionString(const T& x) {
         
         switch (x.schedule.cadence) {
         case Trigger::Cadence::Daily:   subtitle = "Daily"; break;
-        case Trigger::Cadence::Weekly:  subtitle = _StringForWeekDays(x.schedule.weekDays); break;
-        case Trigger::Cadence::Monthly: subtitle = _StringForMonthDays(x.schedule.monthDays); break;
-        case Trigger::Cadence::Yearly:  subtitle = _StringForYearDays(x.schedule.yearDays); break;
+        case Trigger::Cadence::Weekly:  subtitle = _WeekDaysDescription(x.schedule.weekDays); break;
+        case Trigger::Cadence::Monthly: subtitle = _MonthDaysDescription(x.schedule.monthDays); break;
+        case Trigger::Cadence::Yearly:  subtitle = _YearDaysDescription(x.schedule.yearDays); break;
         default:                        abort();
         }
         break;
@@ -448,9 +454,9 @@ static std::string _DescriptionString(const T& x) {
         
         if (x.schedule.dayLimit.enable) {
             switch (x.schedule.dayLimit.cadence) {
-            case Trigger::Cadence::Weekly:  subtitle = _StringForWeekDays(x.schedule.dayLimit.weekDays); break;
-            case Trigger::Cadence::Monthly: subtitle = _StringForMonthDays(x.schedule.dayLimit.monthDays); break;
-            case Trigger::Cadence::Yearly:  subtitle = _StringForYearDays(x.schedule.dayLimit.yearDays); break;
+            case Trigger::Cadence::Weekly:  subtitle = _WeekDaysDescription(x.schedule.dayLimit.weekDays); break;
+            case Trigger::Cadence::Monthly: subtitle = _MonthDaysDescription(x.schedule.dayLimit.monthDays); break;
+            case Trigger::Cadence::Yearly:  subtitle = _YearDaysDescription(x.schedule.dayLimit.yearDays); break;
             default:                        abort();
             }
         }
@@ -481,14 +487,14 @@ static std::string _DescriptionString(const T& x) {
     switch (trigger.type) {
     case Trigger::Type::Time: {
         auto& x = trigger.time;
-        [_descriptionLabel setStringValue:@(_DescriptionString(x.capture).c_str())];
+        [_descriptionLabel setStringValue:@(_CaptureDescription(x.capture).c_str())];
         break;
     }
     
     case Trigger::Type::Motion:
     case Trigger::Type::Button: {
         auto& x = trigger.motionButton;
-        [_descriptionLabel setStringValue:@(_DescriptionString(x.capture).c_str())];
+        [_descriptionLabel setStringValue:@(_CaptureDescription(x.capture).c_str())];
         break;
     }
     default:
@@ -769,15 +775,15 @@ static void _Copy(Trigger::MonthDays& x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         NSMutableArray* tokens = [NSMutableArray new];
-        std::vector<uint8_t> days = _VectorFromMonthDays(x);
-        for (uint8_t day : days) {
+        std::vector<Trigger::Day> days = _VectorFromMonthDays(x);
+        for (Trigger::Day day : days) {
             [tokens addObject:@(day)];
         }
         [field setObjectValue:tokens];
     
     } else {
         NSArray* tokens = Toastbox::CastOrNull<NSArray*>([field objectValue]);
-        std::vector<uint8_t> days;
+        std::vector<Trigger::Day> days;
         for (id t : tokens) {
             NSNumber* num = Toastbox::CastOrNull<NSNumber*>(t);
             if (!num) continue;
@@ -1061,7 +1067,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         NSMutableArray* filtered = [NSMutableArray new];
         for (NSString* t : tokens) {
-            auto day = _MonthDayForString([t UTF8String]);
+            auto day = _DayForString([t UTF8String]);
             if (!day) continue;
             [filtered addObject:@(*day)];
         }
