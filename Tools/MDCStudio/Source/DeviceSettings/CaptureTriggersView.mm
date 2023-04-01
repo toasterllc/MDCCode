@@ -2,6 +2,7 @@
 #import <vector>
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
+#import "Toastbox/IntForStr.h"
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
@@ -178,7 +179,6 @@ struct _TimeFormatState {
     NSDateFormatter* dateFormatterHH = nil;
     NSDateFormatter* dateFormatterHHMM = nil;
     NSDateFormatter* dateFormatterHHMMSS = nil;
-    NSDateFormatter* dateFormatterD = nil;
 };
 
 static _TimeFormatState _TimeFormatStateCreate() {
@@ -207,13 +207,6 @@ static _TimeFormatState _TimeFormatStateCreate() {
         [x.dateFormatterHHMMSS setTimeZone:[x.calendar timeZone]];
         [x.dateFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hh:mm:ss"];
         [x.dateFormatterHHMMSS setLenient:true];
-    }
-    
-    {
-        x.dateFormatterD = [[NSDateFormatter alloc] init];
-        [x.dateFormatterD setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterD setLocalizedDateFormatFromTemplate:@"d"];
-        [x.dateFormatterD setLenient:true];
     }
     
     return x;
@@ -617,6 +610,10 @@ static void _Init(CaptureTriggersView* self) {
     
     [self->_tableView reloadData];
     
+//    [NSCharacterSet newlineCharacterSet]
+//    
+//    [self->_monthDaySelector_Field tokenizingCharacterSet];
+    
 //    [self _loadViewFromModel:self->_triggers.triggers[0]];
 }
 
@@ -1005,7 +1002,21 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 
 
 
-
+static bool _MonthDayValid(std::string_view x) {
+    uint8_t val = 0;
+    NSLog(@"_MonthDayValid: AAA %s", x.data());
+    try {
+        NSLog(@"_MonthDayValid: BBB");
+        val = Toastbox::IntForStr<uint8_t>(x);
+        NSLog(@"_MonthDayValid: CCC");
+    } catch (...) {
+        NSLog(@"_MonthDayValid: DDD");
+        return false;
+    }
+    if (val<1 || val>31) return false;
+    NSLog(@"_MonthDayValid: AAA");
+    return true;
+}
 
 - (NSArray*)tokenField:(NSTokenField*)field shouldAddObjects:(NSArray*)tokens atIndex:(NSUInteger)index {
 //    NSLog(@"%@", NSStringFromSelector(_cmd));
@@ -1016,9 +1027,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         NSMutableArray* filtered = [NSMutableArray new];
         for (NSString* t : tokens) {
-            NSDate* d = [_TimeFormatStateGet().dateFormatterD dateFromString:t];
-            NSLog(@"%@", d);
-            if (d) [filtered addObject:t];
+            if (_MonthDayValid([t UTF8String])) [filtered addObject:t];
         }
         return filtered;
     
@@ -1031,57 +1040,109 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
     }
 }
 
-- (BOOL)control:(NSControl*)control isValidObject:(id)obj {
-    NSLog(@"%@, obj: %@", NSStringFromSelector(_cmd), obj);
-    
-    if (control == _monthDaySelector_Field) {
-        return true;
-    
-    } else if (control == _yearDaySelector_Field) {
-        return true;
-    
-    } else {
-        abort();
-    }
-    return true;
-}
+//- (BOOL)control:(NSControl*)control isValidObject:(id)obj {
+//    NSLog(@"%@, obj: %@", NSStringFromSelector(_cmd), obj);
+//    if (control == _monthDaySelector_Field) {
+//        NSString* str = Toastbox::CastOrNull<NSString*>(obj);
+//        NSLog(@"AAA");
+//        if (!str) return false;
+//        NSLog(@"BBB");
+//        if (!_MonthDayValid([str UTF8String])) return false;
+//        NSLog(@"CCC");
+//        return true;
+//    
+//    } else if (control == _yearDaySelector_Field) {
+//        return true;
+//    
+//    } else {
+//        abort();
+//    }
+//    return true;
+//}
 
 @end
 
 
 
-@interface CaptureTriggersView_TokenField : NSTokenField
-@end
-
-@implementation CaptureTriggersView_TokenField
-
-// -[NSControl sizeThatFits:], -[NSView fittingSize] and -[NSView intrinsicContentSize]
-
-- (void)setFrame:(NSRect)frame {
-    [super setFrame:frame];
-    [self invalidateIntrinsicContentSize];
-}
-
-- (NSSize)intrinsicContentSize {
-//    constexpr CGFloat k = 3;
-//    NSLog(@"%@", NSStringFromSize([[self cell] cellSizeForBounds:{{k,0},{[self bounds].size.width-2*k, CGFLOAT_MAX}}]));
-//    CGSize s = [self fittingSize];
-//    [self layout];
-    CGSize s = [self sizeThatFits:{[self frame].size.width-4, CGFLOAT_MAX}];
-    s.width = NSViewNoIntrinsicMetric;
-    return s;
-//    CGSize s = [[self cell] cellSizeForBounds:{{0,0},{[self bounds].size.width, CGFLOAT_MAX}}];
-    
-//    NSLog(@"intrinsicContentSize: %@ %@", NSStringFromRect([self frame]), NSStringFromRect([self alignmentRectForFrame:[self frame]]));
+//@interface CaptureTriggersView_TokenField : NSTokenField
+//@end
+//
+//@implementation CaptureTriggersView_TokenField {
+//    bool _init;
+//}
+//
+//// -[NSControl sizeThatFits:], -[NSView fittingSize] and -[NSView intrinsicContentSize]
+//
+//- (void)setFrame:(NSRect)frame {
+//    [super setFrame:frame];
+//    [self invalidateIntrinsicContentSize];
+//}
+//
+//- (NSSize)intrinsicContentSize {
+////    constexpr CGFloat k = 3;
+////    NSLog(@"%@", NSStringFromSize([[self cell] cellSizeForBounds:{{k,0},{[self bounds].size.width-2*k, CGFLOAT_MAX}}]));
+////    CGSize s = [self fittingSize];
+////    [self layout];
+//    CGSize s = [self sizeThatFits:{[self frame].size.width-4, CGFLOAT_MAX}];
 //    s.width = NSViewNoIntrinsicMetric;
-//    NSLog(@"intrinsicContentSize: %@", NSStringFromSize(s));
 //    return s;
-//    return [super intrinsicContentSize];
-}
-
-- (void)textDidChange:(NSNotification*)note {
-    [super textDidChange:note];
-    [self invalidateIntrinsicContentSize];
-}
-
-@end
+////    CGSize s = [[self cell] cellSizeForBounds:{{0,0},{[self bounds].size.width, CGFLOAT_MAX}}];
+//    
+////    NSLog(@"intrinsicContentSize: %@ %@", NSStringFromRect([self frame]), NSStringFromRect([self alignmentRectForFrame:[self frame]]));
+////    s.width = NSViewNoIntrinsicMetric;
+////    NSLog(@"intrinsicContentSize: %@", NSStringFromSize(s));
+////    return s;
+////    return [super intrinsicContentSize];
+//}
+//
+//- (void)textDidChange:(NSNotification*)note {
+//    NSLog(@"%@", NSStringFromSelector(_cmd));
+//    [super textDidChange:note];
+//    [self invalidateIntrinsicContentSize];
+//}
+//
+//- (void)insertNewline:(id)sender {
+//    NSLog(@"%@", NSStringFromSelector(_cmd));
+//    [super insertNewline:sender];
+//}
+//
+//- (BOOL)textShouldEndEditing:(NSText*)text {
+//    NSString*const Delimeter = @"\0";
+//    if (!_init) {
+//        _init = true;
+//        NSMutableCharacterSet* s = [[self tokenizingCharacterSet] mutableCopy];
+//        [s addCharactersInString:Delimeter];
+//        [self setTokenizingCharacterSet:s];
+//    }
+////    [self textDidChange:nil];
+//    NSLog(@"%@", NSStringFromSelector(_cmd));
+////    [self endEditing:text];
+////    [text insertNewline:nil];
+////    [text indent:nil];
+////    [self 
+////    NSLog(@"");
+////    [self tokenizingCharacterSet];
+//    [text insertText:Delimeter];
+//    return [super textShouldEndEditing:text];
+////    return true;
+//}
+//
+////- (BOOL)resignFirstResponder {
+////    NSLog(@"%@", NSStringFromSelector(_cmd));
+////    return [super resignFirstResponder];
+////}
+//
+////- (void)interpretKeyEvents:(NSArray<NSEvent *> *)eventArray;
+//
+//- (void)textDidEndEditing:(NSNotification*)note {
+////    [self textDidChange:note];
+//    NSLog(@"%@", NSStringFromSelector(_cmd));
+//    [super textDidEndEditing:note];
+//}
+//
+////- (void)validateEditing {
+////    NSLog(@"%@", NSStringFromSelector(_cmd));
+////    [super validateEditing];
+////}
+//
+//@end

@@ -77,6 +77,7 @@
 		55F887A229D61DAB0075593F /* CaptureTriggers-Icon-Button.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F8879F29D61DAB0075593F /* CaptureTriggers-Icon-Button.pdf */; };
 		55F887A329D61DAB0075593F /* CaptureTriggers-Icon-Time.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F887A029D61DAB0075593F /* CaptureTriggers-Icon-Time.pdf */; };
 		55F887A429D61DAB0075593F /* CaptureTriggers-Icon-Motion.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F887A129D61DAB0075593F /* CaptureTriggers-Icon-Motion.pdf */; };
+		55F8882729D8DADD0075593F /* TokenField.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8882629D8DADD0075593F /* TokenField.mm */; };
 		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
 		55F8D01427BEF3E500757165 /* ImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* ImageView.mm */; };
 		55F8D01927BEF97200757165 /* ImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageView.metal */; };
@@ -268,6 +269,8 @@
 		55F8879F29D61DAB0075593F /* CaptureTriggers-Icon-Button.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "CaptureTriggers-Icon-Button.pdf"; sourceTree = "<group>"; };
 		55F887A029D61DAB0075593F /* CaptureTriggers-Icon-Time.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "CaptureTriggers-Icon-Time.pdf"; sourceTree = "<group>"; };
 		55F887A129D61DAB0075593F /* CaptureTriggers-Icon-Motion.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "CaptureTriggers-Icon-Motion.pdf"; sourceTree = "<group>"; };
+		55F8882429D8DADD0075593F /* TokenField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TokenField.h; sourceTree = "<group>"; };
+		55F8882629D8DADD0075593F /* TokenField.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = TokenField.mm; sourceTree = "<group>"; };
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
@@ -536,6 +539,8 @@
 				55C456832955A1AE00A20363 /* FixedMetalDocumentLayer.mm */,
 				55C456842955A1AE00A20363 /* FixedScrollView.h */,
 				55C456822955A1AE00A20363 /* FixedScrollView.mm */,
+				55F8882429D8DADD0075593F /* TokenField.h */,
+				55F8882629D8DADD0075593F /* TokenField.mm */,
 				55B1658129CB9A50008D53E5 /* Cache.h */,
 				558FFC8D29CAB3AF0022E840 /* BufferPool.h */,
 				55A36A8E27A2951900FD0181 /* MDCDevice.h */,
@@ -813,6 +818,7 @@
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
 				55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */,
 				55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */,
+				55F8882729D8DADD0075593F /* TokenField.mm in Sources */,
 				55425B1B29A01BE000F25D57 /* ThreePartView.mm in Sources */,
 				55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */,
 				55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */,
