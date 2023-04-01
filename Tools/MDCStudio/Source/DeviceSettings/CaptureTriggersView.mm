@@ -262,16 +262,40 @@ static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
 
 
 
+static std::vector<uint8_t> _VectorFromMonthDays(const Trigger::MonthDays& x) {
+    std::vector<uint8_t> r;
+    auto y = std::to_underlying(x);
+    for (uint8_t day=0; y; y>>=1, day++) {
+        if (y & 1) r.push_back(day);
+    }
+    return r;
+}
 
+static Trigger::MonthDays _MonthDaysFromVector(const std::vector<uint8_t>& days) {
+    std::underlying_type_t<Trigger::MonthDays> r = 0;
+    for (uint8_t day : days) {
+        r |= 1<<day;
+    }
+    return (Trigger::MonthDays)r;
+}
 
-static std::optional<Trigger::MonthDays> _MonthDaysForString(std::string_view x) {
+static std::optional<uint8_t> _MonthDayForString(std::string_view x) {
     uint32_t val = 0;
     try {
         Toastbox::IntForStr(val, x);
     } catch (...) { return std::nullopt; }
     if (val<1 || val>31) return std::nullopt;
-    return (Trigger::MonthDays)(1<<val);
+    return (uint8_t)val;
 }
+
+//static std::optional<Trigger::MonthDays> _MonthDaysForString(std::string_view x) {
+//    uint32_t val = 0;
+//    try {
+//        Toastbox::IntForStr(val, x);
+//    } catch (...) { return std::nullopt; }
+//    if (val<1 || val>31) return std::nullopt;
+//    return (Trigger::MonthDays)(1<<val);
+//}
 
 
 
@@ -749,29 +773,21 @@ static void _Copy(Trigger::MonthDays& x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         NSMutableArray* tokens = [NSMutableArray new];
-        
-        auto y = std::to_underlying(x);
-        size_t i = 0;
-        while (y) {
-            if (y & 1) [tokens addObject:@(std::to_string(i).c_str())];
-            y >>= 1;
-            i++;
+        std::vector<uint8_t> days = _VectorFromMonthDays(x);
+        for (uint8_t day : days) {
+            [tokens addObject:@(day)];
         }
         [field setObjectValue:tokens];
-        
-        
-//        [field setObjectValue:@[@"hello", @"goodbye"]];
     
     } else {
         NSArray* tokens = Toastbox::CastOrNull<NSArray*>([field objectValue]);
-        x = {};
+        std::vector<uint8_t> days;
         for (id t : tokens) {
-            NSString* str = Toastbox::CastOrNull<NSString*>(t);
-            if (!str) continue;
-            auto y = _MonthDaysForString([str UTF8String]);
-            if (!y) continue;
-            x = (Trigger::MonthDays)(std::to_underlying(x) | std::to_underlying(*y));
+            NSNumber* num = Toastbox::CastOrNull<NSNumber*>(t);
+            if (!num) continue;
+            days.push_back([num intValue]);
         }
+        x = _MonthDaysFromVector(days);
     }
 }
 
@@ -1049,7 +1065,9 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         NSMutableArray* filtered = [NSMutableArray new];
         for (NSString* t : tokens) {
-            if (_MonthDaysForString([t UTF8String])) [filtered addObject:t];
+            auto day = _MonthDayForString([t UTF8String]);
+            if (!day) continue;
+            [filtered addObject:@(*day)];
         }
         return filtered;
     
@@ -1061,5 +1079,44 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         abort();
     }
 }
+
+- (NSString*)tokenField:(NSTokenField*)field displayStringForRepresentedObject:(id)obj {
+    if (field == _monthDaySelector_Field) {
+        if (NSNumber* num = Toastbox::CastOrNull<NSNumber*>(obj)) {
+            return [NSString stringWithFormat:@"%ju",(uintmax_t)[num intValue]];
+        }
+        return obj;
+    
+    } else if (field == _yearDaySelector_Field) {
+        return nil;
+    
+    } else {
+        abort();
+    }
+}
+
+//- (NSString*)tokenField:(NSTokenField*)field editingStringForRepresentedObject:(id)obj {
+//    if (field == _monthDaySelector_Field) {
+//        return nil;
+//    
+//    } else if (field == _yearDaySelector_Field) {
+//        return nil;
+//    
+//    } else {
+//        abort();
+//    }
+//}
+
+//- (id)tokenField:(NSTokenField*)field representedObjectForEditingString:(NSString*)str {
+//    if (field == _monthDaySelector_Field) {
+//        return nil;
+//    
+//    } else if (field == _yearDaySelector_Field) {
+//        return nil;
+//    
+//    } else {
+//        abort();
+//    }
+//}
 
 @end
