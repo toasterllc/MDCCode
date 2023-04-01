@@ -378,12 +378,8 @@ static std::string _StringForWeekDays(const Trigger::WeekDays& x) {
 }
 
 static std::string _StringForMonthDays(const Trigger::MonthDays& x) {
-    size_t count = 0;
-    auto y = std::to_underlying(x);
-    while (y) {
-        count += y&1;
-        y >>= 1;
-    }
+    const size_t count = _VectorFromMonthDays(x).size();
+    if (count == 1) return "1 day per month";
     return std::to_string(count) + " days per month";
 }
 

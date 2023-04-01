@@ -26,7 +26,6 @@
 // callback (-tokenField:shouldAddObjects:atIndex:) when finishing editing in some
 // cases (eg when when using the tab key or clicking on another field).
 - (BOOL)textShouldEndEditing:(NSText*)text {
-    [text setSelectedRange:{NSNotFound,0}];
     if (auto client = CastProtocol(NSTextInputClient, text)) {
         NSString*const Delimeter = @"\0";
         if (!_init) {
@@ -36,11 +35,9 @@
             [self setTokenizingCharacterSet:s];
         }
         
-        // We need to use -insertText:replacementRange: on NSTextInputClient,
-        // and not -insertText: on NSTextView, because -insertText: will
-        // overwrite selected text.
-        const NSRange range = [client selectedRange];
-        [client insertText:Delimeter replacementRange:{range.location+range.length, 0}];
+        // Clear the selection, otherwise -insertText: will overwrite selected text.
+        [text setSelectedRange:{NSNotFound,0}];
+        [text insertText:Delimeter];
     }
     
     return [super textShouldEndEditing:text];
