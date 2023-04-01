@@ -22,8 +22,8 @@
 }
 
 // Fix default NSTokenField behavior, which doesn't trigger the delegate validation
-// callback (-tokenField:shouldAddObjects:atIndex:) when using the tab key to finish
-// editing the field
+// callback (-tokenField:shouldAddObjects:atIndex:) when finishing editing in some
+// cases (eg when when using the tab key or clicking on another field).
 - (BOOL)textShouldEndEditing:(NSText*)text {
     NSString*const Delimeter = @"\0";
     if (!_init) {

@@ -666,7 +666,7 @@
                     </tokenFieldCell>
                     <connections>
                         <action selector="_viewChangedAction:" target="-2" id="WPd-Lh-CA3"/>
-                        <outlet property="delegate" destination="-2" id="psJ-jO-eiu"/>
+                        <outlet property="delegate" destination="-2" id="yGv-Cx-us0"/>
                     </connections>
                 </tokenField>
             </subviews>
@@ -704,7 +704,7 @@
                     </tokenFieldCell>
                     <connections>
                         <action selector="_viewChangedAction:" target="-2" id="l2x-1U-3mO"/>
-                        <outlet property="delegate" destination="-2" id="8hd-fu-hbU"/>
+                        <outlet property="delegate" destination="-2" id="j1i-EN-pKY"/>
                     </connections>
                 </tokenField>
             </subviews>
