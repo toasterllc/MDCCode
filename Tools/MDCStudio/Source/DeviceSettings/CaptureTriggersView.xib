@@ -657,7 +657,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <tokenField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Eie-m1-O4i">
+                <tokenField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Eie-m1-O4i" customClass="CaptureTriggersView_TokenField">
                     <rect key="frame" x="42" y="0.0" width="296" height="21"/>
                     <tokenFieldCell key="cell" selectable="YES" editable="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" allowsEditingTextAttributes="YES" id="AIG-q7-roy">
                         <font key="font" metaFont="system"/>
@@ -694,7 +694,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <tokenField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="38b-nv-tEn">
+                <tokenField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="38b-nv-tEn" customClass="CaptureTriggersView_TokenField">
                     <rect key="frame" x="47" y="0.0" width="291" height="21"/>
                     <tokenFieldCell key="cell" selectable="YES" editable="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" allowsEditingTextAttributes="YES" id="hVd-3E-HAr">
                         <font key="font" metaFont="system"/>

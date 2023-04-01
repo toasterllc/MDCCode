@@ -178,6 +178,7 @@ struct _TimeFormatState {
     NSDateFormatter* dateFormatterHH = nil;
     NSDateFormatter* dateFormatterHHMM = nil;
     NSDateFormatter* dateFormatterHHMMSS = nil;
+    NSDateFormatter* dateFormatterD = nil;
 };
 
 static _TimeFormatState _TimeFormatStateCreate() {
@@ -206,6 +207,13 @@ static _TimeFormatState _TimeFormatStateCreate() {
         [x.dateFormatterHHMMSS setTimeZone:[x.calendar timeZone]];
         [x.dateFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hh:mm:ss"];
         [x.dateFormatterHHMMSS setLenient:true];
+    }
+    
+    {
+        x.dateFormatterD = [[NSDateFormatter alloc] init];
+        [x.dateFormatterD setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.dateFormatterD setLocalizedDateFormatFromTemplate:@"d"];
+        [x.dateFormatterD setLenient:true];
     }
     
     return x;
@@ -986,18 +994,91 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 //    NSLog(@"tableViewSelectionDidChange");
 }
 
-//- (NSArray*)tokenField:(NSTokenField*)field shouldAddObjects:(NSArray*)tokens atIndex:(NSUInteger)index {
-//    if (field == _monthDaySelector_Field) {
-//        NSLog(@"_monthDaySelector_Field");
-//        return tokens;
-//    
-//    } else if (field == _yearDaySelector_Field) {
-//        NSLog(@"_yearDaySelector_Field");
-//        return tokens;
-//    
-//    } else {
-//        abort();
-//    }
-//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+- (NSArray*)tokenField:(NSTokenField*)field shouldAddObjects:(NSArray*)tokens atIndex:(NSUInteger)index {
+//    NSLog(@"%@", NSStringFromSelector(_cmd));
+//    return nil;
+    
+    if (field == _monthDaySelector_Field) {
+        NSMutableArray* t = [NSMutableArray new];
+        for (NSString* tok : tokens) {
+            NSLog(@"%@", tok);
+        }
+        NSLog(@"_monthDaySelector_Field");
+        return tokens;
+    
+    } else if (field == _yearDaySelector_Field) {
+        NSLog(@"_yearDaySelector_Field");
+        return tokens;
+    
+    } else {
+        abort();
+    }
+}
+
+- (BOOL)control:(NSControl*)control isValidObject:(id)obj {
+    NSLog(@"%@, obj: %@", NSStringFromSelector(_cmd), obj);
+    
+    if (control == _monthDaySelector_Field) {
+        return true;
+    
+    } else if (control == _yearDaySelector_Field) {
+        return true;
+    
+    } else {
+        abort();
+    }
+    return true;
+}
+
+@end
+
+
+
+@interface CaptureTriggersView_TokenField : NSTokenField
+@end
+
+@implementation CaptureTriggersView_TokenField
+
+// -[NSControl sizeThatFits:], -[NSView fittingSize] and -[NSView intrinsicContentSize]
+
+- (void)setFrame:(NSRect)frame {
+    [super setFrame:frame];
+    [self invalidateIntrinsicContentSize];
+}
+
+- (NSSize)intrinsicContentSize {
+//    constexpr CGFloat k = 3;
+//    NSLog(@"%@", NSStringFromSize([[self cell] cellSizeForBounds:{{k,0},{[self bounds].size.width-2*k, CGFLOAT_MAX}}]));
+//    CGSize s = [self fittingSize];
+//    [self layout];
+    CGSize s = [self sizeThatFits:{[self frame].size.width-4, CGFLOAT_MAX}];
+    s.width = NSViewNoIntrinsicMetric;
+    return s;
+//    CGSize s = [[self cell] cellSizeForBounds:{{0,0},{[self bounds].size.width, CGFLOAT_MAX}}];
+    
+//    NSLog(@"intrinsicContentSize: %@ %@", NSStringFromRect([self frame]), NSStringFromRect([self alignmentRectForFrame:[self frame]]));
+//    s.width = NSViewNoIntrinsicMetric;
+//    NSLog(@"intrinsicContentSize: %@", NSStringFromSize(s));
+//    return s;
+//    return [super intrinsicContentSize];
+}
+
+- (void)textDidChange:(NSNotification*)note {
+    [super textDidChange:note];
+    [self invalidateIntrinsicContentSize];
+}
 
 @end
