@@ -629,6 +629,8 @@ static void _Init(CaptureTriggersView* self) {
 static void _SetContainerSubview(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
     // Either subview==nil, or existence of `alignView` matches existence of `subview->alignView`
     assert(!subview || ((bool)alignView == (bool)subview->alignView));
+    // Short-circuit if `subview` is already the subview of `container`
+    if ([subview superview] == container) return;
     
     [subview removeFromSuperview];
     [container setSubviews:@[]];
