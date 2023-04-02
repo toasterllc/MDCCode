@@ -115,6 +115,8 @@ struct [[gnu::packed]] Trigger {
     };
 };
 
+//static void _TriggerInit(Trigger& t, Trigger::Type type) {
+
 static void _TriggerInit(Trigger& t, Trigger::Type type) {
     constexpr uint32_t Time9AM = 32400;
     constexpr uint32_t Time5PM = 61200;

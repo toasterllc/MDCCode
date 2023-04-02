@@ -75,7 +75,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="0.0" y="0.0" width="455" height="50"/>
+                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="12" y="9" width="32" height="32"/>
@@ -674,10 +674,18 @@
             <point key="canvasLocation" x="25" y="530"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Weekly Detail View" customClass="CaptureTriggersView_ContainerSubview">
-            <rect key="frame" x="0.0" y="0.0" width="338" height="18"/>
+            <rect key="frame" x="0.0" y="0.0" width="340" height="18"/>
             <subviews>
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="exe-0z-XyM">
+                    <rect key="frame" x="-2" y="2" width="38" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Days:" id="GmW-zn-h5r">
+                        <font key="font" usesAppearanceFont="YES"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
-                    <rect key="frame" x="-1" y="-1" width="300" height="20"/>
+                    <rect key="frame" x="41" y="-1" width="300" height="20"/>
                     <segmentedCell key="cell" borderStyle="border" alignment="left" style="roundRect" trackingMode="selectAny" id="6jt-aG-9Bq">
                         <font key="font" metaFont="system" size="12"/>
                         <segments>
@@ -696,17 +704,18 @@
                 </segmentedControl>
             </subviews>
             <constraints>
-                <constraint firstItem="WO9-Yi-XDc" firstAttribute="centerY" secondItem="YrJ-S7-rqE" secondAttribute="centerY" id="5yg-ku-hnO"/>
                 <constraint firstItem="WO9-Yi-XDc" firstAttribute="top" secondItem="YrJ-S7-rqE" secondAttribute="top" id="EHd-EF-Wbr"/>
-                <constraint firstItem="WO9-Yi-XDc" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="YrJ-S7-rqE" secondAttribute="leading" id="FN0-Jp-7Me"/>
-                <constraint firstItem="WO9-Yi-XDc" firstAttribute="leading" secondItem="YrJ-S7-rqE" secondAttribute="leading" priority="750" id="FOb-pC-CCd"/>
+                <constraint firstItem="WO9-Yi-XDc" firstAttribute="leading" secondItem="exe-0z-XyM" secondAttribute="trailing" constant="8" id="IGv-BG-bSO"/>
                 <constraint firstAttribute="bottom" secondItem="WO9-Yi-XDc" secondAttribute="bottom" id="Iw8-9t-p5w"/>
+                <constraint firstItem="exe-0z-XyM" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="YrJ-S7-rqE" secondAttribute="leading" id="kIf-Bk-nbL"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="WO9-Yi-XDc" secondAttribute="trailing" id="lwe-Xl-Wfn"/>
+                <constraint firstItem="exe-0z-XyM" firstAttribute="leading" secondItem="YrJ-S7-rqE" secondAttribute="leading" priority="750" id="qIp-Co-TuJ"/>
+                <constraint firstItem="WO9-Yi-XDc" firstAttribute="firstBaseline" secondItem="exe-0z-XyM" secondAttribute="firstBaseline" id="vTG-nB-6Ue"/>
             </constraints>
             <connections>
                 <outlet property="alignView" destination="WO9-Yi-XDc" id="d1n-Q4-rJf"/>
             </connections>
-            <point key="canvasLocation" x="24" y="634"/>
+            <point key="canvasLocation" x="-103" y="634"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="SVc-di-VTv" userLabel="Monthly Detail View" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
