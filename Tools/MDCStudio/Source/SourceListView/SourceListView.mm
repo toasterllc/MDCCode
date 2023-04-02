@@ -95,6 +95,10 @@ using namespace MDCStudio;
     device->name([[[self textField] stringValue] UTF8String]);
 }
 
+- (IBAction)settingsAction:(id)sender {
+    NSLog(@"SETTINGS");
+}
+
 @end
 
 @interface SourceListView_Spacer : SourceListView_Item

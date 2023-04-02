@@ -74,7 +74,7 @@
                                         </connections>
                                     </tableCellView>
                                     <tableCellView identifier="SourceListView_Device" translatesAutoresizingMaskIntoConstraints="NO" id="08g-eg-N7V" customClass="SourceListView_Device">
-                                        <rect key="frame" x="0.0" y="0.0" width="247" height="50"/>
+                                        <rect key="frame" x="1" y="64" width="247" height="50"/>
                                         <subviews>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY">
                                                 <rect key="frame" x="0.0" y="13" width="24" height="24"/>
@@ -95,12 +95,15 @@
                                                     <action selector="textFieldAction:" target="08g-eg-N7V" id="rvh-zP-hHo"/>
                                                 </connections>
                                             </textField>
-                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g8q-te-9OC">
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g8q-te-9OC" userLabel="Settings Button">
                                                 <rect key="frame" x="225" y="18" width="14" height="14"/>
                                                 <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="NSActionTemplate" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="rni-HE-MKl">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
+                                                <connections>
+                                                    <action selector="settingsAction:" target="08g-eg-N7V" id="JTf-kd-HlT"/>
+                                                </connections>
                                             </button>
                                         </subviews>
                                         <constraints>
