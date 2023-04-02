@@ -47,10 +47,14 @@ struct [[gnu::packed]] Trigger {
     };
     
     // MonthDays: a set of days of an unspecified month
-    enum class MonthDays : uint32_t {};
+    struct [[gnu::packed]] MonthDays {
+        uint32_t x = 0;
+    };
     
     // YearDays: a set of days of an unspecified year
-    using YearDays = MonthDays[12];
+    struct [[gnu::packed]] YearDays {
+        MonthDays x[12] = {};
+    };
     
     enum class LEDs : uint8_t {
         None  = 0,
@@ -278,31 +282,126 @@ static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
 
 
 
+
+
+
+static void _DayValidate(const Trigger::Day& x) {
+    if (x<1 || x>31) throw Toastbox::RuntimeError("invalid Day: %ju", (uintmax_t)x);
+}
+
+static void _MonthValidate(const Trigger::Month& x) {
+    if (x<1 || x>12) throw Toastbox::RuntimeError("invalid Month: %ju", (uintmax_t)x);
+}
+
+static void _MonthDayValidate(const Trigger::MonthDay& x) {
+    _DayValidate(x.day);
+}
+
+static void _YearDayValidate(const Trigger::YearDay& x) {
+    _DayValidate(x.day);
+    _MonthValidate(x.month);
+}
+
+
+
+
+static constexpr std::underlying_type_t<Trigger::MonthDays> _MonthDaysMask(Trigger::Day day) {
+    return 1 << (day-1);
+}
+
+static bool _MonthDaysGet(const Trigger::MonthDays& x, Trigger::Day day) {
+    return std::to_underlying(x) & _MonthDaysMask(day);
+}
+
+static void _MonthDaysSet(Trigger::MonthDays& x, Trigger::Day day, bool y) {
+    auto tmp = std::to_underlying(x);
+    tmp &= ~_MonthDaysMask(day);
+    if (y) tmp |= _MonthDaysMask(day);
+    x = (Trigger::MonthDays)tmp;
+}
+
+
+
 static std::vector<Trigger::MonthDay> _VectorFromMonthDays(const Trigger::MonthDays& x) {
     std::vector<Trigger::MonthDay> r;
-    auto y = std::to_underlying(x);
-    for (Trigger::Day day=0; y; y>>=1, day++) {
-        if (y & 1) r.push_back({ day });
+    for (Trigger::Day day=1; day<=31; day++) {
+        if (_MonthDaysGet(x, day)) {
+            r.push_back(Trigger::MonthDay{
+                .day = day,
+            });
+        }
     }
     return r;
 }
 
-static Trigger::MonthDays _MonthDaysFromVector(const std::vector<Trigger::MonthDay>& days) {
-    std::underlying_type_t<Trigger::MonthDays> r = 0;
-    for (Trigger::MonthDay day : days) {
-        r |= 1<<day.day;
+static Trigger::MonthDays _MonthDaysFromVector(const std::vector<Trigger::MonthDay>& x) {
+    Trigger::MonthDays r = {};
+    for (Trigger::MonthDay day : x) {
+        _MonthDayValidate(day);
+        _MonthDaysSet(r, day.day, true);
     }
-    return (Trigger::MonthDays)r;
+    return r;
 }
 
 static std::optional<Trigger::MonthDay> _MonthDayForString(std::string_view x) {
     Trigger::Day day = 0;
     try {
         Toastbox::IntForStr(day, x);
+        _DayValidate(day);
+    } catch (...) { return std::nullopt; }
+    
+    return Trigger::MonthDay{
+        .day = day
+    };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+static std::vector<Trigger::YearDay> _VectorFromYearDays(const Trigger::YearDays& x) {
+    std::vector<Trigger::YearDay> r;
+    for (Trigger::Month m=1; m<=12; m++) {
+        const std::vector<Trigger::MonthDay> monthDays = _VectorFromMonthDays(x[m-1]);
+        for (const Trigger::MonthDay& d : monthDays) {
+            r.push_back(Trigger::YearDay{
+                .month = m,
+                .day = d.day,
+            });
+        }
+    }
+    return r;
+}
+
+static Trigger::YearDays _YearDaysFromVector(const std::vector<Trigger::YearDay>& x) {
+    Trigger::YearDays r = {};
+    for (const Trigger::YearDay& d : x) {
+        _YearDayValidate(d);
+        _MonthDaysSet(r[d.month-1], d.day, true);
+    }
+    return r;
+}
+
+static std::optional<Trigger::YearDay> _YearDayForString(std::string_view x) {
+    Trigger::Day day = 0;
+    try {
+        Toastbox::IntForStr(day, x);
     } catch (...) { return std::nullopt; }
     if (day<1 || day>31) return std::nullopt;
-    return Trigger::MonthDay{ day };
+    return Trigger::YearDay{ day };
 }
+
+
+
+
+
 
 //static std::optional<Trigger::MonthDays> _MonthDaysForString(std::string_view x) {
 //    uint32_t val = 0;
@@ -806,7 +905,24 @@ static void _Copy(Trigger::MonthDays& x, NSTokenField* field) {
 template<bool T_Forward>
 static void _Copy(Trigger::YearDays& x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
-    #warning TODO: implement
+    if constexpr (T_Forward) {
+        NSMutableArray* tokens = [NSMutableArray new];
+        std::vector<Trigger::YearDay> days = _VectorFromYearDays(x);
+        for (Trigger::YearDay day : days) {
+            [tokens addObject:@(day.day)];
+        }
+        [field setObjectValue:tokens];
+    
+    } else {
+        NSArray* tokens = Toastbox::CastOrNull<NSArray*>([field objectValue]);
+        std::vector<Trigger::YearDay> days;
+        for (id t : tokens) {
+            NSNumber* num = Toastbox::CastOrNull<NSNumber*>(t);
+            if (!num) continue;
+            days.push_back({ (Trigger::Day)[num intValue] });
+        }
+        x = _YearDaysFromVector(days);
+    }
 }
 
 template<bool T_Forward>
