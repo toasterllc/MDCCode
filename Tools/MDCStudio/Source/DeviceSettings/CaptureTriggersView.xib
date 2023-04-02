@@ -19,7 +19,9 @@
                 <outlet property="_constraints_Motion_IgnoreTrigger_DurationField" destination="Ucp-vv-qKL" id="ngp-hK-RhZ"/>
                 <outlet property="_constraints_Motion_IgnoreTrigger_DurationUnitMenu" destination="0dn-kG-M5l" id="hj3-47-De7"/>
                 <outlet property="_constraints_Motion_MaxTriggerCount_Checkbox" destination="ftt-2x-C2n" id="Zrq-wK-1hg"/>
+                <outlet property="_constraints_Motion_MaxTriggerCount_DetailLabel" destination="8w2-7N-QIg" id="kLt-sJ-LaE"/>
                 <outlet property="_constraints_Motion_MaxTriggerCount_Field" destination="0mw-Q8-nb7" id="kg9-6n-BBu"/>
+                <outlet property="_constraints_Motion_MaxTriggerCount_Label" destination="1RP-5M-ifT" id="olZ-Ve-Vks"/>
                 <outlet property="_constraints_Motion_View" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
                 <outlet property="_containerView" destination="fUr-DU-jha" id="a5s-0W-xX1"/>
                 <outlet property="_detailView" destination="MTQ-az-LcE" id="saN-XS-2WM"/>
@@ -75,7 +77,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="0.0" y="0.0" width="455" height="50"/>
+                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="12" y="9" width="32" height="32"/>
@@ -826,16 +828,16 @@ Gw
             <rect key="frame" x="0.0" y="0.0" width="451" height="66"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="8w2-7N-QIg">
-                    <rect key="frame" x="358" y="15" width="36" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="(day)" id="GMH-u5-83X">
+                    <rect key="frame" x="279" y="15" width="47" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="(detail)" id="GMH-u5-83X">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="1RP-5M-ifT">
-                    <rect key="frame" x="188" y="15" width="166" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="times per activation period" id="41O-3C-zpv">
+                    <rect key="frame" x="188" y="15" width="87" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="times per day" id="41O-3C-zpv">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -918,9 +920,9 @@ Gw
             </subviews>
             <constraints>
                 <constraint firstItem="1RP-5M-ifT" firstAttribute="firstBaseline" secondItem="0mw-Q8-nb7" secondAttribute="firstBaseline" id="1hH-3m-uZa"/>
+                <constraint firstItem="8w2-7N-QIg" firstAttribute="leading" secondItem="1RP-5M-ifT" secondAttribute="trailing" constant="8" id="4JJ-Tt-0tG"/>
                 <constraint firstAttribute="bottom" secondItem="0mw-Q8-nb7" secondAttribute="bottom" constant="12" id="4MC-jp-CJl"/>
                 <constraint firstItem="8w2-7N-QIg" firstAttribute="firstBaseline" secondItem="1RP-5M-ifT" secondAttribute="firstBaseline" id="5yz-1S-USV"/>
-                <constraint firstItem="8w2-7N-QIg" firstAttribute="leading" secondItem="1RP-5M-ifT" secondAttribute="trailing" constant="8" id="7zR-sR-tzV"/>
                 <constraint firstItem="IXU-RQ-Nel" firstAttribute="firstBaseline" secondItem="0dn-kG-M5l" secondAttribute="firstBaseline" id="BMq-wC-7TZ"/>
                 <constraint firstItem="0dn-kG-M5l" firstAttribute="firstBaseline" secondItem="xue-BB-gUz" secondAttribute="firstBaseline" id="BRb-TF-0Gu"/>
                 <constraint firstItem="0mw-Q8-nb7" firstAttribute="leading" secondItem="ftt-2x-C2n" secondAttribute="trailing" constant="8" id="EFN-Ex-hpn"/>

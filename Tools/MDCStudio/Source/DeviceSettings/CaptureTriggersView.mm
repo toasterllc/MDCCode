@@ -596,6 +596,14 @@ static std::string _CaptureDescription(const T& x) {
     return str;
 }
 
+static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
+    std::string r;
+    r += _TimeOfDayStringFromSeconds(start);
+    r += " – ";
+    r += _TimeOfDayStringFromSeconds(end);
+    return r;
+}
+
 - (void)updateView {
     // Image, title
     switch (trigger.type) {
@@ -649,9 +657,7 @@ static std::string _CaptureDescription(const T& x) {
         
         if (x.schedule.timeLimit.enable) {
             if (!subtitle.empty()) subtitle += ", ";
-            subtitle += _TimeOfDayStringFromSeconds(x.schedule.timeLimit.start);
-            subtitle += " – ";
-            subtitle += _TimeOfDayStringFromSeconds(x.schedule.timeLimit.end);
+            subtitle += _TimeRangeDescription(x.schedule.timeLimit.start, x.schedule.timeLimit.end);
         }
         
         break;
@@ -782,6 +788,8 @@ static std::string _CaptureDescription(const T& x) {
     IBOutlet NSPopUpButton*     _constraints_Motion_IgnoreTrigger_DurationUnitMenu;
     IBOutlet NSButton*          _constraints_Motion_MaxTriggerCount_Checkbox;
     IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_Field;
+    IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_Label;
+    IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_DetailLabel;
     
     IBOutlet NSButton*      _constraints_MaxTotalTriggerCount_Checkbox;
     IBOutlet NSTextField*   _constraints_MaxTotalTriggerCount_Field;
@@ -1096,7 +1104,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             _Copy<T_Forward>(x.capture.flashLEDs, y._capture_FlashLEDsControl);
         }
         
-        // Limits
+        // Constraints
         {
             if constexpr (T_Forward) _ContainerSubviewSet(y._constraints_ContainerView, nil);
             _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, y._constraints_MaxTotalTriggerCount_Checkbox);
@@ -1154,7 +1162,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             _Copy<T_Forward>(x.capture.flashLEDs, y._capture_FlashLEDsControl);
         }
         
-        // Limits
+        // Constraints
         {
             if constexpr (T_Forward) _ContainerSubviewSet(y._constraints_ContainerView, y._constraints_Motion_View, y._constraints_MaxTotalTriggerCount_Field);
             
@@ -1164,6 +1172,19 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             
             _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, y._constraints_Motion_MaxTriggerCount_Checkbox);
             _Copy<T_Forward>(x.constraints.maxTriggerCount.count, y._constraints_Motion_MaxTriggerCount_Field);
+            
+            if constexpr (T_Forward) {
+                if (!x.schedule.timeLimit.enable) {
+                    [y._constraints_Motion_MaxTriggerCount_Label setStringValue:@"times per day"];
+                    [y._constraints_Motion_MaxTriggerCount_DetailLabel setHidden:true];
+                
+                } else {
+                    [y._constraints_Motion_MaxTriggerCount_Label setStringValue:@"times per schedule period"];
+                    const std::string detail = "(" + _TimeRangeDescription(x.schedule.timeLimit.start, x.schedule.timeLimit.end) + ")";
+                    [y._constraints_Motion_MaxTriggerCount_DetailLabel setStringValue:@(detail.c_str())];
+                    [y._constraints_Motion_MaxTriggerCount_DetailLabel setHidden:false];
+                }
+            }
             
             _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, y._constraints_MaxTotalTriggerCount_Checkbox);
             _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, y._constraints_MaxTotalTriggerCount_Field);
@@ -1178,22 +1199,22 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 }
 
 
-- (void)_storeViewToModel:(Trigger&)trigger {
-//    if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
-//        [x selectAll:nil];
-//    }
-//    [[[self window] firstResponder] insertNewline:nil];
-//    NSLog(@"%@", [[[self window] firstResponder] insertNewline:nil]);
-//    [[self window] firstResponder];
-//    [[self window] endEditingFor:nil];
-//    [[self window] firstResponder] endEditing;
-    _Copy<false>(trigger, self);
-}
+//- (void)_storeViewToModel:(Trigger&)trigger {
+////    if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
+////        [x selectAll:nil];
+////    }
+////    [[[self window] firstResponder] insertNewline:nil];
+////    NSLog(@"%@", [[[self window] firstResponder] insertNewline:nil]);
+////    [[self window] firstResponder];
+////    [[self window] endEditingFor:nil];
+////    [[self window] firstResponder] endEditing;
+//    _Copy<false>(trigger, self);
+//}
 
-- (void)_loadViewFromModel:(Trigger&)trigger {
-    _Copy<true>(trigger, self);
-    [[self window] recalculateKeyViewLoop];
-}
+//- (void)_loadViewFromModel:(Trigger&)trigger {
+//    _Copy<true>(trigger, self);
+//    [[self window] recalculateKeyViewLoop];
+//}
 
 
 
@@ -1244,6 +1265,15 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
     return _items.at(idx);
 }
 
+static void _Store(CaptureTriggersView* self, Trigger& trigger) {
+    _Copy<false>(trigger, self);
+}
+
+static void _Load(CaptureTriggersView* self, Trigger& trigger) {
+    _Copy<true>(trigger, self);
+    [[self window] recalculateKeyViewLoop];
+}
+
 static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
     // Prevent re-entry, because our committing logic can trigger multiple calls
     if (self->_actionViewChangedUnderway) return;
@@ -1265,13 +1295,13 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
         [x insertNewline:nil];
     }
     
-    [self _storeViewToModel:it->trigger];
+    _Store(self, it->trigger);
     
     if (initCadence) {
         _InitTriggerScheduleCadence(it->trigger);
     }
     
-    [self _loadViewFromModel:it->trigger];
+    _Load(self, it->trigger);
 //    if ([[self window] firstResponder] != responder) {
 //        [[self window] makeFirstResponder:responder];
 //    }
@@ -1324,13 +1354,12 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
 
 - (void)tableViewSelectionDidChange:(NSNotification*)note {
     NSInteger idx = [_tableView selectedRow];
-    ListItem* item = (idx>=0 ? _items.at(idx) : nil);
+    ListItem* it = (idx>=0 ? _items.at(idx) : nil);
     
-    [_noSelectionView setHidden:(bool)item];
-    [_detailView setHidden:!item];
-    if (!item) return;
-    
-    [self _loadViewFromModel:item->trigger];
+    [_noSelectionView setHidden:(bool)it];
+    [_detailView setHidden:!it];
+    if (!it) return;
+    _Load(self, it->trigger);
 }
 
 
