@@ -50,13 +50,13 @@
             <rect key="frame" x="0.0" y="0.0" width="500" height="600"/>
             <subviews>
                 <scrollView autohidesScrollers="YES" horizontalLineScroll="52" horizontalPageScroll="10" verticalLineScroll="52" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RYD-Tl-az2">
-                    <rect key="frame" x="20" y="350" width="460" height="206"/>
+                    <rect key="frame" x="20" y="349" width="460" height="207"/>
                     <clipView key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
-                        <rect key="frame" x="1" y="1" width="458" height="204"/>
+                        <rect key="frame" x="1" y="1" width="458" height="205"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="50" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
-                                <rect key="frame" x="0.0" y="0.0" width="458" height="204"/>
+                                <rect key="frame" x="0.0" y="0.0" width="458" height="205"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -172,19 +172,29 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gM0-RU-QRz" userLabel="Add">
-                    <rect key="frame" x="456" y="322" width="24" height="20"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="20" id="21u-GX-syF"/>
-                        <constraint firstAttribute="width" constant="24" id="dDc-A4-sym"/>
-                    </constraints>
-                    <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="NSAddTemplate" imagePosition="overlaps" alignment="center" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="uWo-mu-U89">
+                <popUpButton translatesAutoresizingMaskIntoConstraints="NO" id="RBu-R2-DJH" userLabel="Add">
+                    <rect key="frame" x="450" y="323" width="30" height="18"/>
+                    <popUpButtonCell key="cell" type="bevel" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" pullsDown="YES" arrowPosition="noArrow" altersStateOfSelectedItem="NO" id="Azn-sr-kRw">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
-                    </buttonCell>
-                </button>
+                        <menu key="menu" id="SUR-JM-Ghm">
+                            <items>
+                                <menuItem state="on" image="NSAddTemplate" hidden="YES" id="5ar-mi-KvX"/>
+                                <menuItem title="Time Trigger" image="CaptureTriggers-Icon-Time-Small" id="B8D-ap-3r9">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="Motion Trigger" image="CaptureTriggers-Icon-Motion-Small" id="dMz-DO-BJ3">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="Button Trigger" image="CaptureTriggers-Icon-Button-Small" id="r4z-q4-mwZ">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                </popUpButton>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sv3-nB-qTo" userLabel="Remove">
-                    <rect key="frame" x="436" y="320" width="20" height="24"/>
+                    <rect key="frame" x="430" y="320" width="20" height="24"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="20" id="0Xu-8A-4nq"/>
                         <constraint firstAttribute="height" constant="24" id="2UC-X9-spL"/>
@@ -204,17 +214,17 @@
             <constraints>
                 <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="400" id="9OT-Nk-FLC"/>
                 <constraint firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" constant="20" id="ADR-UA-IlK"/>
+                <constraint firstItem="fUr-DU-jha" firstAttribute="top" secondItem="sv3-nB-qTo" secondAttribute="bottom" id="ATc-Nq-7CL"/>
                 <constraint firstAttribute="trailing" secondItem="fUr-DU-jha" secondAttribute="trailing" constant="20" id="Fip-Ky-KtD"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="20" id="Jcp-3s-WDp"/>
                 <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="400" id="QiN-5n-jjt"/>
-                <constraint firstItem="gM0-RU-QRz" firstAttribute="centerY" secondItem="sv3-nB-qTo" secondAttribute="centerY" id="RWq-ii-ezL"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="top" secondItem="2b6-Qj-SMN" secondAttribute="bottom" constant="8" id="RfI-Tf-3Wf"/>
                 <constraint firstAttribute="bottom" secondItem="fUr-DU-jha" secondAttribute="bottom" constant="20" id="SO2-gW-oPk"/>
-                <constraint firstItem="fUr-DU-jha" firstAttribute="top" secondItem="sv3-nB-qTo" secondAttribute="bottom" id="VuU-e4-UcP"/>
-                <constraint firstItem="gM0-RU-QRz" firstAttribute="leading" secondItem="sv3-nB-qTo" secondAttribute="trailing" id="Wu7-a0-niu"/>
-                <constraint firstItem="gM0-RU-QRz" firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" id="baF-e5-bAv"/>
-                <constraint firstItem="gM0-RU-QRz" firstAttribute="top" secondItem="RYD-Tl-az2" secondAttribute="bottom" constant="8" id="rCd-oF-YpH"/>
+                <constraint firstItem="RBu-R2-DJH" firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" id="Vx3-Pn-lP8"/>
+                <constraint firstItem="RBu-R2-DJH" firstAttribute="centerY" secondItem="sv3-nB-qTo" secondAttribute="centerY" id="bFx-NZ-kaU"/>
+                <constraint firstItem="RBu-R2-DJH" firstAttribute="top" secondItem="RYD-Tl-az2" secondAttribute="bottom" constant="8" id="eyo-cv-mc1"/>
                 <constraint firstItem="fUr-DU-jha" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="20" id="s1P-H4-ypG"/>
+                <constraint firstItem="RBu-R2-DJH" firstAttribute="leading" secondItem="sv3-nB-qTo" secondAttribute="trailing" id="vOh-JG-DpN"/>
                 <constraint firstItem="2b6-Qj-SMN" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" constant="20" id="vlg-eY-4Is"/>
                 <constraint firstItem="2b6-Qj-SMN" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="20" id="xYy-K8-Vgc"/>
             </constraints>
