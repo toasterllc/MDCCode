@@ -1324,6 +1324,8 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
     if (!item) return;
     
     [self _loadViewFromModel:item->trigger];
+    
+    [[self window] recalculateKeyViewLoop];
 }
 
 
