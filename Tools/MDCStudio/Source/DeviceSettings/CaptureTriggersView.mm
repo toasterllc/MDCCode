@@ -5,6 +5,7 @@
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/IntForStr.h"
 #import "DeviceSettings.h"
+#import "Toastbox/Defer.h"
 using namespace DeviceSettings;
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
@@ -596,6 +597,7 @@ static std::string _CaptureDescription(const T& x) {
     IBOutlet NSTextField*   _constraints_MaxTotalTriggerCount_Field;
     
     std::vector<ListItem*> _items;
+    bool _viewChangedActionUnderway;
 }
 
 static ListItem* _ListItemCreate(NSTableView* v) {
@@ -651,8 +653,6 @@ static void _Init(CaptureTriggersView* self) {
     }
     
     [self->_yearDaySelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
-    
-//    [self _loadViewFromModel:self->_triggers.triggers[0]];
 }
 
 // MARK: - Creation
@@ -972,6 +972,14 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 
 
 - (void)_storeViewToModel:(Trigger&)trigger {
+//    if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
+//        [x selectAll:nil];
+//    }
+//    [[[self window] firstResponder] insertNewline:nil];
+//    NSLog(@"%@", [[[self window] firstResponder] insertNewline:nil]);
+//    [[self window] firstResponder];
+//    [[self window] endEditingFor:nil];
+//    [[self window] firstResponder] endEditing;
     _Copy<false>(trigger, self);
 }
 
@@ -1029,11 +1037,26 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 }
 
 - (IBAction)_viewChangedAction:(id)sender {
+    // Prevent re-entry, because our committing logic can trigger multiple calls
+    if (_viewChangedActionUnderway) return;
+    _viewChangedActionUnderway = true;
+    Defer( _viewChangedActionUnderway = false );
+    
     NSLog(@"_viewChangedAction");
     ListItem* item = [self _selectedItem];
     if (!item) return;
 //    NSResponder* responder = [[self window] firstResponder];
 //    NSLog(@"BEFORE: %@", responder);
+    
+    // Commit editing the active editor
+    if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
+        // We call -insertNewline twice because NSTokenField has 2 sequential states
+        // that the return key transitions through, and we want to transition through
+        // both to get to the final "select all" state.
+        [x insertNewline:nil];
+        [x insertNewline:nil];
+    }
+    
     [self _storeViewToModel:item->trigger];
     [self _loadViewFromModel:item->trigger];
 //    if ([[self window] firstResponder] != responder) {

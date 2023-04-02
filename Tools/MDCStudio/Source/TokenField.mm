@@ -18,6 +18,7 @@
 }
 
 - (void)textDidChange:(NSNotification*)note {
+    NSLog(@"%@", NSStringFromSelector(_cmd));
     [super textDidChange:note];
     [self invalidateIntrinsicContentSize];
 }
@@ -26,6 +27,7 @@
 // callback (-tokenField:shouldAddObjects:atIndex:) when finishing editing in some
 // cases (eg when when using the tab key or clicking on another field).
 - (BOOL)textShouldEndEditing:(NSText*)text {
+    NSLog(@"%@", NSStringFromSelector(_cmd));
     if (auto client = CastProtocol(NSTextInputClient, text)) {
         NSString*const Delimeter = @"\0";
         if (!_init) {
@@ -37,7 +39,11 @@
         
         // Clear the selection, otherwise -insertText: will overwrite selected text.
         [text setSelectedRange:{NSNotFound,0}];
+        // Call -insertText twice to because there's an intermediate state upon the first delimeter.
+        // (NSTokenFields require two returns keys to trigger the select-all behavior of the text field.)
         [text insertText:Delimeter];
+//        [text selectAll:nil];
+//        [text insertText:Delimeter];
     }
     
     return [super textShouldEndEditing:text];
@@ -47,6 +53,11 @@
     NSLog(@"%@", NSStringFromSelector(_cmd));
 //    [self sendAction:[self action] to:<#(nullable id)#>
     [super textDidEndEditing:note];
+}
+
+- (BOOL)resignFirstResponder {
+    NSLog(@"%@", NSStringFromSelector(_cmd));
+    return [super resignFirstResponder];
 }
 
 @end
