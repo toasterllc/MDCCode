@@ -799,9 +799,11 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
     [it updateView];
     
     self->_items.push_back(it);
-    NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:self->_items.size()-1];
+    const size_t idx = self->_items.size()-1;
+    NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
     [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
     [tv selectRowIndexes:idxs byExtendingSelection:false];
+    [tv scrollRowToVisible:idx];
     return it;
 }
 

@@ -232,9 +232,6 @@
 DQ
 </string>
                     </buttonCell>
-                    <connections>
-                        <action selector="_actionDismiss:" target="-2" id="xzx-3c-0Yp"/>
-                    </connections>
                 </button>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="HXO-cR-ctO">
                     <rect key="frame" x="322" y="13" width="82" height="32"/>
