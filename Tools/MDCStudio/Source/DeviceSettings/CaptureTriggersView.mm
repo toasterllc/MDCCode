@@ -550,6 +550,9 @@ static std::string _CaptureDescription(const T& x) {
     IBOutlet NSView* _nibView;
     
     IBOutlet NSTableView* _tableView;
+    IBOutlet NSView* _containerView;
+    IBOutlet ContainerSubview* _detailView;
+    IBOutlet ContainerSubview* _noSelectionView;
     
     // Schedule
     IBOutlet NSView*            _schedule_ContainerView;
@@ -653,6 +656,9 @@ static void _Init(CaptureTriggersView* self) {
     }
     
     [self->_yearDaySelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
+    
+    _ContainerSubviewAdd(self->_containerView, self->_detailView);
+    _ContainerSubviewAdd(self->_containerView, self->_noSelectionView);
 }
 
 // MARK: - Creation
@@ -669,16 +675,7 @@ static void _Init(CaptureTriggersView* self) {
     return self;
 }
 
-static void _SetContainerSubview(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
-    // Either subview==nil, or existence of `alignView` matches existence of `subview->alignView`
-    assert(!subview || ((bool)alignView == (bool)subview->alignView));
-    // Short-circuit if `subview` is already the subview of `container`
-    if ([subview superview] == container) return;
-    
-    [subview removeFromSuperview];
-    [container setSubviews:@[]];
-    if (!subview) return;
-    
+static void _ContainerSubviewAdd(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
     [container addSubview:subview];
     
     NSMutableArray* constraints = [NSMutableArray new];
@@ -692,6 +689,19 @@ static void _SetContainerSubview(NSView* container, ContainerSubview* subview, N
     }
     
     [NSLayoutConstraint activateConstraints:constraints];
+}
+
+static void _ContainerSubviewSet(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
+    // Either subview==nil, or existence of `alignView` matches existence of `subview->alignView`
+    assert(!subview || ((bool)alignView == (bool)subview->alignView));
+    // Short-circuit if `subview` is already the subview of `container`
+    if ([subview superview] == container) return;
+    
+    [subview removeFromSuperview];
+    [container setSubviews:@[]];
+    if (!subview) return;
+    
+    _ContainerSubviewAdd(container, subview, alignView);
 }
 
 template<bool T_Forward>
@@ -849,24 +859,24 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         // Schedule
         {
-            if constexpr (T_Forward) _SetContainerSubview(y._schedule_ContainerView, y._schedule_Time_View);
+            if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_ContainerView, y._schedule_Time_View);
             
             _CopyTime<T_Forward>(x.schedule.time, y._schedule_Time_TimeField);
             _Copy<T_Forward>(x.schedule.cadence, y._schedule_Time_CadenceMenu);
             switch (x.schedule.cadence) {
             case Trigger::Cadence::Daily:
-                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Time_DaySelectorContainerView, nil);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, nil);
                 break;
             case Trigger::Cadence::Weekly:
-                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Time_DaySelectorContainerView, y._weekDaySelector_View, y._schedule_Time_CadenceMenu);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._weekDaySelector_View, y._schedule_Time_CadenceMenu);
                 _Copy<T_Forward>(x.schedule.weekDays, y._weekDaySelector_Control);
                 break;
             case Trigger::Cadence::Monthly:
-                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Time_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Time_CadenceMenu);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Time_CadenceMenu);
                 _Copy<T_Forward>(x.schedule.monthDays, y._monthDaySelector_Field);
                 break;
             case Trigger::Cadence::Yearly:
-                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Time_DaySelectorContainerView, y._yearDaySelector_View, y._schedule_Time_CadenceMenu);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._yearDaySelector_View, y._schedule_Time_CadenceMenu);
                 _Copy<T_Forward>(x.schedule.yearDays, y._yearDaySelector_Field);
                 break;
             default:
@@ -891,7 +901,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         // Limits
         {
-            if constexpr (T_Forward) _SetContainerSubview(y._constraints_ContainerView, nil);
+            if constexpr (T_Forward) _ContainerSubviewSet(y._constraints_ContainerView, nil);
             _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, y._constraints_MaxTotalTriggerCount_Checkbox);
             _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, y._constraints_MaxTotalTriggerCount_Field);
         }
@@ -905,7 +915,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         // Schedule
         {
-            if constexpr (T_Forward) _SetContainerSubview(y._schedule_ContainerView, y._schedule_Motion_View);
+            if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_ContainerView, y._schedule_Motion_View);
             
             _Copy<T_Forward>(x.schedule.timeLimit.enable, y._schedule_Motion_LimitTime_Checkbox);
             _CopyTime<T_Forward>(x.schedule.timeLimit.start, y._schedule_Motion_LimitTime_TimeStartField);
@@ -916,15 +926,15 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             switch (x.schedule.dayLimit.cadence) {
             case Trigger::Cadence::Daily:
             case Trigger::Cadence::Weekly:
-                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Motion_DaySelectorContainerView, y._weekDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._weekDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
                 _Copy<T_Forward>(x.schedule.dayLimit.weekDays, y._weekDaySelector_Control);
                 break;
             case Trigger::Cadence::Monthly:
-                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Motion_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
                 _Copy<T_Forward>(x.schedule.dayLimit.monthDays, y._monthDaySelector_Field);
                 break;
             case Trigger::Cadence::Yearly:
-                if constexpr (T_Forward) _SetContainerSubview(y._schedule_Motion_DaySelectorContainerView, y._yearDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._yearDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
                 _Copy<T_Forward>(x.schedule.dayLimit.yearDays, y._yearDaySelector_Field);
                 break;
             default:
@@ -949,7 +959,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         // Limits
         {
-            if constexpr (T_Forward) _SetContainerSubview(y._constraints_ContainerView, y._constraints_Motion_View, y._constraints_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _ContainerSubviewSet(y._constraints_ContainerView, y._constraints_Motion_View, y._constraints_MaxTotalTriggerCount_Field);
             
             _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, y._constraints_Motion_IgnoreTrigger_Checkbox);
             _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.value, y._constraints_Motion_IgnoreTrigger_DurationField);
@@ -1081,14 +1091,13 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 
 - (void)tableViewSelectionDidChange:(NSNotification*)note {
     NSInteger idx = [_tableView selectedRow];
-    if (idx < 0) return;
-    ListItem* item = _items.at(idx);
+    ListItem* item = (idx>=0 ? _items.at(idx) : nil);
+    
+    [_noSelectionView setHidden:(bool)item];
+    [_detailView setHidden:!item];
+    if (!item) return;
     
     [self _loadViewFromModel:item->trigger];
-    
-//    item->trigger;
-//    
-//    NSLog(@"tableViewSelectionDidChange");
 }
 
 
