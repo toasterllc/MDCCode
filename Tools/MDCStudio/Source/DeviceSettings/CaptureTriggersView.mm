@@ -1304,6 +1304,10 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
     _ListItemRemove(self, idx);
 }
 
+- (IBAction)_actionDismiss:(id)sender {
+    [[[self window] sheetParent] endSheet:[self window]];
+}
+
 // MARK: - Table View Data Source / Delegate
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView*)tableView {

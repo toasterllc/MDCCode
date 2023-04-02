@@ -3,6 +3,7 @@
 #import "Util.h"
 #import "MDCDevicesManager.h"
 #import "Toastbox/Mac/Util.h"
+#import "DeviceSettings/CaptureTriggersView.h"
 using namespace MDCStudio;
 
 // MARK: - Outline View Items
@@ -97,6 +98,21 @@ using namespace MDCStudio;
 
 - (IBAction)settingsAction:(id)sender {
     NSLog(@"SETTINGS");
+    NSWindow* parentWindow = [self window];
+    
+    CaptureTriggersView* view = [[CaptureTriggersView alloc] initWithFrame:{}];
+    
+    NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
+        styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
+        backing:NSBackingStoreBuffered defer:false];
+    NSView* contentView = [sheetWindow contentView];
+    [contentView addSubview:view];
+    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
+    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
+    
+    [parentWindow beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {
+        NSLog(@"sheet complete");
+    }];
 }
 
 @end
