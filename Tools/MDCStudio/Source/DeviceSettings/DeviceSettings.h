@@ -142,14 +142,80 @@ inline YearDays YearDaysFromVector(const std::vector<YearDay>& x) {
     return r;
 }
 
+
+
+
+
+
+struct _YearDayState {
+    NSCalendar* cal = nil;
+    NSDateFormatter* fmt = nil;
+};
+
+inline _YearDayState _YearDayStateCreate() {
+    _YearDayState x;
+    x.cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    
+    x.fmt = [[NSDateFormatter alloc] init];
+    [x.fmt setLocale:[NSLocale autoupdatingCurrentLocale]];
+    [x.fmt setCalendar:x.cal];
+    [x.fmt setTimeZone:[x.cal timeZone]];
+    [x.fmt setLocalizedDateFormatFromTemplate:@"MMMd"];
+    [x.fmt setLenient:true];
+    
+    return x;
+}
+
+inline _YearDayState& _YearDayStateGet() {
+    static _YearDayState x = _YearDayStateCreate();
+    return x;
+}
+
+
+
+
+
+
+
+//inline NSDateFormatter* _YearDayDateFormatterCreate() {
+//    NSDateFormatter* x = [[NSDateFormatter alloc] init];
+//    [x setLocale:[NSLocale autoupdatingCurrentLocale]];
+//    [x setLocalizedDateFormatFromTemplate:@"Md"];
+//    [x setLenient:true];
+//    return x;
+//}
+//
+//inline NSDateFormatter* _YearDayDateFormatter() {
+//    static NSDateFormatter* X = _YearDayDateFormatterCreate();
+//    return X;
+//}
+
 inline std::optional<YearDay> YearDayFromString(std::string_view x) {
-    #warning TODO: implement
-    abort();
+    NSDate* date = [_YearDayStateGet().fmt dateFromString:@(std::string(x).c_str())];
+    if (!date) return std::nullopt;
+    
+    NSDateComponents* comp = [_YearDayStateGet().cal
+        components:NSCalendarUnitMonth|NSCalendarUnitDay fromDate:date];
+    if (!comp) return std::nullopt;
+    
+    YearDay r = YearDay{
+        .month = (Month)[comp month],
+        .day = (Day)[comp day],
+    };
+    
+    try {
+        YearDayValidate(r);
+    } catch (...) { return std::nullopt; }
+    
+    return r;
 }
 
 inline std::string StringFromYearDay(const YearDay& x) {
-    #warning TODO: implement
-    abort();
+    NSDateComponents* comp = [NSDateComponents new];
+    [comp setMonth:x.month];
+    [comp setDay:x.day];
+    NSDate* date = [_YearDayStateGet().cal dateFromComponents:comp];
+    return [[_YearDayStateGet().fmt stringFromDate:date] UTF8String];
 }
 
 
