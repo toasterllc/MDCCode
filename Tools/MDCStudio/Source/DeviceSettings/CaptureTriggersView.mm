@@ -115,6 +115,142 @@ struct [[gnu::packed]] Trigger {
     };
 };
 
+static void _TriggerInit(Trigger& t, Trigger::Type type) {
+    constexpr uint32_t Time9AM = 32400;
+    constexpr uint32_t Time5PM = 61200;
+    constexpr Calendar::WeekDays WeekDaysMF = (Calendar::WeekDays)(
+        std::to_underlying(Calendar::WeekDays::Mon) |
+        std::to_underlying(Calendar::WeekDays::Tue) |
+        std::to_underlying(Calendar::WeekDays::Wed) |
+        std::to_underlying(Calendar::WeekDays::Thu) |
+        std::to_underlying(Calendar::WeekDays::Fri)
+    );
+    
+    t.type = type;
+    switch (t.type) {
+    case Trigger::Type::Time: {
+        auto& x = t.time;
+        
+        x.schedule = {
+            .time = Time9AM,
+            .cadence = Trigger::Cadence::Daily,
+        };
+        
+        x.capture = {
+            .count = 3,
+            .interval = Trigger::Duration{
+                .value = 1,
+                .unit = Trigger::Duration::Unit::Seconds,
+            },
+            .flashLEDs = Trigger::LEDs::None,
+        };
+        
+        x.constraints = {
+            .maxTotalTriggerCount = {
+                .enable = false,
+                .count = 1,
+            }
+        };
+        
+        break;
+    }
+    
+    case Trigger::Type::Motion: {
+        auto& x = t.motionButton;
+        
+        x.schedule = {
+            .timeLimit = {
+                .enable = true,
+                .start = Time9AM,
+                .end = Time5PM,
+            },
+            .dayLimit = {
+                .enable = true,
+                .cadence = Trigger::Cadence::Weekly,
+                .weekDays = WeekDaysMF,
+            },
+        };
+        
+        x.capture = {
+            .count = 3,
+            .interval = Trigger::Duration{
+                .value = 1,
+                .unit = Trigger::Duration::Unit::Seconds,
+            },
+            .flashLEDs = Trigger::LEDs::None,
+        };
+        
+        x.constraints = {
+            .ignoreTriggerDuration = {
+                .enable = false,
+                .duration = Trigger::Duration{
+                    .value = 1,
+                    .unit = Trigger::Duration::Unit::Seconds,
+                }
+            },
+            .maxTriggerCount = {
+                .enable = false,
+                .count = 1,
+            },
+            .maxTotalTriggerCount = {
+                .enable = false,
+                .count = 1,
+            },
+        };
+        
+        break;
+    }
+    
+    case Trigger::Type::Button: {
+        auto& x = t.motionButton;
+        
+        x.schedule = {
+            .timeLimit = {
+                .enable = false,
+                .start = Time9AM,
+                .end = Time5PM,
+            },
+            .dayLimit = {
+                .enable = false,
+                .cadence = Trigger::Cadence::Weekly,
+                .weekDays = WeekDaysMF,
+            },
+        };
+        
+        x.capture = {
+            .count = 1,
+            .interval = Trigger::Duration{
+                .value = 1,
+                .unit = Trigger::Duration::Unit::Seconds,
+            },
+            .flashLEDs = Trigger::LEDs::None,
+        };
+        
+        x.constraints = {
+            .ignoreTriggerDuration = {
+                .enable = false,
+                .duration = Trigger::Duration{
+                    .value = 1,
+                    .unit = Trigger::Duration::Unit::Seconds,
+                }
+            },
+            .maxTriggerCount = {
+                .enable = false,
+                .count = 1,
+            },
+            .maxTotalTriggerCount = {
+                .enable = false,
+                .count = 1,
+            },
+        };
+        
+        break;
+    }
+    
+    default: abort();
+    }
+}
+
 struct [[gnu::packed]] Triggers {
     Trigger triggers[32];
     uint8_t triggersCount = 0;
@@ -608,8 +744,7 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
     NSTableView* tv = self->_tableView;
     ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
     Trigger& t = it->trigger;
-    
-    t.type = type;
+    _TriggerInit(t, type);
     [it updateView];
     
     self->_items.push_back(it);
