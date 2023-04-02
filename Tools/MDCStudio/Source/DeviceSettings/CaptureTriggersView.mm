@@ -603,9 +603,39 @@ static std::string _CaptureDescription(const T& x) {
     bool _actionViewChangedUnderway;
 }
 
-static ListItem* _ListItemCreate(NSTableView* v) {
-    assert(v);
-    return [v makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
+static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
+    assert(self);
+    NSTableView* tv = self->_tableView;
+    ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
+    Trigger& t = it->trigger;
+    
+    t.type = type;
+    [it updateView];
+    
+    self->_items.push_back(it);
+    NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:self->_items.size()-1];
+    [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
+    [tv selectRowIndexes:idxs byExtendingSelection:false];
+    return it;
+}
+
+static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
+    assert(self);
+    assert(idx < self->_items.size());
+    NSTableView* tv = self->_tableView;
+    
+    // Remove item
+    {
+        NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
+        self->_items.erase(self->_items.begin()+idx);
+        [tv removeRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
+    }
+    
+    // Update selection
+    if (!self->_items.empty()) {
+        NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:std::min(self->_items.size()-1, idx)];
+        [tv selectRowIndexes:idxs byExtendingSelection:false];
+    }
 }
 
 static void _Init(CaptureTriggersView* self) {
@@ -623,31 +653,10 @@ static void _Init(CaptureTriggersView* self) {
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
-    {
-        ListItem* item = _ListItemCreate(self->_tableView);
-        Trigger& t = item->trigger;
-        t.type = Trigger::Type::Time;
-        [item updateView];
-        self->_items.push_back(item);
-    }
-    
-    {
-        ListItem* item = _ListItemCreate(self->_tableView);
-        Trigger& t = item->trigger;
-        t.type = Trigger::Type::Motion;
-        [item updateView];
-        self->_items.push_back(item);
-    }
-    
-    {
-        ListItem* item = _ListItemCreate(self->_tableView);
-        Trigger& t = item->trigger;
-        t.type = Trigger::Type::Button;
-        [item updateView];
-        self->_items.push_back(item);
-    }
-    
     [self->_tableView reloadData];
+    _ListItemAdd(self, Trigger::Type::Time);
+    _ListItemAdd(self, Trigger::Type::Motion);
+    _ListItemAdd(self, Trigger::Type::Button);
     
     {
         NSMutableCharacterSet* set = [[self->_monthDaySelector_Field tokenizingCharacterSet] mutableCopy];
@@ -1075,6 +1084,24 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 //    NSLog(@"AFTER: %@", [[self window] firstResponder]);
 //    [[self window] makeFirstResponder:responder];
     [item updateView];
+}
+
+- (IBAction)_actionAddTimeTrigger:(id)sender {
+    _ListItemAdd(self, Trigger::Type::Time);
+}
+
+- (IBAction)_actionAddMotionTrigger:(id)sender {
+    _ListItemAdd(self, Trigger::Type::Motion);
+}
+
+- (IBAction)_actionAddButtonTrigger:(id)sender {
+    _ListItemAdd(self, Trigger::Type::Button);
+}
+
+- (IBAction)_actionRemove:(id)sender {
+    NSInteger idx = [_tableView selectedRow];
+    if (idx < 0) return;
+    _ListItemRemove(self, idx);
 }
 
 // MARK: - Table View Data Source / Delegate

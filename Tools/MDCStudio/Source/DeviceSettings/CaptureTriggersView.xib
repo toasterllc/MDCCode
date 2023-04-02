@@ -182,12 +182,21 @@
                                 <menuItem state="on" image="NSAddTemplate" hidden="YES" id="5ar-mi-KvX"/>
                                 <menuItem title="Time Trigger" image="CaptureTriggers-Icon-Time-Small" id="B8D-ap-3r9">
                                     <modifierMask key="keyEquivalentModifierMask"/>
+                                    <connections>
+                                        <action selector="_actionAddTimeTrigger:" target="-2" id="LS9-SC-fPP"/>
+                                    </connections>
                                 </menuItem>
                                 <menuItem title="Motion Trigger" image="CaptureTriggers-Icon-Motion-Small" id="dMz-DO-BJ3">
                                     <modifierMask key="keyEquivalentModifierMask"/>
+                                    <connections>
+                                        <action selector="_actionAddMotionTrigger:" target="-2" id="Rky-Ih-kzT"/>
+                                    </connections>
                                 </menuItem>
                                 <menuItem title="Button Trigger" image="CaptureTriggers-Icon-Button-Small" id="r4z-q4-mwZ">
                                     <modifierMask key="keyEquivalentModifierMask"/>
+                                    <connections>
+                                        <action selector="_actionAddButtonTrigger:" target="-2" id="5aj-g6-qNn"/>
+                                    </connections>
                                 </menuItem>
                             </items>
                         </menu>
@@ -203,6 +212,9 @@
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
+                    <connections>
+                        <action selector="_actionRemove:" target="-2" id="xdP-z4-euk"/>
+                    </connections>
                 </button>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="fUr-DU-jha">
                     <rect key="frame" x="20" y="20" width="460" height="300"/>
