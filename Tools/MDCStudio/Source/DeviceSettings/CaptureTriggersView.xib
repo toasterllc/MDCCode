@@ -75,7 +75,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="0.0" y="0.0" width="455" height="50"/>
+                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="12" y="9" width="32" height="32"/>
@@ -274,7 +274,7 @@
                         </menu>
                     </popUpButtonCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="P39-MF-07N"/>
+                        <action selector="_actionViewChanged:" target="-2" id="P39-MF-07N"/>
                     </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uDa-XG-QN2">
@@ -305,7 +305,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="UlD-c7-BnN"/>
+                        <action selector="_actionViewChanged:" target="-2" id="UlD-c7-BnN"/>
                     </connections>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="2Xg-db-P6E" userLabel="Limits Container View">
@@ -350,7 +350,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="EdG-T0-T1k"/>
+                        <action selector="_actionViewChanged:" target="-2" id="EdG-T0-T1k"/>
                     </connections>
                 </textField>
                 <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
@@ -363,7 +363,7 @@
                         </segments>
                     </segmentedCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="aWi-KD-tEq"/>
+                        <action selector="_actionViewChanged:" target="-2" id="aWi-KD-tEq"/>
                     </connections>
                 </segmentedControl>
                 <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="gJ9-mx-gRD">
@@ -387,7 +387,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="FGu-HE-Xub"/>
+                        <action selector="_actionViewChanged:" target="-2" id="FGu-HE-Xub"/>
                     </connections>
                 </button>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oIx-Tj-uov">
@@ -417,7 +417,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="aYd-6b-f1u"/>
+                        <action selector="_actionViewChanged:" target="-2" id="aYd-6b-f1u"/>
                     </connections>
                 </textField>
             </subviews>
@@ -486,7 +486,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="xQX-Ks-PrX"/>
+                        <action selector="_actionViewChanged:" target="-2" id="xQX-Ks-PrX"/>
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
@@ -500,7 +500,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="5U8-Uq-FkN"/>
+                        <action selector="_actionViewChanged:" target="-2" id="5U8-Uq-FkN"/>
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
@@ -522,7 +522,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="EmX-gw-3nu"/>
+                        <action selector="_actionViewChanged:" target="-2" id="EmX-gw-3nu"/>
                     </connections>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Jd9-lQ-a3S" userLabel="Repeat Interval Container View">
@@ -539,7 +539,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="tpS-R8-JD6"/>
+                        <action selector="_actionViewChanged:" target="-2" id="tpS-R8-JD6"/>
                     </connections>
                 </button>
                 <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="RN5-cz-MIP">
@@ -556,7 +556,7 @@
                         </menu>
                     </popUpButtonCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="SKE-hT-11w"/>
+                        <action selector="_actionViewChanged:" target="-2" id="SKE-hT-11w"/>
                     </connections>
                 </popUpButton>
             </subviews>
@@ -603,7 +603,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="nFd-S7-3km"/>
+                        <action selector="_actionViewChanged:" target="-2" id="nFd-S7-3km"/>
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="e2p-19-VKE">
@@ -629,7 +629,7 @@
                         </menu>
                     </popUpButtonCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="wPq-lf-4Qg"/>
+                        <action selector="_actionViewChanged:" target="-2" id="wPq-lf-4Qg"/>
                     </connections>
                 </popUpButton>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="5tK-cV-igO" userLabel="Repeat Interval Container View">
@@ -678,7 +678,7 @@
                         </segments>
                     </segmentedCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="HxT-Kg-WnD"/>
+                        <action selector="_actionViewChanged:" target="-2" id="HxT-Kg-WnD"/>
                     </connections>
                 </segmentedControl>
             </subviews>
@@ -714,7 +714,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </tokenFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="WPd-Lh-CA3"/>
+                        <action selector="_actionViewChanged:" target="-2" id="WPd-Lh-CA3"/>
                         <outlet property="delegate" destination="-2" id="yGv-Cx-us0"/>
                     </connections>
                 </tokenField>
@@ -752,7 +752,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </tokenFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="l2x-1U-3mO"/>
+                        <action selector="_actionViewChanged:" target="-2" id="l2x-1U-3mO"/>
                         <outlet property="delegate" destination="-2" id="j1i-EN-pKY"/>
                     </connections>
                 </tokenField>
@@ -801,7 +801,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="Fog-J6-Vp6"/>
+                        <action selector="_actionViewChanged:" target="-2" id="Fog-J6-Vp6"/>
                     </connections>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0dn-kG-M5l">
@@ -819,7 +819,7 @@
                         </menu>
                     </popUpButtonCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="5Tn-aU-Ctc"/>
+                        <action selector="_actionViewChanged:" target="-2" id="5Tn-aU-Ctc"/>
                     </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="IXU-RQ-Nel">
@@ -837,7 +837,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="awh-BF-4rv"/>
+                        <action selector="_actionViewChanged:" target="-2" id="awh-BF-4rv"/>
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ucp-vv-qKL">
@@ -851,7 +851,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="KsS-8a-4Hi"/>
+                        <action selector="_actionViewChanged:" target="-2" id="KsS-8a-4Hi"/>
                     </connections>
                 </textField>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="xue-BB-gUz">
@@ -861,7 +861,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="_viewChangedAction:" target="-2" id="DIO-64-ver"/>
+                        <action selector="_actionViewChanged:" target="-2" id="DIO-64-ver"/>
                     </connections>
                 </button>
             </subviews>
@@ -894,20 +894,6 @@
             </connections>
             <point key="canvasLocation" x="25" y="867"/>
         </customView>
-        <menu id="APX-cp-L9t">
-            <items>
-                <menuItem title="Time Trigger" image="CaptureTriggers-Icon-Time-Small" id="tN5-oA-Tvc">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-                <menuItem title="Motion Trigger" image="CaptureTriggers-Icon-Motion-Small" id="XPh-17-Xhc">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-                <menuItem title="Button Trigger" image="CaptureTriggers-Icon-Button-Small" id="57K-8g-e53">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-            </items>
-            <point key="canvasLocation" x="694" y="634"/>
-        </menu>
     </objects>
     <resources>
         <image name="CaptureTriggers-Icon-Button-Small" width="22" height="22"/>

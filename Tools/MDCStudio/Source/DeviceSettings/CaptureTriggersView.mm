@@ -600,7 +600,7 @@ static std::string _CaptureDescription(const T& x) {
     IBOutlet NSTextField*   _constraints_MaxTotalTriggerCount_Field;
     
     std::vector<ListItem*> _items;
-    bool _viewChangedActionUnderway;
+    bool _actionViewChangedUnderway;
 }
 
 static ListItem* _ListItemCreate(NSTableView* v) {
@@ -1046,13 +1046,13 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
     return _items.at(idx);
 }
 
-- (IBAction)_viewChangedAction:(id)sender {
+- (IBAction)_actionViewChanged:(id)sender {
     // Prevent re-entry, because our committing logic can trigger multiple calls
-    if (_viewChangedActionUnderway) return;
-    _viewChangedActionUnderway = true;
-    Defer( _viewChangedActionUnderway = false );
+    if (_actionViewChangedUnderway) return;
+    _actionViewChangedUnderway = true;
+    Defer( _actionViewChangedUnderway = false );
     
-    NSLog(@"_viewChangedAction");
+    NSLog(@"_actionViewChanged");
     ListItem* item = [self _selectedItem];
     if (!item) return;
 //    NSResponder* responder = [[self window] firstResponder];
