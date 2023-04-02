@@ -75,18 +75,18 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="455" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
-                                                        <rect key="frame" x="12" y="14" width="28" height="22"/>
+                                                        <rect key="frame" x="12" y="9" width="32" height="32"/>
                                                         <constraints>
-                                                            <constraint firstAttribute="height" constant="22" id="I7N-I8-ey7"/>
-                                                            <constraint firstAttribute="width" constant="28" id="gNc-el-Ztg"/>
+                                                            <constraint firstAttribute="height" constant="32" id="I7N-I8-ey7"/>
+                                                            <constraint firstAttribute="width" constant="32" id="gNc-el-Ztg"/>
                                                         </constraints>
                                                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" id="w44-RA-Kh1"/>
                                                     </imageView>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="n8U-Uc-9fw">
-                                                        <rect key="frame" x="58" y="28" width="64" height="15"/>
+                                                        <rect key="frame" x="62" y="28" width="64" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Title Prefix" id="vwX-Nl-AIs">
                                                             <font key="font" metaFont="systemLight" size="12"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -94,7 +94,7 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QhX-Pl-rlK">
-                                                        <rect key="frame" x="122" y="28" width="31" height="15"/>
+                                                        <rect key="frame" x="126" y="28" width="31" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Title" id="qQv-Q5-INr">
                                                             <font key="font" metaFont="systemSemibold" size="12"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -102,7 +102,7 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xRA-1R-gxT">
-                                                        <rect key="frame" x="58" y="9" width="47" height="15"/>
+                                                        <rect key="frame" x="62" y="9" width="47" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Subtitle" id="TsS-dG-2bw">
                                                             <font key="font" metaFont="systemLight" size="12"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -110,7 +110,7 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="Suo-7y-kvg">
-                                                        <rect key="frame" x="153" y="28" width="69" height="15"/>
+                                                        <rect key="frame" x="157" y="28" width="69" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Description" id="GIs-LG-n68">
                                                             <font key="font" metaFont="systemLight" size="12"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -172,7 +172,7 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gM0-RU-QRz">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gM0-RU-QRz" userLabel="Add">
                     <rect key="frame" x="456" y="322" width="24" height="20"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="20" id="21u-GX-syF"/>
@@ -183,7 +183,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                 </button>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sv3-nB-qTo">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sv3-nB-qTo" userLabel="Remove">
                     <rect key="frame" x="436" y="320" width="20" height="24"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="20" id="0Xu-8A-4nq"/>
@@ -884,8 +884,25 @@
             </connections>
             <point key="canvasLocation" x="25" y="867"/>
         </customView>
+        <menu id="APX-cp-L9t">
+            <items>
+                <menuItem title="Time Trigger" image="CaptureTriggers-Icon-Time-Small" id="tN5-oA-Tvc">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                </menuItem>
+                <menuItem title="Motion Trigger" image="CaptureTriggers-Icon-Motion-Small" id="XPh-17-Xhc">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                </menuItem>
+                <menuItem title="Button Trigger" image="CaptureTriggers-Icon-Button-Small" id="57K-8g-e53">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                </menuItem>
+            </items>
+            <point key="canvasLocation" x="694" y="634"/>
+        </menu>
     </objects>
     <resources>
+        <image name="CaptureTriggers-Icon-Button-Small" width="22" height="22"/>
+        <image name="CaptureTriggers-Icon-Motion-Small" width="23" height="22"/>
+        <image name="CaptureTriggers-Icon-Time-Small" width="23" height="23"/>
         <image name="NSAddTemplate" width="11" height="11"/>
         <image name="NSRemoveTemplate" width="11" height="11"/>
     </resources>

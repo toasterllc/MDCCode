@@ -413,17 +413,17 @@ static std::string _CaptureDescription(const T& x) {
     // Image, title
     switch (trigger.type) {
     case Trigger::Type::Time:
-        [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time"]];
+        [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time-Large"]];
         [_titlePrefixLabel setStringValue: @"At"];
         [_titleLabel setStringValue: @((_TimeOfDayStringFromSeconds(trigger.time.schedule.time) + ",").c_str())];
         break;
     case Trigger::Type::Motion:
-        [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion"]];
+        [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion-Large"]];
         [_titlePrefixLabel setStringValue: @"On"];
         [_titleLabel setStringValue:@"motion,"];
         break;
     case Trigger::Type::Button:
-        [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Button"]];
+        [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Button-Large"]];
         [_titlePrefixLabel setStringValue: @"On"];
         [_titleLabel setStringValue:@"button press,"];
         break;
