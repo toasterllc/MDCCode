@@ -4,6 +4,8 @@
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/IntForStr.h"
+#import "DeviceSettings.h"
+using namespace DeviceSettings;
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
@@ -19,41 +21,6 @@ struct [[gnu::packed]] Trigger {
         Weekly,
         Monthly,
         Yearly,
-    };
-    
-    enum class WeekDays : uint8_t {
-        None = 0,
-        Mon  = 1<<0,
-        Tue  = 1<<1,
-        Wed  = 1<<2,
-        Thu  = 1<<3,
-        Fri  = 1<<4,
-        Sat  = 1<<5,
-        Sun  = 1<<6,
-    };
-    
-    using Day = uint8_t;
-    using Month = uint8_t;
-    
-    // MonthDay: a particular day of an unspecified month
-    struct [[gnu::packed]] MonthDay {
-        Day day = 0;
-    };
-    
-    // YearDay: a particular day of an unspecified year
-    struct [[gnu::packed]] YearDay {
-        Month month = 0;
-        Day day = 0;
-    };
-    
-    // MonthDays: a set of days of an unspecified month
-    struct [[gnu::packed]] MonthDays {
-        uint32_t x = 0;
-    };
-    
-    // YearDays: a set of days of an unspecified year
-    struct [[gnu::packed]] YearDays {
-        MonthDays x[12] = {};
     };
     
     enum class LEDs : uint8_t {
@@ -82,9 +49,9 @@ struct [[gnu::packed]] Trigger {
                 uint32_t time;
                 Cadence cadence;
                 union {
-                    WeekDays weekDays;
-                    MonthDays monthDays;
-                    YearDays yearDays;
+                    Calendar::WeekDays weekDays;
+                    Calendar::MonthDays monthDays;
+                    Calendar::YearDays yearDays;
                 };
             } schedule;
             
@@ -114,9 +81,9 @@ struct [[gnu::packed]] Trigger {
                     bool enable;
                     Cadence cadence;
                     union {
-                        WeekDays weekDays;
-                        MonthDays monthDays;
-                        YearDays yearDays;
+                        Calendar::WeekDays weekDays;
+                        Calendar::MonthDays monthDays;
+                        Calendar::YearDays yearDays;
                     };
                 } dayLimit;
             } schedule;
@@ -151,6 +118,30 @@ struct [[gnu::packed]] Triggers {
     Trigger triggers[32];
     uint8_t triggersCount = 0;
 };
+
+
+
+@interface MonthDayObj : NSObject {
+@public
+    Calendar::MonthDay x;
+}
+@end
+
+@implementation MonthDayObj
+@end
+
+
+
+@interface YearDayObj : NSObject {
+@public
+    Calendar::YearDay x;
+}
+@end
+
+@implementation YearDayObj
+@end
+
+
 
 
 static std::string StringFromUnit(const Trigger::Duration::Unit& x) {
@@ -285,75 +276,6 @@ static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
 
 
 
-static void _DayValidate(const Trigger::Day& x) {
-    if (x<1 || x>31) throw Toastbox::RuntimeError("invalid Day: %ju", (uintmax_t)x);
-}
-
-static void _MonthValidate(const Trigger::Month& x) {
-    if (x<1 || x>12) throw Toastbox::RuntimeError("invalid Month: %ju", (uintmax_t)x);
-}
-
-static void _MonthDayValidate(const Trigger::MonthDay& x) {
-    _DayValidate(x.day);
-}
-
-static void _YearDayValidate(const Trigger::YearDay& x) {
-    _DayValidate(x.day);
-    _MonthValidate(x.month);
-}
-
-
-
-
-static constexpr std::underlying_type_t<Trigger::MonthDays> _MonthDaysMask(Trigger::Day day) {
-    return 1 << (day-1);
-}
-
-static bool _MonthDaysGet(const Trigger::MonthDays& x, Trigger::Day day) {
-    return std::to_underlying(x) & _MonthDaysMask(day);
-}
-
-static void _MonthDaysSet(Trigger::MonthDays& x, Trigger::Day day, bool y) {
-    auto tmp = std::to_underlying(x);
-    tmp &= ~_MonthDaysMask(day);
-    if (y) tmp |= _MonthDaysMask(day);
-    x = (Trigger::MonthDays)tmp;
-}
-
-
-
-static std::vector<Trigger::MonthDay> _VectorFromMonthDays(const Trigger::MonthDays& x) {
-    std::vector<Trigger::MonthDay> r;
-    for (Trigger::Day day=1; day<=31; day++) {
-        if (_MonthDaysGet(x, day)) {
-            r.push_back(Trigger::MonthDay{
-                .day = day,
-            });
-        }
-    }
-    return r;
-}
-
-static Trigger::MonthDays _MonthDaysFromVector(const std::vector<Trigger::MonthDay>& x) {
-    Trigger::MonthDays r = {};
-    for (Trigger::MonthDay day : x) {
-        _MonthDayValidate(day);
-        _MonthDaysSet(r, day.day, true);
-    }
-    return r;
-}
-
-static std::optional<Trigger::MonthDay> _MonthDayForString(std::string_view x) {
-    Trigger::Day day = 0;
-    try {
-        Toastbox::IntForStr(day, x);
-        _DayValidate(day);
-    } catch (...) { return std::nullopt; }
-    
-    return Trigger::MonthDay{
-        .day = day
-    };
-}
 
 
 
@@ -366,50 +288,20 @@ static std::optional<Trigger::MonthDay> _MonthDayForString(std::string_view x) {
 
 
 
-static std::vector<Trigger::YearDay> _VectorFromYearDays(const Trigger::YearDays& x) {
-    std::vector<Trigger::YearDay> r;
-    for (Trigger::Month m=1; m<=12; m++) {
-        const std::vector<Trigger::MonthDay> monthDays = _VectorFromMonthDays(x[m-1]);
-        for (const Trigger::MonthDay& d : monthDays) {
-            r.push_back(Trigger::YearDay{
-                .month = m,
-                .day = d.day,
-            });
-        }
-    }
-    return r;
-}
-
-static Trigger::YearDays _YearDaysFromVector(const std::vector<Trigger::YearDay>& x) {
-    Trigger::YearDays r = {};
-    for (const Trigger::YearDay& d : x) {
-        _YearDayValidate(d);
-        _MonthDaysSet(r[d.month-1], d.day, true);
-    }
-    return r;
-}
-
-static std::optional<Trigger::YearDay> _YearDayForString(std::string_view x) {
-    Trigger::Day day = 0;
-    try {
-        Toastbox::IntForStr(day, x);
-    } catch (...) { return std::nullopt; }
-    if (day<1 || day>31) return std::nullopt;
-    return Trigger::YearDay{ day };
-}
 
 
 
 
 
 
-//static std::optional<Trigger::MonthDays> _MonthDaysForString(std::string_view x) {
+
+//static std::optional<Calendar::MonthDays> _MonthDaysForString(std::string_view x) {
 //    uint32_t val = 0;
 //    try {
 //        Toastbox::IntForStr(val, x);
 //    } catch (...) { return std::nullopt; }
 //    if (val<1 || val>31) return std::nullopt;
-//    return (Trigger::MonthDays)(1<<val);
+//    return (Calendar::MonthDays)(1<<val);
 //}
 
 
@@ -453,8 +345,8 @@ static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
 //            MonthDays monthDays;
 //            YearDays yearDays;
 
-static std::string _WeekDaysDescription(const Trigger::WeekDays& x) {
-    using X = Trigger::WeekDays;
+static std::string _WeekDaysDescription(const Calendar::WeekDays& x) {
+    using X = Calendar::WeekDays;
     // Only one day set
     switch (x) {
     case X::Mon:  return "Mondays";
@@ -492,21 +384,15 @@ static std::string _WeekDaysDescription(const Trigger::WeekDays& x) {
     return std::to_string(count) + " days per week";
 }
 
-static std::string _MonthDaysDescription(const Trigger::MonthDays& x) {
-    const size_t count = _VectorFromMonthDays(x).size();
+static std::string _MonthDaysDescription(const Calendar::MonthDays& x) {
+    const size_t count = VectorFromMonthDays(x).size();
     if (count == 1) return "1 day per month";
     return std::to_string(count) + " days per month";
 }
 
-static std::string _YearDaysDescription(const Trigger::YearDays& x) {
-    size_t count = 0;
-    for (auto y : x) {
-        auto z = std::to_underlying(y);
-        while (z) {
-            count += z&1;
-            z >>= 1;
-        }
-    }
+static std::string _YearDaysDescription(const Calendar::YearDays& x) {
+    const size_t count = VectorFromYearDays(x).size();
+    if (count == 1) return "1 day per year";
     return std::to_string(count) + " days per year";
 }
 
@@ -860,7 +746,7 @@ static void _Copy(Trigger::Duration::Unit& x, NSPopUpButton* menu) {
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::WeekDays& x, NSSegmentedControl* control) {
+static void _Copy(Calendar::WeekDays& x, NSSegmentedControl* control) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         size_t idx = 0;
@@ -880,48 +766,52 @@ static void _Copy(Trigger::WeekDays& x, NSSegmentedControl* control) {
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::MonthDays& x, NSTokenField* field) {
+static void _Copy(Calendar::MonthDays& x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         NSMutableArray* tokens = [NSMutableArray new];
-        std::vector<Trigger::MonthDay> days = _VectorFromMonthDays(x);
-        for (Trigger::MonthDay day : days) {
-            [tokens addObject:@(day.day)];
+        std::vector<Calendar::MonthDay> days = VectorFromMonthDays(x);
+        for (Calendar::MonthDay day : days) {
+            MonthDayObj* x = [MonthDayObj new];
+            x->x = day;
+            [tokens addObject:x];
         }
         [field setObjectValue:tokens];
     
     } else {
         NSArray* tokens = Toastbox::CastOrNull<NSArray*>([field objectValue]);
-        std::vector<Trigger::MonthDay> days;
+        std::vector<Calendar::MonthDay> days;
         for (id t : tokens) {
-            NSNumber* num = Toastbox::CastOrNull<NSNumber*>(t);
-            if (!num) continue;
-            days.push_back({ (Trigger::Day)[num intValue] });
+            MonthDayObj* x = Toastbox::CastOrNull<MonthDayObj*>(t);
+            if (!x) continue;
+            days.push_back(x->x);
         }
-        x = _MonthDaysFromVector(days);
+        x = MonthDaysFromVector(days);
     }
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::YearDays& x, NSTokenField* field) {
+static void _Copy(Calendar::YearDays& x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         NSMutableArray* tokens = [NSMutableArray new];
-        std::vector<Trigger::YearDay> days = _VectorFromYearDays(x);
-        for (Trigger::YearDay day : days) {
-            [tokens addObject:@(day.day)];
+        std::vector<Calendar::YearDay> days = VectorFromYearDays(x);
+        for (Calendar::YearDay day : days) {
+            YearDayObj* x = [YearDayObj new];
+            x->x = day;
+            [tokens addObject:x];
         }
         [field setObjectValue:tokens];
     
     } else {
         NSArray* tokens = Toastbox::CastOrNull<NSArray*>([field objectValue]);
-        std::vector<Trigger::YearDay> days;
+        std::vector<Calendar::YearDay> days;
         for (id t : tokens) {
-            NSNumber* num = Toastbox::CastOrNull<NSNumber*>(t);
-            if (!num) continue;
-            days.push_back({ (Trigger::Day)[num intValue] });
+            YearDayObj* x = Toastbox::CastOrNull<YearDayObj*>(t);
+            if (!x) continue;
+            days.push_back(x->x);
         }
-        x = _YearDaysFromVector(days);
+        x = YearDaysFromVector(days);
     }
 }
 
@@ -1107,19 +997,19 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 
 
 
-//static void _MonthDaysLoad(const Trigger::MonthDays& days, NSSegmentedControl* control) {
-//    using D = Trigger::WeekDays_;
+//static void _MonthDaysLoad(const Calendar::MonthDays& days, NSSegmentedControl* control) {
+//    using D = Calendar::WeekDays_;
 //    size_t idx = 0;
-//    for (Trigger::WeekDays day : { D::Mon, D::Tue, D::Wed, D::Thu, D::Fri, D::Sat, D::Sun }) {
+//    for (Calendar::WeekDays day : { D::Mon, D::Tue, D::Wed, D::Thu, D::Fri, D::Sat, D::Sun }) {
 //        [control setSelected:(days & day) forSegment:idx];
 //        idx++;
 //    }
 //}
 //
-//static void _MonthDaysStore(Trigger::MonthDays& days, NSSegmentedControl* control) {
-//    using D = Trigger::WeekDays_;
+//static void _MonthDaysStore(Calendar::MonthDays& days, NSSegmentedControl* control) {
+//    using D = Calendar::WeekDays_;
 //    size_t idx = 0;
-//    for (Trigger::WeekDays day : { D::Mon, D::Tue, D::Wed, D::Thu, D::Fri, D::Sat, D::Sun }) {
+//    for (Calendar::WeekDays day : { D::Mon, D::Tue, D::Wed, D::Thu, D::Fri, D::Sat, D::Sun }) {
 //        days |= ([control isSelectedForSegment:idx] ? day : 0);
 //        idx++;
 //    }
@@ -1193,15 +1083,26 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         NSMutableArray* filtered = [NSMutableArray new];
         for (NSString* t : tokens) {
-            auto day = _MonthDayForString([t UTF8String]);
+            auto day = Calendar::MonthDayFromString([t UTF8String]);
             if (!day) continue;
-            [filtered addObject:@(day->day)];
+            MonthDayObj* obj = [MonthDayObj new];
+            obj->x = *day;
+            [filtered addObject:obj];
         }
         return filtered;
     
     } else if (field == _yearDaySelector_Field) {
         NSLog(@"_yearDaySelector_Field");
-        return tokens;
+        
+        NSMutableArray* filtered = [NSMutableArray new];
+        for (NSString* x : tokens) {
+            auto day = Calendar::YearDayFromString([x UTF8String]);
+            if (!day) continue;
+            YearDayObj* obj = [YearDayObj new];
+            obj->x = *day;
+            [filtered addObject:obj];
+        }
+        return filtered;
     
     } else {
         abort();
@@ -1210,13 +1111,16 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 
 - (NSString*)tokenField:(NSTokenField*)field displayStringForRepresentedObject:(id)obj {
     if (field == _monthDaySelector_Field) {
-        if (NSNumber* num = Toastbox::CastOrNull<NSNumber*>(obj)) {
-            return [NSString stringWithFormat:@"%ju",(uintmax_t)[num intValue]];
+        if (MonthDayObj* x = Toastbox::CastOrNull<MonthDayObj*>(obj)) {
+            return @(Calendar::StringFromMonthDay(x->x).c_str());
         }
         return obj;
     
     } else if (field == _yearDaySelector_Field) {
-        return nil;
+        if (YearDayObj* x = Toastbox::CastOrNull<YearDayObj*>(obj)) {
+            return @(Calendar::StringFromYearDay(x->x).c_str());
+        }
+        return obj;
     
     } else {
         abort();

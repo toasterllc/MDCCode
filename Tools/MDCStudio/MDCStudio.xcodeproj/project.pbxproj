@@ -78,6 +78,7 @@
 		55F887A329D61DAB0075593F /* CaptureTriggers-Icon-Time.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F887A029D61DAB0075593F /* CaptureTriggers-Icon-Time.pdf */; };
 		55F887A429D61DAB0075593F /* CaptureTriggers-Icon-Motion.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F887A129D61DAB0075593F /* CaptureTriggers-Icon-Motion.pdf */; };
 		55F8882729D8DADD0075593F /* TokenField.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8882629D8DADD0075593F /* TokenField.mm */; };
+		55F8882929D9015D0075593F /* DeviceSettings.h in Sources */ = {isa = PBXBuildFile; fileRef = 55F8882829D9015D0075593F /* DeviceSettings.h */; };
 		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
 		55F8D01427BEF3E500757165 /* ImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* ImageView.mm */; };
 		55F8D01927BEF97200757165 /* ImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageView.metal */; };
@@ -271,6 +272,7 @@
 		55F887A129D61DAB0075593F /* CaptureTriggers-Icon-Motion.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "CaptureTriggers-Icon-Motion.pdf"; sourceTree = "<group>"; };
 		55F8882429D8DADD0075593F /* TokenField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TokenField.h; sourceTree = "<group>"; };
 		55F8882629D8DADD0075593F /* TokenField.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = TokenField.mm; sourceTree = "<group>"; };
+		55F8882829D9015D0075593F /* DeviceSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceSettings.h; sourceTree = "<group>"; };
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
@@ -662,6 +664,7 @@
 		55F8877C29D3A6E30075593F /* DeviceSettings */ = {
 			isa = PBXGroup;
 			children = (
+				55F8882829D9015D0075593F /* DeviceSettings.h */,
 				55F8878129D4A96B0075593F /* CaptureTriggersView.h */,
 				55F8878029D4A96B0075593F /* CaptureTriggersView.mm */,
 				55F8877E29D3A7100075593F /* CaptureTriggersView.xib */,
@@ -808,6 +811,7 @@
 				55C456872955A1AE00A20363 /* FixedMetalDocumentLayer.mm in Sources */,
 				55C456882955A1AE00A20363 /* FixedDocumentView.mm in Sources */,
 				55496F4F278CFC0600BCA739 /* main.mm in Sources */,
+				55F8882929D9015D0075593F /* DeviceSettings.h in Sources */,
 				5544AE5D27B6EE04006AB473 /* Document.mm in Sources */,
 				55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */,
 				55E43F9628C00D6B00FCCEA0 /* FFCC.metal in Sources */,
