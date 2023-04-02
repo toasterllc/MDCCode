@@ -218,6 +218,14 @@ inline std::string StringFromYearDay(const YearDay& x) {
     return [[_YearDayStateGet().fmt stringFromDate:date] UTF8String];
 }
 
+inline std::string YearDayPlaceholderString() {
+    static std::string X = StringFromYearDay(YearDay{
+        .month = 10,
+        .day = 31,
+    });
+    return X;
+}
+
 
 
 

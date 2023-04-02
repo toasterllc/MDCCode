@@ -650,6 +650,8 @@ static void _Init(CaptureTriggersView* self) {
         [self->_monthDaySelector_Field setTokenizingCharacterSet:set];
     }
     
+    [self->_yearDaySelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
+    
 //    [self _loadViewFromModel:self->_triggers.triggers[0]];
 }
 
