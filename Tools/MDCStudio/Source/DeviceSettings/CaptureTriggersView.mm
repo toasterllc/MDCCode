@@ -1190,6 +1190,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 
 - (void)_loadViewFromModel:(Trigger&)trigger {
     _Copy<true>(trigger, self);
+    [[self window] recalculateKeyViewLoop];
 }
 
 
@@ -1324,8 +1325,6 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
     if (!item) return;
     
     [self _loadViewFromModel:item->trigger];
-    
-    [[self window] recalculateKeyViewLoop];
 }
 
 
