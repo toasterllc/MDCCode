@@ -569,7 +569,7 @@
                         </menu>
                     </popUpButtonCell>
                     <connections>
-                        <action selector="_actionViewChanged:" target="-2" id="SKE-hT-11w"/>
+                        <action selector="_actionScheduleCadenceChanged:" target="-2" id="zNB-4h-YvQ"/>
                     </connections>
                 </popUpButton>
             </subviews>
@@ -642,7 +642,7 @@
                         </menu>
                     </popUpButtonCell>
                     <connections>
-                        <action selector="_actionViewChanged:" target="-2" id="wPq-lf-4Qg"/>
+                        <action selector="_actionScheduleCadenceChanged:" target="-2" id="ruK-YO-9j3"/>
                     </connections>
                 </popUpButton>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="5tK-cV-igO" userLabel="Repeat Interval Container View">

@@ -115,26 +115,75 @@ struct [[gnu::packed]] Trigger {
     };
 };
 
-//static void _TriggerInit(Trigger& t, Trigger::Type type) {
+constexpr uint32_t _TimeStartInit = 32400; // 9 AM
+constexpr uint32_t _TimeEndInit = 61200;   // 5 PM
+constexpr Calendar::WeekDays _WeekDaysInit = (Calendar::WeekDays)(
+    std::to_underlying(Calendar::WeekDays::Mon) |
+    std::to_underlying(Calendar::WeekDays::Tue) |
+    std::to_underlying(Calendar::WeekDays::Wed) |
+    std::to_underlying(Calendar::WeekDays::Thu) |
+    std::to_underlying(Calendar::WeekDays::Fri)
+);
 
-static void _TriggerInit(Trigger& t, Trigger::Type type) {
-    constexpr uint32_t Time9AM = 32400;
-    constexpr uint32_t Time5PM = 61200;
-    constexpr Calendar::WeekDays WeekDaysMF = (Calendar::WeekDays)(
-        std::to_underlying(Calendar::WeekDays::Mon) |
-        std::to_underlying(Calendar::WeekDays::Tue) |
-        std::to_underlying(Calendar::WeekDays::Wed) |
-        std::to_underlying(Calendar::WeekDays::Thu) |
-        std::to_underlying(Calendar::WeekDays::Fri)
-    );
+static const Calendar::MonthDays _MonthDaysInit = Calendar::MonthDaysFromVector({Calendar::MonthDay{14}, Calendar::MonthDay{28}});
+static const Calendar::YearDays _YearDaysInit = Calendar::YearDaysFromVector({Calendar::YearDay{9,20}, Calendar::YearDay{12,31}});
+
+static void _InitTriggerScheduleCadence(Trigger& t) {
+    switch (t.type) {
+    case Trigger::Type::Time: {
+        auto& x = t.time.schedule;
+        switch (x.cadence) {
+        case Trigger::Cadence::Daily:
+            break;
+        case Trigger::Cadence::Weekly:
+            x.weekDays = _WeekDaysInit;
+            break;
+        case Trigger::Cadence::Monthly:
+            x.monthDays = _MonthDaysInit;
+            break;
+        case Trigger::Cadence::Yearly:
+            x.yearDays = _YearDaysInit;
+            break;
+        default:
+            abort();
+        }
+        break;
+    }
     
+    case Trigger::Type::Motion:
+    case Trigger::Type::Button: {
+        auto& x = t.motionButton.schedule.dayLimit;
+        switch (x.cadence) {
+        case Trigger::Cadence::Daily:
+            break;
+        case Trigger::Cadence::Weekly:
+            x.weekDays = _WeekDaysInit;
+            break;
+        case Trigger::Cadence::Monthly:
+            x.monthDays = _MonthDaysInit;
+            break;
+        case Trigger::Cadence::Yearly:
+            x.yearDays = _YearDaysInit;
+            break;
+        default:
+            abort();
+        }
+        break;
+    }
+    
+    default:
+        abort();
+    }
+}
+
+static void _InitTrigger(Trigger& t, Trigger::Type type) {
     t.type = type;
     switch (t.type) {
     case Trigger::Type::Time: {
         auto& x = t.time;
         
         x.schedule = {
-            .time = Time9AM,
+            .time = _TimeStartInit,
             .cadence = Trigger::Cadence::Daily,
         };
         
@@ -163,13 +212,13 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
         x.schedule = {
             .timeLimit = {
                 .enable = true,
-                .start = Time9AM,
-                .end = Time5PM,
+                .start = _TimeStartInit,
+                .end = _TimeEndInit,
             },
             .dayLimit = {
                 .enable = true,
                 .cadence = Trigger::Cadence::Weekly,
-                .weekDays = WeekDaysMF,
+                .weekDays = _WeekDaysInit,
             },
         };
         
@@ -209,13 +258,13 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
         x.schedule = {
             .timeLimit = {
                 .enable = false,
-                .start = Time9AM,
-                .end = Time5PM,
+                .start = _TimeStartInit,
+                .end = _TimeEndInit,
             },
             .dayLimit = {
                 .enable = false,
                 .cadence = Trigger::Cadence::Weekly,
-                .weekDays = WeekDaysMF,
+                .weekDays = _WeekDaysInit,
             },
         };
         
@@ -746,7 +795,7 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
     NSTableView* tv = self->_tableView;
     ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
     Trigger& t = it->trigger;
-    _TriggerInit(t, type);
+    _InitTrigger(t, type);
     [it updateView];
     
     self->_items.push_back(it);
@@ -1192,15 +1241,15 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
     return _items.at(idx);
 }
 
-- (IBAction)_actionViewChanged:(id)sender {
+static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
     // Prevent re-entry, because our committing logic can trigger multiple calls
-    if (_actionViewChangedUnderway) return;
-    _actionViewChangedUnderway = true;
-    Defer( _actionViewChangedUnderway = false );
+    if (self->_actionViewChangedUnderway) return;
+    self->_actionViewChangedUnderway = true;
+    Defer( self->_actionViewChangedUnderway = false );
     
     NSLog(@"_actionViewChanged");
-    ListItem* item = [self _selectedItem];
-    if (!item) return;
+    ListItem* it = [self _selectedItem];
+    if (!it) return;
 //    NSResponder* responder = [[self window] firstResponder];
 //    NSLog(@"BEFORE: %@", responder);
     
@@ -1213,14 +1262,27 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         [x insertNewline:nil];
     }
     
-    [self _storeViewToModel:item->trigger];
-    [self _loadViewFromModel:item->trigger];
+    [self _storeViewToModel:it->trigger];
+    
+    if (initCadence) {
+        _InitTriggerScheduleCadence(it->trigger);
+    }
+    
+    [self _loadViewFromModel:it->trigger];
 //    if ([[self window] firstResponder] != responder) {
 //        [[self window] makeFirstResponder:responder];
 //    }
 //    NSLog(@"AFTER: %@", [[self window] firstResponder]);
 //    [[self window] makeFirstResponder:responder];
-    [item updateView];
+    [it updateView];
+}
+
+- (IBAction)_actionViewChanged:(id)sender {
+    _StoreLoad(self);
+}
+
+- (IBAction)_actionScheduleCadenceChanged:(id)sender {
+    _StoreLoad(self, true);
 }
 
 - (IBAction)_actionAddTimeTrigger:(id)sender {
