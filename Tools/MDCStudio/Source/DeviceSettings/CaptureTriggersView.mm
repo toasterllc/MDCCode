@@ -840,8 +840,8 @@ static void _Init(CaptureTriggersView* self) {
     }
     
     [self->_tableView reloadData];
-    _ListItemAdd(self, Trigger::Type::Time);
-    _ListItemAdd(self, Trigger::Type::Motion);
+//    _ListItemAdd(self, Trigger::Type::Time);
+//    _ListItemAdd(self, Trigger::Type::Motion);
     _ListItemAdd(self, Trigger::Type::Button);
     
     {

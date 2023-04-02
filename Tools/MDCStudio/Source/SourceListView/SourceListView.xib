@@ -11,13 +11,13 @@
                 <outlet property="_outlineView" destination="AKO-DU-mMa" id="8cY-GE-qnW"/>
             </connections>
         </customObject>
-        <scrollView misplaced="YES" borderType="none" autohidesScrollers="YES" horizontalLineScroll="22" horizontalPageScroll="10" verticalLineScroll="22" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fLh-R7-6A0">
+        <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="52" horizontalPageScroll="10" verticalLineScroll="52" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fLh-R7-6A0">
             <rect key="frame" x="0.0" y="0.0" width="250" height="400"/>
             <clipView key="contentView" drawsBackground="NO" id="OCF-P9-iE6">
                 <rect key="frame" x="0.0" y="0.0" width="250" height="400"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <outlineView verticalHuggingPriority="750" misplaced="YES" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" selectionHighlightStyle="sourceList" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="20" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa">
+                    <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" selectionHighlightStyle="sourceList" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="50" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa">
                         <rect key="frame" x="0.0" y="0.0" width="250" height="400"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <size key="intercellSpacing" width="3" height="2"/>
@@ -74,18 +74,18 @@
                                         </connections>
                                     </tableCellView>
                                     <tableCellView identifier="SourceListView_Device" translatesAutoresizingMaskIntoConstraints="NO" id="08g-eg-N7V" customClass="SourceListView_Device">
-                                        <rect key="frame" x="1" y="64" width="247" height="20"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="247" height="50"/>
                                         <subviews>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY">
-                                                <rect key="frame" x="0.0" y="3" width="14" height="14"/>
+                                                <rect key="frame" x="0.0" y="13" width="24" height="24"/>
                                                 <constraints>
-                                                    <constraint firstAttribute="width" constant="14" id="eSu-j3-Hou"/>
-                                                    <constraint firstAttribute="height" constant="14" id="u3f-gJ-ek7"/>
+                                                    <constraint firstAttribute="width" constant="24" id="eSu-j3-Hou"/>
+                                                    <constraint firstAttribute="height" constant="24" id="u3f-gJ-ek7"/>
                                                 </constraints>
-                                                <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="NSActionTemplate" id="KoV-V9-mVz"/>
+                                                <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="NSUser" id="KoV-V9-mVz"/>
                                             </imageView>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
-                                                <rect key="frame" x="19" y="2" width="222" height="16"/>
+                                                <rect key="frame" x="29" y="17" width="190" height="16"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="aUI-KD-Hqx">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -95,13 +95,22 @@
                                                     <action selector="textFieldAction:" target="08g-eg-N7V" id="rvh-zP-hHo"/>
                                                 </connections>
                                             </textField>
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g8q-te-9OC">
+                                                <rect key="frame" x="225" y="18" width="14" height="14"/>
+                                                <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="NSActionTemplate" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="rni-HE-MKl">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                            </button>
                                         </subviews>
                                         <constraints>
                                             <constraint firstItem="MZn-BH-IiQ" firstAttribute="leading" secondItem="7cJ-fN-hbY" secondAttribute="trailing" constant="7" id="1zf-B5-EyI"/>
                                             <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" id="Kje-qB-Fxx"/>
-                                            <constraint firstAttribute="height" constant="20" id="T60-bh-CJV"/>
+                                            <constraint firstItem="g8q-te-9OC" firstAttribute="centerY" secondItem="08g-eg-N7V" secondAttribute="centerY" id="LSU-2Y-drW"/>
+                                            <constraint firstAttribute="trailing" secondItem="g8q-te-9OC" secondAttribute="trailing" constant="8" id="QsS-nN-IFx"/>
+                                            <constraint firstAttribute="height" constant="50" id="T60-bh-CJV"/>
                                             <constraint firstItem="MZn-BH-IiQ" firstAttribute="centerY" secondItem="7cJ-fN-hbY" secondAttribute="centerY" id="YM3-H9-fNG"/>
-                                            <constraint firstAttribute="trailing" secondItem="MZn-BH-IiQ" secondAttribute="trailing" constant="8" id="dJQ-Hj-a6v"/>
+                                            <constraint firstItem="g8q-te-9OC" firstAttribute="leading" secondItem="MZn-BH-IiQ" secondAttribute="trailing" constant="8" id="e4r-UM-nE5"/>
                                             <constraint firstItem="MZn-BH-IiQ" firstAttribute="centerY" secondItem="08g-eg-N7V" secondAttribute="centerY" id="yPg-nX-57Q"/>
                                         </constraints>
                                         <connections>
@@ -112,10 +121,10 @@
                                         </connections>
                                     </tableCellView>
                                     <tableCellView identifier="SourceListView_Library" translatesAutoresizingMaskIntoConstraints="NO" id="NqZ-ff-YXV" customClass="SourceListView_Library">
-                                        <rect key="frame" x="1" y="86" width="247" height="20"/>
+                                        <rect key="frame" x="1" y="116" width="247" height="50"/>
                                         <subviews>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="Zpc-jG-CaC">
-                                                <rect key="frame" x="0.0" y="3" width="14" height="14"/>
+                                                <rect key="frame" x="0.0" y="18" width="14" height="14"/>
                                                 <constraints>
                                                     <constraint firstAttribute="width" constant="14" id="Ch7-G8-gpn"/>
                                                     <constraint firstAttribute="height" constant="14" id="jXA-XF-UKB"/>
@@ -123,7 +132,7 @@
                                                 <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="NSActionTemplate" id="aDA-Vo-LUw"/>
                                             </imageView>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="aB1-av-7PN" userLabel="Text Field">
-                                                <rect key="frame" x="19" y="2" width="222" height="16"/>
+                                                <rect key="frame" x="19" y="17" width="222" height="16"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="eAY-rM-mOq">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -135,7 +144,7 @@
                                             <constraint firstAttribute="trailing" secondItem="aB1-av-7PN" secondAttribute="trailing" constant="8" id="2kr-Yd-rFO"/>
                                             <constraint firstItem="Zpc-jG-CaC" firstAttribute="leading" secondItem="NqZ-ff-YXV" secondAttribute="leading" id="ECd-5J-lAX"/>
                                             <constraint firstItem="aB1-av-7PN" firstAttribute="centerY" secondItem="Zpc-jG-CaC" secondAttribute="centerY" id="JX1-Fv-OOu"/>
-                                            <constraint firstAttribute="height" constant="20" id="mXu-IO-l8D"/>
+                                            <constraint firstAttribute="height" constant="50" id="mXu-IO-l8D"/>
                                             <constraint firstItem="aB1-av-7PN" firstAttribute="centerY" secondItem="NqZ-ff-YXV" secondAttribute="centerY" id="oka-fK-RBm"/>
                                             <constraint firstItem="aB1-av-7PN" firstAttribute="leading" secondItem="Zpc-jG-CaC" secondAttribute="trailing" constant="7" id="xie-pv-vDf"/>
                                         </constraints>
@@ -175,5 +184,6 @@
     </objects>
     <resources>
         <image name="NSActionTemplate" width="14" height="14"/>
+        <image name="NSUser" width="32" height="32"/>
     </resources>
 </document>

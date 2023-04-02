@@ -59,7 +59,7 @@ using namespace MDCStudio;
 }
 - (NSString*)name { return name; }
 - (bool)selectable { return true; }
-- (CGFloat)height { return 25; }
+- (CGFloat)height { return 50; }
 - (CGFloat)indent { return [super indent]+5; }
 @end
 
