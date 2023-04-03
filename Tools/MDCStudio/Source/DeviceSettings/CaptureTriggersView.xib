@@ -51,16 +51,16 @@
             </connections>
         </customObject>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
-            <rect key="frame" x="0.0" y="0.0" width="500" height="741"/>
+            <rect key="frame" x="0.0" y="0.0" width="500" height="792"/>
             <subviews>
                 <scrollView autohidesScrollers="YES" horizontalLineScroll="52" horizontalPageScroll="10" verticalLineScroll="52" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RYD-Tl-az2">
-                    <rect key="frame" x="20" y="470" width="460" height="227"/>
+                    <rect key="frame" x="20" y="590" width="460" height="158"/>
                     <clipView key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
-                        <rect key="frame" x="1" y="1" width="458" height="225"/>
+                        <rect key="frame" x="1" y="1" width="458" height="156"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="50" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
-                                <rect key="frame" x="0.0" y="0.0" width="458" height="225"/>
+                                <rect key="frame" x="0.0" y="0.0" width="458" height="156"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -79,7 +79,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="455" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="12" y="9" width="32" height="32"/>
@@ -169,7 +169,7 @@
                     </scroller>
                 </scrollView>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2b6-Qj-SMN">
-                    <rect key="frame" x="18" y="705" width="107" height="16"/>
+                    <rect key="frame" x="18" y="756" width="107" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Capture triggers:" id="7Mh-wt-Jg4">
                         <font key="font" usesAppearanceFont="YES"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -177,7 +177,7 @@
                     </textFieldCell>
                 </textField>
                 <popUpButton translatesAutoresizingMaskIntoConstraints="NO" id="RBu-R2-DJH" userLabel="Add">
-                    <rect key="frame" x="450" y="444" width="30" height="18"/>
+                    <rect key="frame" x="450" y="564" width="30" height="18"/>
                     <popUpButtonCell key="cell" type="bevel" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" pullsDown="YES" arrowPosition="noArrow" altersStateOfSelectedItem="NO" id="Azn-sr-kRw">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -207,7 +207,7 @@
                     </popUpButtonCell>
                 </popUpButton>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sv3-nB-qTo" userLabel="Remove">
-                    <rect key="frame" x="430" y="441" width="20" height="24"/>
+                    <rect key="frame" x="430" y="561" width="20" height="24"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="20" id="0Xu-8A-4nq"/>
                         <constraint firstAttribute="height" constant="24" id="2UC-X9-spL"/>
@@ -221,10 +221,10 @@
                     </connections>
                 </button>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="fUr-DU-jha">
-                    <rect key="frame" x="20" y="61" width="460" height="380"/>
+                    <rect key="frame" x="20" y="61" width="460" height="500"/>
                     <constraints>
-                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="380" id="GH8-LS-Cfu"/>
-                        <constraint firstAttribute="height" priority="750" constant="380" id="uiH-mA-Oyq"/>
+                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="500" id="GH8-LS-Cfu"/>
+                        <constraint firstAttribute="height" priority="750" constant="500" id="uiH-mA-Oyq"/>
                     </constraints>
                 </customView>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="loq-oF-BLr">
@@ -549,7 +549,7 @@ Gw
                 <constraint firstItem="pjC-Tk-6eR" firstAttribute="top" secondItem="Rsa-ll-JvR" secondAttribute="bottom" constant="30" id="x1p-hL-Dky"/>
                 <constraint firstItem="dmd-uc-OsP" firstAttribute="firstBaseline" secondItem="MFX-Ck-e2M" secondAttribute="firstBaseline" id="zw1-Ae-c9D"/>
             </constraints>
-            <point key="canvasLocation" x="632" y="-672"/>
+            <point key="canvasLocation" x="632" y="-672.5"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Schedule - Time" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="491" height="96"/>
@@ -592,7 +592,7 @@ Gw
             <point key="canvasLocation" x="-119.5" y="-13"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Schedule - Motion" customClass="CaptureTriggersView_ContainerSubview">
-            <rect key="frame" x="0.0" y="0.0" width="570" height="96"/>
+            <rect key="frame" x="0.0" y="0.0" width="570" height="120"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="jlP-Se-MW3">
                     <rect key="frame" x="-2" y="3" width="38" height="16"/>
@@ -655,11 +655,11 @@ Gw
                     </connections>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Qag-Kc-J1Q">
-                    <rect key="frame" x="0.0" y="33" width="570" height="29"/>
+                    <rect key="frame" x="0.0" y="33" width="570" height="39"/>
                 </customView>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
-                    <rect key="frame" x="18" y="82" width="534" height="14"/>
-                    <textFieldCell key="cell" title="You can limit the time period that your MDCDevice captures images, which will extend its battery life." id="Oar-aS-K64">
+                    <rect key="frame" x="18" y="92" width="534" height="28"/>
+                    <textFieldCell key="cell" title="You can limit the time period that your MDCDevice is sensitive to motion, which will extend its battery life." id="Oar-aS-K64">
                         <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -687,7 +687,7 @@ Gw
                 <constraint firstItem="Gg2-oe-gZo" firstAttribute="firstBaseline" secondItem="jlP-Se-MW3" secondAttribute="firstBaseline" id="uP5-Yi-cig"/>
                 <constraint firstAttribute="bottom" secondItem="35D-kR-T9a" secondAttribute="bottom" id="uyH-Cg-d9P"/>
             </constraints>
-            <point key="canvasLocation" x="460" y="105"/>
+            <point key="canvasLocation" x="460" y="83.5"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="eDT-jR-EFe" userLabel="Repeat" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="572" height="51"/>
