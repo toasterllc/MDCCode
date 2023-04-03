@@ -30,18 +30,21 @@
                 <outlet property="_daySelector_View" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
                 <outlet property="_detailView" destination="MTQ-az-LcE" id="saN-XS-2WM"/>
                 <outlet property="_intervalSelector_DescriptionLabel" destination="2YV-iT-BmO" id="mSR-6Y-Aer"/>
-                <outlet property="_intervalSelector_Field" destination="2Au-XF-sqi" id="s2M-3N-iPD"/>
+                <outlet property="_intervalSelector_Field" destination="bhM-F8-1Bt" id="2Yk-ca-UWU"/>
                 <outlet property="_intervalSelector_View" destination="F0b-7x-6jH" id="xii-eu-ibn"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
                 <outlet property="_noSelectionView" destination="GNq-2s-vXR" id="7kd-Ll-yV1"/>
+                <outlet property="_repeat_ContainerView" destination="Jd9-lQ-a3S" id="rvs-aF-ThI"/>
+                <outlet property="_repeat_Menu" destination="RN5-cz-MIP" id="L7P-1d-xQc"/>
+                <outlet property="_repeat_MenuLabel" destination="ZDT-0E-VY7" id="TpO-b2-33X"/>
+                <outlet property="_repeat_View" destination="eDT-jR-EFe" id="9yN-xh-ImA"/>
                 <outlet property="_schedule_ContainerView" destination="4R1-In-Kbb" id="cwH-BJ-Tmv"/>
-                <outlet property="_schedule_Motion_DaySelectorContainerView" destination="Jd9-lQ-a3S" id="ugZ-xT-TRK"/>
-                <outlet property="_schedule_Motion_LimitDays_CadenceMenu" destination="RN5-cz-MIP" id="TO7-Su-VdB"/>
-                <outlet property="_schedule_Motion_LimitTime_TimeEndField" destination="gGO-69-NDw" id="lWJ-3y-Q04"/>
-                <outlet property="_schedule_Motion_LimitTime_TimeStartField" destination="35D-kR-T9a" id="xog-sm-S9q"/>
+                <outlet property="_schedule_Motion_RepeatContainerView" destination="Qag-Kc-J1Q" id="XkC-Nh-Gh4"/>
+                <outlet property="_schedule_Motion_TimeRange_Menu" destination="Gg2-oe-gZo" id="wdC-WN-kZ1"/>
+                <outlet property="_schedule_Motion_TimeRange_TimeEndField" destination="gGO-69-NDw" id="lWJ-3y-Q04"/>
+                <outlet property="_schedule_Motion_TimeRange_TimeStartField" destination="35D-kR-T9a" id="xog-sm-S9q"/>
                 <outlet property="_schedule_Motion_View" destination="ZTq-dS-LMW" id="1gL-1a-8fb"/>
-                <outlet property="_schedule_Time_CadenceMenu" destination="Aqh-R6-EdY" id="sNy-bb-Kbh"/>
-                <outlet property="_schedule_Time_DaySelectorContainerView" destination="5tK-cV-igO" id="Ov6-YM-bWB"/>
+                <outlet property="_schedule_Time_RepeatContainerView" destination="7zE-QH-sSw" id="A0i-PA-QdY"/>
                 <outlet property="_schedule_Time_TimeField" destination="Vfd-bm-n7h" id="hHH-4i-GdL"/>
                 <outlet property="_schedule_Time_View" destination="bvu-Ek-Vhq" id="Sbb-1d-ZG7"/>
                 <outlet property="_tableView" destination="RfV-Mq-Pvl" id="hYB-B3-xIy"/>
@@ -548,12 +551,26 @@ Gw
             </constraints>
             <point key="canvasLocation" x="632" y="-672"/>
         </customView>
-        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Schedule - Motion" customClass="CaptureTriggersView_ContainerSubview">
-            <rect key="frame" x="0.0" y="0.0" width="572" height="96"/>
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="eDT-jR-EFe" userLabel="Repeat" customClass="CaptureTriggersView_ContainerSubview">
+            <rect key="frame" x="0.0" y="0.0" width="572" height="63"/>
             <subviews>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="Jd9-lQ-a3S" userLabel="Repeat Interval Container View">
+                    <rect key="frame" x="0.0" y="0.0" width="572" height="30"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="30" placeholder="YES" id="PC3-jA-aCM"/>
+                        <constraint firstAttribute="height" priority="250" id="RgM-qq-SGC"/>
+                    </constraints>
+                </customView>
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZDT-0E-VY7">
+                    <rect key="frame" x="-2" y="45" width="51" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Repeat:" id="aZ7-eh-Vn7">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
                 <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="RN5-cz-MIP">
-                    <rect key="frame" x="48" y="72" width="114" height="25"/>
+                    <rect key="frame" x="53" y="39" width="114" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="Every day" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="czL-8b-ksL" id="6OU-7c-MaS">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -570,23 +587,31 @@ Gw
                         <action selector="_actionScheduleCadenceChanged:" target="-2" id="zNB-4h-YvQ"/>
                     </connections>
                 </popUpButton>
-                <customView translatesAutoresizingMaskIntoConstraints="NO" id="Jd9-lQ-a3S" userLabel="Repeat Interval Container View">
-                    <rect key="frame" x="0.0" y="33" width="572" height="30"/>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="30" placeholder="YES" id="PC3-jA-aCM"/>
-                        <constraint firstAttribute="height" priority="250" id="RgM-qq-SGC"/>
-                    </constraints>
-                </customView>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZDT-0E-VY7">
-                    <rect key="frame" x="-2" y="78" width="46" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Active:" id="aZ7-eh-Vn7">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
+            </subviews>
+            <constraints>
+                <constraint firstItem="ZDT-0E-VY7" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="eDT-jR-EFe" secondAttribute="leading" id="Bcj-jM-Cf5"/>
+                <constraint firstAttribute="bottom" secondItem="Jd9-lQ-a3S" secondAttribute="bottom" id="DVy-dD-c5v"/>
+                <constraint firstItem="RN5-cz-MIP" firstAttribute="firstBaseline" secondItem="ZDT-0E-VY7" secondAttribute="firstBaseline" id="Fll-lF-M52"/>
+                <constraint firstItem="Jd9-lQ-a3S" firstAttribute="top" secondItem="RN5-cz-MIP" secondAttribute="bottom" constant="12" id="GG8-WE-4KK"/>
+                <constraint firstAttribute="trailing" secondItem="Jd9-lQ-a3S" secondAttribute="trailing" id="JA0-ak-WRJ"/>
+                <constraint firstItem="ZDT-0E-VY7" firstAttribute="leading" secondItem="eDT-jR-EFe" secondAttribute="leading" priority="750" id="QI2-M3-OV9"/>
+                <constraint firstItem="RN5-cz-MIP" firstAttribute="leading" secondItem="ZDT-0E-VY7" secondAttribute="trailing" constant="8" id="hrS-JS-UcX"/>
+                <constraint firstItem="Jd9-lQ-a3S" firstAttribute="leading" secondItem="eDT-jR-EFe" secondAttribute="leading" id="ipN-t1-kQS"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="RN5-cz-MIP" secondAttribute="trailing" id="m0H-cf-UQy"/>
+                <constraint firstItem="RN5-cz-MIP" firstAttribute="top" secondItem="eDT-jR-EFe" secondAttribute="top" id="xXa-SO-8yI"/>
+            </constraints>
+            <connections>
+                <outlet property="alignView" destination="RN5-cz-MIP" id="iwV-yR-aTv"/>
+            </connections>
+            <point key="canvasLocation" x="447" y="269"/>
+        </customView>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="ZTq-dS-LMW" userLabel="Schedule - Motion" customClass="CaptureTriggersView_ContainerSubview">
+            <rect key="frame" x="0.0" y="0.0" width="572" height="96"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="jlP-Se-MW3">
-                    <rect key="frame" x="6" y="3" width="38" height="16"/>
+                    <rect key="frame" x="-2" y="3" width="38" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Time:" id="cAO-Up-uew">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -594,7 +619,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Gg2-oe-gZo">
-                    <rect key="frame" x="48" y="-3" width="122" height="25"/>
+                    <rect key="frame" x="40" y="-3" width="122" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="All day" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="ERT-jc-JfS" id="4pR-b8-jWO">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -607,7 +632,7 @@ Gw
                     </popUpButtonCell>
                 </popUpButton>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
-                    <rect key="frame" x="179" y="0.0" width="100" height="21"/>
+                    <rect key="frame" x="171" y="0.0" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="bIP-5H-5pa"/>
                     </constraints>
@@ -621,7 +646,7 @@ Gw
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
-                    <rect key="frame" x="285" y="3" width="17" height="16"/>
+                    <rect key="frame" x="277" y="3" width="17" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="to" id="Qdg-p5-o0x">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -629,7 +654,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
-                    <rect key="frame" x="308" y="0.0" width="100" height="21"/>
+                    <rect key="frame" x="300" y="0.0" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="ocG-Lr-SSl"/>
                     </constraints>
@@ -642,28 +667,25 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="EmX-gw-3nu"/>
                     </connections>
                 </textField>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="Qag-Kc-J1Q">
+                    <rect key="frame" x="0.0" y="33" width="572" height="63"/>
+                </customView>
             </subviews>
             <constraints>
-                <constraint firstItem="Jd9-lQ-a3S" firstAttribute="top" secondItem="RN5-cz-MIP" secondAttribute="bottom" constant="12" id="0sO-Lr-Bg7"/>
-                <constraint firstItem="RN5-cz-MIP" firstAttribute="leading" secondItem="ZDT-0E-VY7" secondAttribute="trailing" constant="8" id="6t1-6M-1e7"/>
-                <constraint firstItem="ZDT-0E-VY7" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" priority="750" id="IP8-5f-62d"/>
+                <constraint firstItem="Qag-Kc-J1Q" firstAttribute="top" secondItem="ZTq-dS-LMW" secondAttribute="top" id="2XM-mE-fks"/>
+                <constraint firstAttribute="trailing" secondItem="Qag-Kc-J1Q" secondAttribute="trailing" id="9O2-Nw-v1r"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="gGO-69-NDw" secondAttribute="trailing" id="LjE-Gt-nq5"/>
-                <constraint firstItem="Gg2-oe-gZo" firstAttribute="leading" secondItem="RN5-cz-MIP" secondAttribute="leading" id="LsC-x3-EQn"/>
-                <constraint firstItem="Jd9-lQ-a3S" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="MN6-zV-gDL"/>
-                <constraint firstItem="RN5-cz-MIP" firstAttribute="firstBaseline" secondItem="ZDT-0E-VY7" secondAttribute="firstBaseline" id="SWn-Gp-efP"/>
+                <constraint firstItem="Qag-Kc-J1Q" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="Pj4-yS-sKL"/>
                 <constraint firstItem="qtR-4H-6GP" firstAttribute="firstBaseline" secondItem="gGO-69-NDw" secondAttribute="firstBaseline" id="W4y-OJ-ewE"/>
                 <constraint firstItem="qtR-4H-6GP" firstAttribute="leading" secondItem="35D-kR-T9a" secondAttribute="trailing" constant="8" id="WUF-fF-MHy"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="firstBaseline" secondItem="Gg2-oe-gZo" secondAttribute="firstBaseline" id="WpX-fT-FYD"/>
                 <constraint firstItem="Gg2-oe-gZo" firstAttribute="leading" secondItem="jlP-Se-MW3" secondAttribute="trailing" constant="8" id="abn-vQ-2Xw"/>
-                <constraint firstItem="Gg2-oe-gZo" firstAttribute="top" secondItem="Jd9-lQ-a3S" secondAttribute="bottom" constant="12" id="b6S-cE-SCu"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="firstBaseline" secondItem="qtR-4H-6GP" secondAttribute="firstBaseline" id="blm-sX-Abk"/>
+                <constraint firstItem="Gg2-oe-gZo" firstAttribute="top" secondItem="Qag-Kc-J1Q" secondAttribute="bottom" constant="12" id="dc6-2R-WKe"/>
                 <constraint firstItem="jlP-Se-MW3" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" priority="750" id="eHw-nY-Kg2"/>
                 <constraint firstItem="jlP-Se-MW3" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="ewV-Lp-2we"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="leading" secondItem="Gg2-oe-gZo" secondAttribute="trailing" constant="12" id="f0m-19-ITq"/>
-                <constraint firstAttribute="trailing" secondItem="Jd9-lQ-a3S" secondAttribute="trailing" id="jnR-o6-5lH"/>
                 <constraint firstItem="gGO-69-NDw" firstAttribute="leading" secondItem="qtR-4H-6GP" secondAttribute="trailing" constant="8" id="mjn-YN-xAs"/>
-                <constraint firstItem="ZDT-0E-VY7" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="n6h-0y-USL"/>
-                <constraint firstItem="RN5-cz-MIP" firstAttribute="top" secondItem="ZTq-dS-LMW" secondAttribute="top" id="rql-Va-xV9"/>
                 <constraint firstItem="Gg2-oe-gZo" firstAttribute="firstBaseline" secondItem="jlP-Se-MW3" secondAttribute="firstBaseline" id="uP5-Yi-cig"/>
                 <constraint firstAttribute="bottom" secondItem="35D-kR-T9a" secondAttribute="bottom" id="uyH-Cg-d9P"/>
             </constraints>
@@ -672,21 +694,6 @@ Gw
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="F0b-7x-6jH" userLabel="Interval Selector" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="87" height="39"/>
             <subviews>
-                <tokenField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="2Au-XF-sqi" customClass="TokenField">
-                    <rect key="frame" x="0.0" y="18" width="50" height="21"/>
-                    <constraints>
-                        <constraint firstAttribute="width" constant="50" id="Sr4-nO-Pra"/>
-                    </constraints>
-                    <tokenFieldCell key="cell" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" allowsEditingTextAttributes="YES" id="gLg-NO-23A">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </tokenFieldCell>
-                    <connections>
-                        <action selector="_actionViewChanged:" target="-2" id="Om5-Nv-OaC"/>
-                        <outlet property="delegate" destination="-2" id="yCo-zd-vBb"/>
-                    </connections>
-                </tokenField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Kej-fU-cQZ">
                     <rect key="frame" x="56" y="21" width="33" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="days" id="dRL-08-tE7">
@@ -703,23 +710,37 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="bhM-F8-1Bt">
+                    <rect key="frame" x="0.0" y="18" width="50" height="21"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="50" id="ulk-f4-Lyg"/>
+                    </constraints>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="wuz-0c-Fcm">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <action selector="_actionViewChanged:" target="-2" id="Lsj-Yf-vAl"/>
+                    </connections>
+                </textField>
             </subviews>
             <constraints>
-                <constraint firstItem="2YV-iT-BmO" firstAttribute="leading" secondItem="2Au-XF-sqi" secondAttribute="leading" id="3XE-R7-oJD"/>
+                <constraint firstItem="Kej-fU-cQZ" firstAttribute="leading" secondItem="bhM-F8-1Bt" secondAttribute="trailing" constant="8" id="7cX-0O-zwy"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Kej-fU-cQZ" secondAttribute="trailing" id="FAv-Ao-sfc"/>
-                <constraint firstItem="Kej-fU-cQZ" firstAttribute="leading" secondItem="2Au-XF-sqi" secondAttribute="trailing" constant="8" id="Gof-eG-ra7"/>
-                <constraint firstItem="Kej-fU-cQZ" firstAttribute="firstBaseline" secondItem="2Au-XF-sqi" secondAttribute="firstBaseline" id="YW6-T2-EBx"/>
-                <constraint firstItem="2Au-XF-sqi" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="F0b-7x-6jH" secondAttribute="leading" id="cTF-8m-fPS"/>
+                <constraint firstItem="2YV-iT-BmO" firstAttribute="top" secondItem="bhM-F8-1Bt" secondAttribute="bottom" constant="4" id="Q3R-3s-cex"/>
+                <constraint firstItem="2YV-iT-BmO" firstAttribute="leading" secondItem="bhM-F8-1Bt" secondAttribute="leading" id="Qad-fg-N95"/>
+                <constraint firstItem="bhM-F8-1Bt" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="F0b-7x-6jH" secondAttribute="leading" id="XVw-fU-9p4"/>
+                <constraint firstItem="bhM-F8-1Bt" firstAttribute="top" secondItem="F0b-7x-6jH" secondAttribute="top" id="bUQ-9A-Ht3"/>
+                <constraint firstItem="bhM-F8-1Bt" firstAttribute="leading" secondItem="F0b-7x-6jH" secondAttribute="leading" priority="750" id="egv-sL-Aer"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="2YV-iT-BmO" secondAttribute="trailing" id="iww-cd-tIN"/>
-                <constraint firstItem="2Au-XF-sqi" firstAttribute="leading" secondItem="F0b-7x-6jH" secondAttribute="leading" priority="750" id="kcz-gs-2mX"/>
-                <constraint firstItem="2Au-XF-sqi" firstAttribute="top" secondItem="F0b-7x-6jH" secondAttribute="top" id="qvh-fC-IE6"/>
                 <constraint firstAttribute="bottom" secondItem="2YV-iT-BmO" secondAttribute="bottom" id="r8w-yI-oz9"/>
-                <constraint firstItem="2YV-iT-BmO" firstAttribute="top" secondItem="2Au-XF-sqi" secondAttribute="bottom" constant="4" id="zDE-1m-NHc"/>
+                <constraint firstItem="Kej-fU-cQZ" firstAttribute="firstBaseline" secondItem="bhM-F8-1Bt" secondAttribute="firstBaseline" id="rcf-LU-iaz"/>
             </constraints>
             <connections>
-                <outlet property="alignView" destination="2Au-XF-sqi" id="lcV-Cs-xK3"/>
+                <outlet property="alignView" destination="bhM-F8-1Bt" id="9Pf-hK-tVc"/>
             </connections>
-            <point key="canvasLocation" x="-119" y="309"/>
+            <point key="canvasLocation" x="-144.5" y="308.5"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Date Selector" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
@@ -748,6 +769,46 @@ Gw
                 <outlet property="alignView" destination="38b-nv-tEn" id="Pls-et-TTB"/>
             </connections>
             <point key="canvasLocation" x="-119" y="216"/>
+        </customView>
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Schedule - Time" customClass="CaptureTriggersView_ContainerSubview">
+            <rect key="frame" x="0.0" y="0.0" width="491" height="96"/>
+            <subviews>
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="PfN-UJ-gre">
+                    <rect key="frame" x="-2" y="78" width="38" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Time:" id="9yo-Wm-9si">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Vfd-bm-n7h">
+                    <rect key="frame" x="42" y="75" width="449" height="21"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="22A-Qe-TQ7">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <action selector="_actionViewChanged:" target="-2" id="nFd-S7-3km"/>
+                    </connections>
+                </textField>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="7zE-QH-sSw">
+                    <rect key="frame" x="0.0" y="0.0" width="491" height="63"/>
+                </customView>
+            </subviews>
+            <constraints>
+                <constraint firstAttribute="trailing" secondItem="Vfd-bm-n7h" secondAttribute="trailing" id="0QH-ko-015"/>
+                <constraint firstAttribute="trailing" secondItem="7zE-QH-sSw" secondAttribute="trailing" id="KqK-8x-v9x"/>
+                <constraint firstItem="PfN-UJ-gre" firstAttribute="leading" secondItem="bvu-Ek-Vhq" secondAttribute="leading" priority="750" id="MJx-8D-2I6"/>
+                <constraint firstItem="PfN-UJ-gre" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="bvu-Ek-Vhq" secondAttribute="leading" id="NdV-nh-hBs"/>
+                <constraint firstItem="7zE-QH-sSw" firstAttribute="top" secondItem="Vfd-bm-n7h" secondAttribute="bottom" constant="12" id="Olk-C6-qmh"/>
+                <constraint firstAttribute="bottom" secondItem="7zE-QH-sSw" secondAttribute="bottom" id="cNM-fJ-3oW"/>
+                <constraint firstItem="Vfd-bm-n7h" firstAttribute="firstBaseline" secondItem="PfN-UJ-gre" secondAttribute="firstBaseline" id="eAs-ZG-TKN"/>
+                <constraint firstItem="7zE-QH-sSw" firstAttribute="leading" secondItem="bvu-Ek-Vhq" secondAttribute="leading" id="eID-GO-Njq"/>
+                <constraint firstItem="Vfd-bm-n7h" firstAttribute="top" secondItem="bvu-Ek-Vhq" secondAttribute="top" id="f3k-g5-g7w"/>
+                <constraint firstItem="Vfd-bm-n7h" firstAttribute="leading" secondItem="PfN-UJ-gre" secondAttribute="trailing" constant="8" id="lcj-MG-JtQ"/>
+            </constraints>
+            <point key="canvasLocation" x="-119.5" y="-13"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Day Selector" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="340" height="18"/>
@@ -782,82 +843,6 @@ Gw
                 <outlet property="alignView" destination="WO9-Yi-XDc" id="d1n-Q4-rJf"/>
             </connections>
             <point key="canvasLocation" x="-246" y="91"/>
-        </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Schedule - Time" customClass="CaptureTriggersView_ContainerSubview">
-            <rect key="frame" x="0.0" y="0.0" width="491" height="96"/>
-            <subviews>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="PfN-UJ-gre">
-                    <rect key="frame" x="11" y="78" width="38" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Time:" id="9yo-Wm-9si">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Vfd-bm-n7h">
-                    <rect key="frame" x="55" y="75" width="436" height="21"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="22A-Qe-TQ7">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <action selector="_actionViewChanged:" target="-2" id="nFd-S7-3km"/>
-                    </connections>
-                </textField>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="e2p-19-VKE">
-                    <rect key="frame" x="-2" y="45" width="51" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Repeat:" id="JBQ-7A-gD7">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Aqh-R6-EdY">
-                    <rect key="frame" x="53" y="39" width="114" height="25"/>
-                    <popUpButtonCell key="cell" type="push" title="Every day" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="OHf-h1-mhY" id="yYC-RB-GYm">
-                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <menu key="menu" id="sec-qx-Xwk">
-                            <items>
-                                <menuItem title="Every day" state="on" id="OHf-h1-mhY"/>
-                                <menuItem title="On days" id="HGy-eg-Iae"/>
-                                <menuItem title="On dates" id="9Le-SB-kZR"/>
-                                <menuItem title="With interval" id="GND-Ck-abo"/>
-                            </items>
-                        </menu>
-                    </popUpButtonCell>
-                    <connections>
-                        <action selector="_actionScheduleCadenceChanged:" target="-2" id="ruK-YO-9j3"/>
-                    </connections>
-                </popUpButton>
-                <customView translatesAutoresizingMaskIntoConstraints="NO" id="5tK-cV-igO" userLabel="Repeat Interval Container View">
-                    <rect key="frame" x="0.0" y="0.0" width="491" height="30"/>
-                    <constraints>
-                        <constraint firstAttribute="height" priority="250" id="9il-d4-0qM"/>
-                        <constraint firstAttribute="height" constant="30" placeholder="YES" id="AU6-W7-yJm"/>
-                    </constraints>
-                </customView>
-            </subviews>
-            <constraints>
-                <constraint firstAttribute="trailing" secondItem="Vfd-bm-n7h" secondAttribute="trailing" id="0QH-ko-015"/>
-                <constraint firstItem="Aqh-R6-EdY" firstAttribute="leading" secondItem="Vfd-bm-n7h" secondAttribute="leading" id="6U1-qo-Lcr"/>
-                <constraint firstItem="Aqh-R6-EdY" firstAttribute="leading" secondItem="e2p-19-VKE" secondAttribute="trailing" constant="8" id="9ch-Dq-aRO"/>
-                <constraint firstItem="Aqh-R6-EdY" firstAttribute="top" secondItem="Vfd-bm-n7h" secondAttribute="bottom" constant="12" id="Cdc-pK-YT3"/>
-                <constraint firstAttribute="trailing" secondItem="5tK-cV-igO" secondAttribute="trailing" id="LoD-15-0xs"/>
-                <constraint firstItem="PfN-UJ-gre" firstAttribute="leading" secondItem="bvu-Ek-Vhq" secondAttribute="leading" priority="750" id="MJx-8D-2I6"/>
-                <constraint firstItem="PfN-UJ-gre" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="bvu-Ek-Vhq" secondAttribute="leading" id="NdV-nh-hBs"/>
-                <constraint firstItem="e2p-19-VKE" firstAttribute="leading" secondItem="bvu-Ek-Vhq" secondAttribute="leading" priority="750" id="QAv-aK-ZgG"/>
-                <constraint firstItem="5tK-cV-igO" firstAttribute="leading" secondItem="bvu-Ek-Vhq" secondAttribute="leading" id="ZN3-24-5DD"/>
-                <constraint firstItem="Vfd-bm-n7h" firstAttribute="firstBaseline" secondItem="PfN-UJ-gre" secondAttribute="firstBaseline" id="eAs-ZG-TKN"/>
-                <constraint firstItem="Vfd-bm-n7h" firstAttribute="top" secondItem="bvu-Ek-Vhq" secondAttribute="top" id="f3k-g5-g7w"/>
-                <constraint firstItem="Aqh-R6-EdY" firstAttribute="firstBaseline" secondItem="e2p-19-VKE" secondAttribute="firstBaseline" id="f5d-xe-jNj"/>
-                <constraint firstItem="5tK-cV-igO" firstAttribute="top" secondItem="Aqh-R6-EdY" secondAttribute="bottom" constant="12" id="fX4-ME-aL9"/>
-                <constraint firstItem="Vfd-bm-n7h" firstAttribute="leading" secondItem="PfN-UJ-gre" secondAttribute="trailing" constant="8" id="lcj-MG-JtQ"/>
-                <constraint firstAttribute="bottom" secondItem="5tK-cV-igO" secondAttribute="bottom" id="oBu-bD-hKD"/>
-                <constraint firstItem="e2p-19-VKE" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="bvu-Ek-Vhq" secondAttribute="leading" id="rep-HE-dww"/>
-            </constraints>
-            <point key="canvasLocation" x="-119" y="-13"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="ihD-Oq-dCa" userLabel="Limits Detail View" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="451" height="66"/>

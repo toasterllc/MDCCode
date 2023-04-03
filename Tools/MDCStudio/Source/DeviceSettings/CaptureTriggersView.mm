@@ -17,11 +17,20 @@ struct [[gnu::packed]] Trigger {
         Button,
     };
     
-    enum class RepeatType : uint8_t {
-        EveryDay,
-        WeekDays,
-        YearDays,
-        Interval,
+    struct [[gnu::packed]] Repeat {
+        enum class Type : uint8_t {
+            Daily,
+            WeekDays,
+            YearDays,
+            Interval,
+        };
+        
+        Type type;
+        union {
+            Calendar::WeekDays weekDays;
+            Calendar::YearDays yearDays;
+            uint32_t interval;
+        };
     };
     
     enum class LEDs : uint8_t {
@@ -48,12 +57,7 @@ struct [[gnu::packed]] Trigger {
         struct [[gnu::packed]] {
             struct [[gnu::packed]] {
                 uint32_t time;
-                RepeatType repeatType;
-                union {
-                    uint32_t interval;
-                    Calendar::WeekDays weekDays;
-                    Calendar::YearDays yearDays;
-                };
+                Repeat repeat;
             } schedule;
             
             struct [[gnu::packed]] {
@@ -78,12 +82,7 @@ struct [[gnu::packed]] Trigger {
                     uint32_t end;
                 } timeRange;
                 
-                RepeatType repeatType;
-                union {
-                    uint32_t interval;
-                    Calendar::WeekDays weekDays;
-                    Calendar::YearDays yearDays;
-                };
+                Repeat repeat;
             } schedule;
             
             struct [[gnu::packed]] {
@@ -122,58 +121,33 @@ constexpr Calendar::WeekDays _WeekDaysInit = (Calendar::WeekDays)(
     std::to_underlying(Calendar::WeekDays::Fri)
 );
 
-static const Calendar::MonthDays _MonthDaysInit = Calendar::MonthDaysFromVector({Calendar::MonthDay{14}, Calendar::MonthDay{28}});
 static const Calendar::YearDays _YearDaysInit = Calendar::YearDaysFromVector({Calendar::YearDay{9,20}, Calendar::YearDay{12,31}});
 
-static void _InitTriggerScheduleCadence(Trigger& t) {
+static constexpr uint32_t _IntervalInit = 2;
+
+static Trigger::Repeat& _TriggerRepeatGet(Trigger& t) {
     switch (t.type) {
-    case Trigger::Type::Time: {
-        auto& x = t.time.schedule;
-        switch (x.repeatType) {
-        case Trigger::RepeatType::EveryDay:
-            break;
-        case Trigger::RepeatType::WeekDays:
-            x.weekDays = _WeekDaysInit;
-            break;
-        case Trigger::RepeatType::YearDays:
-            x.yearDays = _YearDaysInit;
-            break;
-        case Trigger::RepeatType::Interval:
-            x.interval = _MonthDaysInit;
-            break;
-        default:
-            abort();
-        }
-        break;
-        
-        EveryDay,
-        WeekDays,
-        YearDays,
-        Interval,
-        
-    }
-    
+    case Trigger::Type::Time:   return t.time.schedule.repeat;
     case Trigger::Type::Motion:
-    case Trigger::Type::Button: {
-        auto& x = t.motionButton.schedule.dayLimit;
-        switch (x.cadence) {
-        case Trigger::Cadence::Daily:
-            break;
-        case Trigger::Cadence::Weekly:
-            x.weekDays = _WeekDaysInit;
-            break;
-        case Trigger::Cadence::Monthly:
-            x.monthDays = _MonthDaysInit;
-            break;
-        case Trigger::Cadence::Yearly:
-            x.yearDays = _YearDaysInit;
-            break;
-        default:
-            abort();
-        }
-        break;
+    case Trigger::Type::Button: return t.motionButton.schedule.repeat;
+    default:                    abort();
     }
-    
+}
+
+static void _InitTriggerRepeat(Trigger::Repeat& x) {
+    using X = Trigger::Repeat::Type;
+    switch (x.type) {
+    case X::Daily:
+        break;
+    case X::WeekDays:
+        x.weekDays = _WeekDaysInit;
+        break;
+    case X::YearDays:
+        x.yearDays = _YearDaysInit;
+        break;
+    case X::Interval:
+        x.interval = _IntervalInit;
+        break;
     default:
         abort();
     }
@@ -187,7 +161,9 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         
         x.schedule = {
             .time = _TimeStartInit,
-            .cadence = Trigger::Cadence::Daily,
+            .repeat = {
+                .type = Trigger::Repeat::Type::Daily,
+            }
         };
         
         x.capture = {
@@ -213,14 +189,13 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         auto& x = t.motionButton;
         
         x.schedule = {
-            .timeLimit = {
+            .timeRange = {
                 .enable = true,
                 .start = _TimeStartInit,
                 .end = _TimeEndInit,
             },
-            .dayLimit = {
-                .enable = true,
-                .cadence = Trigger::Cadence::Weekly,
+            .repeat = {
+                .type = Trigger::Repeat::Type::WeekDays,
                 .weekDays = _WeekDaysInit,
             },
         };
@@ -259,14 +234,13 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         auto& x = t.motionButton;
         
         x.schedule = {
-            .timeLimit = {
+            .timeRange = {
                 .enable = false,
                 .start = _TimeStartInit,
                 .end = _TimeEndInit,
             },
-            .dayLimit = {
-                .enable = false,
-                .cadence = Trigger::Cadence::Weekly,
+            .repeat = {
+                .type = Trigger::Repeat::Type::WeekDays,
                 .weekDays = _WeekDaysInit,
             },
         };
@@ -356,24 +330,24 @@ static Trigger::Duration::Unit UnitFromString(std::string x) {
     else abort();
 }
 
-static std::string StringFromCadence(const Trigger::Cadence& x) {
+static std::string StringFromRepeatType(const Trigger::Repeat::Type& x) {
     using X = std::remove_reference_t<decltype(x)>;
     switch (x) {
-    case X::Daily:   return "daily";
-    case X::Weekly:  return "weekly";
-    case X::Monthly: return "monthly";
-    case X::Yearly:  return "yearly";
-    default:         abort();
+    case X::Daily:      return "every day";
+    case X::WeekDays:   return "on days";
+    case X::YearDays:   return "on dates";
+    case X::Interval:   return "with interval";
+    default:            abort();
     }
 }
 
-static Trigger::Cadence CadenceFromString(std::string x) {
-    using X = Trigger::Cadence;
+static Trigger::Repeat::Type RepeatTypeFromString(std::string x) {
+    using X = Trigger::Repeat::Type;
     for (auto& c : x) c = std::tolower(c);
-         if (x == "daily")   return X::Daily;
-    else if (x == "weekly")  return X::Weekly;
-    else if (x == "monthly") return X::Monthly;
-    else if (x == "yearly")  return X::Yearly;
+         if (x == "every day")     return X::Daily;
+    else if (x == "on days")       return X::WeekDays;
+    else if (x == "on dates")      return X::YearDays;
+    else if (x == "with interval") return X::Interval;
     else abort();
 }
 
@@ -533,23 +507,17 @@ static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
     }
 }
 
-//        Cadence cadence = Cadence::Daily;
-//        union {
-//            WeekDays weekDays;
-//            MonthDays monthDays;
-//            YearDays yearDays;
-
 static std::string _WeekDaysDescription(const Calendar::WeekDays& x) {
     using X = Calendar::WeekDays;
     // Only one day set
     switch (x) {
-    case X::Mon:  return "Mondays";
-    case X::Tue:  return "Tuesdays";
-    case X::Wed:  return "Wednesdays";
-    case X::Thu:  return "Thursdays";
-    case X::Fri:  return "Fridays";
-    case X::Sat:  return "Saturdays";
-    case X::Sun:  return "Sundays";
+    case X::Mon:  return "mondays";
+    case X::Tue:  return "tuesdays";
+    case X::Wed:  return "wednesdays";
+    case X::Thu:  return "thursdays";
+    case X::Fri:  return "fridays";
+    case X::Sat:  return "saturdays";
+    case X::Sun:  return "sundays";
     default:      break;
     }
     
@@ -588,6 +556,37 @@ static std::string _YearDaysDescription(const Calendar::YearDays& x) {
     const size_t count = VectorFromYearDays(x).size();
     if (count == 1) return "1 day per year";
     return std::to_string(count) + " days per year";
+}
+
+static std::string _IntervalDescription(uint32_t x) {
+    if (x == 1) return "every day";
+    if (x == 2) return "every other day";
+    return "every " + std::to_string(x) + " days";
+}
+
+static std::string _IntervalDetailedDescription(uint32_t x) {
+    if (x == 1) return "every day";
+    if (x == 2) return "every other day";
+    return "1 day on, " + std::to_string(x-1) + " days off";
+}
+
+static std::string _Capitalize(std::string x) {
+    if (!x.empty()) {
+        x[0] = std::toupper(x[0]);
+    }
+    return x;
+}
+
+static std::string _RepeatDescription(const Trigger::Repeat& x) {
+    using T = Trigger::Repeat::Type;
+    std::string s;
+    switch (x.type) {
+    case T::Daily:    return "daily";
+    case T::WeekDays: return _WeekDaysDescription(x.weekDays);
+    case T::YearDays: return _YearDaysDescription(x.yearDays);
+    case T::Interval: return _IntervalDescription(x.interval);
+    default:          abort();
+    }
 }
 
 template<typename T>
@@ -630,44 +629,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     }
     
     // Subtitle
-    std::string subtitle;
-    switch (trigger.type) {
-    case Trigger::Type::Time: {
-        auto& x = trigger.time;
-        
-        switch (x.schedule.cadence) {
-        case Trigger::Cadence::Daily:   subtitle = "Daily"; break;
-        case Trigger::Cadence::Weekly:  subtitle = _WeekDaysDescription(x.schedule.weekDays); break;
-        case Trigger::Cadence::Monthly: subtitle = _MonthDaysDescription(x.schedule.monthDays); break;
-        case Trigger::Cadence::Yearly:  subtitle = _YearDaysDescription(x.schedule.yearDays); break;
-        default:                        abort();
-        }
-        break;
-    }
-    
-    case Trigger::Type::Motion:
-    case Trigger::Type::Button: {
-        auto& x = trigger.motionButton;
-        
-        if (x.schedule.dayLimit.enable) {
-            switch (x.schedule.dayLimit.cadence) {
-            case Trigger::Cadence::Weekly:  subtitle = _WeekDaysDescription(x.schedule.dayLimit.weekDays); break;
-            case Trigger::Cadence::Monthly: subtitle = _MonthDaysDescription(x.schedule.dayLimit.monthDays); break;
-            case Trigger::Cadence::Yearly:  subtitle = _YearDaysDescription(x.schedule.dayLimit.yearDays); break;
-            default:                        abort();
-            }
-        }
-        
-        if (x.schedule.timeLimit.enable) {
-            if (!subtitle.empty()) subtitle += ", ";
-            subtitle += _TimeRangeDescription(x.schedule.timeLimit.start, x.schedule.timeLimit.end);
-        }
-        
-        break;
-    }
-    default:
-        abort();
-    }
+    const std::string subtitle = _Capitalize(_RepeatDescription(_TriggerRepeatGet(trigger)));
     if (!subtitle.empty()) {
         [_subtitleLabel setStringValue:@(subtitle.c_str())];
         // When we have a subtitle, center title+subtitle as a group by allowing _titleCenterYConstraint to be overridden
@@ -755,16 +717,18 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     
     IBOutlet ContainerSubview*  _schedule_Time_View;
     IBOutlet NSTextField*       _schedule_Time_TimeField;
-    IBOutlet NSView*            _schedule_Time_DaySelectorContainerView;
-    IBOutlet NSPopUpButton*     _schedule_Time_CadenceMenu;
+    IBOutlet NSView*            _schedule_Time_RepeatContainerView;
     
     IBOutlet ContainerSubview*  _schedule_Motion_View;
-    IBOutlet NSButton*          _schedule_Motion_LimitTime_Checkbox;
-    IBOutlet NSTextField*       _schedule_Motion_LimitTime_TimeStartField;
-    IBOutlet NSTextField*       _schedule_Motion_LimitTime_TimeEndField;
-    IBOutlet NSButton*          _schedule_Motion_LimitDays_Checkbox;
-    IBOutlet NSPopUpButton*     _schedule_Motion_LimitDays_CadenceMenu;
-    IBOutlet NSView*            _schedule_Motion_DaySelectorContainerView;
+    IBOutlet NSView*            _schedule_Motion_RepeatContainerView;
+    IBOutlet NSPopUpButton*     _schedule_Motion_TimeRange_Menu;
+    IBOutlet NSTextField*       _schedule_Motion_TimeRange_TimeStartField;
+    IBOutlet NSTextField*       _schedule_Motion_TimeRange_TimeEndField;
+    
+    IBOutlet ContainerSubview*  _repeat_View;
+    IBOutlet NSTextField*       _repeat_MenuLabel;
+    IBOutlet NSPopUpButton*     _repeat_Menu;
+    IBOutlet NSView*            _repeat_ContainerView;
     
     IBOutlet ContainerSubview*   _daySelector_View;
     IBOutlet NSSegmentedControl* _daySelector_Control;
@@ -773,7 +737,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTokenField*      _dateSelector_Field;
     
     IBOutlet ContainerSubview*  _intervalSelector_View;
-    IBOutlet NSTokenField*      _intervalSelector_Field;
+    IBOutlet NSTextField*       _intervalSelector_Field;
     IBOutlet NSTextField*       _intervalSelector_DescriptionLabel;
     
     // Capture
@@ -858,11 +822,11 @@ static void _Init(CaptureTriggersView* self) {
 //    _ListItemAdd(self, Trigger::Type::Motion);
     _ListItemAdd(self, Trigger::Type::Button);
     
-    {
-        NSMutableCharacterSet* set = [[self->_monthDaySelector_Field tokenizingCharacterSet] mutableCopy];
-        [set addCharactersInString:@" "];
-        [self->_monthDaySelector_Field setTokenizingCharacterSet:set];
-    }
+//    {
+//        NSMutableCharacterSet* set = [[self->_monthDaySelector_Field tokenizingCharacterSet] mutableCopy];
+//        [set addCharactersInString:@" "];
+//        [self->_monthDaySelector_Field setTokenizingCharacterSet:set];
+//    }
     
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
     
@@ -923,10 +887,10 @@ static void _Copy(bool& x, NSButton* checkbox) {
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::Cadence& x, NSPopUpButton* menu) {
+static void _Copy(Trigger::Repeat::Type& x, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        std::string xstr = StringFromCadence(x);
+        std::string xstr = StringFromRepeatType(x);
         xstr[0] = std::toupper(xstr[0]);
         NSMenuItem* item = [menu itemWithTitle:@(xstr.c_str())];
         #warning TODO: is this a good behavior?
@@ -936,7 +900,7 @@ static void _Copy(Trigger::Cadence& x, NSPopUpButton* menu) {
     } else {
         NSString* str = [menu titleOfSelectedItem];
         assert(str);
-        x = CadenceFromString([str UTF8String]);
+        x = RepeatTypeFromString([str UTF8String]);
     }
 }
 
@@ -1060,59 +1024,83 @@ static void _Copy(Trigger::LEDs& x, NSSegmentedControl* control) {
 }
 
 template<bool T_Forward>
+static void _Copy(Trigger::Repeat& x, CaptureTriggersView* view) {
+    auto& v = *view;
+    _Copy<T_Forward>(x.type, v._repeat_Menu);
+    switch (x.type) {
+    case Trigger::Repeat::Type::Daily:
+        if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, nil);
+        break;
+    case Trigger::Repeat::Type::WeekDays:
+        if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._daySelector_View, v._repeat_Menu);
+        _Copy<T_Forward>(x.weekDays, v._daySelector_Control);
+        break;
+    case Trigger::Repeat::Type::YearDays:
+        if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._dateSelector_View, v._repeat_Menu);
+        _Copy<T_Forward>(x.yearDays, v._dateSelector_Field);
+        break;
+    case Trigger::Repeat::Type::Interval:
+        if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._intervalSelector_View, v._repeat_Menu);
+        _Copy<T_Forward>(x.interval, v._intervalSelector_Field);
+        if constexpr (T_Forward) {
+            [v._intervalSelector_DescriptionLabel setStringValue:@(_IntervalDetailedDescription(x.interval).c_str())];
+        }
+        break;
+    default:
+        abort();
+    }
+}
+
+template<bool T_Forward>
+static void _CopyTimeRangeEnable(bool& x, NSPopUpButton* menu) {
+    using X = std::remove_reference_t<decltype(x)>;
+    if constexpr (T_Forward) {
+        [menu selectItemAtIndex:(NSInteger)x];
+    } else {
+        x = (bool)[menu indexOfSelectedItem];
+    }
+}
+
+template<bool T_Forward, typename T_Capture>
+static void _CopyCapture(T_Capture& x, CaptureTriggersView* view) {
+    auto& v = *view;
+    _Copy<T_Forward>(x.count, v._capture_CountField);
+    _Copy<T_Forward>(x.interval.value, v._capture_IntervalField);
+    _Copy<T_Forward>(x.interval.unit, v._capture_IntervalUnitMenu);
+    
+    if constexpr (T_Forward) {
+        [v._capture_IntervalLabel setEnabled:x.count>1];
+        [v._capture_IntervalField setEnabled:x.count>1];
+        [v._capture_IntervalUnitMenu setEnabled:x.count>1];
+    }
+    
+    _Copy<T_Forward>(x.flashLEDs, v._capture_FlashLEDsControl);
+}
+
+template<bool T_Forward>
 static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
-    auto& y = *view;
+    auto& v = *view;
     switch (trigger.type) {
     case Trigger::Type::Time: {
         auto& x = trigger.time;
         
         // Schedule
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_ContainerView, y._schedule_Time_View);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_ContainerView, v._schedule_Time_View);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_Time_RepeatContainerView, v._repeat_View, v._schedule_Time_TimeField);
             
-            _CopyTime<T_Forward>(x.schedule.time, y._schedule_Time_TimeField);
-            _Copy<T_Forward>(x.schedule.cadence, y._schedule_Time_CadenceMenu);
-            switch (x.schedule.cadence) {
-            case Trigger::Cadence::Daily:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, nil);
-                break;
-            case Trigger::Cadence::Weekly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._daySelector_View, y._schedule_Time_CadenceMenu);
-                _Copy<T_Forward>(x.schedule.weekDays, y._daySelector_Control);
-                break;
-            case Trigger::Cadence::Monthly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Time_CadenceMenu);
-                _Copy<T_Forward>(x.schedule.monthDays, y._monthDaySelector_Field);
-                break;
-            case Trigger::Cadence::Yearly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._dateSelector_View, y._schedule_Time_CadenceMenu);
-                _Copy<T_Forward>(x.schedule.yearDays, y._dateSelector_Field);
-                break;
-            default:
-                abort();
-            }
+            _CopyTime<T_Forward>(x.schedule.time, v._schedule_Time_TimeField);
+            _Copy<T_Forward>(x.schedule.repeat, view);
         }
         
         // Capture
-        {
-            _Copy<T_Forward>(x.capture.count, y._capture_CountField);
-            _Copy<T_Forward>(x.capture.interval.value, y._capture_IntervalField);
-            _Copy<T_Forward>(x.capture.interval.unit, y._capture_IntervalUnitMenu);
-            
-            if constexpr (T_Forward) {
-                [y._capture_IntervalLabel setHidden:x.capture.count<2];
-                [y._capture_IntervalField setHidden:x.capture.count<2];
-                [y._capture_IntervalUnitMenu setHidden:x.capture.count<2];
-            }
-            
-            _Copy<T_Forward>(x.capture.flashLEDs, y._capture_FlashLEDsControl);
-        }
+        _CopyCapture<T_Forward>(x.capture, view);
         
         // Constraints
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(y._constraints_ContainerView, nil);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, y._constraints_MaxTotalTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, y._constraints_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._constraints_ContainerView, nil);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._constraints_MaxTotalTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._constraints_MaxTotalTriggerCount_Field);
         }
         
         break;
@@ -1124,74 +1112,43 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         // Schedule
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_ContainerView, y._schedule_Motion_View);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_ContainerView, v._schedule_Motion_View);
             
-            _Copy<T_Forward>(x.schedule.timeLimit.enable, y._schedule_Motion_LimitTime_Checkbox);
-            _CopyTime<T_Forward>(x.schedule.timeLimit.start, y._schedule_Motion_LimitTime_TimeStartField);
-            _CopyTime<T_Forward>(x.schedule.timeLimit.end, y._schedule_Motion_LimitTime_TimeEndField);
-            _Copy<T_Forward>(x.schedule.dayLimit.enable, y._schedule_Motion_LimitDays_Checkbox);
-            _Copy<T_Forward>(x.schedule.dayLimit.cadence, y._schedule_Motion_LimitDays_CadenceMenu);
-            
-            switch (x.schedule.dayLimit.cadence) {
-            case Trigger::Cadence::Daily:
-            case Trigger::Cadence::Weekly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._daySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
-                _Copy<T_Forward>(x.schedule.dayLimit.weekDays, y._daySelector_Control);
-                break;
-            case Trigger::Cadence::Monthly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
-                _Copy<T_Forward>(x.schedule.dayLimit.monthDays, y._monthDaySelector_Field);
-                break;
-            case Trigger::Cadence::Yearly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._dateSelector_View, y._schedule_Motion_LimitTime_TimeStartField);
-                _Copy<T_Forward>(x.schedule.dayLimit.yearDays, y._dateSelector_Field);
-                break;
-            default:
-                abort();
-            }
+            _Copy<T_Forward>(x.schedule.repeat, view);
+            _CopyTimeRangeEnable<T_Forward>(x.schedule.timeRange.enable, v._schedule_Motion_TimeRange_Menu);
+            _CopyTime<T_Forward>(x.schedule.timeRange.start, v._schedule_Motion_TimeRange_TimeStartField);
+            _CopyTime<T_Forward>(x.schedule.timeRange.end, v._schedule_Motion_TimeRange_TimeEndField);
         }
         
         // Capture
-        {
-            _Copy<T_Forward>(x.capture.count, y._capture_CountField);
-            _Copy<T_Forward>(x.capture.interval.value, y._capture_IntervalField);
-            _Copy<T_Forward>(x.capture.interval.unit, y._capture_IntervalUnitMenu);
-            
-            if constexpr (T_Forward) {
-                [y._capture_IntervalLabel setHidden:x.capture.count<2];
-                [y._capture_IntervalField setHidden:x.capture.count<2];
-                [y._capture_IntervalUnitMenu setHidden:x.capture.count<2];
-            }
-            
-            _Copy<T_Forward>(x.capture.flashLEDs, y._capture_FlashLEDsControl);
-        }
+        _CopyCapture<T_Forward>(x.capture, view);
         
         // Constraints
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(y._constraints_ContainerView, y._constraints_Motion_View, y._constraints_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._constraints_ContainerView, v._constraints_Motion_View, v._constraints_MaxTotalTriggerCount_Field);
             
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, y._constraints_Motion_IgnoreTrigger_Checkbox);
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.value, y._constraints_Motion_IgnoreTrigger_DurationField);
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.unit, y._constraints_Motion_IgnoreTrigger_DurationUnitMenu);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, v._constraints_Motion_IgnoreTrigger_Checkbox);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.value, v._constraints_Motion_IgnoreTrigger_DurationField);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.unit, v._constraints_Motion_IgnoreTrigger_DurationUnitMenu);
             
-            _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, y._constraints_Motion_MaxTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTriggerCount.count, y._constraints_Motion_MaxTriggerCount_Field);
+            _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, v._constraints_Motion_MaxTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTriggerCount.count, v._constraints_Motion_MaxTriggerCount_Field);
             
             if constexpr (T_Forward) {
-                if (!x.schedule.timeLimit.enable) {
-                    [y._constraints_Motion_MaxTriggerCount_Label setStringValue:@"times per day"];
-                    [y._constraints_Motion_MaxTriggerCount_DetailLabel setHidden:true];
+                if (!x.schedule.timeRange.enable) {
+                    [v._constraints_Motion_MaxTriggerCount_Label setStringValue:@"times per day"];
+                    [v._constraints_Motion_MaxTriggerCount_DetailLabel setHidden:true];
                 
                 } else {
-                    [y._constraints_Motion_MaxTriggerCount_Label setStringValue:@"times per schedule period"];
-                    const std::string detail = "(" + _TimeRangeDescription(x.schedule.timeLimit.start, x.schedule.timeLimit.end) + ")";
-                    [y._constraints_Motion_MaxTriggerCount_DetailLabel setStringValue:@(detail.c_str())];
-                    [y._constraints_Motion_MaxTriggerCount_DetailLabel setHidden:false];
+                    [v._constraints_Motion_MaxTriggerCount_Label setStringValue:@"times per schedule period"];
+                    const std::string detail = "(" + _TimeRangeDescription(x.schedule.timeRange.start, x.schedule.timeRange.end) + ")";
+                    [v._constraints_Motion_MaxTriggerCount_DetailLabel setStringValue:@(detail.c_str())];
+                    [v._constraints_Motion_MaxTriggerCount_DetailLabel setHidden:false];
                 }
             }
             
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, y._constraints_MaxTotalTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, y._constraints_MaxTotalTriggerCount_Field);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._constraints_MaxTotalTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._constraints_MaxTotalTriggerCount_Field);
         }
         
         break;
@@ -1302,7 +1259,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
     _Store(self, it->trigger);
     
     if (initCadence) {
-        _InitTriggerScheduleCadence(it->trigger);
+        _InitTriggerRepeat(_TriggerRepeatGet(it->trigger));
     }
     
     _Load(self, it->trigger);
@@ -1381,53 +1338,27 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
 //    NSLog(@"%@", NSStringFromSelector(_cmd));
 //    return nil;
     
-    if (field == _monthDaySelector_Field) {
-        NSLog(@"_monthDaySelector_Field");
-        
-        NSMutableArray* filtered = [NSMutableArray new];
-        for (NSString* t : tokens) {
-            auto day = Calendar::MonthDayFromString([t UTF8String]);
-            if (!day) continue;
-            MonthDayObj* obj = [MonthDayObj new];
-            obj->x = *day;
-            [filtered addObject:obj];
-        }
-        return filtered;
+    if (field != _dateSelector_Field) abort();
     
-    } else if (field == _dateSelector_Field) {
-        NSLog(@"_dateSelector_Field");
-        
-        NSMutableArray* filtered = [NSMutableArray new];
-        for (NSString* x : tokens) {
-            auto day = Calendar::YearDayFromString([x UTF8String]);
-            if (!day) continue;
-            YearDayObj* obj = [YearDayObj new];
-            obj->x = *day;
-            [filtered addObject:obj];
-        }
-        return filtered;
-    
-    } else {
-        abort();
+    NSLog(@"_dateSelector_Field");
+    NSMutableArray* filtered = [NSMutableArray new];
+    for (NSString* x : tokens) {
+        auto day = Calendar::YearDayFromString([x UTF8String]);
+        if (!day) continue;
+        YearDayObj* obj = [YearDayObj new];
+        obj->x = *day;
+        [filtered addObject:obj];
     }
+    return filtered;
 }
 
 - (NSString*)tokenField:(NSTokenField*)field displayStringForRepresentedObject:(id)obj {
-    if (field == _monthDaySelector_Field) {
-        if (MonthDayObj* x = Toastbox::CastOrNull<MonthDayObj*>(obj)) {
-            return @(Calendar::StringFromMonthDay(x->x).c_str());
-        }
-        return obj;
+    if (field != _dateSelector_Field) abort();
     
-    } else if (field == _dateSelector_Field) {
-        if (YearDayObj* x = Toastbox::CastOrNull<YearDayObj*>(obj)) {
-            return @(Calendar::StringFromYearDay(x->x).c_str());
-        }
-        return obj;
-    
-    } else {
-        abort();
+    if (YearDayObj* x = Toastbox::CastOrNull<YearDayObj*>(obj)) {
+        return @(Calendar::StringFromYearDay(x->x).c_str());
     }
+    return obj;
 }
 
 //- (NSString*)tokenField:(NSTokenField*)field editingStringForRepresentedObject:(id)obj {
