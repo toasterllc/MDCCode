@@ -1009,7 +1009,7 @@ static void _Copy(Trigger::Repeat& x, CaptureTriggersView* view) {
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._intervalSelector_View, v._repeat_Menu);
         _Copy<T_Forward>(x.interval, v._intervalSelector_Field);
         if constexpr (T_Forward) {
-            [v._intervalSelector_DescriptionLabel setStringValue:@(_IntervalDetailedDescription(x.interval).c_str())];
+            [v._intervalSelector_DescriptionLabel setStringValue:@(("(" + _IntervalDetailedDescription(x.interval) + ")").c_str())];
         }
         break;
     default:
