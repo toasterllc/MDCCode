@@ -163,13 +163,13 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
             .time = _TimeStartInit,
             .repeat = {
                 .type = Trigger::Repeat::Type::Daily,
-            }
+            },
         };
         
         x.capture = {
-            .count = 3,
+            .count = 1,
             .interval = Trigger::Duration{
-                .value = 1,
+                .value = 0,
                 .unit = Trigger::Duration::Unit::Seconds,
             },
             .flashLEDs = Trigger::LEDs::None,
@@ -190,20 +190,19 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         
         x.schedule = {
             .timeRange = {
-                .enable = true,
+                .enable = false,
                 .start = _TimeStartInit,
                 .end = _TimeEndInit,
             },
             .repeat = {
-                .type = Trigger::Repeat::Type::WeekDays,
-                .weekDays = _WeekDaysInit,
+                .type = Trigger::Repeat::Type::Daily,
             },
         };
         
         x.capture = {
-            .count = 3,
+            .count = 1,
             .interval = Trigger::Duration{
-                .value = 1,
+                .value = 0,
                 .unit = Trigger::Duration::Unit::Seconds,
             },
             .flashLEDs = Trigger::LEDs::None,
@@ -240,15 +239,14 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
                 .end = _TimeEndInit,
             },
             .repeat = {
-                .type = Trigger::Repeat::Type::WeekDays,
-                .weekDays = _WeekDaysInit,
+                .type = Trigger::Repeat::Type::Daily,
             },
         };
         
         x.capture = {
             .count = 1,
             .interval = Trigger::Duration{
-                .value = 1,
+                .value = 0,
                 .unit = Trigger::Duration::Unit::Seconds,
             },
             .flashLEDs = Trigger::LEDs::None,
@@ -463,18 +461,6 @@ static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
 
 
 
-//static std::optional<Calendar::MonthDays> _MonthDaysForString(std::string_view x) {
-//    uint32_t val = 0;
-//    try {
-//        Toastbox::IntForStr(val, x);
-//    } catch (...) { return std::nullopt; }
-//    if (val<1 || val>31) return std::nullopt;
-//    return (Calendar::MonthDays)(1<<val);
-//}
-
-
-
-
 
 
 
@@ -544,12 +530,6 @@ static std::string _WeekDaysDescription(const Calendar::WeekDays& x) {
     
     if (count>0 && count<4) return r;
     return std::to_string(count) + " days per week";
-}
-
-static std::string _MonthDaysDescription(const Calendar::MonthDays& x) {
-    const size_t count = VectorFromMonthDays(x).size();
-    if (count == 1) return "1 day per month";
-    return std::to_string(count) + " days per month";
 }
 
 static std::string _YearDaysDescription(const Calendar::YearDays& x) {
@@ -839,12 +819,6 @@ static void _Init(CaptureTriggersView* self) {
 //    _ListItemAdd(self, Trigger::Type::Motion);
     _ListItemAdd(self, Trigger::Type::Button);
     
-//    {
-//        NSMutableCharacterSet* set = [[self->_monthDaySelector_Field tokenizingCharacterSet] mutableCopy];
-//        [set addCharactersInString:@" "];
-//        [self->_monthDaySelector_Field setTokenizingCharacterSet:set];
-//    }
-    
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
     
     _ContainerSubviewAdd(self->_containerView, self->_detailView);
@@ -967,31 +941,6 @@ static void _Copy(Calendar::WeekDays& x, NSSegmentedControl* control) {
             idx++;
         }
         x = static_cast<X>(r);
-    }
-}
-
-template<bool T_Forward>
-static void _Copy(Calendar::MonthDays& x, NSTokenField* field) {
-    using X = std::remove_reference_t<decltype(x)>;
-    if constexpr (T_Forward) {
-        NSMutableArray* tokens = [NSMutableArray new];
-        std::vector<Calendar::MonthDay> days = VectorFromMonthDays(x);
-        for (Calendar::MonthDay day : days) {
-            MonthDayObj* x = [MonthDayObj new];
-            x->x = day;
-            [tokens addObject:x];
-        }
-        [field setObjectValue:tokens];
-    
-    } else {
-        NSArray* tokens = Toastbox::CastOrNull<NSArray*>([field objectValue]);
-        std::vector<Calendar::MonthDay> days;
-        for (id t : tokens) {
-            MonthDayObj* x = Toastbox::CastOrNull<MonthDayObj*>(t);
-            if (!x) continue;
-            days.push_back(x->x);
-        }
-        x = MonthDaysFromVector(days);
     }
 }
 
@@ -1226,26 +1175,6 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 
 
 
-
-
-//static void _MonthDaysLoad(const Calendar::MonthDays& days, NSSegmentedControl* control) {
-//    using D = Calendar::WeekDays_;
-//    size_t idx = 0;
-//    for (Calendar::WeekDays day : { D::Mon, D::Tue, D::Wed, D::Thu, D::Fri, D::Sat, D::Sun }) {
-//        [control setSelected:(days & day) forSegment:idx];
-//        idx++;
-//    }
-//}
-//
-//static void _MonthDaysStore(Calendar::MonthDays& days, NSSegmentedControl* control) {
-//    using D = Calendar::WeekDays_;
-//    size_t idx = 0;
-//    for (Calendar::WeekDays day : { D::Mon, D::Tue, D::Wed, D::Thu, D::Fri, D::Sat, D::Sun }) {
-//        days |= ([control isSelectedForSegment:idx] ? day : 0);
-//        idx++;
-//    }
-//}
-
 // MARK: - Actions
 
 - (ListItem*)_selectedItem {
@@ -1388,29 +1317,5 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     }
     return obj;
 }
-
-//- (NSString*)tokenField:(NSTokenField*)field editingStringForRepresentedObject:(id)obj {
-//    if (field == _monthDaySelector_Field) {
-//        return nil;
-//    
-//    } else if (field == _dateSelector_Field) {
-//        return nil;
-//    
-//    } else {
-//        abort();
-//    }
-//}
-
-//- (id)tokenField:(NSTokenField*)field representedObjectForEditingString:(NSString*)str {
-//    if (field == _monthDaySelector_Field) {
-//        return nil;
-//    
-//    } else if (field == _dateSelector_Field) {
-//        return nil;
-//    
-//    } else {
-//        abort();
-//    }
-//}
 
 @end
