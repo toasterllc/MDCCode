@@ -334,7 +334,7 @@ static std::string StringFromRepeatType(const Trigger::Repeat::Type& x) {
     case X::Daily:      return "every day";
     case X::WeekDays:   return "on days";
     case X::YearDays:   return "on dates";
-    case X::Interval:   return "with interval";
+    case X::Interval:   return "on interval";
     default:            abort();
     }
 }
@@ -345,7 +345,7 @@ static Trigger::Repeat::Type RepeatTypeFromString(std::string x) {
          if (x == "every day")     return X::Daily;
     else if (x == "on days")       return X::WeekDays;
     else if (x == "on dates")      return X::YearDays;
-    else if (x == "with interval") return X::Interval;
+    else if (x == "on interval")   return X::Interval;
     else abort();
 }
 
