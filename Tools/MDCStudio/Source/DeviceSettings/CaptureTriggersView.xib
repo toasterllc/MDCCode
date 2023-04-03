@@ -79,7 +79,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="0.0" y="0.0" width="455" height="50"/>
+                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="12" y="9" width="32" height="32"/>
@@ -363,7 +363,7 @@ Gw
                 <segmentedControl horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
                     <rect key="frame" x="79" y="211" width="92" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectAny" id="8hR-9j-fJM">
-                        <font key="font" metaFont="controlContent" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <segments>
                             <segment label="Green"/>
                             <segment label="Red" selected="YES" tag="1"/>
@@ -377,15 +377,15 @@ Gw
                     <rect key="frame" x="65" y="409" width="435" height="5"/>
                 </box>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="UR7-ZS-KAS">
-                    <rect key="frame" x="-2" y="312" width="53" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Capture" id="ktr-2v-cCc">
+                    <rect key="frame" x="-2" y="312" width="52" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Options" id="ktr-2v-cCc">
                         <font key="font" usesAppearanceFont="YES"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <box verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="u1N-yv-zO7">
-                    <rect key="frame" x="57" y="318" width="443" height="5"/>
+                    <rect key="frame" x="56" y="318" width="444" height="5"/>
                 </box>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="MFX-Ck-e2M">
                     <rect key="frame" x="18" y="103" width="169" height="18"/>
@@ -552,18 +552,21 @@ Gw
             <point key="canvasLocation" x="632" y="-672.5"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Schedule - Time" customClass="CaptureTriggersView_ContainerSubview">
-            <rect key="frame" x="0.0" y="0.0" width="491" height="96"/>
+            <rect key="frame" x="0.0" y="0.0" width="391" height="96"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="PfN-UJ-gre">
-                    <rect key="frame" x="-2" y="78" width="38" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Time:" id="9yo-Wm-9si">
+                    <rect key="frame" x="-2" y="78" width="72" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Capture at:" id="9yo-Wm-9si">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Vfd-bm-n7h">
-                    <rect key="frame" x="42" y="75" width="449" height="21"/>
+                    <rect key="frame" x="76" y="75" width="90" height="21"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="90" id="nVG-ul-wSZ"/>
+                    </constraints>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="22A-Qe-TQ7">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -574,11 +577,10 @@ Gw
                     </connections>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="7zE-QH-sSw">
-                    <rect key="frame" x="0.0" y="0.0" width="491" height="63"/>
+                    <rect key="frame" x="0.0" y="0.0" width="391" height="63"/>
                 </customView>
             </subviews>
             <constraints>
-                <constraint firstAttribute="trailing" secondItem="Vfd-bm-n7h" secondAttribute="trailing" id="0QH-ko-015"/>
                 <constraint firstAttribute="trailing" secondItem="7zE-QH-sSw" secondAttribute="trailing" id="KqK-8x-v9x"/>
                 <constraint firstItem="PfN-UJ-gre" firstAttribute="leading" secondItem="bvu-Ek-Vhq" secondAttribute="leading" priority="750" id="MJx-8D-2I6"/>
                 <constraint firstItem="PfN-UJ-gre" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="bvu-Ek-Vhq" secondAttribute="leading" id="NdV-nh-hBs"/>
@@ -589,7 +591,7 @@ Gw
                 <constraint firstItem="Vfd-bm-n7h" firstAttribute="top" secondItem="bvu-Ek-Vhq" secondAttribute="top" id="f3k-g5-g7w"/>
                 <constraint firstItem="Vfd-bm-n7h" firstAttribute="leading" secondItem="PfN-UJ-gre" secondAttribute="trailing" constant="8" id="lcj-MG-JtQ"/>
             </constraints>
-            <point key="canvasLocation" x="-119.5" y="-13"/>
+            <point key="canvasLocation" x="-183" y="-16"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Schedule - Motion" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="570" height="120"/>
@@ -660,7 +662,7 @@ Gw
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
                     <rect key="frame" x="18" y="92" width="534" height="28"/>
                     <textFieldCell key="cell" title="You can limit the time period that your MDCDevice is sensitive to motion, which will extend its battery life." id="Oar-aS-K64">
-                        <font key="font" metaFont="controlContent" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -749,7 +751,7 @@ Gw
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
                     <rect key="frame" x="-2" y="-2" width="301" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="controlContent" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>
