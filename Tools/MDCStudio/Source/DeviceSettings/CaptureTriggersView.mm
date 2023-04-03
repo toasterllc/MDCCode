@@ -559,12 +559,14 @@ static std::string _YearDaysDescription(const Calendar::YearDays& x) {
 }
 
 static std::string _IntervalDescription(uint32_t x) {
+    if (x == 0) return "every day";
     if (x == 1) return "every day";
     if (x == 2) return "every other day";
     return "every " + std::to_string(x) + " days";
 }
 
 static std::string _IntervalDetailedDescription(uint32_t x) {
+    if (x == 0) return "every day";
     if (x == 1) return "every day";
     if (x == 2) return "every other day";
     return "1 day on, " + std::to_string(x-1) + " days off";
@@ -758,9 +760,8 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_Field;
     IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_Label;
     IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_DetailLabel;
-    
-    IBOutlet NSButton*      _constraints_MaxTotalTriggerCount_Checkbox;
-    IBOutlet NSTextField*   _constraints_MaxTotalTriggerCount_Field;
+    IBOutlet NSButton*          _constraints_MaxTotalTriggerCount_Checkbox;
+    IBOutlet NSTextField*       _constraints_MaxTotalTriggerCount_Field;
     
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
@@ -1061,6 +1062,18 @@ static void _CopyTimeRangeEnable(bool& x, NSPopUpButton* menu) {
     }
 }
 
+template<bool T_Forward, typename T_TimeRange>
+static void _CopyTimeRange(T_TimeRange& x, CaptureTriggersView* view) {
+    auto& v = *view;
+    _CopyTimeRangeEnable<T_Forward>(x.enable, v._schedule_Motion_TimeRange_Menu);
+    _CopyTime<T_Forward>(x.start, v._schedule_Motion_TimeRange_TimeStartField);
+    _CopyTime<T_Forward>(x.end, v._schedule_Motion_TimeRange_TimeEndField);
+    if constexpr (T_Forward) {
+        [v._schedule_Motion_TimeRange_TimeStartField setEnabled:x.enable];
+        [v._schedule_Motion_TimeRange_TimeEndField setEnabled:x.enable];
+    }
+}
+
 template<bool T_Forward, typename T_Capture>
 static void _CopyCapture(T_Capture& x, CaptureTriggersView* view) {
     auto& v = *view;
@@ -1115,9 +1128,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_ContainerView, v._schedule_Motion_View);
             
             _Copy<T_Forward>(x.schedule.repeat, view);
-            _CopyTimeRangeEnable<T_Forward>(x.schedule.timeRange.enable, v._schedule_Motion_TimeRange_Menu);
-            _CopyTime<T_Forward>(x.schedule.timeRange.start, v._schedule_Motion_TimeRange_TimeStartField);
-            _CopyTime<T_Forward>(x.schedule.timeRange.end, v._schedule_Motion_TimeRange_TimeEndField);
+            _CopyTimeRange<T_Forward>(x.schedule.timeRange, view);
         }
         
         // Capture
@@ -1235,7 +1246,7 @@ static void _Load(CaptureTriggersView* self, Trigger& trigger) {
     [[self window] recalculateKeyViewLoop];
 }
 
-static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
+static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     // Prevent re-entry, because our committing logic can trigger multiple calls
     if (self->_actionViewChangedUnderway) return;
     self->_actionViewChangedUnderway = true;
@@ -1258,7 +1269,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
     
     _Store(self, it->trigger);
     
-    if (initCadence) {
+    if (initRepeat) {
         _InitTriggerRepeat(_TriggerRepeatGet(it->trigger));
     }
     
@@ -1275,7 +1286,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
     _StoreLoad(self);
 }
 
-- (IBAction)_actionScheduleCadenceChanged:(id)sender {
+- (IBAction)_actionRepeatMenuChanged:(id)sender {
     _StoreLoad(self, true);
 }
 
