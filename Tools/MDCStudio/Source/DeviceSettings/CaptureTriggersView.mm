@@ -854,16 +854,16 @@ static void _ContainerSubviewAdd(NSView* container, ContainerSubview* subview, N
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[subview]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
     
-//    if (alignView) {
-//        [constraints addObject:[[subview->alignView leadingAnchor] constraintEqualToAnchor:[alignView leadingAnchor]]];
-//    }
+    if (alignView) {
+        [constraints addObject:[[subview->alignView leadingAnchor] constraintEqualToAnchor:[alignView leadingAnchor]]];
+    }
     
     [NSLayoutConstraint activateConstraints:constraints];
 }
 
 static void _ContainerSubviewSet(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
     // Either subview==nil, or existence of `alignView` matches existence of `subview->alignView`
-//    assert(!subview || ((bool)alignView == (bool)subview->alignView));
+    assert(!subview || ((bool)alignView == (bool)subview->alignView));
     // Short-circuit if `subview` is already the subview of `container`
     if ([subview superview] == container) return;
     
@@ -1110,7 +1110,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         // Constraints
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_Motion_View, v._battery_Motion_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_Motion_View);
             
             _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, v._battery_Motion_IgnoreTrigger_Checkbox);
             _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.value, v._battery_Motion_IgnoreTrigger_DurationField);

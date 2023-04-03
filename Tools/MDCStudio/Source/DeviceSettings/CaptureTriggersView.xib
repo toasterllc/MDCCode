@@ -298,7 +298,7 @@ Gw
             </constraints>
             <point key="canvasLocation" x="410" y="-352"/>
         </customView>
-        <customView misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MTQ-az-LcE" userLabel="Detail View" customClass="CaptureTriggersView_ContainerSubview">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="MTQ-az-LcE" userLabel="Detail View" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="500" height="345"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="9iW-US-9Nz">
@@ -309,14 +309,14 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView translatesAutoresizingMaskIntoConstraints="NO" id="4R1-In-Kbb" userLabel="Time Container View">
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="4R1-In-Kbb" userLabel="Schedule Container View">
                     <rect key="frame" x="0.0" y="245" width="500" height="100"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="100" placeholder="YES" id="XZ0-4g-Xcr"/>
                         <constraint firstAttribute="height" priority="750" id="ctV-RE-SeS"/>
                     </constraints>
                 </customView>
-                <customView translatesAutoresizingMaskIntoConstraints="NO" id="2Xg-db-P6E" userLabel="Limits Container View">
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="2Xg-db-P6E" userLabel="Battery Container View">
                     <rect key="frame" x="0.0" y="0.0" width="500" height="100"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="100" placeholder="YES" id="0pN-eW-sEB"/>
@@ -334,7 +334,7 @@ Gw
                 <segmentedControl horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
                     <rect key="frame" x="79" y="128" width="92" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectAny" id="8hR-9j-fJM">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Green"/>
                             <segment label="Red" selected="YES" tag="1"/>
@@ -434,7 +434,7 @@ Gw
                 </textField>
             </subviews>
             <constraints>
-                <constraint firstAttribute="bottom" secondItem="2Xg-db-P6E" secondAttribute="bottom" id="4kv-Ad-55Q"/>
+                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="2Xg-db-P6E" secondAttribute="bottom" id="4kv-Ad-55Q"/>
                 <constraint firstItem="zlI-fc-Hnz" firstAttribute="firstBaseline" secondItem="Rsa-ll-JvR" secondAttribute="firstBaseline" id="8ia-QT-YbF"/>
                 <constraint firstItem="UR7-ZS-KAS" firstAttribute="top" secondItem="4R1-In-Kbb" secondAttribute="bottom" id="ACe-Vi-mNf"/>
                 <constraint firstItem="u1N-yv-zO7" firstAttribute="leading" secondItem="UR7-ZS-KAS" secondAttribute="trailing" constant="8" id="BLC-MG-fXO"/>
@@ -600,7 +600,7 @@ Gw
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
                     <rect key="frame" x="18" y="286" width="534" height="28"/>
                     <textFieldCell key="cell" title="You can set the time period that your MDCDevice is sensitive to motion, which extends its battery life." id="Oar-aS-K64">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -948,7 +948,7 @@ Gw
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
                     <rect key="frame" x="-2" y="-2" width="301" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>
