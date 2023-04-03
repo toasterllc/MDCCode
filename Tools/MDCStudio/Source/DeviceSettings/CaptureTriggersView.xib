@@ -361,9 +361,9 @@ Gw
                     </connections>
                 </textField>
                 <segmentedControl horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
-                    <rect key="frame" x="80" y="227" width="102" height="20"/>
-                    <segmentedCell key="cell" borderStyle="border" alignment="left" style="roundRect" trackingMode="selectAny" id="8hR-9j-fJM">
-                        <font key="font" metaFont="controlContent"/>
+                    <rect key="frame" x="79" y="226" width="92" height="21"/>
+                    <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectAny" id="8hR-9j-fJM">
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Green"/>
                             <segment label="Red" selected="YES" tag="1"/>
@@ -475,7 +475,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="zlI-fc-Hnz">
-                    <rect key="frame" x="187" y="230" width="185" height="16"/>
+                    <rect key="frame" x="175" y="230" width="185" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="LED when capturing an image" id="zxW-CW-Coo">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -733,12 +733,12 @@ Gw
             <point key="canvasLocation" x="447" y="269"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Day Selector" customClass="CaptureTriggersView_ContainerSubview">
-            <rect key="frame" x="0.0" y="0.0" width="340" height="30"/>
+            <rect key="frame" x="0.0" y="0.0" width="340" height="26"/>
             <subviews>
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
-                    <rect key="frame" x="-1" y="-1" width="300" height="20"/>
-                    <segmentedCell key="cell" borderStyle="border" alignment="left" style="roundRect" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="controlContent"/>
+                    <rect key="frame" x="-2" y="-2" width="301" height="21"/>
+                    <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>
@@ -755,7 +755,7 @@ Gw
                 </segmentedControl>
             </subviews>
             <constraints>
-                <constraint firstItem="WO9-Yi-XDc" firstAttribute="top" secondItem="YrJ-S7-rqE" secondAttribute="top" constant="12" id="EHd-EF-Wbr"/>
+                <constraint firstItem="WO9-Yi-XDc" firstAttribute="top" secondItem="YrJ-S7-rqE" secondAttribute="top" constant="8" id="EHd-EF-Wbr"/>
                 <constraint firstAttribute="bottom" secondItem="WO9-Yi-XDc" secondAttribute="bottom" id="Iw8-9t-p5w"/>
                 <constraint firstItem="WO9-Yi-XDc" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="YrJ-S7-rqE" secondAttribute="leading" id="NZO-x5-lEJ"/>
                 <constraint firstItem="WO9-Yi-XDc" firstAttribute="leading" secondItem="YrJ-S7-rqE" secondAttribute="leading" priority="750" id="Q1Q-L7-MBB"/>
@@ -767,7 +767,7 @@ Gw
             <point key="canvasLocation" x="-246" y="91"/>
         </customView>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Date Selector" customClass="CaptureTriggersView_ContainerSubview">
-            <rect key="frame" x="0.0" y="0.0" width="338" height="33"/>
+            <rect key="frame" x="0.0" y="0.0" width="338" height="29"/>
             <subviews>
                 <tokenField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="38b-nv-tEn" customClass="TokenField">
                     <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
@@ -783,7 +783,7 @@ Gw
                 </tokenField>
             </subviews>
             <constraints>
-                <constraint firstItem="38b-nv-tEn" firstAttribute="top" secondItem="U49-dv-RHU" secondAttribute="top" constant="12" id="AHY-N9-B31"/>
+                <constraint firstItem="38b-nv-tEn" firstAttribute="top" secondItem="U49-dv-RHU" secondAttribute="top" constant="8" id="AHY-N9-B31"/>
                 <constraint firstItem="38b-nv-tEn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="U49-dv-RHU" secondAttribute="leading" id="Jsb-hR-A5p"/>
                 <constraint firstAttribute="trailing" secondItem="38b-nv-tEn" secondAttribute="trailing" id="VXe-jg-40w"/>
                 <constraint firstAttribute="bottom" secondItem="38b-nv-tEn" secondAttribute="bottom" id="jTy-Sd-CX0"/>
@@ -796,7 +796,7 @@ Gw
         </customView>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="F0b-7x-6jH" userLabel="Interval Selector" customClass="CaptureTriggersView_ContainerSubview">
-            <rect key="frame" x="0.0" y="0.0" width="163" height="33"/>
+            <rect key="frame" x="0.0" y="0.0" width="163" height="29"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Kej-fU-cQZ">
                     <rect key="frame" x="56" y="3" width="33" height="16"/>
@@ -836,7 +836,7 @@ Gw
                 <constraint firstItem="2YV-iT-BmO" firstAttribute="leading" secondItem="Kej-fU-cQZ" secondAttribute="trailing" constant="8" id="Kcp-HX-Ak4"/>
                 <constraint firstItem="bhM-F8-1Bt" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="F0b-7x-6jH" secondAttribute="leading" id="XVw-fU-9p4"/>
                 <constraint firstAttribute="bottom" secondItem="bhM-F8-1Bt" secondAttribute="bottom" id="aNx-Rp-QIf"/>
-                <constraint firstItem="bhM-F8-1Bt" firstAttribute="top" secondItem="F0b-7x-6jH" secondAttribute="top" constant="12" id="bUQ-9A-Ht3"/>
+                <constraint firstItem="bhM-F8-1Bt" firstAttribute="top" secondItem="F0b-7x-6jH" secondAttribute="top" constant="8" id="bUQ-9A-Ht3"/>
                 <constraint firstItem="bhM-F8-1Bt" firstAttribute="leading" secondItem="F0b-7x-6jH" secondAttribute="leading" priority="750" id="egv-sL-Aer"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="2YV-iT-BmO" secondAttribute="trailing" id="iww-cd-tIN"/>
                 <constraint firstItem="Kej-fU-cQZ" firstAttribute="firstBaseline" secondItem="bhM-F8-1Bt" secondAttribute="firstBaseline" id="rcf-LU-iaz"/>
