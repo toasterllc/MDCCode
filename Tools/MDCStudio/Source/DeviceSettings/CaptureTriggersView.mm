@@ -990,8 +990,11 @@ static void _Copy(Trigger::LEDs& x, NSSegmentedControl* control) {
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::Repeat& x, CaptureTriggersView* view) {
+static void _Copy(Trigger::Repeat& x, CaptureTriggersView* view, const char* menuLabel) {
     auto& v = *view;
+    
+    if (T_Forward) [v._repeat_MenuLabel setStringValue:@(menuLabel)];
+    
     _Copy<T_Forward>(x.type, v._repeat_Menu);
     switch (x.type) {
     case Trigger::Repeat::Type::Daily:
@@ -1068,7 +1071,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_Time_RepeatContainerView, v._repeat_View, v._schedule_Time_TimeField);
             
             _CopyTime<T_Forward>(x.schedule.time, v._schedule_Time_TimeField);
-            _Copy<T_Forward>(x.schedule.repeat, view);
+            _Copy<T_Forward>(x.schedule.repeat, view, "Repeat:");
         }
         
         // Capture
@@ -1093,7 +1096,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_ContainerView, v._schedule_Motion_View);
             if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_Motion_RepeatContainerView, v._repeat_View, v._schedule_Motion_TimeRange_Menu);
             
-            _Copy<T_Forward>(x.schedule.repeat, view);
+            _Copy<T_Forward>(x.schedule.repeat, view, "Active:");
             _CopyTimeRange<T_Forward>(x.schedule.timeRange, view);
         }
         
