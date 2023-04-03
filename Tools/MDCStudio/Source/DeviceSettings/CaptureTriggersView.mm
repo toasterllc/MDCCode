@@ -631,7 +631,23 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     }
     
     // Subtitle
-    const std::string subtitle = _Capitalize(_RepeatDescription(_TriggerRepeatGet(trigger)));
+    auto& repeat = _TriggerRepeatGet(trigger);
+    std::string subtitle = _Capitalize(_RepeatDescription(repeat));
+    switch (trigger.type) {
+    case Trigger::Type::Motion:
+    case Trigger::Type::Button: {
+        auto& x = trigger.motionButton;
+        if (repeat.type == Trigger::Repeat::Type::Daily) subtitle = "";
+        if (x.schedule.timeRange.enable) {
+            if (!subtitle.empty()) subtitle += ", ";
+            subtitle += _TimeRangeDescription(x.schedule.timeRange.start, x.schedule.timeRange.end);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    
     if (!subtitle.empty()) {
         [_subtitleLabel setStringValue:@(subtitle.c_str())];
         // When we have a subtitle, center title+subtitle as a group by allowing _titleCenterYConstraint to be overridden
@@ -1126,6 +1142,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         // Schedule
         {
             if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_ContainerView, v._schedule_Motion_View);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_Motion_RepeatContainerView, v._repeat_View, v._schedule_Motion_TimeRange_Menu);
             
             _Copy<T_Forward>(x.schedule.repeat, view);
             _CopyTimeRange<T_Forward>(x.schedule.timeRange, view);
