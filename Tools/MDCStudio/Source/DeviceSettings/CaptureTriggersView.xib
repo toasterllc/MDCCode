@@ -24,7 +24,14 @@
                 <outlet property="_constraints_Motion_MaxTriggerCount_Label" destination="1RP-5M-ifT" id="olZ-Ve-Vks"/>
                 <outlet property="_constraints_Motion_View" destination="ihD-Oq-dCa" id="YXK-Cn-uA3"/>
                 <outlet property="_containerView" destination="fUr-DU-jha" id="a5s-0W-xX1"/>
+                <outlet property="_dateSelector_Field" destination="38b-nv-tEn" id="pe6-UW-ghG"/>
+                <outlet property="_dateSelector_View" destination="U49-dv-RHU" id="lCm-Lj-O6f"/>
+                <outlet property="_daySelector_Control" destination="WO9-Yi-XDc" id="aX8-O8-AU4"/>
+                <outlet property="_daySelector_View" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
                 <outlet property="_detailView" destination="MTQ-az-LcE" id="saN-XS-2WM"/>
+                <outlet property="_intervalSelector_DescriptionLabel" destination="2YV-iT-BmO" id="mSR-6Y-Aer"/>
+                <outlet property="_intervalSelector_Field" destination="2Au-XF-sqi" id="s2M-3N-iPD"/>
+                <outlet property="_intervalSelector_View" destination="F0b-7x-6jH" id="xii-eu-ibn"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
                 <outlet property="_noSelectionView" destination="GNq-2s-vXR" id="7kd-Ll-yV1"/>
                 <outlet property="_schedule_ContainerView" destination="4R1-In-Kbb" id="cwH-BJ-Tmv"/>
@@ -38,10 +45,6 @@
                 <outlet property="_schedule_Time_TimeField" destination="Vfd-bm-n7h" id="hHH-4i-GdL"/>
                 <outlet property="_schedule_Time_View" destination="bvu-Ek-Vhq" id="Sbb-1d-ZG7"/>
                 <outlet property="_tableView" destination="RfV-Mq-Pvl" id="hYB-B3-xIy"/>
-                <outlet property="_weekDaySelector_Control" destination="WO9-Yi-XDc" id="aX8-O8-AU4"/>
-                <outlet property="_weekDaySelector_View" destination="YrJ-S7-rqE" id="ssP-Ha-NaG"/>
-                <outlet property="_yearDaySelector_Field" destination="38b-nv-tEn" id="pe6-UW-ghG"/>
-                <outlet property="_yearDaySelector_View" destination="U49-dv-RHU" id="lCm-Lj-O6f"/>
             </connections>
         </customObject>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
@@ -292,7 +295,7 @@ Gw
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="MTQ-az-LcE" userLabel="Detail View" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="500" height="419"/>
             <subviews>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="9iW-US-9Nz">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="9iW-US-9Nz">
                     <rect key="frame" x="18" y="294" width="57" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Capture:" id="3eT-Tn-JeZ">
                         <font key="font" metaFont="system"/>
@@ -316,7 +319,7 @@ Gw
                         <constraint firstAttribute="height" priority="250" id="zHO-Fb-PUI"/>
                     </constraints>
                 </customView>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WG6-sL-UzH">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WG6-sL-UzH">
                     <rect key="frame" x="281" y="131" width="178" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="(until device is reconfigured)" id="ceU-Rb-6kH">
                         <font key="font" metaFont="system"/>
@@ -324,7 +327,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="dgh-l6-oxS">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="dgh-l6-oxS">
                     <rect key="frame" x="35" y="230" width="40" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Flash:" id="6yc-Uk-oUh">
                         <font key="font" metaFont="system"/>
@@ -332,7 +335,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="pjC-Tk-6eR">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="pjC-Tk-6eR">
                     <rect key="frame" x="-2" y="194" width="74" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Constraints" id="xmc-H2-G9J">
                         <font key="font" usesAppearanceFont="YES"/>
@@ -340,7 +343,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="dmd-uc-OsP">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="dmd-uc-OsP">
                     <rect key="frame" x="193" y="128" width="40" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="n9c-QN-Ixm"/>
@@ -354,7 +357,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="EdG-T0-T1k"/>
                     </connections>
                 </textField>
-                <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
+                <segmentedControl horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
                     <rect key="frame" x="80" y="227" width="102" height="20"/>
                     <segmentedCell key="cell" borderStyle="border" alignment="left" style="roundRect" trackingMode="selectAny" id="8hR-9j-fJM">
                         <font key="font" metaFont="system" size="12"/>
@@ -370,7 +373,7 @@ Gw
                 <box verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="gJ9-mx-gRD">
                     <rect key="frame" x="65" y="409" width="435" height="5"/>
                 </box>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="UR7-ZS-KAS">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="UR7-ZS-KAS">
                     <rect key="frame" x="-2" y="327" width="53" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Capture" id="ktr-2v-cCc">
                         <font key="font" usesAppearanceFont="YES"/>
@@ -381,7 +384,7 @@ Gw
                 <box verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="u1N-yv-zO7">
                     <rect key="frame" x="57" y="333" width="443" height="5"/>
                 </box>
-                <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="MFX-Ck-e2M">
+                <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="MFX-Ck-e2M">
                     <rect key="frame" x="18" y="130" width="169" height="18"/>
                     <buttonCell key="cell" type="check" title="Limit total trigger count:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ytX-qa-bds">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -391,7 +394,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="FGu-HE-Xub"/>
                     </connections>
                 </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="oIx-Tj-uov">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="oIx-Tj-uov">
                     <rect key="frame" x="-2" y="403" width="61" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Schedule" id="HLc-23-609">
                         <font key="font" usesAppearanceFont="YES"/>
@@ -399,7 +402,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0cY-aD-cNx">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0cY-aD-cNx">
                     <rect key="frame" x="239" y="131" width="38" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="times" id="lWH-LJ-Bso">
                         <font key="font" metaFont="system"/>
@@ -407,7 +410,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Yym-4z-PG4">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Yym-4z-PG4">
                     <rect key="frame" x="81" y="291" width="40" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="fRT-ql-hvJ"/>
@@ -421,7 +424,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="aYd-6b-f1u"/>
                     </connections>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="i1A-N3-hrL">
+                <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="i1A-N3-hrL">
                     <rect key="frame" x="127" y="255" width="90" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="seconds" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="guS-Av-qht" id="6nJ-25-Hvp">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -438,7 +441,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="P39-MF-07N"/>
                     </connections>
                 </popUpButton>
-                <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WTE-Pb-dq9">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WTE-Pb-dq9">
                     <rect key="frame" x="81" y="258" width="40" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="ux7-XG-HIO"/>
@@ -452,7 +455,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="UlD-c7-BnN"/>
                     </connections>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="uDa-XG-QN2">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="uDa-XG-QN2">
                     <rect key="frame" x="127" y="294" width="143" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="images when triggered" id="I4u-vb-OAa">
                         <font key="font" metaFont="system"/>
@@ -460,7 +463,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="uyQ-Us-DO2">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="uyQ-Us-DO2">
                     <rect key="frame" x="220" y="261" width="129" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="between each image" id="hij-CQ-5gb">
                         <font key="font" metaFont="system"/>
@@ -468,7 +471,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="zlI-fc-Hnz">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="zlI-fc-Hnz">
                     <rect key="frame" x="187" y="230" width="185" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="LED when capturing an image" id="zxW-CW-Coo">
                         <font key="font" metaFont="system"/>
@@ -476,7 +479,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WSs-FH-tIi">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WSs-FH-tIi">
                     <rect key="frame" x="40" y="261" width="35" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Wait:" id="W1q-Ew-f76">
                         <font key="font" metaFont="system"/>
@@ -549,7 +552,7 @@ Gw
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZTq-dS-LMW" userLabel="Schedule - Motion" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="572" height="96"/>
             <subviews>
-                <popUpButton verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="RN5-cz-MIP">
+                <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="RN5-cz-MIP">
                     <rect key="frame" x="48" y="72" width="114" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="Every day" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="czL-8b-ksL" id="6OU-7c-MaS">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -574,7 +577,7 @@ Gw
                         <constraint firstAttribute="height" priority="250" id="RgM-qq-SGC"/>
                     </constraints>
                 </customView>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZDT-0E-VY7">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZDT-0E-VY7">
                     <rect key="frame" x="-2" y="78" width="46" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Active:" id="aZ7-eh-Vn7">
                         <font key="font" metaFont="system"/>
@@ -582,7 +585,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="jlP-Se-MW3">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="jlP-Se-MW3">
                     <rect key="frame" x="6" y="3" width="38" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Time:" id="cAO-Up-uew">
                         <font key="font" metaFont="system"/>
@@ -590,7 +593,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Gg2-oe-gZo">
+                <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Gg2-oe-gZo">
                     <rect key="frame" x="48" y="-3" width="122" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="All day" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="ERT-jc-JfS" id="4pR-b8-jWO">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -603,7 +606,7 @@ Gw
                         </menu>
                     </popUpButtonCell>
                 </popUpButton>
-                <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
                     <rect key="frame" x="179" y="0.0" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="bIP-5H-5pa"/>
@@ -617,7 +620,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="5U8-Uq-FkN"/>
                     </connections>
                 </textField>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
                     <rect key="frame" x="285" y="3" width="17" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="to" id="Qdg-p5-o0x">
                         <font key="font" metaFont="system"/>
@@ -625,7 +628,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
                     <rect key="frame" x="308" y="0.0" width="100" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="100" id="ocG-Lr-SSl"/>
@@ -666,7 +669,7 @@ Gw
             </constraints>
             <point key="canvasLocation" x="460" y="105"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="F0b-7x-6jH" userLabel="Day Selector - Interval" customClass="CaptureTriggersView_ContainerSubview">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="F0b-7x-6jH" userLabel="Interval Selector" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="87" height="39"/>
             <subviews>
                 <tokenField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="2Au-XF-sqi" customClass="TokenField">
@@ -695,7 +698,7 @@ Gw
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="2YV-iT-BmO">
                     <rect key="frame" x="-2" y="0.0" width="63" height="14"/>
                     <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" title="description" id="cdn-V8-m37">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="label" size="11"/>
                         <color key="textColor" name="tertiaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -718,7 +721,7 @@ Gw
             </connections>
             <point key="canvasLocation" x="-119" y="309"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Day Selector - Dates" customClass="CaptureTriggersView_ContainerSubview">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="U49-dv-RHU" userLabel="Date Selector" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="338" height="21"/>
             <subviews>
                 <tokenField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="38b-nv-tEn" customClass="TokenField">
@@ -746,7 +749,7 @@ Gw
             </connections>
             <point key="canvasLocation" x="-119" y="216"/>
         </customView>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Day Selector - Day" customClass="CaptureTriggersView_ContainerSubview">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="YrJ-S7-rqE" userLabel="Day Selector" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="340" height="18"/>
             <subviews>
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
@@ -783,7 +786,7 @@ Gw
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="bvu-Ek-Vhq" userLabel="Schedule - Time" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="491" height="96"/>
             <subviews>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="PfN-UJ-gre">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="PfN-UJ-gre">
                     <rect key="frame" x="11" y="78" width="38" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Time:" id="9yo-Wm-9si">
                         <font key="font" metaFont="system"/>
@@ -791,7 +794,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Vfd-bm-n7h">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Vfd-bm-n7h">
                     <rect key="frame" x="55" y="75" width="436" height="21"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="22A-Qe-TQ7">
                         <font key="font" metaFont="system"/>
@@ -802,7 +805,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="nFd-S7-3km"/>
                     </connections>
                 </textField>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="e2p-19-VKE">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="e2p-19-VKE">
                     <rect key="frame" x="-2" y="45" width="51" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Repeat:" id="JBQ-7A-gD7">
                         <font key="font" metaFont="system"/>
@@ -810,7 +813,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Aqh-R6-EdY">
+                <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Aqh-R6-EdY">
                     <rect key="frame" x="53" y="39" width="114" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="Every day" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="OHf-h1-mhY" id="yYC-RB-GYm">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -859,7 +862,7 @@ Gw
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="ihD-Oq-dCa" userLabel="Limits Detail View" customClass="CaptureTriggersView_ContainerSubview">
             <rect key="frame" x="0.0" y="0.0" width="451" height="66"/>
             <subviews>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="8w2-7N-QIg">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="8w2-7N-QIg">
                     <rect key="frame" x="279" y="15" width="47" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="(detail)" id="GMH-u5-83X">
                         <font key="font" metaFont="system"/>
@@ -867,7 +870,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="1RP-5M-ifT">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="1RP-5M-ifT">
                     <rect key="frame" x="188" y="15" width="87" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="times per day" id="41O-3C-zpv">
                         <font key="font" metaFont="system"/>
@@ -875,7 +878,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0mw-Q8-nb7">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0mw-Q8-nb7">
                     <rect key="frame" x="142" y="12" width="40" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="bvG-bg-tSQ"/>
@@ -889,7 +892,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="Fog-J6-Vp6"/>
                     </connections>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0dn-kG-M5l">
+                <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0dn-kG-M5l">
                     <rect key="frame" x="188" y="42" width="90" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="seconds" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="MDa-vX-ILI" id="xCv-SO-mUT">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -907,7 +910,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="5Tn-aU-Ctc"/>
                     </connections>
                 </popUpButton>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="IXU-RQ-Nel">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="IXU-RQ-Nel">
                     <rect key="frame" x="281" y="48" width="132" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="after previous trigger" id="uzV-1s-eqG">
                         <font key="font" metaFont="system"/>
@@ -915,7 +918,7 @@ Gw
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ftt-2x-C2n">
+                <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ftt-2x-C2n">
                     <rect key="frame" x="-2" y="14" width="138" height="18"/>
                     <buttonCell key="cell" type="check" title="Limit trigger count:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="YEs-eA-lnu">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -925,7 +928,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="awh-BF-4rv"/>
                     </connections>
                 </button>
-                <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Ucp-vv-qKL">
+                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Ucp-vv-qKL">
                     <rect key="frame" x="142" y="45" width="40" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="2sy-WA-x5Y"/>
@@ -939,7 +942,7 @@ Gw
                         <action selector="_actionViewChanged:" target="-2" id="KsS-8a-4Hi"/>
                     </connections>
                 </textField>
-                <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="xue-BB-gUz">
+                <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="xue-BB-gUz">
                     <rect key="frame" x="7" y="47" width="129" height="18"/>
                     <buttonCell key="cell" type="check" title="Ignore trigger for:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="AeG-lk-3Ju">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>

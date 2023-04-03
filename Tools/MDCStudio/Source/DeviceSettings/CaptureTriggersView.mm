@@ -17,11 +17,11 @@ struct [[gnu::packed]] Trigger {
         Button,
     };
     
-    enum class Cadence : uint8_t {
-        Daily,
-        Weekly,
-        Monthly,
-        Yearly,
+    enum class RepeatType : uint8_t {
+        EveryDay,
+        WeekDays,
+        YearDays,
+        Interval,
     };
     
     enum class LEDs : uint8_t {
@@ -48,10 +48,10 @@ struct [[gnu::packed]] Trigger {
         struct [[gnu::packed]] {
             struct [[gnu::packed]] {
                 uint32_t time;
-                Cadence cadence;
+                RepeatType repeatType;
                 union {
+                    uint32_t interval;
                     Calendar::WeekDays weekDays;
-                    Calendar::MonthDays monthDays;
                     Calendar::YearDays yearDays;
                 };
             } schedule;
@@ -76,17 +76,14 @@ struct [[gnu::packed]] Trigger {
                     bool enable;
                     uint32_t start;
                     uint32_t end;
-                } timeLimit;
+                } timeRange;
                 
-                struct [[gnu::packed]] {
-                    bool enable;
-                    Cadence cadence;
-                    union {
-                        Calendar::WeekDays weekDays;
-                        Calendar::MonthDays monthDays;
-                        Calendar::YearDays yearDays;
-                    };
-                } dayLimit;
+                RepeatType repeatType;
+                union {
+                    uint32_t interval;
+                    Calendar::WeekDays weekDays;
+                    Calendar::YearDays yearDays;
+                };
             } schedule;
             
             struct [[gnu::packed]] {
@@ -132,22 +129,28 @@ static void _InitTriggerScheduleCadence(Trigger& t) {
     switch (t.type) {
     case Trigger::Type::Time: {
         auto& x = t.time.schedule;
-        switch (x.cadence) {
-        case Trigger::Cadence::Daily:
+        switch (x.repeatType) {
+        case Trigger::RepeatType::EveryDay:
             break;
-        case Trigger::Cadence::Weekly:
+        case Trigger::RepeatType::WeekDays:
             x.weekDays = _WeekDaysInit;
             break;
-        case Trigger::Cadence::Monthly:
-            x.monthDays = _MonthDaysInit;
-            break;
-        case Trigger::Cadence::Yearly:
+        case Trigger::RepeatType::YearDays:
             x.yearDays = _YearDaysInit;
+            break;
+        case Trigger::RepeatType::Interval:
+            x.interval = _MonthDaysInit;
             break;
         default:
             abort();
         }
         break;
+        
+        EveryDay,
+        WeekDays,
+        YearDays,
+        Interval,
+        
     }
     
     case Trigger::Type::Motion:
@@ -763,14 +766,15 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSPopUpButton*     _schedule_Motion_LimitDays_CadenceMenu;
     IBOutlet NSView*            _schedule_Motion_DaySelectorContainerView;
     
-    IBOutlet ContainerSubview*   _weekDaySelector_View;
-    IBOutlet NSSegmentedControl* _weekDaySelector_Control;
+    IBOutlet ContainerSubview*   _daySelector_View;
+    IBOutlet NSSegmentedControl* _daySelector_Control;
     
-    IBOutlet ContainerSubview*  _monthDaySelector_View;
-    IBOutlet NSTokenField*      _monthDaySelector_Field;
+    IBOutlet ContainerSubview*  _dateSelector_View;
+    IBOutlet NSTokenField*      _dateSelector_Field;
     
-    IBOutlet ContainerSubview*  _yearDaySelector_View;
-    IBOutlet NSTokenField*      _yearDaySelector_Field;
+    IBOutlet ContainerSubview*  _intervalSelector_View;
+    IBOutlet NSTokenField*      _intervalSelector_Field;
+    IBOutlet NSTextField*       _intervalSelector_DescriptionLabel;
     
     // Capture
     IBOutlet NSTextField*        _capture_CountField;
@@ -860,7 +864,7 @@ static void _Init(CaptureTriggersView* self) {
         [self->_monthDaySelector_Field setTokenizingCharacterSet:set];
     }
     
-    [self->_yearDaySelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
+    [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
     
     _ContainerSubviewAdd(self->_containerView, self->_detailView);
     _ContainerSubviewAdd(self->_containerView, self->_noSelectionView);
@@ -1073,16 +1077,16 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
                 if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, nil);
                 break;
             case Trigger::Cadence::Weekly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._weekDaySelector_View, y._schedule_Time_CadenceMenu);
-                _Copy<T_Forward>(x.schedule.weekDays, y._weekDaySelector_Control);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._daySelector_View, y._schedule_Time_CadenceMenu);
+                _Copy<T_Forward>(x.schedule.weekDays, y._daySelector_Control);
                 break;
             case Trigger::Cadence::Monthly:
                 if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Time_CadenceMenu);
                 _Copy<T_Forward>(x.schedule.monthDays, y._monthDaySelector_Field);
                 break;
             case Trigger::Cadence::Yearly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._yearDaySelector_View, y._schedule_Time_CadenceMenu);
-                _Copy<T_Forward>(x.schedule.yearDays, y._yearDaySelector_Field);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Time_DaySelectorContainerView, y._dateSelector_View, y._schedule_Time_CadenceMenu);
+                _Copy<T_Forward>(x.schedule.yearDays, y._dateSelector_Field);
                 break;
             default:
                 abort();
@@ -1131,16 +1135,16 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             switch (x.schedule.dayLimit.cadence) {
             case Trigger::Cadence::Daily:
             case Trigger::Cadence::Weekly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._weekDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
-                _Copy<T_Forward>(x.schedule.dayLimit.weekDays, y._weekDaySelector_Control);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._daySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
+                _Copy<T_Forward>(x.schedule.dayLimit.weekDays, y._daySelector_Control);
                 break;
             case Trigger::Cadence::Monthly:
                 if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._monthDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
                 _Copy<T_Forward>(x.schedule.dayLimit.monthDays, y._monthDaySelector_Field);
                 break;
             case Trigger::Cadence::Yearly:
-                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._yearDaySelector_View, y._schedule_Motion_LimitTime_TimeStartField);
-                _Copy<T_Forward>(x.schedule.dayLimit.yearDays, y._yearDaySelector_Field);
+                if constexpr (T_Forward) _ContainerSubviewSet(y._schedule_Motion_DaySelectorContainerView, y._dateSelector_View, y._schedule_Motion_LimitTime_TimeStartField);
+                _Copy<T_Forward>(x.schedule.dayLimit.yearDays, y._dateSelector_Field);
                 break;
             default:
                 abort();
@@ -1390,8 +1394,8 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
         }
         return filtered;
     
-    } else if (field == _yearDaySelector_Field) {
-        NSLog(@"_yearDaySelector_Field");
+    } else if (field == _dateSelector_Field) {
+        NSLog(@"_dateSelector_Field");
         
         NSMutableArray* filtered = [NSMutableArray new];
         for (NSString* x : tokens) {
@@ -1415,7 +1419,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
         }
         return obj;
     
-    } else if (field == _yearDaySelector_Field) {
+    } else if (field == _dateSelector_Field) {
         if (YearDayObj* x = Toastbox::CastOrNull<YearDayObj*>(obj)) {
             return @(Calendar::StringFromYearDay(x->x).c_str());
         }
@@ -1430,7 +1434,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
 //    if (field == _monthDaySelector_Field) {
 //        return nil;
 //    
-//    } else if (field == _yearDaySelector_Field) {
+//    } else if (field == _dateSelector_Field) {
 //        return nil;
 //    
 //    } else {
@@ -1442,7 +1446,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initCadence=false) {
 //    if (field == _monthDaySelector_Field) {
 //        return nil;
 //    
-//    } else if (field == _yearDaySelector_Field) {
+//    } else if (field == _dateSelector_Field) {
 //        return nil;
 //    
 //    } else {
