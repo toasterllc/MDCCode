@@ -848,16 +848,16 @@ static void _ContainerSubviewAdd(NSView* container, ContainerSubview* subview, N
     [constraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[subview]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(subview)]];
     
-    if (alignView) {
-        [constraints addObject:[[subview->alignView leadingAnchor] constraintEqualToAnchor:[alignView leadingAnchor]]];
-    }
+//    if (alignView) {
+//        [constraints addObject:[[subview->alignView leadingAnchor] constraintEqualToAnchor:[alignView leadingAnchor]]];
+//    }
     
     [NSLayoutConstraint activateConstraints:constraints];
 }
 
 static void _ContainerSubviewSet(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
     // Either subview==nil, or existence of `alignView` matches existence of `subview->alignView`
-    assert(!subview || ((bool)alignView == (bool)subview->alignView));
+//    assert(!subview || ((bool)alignView == (bool)subview->alignView));
     // Short-circuit if `subview` is already the subview of `container`
     if ([subview superview] == container) return;
     
