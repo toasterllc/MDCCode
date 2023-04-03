@@ -1085,7 +1085,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         // Constraints
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, nil);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_TimeButton_View);
             _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._battery_TimeButton_MaxTotalTriggerCount_Checkbox);
             _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._battery_TimeButton_MaxTotalTriggerCount_Field);
         }
@@ -1121,11 +1121,11 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             
             if constexpr (T_Forward) {
                 if (!x.schedule.timeRange.enable) {
-                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"times per day"];
+                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"triggers per day"];
                     [v._battery_Motion_MaxTriggerCount_DetailLabel setHidden:true];
                 
                 } else {
-                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"times per schedule period"];
+                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"triggers per time period"];
                     const std::string detail = "(" + _TimeRangeDescription(x.schedule.timeRange.start, x.schedule.timeRange.end) + ")";
                     [v._battery_Motion_MaxTriggerCount_DetailLabel setStringValue:@(detail.c_str())];
                     [v._battery_Motion_MaxTriggerCount_DetailLabel setHidden:false];
