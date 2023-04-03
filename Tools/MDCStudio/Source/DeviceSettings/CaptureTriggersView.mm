@@ -51,6 +51,12 @@ struct [[gnu::packed]] Trigger {
         Unit unit;
     };
     
+    struct [[gnu::packed]] Capture {
+        uint32_t count;
+        Duration interval;
+        LEDs flashLEDs;
+    };
+    
     Type type = Type::Time;
     
     union {
@@ -60,11 +66,7 @@ struct [[gnu::packed]] Trigger {
                 Repeat repeat;
             } schedule;
             
-            struct [[gnu::packed]] {
-                uint32_t count;
-                Duration interval;
-                LEDs flashLEDs;
-            } capture;
+            Capture capture;
             
             struct [[gnu::packed]] {
                 struct [[gnu::packed]] {
@@ -85,11 +87,7 @@ struct [[gnu::packed]] Trigger {
                 Repeat repeat;
             } schedule;
             
-            struct [[gnu::packed]] {
-                uint32_t count;
-                Duration interval;
-                LEDs flashLEDs;
-            } capture;
+            Capture capture;
             
             struct [[gnu::packed]] {
                 struct [[gnu::packed]] {
@@ -107,7 +105,18 @@ struct [[gnu::packed]] Trigger {
                     uint32_t count;
                 } maxTotalTriggerCount;
             } constraints;
-        } motionButton;
+        } motion;
+        
+        struct [[gnu::packed]] {
+            Capture capture;
+            
+            struct [[gnu::packed]] {
+                struct [[gnu::packed]] {
+                    bool enable;
+                    uint32_t count;
+                } maxTotalTriggerCount;
+            } constraints;
+        } button;
     };
 };
 
@@ -125,14 +134,13 @@ static const Calendar::YearDays _YearDaysInit = Calendar::YearDaysFromVector({Ca
 
 static constexpr uint32_t _IntervalInit = 2;
 
-static Trigger::Repeat& _TriggerRepeatGet(Trigger& t) {
-    switch (t.type) {
-    case Trigger::Type::Time:   return t.time.schedule.repeat;
-    case Trigger::Type::Motion:
-    case Trigger::Type::Button: return t.motionButton.schedule.repeat;
-    default:                    abort();
-    }
-}
+//static Trigger::Repeat& _TriggerRepeatGet(Trigger& t) {
+//    switch (t.type) {
+//    case Trigger::Type::Time:   return t.time.schedule.repeat;
+//    case Trigger::Type::Motion: return t.motion.schedule.repeat;
+//    default:                    abort();
+//    }
+//}
 
 static void _InitTriggerRepeat(Trigger::Repeat& x) {
     using X = Trigger::Repeat::Type;
@@ -186,7 +194,7 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
     }
     
     case Trigger::Type::Motion: {
-        auto& x = t.motionButton;
+        auto& x = t.motion;
         
         x.schedule = {
             .timeRange = {
@@ -230,18 +238,7 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
     }
     
     case Trigger::Type::Button: {
-        auto& x = t.motionButton;
-        
-        x.schedule = {
-            .timeRange = {
-                .enable = false,
-                .start = _TimeStartInit,
-                .end = _TimeEndInit,
-            },
-            .repeat = {
-                .type = Trigger::Repeat::Type::Daily,
-            },
-        };
+        auto& x = t.button;
         
         x.capture = {
             .count = 1,
@@ -253,17 +250,6 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         };
         
         x.constraints = {
-            .ignoreTriggerDuration = {
-                .enable = false,
-                .duration = Trigger::Duration{
-                    .value = 1,
-                    .unit = Trigger::Duration::Unit::Seconds,
-                }
-            },
-            .maxTriggerCount = {
-                .enable = false,
-                .count = 1,
-            },
             .maxTotalTriggerCount = {
                 .enable = false,
                 .count = 1,
@@ -571,8 +557,7 @@ static std::string _RepeatDescription(const Trigger::Repeat& x) {
     }
 }
 
-template<typename T>
-static std::string _CaptureDescription(const T& x) {
+static std::string _CaptureDescription(const Trigger::Capture& x) {
     std::string str = "capture " + std::to_string(x.count) + " image" + (x.count!=1 ? "s" : "");
     if (x.count>1 && x.interval.value) {
         str += " (" + std::to_string(x.interval.value) + _SuffixForDurationUnit(x.interval.unit) + " interval)";
@@ -611,19 +596,32 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     }
     
     // Subtitle
-    auto& repeat = _TriggerRepeatGet(trigger);
-    std::string subtitle = _Capitalize(_RepeatDescription(repeat));
+    std::string subtitle;
     switch (trigger.type) {
-    case Trigger::Type::Motion:
-    case Trigger::Type::Button: {
-        auto& x = trigger.motionButton;
-        if (repeat.type == Trigger::Repeat::Type::Daily) subtitle = "";
+    case Trigger::Type::Time: {
+        auto& x = trigger.time;
+        subtitle = _Capitalize(_RepeatDescription(x.schedule.repeat));
+        break;
+    }
+    
+    case Trigger::Type::Motion: {
+        auto& x = trigger.motion;
+        auto& repeat = trigger.motion.schedule.repeat;
+        if (repeat.type != Trigger::Repeat::Type::Daily) {
+            subtitle = _Capitalize(_RepeatDescription(repeat));
+        }
+        
         if (x.schedule.timeRange.enable) {
             if (!subtitle.empty()) subtitle += ", ";
             subtitle += _TimeRangeDescription(x.schedule.timeRange.start, x.schedule.timeRange.end);
         }
         break;
     }
+    
+    case Trigger::Type::Button: {
+        break;
+    }
+    
     default:
         break;
     }
@@ -646,9 +644,14 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
         break;
     }
     
-    case Trigger::Type::Motion:
+    case Trigger::Type::Motion: {
+        auto& x = trigger.motion;
+        [_descriptionLabel setStringValue:@(_CaptureDescription(x.capture).c_str())];
+        break;
+    }
+    
     case Trigger::Type::Button: {
-        auto& x = trigger.motionButton;
+        auto& x = trigger.button;
         [_descriptionLabel setStringValue:@(_CaptureDescription(x.capture).c_str())];
         break;
     }
@@ -717,7 +720,6 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTextField*       _schedule_Time_TimeField;
     IBOutlet NSView*            _schedule_Time_RepeatContainerView;
     
-    IBOutlet ContainerSubview*  _schedule_Motion_View;
     IBOutlet NSView*            _schedule_Motion_RepeatContainerView;
     IBOutlet NSPopUpButton*     _schedule_Motion_TimeRange_Menu;
     IBOutlet NSTextField*       _schedule_Motion_TimeRange_TimeStartField;
@@ -746,18 +748,22 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSSegmentedControl* _capture_FlashLEDsControl;
     
     // Constraints
-    IBOutlet NSView*            _constraints_ContainerView;
+    IBOutlet NSView*            _battery_ContainerView;
     
-    IBOutlet ContainerSubview*  _constraints_Motion_View;
-    IBOutlet NSButton*          _constraints_Motion_IgnoreTrigger_Checkbox;
-    IBOutlet NSTextField*       _constraints_Motion_IgnoreTrigger_DurationField;
-    IBOutlet NSPopUpButton*     _constraints_Motion_IgnoreTrigger_DurationUnitMenu;
-    IBOutlet NSButton*          _constraints_Motion_MaxTriggerCount_Checkbox;
-    IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_Field;
-    IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_Label;
-    IBOutlet NSTextField*       _constraints_Motion_MaxTriggerCount_DetailLabel;
-    IBOutlet NSButton*          _constraints_MaxTotalTriggerCount_Checkbox;
-    IBOutlet NSTextField*       _constraints_MaxTotalTriggerCount_Field;
+    IBOutlet ContainerSubview*  _battery_Motion_View;
+    IBOutlet NSButton*          _battery_Motion_IgnoreTrigger_Checkbox;
+    IBOutlet NSTextField*       _battery_Motion_IgnoreTrigger_DurationField;
+    IBOutlet NSPopUpButton*     _battery_Motion_IgnoreTrigger_DurationUnitMenu;
+    IBOutlet NSButton*          _battery_Motion_MaxTriggerCount_Checkbox;
+    IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_Field;
+    IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_Label;
+    IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_DetailLabel;
+    IBOutlet NSButton*          _battery_Motion_MaxTotalTriggerCount_Checkbox;
+    IBOutlet NSTextField*       _battery_Motion_MaxTotalTriggerCount_Field;
+    
+    IBOutlet ContainerSubview*  _battery_TimeButton_View;
+    IBOutlet NSButton*          _battery_TimeButton_MaxTotalTriggerCount_Checkbox;
+    IBOutlet NSTextField*       _battery_TimeButton_MaxTotalTriggerCount_Field;
     
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
@@ -1042,8 +1048,8 @@ static void _CopyTimeRange(T_TimeRange& x, CaptureTriggersView* view) {
     }
 }
 
-template<bool T_Forward, typename T_Capture>
-static void _CopyCapture(T_Capture& x, CaptureTriggersView* view) {
+template<bool T_Forward>
+static void _Copy(Trigger::Capture& x, CaptureTriggersView* view) {
     auto& v = *view;
     _Copy<T_Forward>(x.count, v._capture_CountField);
     _Copy<T_Forward>(x.interval.value, v._capture_IntervalField);
@@ -1075,25 +1081,24 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         }
         
         // Capture
-        _CopyCapture<T_Forward>(x.capture, view);
+        _Copy<T_Forward>(x.capture, view);
         
         // Constraints
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(v._constraints_ContainerView, nil);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._constraints_MaxTotalTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._constraints_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, nil);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._battery_TimeButton_MaxTotalTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._battery_TimeButton_MaxTotalTriggerCount_Field);
         }
         
         break;
     }
     
-    case Trigger::Type::Motion:
-    case Trigger::Type::Button: {
-        auto& x = trigger.motionButton;
+    case Trigger::Type::Motion: {
+        auto& x = trigger.motion;
         
         // Schedule
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_ContainerView, v._schedule_Motion_View);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_ContainerView, nil);
             if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_Motion_RepeatContainerView, v._repeat_View, v._schedule_Motion_TimeRange_Menu);
             
             _Copy<T_Forward>(x.schedule.repeat, view, "Active:");
@@ -1101,34 +1106,55 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         }
         
         // Capture
-        _CopyCapture<T_Forward>(x.capture, view);
+        _Copy<T_Forward>(x.capture, view);
         
         // Constraints
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(v._constraints_ContainerView, v._constraints_Motion_View, v._constraints_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_Motion_View, v._battery_Motion_MaxTotalTriggerCount_Field);
             
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, v._constraints_Motion_IgnoreTrigger_Checkbox);
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.value, v._constraints_Motion_IgnoreTrigger_DurationField);
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.unit, v._constraints_Motion_IgnoreTrigger_DurationUnitMenu);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, v._battery_Motion_IgnoreTrigger_Checkbox);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.value, v._battery_Motion_IgnoreTrigger_DurationField);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.unit, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
             
-            _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, v._constraints_Motion_MaxTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTriggerCount.count, v._constraints_Motion_MaxTriggerCount_Field);
+            _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, v._battery_Motion_MaxTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTriggerCount.count, v._battery_Motion_MaxTriggerCount_Field);
             
             if constexpr (T_Forward) {
                 if (!x.schedule.timeRange.enable) {
-                    [v._constraints_Motion_MaxTriggerCount_Label setStringValue:@"times per day"];
-                    [v._constraints_Motion_MaxTriggerCount_DetailLabel setHidden:true];
+                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"times per day"];
+                    [v._battery_Motion_MaxTriggerCount_DetailLabel setHidden:true];
                 
                 } else {
-                    [v._constraints_Motion_MaxTriggerCount_Label setStringValue:@"times per schedule period"];
+                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"times per schedule period"];
                     const std::string detail = "(" + _TimeRangeDescription(x.schedule.timeRange.start, x.schedule.timeRange.end) + ")";
-                    [v._constraints_Motion_MaxTriggerCount_DetailLabel setStringValue:@(detail.c_str())];
-                    [v._constraints_Motion_MaxTriggerCount_DetailLabel setHidden:false];
+                    [v._battery_Motion_MaxTriggerCount_DetailLabel setStringValue:@(detail.c_str())];
+                    [v._battery_Motion_MaxTriggerCount_DetailLabel setHidden:false];
                 }
             }
             
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._constraints_MaxTotalTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._constraints_MaxTotalTriggerCount_Field);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._battery_Motion_MaxTotalTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._battery_Motion_MaxTotalTriggerCount_Field);
+        }
+        
+        break;
+    }
+    
+    case Trigger::Type::Button: {
+        auto& x = trigger.button;
+        
+        // Schedule
+        {
+            if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_ContainerView, nil);
+        }
+        
+        // Capture
+        _Copy<T_Forward>(x.capture, view);
+        
+        // Constraints
+        {
+            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_TimeButton_View);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._battery_TimeButton_MaxTotalTriggerCount_Checkbox);
+            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._battery_TimeButton_MaxTotalTriggerCount_Field);
         }
         
         break;
@@ -1204,6 +1230,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     NSLog(@"_actionViewChanged");
     ListItem* it = [self _selectedItem];
     if (!it) return;
+    Trigger& trigger = it->trigger;
 //    NSResponder* responder = [[self window] firstResponder];
 //    NSLog(@"BEFORE: %@", responder);
     
@@ -1216,13 +1243,17 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
         [x insertNewline:nil];
     }
     
-    _Store(self, it->trigger);
+    _Store(self, trigger);
     
     if (initRepeat) {
-        _InitTriggerRepeat(_TriggerRepeatGet(it->trigger));
+        switch (trigger.type) {
+        case Trigger::Type::Time:   _InitTriggerRepeat(trigger.time.schedule.repeat); break;
+        case Trigger::Type::Motion: _InitTriggerRepeat(trigger.motion.schedule.repeat); break;
+        default:                    abort();
+        }
     }
     
-    _Load(self, it->trigger);
+    _Load(self, trigger);
 //    if ([[self window] firstResponder] != responder) {
 //        [[self window] makeFirstResponder:responder];
 //    }
