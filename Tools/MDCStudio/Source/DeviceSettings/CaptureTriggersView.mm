@@ -1214,7 +1214,6 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
     }
 }
 
-
 // MARK: - Actions
 
 - (ListItem*)_selectedItem {
@@ -1242,8 +1241,6 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     ListItem* it = [self _selectedItem];
     if (!it) return;
     Trigger& trigger = it->trigger;
-//    NSResponder* responder = [[self window] firstResponder];
-//    NSLog(@"BEFORE: %@", responder);
     
     // Commit editing the active editor
     if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
@@ -1265,11 +1262,6 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     }
     
     _Load(self, trigger);
-//    if ([[self window] firstResponder] != responder) {
-//        [[self window] makeFirstResponder:responder];
-//    }
-//    NSLog(@"AFTER: %@", [[self window] firstResponder]);
-//    [[self window] makeFirstResponder:responder];
     [it updateView];
 }
 
@@ -1338,9 +1330,6 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 
 
 - (NSArray*)tokenField:(NSTokenField*)field shouldAddObjects:(NSArray*)tokens atIndex:(NSUInteger)index {
-//    NSLog(@"%@", NSStringFromSelector(_cmd));
-//    return nil;
-    
     if (field != _dateSelector_Field) abort();
     
     NSLog(@"_dateSelector_Field");
@@ -1369,7 +1358,6 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureTriggersView.PasteboardType";
 
 - (id<NSPasteboardWriting>)tableView:(NSTableView*)tableView pasteboardWriterForRow:(NSInteger)row {
-    NSLog(@"tableView:pasteboardWriterForRow:");
     NSPasteboardItem* pb = [NSPasteboardItem new];
     [pb setPropertyList:@(row) forType:_PboardDragItemsType];
     return pb;
@@ -1378,40 +1366,8 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
 - (NSDragOperation)tableView:(NSTableView *)tableView validateDrop:(id<NSDraggingInfo>)info
     proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)drop {
     
-    if (drop == NSTableViewDropAbove) {
-        NSLog(@"proposedDropOperation %@", @(drop));
-//        NSArray<NSPasteboardItem*>* items = [[info draggingPasteboard] pasteboardItems];
-//        std::set<size_t> rows;
-//        for (NSPasteboardItem* it : items) {
-//            NSNumber* num = Toastbox::Cast<NSNumber*>([it propertyListForType:_PboardDragItemsType]);
-//            rows.insert([num integerValue]);
-//        }
-        
-        return NSDragOperationMove;
-    }
-    
+    if (drop == NSTableViewDropAbove) return NSDragOperationMove;
     return NSDragOperationNone;
-    
-//    return NSDragOperationNone;
-//    Item* targetItem = Cast<Item*>(targetItemId ? targetItemId : _rootItem);
-//    
-//    std::set<Item*> targetAncestors;
-//    if (targetItem) targetAncestors = _GetAncestors(_outlineView, Cast<Item*>(targetItem));
-//    // If the dragged items share any ancestor with the target item, don't allow the move
-//    // because we're trying to move an element into itself.
-//    std::vector<_PboardDragItem> pbDragItems = _PboardDragItemsGetAll([[info draggingPasteboard] pasteboardItems]);
-//    for (const _PboardDragItem& pbDragItem : pbDragItems) {
-//        Item* item = pbDragItem.parent->items.at(pbDragItem.idx);
-//        if (targetAncestors.find(item) != targetAncestors.end()) {
-//            return NSDragOperationNone;
-//        }
-//    }
-//    
-//    if (!targetItem || (bool)CastOrNull<Schematic::GroupPtr>(targetItem->obj)) {
-//        return NSDragOperationMove;
-//    }
-//    
-//    return NSDragOperationNone;
 }
 
 - (BOOL)tableView:(NSTableView*)tableView acceptDrop:(id<NSDraggingInfo>)info
@@ -1451,56 +1407,6 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
             withAnimation:NSTableViewAnimationEffectNone];
     }
     
-    
-    
-//    // Restore the current selection when we're done handling the drag
-//    auto selectionPrev = [self selection];
-//    Defer(
-//        [self setSelection:selectionPrev];
-//    );
-//    
-//    std::vector<_PboardDragItem> pbDragItems = _PboardDragItemsGetAll([[info draggingPasteboard] pasteboardItems]);
-//    
-//    // Create `srcCollIdxs` which maps a Collection -> indexes of items being dragged
-//    Item* dstItem = Cast<Item*>(targetItemId ? targetItemId : _rootItem);
-//    Schematic::GroupPtr dstColl = Cast<Schematic::GroupPtr>(dstItem->obj);
-//    std::vector<Schematic::ObjectPtr> dragObjs;
-//    std::map<Schematic::GroupPtr,std::set<size_t>> srcCollIdxs;
-//    if (dstIdx < 0) dstIdx = dstColl->collectionObjects().size(); // dstIdx==-1 when user drags past the end
-//    
-//    for (const _PboardDragItem& pbDragItem : pbDragItems) {
-//        dragObjs.push_back(pbDragItem.parent->items.at(pbDragItem.idx)->obj);
-//        Schematic::GroupPtr coll = Cast<Schematic::GroupPtr>(pbDragItem.parent->obj);
-//        srcCollIdxs[coll].insert(pbDragItem.idx);
-//    }
-//    
-//    // Remove the dragged items from their source parents
-//    const Object::Event::Flags flags = Object::Event::Move;
-//    std::set<Schematic::GroupPtr> colls; // Modified collections
-//    for (const auto& [coll,idxs] : srcCollIdxs) {
-//        for (auto it=idxs.rbegin(); it!=idxs.rend(); it++) {
-//            const size_t idx = *it;
-//            coll->collectionRemove(idx, flags);
-//            // We need to adjust `dstIdx` when removing items that
-//            // precede `dstIdx` from the same parent
-//            if (coll == dstColl) {
-//                if (idx < dstIdx) {
-//                    dstIdx--;
-//                }
-//            }
-//        }
-//        colls.insert(coll);
-//    }
-//    
-//    // Add the dragged items to the destination parent
-//    for (Schematic::ObjectPtr obj : dragObjs) {
-//        dstColl->collectionAdd(obj, dstIdx, flags);
-//        dstIdx++;
-//    }
-//    colls.insert(dstColl);
-//    
-//    // Clear our _PboardDragItems state so we're ready for the next drag
-//    _PboardDragItemsClear();
     return true;
 }
 
