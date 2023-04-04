@@ -21,19 +21,23 @@ struct [[gnu::packed]] Trigger {
         Button,
     };
     
+    struct [[gnu::packed]] DayInterval {
+        uint32_t interval;
+    };
+    
     struct [[gnu::packed]] Repeat {
         enum class Type : uint8_t {
             Daily,
             WeekDays,
             YearDays,
-            Interval,
+            DayInterval,
         };
         
         Type type;
         union {
             Calendar::WeekDays weekDays;
             Calendar::YearDays yearDays;
-            uint32_t interval;
+            DayInterval dayInterval;
         };
     };
     
@@ -136,7 +140,7 @@ constexpr Calendar::WeekDays _WeekDaysInit = (Calendar::WeekDays)(
 
 static const Calendar::YearDays _YearDaysInit = Calendar::YearDaysFromVector({Calendar::YearDay{9,20}, Calendar::YearDay{12,31}});
 
-static constexpr uint32_t _IntervalInit = 2;
+static constexpr Trigger::DayInterval _DayIntervalInit = Trigger::DayInterval{ .interval = 2 };
 
 //static Trigger::Repeat& _TriggerRepeatGet(Trigger& t) {
 //    switch (t.type) {
@@ -157,8 +161,8 @@ static void _InitTriggerRepeat(Trigger::Repeat& x) {
     case X::YearDays:
         x.yearDays = _YearDaysInit;
         break;
-    case X::Interval:
-        x.interval = _IntervalInit;
+    case X::DayInterval:
+        x.dayInterval = _DayIntervalInit;
         break;
     default:
         abort();
@@ -321,11 +325,11 @@ static Trigger::Duration::Unit UnitFromString(std::string x) {
 static std::string StringFromRepeatType(const Trigger::Repeat::Type& x) {
     using X = std::remove_reference_t<decltype(x)>;
     switch (x) {
-    case X::Daily:      return "every day";
-    case X::WeekDays:   return "on days";
-    case X::YearDays:   return "on dates";
-    case X::Interval:   return "on interval";
-    default:            abort();
+    case X::Daily:       return "every day";
+    case X::WeekDays:    return "on days";
+    case X::YearDays:    return "on dates";
+    case X::DayInterval: return "on interval";
+    default:             abort();
     }
 }
 
@@ -335,7 +339,7 @@ static Trigger::Repeat::Type RepeatTypeFromString(std::string x) {
          if (x == "every day")     return X::Daily;
     else if (x == "on days")       return X::WeekDays;
     else if (x == "on dates")      return X::YearDays;
-    else if (x == "on interval")   return X::Interval;
+    else if (x == "on interval")   return X::DayInterval;
     else abort();
 }
 
@@ -563,18 +567,18 @@ static std::string _YearDaysDescription(const Calendar::YearDays& x) {
     return std::to_string(count) + " days per year";
 }
 
-static std::string _IntervalDescription(uint32_t x) {
-    if (x == 0) return "every day";
-    if (x == 1) return "every day";
-    if (x == 2) return "every other day";
-    return "every " + std::to_string(x) + " days";
+static std::string _DayIntervalDescription(const Trigger::DayInterval& x) {
+    if (x.interval == 0) return "every day";
+    if (x.interval == 1) return "every day";
+    if (x.interval == 2) return "every other day";
+    return "every " + std::to_string(x.interval) + " days";
 }
 
-static std::string _IntervalDetailedDescription(uint32_t x) {
-    if (x == 0) return "every day";
-    if (x == 1) return "every day";
-    if (x == 2) return "every other day";
-    return "1 day on, " + std::to_string(x-1) + " days off";
+static std::string _DayIntervalDetailedDescription(const Trigger::DayInterval& x) {
+    if (x.interval == 0) return "every day";
+    if (x.interval == 1) return "every day";
+    if (x.interval == 2) return "every other day";
+    return "1 day on, " + std::to_string(x.interval-1) + " days off";
 }
 
 static std::string _Capitalize(std::string x) {
@@ -588,11 +592,11 @@ static std::string _RepeatDescription(const Trigger::Repeat& x) {
     using T = Trigger::Repeat::Type;
     std::string s;
     switch (x.type) {
-    case T::Daily:    return "daily";
-    case T::WeekDays: return _WeekDaysDescription(x.weekDays);
-    case T::YearDays: return _YearDaysDescription(x.yearDays);
-    case T::Interval: return _IntervalDescription(x.interval);
-    default:          abort();
+    case T::Daily:       return "daily";
+    case T::WeekDays:    return _WeekDaysDescription(x.weekDays);
+    case T::YearDays:    return _YearDaysDescription(x.yearDays);
+    case T::DayInterval: return _DayIntervalDescription(x.dayInterval);
+    default:             abort();
     }
 }
 
@@ -973,6 +977,15 @@ static void _Copy(uint32_t& x, NSTextField* field) {
 }
 
 template<bool T_Forward>
+static void _Copy(Trigger::DayInterval& x, NSTextField* field) {
+    if constexpr (T_Forward) {
+        [field setObjectValue:@(x.interval)];
+    } else {
+        x.interval = std::max(2, [field intValue]);
+    }
+}
+
+template<bool T_Forward>
 static void _Copy(float& x, NSTextField* field) {
     if constexpr (T_Forward) {
         [field setObjectValue:@(x)];
@@ -1076,11 +1089,11 @@ static void _Copy(Trigger::Repeat& x, CaptureTriggersView* view, const char* men
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._dateSelector_View, v._repeat_Menu);
         _Copy<T_Forward>(x.yearDays, v._dateSelector_Field);
         break;
-    case Trigger::Repeat::Type::Interval:
+    case Trigger::Repeat::Type::DayInterval:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._intervalSelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.interval, v._intervalSelector_Field);
+        _Copy<T_Forward>(x.dayInterval, v._intervalSelector_Field);
         if constexpr (T_Forward) {
-            [v._intervalSelector_DescriptionLabel setStringValue:@(("(" + _IntervalDetailedDescription(x.interval) + ")").c_str())];
+            [v._intervalSelector_DescriptionLabel setStringValue:@(("(" + _DayIntervalDetailedDescription(x.dayInterval) + ")").c_str())];
         }
         break;
     default:
