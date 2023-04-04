@@ -77,10 +77,6 @@ struct [[gnu::packed]] Trigger {
             Capture capture;
             
             struct [[gnu::packed]] {
-                struct [[gnu::packed]] {
-                    bool enable;
-                    uint32_t count;
-                } maxTotalTriggerCount;
             } constraints;
         } time;
         
@@ -107,11 +103,6 @@ struct [[gnu::packed]] Trigger {
                     bool enable;
                     uint32_t count;
                 } maxTriggerCount;
-                
-                struct [[gnu::packed]] {
-                    bool enable;
-                    uint32_t count;
-                } maxTotalTriggerCount;
             } constraints;
         } motion;
         
@@ -119,10 +110,6 @@ struct [[gnu::packed]] Trigger {
             Capture capture;
             
             struct [[gnu::packed]] {
-                struct [[gnu::packed]] {
-                    bool enable;
-                    uint32_t count;
-                } maxTotalTriggerCount;
             } constraints;
         } button;
     };
@@ -192,10 +179,6 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         };
         
         x.constraints = {
-            .maxTotalTriggerCount = {
-                .enable = false,
-                .count = 1,
-            }
         };
         
         break;
@@ -236,10 +219,6 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
                 .enable = false,
                 .count = 5,
             },
-            .maxTotalTriggerCount = {
-                .enable = false,
-                .count = 1,
-            },
         };
         
         break;
@@ -258,10 +237,6 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         };
         
         x.constraints = {
-            .maxTotalTriggerCount = {
-                .enable = false,
-                .count = 1,
-            },
         };
         
         break;
@@ -600,20 +575,32 @@ static std::string _RepeatDescription(const Trigger::Repeat& x) {
     }
 }
 
+static std::string _StringFromFloat(float x, int maxDecimalPlaces=1) {
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(maxDecimalPlaces) << x;
+    // Erase trailing zeroes
+    std::string str = ss.str();
+    for (auto it=str.end()-1; it!=str.begin(); it--) {
+        if (std::isdigit(*it)) {
+            if (*it == '0') {
+                it = str.erase(it);
+            } else {
+                break;
+            }
+        } else {
+            // Assume this is the (localized) decimal point
+            it = str.erase(it);
+            break;
+        }
+    }
+    return str;
+}
+
 static std::string _CaptureDescription(const Trigger::Capture& x) {
     std::stringstream ss;
     ss << "capture " << x.count << " image" << (x.count!=1 ? "s" : "");
     if (x.count>1 && x.interval.value>0) {
-        constexpr size_t DecimalPlaces = 1;
-        constexpr size_t Multiplier = 10*DecimalPlaces;
-        ss << " (";
-        // Only print value as a float if the tenths place is non-zero
-        const float f = std::max(0.f, x.interval.value);
-        if (((uintmax_t)(f*Multiplier)) % Multiplier) {
-            ss << std::fixed << std::setprecision(1) << x.interval.value;
-        } else {
-            ss << (intmax_t)std::round(f);
-        }
+        ss << " (" << _StringFromFloat(x.interval.value);
         ss << _SuffixForDurationUnit(x.interval.unit) << " interval)";
     }
     return ss.str();
@@ -812,12 +799,6 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_Field;
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_Label;
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_DetailLabel;
-    IBOutlet NSButton*          _battery_Motion_MaxTotalTriggerCount_Checkbox;
-    IBOutlet NSTextField*       _battery_Motion_MaxTotalTriggerCount_Field;
-    
-    IBOutlet ContainerSubview*  _battery_TimeButton_View;
-    IBOutlet NSButton*          _battery_TimeButton_MaxTotalTriggerCount_Checkbox;
-    IBOutlet NSTextField*       _battery_TimeButton_MaxTotalTriggerCount_Field;
     
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
@@ -968,18 +949,18 @@ static void _CopyTime(uint32_t& x, NSTextField* field) {
 }
 
 template<bool T_Forward>
-static void _Copy(uint32_t& x, NSTextField* field) {
+static void _Copy(uint32_t& x, NSTextField* field, uint32_t min=0) {
     if constexpr (T_Forward) {
-        [field setObjectValue:@(x)];
+        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x]];
     } else {
-        x = (uint32_t)[field integerValue];
+        x = std::max((int)min, [field intValue]);
     }
 }
 
 template<bool T_Forward>
 static void _Copy(Trigger::DayInterval& x, NSTextField* field) {
     if constexpr (T_Forward) {
-        [field setObjectValue:@(x.interval)];
+        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.interval]];
     } else {
         x.interval = std::max(2, [field intValue]);
     }
@@ -989,7 +970,7 @@ template<bool T_Forward>
 static void _Copy(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        [field setObjectValue:@(x.value)];
+        [field setStringValue:@(_StringFromFloat(x.value).c_str())];
         [menu selectItemWithTitle:@(StringFromUnit(x.unit).c_str())];
     } else {
         const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
@@ -1152,9 +1133,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         // Constraints
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_TimeButton_View);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._battery_TimeButton_MaxTotalTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._battery_TimeButton_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, nil);
         }
         
         break;
@@ -1183,7 +1162,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration, v._battery_Motion_IgnoreTrigger_DurationField, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
             
             _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, v._battery_Motion_MaxTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTriggerCount.count, v._battery_Motion_MaxTriggerCount_Field);
+            _Copy<T_Forward>(x.constraints.maxTriggerCount.count, v._battery_Motion_MaxTriggerCount_Field, 1);
             
             if constexpr (T_Forward) {
                 if (!x.schedule.timeRange.enable) {
@@ -1197,9 +1176,6 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
                     [v._battery_Motion_MaxTriggerCount_DetailLabel setHidden:false];
                 }
             }
-            
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._battery_Motion_MaxTotalTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._battery_Motion_MaxTotalTriggerCount_Field);
         }
         
         break;
@@ -1218,9 +1194,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         
         // Constraints
         {
-            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_TimeButton_View);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.enable, v._battery_TimeButton_MaxTotalTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTotalTriggerCount.count, v._battery_TimeButton_MaxTotalTriggerCount_Field);
+            if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, nil);
         }
         
         break;
@@ -1230,44 +1204,6 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         abort();
     }
 }
-
-
-//- (void)_storeViewToModel:(Trigger&)trigger {
-////    if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
-////        [x selectAll:nil];
-////    }
-////    [[[self window] firstResponder] insertNewline:nil];
-////    NSLog(@"%@", [[[self window] firstResponder] insertNewline:nil]);
-////    [[self window] firstResponder];
-////    [[self window] endEditingFor:nil];
-////    [[self window] firstResponder] endEditing;
-//    _Copy<false>(trigger, self);
-//}
-
-//- (void)_loadViewFromModel:(Trigger&)trigger {
-//    _Copy<true>(trigger, self);
-//    [[self window] recalculateKeyViewLoop];
-//}
-
-
-
-
-
-//static void _Copy(const Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
-//    using X = std::remove_reference_t<decltype(x)>;
-//    [field setObjectValue:@(x.value)];
-//    [menu selectItemAtIndex:(NSInteger)x.unit];
-//}
-//
-//static void _Store(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
-//    using X = std::remove_reference_t<decltype(x)>;
-//    x.value = (uint32_t)[field integerValue];
-//    x.unit = (Trigger::Duration::Unit)[menu indexOfSelectedItem];
-//}
-
-
-
-
 
 
 // MARK: - Actions
