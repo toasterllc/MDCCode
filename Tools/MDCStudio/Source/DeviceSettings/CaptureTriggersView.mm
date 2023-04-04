@@ -4,9 +4,10 @@
 #import <sstream>
 #import <iomanip>
 #import <cmath>
+#import <string>
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
-#import "Toastbox/IntForStr.h"
+#import "Toastbox/NumForStr.h"
 #import "Toastbox/String.h"
 #import "DeviceSettings.h"
 #import "Toastbox/Defer.h"
@@ -596,6 +597,10 @@ static std::string _StringFromFloat(float x, int maxDecimalPlaces=1) {
     return str;
 }
 
+static float _FloatFromString(std::string_view x) {
+    return Toastbox::FloatForStr<float>(x);
+}
+
 static std::string _CaptureDescription(const Trigger::Capture& x) {
     std::stringstream ss;
     ss << "capture " << x.count << " image" << (x.count!=1 ? "s" : "");
@@ -974,7 +979,9 @@ static void _Copy(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu)
         [menu selectItemWithTitle:@(StringFromUnit(x.unit).c_str())];
     } else {
         const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
-        x.value = std::max(0.f, [field floatValue]);
+        try {
+            x.value = std::max(0.f, _FloatFromString([[field stringValue] UTF8String]));
+        } catch (...) {}
         x.unit = UnitFromString([[menu titleOfSelectedItem] UTF8String]);
     }
 }

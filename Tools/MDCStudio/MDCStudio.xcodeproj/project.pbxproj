@@ -162,7 +162,7 @@
 		5544AE1927B5E58F006AB473 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		5544AE1A27B5E58F006AB473 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
 		5544AE1B27B5E58F006AB473 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
-		5544AE1C27B5E58F006AB473 /* IntForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IntForStr.h; sourceTree = "<group>"; };
+		5544AE1C27B5E58F006AB473 /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
 		5544AE1D27B5E58F006AB473 /* FileDescriptor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileDescriptor.h; sourceTree = "<group>"; };
 		5544AE1E27B5E58F006AB473 /* USB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USB.h; sourceTree = "<group>"; };
 		5544AE1F27B5E58F006AB473 /* Defer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defer.h; sourceTree = "<group>"; };
@@ -451,7 +451,7 @@
 				5544AE1927B5E58F006AB473 /* Enum.h */,
 				5544AE1D27B5E58F006AB473 /* FileDescriptor.h */,
 				5544AE2127B5E58F006AB473 /* HashInts.h */,
-				5544AE1C27B5E58F006AB473 /* IntForStr.h */,
+				5544AE1C27B5E58F006AB473 /* NumForStr.h */,
 				558FFC4629C7EF920022E840 /* IterAny.h */,
 				5544AE1727B5E58F006AB473 /* LICENSE.md */,
 				55C90C6329B70494007CC97E /* LRU.h */,
