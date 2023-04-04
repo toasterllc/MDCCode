@@ -986,22 +986,15 @@ static void _Copy(Trigger::DayInterval& x, NSTextField* field) {
 }
 
 template<bool T_Forward>
-static void _Copy(float& x, NSTextField* field) {
-    if constexpr (T_Forward) {
-        [field setObjectValue:@(x)];
-    } else {
-        x = [field floatValue];
-    }
-}
-
-template<bool T_Forward>
-static void _Copy(Trigger::Duration::Unit& x, NSPopUpButton* menu) {
+static void _Copy(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        [menu selectItemWithTitle:@(StringFromUnit(x).c_str())];
+        [field setObjectValue:@(x.value)];
+        [menu selectItemWithTitle:@(StringFromUnit(x.unit).c_str())];
     } else {
         const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
-        x = UnitFromString([[menu titleOfSelectedItem] UTF8String]);
+        x.value = std::max(0.f, [field floatValue]);
+        x.unit = UnitFromString([[menu titleOfSelectedItem] UTF8String]);
     }
 }
 
@@ -1127,8 +1120,7 @@ template<bool T_Forward>
 static void _Copy(Trigger::Capture& x, CaptureTriggersView* view) {
     auto& v = *view;
     _Copy<T_Forward>(x.count, v._capture_CountField);
-    _Copy<T_Forward>(x.interval.value, v._capture_IntervalField);
-    _Copy<T_Forward>(x.interval.unit, v._capture_IntervalUnitMenu);
+    _Copy<T_Forward>(x.interval, v._capture_IntervalField, v._capture_IntervalUnitMenu);
     
     if constexpr (T_Forward) {
         [v._capture_IntervalLabel setEnabled:x.count>1];
@@ -1188,8 +1180,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_Motion_View);
             
             _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, v._battery_Motion_IgnoreTrigger_Checkbox);
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.value, v._battery_Motion_IgnoreTrigger_DurationField);
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration.unit, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
+            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration, v._battery_Motion_IgnoreTrigger_DurationField, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
             
             _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, v._battery_Motion_MaxTriggerCount_Checkbox);
             _Copy<T_Forward>(x.constraints.maxTriggerCount.count, v._battery_Motion_MaxTriggerCount_Field);
