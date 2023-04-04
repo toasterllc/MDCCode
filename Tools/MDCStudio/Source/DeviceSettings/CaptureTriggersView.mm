@@ -7,6 +7,7 @@
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/IntForStr.h"
+#import "Toastbox/String.h"
 #import "DeviceSettings.h"
 #import "Toastbox/Defer.h"
 using namespace DeviceSettings;
@@ -343,6 +344,8 @@ struct _TimeFormatState {
     NSDateFormatter* dateFormatterHH = nil;
     NSDateFormatter* dateFormatterHHMM = nil;
     NSDateFormatter* dateFormatterHHMMSS = nil;
+    bool showsAMPM = false;
+    char timeSeparator = 0;
 };
 
 static _TimeFormatState _TimeFormatStateCreate() {
@@ -363,7 +366,7 @@ static _TimeFormatState _TimeFormatStateCreate() {
         [x.dateFormatterHHMM setLocale:[NSLocale autoupdatingCurrentLocale]];
         [x.dateFormatterHHMM setCalendar:x.calendar];
         [x.dateFormatterHHMM setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHHMM setLocalizedDateFormatFromTemplate:@"hh:mm"];
+        [x.dateFormatterHHMM setLocalizedDateFormatFromTemplate:@"hhmm"];
         [x.dateFormatterHHMM setLenient:true];
     }
     
@@ -372,9 +375,13 @@ static _TimeFormatState _TimeFormatStateCreate() {
         [x.dateFormatterHHMMSS setLocale:[NSLocale autoupdatingCurrentLocale]];
         [x.dateFormatterHHMMSS setCalendar:x.calendar];
         [x.dateFormatterHHMMSS setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hh:mm:ss"];
+        [x.dateFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hhmmss"];
         [x.dateFormatterHHMMSS setLenient:true];
     }
+    
+    NSString* dateFormat = [x.dateFormatterHHMMSS dateFormat];
+    x.showsAMPM = [dateFormat containsString:@"a"];
+    x.timeSeparator = ([dateFormat containsString:@":"] ? ':' : 0);
     
     return x;
 }
@@ -385,7 +392,7 @@ static _TimeFormatState& _TimeFormatStateGet() {
 }
 
 // 56789 -> 3:46:29 PM / 15:46:29 (depending on locale)
-static std::string _TimeOfDayStringFromSeconds(uint32_t x, bool full=false) {
+static std::string _TimeOfDayStringFromSeconds(uint32_t x) {
 //    uint32_t second = x%60;
 //    uint32_t minute = x/60*60;
     const uint32_t h = x/(60*60);
@@ -403,7 +410,7 @@ static std::string _TimeOfDayStringFromSeconds(uint32_t x, bool full=false) {
     [comp setSecond:s];
     NSDate* date = [_TimeFormatStateGet().calendar dateFromComponents:comp];
     
-    if (full) return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
+//    if (full) return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
     
     if (!s && !m) {
         return [[_TimeFormatStateGet().dateFormatterHH stringFromDate:date] UTF8String];
@@ -415,7 +422,37 @@ static std::string _TimeOfDayStringFromSeconds(uint32_t x, bool full=false) {
 }
 
 // 3:46:29 PM / 15:46:29 -> 56789
-static uint32_t _SecondsFromTimeOfDayString(const std::string& x) {
+static uint32_t _SecondsFromTimeOfDayString(std::string x, bool assumeAM=true) {
+    // Convert input to lowercase / remove all spaces
+    const char timeSeparator = _TimeFormatStateGet().timeSeparator;
+    bool hasSeparators = false;
+    for (auto it=x.begin(); it!=x.end();) {
+        *it = std::tolower(*it);
+        hasSeparators |= (timeSeparator && *it==timeSeparator);
+        if (std::isspace(*it))  it = x.erase(it);
+        else                    it++;
+    }
+    
+    // Insert time separators (112233 -> 11:22:33) if they're missing, so we don't reject the input if they are missing
+    if (timeSeparator && !hasSeparators && !x.empty()) {
+        bool started = false;
+        size_t count = 0;
+        for (auto it=x.end()-1; it!=x.begin(); it--) {
+            started |= std::isdigit(*it);
+            if (count == 1) x.insert(it, timeSeparator);
+            count += started;
+            if (count == 2) count = 0;
+        }
+        printf("%s\n", x.c_str());
+    }
+    
+    // Add AM/PM if it isn't specified, so we don't reject the input if it's just missing am/pm
+    if (_TimeFormatStateGet().showsAMPM &&
+        !Toastbox::String::EndsWith("am", x) &&
+        !Toastbox::String::EndsWith("pm", x)) {
+        x += (assumeAM ? "am" : "pm");
+    }
+    
     NSDate* date = [_TimeFormatStateGet().dateFormatterHHMMSS dateFromString:@(x.c_str())];
     if (!date) date = [_TimeFormatStateGet().dateFormatterHHMM dateFromString:@(x.c_str())];
     if (!date) date = [_TimeFormatStateGet().dateFormatterHH dateFromString:@(x.c_str())];
@@ -920,7 +957,10 @@ static void _CopyTime(uint32_t& x, NSTextField* field) {
     if constexpr (T_Forward) {
         [field setStringValue:@(_TimeOfDayStringFromSeconds(x).c_str())];
     } else {
-        x = _SecondsFromTimeOfDayString([[field stringValue] UTF8String]);
+        try {
+            const bool assumeAM = x < 12*60*60;
+            x = _SecondsFromTimeOfDayString([[field stringValue] UTF8String], assumeAM);
+        } catch (...) {}
     }
 }
 
