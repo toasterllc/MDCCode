@@ -220,8 +220,8 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
             .ignoreTriggerDuration = {
                 .enable = false,
                 .duration = Trigger::Duration{
-                    .value = 1,
-                    .unit = Trigger::Duration::Unit::Seconds,
+                    .value = 5,
+                    .unit = Trigger::Duration::Unit::Minutes,
                 }
             },
             .maxTriggerCount = {

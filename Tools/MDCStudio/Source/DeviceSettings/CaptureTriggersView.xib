@@ -334,7 +334,7 @@ Gw
                 <segmentedControl horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
                     <rect key="frame" x="99" y="128" width="92" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectAny" id="8hR-9j-fJM">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Green"/>
                             <segment label="Red" selected="YES" tag="1"/>
@@ -409,8 +409,8 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="uyQ-Us-DO2">
-                    <rect key="frame" x="240" y="163" width="139" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="between each capture" id="hij-CQ-5gb">
+                    <rect key="frame" x="240" y="163" width="129" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="between each image" id="hij-CQ-5gb">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -533,7 +533,7 @@ Gw
             <rect key="frame" x="0.0" y="0.0" width="570" height="439"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="jlP-Se-MW3">
-                    <rect key="frame" x="38" y="276" width="38" height="16"/>
+                    <rect key="frame" x="38" y="326" width="38" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Time:" id="cAO-Up-uew">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -541,7 +541,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Gg2-oe-gZo">
-                    <rect key="frame" x="80" y="270" width="122" height="25"/>
+                    <rect key="frame" x="80" y="320" width="122" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="All day" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="ERT-jc-JfS" id="4pR-b8-jWO">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -557,7 +557,7 @@ Gw
                     </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
-                    <rect key="frame" x="211" y="273" width="90" height="21"/>
+                    <rect key="frame" x="211" y="323" width="90" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="90" id="bIP-5H-5pa"/>
                     </constraints>
@@ -571,7 +571,7 @@ Gw
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
-                    <rect key="frame" x="307" y="276" width="17" height="16"/>
+                    <rect key="frame" x="307" y="326" width="17" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="to" id="Qdg-p5-o0x">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -579,7 +579,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
-                    <rect key="frame" x="330" y="273" width="90" height="21"/>
+                    <rect key="frame" x="330" y="323" width="90" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="90" id="ocG-Lr-SSl"/>
                     </constraints>
@@ -593,10 +593,10 @@ Gw
                     </connections>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Qag-Kc-J1Q">
-                    <rect key="frame" x="40" y="306" width="530" height="102"/>
+                    <rect key="frame" x="40" y="356" width="530" height="52"/>
                 </customView>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="8w2-7N-QIg">
-                    <rect key="frame" x="282" y="181" width="47" height="16"/>
+                    <rect key="frame" x="282" y="231" width="47" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="(detail)" id="GMH-u5-83X">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -604,7 +604,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="1RP-5M-ifT">
-                    <rect key="frame" x="177" y="181" width="101" height="16"/>
+                    <rect key="frame" x="177" y="231" width="101" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="triggers per day" id="41O-3C-zpv">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -612,7 +612,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0mw-Q8-nb7">
-                    <rect key="frame" x="131" y="178" width="40" height="21"/>
+                    <rect key="frame" x="131" y="228" width="40" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="bvG-bg-tSQ"/>
                     </constraints>
@@ -626,7 +626,7 @@ Gw
                     </connections>
                 </textField>
                 <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0dn-kG-M5l">
-                    <rect key="frame" x="220" y="101" width="90" height="25"/>
+                    <rect key="frame" x="220" y="151" width="90" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="seconds" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="MDa-vX-ILI" id="xCv-SO-mUT">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -644,7 +644,7 @@ Gw
                     </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="IXU-RQ-Nel">
-                    <rect key="frame" x="313" y="107" width="134" height="16"/>
+                    <rect key="frame" x="313" y="157" width="134" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="after previous motion" id="uzV-1s-eqG">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -652,7 +652,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ftt-2x-C2n">
-                    <rect key="frame" x="38" y="180" width="87" height="18"/>
+                    <rect key="frame" x="38" y="230" width="87" height="18"/>
                     <buttonCell key="cell" type="check" title="Stop after:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="YEs-eA-lnu">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -662,7 +662,7 @@ Gw
                     </connections>
                 </button>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Ucp-vv-qKL">
-                    <rect key="frame" x="174" y="104" width="40" height="21"/>
+                    <rect key="frame" x="174" y="154" width="40" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="2sy-WA-x5Y"/>
                     </constraints>
@@ -676,7 +676,7 @@ Gw
                     </connections>
                 </textField>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="xue-BB-gUz">
-                    <rect key="frame" x="38" y="106" width="130" height="18"/>
+                    <rect key="frame" x="38" y="156" width="130" height="18"/>
                     <buttonCell key="cell" type="check" title="Ignore motion for:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="AeG-lk-3Ju">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -686,13 +686,13 @@ Gw
                     </connections>
                 </button>
                 <box verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="lyL-PW-LHZ">
-                    <rect key="frame" x="0.0" y="138" width="570" height="5"/>
+                    <rect key="frame" x="0.0" y="188" width="570" height="5"/>
                 </box>
                 <box verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="jW2-hf-cQd">
-                    <rect key="frame" x="0.0" y="212" width="570" height="5"/>
+                    <rect key="frame" x="0.0" y="262" width="570" height="5"/>
                 </box>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="mh3-Eg-cdf">
-                    <rect key="frame" x="301" y="33" width="178" height="16"/>
+                    <rect key="frame" x="263" y="83" width="178" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="(until device is reconfigured)" id="B2M-t0-FxG">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -700,7 +700,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ded-KD-qIn">
-                    <rect key="frame" x="213" y="30" width="40" height="21"/>
+                    <rect key="frame" x="131" y="80" width="40" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="40" id="Q9M-nk-g5T"/>
                     </constraints>
@@ -714,8 +714,8 @@ Gw
                     </connections>
                 </textField>
                 <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="rnm-Cb-Ezt">
-                    <rect key="frame" x="38" y="32" width="169" height="18"/>
-                    <buttonCell key="cell" type="check" title="Limit total trigger count:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="6RM-io-38S">
+                    <rect key="frame" x="38" y="82" width="87" height="18"/>
+                    <buttonCell key="cell" type="check" title="Stop after:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="6RM-io-38S">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -724,8 +724,8 @@ Gw
                     </connections>
                 </button>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Jdx-NT-S6k">
-                    <rect key="frame" x="259" y="33" width="38" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="times" id="aM7-75-rTF">
+                    <rect key="frame" x="177" y="83" width="82" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="triggers total" id="aM7-75-rTF">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -743,28 +743,37 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZhD-fg-EKZ">
-                    <rect key="frame" x="38" y="156" width="455" height="14"/>
+                    <rect key="frame" x="38" y="206" width="455" height="14"/>
                     <textFieldCell key="cell" title="After this number of triggers, your Photon will ignore further motion until the next day." id="77K-Wk-abH">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="icX-od-xa4">
-                    <rect key="frame" x="38" y="82" width="455" height="14"/>
+                    <rect key="frame" x="38" y="132" width="455" height="14"/>
                     <textFieldCell key="cell" title="This setting can be used to limit the number of triggers during long periods of motion." id="Org-0X-drC">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <box verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="axA-Ea-UQa">
-                    <rect key="frame" x="0.0" y="64" width="570" height="5"/>
+                    <rect key="frame" x="0.0" y="114" width="570" height="5"/>
                 </box>
+                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="rbf-zO-9IT">
+                    <rect key="frame" x="38" y="30" width="534" height="42"/>
+                    <textFieldCell key="cell" id="MAN-Ou-fcT">
+                        <font key="font" metaFont="controlContent" size="11"/>
+                        <string key="title">After this number of triggers, your Photon will ignore further motion until you reconfigure the device using this panel. Use this setting when you know you only need a certain number of images to be captured.</string>
+                        <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
-                    <rect key="frame" x="38" y="230" width="534" height="28"/>
+                    <rect key="frame" x="38" y="280" width="534" height="28"/>
                     <textFieldCell key="cell" title="You can restrict the time period that your Photon is sensitive to motion, which extends its battery life." id="Oar-aS-K64">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -776,15 +785,16 @@ Gw
                 <constraint firstItem="rnm-Cb-Ezt" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="ZTq-dS-LMW" secondAttribute="leading" constant="40" id="3Ne-9z-poH"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="icX-od-xa4" secondAttribute="trailing" id="3pP-8v-OMg"/>
                 <constraint firstItem="icX-od-xa4" firstAttribute="leading" secondItem="xue-BB-gUz" secondAttribute="leading" id="4A4-LA-gFh"/>
+                <constraint firstItem="rbf-zO-9IT" firstAttribute="top" secondItem="ded-KD-qIn" secondAttribute="bottom" constant="8" id="4Wr-zC-ZqW"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="IXU-RQ-Nel" secondAttribute="trailing" id="5pd-YU-5qe"/>
                 <constraint firstItem="mh3-Eg-cdf" firstAttribute="leading" secondItem="Jdx-NT-S6k" secondAttribute="trailing" constant="8" id="5vN-kQ-6e6"/>
                 <constraint firstItem="icX-od-xa4" firstAttribute="top" secondItem="Ucp-vv-qKL" secondAttribute="bottom" constant="8" id="98y-u9-XVZ"/>
                 <constraint firstAttribute="trailing" secondItem="Qag-Kc-J1Q" secondAttribute="trailing" id="9O2-Nw-v1r"/>
                 <constraint firstItem="0mw-Q8-nb7" firstAttribute="firstBaseline" secondItem="ftt-2x-C2n" secondAttribute="firstBaseline" id="9bt-PR-Dfz"/>
                 <constraint firstItem="jW2-hf-cQd" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="9qv-WH-Gb3"/>
-                <constraint firstAttribute="bottom" secondItem="ded-KD-qIn" secondAttribute="bottom" constant="30" id="AXk-jP-piC"/>
                 <constraint firstItem="Jdx-NT-S6k" firstAttribute="leading" secondItem="ded-KD-qIn" secondAttribute="trailing" constant="8" id="Bpd-No-ysb"/>
                 <constraint firstItem="Ucp-vv-qKL" firstAttribute="leading" secondItem="xue-BB-gUz" secondAttribute="trailing" constant="8" id="D21-eI-BlN"/>
+                <constraint firstItem="rbf-zO-9IT" firstAttribute="leading" secondItem="rnm-Cb-Ezt" secondAttribute="leading" id="DKa-aR-t3G"/>
                 <constraint firstItem="rnm-Cb-Ezt" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" priority="750" constant="40" id="DNP-CA-jqF"/>
                 <constraint firstItem="Jdx-NT-S6k" firstAttribute="firstBaseline" secondItem="ded-KD-qIn" secondAttribute="firstBaseline" id="EJF-qU-Vjh"/>
                 <constraint firstItem="vBI-1j-Aa7" firstAttribute="top" secondItem="ZTq-dS-LMW" secondAttribute="top" id="EbZ-su-09R"/>
@@ -806,6 +816,7 @@ Gw
                 <constraint firstItem="Gg2-oe-gZo" firstAttribute="leading" secondItem="jlP-Se-MW3" secondAttribute="trailing" constant="8" id="abn-vQ-2Xw"/>
                 <constraint firstItem="8w2-7N-QIg" firstAttribute="firstBaseline" secondItem="ftt-2x-C2n" secondAttribute="firstBaseline" id="axI-hw-jUM"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="firstBaseline" secondItem="qtR-4H-6GP" secondAttribute="firstBaseline" id="blm-sX-Abk"/>
+                <constraint firstAttribute="bottom" secondItem="rbf-zO-9IT" secondAttribute="bottom" constant="30" id="cT8-LP-gBo"/>
                 <constraint firstItem="Gg2-oe-gZo" firstAttribute="top" secondItem="Qag-Kc-J1Q" secondAttribute="bottom" constant="12" id="dc6-2R-WKe"/>
                 <constraint firstItem="xue-BB-gUz" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" constant="40" id="dfb-mx-j3w"/>
                 <constraint firstItem="0dn-kG-M5l" firstAttribute="top" secondItem="lyL-PW-LHZ" secondAttribute="bottom" constant="15" id="dpH-LC-1sY"/>
@@ -816,6 +827,7 @@ Gw
                 <constraint firstItem="lyL-PW-LHZ" firstAttribute="top" secondItem="ZhD-fg-EKZ" secondAttribute="bottom" constant="15" id="gL1-Ok-Czd"/>
                 <constraint firstItem="mh3-Eg-cdf" firstAttribute="firstBaseline" secondItem="Jdx-NT-S6k" secondAttribute="firstBaseline" id="iB8-e5-bWy"/>
                 <constraint firstItem="8w2-7N-QIg" firstAttribute="leading" secondItem="1RP-5M-ifT" secondAttribute="trailing" constant="8" id="kRx-T8-sEQ"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="rbf-zO-9IT" secondAttribute="trailing" id="kxy-0d-wmI"/>
                 <constraint firstAttribute="trailing" secondItem="lyL-PW-LHZ" secondAttribute="trailing" id="ldT-bI-PhA"/>
                 <constraint firstItem="ZhD-fg-EKZ" firstAttribute="leading" secondItem="ftt-2x-C2n" secondAttribute="leading" id="lw9-dx-z1M"/>
                 <constraint firstItem="vBI-1j-Aa7" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="mBS-5d-1MW"/>
@@ -976,7 +988,7 @@ Gw
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
                     <rect key="frame" x="-2" y="-2" width="301" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>
