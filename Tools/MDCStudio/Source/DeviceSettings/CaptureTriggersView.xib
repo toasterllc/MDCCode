@@ -50,6 +50,9 @@
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
             <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
             <subviews>
+                <visualEffectView blendingMode="behindWindow" material="windowBackground" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="htS-Zh-S2s">
+                    <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
+                </visualEffectView>
                 <scrollView autohidesScrollers="YES" horizontalLineScroll="52" horizontalPageScroll="10" verticalLineScroll="52" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RYD-Tl-az2">
                     <rect key="frame" x="20" y="487" width="560" height="261"/>
                     <clipView key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
@@ -246,19 +249,23 @@ Gw
                 </button>
             </subviews>
             <constraints>
+                <constraint firstAttribute="trailing" secondItem="htS-Zh-S2s" secondAttribute="trailing" id="7TX-rW-Gh8"/>
                 <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="600" id="9OT-Nk-FLC"/>
                 <constraint firstAttribute="bottom" secondItem="HXO-cR-ctO" secondAttribute="bottom" constant="20" id="A1Y-aZ-deN"/>
                 <constraint firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" constant="20" id="ADR-UA-IlK"/>
                 <constraint firstItem="fUr-DU-jha" firstAttribute="top" secondItem="sv3-nB-qTo" secondAttribute="bottom" id="ATc-Nq-7CL"/>
                 <constraint firstAttribute="trailing" secondItem="loq-oF-BLr" secondAttribute="trailing" constant="20" id="CCA-sD-e5Z"/>
+                <constraint firstItem="htS-Zh-S2s" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="FDu-59-hjn"/>
                 <constraint firstAttribute="trailing" secondItem="fUr-DU-jha" secondAttribute="trailing" constant="20" id="Fip-Ky-KtD"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="20" id="Jcp-3s-WDp"/>
                 <constraint firstItem="loq-oF-BLr" firstAttribute="width" secondItem="HXO-cR-ctO" secondAttribute="width" id="KC7-Zv-CsK"/>
                 <constraint firstItem="loq-oF-BLr" firstAttribute="top" secondItem="fUr-DU-jha" secondAttribute="bottom" constant="20" id="Pm9-Nw-Pid"/>
+                <constraint firstAttribute="bottom" secondItem="htS-Zh-S2s" secondAttribute="bottom" id="QJf-R3-SoD"/>
                 <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="400" id="QiN-5n-jjt"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="top" secondItem="2b6-Qj-SMN" secondAttribute="bottom" constant="8" id="RfI-Tf-3Wf"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" id="Vx3-Pn-lP8"/>
                 <constraint firstItem="loq-oF-BLr" firstAttribute="leading" secondItem="HXO-cR-ctO" secondAttribute="trailing" constant="12" id="XlP-Nb-K2B"/>
+                <constraint firstItem="htS-Zh-S2s" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="bCa-pb-x1k"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="centerY" secondItem="sv3-nB-qTo" secondAttribute="centerY" id="bFx-NZ-kaU"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="top" secondItem="RYD-Tl-az2" secondAttribute="bottom" constant="8" id="eyo-cv-mc1"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="height" secondItem="sv3-nB-qTo" secondAttribute="height" id="gzw-iE-YrW"/>
@@ -326,7 +333,7 @@ Gw
                 <segmentedControl horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
                     <rect key="frame" x="99" y="128" width="92" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectAny" id="8hR-9j-fJM">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Green"/>
                             <segment label="Red" selected="YES" tag="1"/>
@@ -697,7 +704,7 @@ Gw
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZhD-fg-EKZ">
                     <rect key="frame" x="38" y="88" width="534" height="28"/>
                     <textFieldCell key="cell" title="After this number of triggers, your Photon ignores motion until the next day to prolong its battery life." id="77K-Wk-abH">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -705,7 +712,7 @@ Gw
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="icX-od-xa4">
                     <rect key="frame" x="38" y="0.0" width="534" height="28"/>
                     <textFieldCell key="cell" id="Org-0X-drC">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <string key="title">After motion triggers it, your Photon will ignore further motion for this amount of time. This can help limit the number of triggers during long periods of continuous motion, prolonging battery life.</string>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -714,7 +721,7 @@ Gw
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
                     <rect key="frame" x="38" y="176" width="534" height="14"/>
                     <textFieldCell key="cell" title="You can restrict the time period that your Photon is triggered by motion to prolong its battery life." id="Oar-aS-K64">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -838,7 +845,7 @@ Gw
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
                     <rect key="frame" x="-2" y="-2" width="301" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>
