@@ -393,7 +393,7 @@ static std::string _TimeOfDayStringFromSeconds(uint32_t x) {
     
 //    if (full) return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
     
-    if (!s && !m) {
+    if (_TimeFormatStateGet().showsAMPM && !s && !m) {
         return [[_TimeFormatStateGet().dateFormatterHH stringFromDate:date] UTF8String];
     } else if (!s) {
         return [[_TimeFormatStateGet().dateFormatterHHMM stringFromDate:date] UTF8String];
