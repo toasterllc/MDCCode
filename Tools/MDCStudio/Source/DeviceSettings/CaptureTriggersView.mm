@@ -706,12 +706,12 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
 
 @implementation CaptureTriggersView {
 @public
-    IBOutlet NSView* _nibView;
-    
-    IBOutlet NSTableView* _tableView;
-    IBOutlet NSView* _containerView;
-    IBOutlet ContainerSubview* _detailView;
-    IBOutlet ContainerSubview* _noSelectionView;
+    IBOutlet NSView*            _nibView;
+    IBOutlet NSTableView*       _tableView;
+    IBOutlet NSView*            _containerView;
+    IBOutlet ContainerSubview*  _detailView;
+    IBOutlet ContainerSubview*  _noSelectionView;
+    IBOutlet NSButton*          _removeButton;
     
     // Schedule
     IBOutlet NSView*            _schedule_ContainerView;
@@ -1310,6 +1310,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     
     [_noSelectionView setHidden:(bool)it];
     [_detailView setHidden:!it];
+    [_removeButton setEnabled:(bool)it];
     if (!it) return;
     _Load(self, it->trigger);
 }
