@@ -177,7 +177,7 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         x.capture = {
             .count = 1,
             .interval = Trigger::Duration{
-                .value = 0,
+                .value = 5,
                 .unit = Trigger::Duration::Unit::Seconds,
             },
             .flashLEDs = Trigger::LEDs::None,
@@ -210,7 +210,7 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         x.capture = {
             .count = 1,
             .interval = Trigger::Duration{
-                .value = 0,
+                .value = 5,
                 .unit = Trigger::Duration::Unit::Seconds,
             },
             .flashLEDs = Trigger::LEDs::None,
@@ -226,7 +226,7 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
             },
             .maxTriggerCount = {
                 .enable = false,
-                .count = 1,
+                .count = 5,
             },
             .maxTotalTriggerCount = {
                 .enable = false,
@@ -243,7 +243,7 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         x.capture = {
             .count = 1,
             .interval = Trigger::Duration{
-                .value = 0,
+                .value = 5,
                 .unit = Trigger::Duration::Unit::Seconds,
             },
             .flashLEDs = Trigger::LEDs::None,
