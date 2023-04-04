@@ -39,7 +39,7 @@
                         </tabViewItem>
                         <tabViewItem label="Battery Life" identifier="" id="0vi-hB-ilh">
                             <view key="view" id="l27-h2-i0f">
-                                <rect key="frame" x="10" y="33" width="554" height="681"/>
+                                <rect key="frame" x="10" y="33" width="604" height="686"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </view>
                         </tabViewItem>
