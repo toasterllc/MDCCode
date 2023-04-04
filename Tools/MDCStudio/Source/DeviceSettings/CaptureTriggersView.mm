@@ -1,6 +1,9 @@
 #import "CaptureTriggersView.h"
 #import <vector>
 #import <optional>
+#import <sstream>
+#import <iomanip>
+#import <cmath>
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/IntForStr.h"
@@ -47,7 +50,7 @@ struct [[gnu::packed]] Trigger {
             Days,
         };
         
-        uint32_t value;
+        float value;
         Unit unit;
     };
     
@@ -558,11 +561,22 @@ static std::string _RepeatDescription(const Trigger::Repeat& x) {
 }
 
 static std::string _CaptureDescription(const Trigger::Capture& x) {
-    std::string str = "capture " + std::to_string(x.count) + " image" + (x.count!=1 ? "s" : "");
-    if (x.count>1 && x.interval.value) {
-        str += " (" + std::to_string(x.interval.value) + _SuffixForDurationUnit(x.interval.unit) + " interval)";
+    std::stringstream ss;
+    ss << "capture " << x.count << " image" << (x.count!=1 ? "s" : "");
+    if (x.count>1 && x.interval.value>0) {
+        constexpr size_t DecimalPlaces = 1;
+        constexpr size_t Multiplier = 10*DecimalPlaces;
+        ss << " (";
+        // Only print value as a float if the tenths place is non-zero
+        const float f = std::max(0.f, x.interval.value);
+        if (((uintmax_t)(f*Multiplier)) % Multiplier) {
+            ss << std::fixed << std::setprecision(1) << x.interval.value;
+        } else {
+            ss << (intmax_t)std::round(f);
+        }
+        ss << _SuffixForDurationUnit(x.interval.unit) << " interval)";
     }
-    return str;
+    return ss.str();
 }
 
 static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
@@ -916,6 +930,15 @@ static void _Copy(uint32_t& x, NSTextField* field) {
         [field setObjectValue:@(x)];
     } else {
         x = (uint32_t)[field integerValue];
+    }
+}
+
+template<bool T_Forward>
+static void _Copy(float& x, NSTextField* field) {
+    if constexpr (T_Forward) {
+        [field setObjectValue:@(x)];
+    } else {
+        x = [field floatValue];
     }
 }
 
