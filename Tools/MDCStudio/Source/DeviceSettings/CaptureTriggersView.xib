@@ -47,23 +47,23 @@
                 <outlet property="_tableView" destination="RfV-Mq-Pvl" id="hYB-B3-xIy"/>
             </connections>
         </customObject>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
-            <rect key="frame" x="0.0" y="0.0" width="500" height="792"/>
+        <customView misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
+            <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
             <subviews>
                 <scrollView autohidesScrollers="YES" horizontalLineScroll="52" horizontalPageScroll="10" verticalLineScroll="52" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RYD-Tl-az2">
-                    <rect key="frame" x="20" y="487" width="460" height="261"/>
+                    <rect key="frame" x="20" y="487" width="560" height="261"/>
                     <clipView key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
-                        <rect key="frame" x="1" y="1" width="458" height="259"/>
+                        <rect key="frame" x="1" y="1" width="558" height="259"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" misplaced="YES" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="50" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
-                                <rect key="frame" x="0.0" y="0.0" width="458" height="259"/>
+                                <rect key="frame" x="0.0" y="0.0" width="558" height="259"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn width="455" minWidth="40" maxWidth="1000" id="GfJ-4C-MOX">
+                                    <tableColumn width="555" minWidth="40" maxWidth="1000" id="GfJ-4C-MOX">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
@@ -76,7 +76,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="1" y="1" width="455" height="50"/>
+                                                <rect key="frame" x="1" y="1" width="555" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="12" y="9" width="32" height="32"/>
@@ -174,7 +174,7 @@
                     </textFieldCell>
                 </textField>
                 <popUpButton translatesAutoresizingMaskIntoConstraints="NO" id="RBu-R2-DJH" userLabel="Add">
-                    <rect key="frame" x="450" y="461" width="30" height="18"/>
+                    <rect key="frame" x="550" y="461" width="30" height="18"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="30" id="wfN-Mf-rqO"/>
                         <constraint firstAttribute="height" constant="18" id="yiX-pu-feH"/>
@@ -208,7 +208,7 @@
                     </popUpButtonCell>
                 </popUpButton>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sv3-nB-qTo" userLabel="Remove">
-                    <rect key="frame" x="439" y="461" width="11" height="18"/>
+                    <rect key="frame" x="539" y="461" width="11" height="18"/>
                     <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="NSRemoveTemplate" imagePosition="overlaps" alignment="center" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="NEr-oO-zN6">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -218,14 +218,14 @@
                     </connections>
                 </button>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="fUr-DU-jha">
-                    <rect key="frame" x="20" y="61" width="460" height="400"/>
+                    <rect key="frame" x="20" y="61" width="560" height="400"/>
                     <constraints>
                         <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="400" id="GH8-LS-Cfu"/>
                         <constraint firstAttribute="height" priority="750" constant="400" id="uiH-mA-Oyq"/>
                     </constraints>
                 </customView>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="loq-oF-BLr">
-                    <rect key="frame" x="404" y="13" width="82" height="32"/>
+                    <rect key="frame" x="504" y="13" width="82" height="32"/>
                     <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="iMF-nE-jdf">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -235,7 +235,7 @@ DQ
                     </buttonCell>
                 </button>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="HXO-cR-ctO">
-                    <rect key="frame" x="322" y="13" width="82" height="32"/>
+                    <rect key="frame" x="422" y="13" width="82" height="32"/>
                     <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="YGv-xU-voq">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -249,7 +249,7 @@ Gw
                 </button>
             </subviews>
             <constraints>
-                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="400" id="9OT-Nk-FLC"/>
+                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="600" id="9OT-Nk-FLC"/>
                 <constraint firstAttribute="bottom" secondItem="HXO-cR-ctO" secondAttribute="bottom" constant="20" id="A1Y-aZ-deN"/>
                 <constraint firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" constant="20" id="ADR-UA-IlK"/>
                 <constraint firstItem="fUr-DU-jha" firstAttribute="top" secondItem="sv3-nB-qTo" secondAttribute="bottom" id="ATc-Nq-7CL"/>
