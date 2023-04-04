@@ -337,7 +337,7 @@ Gw
                 <segmentedControl horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
                     <rect key="frame" x="99" y="128" width="92" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectAny" id="8hR-9j-fJM">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <segments>
                             <segment label="Green"/>
                             <segment label="Red" selected="YES" tag="1"/>
@@ -536,7 +536,7 @@ Gw
             <rect key="frame" x="0.0" y="0.0" width="570" height="439"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="jlP-Se-MW3">
-                    <rect key="frame" x="38" y="208" width="38" height="16"/>
+                    <rect key="frame" x="38" y="179" width="38" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Time:" id="cAO-Up-uew">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -544,7 +544,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Gg2-oe-gZo">
-                    <rect key="frame" x="80" y="202" width="122" height="25"/>
+                    <rect key="frame" x="80" y="173" width="122" height="25"/>
                     <popUpButtonCell key="cell" type="push" title="All day" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="ERT-jc-JfS" id="4pR-b8-jWO">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -560,7 +560,7 @@ Gw
                     </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="35D-kR-T9a">
-                    <rect key="frame" x="211" y="205" width="90" height="21"/>
+                    <rect key="frame" x="211" y="176" width="90" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="90" id="bIP-5H-5pa"/>
                     </constraints>
@@ -574,7 +574,7 @@ Gw
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="qtR-4H-6GP">
-                    <rect key="frame" x="307" y="208" width="17" height="16"/>
+                    <rect key="frame" x="307" y="179" width="17" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="to" id="Qdg-p5-o0x">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -582,7 +582,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="gGO-69-NDw">
-                    <rect key="frame" x="330" y="205" width="90" height="21"/>
+                    <rect key="frame" x="330" y="176" width="90" height="21"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="90" id="ocG-Lr-SSl"/>
                     </constraints>
@@ -596,7 +596,7 @@ Gw
                     </connections>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Qag-Kc-J1Q">
-                    <rect key="frame" x="40" y="238" width="530" height="170"/>
+                    <rect key="frame" x="40" y="209" width="530" height="170"/>
                 </customView>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="8w2-7N-QIg">
                     <rect key="frame" x="282" y="127" width="47" height="16"/>
@@ -708,7 +708,7 @@ Gw
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZhD-fg-EKZ">
                     <rect key="frame" x="38" y="88" width="534" height="28"/>
                     <textFieldCell key="cell" title="After this number of triggers, your Photon ignores motion until the next day to prolong its battery life." id="77K-Wk-abH">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -716,16 +716,16 @@ Gw
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="icX-od-xa4">
                     <rect key="frame" x="38" y="0.0" width="534" height="28"/>
                     <textFieldCell key="cell" id="Org-0X-drC">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <string key="title">After motion triggers it, your Photon will ignore further motion for this amount of time. This can help limit the number of triggers during long periods of continuous motion, prolonging battery life.</string>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
-                    <rect key="frame" x="38" y="176" width="534" height="14"/>
+                    <rect key="frame" x="38" y="394" width="425" height="14"/>
                     <textFieldCell key="cell" title="You can restrict when your Photon responds to motion to prolong its battery life." id="Oar-aS-K64">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -742,15 +742,14 @@ Gw
                 <constraint firstItem="jW2-hf-cQd" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" id="9qv-WH-Gb3"/>
                 <constraint firstItem="Ucp-vv-qKL" firstAttribute="leading" secondItem="xue-BB-gUz" secondAttribute="trailing" constant="8" id="D21-eI-BlN"/>
                 <constraint firstItem="vBI-1j-Aa7" firstAttribute="top" secondItem="ZTq-dS-LMW" secondAttribute="top" id="EbZ-su-09R"/>
-                <constraint firstItem="fCg-QT-CcV" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" constant="40" id="L8s-aN-kix"/>
+                <constraint firstItem="fCg-QT-CcV" firstAttribute="top" secondItem="vBI-1j-Aa7" secondAttribute="bottom" constant="15" id="H5d-p7-7ur"/>
+                <constraint firstItem="Qag-Kc-J1Q" firstAttribute="top" secondItem="fCg-QT-CcV" secondAttribute="bottom" constant="15" id="HbY-Tl-0go"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="gGO-69-NDw" secondAttribute="trailing" id="LjE-Gt-nq5"/>
-                <constraint firstItem="Qag-Kc-J1Q" firstAttribute="top" secondItem="vBI-1j-Aa7" secondAttribute="bottom" constant="15" id="Lsd-EG-YV5"/>
                 <constraint firstItem="Qag-Kc-J1Q" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" constant="40" id="Pj4-yS-sKL"/>
                 <constraint firstItem="IXU-RQ-Nel" firstAttribute="firstBaseline" secondItem="xue-BB-gUz" secondAttribute="firstBaseline" id="PzB-Pc-3SL"/>
                 <constraint firstItem="0dn-kG-M5l" firstAttribute="firstBaseline" secondItem="xue-BB-gUz" secondAttribute="firstBaseline" id="VcR-lo-xH7"/>
                 <constraint firstItem="qtR-4H-6GP" firstAttribute="firstBaseline" secondItem="gGO-69-NDw" secondAttribute="firstBaseline" id="W4y-OJ-ewE"/>
                 <constraint firstItem="qtR-4H-6GP" firstAttribute="leading" secondItem="35D-kR-T9a" secondAttribute="trailing" constant="8" id="WUF-fF-MHy"/>
-                <constraint firstItem="fCg-QT-CcV" firstAttribute="top" secondItem="35D-kR-T9a" secondAttribute="bottom" constant="15" id="WlB-ML-qrk"/>
                 <constraint firstItem="35D-kR-T9a" firstAttribute="firstBaseline" secondItem="Gg2-oe-gZo" secondAttribute="firstBaseline" id="WpX-fT-FYD"/>
                 <constraint firstItem="1RP-5M-ifT" firstAttribute="leading" secondItem="0mw-Q8-nb7" secondAttribute="trailing" constant="8" id="YJn-Ac-q8l"/>
                 <constraint firstItem="0mw-Q8-nb7" firstAttribute="leading" secondItem="ftt-2x-C2n" secondAttribute="trailing" constant="8" id="aIe-5x-WVY"/>
@@ -773,11 +772,10 @@ Gw
                 <constraint firstItem="4b3-bD-7By" firstAttribute="leading" secondItem="vBI-1j-Aa7" secondAttribute="trailing" constant="8" id="mVH-G6-Ugm"/>
                 <constraint firstAttribute="trailing" secondItem="4b3-bD-7By" secondAttribute="trailing" id="mip-fh-7By"/>
                 <constraint firstItem="gGO-69-NDw" firstAttribute="leading" secondItem="qtR-4H-6GP" secondAttribute="trailing" constant="8" id="mjn-YN-xAs"/>
-                <constraint firstItem="jW2-hf-cQd" firstAttribute="top" secondItem="fCg-QT-CcV" secondAttribute="bottom" constant="15" id="nMG-jo-dnl"/>
                 <constraint firstItem="ftt-2x-C2n" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" constant="40" id="nn6-37-c0m"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="8w2-7N-QIg" secondAttribute="trailing" id="oBN-tQ-h3a"/>
                 <constraint firstAttribute="trailing" secondItem="jW2-hf-cQd" secondAttribute="trailing" id="pEj-fg-9eO"/>
-                <constraint firstAttribute="trailing" secondItem="fCg-QT-CcV" secondAttribute="trailing" id="psA-4l-JLr"/>
+                <constraint firstItem="jW2-hf-cQd" firstAttribute="top" secondItem="Gg2-oe-gZo" secondAttribute="bottom" constant="15" id="pzK-69-lym"/>
                 <constraint firstItem="ZhD-fg-EKZ" firstAttribute="top" secondItem="0mw-Q8-nb7" secondAttribute="bottom" constant="8" id="q4e-SC-vFt"/>
                 <constraint firstItem="0mw-Q8-nb7" firstAttribute="top" secondItem="jW2-hf-cQd" secondAttribute="bottom" constant="15" id="qz7-rC-hbY"/>
                 <constraint firstItem="Gg2-oe-gZo" firstAttribute="firstBaseline" secondItem="jlP-Se-MW3" secondAttribute="firstBaseline" id="uP5-Yi-cig"/>
@@ -786,6 +784,7 @@ Gw
                 <constraint firstItem="Ucp-vv-qKL" firstAttribute="firstBaseline" secondItem="xue-BB-gUz" secondAttribute="firstBaseline" id="vDc-fO-I3X"/>
                 <constraint firstItem="0dn-kG-M5l" firstAttribute="leading" secondItem="Ucp-vv-qKL" secondAttribute="trailing" constant="8" id="vJO-bj-Pak"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="ZhD-fg-EKZ" secondAttribute="trailing" id="wnd-dO-dk8"/>
+                <constraint firstItem="fCg-QT-CcV" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" constant="40" id="yF3-Uk-wgN"/>
             </constraints>
             <point key="canvasLocation" x="613" y="420.5"/>
         </customView>
@@ -849,7 +848,7 @@ Gw
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
                     <rect key="frame" x="-2" y="-2" width="301" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>
