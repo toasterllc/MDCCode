@@ -1377,18 +1377,22 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
     
     std::set<size_t> rows;
     std::vector<ListItem*> movedItems;
-    NSMutableIndexSet* idxs = [NSMutableIndexSet new];
+    NSMutableIndexSet* idxsOld = [NSMutableIndexSet new];
     size_t dstIdx = row;
+    
+    // Compose `movedItems`
     for (NSPasteboardItem* it : items) {
         NSNumber* num = Toastbox::Cast<NSNumber*>([it propertyListForType:_PboardDragItemsType]);
         const size_t idx = (size_t)[num unsignedIntegerValue];
         rows.insert(idx);
-        [idxs addIndex:idx];
+        [idxsOld addIndex:idx];
         movedItems.push_back(_items[idx]);
         if (idx < dstIdx) {
             dstIdx--;
         }
     }
+    
+    NSIndexSet* idxsNew = [NSIndexSet indexSetWithIndexesInRange:{dstIdx, movedItems.size()}];
     
     // Remove moved items
     {
@@ -1397,14 +1401,16 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
             _items.erase(_items.begin() + row - off);
             off++;
         }
-        [_tableView removeRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
+        [_tableView removeRowsAtIndexes:idxsOld withAnimation:NSTableViewAnimationEffectNone];
     }
     
     // Add moved items
     {
         _items.insert(_items.begin()+dstIdx, movedItems.begin(), movedItems.end());
-        [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:{dstIdx, movedItems.size()}]
-            withAnimation:NSTableViewAnimationEffectNone];
+        [_tableView insertRowsAtIndexes:idxsNew withAnimation:NSTableViewAnimationEffectNone];
+        // Select new rows
+        [_tableView selectRowIndexes:idxsNew byExtendingSelection:false];
+        [_tableView scrollRowToVisible:dstIdx];
     }
     
     return true;
