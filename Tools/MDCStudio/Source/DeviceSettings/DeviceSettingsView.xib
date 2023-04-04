@@ -16,7 +16,7 @@
                 <visualEffectView blendingMode="behindWindow" material="windowBackground" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="htS-Zh-S2s">
                     <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
                 </visualEffectView>
-                <tabView translatesAutoresizingMaskIntoConstraints="NO" id="NLY-ZL-vCb">
+                <tabView drawsBackground="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NLY-ZL-vCb">
                     <rect key="frame" x="-12" y="51" width="624" height="732"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>

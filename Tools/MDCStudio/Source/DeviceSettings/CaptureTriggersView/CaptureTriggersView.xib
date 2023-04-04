@@ -51,6 +51,9 @@
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
             <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
             <subviews>
+                <visualEffectView blendingMode="withinWindow" material="windowBackground" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="INJ-0A-iQw">
+                    <rect key="frame" x="0.0" y="0.0" width="600" height="434"/>
+                </visualEffectView>
                 <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="52" horizontalPageScroll="10" verticalLineScroll="52" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RYD-Tl-az2">
                     <rect key="frame" x="0.0" y="434" width="600" height="358"/>
                     <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
@@ -226,14 +229,18 @@ CA
                 <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="600" id="9OT-Nk-FLC"/>
                 <constraint firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" id="ADR-UA-IlK"/>
                 <constraint firstItem="fUr-DU-jha" firstAttribute="top" secondItem="RBu-R2-DJH" secondAttribute="bottom" id="AuO-F3-NgJ"/>
+                <constraint firstAttribute="bottom" secondItem="INJ-0A-iQw" secondAttribute="bottom" id="D1X-tH-Evh"/>
                 <constraint firstAttribute="trailing" secondItem="fUr-DU-jha" secondAttribute="trailing" id="Fip-Ky-KtD"/>
+                <constraint firstItem="INJ-0A-iQw" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="GAq-bq-17k"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="Jcp-3s-WDp"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="centerY" secondItem="EQc-nq-cmH" secondAttribute="centerY" id="LLE-8n-ub1"/>
                 <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="400" id="QiN-5n-jjt"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" constant="-12" id="Vx3-Pn-lP8"/>
                 <constraint firstAttribute="bottom" secondItem="fUr-DU-jha" secondAttribute="bottom" id="cDY-05-1JP"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="top" secondItem="RYD-Tl-az2" secondAttribute="bottom" constant="8" id="eyo-cv-mc1"/>
+                <constraint firstAttribute="trailing" secondItem="INJ-0A-iQw" secondAttribute="trailing" id="mCb-9G-TXi"/>
                 <constraint firstItem="fUr-DU-jha" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="s1P-H4-ypG"/>
+                <constraint firstItem="INJ-0A-iQw" firstAttribute="top" secondItem="RYD-Tl-az2" secondAttribute="bottom" id="u4O-ax-1rB"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="uSV-CQ-a5h"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="leading" secondItem="EQc-nq-cmH" secondAttribute="trailing" id="yih-vp-0ex"/>
             </constraints>
