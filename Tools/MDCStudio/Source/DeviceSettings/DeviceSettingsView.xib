@@ -16,17 +16,17 @@
                 <visualEffectView blendingMode="behindWindow" material="windowBackground" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="htS-Zh-S2s">
                     <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
                 </visualEffectView>
-                <tabView drawsBackground="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NLY-ZL-vCb">
-                    <rect key="frame" x="-7" y="51" width="614" height="727"/>
+                <tabView translatesAutoresizingMaskIntoConstraints="NO" id="NLY-ZL-vCb">
+                    <rect key="frame" x="-12" y="51" width="624" height="732"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="Capture Triggers" identifier="" id="t1H-wv-Rdu">
                             <view key="view" id="Opp-py-5Rd">
-                                <rect key="frame" x="10" y="33" width="594" height="681"/>
+                                <rect key="frame" x="10" y="33" width="604" height="686"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="yhK-fY-aTs" customClass="CaptureTriggersView">
-                                        <rect key="frame" x="0.0" y="0.0" width="594" height="681"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="604" height="686"/>
                                     </customView>
                                 </subviews>
                                 <constraints>
@@ -79,11 +79,11 @@ Gw
                 <constraint firstItem="loq-oF-BLr" firstAttribute="width" secondItem="HXO-cR-ctO" secondAttribute="width" id="KC7-Zv-CsK"/>
                 <constraint firstAttribute="bottom" secondItem="htS-Zh-S2s" secondAttribute="bottom" id="QJf-R3-SoD"/>
                 <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="400" id="QiN-5n-jjt"/>
-                <constraint firstAttribute="trailing" secondItem="NLY-ZL-vCb" secondAttribute="trailing" id="WIZ-j9-MkW"/>
+                <constraint firstAttribute="trailing" secondItem="NLY-ZL-vCb" secondAttribute="trailing" constant="-5" id="WIZ-j9-MkW"/>
                 <constraint firstItem="loq-oF-BLr" firstAttribute="leading" secondItem="HXO-cR-ctO" secondAttribute="trailing" constant="12" id="XlP-Nb-K2B"/>
                 <constraint firstItem="htS-Zh-S2s" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="bCa-pb-x1k"/>
-                <constraint firstItem="NLY-ZL-vCb" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="dwS-vm-SoD"/>
-                <constraint firstItem="NLY-ZL-vCb" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" constant="20" id="jaT-NA-raq"/>
+                <constraint firstItem="NLY-ZL-vCb" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="-5" id="dwS-vm-SoD"/>
+                <constraint firstItem="NLY-ZL-vCb" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" constant="15" id="jaT-NA-raq"/>
                 <constraint firstItem="loq-oF-BLr" firstAttribute="top" secondItem="NLY-ZL-vCb" secondAttribute="bottom" constant="20" id="pe6-sx-tNw"/>
                 <constraint firstAttribute="bottom" secondItem="loq-oF-BLr" secondAttribute="bottom" constant="20" id="y02-sQ-oup"/>
             </constraints>
