@@ -5,6 +5,7 @@
 #import <iomanip>
 #import <cmath>
 #import <string>
+#import <set>
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/NumForStr.h"
@@ -860,6 +861,7 @@ static void _Init(CaptureTriggersView* self) {
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
+    [self->_tableView registerForDraggedTypes:@[_PboardDragItemsType]];
     [self->_tableView reloadData];
 //    _ListItemAdd(self, Trigger::Type::Time);
 //    _ListItemAdd(self, Trigger::Type::Motion);
@@ -1360,6 +1362,146 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
         return @(Calendar::StringFromYearDay(x->x).c_str());
     }
     return obj;
+}
+
+// MARK: - Table View Drag / Drop
+
+static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureTriggersView.PasteboardType";
+
+- (id<NSPasteboardWriting>)tableView:(NSTableView*)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSLog(@"tableView:pasteboardWriterForRow:");
+    NSPasteboardItem* pb = [NSPasteboardItem new];
+    [pb setPropertyList:@(row) forType:_PboardDragItemsType];
+    return pb;
+}
+
+- (NSDragOperation)tableView:(NSTableView *)tableView validateDrop:(id<NSDraggingInfo>)info
+    proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)drop {
+    
+    if (drop == NSTableViewDropAbove) {
+        NSLog(@"proposedDropOperation %@", @(drop));
+//        NSArray<NSPasteboardItem*>* items = [[info draggingPasteboard] pasteboardItems];
+//        std::set<size_t> rows;
+//        for (NSPasteboardItem* it : items) {
+//            NSNumber* num = Toastbox::Cast<NSNumber*>([it propertyListForType:_PboardDragItemsType]);
+//            rows.insert([num integerValue]);
+//        }
+        
+        return NSDragOperationMove;
+    }
+    
+    return NSDragOperationNone;
+    
+//    return NSDragOperationNone;
+//    Item* targetItem = Cast<Item*>(targetItemId ? targetItemId : _rootItem);
+//    
+//    std::set<Item*> targetAncestors;
+//    if (targetItem) targetAncestors = _GetAncestors(_outlineView, Cast<Item*>(targetItem));
+//    // If the dragged items share any ancestor with the target item, don't allow the move
+//    // because we're trying to move an element into itself.
+//    std::vector<_PboardDragItem> pbDragItems = _PboardDragItemsGetAll([[info draggingPasteboard] pasteboardItems]);
+//    for (const _PboardDragItem& pbDragItem : pbDragItems) {
+//        Item* item = pbDragItem.parent->items.at(pbDragItem.idx);
+//        if (targetAncestors.find(item) != targetAncestors.end()) {
+//            return NSDragOperationNone;
+//        }
+//    }
+//    
+//    if (!targetItem || (bool)CastOrNull<Schematic::GroupPtr>(targetItem->obj)) {
+//        return NSDragOperationMove;
+//    }
+//    
+//    return NSDragOperationNone;
+}
+
+- (BOOL)tableView:(NSTableView*)tableView acceptDrop:(id<NSDraggingInfo>)info
+    row:(NSInteger)row dropOperation:(NSTableViewDropOperation)drop {
+    
+    NSArray<NSPasteboardItem*>* items = [[info draggingPasteboard] pasteboardItems];
+    
+    std::set<size_t> rows;
+    std::vector<ListItem*> movedItems;
+    NSMutableIndexSet* idxs = [NSMutableIndexSet new];
+    size_t dstIdx = row;
+    for (NSPasteboardItem* it : items) {
+        NSNumber* num = Toastbox::Cast<NSNumber*>([it propertyListForType:_PboardDragItemsType]);
+        const size_t idx = (size_t)[num unsignedIntegerValue];
+        rows.insert(idx);
+        [idxs addIndex:idx];
+        movedItems.push_back(_items[idx]);
+        if (idx < dstIdx) {
+            dstIdx--;
+        }
+    }
+    
+    // Remove moved items
+    {
+        size_t off = 0;
+        for (size_t row : rows) {
+            _items.erase(_items.begin() + row - off);
+            off++;
+        }
+        [_tableView removeRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
+    }
+    
+    // Add moved items
+    {
+        _items.insert(_items.begin()+dstIdx, movedItems.begin(), movedItems.end());
+        [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:{dstIdx, movedItems.size()}]
+            withAnimation:NSTableViewAnimationEffectNone];
+    }
+    
+    
+    
+//    // Restore the current selection when we're done handling the drag
+//    auto selectionPrev = [self selection];
+//    Defer(
+//        [self setSelection:selectionPrev];
+//    );
+//    
+//    std::vector<_PboardDragItem> pbDragItems = _PboardDragItemsGetAll([[info draggingPasteboard] pasteboardItems]);
+//    
+//    // Create `srcCollIdxs` which maps a Collection -> indexes of items being dragged
+//    Item* dstItem = Cast<Item*>(targetItemId ? targetItemId : _rootItem);
+//    Schematic::GroupPtr dstColl = Cast<Schematic::GroupPtr>(dstItem->obj);
+//    std::vector<Schematic::ObjectPtr> dragObjs;
+//    std::map<Schematic::GroupPtr,std::set<size_t>> srcCollIdxs;
+//    if (dstIdx < 0) dstIdx = dstColl->collectionObjects().size(); // dstIdx==-1 when user drags past the end
+//    
+//    for (const _PboardDragItem& pbDragItem : pbDragItems) {
+//        dragObjs.push_back(pbDragItem.parent->items.at(pbDragItem.idx)->obj);
+//        Schematic::GroupPtr coll = Cast<Schematic::GroupPtr>(pbDragItem.parent->obj);
+//        srcCollIdxs[coll].insert(pbDragItem.idx);
+//    }
+//    
+//    // Remove the dragged items from their source parents
+//    const Object::Event::Flags flags = Object::Event::Move;
+//    std::set<Schematic::GroupPtr> colls; // Modified collections
+//    for (const auto& [coll,idxs] : srcCollIdxs) {
+//        for (auto it=idxs.rbegin(); it!=idxs.rend(); it++) {
+//            const size_t idx = *it;
+//            coll->collectionRemove(idx, flags);
+//            // We need to adjust `dstIdx` when removing items that
+//            // precede `dstIdx` from the same parent
+//            if (coll == dstColl) {
+//                if (idx < dstIdx) {
+//                    dstIdx--;
+//                }
+//            }
+//        }
+//        colls.insert(coll);
+//    }
+//    
+//    // Add the dragged items to the destination parent
+//    for (Schematic::ObjectPtr obj : dragObjs) {
+//        dstColl->collectionAdd(obj, dstIdx, flags);
+//        dstIdx++;
+//    }
+//    colls.insert(dstColl);
+//    
+//    // Clear our _PboardDragItems state so we're ready for the next drag
+//    _PboardDragItemsClear();
+    return true;
 }
 
 @end
