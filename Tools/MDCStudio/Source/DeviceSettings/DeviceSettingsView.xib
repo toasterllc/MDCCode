@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="DeviceSettingsView">
+            <connections>
+                <outlet property="_nibView" destination="8kh-WA-1UA" id="284-K1-4nm"/>
+            </connections>
+        </customObject>
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
+            <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
+            <subviews>
+                <visualEffectView blendingMode="behindWindow" material="windowBackground" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="htS-Zh-S2s">
+                    <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
+                </visualEffectView>
+                <tabView drawsBackground="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NLY-ZL-vCb">
+                    <rect key="frame" x="-7" y="51" width="614" height="727"/>
+                    <font key="font" metaFont="system"/>
+                    <tabViewItems>
+                        <tabViewItem label="Capture Triggers" identifier="" id="t1H-wv-Rdu">
+                            <view key="view" id="Opp-py-5Rd">
+                                <rect key="frame" x="10" y="33" width="594" height="681"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <subviews>
+                                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="yhK-fY-aTs" customClass="CaptureTriggersView">
+                                        <rect key="frame" x="0.0" y="0.0" width="594" height="681"/>
+                                    </customView>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="yhK-fY-aTs" firstAttribute="leading" secondItem="Opp-py-5Rd" secondAttribute="leading" id="FJD-CE-CSq"/>
+                                    <constraint firstAttribute="trailing" secondItem="yhK-fY-aTs" secondAttribute="trailing" id="KMw-D1-Ics"/>
+                                    <constraint firstItem="yhK-fY-aTs" firstAttribute="top" secondItem="Opp-py-5Rd" secondAttribute="top" id="lJ1-do-f8i"/>
+                                    <constraint firstAttribute="bottom" secondItem="yhK-fY-aTs" secondAttribute="bottom" id="p6U-ko-C0f"/>
+                                </constraints>
+                            </view>
+                        </tabViewItem>
+                        <tabViewItem label="Battery Life" identifier="" id="0vi-hB-ilh">
+                            <view key="view" id="l27-h2-i0f">
+                                <rect key="frame" x="10" y="33" width="554" height="681"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            </view>
+                        </tabViewItem>
+                    </tabViewItems>
+                </tabView>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="loq-oF-BLr">
+                    <rect key="frame" x="504" y="13" width="82" height="32"/>
+                    <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="iMF-nE-jdf">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="_actionDismiss:" target="-2" id="1ia-Az-FoL"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="HXO-cR-ctO">
+                    <rect key="frame" x="422" y="13" width="82" height="32"/>
+                    <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="YGv-xU-voq">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                        <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                    </buttonCell>
+                    <connections>
+                        <action selector="_actionDismiss:" target="-2" id="aU7-Zg-hDq"/>
+                    </connections>
+                </button>
+            </subviews>
+            <constraints>
+                <constraint firstItem="loq-oF-BLr" firstAttribute="firstBaseline" secondItem="HXO-cR-ctO" secondAttribute="firstBaseline" id="1cD-Zb-En7"/>
+                <constraint firstAttribute="trailing" secondItem="htS-Zh-S2s" secondAttribute="trailing" id="7TX-rW-Gh8"/>
+                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="600" id="9OT-Nk-FLC"/>
+                <constraint firstAttribute="bottom" secondItem="HXO-cR-ctO" secondAttribute="bottom" constant="20" id="A1Y-aZ-deN"/>
+                <constraint firstAttribute="trailing" secondItem="loq-oF-BLr" secondAttribute="trailing" constant="20" id="CCA-sD-e5Z"/>
+                <constraint firstItem="htS-Zh-S2s" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="FDu-59-hjn"/>
+                <constraint firstItem="loq-oF-BLr" firstAttribute="width" secondItem="HXO-cR-ctO" secondAttribute="width" id="KC7-Zv-CsK"/>
+                <constraint firstAttribute="bottom" secondItem="htS-Zh-S2s" secondAttribute="bottom" id="QJf-R3-SoD"/>
+                <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="400" id="QiN-5n-jjt"/>
+                <constraint firstAttribute="trailing" secondItem="NLY-ZL-vCb" secondAttribute="trailing" id="WIZ-j9-MkW"/>
+                <constraint firstItem="loq-oF-BLr" firstAttribute="leading" secondItem="HXO-cR-ctO" secondAttribute="trailing" constant="12" id="XlP-Nb-K2B"/>
+                <constraint firstItem="htS-Zh-S2s" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="bCa-pb-x1k"/>
+                <constraint firstItem="NLY-ZL-vCb" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="dwS-vm-SoD"/>
+                <constraint firstItem="NLY-ZL-vCb" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" constant="20" id="jaT-NA-raq"/>
+                <constraint firstItem="loq-oF-BLr" firstAttribute="top" secondItem="NLY-ZL-vCb" secondAttribute="bottom" constant="20" id="pe6-sx-tNw"/>
+                <constraint firstAttribute="bottom" secondItem="loq-oF-BLr" secondAttribute="bottom" constant="20" id="y02-sQ-oup"/>
+            </constraints>
+            <point key="canvasLocation" x="12" y="-537"/>
+        </customView>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+    </objects>
+</document>

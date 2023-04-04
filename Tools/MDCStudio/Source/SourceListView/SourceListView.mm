@@ -3,7 +3,7 @@
 #import "Util.h"
 #import "MDCDevicesManager.h"
 #import "Toastbox/Mac/Util.h"
-#import "DeviceSettings/CaptureTriggersView.h"
+#import "DeviceSettings/DeviceSettingsView.h"
 using namespace MDCStudio;
 
 // MARK: - Outline View Items
@@ -100,7 +100,7 @@ using namespace MDCStudio;
     NSLog(@"SETTINGS");
     NSWindow* parentWindow = [self window];
     
-    CaptureTriggersView* view = [[CaptureTriggersView alloc] initWithFrame:{}];
+    DeviceSettingsView* view = [[DeviceSettingsView alloc] initWithFrame:{}];
     
     NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
         styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable

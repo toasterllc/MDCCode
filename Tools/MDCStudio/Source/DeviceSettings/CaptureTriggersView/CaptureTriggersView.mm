@@ -10,7 +10,7 @@
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/NumForStr.h"
 #import "Toastbox/String.h"
-#import "DeviceSettings.h"
+#import "DeviceSettings/DeviceSettings.h"
 #import "Toastbox/Defer.h"
 using namespace DeviceSettings;
 
@@ -1289,10 +1289,6 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     NSInteger idx = [_tableView selectedRow];
     if (idx < 0) return;
     _ListItemRemove(self, idx);
-}
-
-- (IBAction)_actionDismiss:(id)sender {
-    [[[self window] sheetParent] endSheet:[self window]];
 }
 
 // MARK: - Table View Data Source / Delegate
