@@ -1144,11 +1144,11 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             
             if constexpr (T_Forward) {
                 if (!x.schedule.timeRange.enable) {
-                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"triggers per day"];
+                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"triggers, until next day"];
                     [v._battery_Motion_MaxTriggerCount_DetailLabel setHidden:true];
                 
                 } else {
-                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"triggers per time period"];
+                    [v._battery_Motion_MaxTriggerCount_Label setStringValue:@"triggers, until next time period"];
                     const std::string detail = "(" + _TimeRangeDescription(x.schedule.timeRange.start, x.schedule.timeRange.end) + ")";
                     [v._battery_Motion_MaxTriggerCount_DetailLabel setStringValue:@(detail.c_str())];
                     [v._battery_Motion_MaxTriggerCount_DetailLabel setHidden:false];
