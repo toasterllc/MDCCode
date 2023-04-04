@@ -443,7 +443,6 @@ static uint32_t _SecondsFromTimeOfDayString(std::string x, bool assumeAM=true) {
             count += started;
             if (count == 2) count = 0;
         }
-        printf("%s\n", x.c_str());
     }
     
     // Add AM/PM if it isn't specified, so we don't reject the input if it's just missing am/pm
