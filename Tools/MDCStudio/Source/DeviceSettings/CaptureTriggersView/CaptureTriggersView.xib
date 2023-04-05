@@ -601,7 +601,7 @@ CA
                     </connections>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Qag-Kc-J1Q">
-                    <rect key="frame" x="40" y="239" width="530" height="140"/>
+                    <rect key="frame" x="40" y="239" width="510" height="140"/>
                 </customView>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="8w2-7N-QIg">
                     <rect key="frame" x="321" y="157" width="47" height="16"/>
@@ -711,7 +711,7 @@ CA
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZhD-fg-EKZ">
-                    <rect key="frame" x="38" y="118" width="534" height="28"/>
+                    <rect key="frame" x="38" y="118" width="514" height="28"/>
                     <textFieldCell key="cell" title="After this number of triggers, your Photon ignores motion until the next day to prolong its battery life." id="77K-Wk-abH">
                         <font key="font" metaFont="label" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -719,7 +719,7 @@ CA
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="icX-od-xa4">
-                    <rect key="frame" x="38" y="30" width="534" height="28"/>
+                    <rect key="frame" x="38" y="30" width="514" height="28"/>
                     <textFieldCell key="cell" id="Org-0X-drC">
                         <font key="font" metaFont="label" size="11"/>
                         <string key="title">After motion occurs, your Photon will ignore further motion for this amount of time. This can help limit the number of triggers during long periods of continuous motion, prolonging battery life.</string>
@@ -738,11 +738,11 @@ CA
             </subviews>
             <constraints>
                 <constraint firstItem="1RP-5M-ifT" firstAttribute="firstBaseline" secondItem="ftt-2x-C2n" secondAttribute="firstBaseline" id="00t-c2-bfs"/>
-                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="icX-od-xa4" secondAttribute="trailing" id="3pP-8v-OMg"/>
+                <constraint firstAttribute="trailing" secondItem="icX-od-xa4" secondAttribute="trailing" constant="20" id="3pP-8v-OMg"/>
                 <constraint firstItem="icX-od-xa4" firstAttribute="leading" secondItem="xue-BB-gUz" secondAttribute="leading" id="4A4-LA-gFh"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="IXU-RQ-Nel" secondAttribute="trailing" id="5pd-YU-5qe"/>
                 <constraint firstItem="icX-od-xa4" firstAttribute="top" secondItem="Ucp-vv-qKL" secondAttribute="bottom" constant="8" id="98y-u9-XVZ"/>
-                <constraint firstAttribute="trailing" secondItem="Qag-Kc-J1Q" secondAttribute="trailing" id="9O2-Nw-v1r"/>
+                <constraint firstAttribute="trailing" secondItem="Qag-Kc-J1Q" secondAttribute="trailing" constant="20" id="9O2-Nw-v1r"/>
                 <constraint firstItem="0mw-Q8-nb7" firstAttribute="firstBaseline" secondItem="ftt-2x-C2n" secondAttribute="firstBaseline" id="9bt-PR-Dfz"/>
                 <constraint firstItem="jW2-hf-cQd" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" constant="50" id="9qv-WH-Gb3"/>
                 <constraint firstItem="Ucp-vv-qKL" firstAttribute="leading" secondItem="xue-BB-gUz" secondAttribute="trailing" constant="8" id="D21-eI-BlN"/>
@@ -788,7 +788,7 @@ CA
                 <constraint firstItem="4b3-bD-7By" firstAttribute="centerY" secondItem="vBI-1j-Aa7" secondAttribute="centerY" id="v7E-bx-OyL"/>
                 <constraint firstItem="Ucp-vv-qKL" firstAttribute="firstBaseline" secondItem="xue-BB-gUz" secondAttribute="firstBaseline" id="vDc-fO-I3X"/>
                 <constraint firstItem="0dn-kG-M5l" firstAttribute="leading" secondItem="Ucp-vv-qKL" secondAttribute="trailing" constant="8" id="vJO-bj-Pak"/>
-                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="ZhD-fg-EKZ" secondAttribute="trailing" id="wnd-dO-dk8"/>
+                <constraint firstAttribute="trailing" secondItem="ZhD-fg-EKZ" secondAttribute="trailing" constant="20" id="wnd-dO-dk8"/>
                 <constraint firstItem="fCg-QT-CcV" firstAttribute="leading" secondItem="ZTq-dS-LMW" secondAttribute="leading" constant="40" id="yF3-Uk-wgN"/>
             </constraints>
             <point key="canvasLocation" x="613" y="420.5"/>
