@@ -757,6 +757,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTableView*       _tableView;
     IBOutlet ContainerSubview*  _detailView;
     IBOutlet NSButton*          _removeButton;
+    IBOutlet NSView*            _noTriggersView;
     
     // Schedule
     IBOutlet NSView*            _schedule_ContainerView;
@@ -822,6 +823,8 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
     [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
     [tv selectRowIndexes:idxs byExtendingSelection:false];
     [tv scrollRowToVisible:idx];
+    
+    [self->_noTriggersView setHidden:true];
     return it;
 }
 
@@ -841,6 +844,8 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     if (!self->_items.empty()) {
         NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:std::min(self->_items.size()-1, idx)];
         [tv selectRowIndexes:idxs byExtendingSelection:false];
+    } else {
+        [self->_noTriggersView setHidden:false];
     }
 }
 

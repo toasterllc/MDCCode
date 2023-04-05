@@ -30,6 +30,7 @@
                 <outlet property="_intervalSelector_Field" destination="bhM-F8-1Bt" id="2Yk-ca-UWU"/>
                 <outlet property="_intervalSelector_View" destination="F0b-7x-6jH" id="xii-eu-ibn"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
+                <outlet property="_noTriggersView" destination="iG6-k9-Zxe" id="bb3-5E-LPR"/>
                 <outlet property="_removeButton" destination="EQc-nq-cmH" id="jZo-dA-vUL"/>
                 <outlet property="_repeat_ContainerView" destination="Jd9-lQ-a3S" id="rvs-aF-ThI"/>
                 <outlet property="_repeat_Menu" destination="RN5-cz-MIP" id="L7P-1d-xQc"/>
@@ -164,6 +165,36 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                 </scrollView>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="iG6-k9-Zxe" userLabel="No Triggers View">
+                    <rect key="frame" x="201" y="457" width="198" height="45"/>
+                    <subviews>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tcN-PV-F9r">
+                            <rect key="frame" x="-2" y="17" width="202" height="28"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="No Capture Triggers" id="kA0-UF-qqd">
+                                <font key="font" metaFont="systemThin" size="24"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="90Z-72-SUf">
+                            <rect key="frame" x="55" y="0.0" width="89" height="15"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="Add one below!" id="DWV-gf-ePZ">
+                                <font key="font" metaFont="systemThin" size="12"/>
+                                <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                    </subviews>
+                    <constraints>
+                        <constraint firstItem="90Z-72-SUf" firstAttribute="top" secondItem="tcN-PV-F9r" secondAttribute="bottom" constant="2" id="6KS-Xe-HVE"/>
+                        <constraint firstItem="tcN-PV-F9r" firstAttribute="top" secondItem="iG6-k9-Zxe" secondAttribute="top" id="CSU-z9-jwo"/>
+                        <constraint firstItem="90Z-72-SUf" firstAttribute="centerX" secondItem="tcN-PV-F9r" secondAttribute="centerX" id="GgR-sZ-bYY"/>
+                        <constraint firstItem="tcN-PV-F9r" firstAttribute="centerX" secondItem="iG6-k9-Zxe" secondAttribute="centerX" id="fdd-rM-BY2"/>
+                        <constraint firstItem="tcN-PV-F9r" firstAttribute="leading" secondItem="iG6-k9-Zxe" secondAttribute="leading" id="mat-AR-Afo"/>
+                        <constraint firstAttribute="bottom" secondItem="90Z-72-SUf" secondAttribute="bottom" id="pHZ-TB-471"/>
+                        <constraint firstAttribute="trailing" secondItem="tcN-PV-F9r" secondAttribute="trailing" id="rSz-0F-Aw5"/>
+                    </constraints>
+                </customView>
                 <popUpButton translatesAutoresizingMaskIntoConstraints="NO" id="RBu-R2-DJH" userLabel="Add">
                     <rect key="frame" x="526" y="345" width="62" height="26"/>
                     <constraints>
@@ -397,9 +428,11 @@ CA
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="Jcp-3s-WDp"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="centerY" secondItem="EQc-nq-cmH" secondAttribute="centerY" id="LLE-8n-ub1"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" constant="-12" id="Vx3-Pn-lP8"/>
+                <constraint firstItem="iG6-k9-Zxe" firstAttribute="centerX" secondItem="RYD-Tl-az2" secondAttribute="centerX" id="Xv8-y2-a79"/>
                 <constraint firstAttribute="bottom" secondItem="MTQ-az-LcE" secondAttribute="bottom" id="Zw9-gt-qJx"/>
                 <constraint firstAttribute="trailing" secondItem="MTQ-az-LcE" secondAttribute="trailing" id="atb-QH-nDj"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="top" secondItem="RYD-Tl-az2" secondAttribute="bottom" constant="8" id="eyo-cv-mc1"/>
+                <constraint firstItem="iG6-k9-Zxe" firstAttribute="centerY" secondItem="RYD-Tl-az2" secondAttribute="centerY" id="l4j-zn-tRW"/>
                 <constraint firstItem="MTQ-az-LcE" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="sM2-i3-IzO"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="uSV-CQ-a5h"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="leading" secondItem="EQc-nq-cmH" secondAttribute="trailing" id="yih-vp-0ex"/>
