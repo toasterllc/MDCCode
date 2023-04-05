@@ -43,6 +43,8 @@
 		55496F61278E88B800BCA739 /* Grid.h in Sources */ = {isa = PBXBuildFile; fileRef = 55496F60278E88B800BCA739 /* Grid.h */; };
 		55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F62278FCDD000BCA739 /* MetalKit.framework */; };
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
+		557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557ABCED29DD24230032619E /* BatteryLifeView.mm */; };
+		557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 557ABCEE29DD24230032619E /* BatteryLifeView.xib */; };
 		558FFC5829C8F26F0022E840 /* EstimateIlluminant.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */; };
 		55A36AB827A35ABD00FD0181 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55A36AB727A35ABD00FD0181 /* IOKit.framework */; };
 		55C456862955A1AE00A20363 /* FixedScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456822955A1AE00A20363 /* FixedScrollView.mm */; };
@@ -196,6 +198,9 @@
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		5562353A27B5086E0008074C /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		557ABCED29DD24230032619E /* BatteryLifeView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifeView.mm; sourceTree = "<group>"; };
+		557ABCEE29DD24230032619E /* BatteryLifeView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BatteryLifeView.xib; sourceTree = "<group>"; };
+		557ABCEF29DD24230032619E /* BatteryLifeView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BatteryLifeView.h; sourceTree = "<group>"; };
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
 		558FFC4629C7EF920022E840 /* IterAny.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IterAny.h; sourceTree = "<group>"; };
@@ -608,6 +613,16 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		557ABCEC29DD24230032619E /* BatteryLifeView */ = {
+			isa = PBXGroup;
+			children = (
+				557ABCEF29DD24230032619E /* BatteryLifeView.h */,
+				557ABCED29DD24230032619E /* BatteryLifeView.mm */,
+				557ABCEE29DD24230032619E /* BatteryLifeView.xib */,
+			);
+			path = BatteryLifeView;
+			sourceTree = "<group>";
+		};
 		55C90C6A29B795A4007CC97E /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -698,6 +713,7 @@
 				5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */,
 				5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */,
 				5530DC3729DCDA21005FEC0A /* CaptureTriggersView */,
+				557ABCEC29DD24230032619E /* BatteryLifeView */,
 			);
 			path = DeviceSettings;
 			sourceTree = "<group>";
@@ -789,6 +805,7 @@
 			files = (
 				55F8877F29D3A7110075593F /* CaptureTriggersView.xib in Resources */,
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
+				557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */,
 				55425B9129A3F39700F25D57 /* Inspector-Exposure-Min.pdf in Resources */,
 				552F4BB629AE6E84000CEAB2 /* Inspector-Clear.pdf in Resources */,
 				55425B8C29A3F39700F25D57 /* Inspector-Brightness-Min.pdf in Resources */,
@@ -838,6 +855,7 @@
 				55C456862955A1AE00A20363 /* FixedScrollView.mm in Sources */,
 				551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */,
 				55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */,
+				557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */,
 				55D30A2E29A828E60080BCBD /* tz.cpp in Sources */,
 				55C456872955A1AE00A20363 /* FixedMetalDocumentLayer.mm in Sources */,
 				55C456882955A1AE00A20363 /* FixedDocumentView.mm in Sources */,

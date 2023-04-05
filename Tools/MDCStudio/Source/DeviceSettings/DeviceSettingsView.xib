@@ -31,12 +31,12 @@
                     <tabViewItems>
                         <tabViewItem label="Capture Triggers" identifier="" id="t1H-wv-Rdu">
                             <view key="view" translatesAutoresizingMaskIntoConstraints="NO" id="Opp-py-5Rd" customClass="CaptureTriggersView">
-                                <rect key="frame" x="0.0" y="0.0" width="600" height="705"/>
+                                <rect key="frame" x="0.0" y="0.0" width="600" height="685"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </view>
                         </tabViewItem>
                         <tabViewItem label="Battery Life" identifier="" id="0vi-hB-ilh">
-                            <view key="view" translatesAutoresizingMaskIntoConstraints="NO" id="l27-h2-i0f">
+                            <view key="view" translatesAutoresizingMaskIntoConstraints="NO" id="l27-h2-i0f" customClass="BatteryLifeView">
                                 <rect key="frame" x="0.0" y="0.0" width="600" height="685"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </view>
