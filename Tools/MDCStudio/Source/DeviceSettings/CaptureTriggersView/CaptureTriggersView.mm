@@ -1412,4 +1412,12 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
     return true;
 }
 
+- (NSLayoutYAxisAnchor*)deviceSettingsView_HeaderBottomAnchor {
+    return [_containerView topAnchor];
+}
+
+- (CGFloat)deviceSettingsView_HeaderBottomAnchorOffset {
+    return 8;
+}
+
 @end

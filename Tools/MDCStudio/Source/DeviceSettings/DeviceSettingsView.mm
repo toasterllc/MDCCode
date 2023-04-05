@@ -1,8 +1,12 @@
 #import "DeviceSettingsView.h"
+#import "Toastbox/Mac/Util.h"
 
 @implementation DeviceSettingsView {
 @public
     IBOutlet NSView* _nibView;
+    IBOutlet NSTabView* _tabView;
+    IBOutlet NSSegmentedControl* _segmentedControl;
+    IBOutlet NSView* _headerBackground;
 }
 
 static void _Init(DeviceSettingsView* self) {
@@ -19,6 +23,9 @@ static void _Init(DeviceSettingsView* self) {
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
+//    [self->_tabView selectTabViewItem:[self->_tabView tabViewItemAtIndex:0]];
+    [self->_segmentedControl setSelectedSegment:0];
+    [self _actionSectionChanged:nil];
 }
 
 // MARK: - Creation
@@ -33,6 +40,16 @@ static void _Init(DeviceSettingsView* self) {
     if (!(self = [super initWithCoder:coder])) return nil;
     _Init(self);
     return self;
+}
+
+- (IBAction)_actionSectionChanged:(id)sender {
+    const NSInteger idx = [_segmentedControl selectedSegment];
+    [_tabView selectTabViewItemAtIndex:idx];
+    
+    NSView* view = [[_tabView tabViewItemAtIndex:idx] view];
+    NSLayoutYAxisAnchor*const anchor = [view deviceSettingsView_HeaderBottomAnchor];
+    const CGFloat offset = [view deviceSettingsView_HeaderBottomAnchorOffset];
+    [[[_headerBackground bottomAnchor] constraintEqualToAnchor:anchor constant:offset] setActive:true];
 }
 
 - (IBAction)_actionDismiss:(id)sender {

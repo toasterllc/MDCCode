@@ -7,7 +7,10 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="DeviceSettingsView">
             <connections>
+                <outlet property="_headerBackground" destination="ZMn-44-fZX" id="XUJ-s4-M55"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="284-K1-4nm"/>
+                <outlet property="_segmentedControl" destination="0mG-ww-k7b" id="R9J-57-oV6"/>
+                <outlet property="_tabView" destination="NLY-ZL-vCb" id="Fi3-gv-mgr"/>
             </connections>
         </customObject>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
@@ -17,44 +20,33 @@
                     <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
                 </visualEffectView>
                 <visualEffectView blendingMode="withinWindow" material="underPageBackground" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="ZMn-44-fZX">
-                    <rect key="frame" x="0.0" y="492" width="600" height="300"/>
+                    <rect key="frame" x="0.0" y="767" width="600" height="25"/>
                     <constraints>
-                        <constraint firstAttribute="height" constant="300" id="flT-Wt-dhI"/>
+                        <constraint firstAttribute="height" constant="25" placeholder="YES" id="flT-Wt-dhI"/>
                     </constraints>
                 </visualEffectView>
-                <tabView drawsBackground="NO" type="noTabsNoBorder" translatesAutoresizingMaskIntoConstraints="NO" id="NLY-ZL-vCb" customClass="MyTabView">
+                <tabView drawsBackground="NO" type="noTabsNoBorder" translatesAutoresizingMaskIntoConstraints="NO" id="NLY-ZL-vCb">
                     <rect key="frame" x="0.0" y="61" width="600" height="685"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="Capture Triggers" identifier="" id="t1H-wv-Rdu">
-                            <view key="view" id="Opp-py-5Rd">
+                            <view key="view" id="Opp-py-5Rd" customClass="CaptureTriggersView">
                                 <rect key="frame" x="0.0" y="0.0" width="600" height="685"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                <subviews>
-                                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="yhK-fY-aTs" customClass="CaptureTriggersView">
-                                        <rect key="frame" x="0.0" y="0.0" width="600" height="685"/>
-                                    </customView>
-                                </subviews>
-                                <constraints>
-                                    <constraint firstItem="yhK-fY-aTs" firstAttribute="leading" secondItem="Opp-py-5Rd" secondAttribute="leading" id="FJD-CE-CSq"/>
-                                    <constraint firstAttribute="trailing" secondItem="yhK-fY-aTs" secondAttribute="trailing" id="KMw-D1-Ics"/>
-                                    <constraint firstItem="yhK-fY-aTs" firstAttribute="top" secondItem="Opp-py-5Rd" secondAttribute="top" id="lJ1-do-f8i"/>
-                                    <constraint firstAttribute="bottom" secondItem="yhK-fY-aTs" secondAttribute="bottom" id="p6U-ko-C0f"/>
-                                </constraints>
                             </view>
                         </tabViewItem>
                         <tabViewItem label="Battery Life" identifier="" id="0vi-hB-ilh">
                             <view key="view" id="l27-h2-i0f">
-                                <rect key="frame" x="0.0" y="0.0" width="610" height="705"/>
+                                <rect key="frame" x="0.0" y="0.0" width="600" height="685"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </view>
                         </tabViewItem>
                     </tabViewItems>
                 </tabView>
-                <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="nZd-r3-PiT">
+                <box hidden="YES" verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="nZd-r3-PiT">
                     <rect key="frame" x="0.0" y="764" width="175" height="5"/>
                 </box>
-                <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="fEs-i7-uB3">
+                <box hidden="YES" verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="fEs-i7-uB3">
                     <rect key="frame" x="425" y="764" width="175" height="5"/>
                 </box>
                 <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0mG-ww-k7b">
@@ -69,6 +61,9 @@
                             <segment label="Battery Life" selected="YES" tag="1"/>
                         </segments>
                     </segmentedCell>
+                    <connections>
+                        <action selector="_actionSectionChanged:" target="-2" id="Ler-il-cY6"/>
+                    </connections>
                 </segmentedControl>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="loq-oF-BLr">
                     <rect key="frame" x="504" y="13" width="82" height="32"/>
