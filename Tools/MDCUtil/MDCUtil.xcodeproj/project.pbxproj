@@ -44,7 +44,6 @@
 		552F4B8E29AD3ACB000CEAB2 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		552F4B8F29AD3ACB000CEAB2 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
 		552F4B9029AD3ACB000CEAB2 /* Scheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scheduler.h; sourceTree = "<group>"; };
-		552F4B9129AD3ACB000CEAB2 /* RelativeTimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RelativeTimeString.h; sourceTree = "<group>"; };
 		552F4B9229AD3ACB000CEAB2 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
 		552F4B9429AD3ACB000CEAB2 /* ThreePartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
 		552F4B9529AD3ACB000CEAB2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
@@ -54,7 +53,6 @@
 		552F4B9929AD3ACB000CEAB2 /* Cast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cast.h; sourceTree = "<group>"; };
 		552F4B9A29AD3ACB000CEAB2 /* FileDescriptor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileDescriptor.h; sourceTree = "<group>"; };
 		552F4B9B29AD3ACB000CEAB2 /* USB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USB.h; sourceTree = "<group>"; };
-		552F4B9C29AD3ACB000CEAB2 /* Stringify.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Stringify.h; sourceTree = "<group>"; };
 		552F4B9D29AD3ACB000CEAB2 /* Defer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defer.h; sourceTree = "<group>"; };
 		552F4B9E29AD3ACB000CEAB2 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		552F4B9F29AD3ACB000CEAB2 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
@@ -66,6 +64,9 @@
 		552F4BA529AD3ACB000CEAB2 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		552F4BA629AD3ACB000CEAB2 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
 		55496F38278BAC5000BCA739 /* MSP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
+		557ABD2529E61A3D0032619E /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
+		557ABD8A29E9C3210032619E /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
+		557ABD8F29EA1BE70032619E /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
 		55B2151327090FD2001423C1 /* VectorTable.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = VectorTable.s; sourceTree = "<group>"; };
 		55B2151927090FD2001423C1 /* GPIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GPIO.h; sourceTree = "<group>"; };
 		55B2151B27090FD2001423C1 /* QSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QSPI.h; sourceTree = "<group>"; };
@@ -183,7 +184,6 @@
 				552F4B8E29AD3ACB000CEAB2 /* Enum.h */,
 				552F4B8F29AD3ACB000CEAB2 /* Endian.h */,
 				552F4B9029AD3ACB000CEAB2 /* Scheduler.h */,
-				552F4B9129AD3ACB000CEAB2 /* RelativeTimeString.h */,
 				552F4B9229AD3ACB000CEAB2 /* RuntimeError.h */,
 				552F4B9329AD3ACB000CEAB2 /* Mac */,
 				552F4B9729AD3ACB000CEAB2 /* IntForStr.h */,
@@ -191,9 +191,9 @@
 				552F4B9929AD3ACB000CEAB2 /* Cast.h */,
 				552F4B9A29AD3ACB000CEAB2 /* FileDescriptor.h */,
 				552F4B9B29AD3ACB000CEAB2 /* USB.h */,
-				552F4B9C29AD3ACB000CEAB2 /* Stringify.h */,
 				552F4B9D29AD3ACB000CEAB2 /* Defer.h */,
 				552F4B9E29AD3ACB000CEAB2 /* Mmap.h */,
+				557ABD2529E61A3D0032619E /* NumForStr.h */,
 				552F4B9F29AD3ACB000CEAB2 /* HashInts.h */,
 				552F4BA029AD3ACB000CEAB2 /* RefCounted.h */,
 				552F4BA129AD3ACB000CEAB2 /* Uniqued.h */,
@@ -202,6 +202,7 @@
 				552F4BA429AD3ACB000CEAB2 /* RingBuffer.h */,
 				552F4BA529AD3ACB000CEAB2 /* SendRight.h */,
 				552F4BA629AD3ACB000CEAB2 /* String.h */,
+				557ABD8F29EA1BE70032619E /* DurationString.h */,
 			);
 			path = Toastbox;
 			sourceTree = "<group>";
@@ -252,6 +253,7 @@
 			isa = PBXGroup;
 			children = (
 				55B2153327091044001423C1 /* Assert.h */,
+				557ABD8A29E9C3210032619E /* Clock.h */,
 				55D08210270BAC6500B9BB97 /* ChecksumFletcher32.h */,
 				55B66B4A27176EC700AD39A5 /* ICE.h */,
 				55B66B3F271525F800AD39A5 /* Img.h */,

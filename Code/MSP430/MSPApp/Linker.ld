@@ -20,7 +20,7 @@ SECTIONS {
         _ram_backup_dstend = .;
     } >BAKMEM AT> FRAM
     
-    /* Backup RAM (RAM maintained during LPM3.5) */
+    /* Backup RAM (RAM maintained during LPM3.5), uninitialized */
     .ram_backup_noinit : {
         . = ALIGN(2);
         *(.ram_backup_noinit.*)

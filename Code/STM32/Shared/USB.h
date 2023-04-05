@@ -570,7 +570,7 @@ private:
             if (eps.len == sizeof(_ResetSentinel)) eps.stage = _EndpointStage::Ready;
             break;
         default:
-            abort();
+            Assert(false);
         }
         
         // State actions
@@ -612,7 +612,7 @@ private:
         case _EndpointStage::ResetZLP1:     eps.stage = _EndpointStage::ResetZLP2;     break;
         case _EndpointStage::ResetZLP2:     eps.stage = _EndpointStage::ResetSentinel; break;
         case _EndpointStage::ResetSentinel: eps.stage = _EndpointStage::Ready;         break;
-        default:                            abort();
+        default:                            Assert(false);
         }
         
         // State actions
@@ -638,7 +638,7 @@ private:
     }
     
 private:
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     static const inline uint8_t _ResetSentinel = 0;
     
     // _DevNullAddr: address that throw-away data can be written to.
@@ -649,7 +649,7 @@ private:
     // ignored as long as the flash isn't unlocked.
     static constexpr uint32_t _DevNullAddr = 0x08000000;
     
-    alignas(alignof(void*)) // Aligned to receive via USB
+    alignas(void*) // Aligned to receive via USB
     static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl];
     
     static inline std::optional<size_t> _CmdRecvLen;

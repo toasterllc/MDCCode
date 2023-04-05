@@ -1,23 +1,24 @@
 #pragma once
 #include <msp430.h>
 #include <atomic>
+#include "Assert.h"
 
 template <
+auto T_Domain,
 typename T_Scheduler,
 typename T_SCLPin,
 typename T_SDAPin,
 typename T_ActivePin,
-uint8_t T_Addr,
-[[noreturn]] void T_Error(uint16_t)
+uint8_t T_Addr
 >
 class I2CType {
-#define Assert(x) if (!(x)) T_Error(__LINE__)
-
 private:
     using _ActiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
     using _InactiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
     
 public:
+    static constexpr auto AssertDomain = T_Domain;
+    
     struct Pin {
         using SCL = typename T_SCLPin::template Opts<GPIO::Option::Sel01>;
         using SDA = typename T_SDAPin::template Opts<GPIO::Option::Sel01>;
@@ -170,6 +171,4 @@ private:
     }
     
     static volatile inline _Events _Ev = _EventNone;
-    
-#undef Assert
 };

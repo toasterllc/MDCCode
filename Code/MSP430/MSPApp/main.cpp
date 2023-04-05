@@ -1,7 +1,6 @@
 #include <msp430.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <inttypes.h>
+#include <cstdint>
+#include <cstdbool>
 #include <cstddef>
 #include <atomic>
 #define SchedulerMSP430
@@ -24,18 +23,17 @@
 #include "OutputPriority.h"
 #include "BatterySampler.h"
 #include "Button.h"
-#include "ResourceCounter.h"
+#include "AssertionCounter.h"
+#include "Triggers.h"
+#include "Motion.h"
+#include "SuppressibleAssertion.h"
+#include "Assert.h"
 using namespace GPIO;
 
-#define Assert(x) if (!(x)) _MainError(__LINE__)
-#define AssertArg(x) if (!(x)) _MainError(__LINE__)
-
+static constexpr auto AssertDomain = MSP::Domain_::Main;
 static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _XT1FreqHz        = 32768;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
-
-[[noreturn]]
-static void _Abort(uint16_t domain, uint16_t line);
 
 struct _Pin {
     // Port A
@@ -51,12 +49,13 @@ struct _Pin {
     using MSP_XIN                   = PortA::Pin<0x9>;
     using LED_RED_                  = PortA::Pin<0xA, Option::Output1>;
     using VDD_B_2V8_IMG_SD_EN       = PortA::Pin<0xB, Option::Output0>;
-    using MOTION_SIGNAL             = PortA::Pin<0xC, Option::Input, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only drive 1, so we have a pulldown
+    using MOTION_SIGNAL             = PortA::Pin<0xC>;
     using BUTTON_SIGNAL_            = PortA::Pin<0xD>;
     using BAT_CHRG_LVL_EN_          = PortA::Pin<0xE, Option::Output1>;
     using VDD_B_3V3_STM             = PortA::Pin<0xF, Option::Input, Option::Resistor0>;
+    
     // Port B
-    using MOTION_EN_                = PortB::Pin<0x0, Option::Output1>;
+    using MOTION_EN_                = PortB::Pin<0x0>;
     using VDD_B_EN                  = PortB::Pin<0x1, Option::Output0>;
     using _UNUSED0                  = PortB::Pin<0x2>;
 };
@@ -66,16 +65,10 @@ class _TaskSD;
 class _TaskImg;
 class _TaskI2C;
 class _TaskButton;
+class _TaskMotion;
 
 static void _Sleep();
-
 static void _SchedulerStackOverflow();
-static void _MainError(uint16_t line);
-static void _ICEError(uint16_t line);
-static void _SDError(uint16_t line);
-static void _ImgError(uint16_t line);
-static void _I2CError(uint16_t line);
-static void _BatterySamplerError(uint16_t line);
 
 #warning TODO: disable stack guard for production
 static constexpr size_t _StackGuardCount = 16;
@@ -90,27 +83,29 @@ using _Scheduler = Toastbox::Scheduler<
     _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
     nullptr,                                    // T_StackInterrupt: unused
     
-    _TaskMain,                                  // T_Tasks: list of tasks
+    _TaskButton,                                // T_Tasks: list of tasks
+    _TaskMain,
     _TaskSD,
     _TaskImg,
     _TaskI2C,
-    _TaskButton
+    _TaskMotion
 >;
 
 using _Clock = ClockType<_MCLKFreqHz>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
-using _ICE = ICE<_Scheduler, _ICEError>;
+using _ICE = ICE<MSP::Domain_::ICE, _Scheduler>;
 
-using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr, _I2CError>;
+using _I2C = I2CType<MSP::Domain_::I2C, _Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
+using _Motion = T_Motion<MSP::Domain_::Motion, _Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
 
-using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_, _BatterySamplerError>;
+using _BatterySampler = BatterySamplerType<MSP::Domain_::BatterySampler, _Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
 
 constexpr uint16_t _ButtonHoldDurationMs = 1500;
 using _Button = ButtonType<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
 
-using _LEDGreen_ = OutputPriority<_Pin::LED_GREEN_>;
-using _LEDRed_ = OutputPriority<_Pin::LED_RED_>;
+static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
+static OutputPriority _LEDRed_(_Pin::LED_RED_{});
 
 struct _LEDPriority {
     static constexpr uint8_t Power   = 0;
@@ -123,18 +118,18 @@ struct _LEDPriority {
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
 using _ImgSensor = Img::Sensor<
+    MSP::Domain_::Img,      // T_Domain,
     _Scheduler,             // T_Scheduler
-    _ICE,                   // T_ICE
-    _ImgError               // T_Error
+    _ICE                    // T_ICE
 >;
 
 // _SDCard: SD card object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
 using _SDCard = SD::Card<
+    MSP::Domain_::SD,   // T_Domain,
     _Scheduler,         // T_Scheduler
     _ICE,               // T_ICE
-    _SDError,           // T_Error
     1,                  // T_ClkDelaySlow (odd values invert the clock)
     6                   // T_ClkDelayFast (odd values invert the clock)
 >;
@@ -143,20 +138,101 @@ using _SDCard = SD::Card<
 using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
-// Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
-[[gnu::section(".fram_info.main")]]
+// Stored in FRAM because it needs to persist indefinitely.
+[[gnu::section(".persistent")]]
 static MSP::State _State = {
     .header = MSP::StateHeader,
 };
 
-static volatile uint8_t _PowerAssertionCounter = 0;
-using _PowerAssertion = T_ResourceCounter<_PowerAssertionCounter>;
+// Power assertion
+using _Powered = T_AssertionCounter<MSP::Domain_::AssertionCounter>;
 
+// Capture pause/resume
 static void _CapturePause();
 static void _CaptureResume();
+using _CapturePaused = T_AssertionCounter<MSP::Domain_::AssertionCounter, _CapturePause, _CaptureResume>;
 
-static volatile uint8_t _CapturePauseAssertionCounter = 0;
-using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter, _CapturePause, _CaptureResume>;
+// Motion enable/disable
+static void _MotionEnable();
+static void _MotionDisable();
+using _MotionEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _MotionEnable, _MotionDisable>;
+using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
+
+// _Triggers: stores our current event state
+using _Triggers = T_Triggers<MSP::Domain_::Triggers, _State, _MotionEnabledAssertion>;
+
+static Time::Us _RepeatAdvance(MSP::Repeat& x) {
+    static constexpr Time::Us Day         = (Time::Us)     24*60*60*1000000;
+    static constexpr Time::Us Year        = (Time::Us) 365*24*60*60*1000000;
+    static constexpr Time::Us YearPlusDay = (Time::Us) 366*24*60*60*1000000;
+    switch (x.type) {
+    case MSP::Repeat::Type::Never:
+        return 0;
+    
+    case MSP::Repeat::Type::Daily:
+        Assert(x.Daily.interval);
+        return Day*x.Daily.interval;
+    
+    case MSP::Repeat::Type::Weekly: {
+        #warning TODO: verify this works properly
+        // Determine the next trigger day, calculating the duration of time until then
+        Assert(x.Weekly.days & 1); // Weekly.days must always rest on an active day
+        x.Weekly.days |= 0x80;
+        uint8_t count = 0;
+        do {
+            x.Weekly.days >>= 1;
+            count++;
+        } while (!(x.Weekly.days & 1));
+        return count*Day;
+    }
+    
+    case MSP::Repeat::Type::Yearly:
+        #warning TODO: verify this works properly
+        // Return 1 year (either 365 or 366 days) in microseconds
+        // We appropriately handle leap years by referencing `leapPhase`
+        if (x.Yearly.leapPhase) {
+            x.Yearly.leapPhase--;
+            return Year;
+        } else {
+            x.Yearly.leapPhase = 3;
+            return YearPlusDay;
+        }
+    }
+    Assert(false);
+}
+
+//static void _EventInsert(_Triggers::Event& ev, const Time::Instant& t) {
+//    _Triggers::EventInsert(ev, t);
+//}
+
+static void _EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
+    const Time::Us delta = _RepeatAdvance(repeat);
+    // delta=0 means Repeat=never, in which case we don't reschedule the event
+    if (delta) {
+        _Triggers::EventInsert(ev, ev.time+delta);
+    }
+}
+
+static void _EventInsert(_Triggers::Event& ev, Time::Instant time, uint32_t deltaMs) {
+    _Triggers::EventInsert(ev, time + ((Time::Us)deltaMs)*1000);
+}
+
+static void _CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) {
+    // Reset capture count
+    ev.countRem = ev.capture->count;
+    if (ev.countRem) {
+        _Triggers::EventInsert(ev, time);
+    }
+}
+
+
+
+
+
+
+
+
+
 
 // MARK: - Power
 
@@ -208,7 +284,7 @@ static void _ICEInit() {
     Assert(ok);
 }
 
-// MARK: - Tasks
+// MARK: - _TaskSD
 
 //static void debugSignal() {
 //    _Pin::DEBUG_OUT::Init();
@@ -404,9 +480,11 @@ struct _TaskSD {
     
     // Task stack
     [[gnu::section(".stack._TaskSD")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
+
+// MARK: - _TaskImg
 
 struct _TaskImg {
     static void Init() {
@@ -508,9 +586,11 @@ struct _TaskImg {
     
     // Task stack
     [[gnu::section(".stack._TaskImg")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
+
+// MARK: - _TaskMain
 
 struct _TaskMain {
     static void Start() {
@@ -519,8 +599,7 @@ struct _TaskMain {
     
     static void Reset() {
         // Reset our state
-        _Power = {};
-        _TrigSrc = _TriggerSources::None;
+        _State = {};
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Init();
@@ -534,133 +613,98 @@ struct _TaskMain {
         _VDDBSet(false);
     }
     
-    using _TriggerSource = uint8_t;
-    struct _TriggerSources {
-        static constexpr _TriggerSource None    = 0;
-        static constexpr _TriggerSource Motion  = 1<<0;
-        static constexpr _TriggerSource Manual  = 1<<1;
-    };
-    
-    static _TriggerSource _TriggerPoll() {
-        const _TriggerSource x = _TrigSrc;
-        _TrigSrc = _TriggerSources::None;
-        return x;
+    static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
+        _Triggers::TimeTrigger& trigger = ev.trigger();
+        // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
+        if (!_State.fastForward) {
+            _CaptureStart(trigger, ev.time);
+        }
+        // Reschedule TimeTriggerEvent for its next trigger time
+        _EventInsert(ev, ev.repeat);
     }
     
-    static void ManualTrigger() {
-        _TrigSrc |= _TriggerSources::Manual;
+    static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
+        _Triggers::MotionTrigger& trigger = ev.trigger();
+        
+        // Enable motion
+        trigger.enabled.set(true);
+        
+        // Schedule the MotionDisable event, if applicable
+        // This needs to happen before we reschedule `motionEnableEvent` because we need its .time to
+        // properly schedule the MotionDisableEvent!
+        const uint32_t durationMs = trigger.base().durationMs;
+        if (durationMs) {
+            _EventInsert((_Triggers::MotionDisableEvent&)trigger, ev.time, durationMs);
+        }
+        
+        // Reschedule MotionEnableEvent for its next trigger time
+        _EventInsert(ev, ev.repeat);
     }
     
-    static void Run() {
-//        for (bool x=false;; x=!x) {
-//            _Pin::LED_RED_::Write(x);
-//            _BatterySampler::Sample();
-//            _Scheduler::Sleep(_Scheduler::Ms(1000));
-//        }
+    static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
+        _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
+        trigger.enabled.set(false);
+    }
+    
+    static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
+        // We should never get a MotionUnsuppressEvent event while in fast-forward mode
+        Assert(!_State.fastForward);
+        _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
+        trigger.enabled.suppress(false);
+    }
+    
+    static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
+        // We should never get a CaptureImageEvent event while in fast-forward mode
+        Assert(!_State.fastForward);
         
-//        // Handle cold starts
-//        if (!_FirstRunDone) {
-//            _FirstRunDone = true;
-//            // Since this is a cold start, delay 3s before beginning.
-//            // This delay is meant for the case where we restarted due to an abort, and
-//            // serves 2 purposes:
-//            //   1. it rate-limits aborts, in case there's a persistent issue
-//            //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-//            _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
-//            _Scheduler::Sleep(_Scheduler::Ms(3000));
-//            _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
-//        }
-//        
-//        _Scheduler::Sleep(_Scheduler::Ms(10000));
+        constexpr MSP::ImgRingBuf& imgRingBuf = ::_State.sd.imgRingBufs[0];
         
-//        _Pin::VDD_B_EN::Write(1);
-//        _Scheduler::Sleep(_Scheduler::Ms(250));
-//        
-//        for (;;) {
-//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//            _Scheduler::Sleep(_Scheduler::Ms(250));
-//            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            _Scheduler::Sleep(_Scheduler::Ms(250));
-//        }
+        const bool green = ev.capture->leds & MSP::LEDs_::Green;
+        const bool red = ev.capture->leds & MSP::LEDs_::Red;
+        _LEDGreen_.set(_LEDPriority::Capture, !green);
+        _LEDRed_.set(_LEDPriority::Capture, !red);
         
-//        for (;;) {
-//            _Scheduler::Sleep(_Scheduler::Ms(1000));
-//        }
+        // Turn on VDD_B power (turns on ICE40)
+        _VDDBSet(true);
         
-        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
+        // Wait for ICE40 to start
+        // We specify (within the bitstream itself, via icepack) that ICE40 should load
+        // the bitstream at high-frequency (40 MHz).
+        // According to the datasheet, this takes 70ms.
+        _Scheduler::Sleep(_Scheduler::Ms(30));
+        _ICEInit();
         
-        // Reset our state
-        Reset();
+        // Reset SD nets before we turn on SD power
+        _TaskSD::CardReset();
+        _TaskSD::Wait();
         
-        // Init SPI peripheral
-        _SPI::Init();
+        // Turn on IMG/SD power
+        _VDDIMGSDSet(true);
         
-        for (;;) {
-//            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-//            {
-//                _WaitingForMotion = true;
-//                _Scheduler::Wait([&] { return (bool)_Motion; });
-//                _Motion = false;
-//                _WaitingForMotion = false;
-//            }
+        // Init image sensor / SD card
+        _TaskImg::SensorInit();
+        _TaskSD::CardInit();
+        
+        // Capture an image
+        {
+            // Wait for _TaskSD to be initialized and done with writing, which is necessary
+            // for 2 reasons:
+            //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
+            //      access it,
+            //   2. we can't initiate a new capture until writing to the SD card (from a
+            //      previous capture) is complete (because the SDRAM is single-port, so
+            //      we can only read or write at one time)
+            _TaskSD::WaitForInitAndWrite();
             
-            // Wait until we're triggered to capture an image
-            static _TriggerSource trigger = _TriggerSources::None;
-            _Scheduler::Wait([] {
-                trigger = _TriggerPoll();
-                return trigger!=_TriggerSources::None;
-            });
+            // Capture image to RAM
+            _TaskImg::Capture(imgRingBuf.buf.id);
+            const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
             
-            // Light the red LED if this is a manual trigger
-            if (trigger & _TriggerSources::Manual) {
-                _LEDRed_::Set(_LEDPriority::Capture, 0);
-            }
-            
-            // Stay powered until we finish capturing the image
-            _Power.acquire();
-            
-            // Turn on VDD_B power (turns on ICE40)
-            _VDDBSet(true);
-            
-            // Wait for ICE40 to start
-            // We specify (within the bitstream itself, via icepack) that ICE40 should load
-            // the bitstream at high-frequency (40 MHz).
-            // According to the datasheet, this takes 70ms.
-            _Scheduler::Sleep(_Scheduler::Ms(30));
-            _ICEInit();
-            
-            // Reset SD nets before we turn on SD power
-            _TaskSD::CardReset();
+            // Copy image from RAM -> SD card
+            _TaskSD::Write(srcRAMBlock);
             _TaskSD::Wait();
-            
-            // Turn on IMG/SD power
-            _VDDIMGSDSet(true);
-            
-            // Init image sensor / SD card
-            _TaskImg::SensorInit();
-            _TaskSD::CardInit();
-            
-            // Capture an image
-            {
-                // Wait for _TaskSD to be initialized and done with writing, which is necessary
-                // for 2 reasons:
-                //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
-                //      access it,
-                //   2. we can't initiate a new capture until writing to the SD card (from a
-                //      previous capture) is complete (because the SDRAM is single-port, so
-                //      we can only read or write at one time)
-                _TaskSD::WaitForInitAndWrite();
-                
-                // Capture image to RAM
-                _TaskImg::Capture(imgRingBuf.buf.id);
-                const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
-                
-                // Copy image from RAM -> SD card
-                _TaskSD::Write(srcRAMBlock);
-                _TaskSD::Wait();
-            }
-            
+        }
+        
 //            for (;;) {
 //                // Capture an image
 //                {
@@ -694,28 +738,125 @@ struct _TaskMain {
 ////                // the true value by resetting it to false.
 ////                _Motion = false;
 //            }
-            
-            if (trigger & _TriggerSources::Manual) {
-                _LEDRed_::Set(_LEDPriority::Capture, 1);
-            }
-            
-            _VDDIMGSDSet(false);
-            _VDDBSet(false);
-            
-            // Release power assertion
-            _Power.release();
-            
-            // Release control of the LED
-            _LEDRed_::Set(_LEDPriority::Capture, std::nullopt);
+//        
+//        if (trigger & _TriggerSources::Manual) {
+//            _LEDRed_.set(_LEDPriority::Capture, 1);
+//        }
+        
+        _LEDGreen_.set(_LEDPriority::Capture, std::nullopt);
+        _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
+        
+        _VDDIMGSDSet(false);
+        _VDDBSet(false);
+        
+        ev.countRem--;
+        if (ev.countRem) {
+            _EventInsert(ev, ev.time, ev.capture->delayMs);
         }
     }
     
-//    static void _Init() {
-//        // Reset our shared state
-//        // This is used to init our task after it's been stopped in an arbitrary state.
-//        _Motion = false;
-//    }
-//    
+    static _Triggers::Event* _EventPop() {
+        _Triggers::Event* ev = _Triggers::EventPop(_RTC::TimeRead());
+        // Exit fast-forward mode when we no longer have any events in the past
+        if (!ev) {
+            _State.fastForward = false;
+        }
+        return ev;
+    }
+    
+    static void Run() {
+//        for (bool x=false;; x=!x) {
+//            _Pin::LED_RED_::Write(x);
+//            _BatterySampler::Sample();
+//            _Scheduler::Sleep(_Scheduler::Ms(1000));
+//        }
+        
+//        // Handle cold starts
+//        if (!_FirstRunDone) {
+//            _FirstRunDone = true;
+//            // Since this is a cold start, delay 3s before beginning.
+//            // This delay is meant for the case where we restarted due to an abort, and
+//            // serves 2 purposes:
+//            //   1. it rate-limits aborts, in case there's a persistent issue
+//            //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+//            _LEDRed_.set(_LEDRed_::Priority::Low, 0);
+//            _Scheduler::Sleep(_Scheduler::Ms(3000));
+//            _LEDRed_.set(_LEDRed_::Priority::Low, 1);
+//        }
+//        
+//        _Scheduler::Sleep(_Scheduler::Ms(10000));
+        
+//        _Pin::VDD_B_EN::Write(1);
+//        _Scheduler::Sleep(_Scheduler::Ms(250));
+//        
+//        for (;;) {
+//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//            _Scheduler::Sleep(_Scheduler::Ms(250));
+//            
+//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//            _Scheduler::Sleep(_Scheduler::Ms(250));
+//        }
+        
+//        for (;;) {
+//            _Scheduler::Sleep(_Scheduler::Ms(1000));
+//        }
+        
+        // Reset our state
+        Reset();
+        
+        // Init SPI peripheral
+        _SPI::Init();
+        
+        // Init Triggers
+        _Triggers::Init(_RTC::TimeRead());
+        
+        // Enter fast-forward mode while we pop every event that occurs in the past
+        // (_EventPop() will exit from fast-forward mode)
+        _State.fastForward = true;
+        for (;;) {
+//            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
+//            {
+//                _WaitingForMotion = true;
+//                _Scheduler::Wait([&] { return (bool)_Motion; });
+//                _Motion = false;
+//                _WaitingForMotion = false;
+//            }
+            
+            // Wait for an event
+            static _Triggers::Event* ev = nullptr;
+            _Scheduler::Wait([] { return (bool)(ev = _EventPop()); });
+            
+            // Stay powered while we handle the event
+            _State.power = true;
+            
+//            TimeTrigger,        // idx: _TimeTrigger[]
+//            MotionEnable,       // idx: _MotionTrigger[]
+//            MotionDisable,      // idx: _MotionTrigger[]
+//            MotionUnsuppress,   // idx: _MotionTrigger[]
+//            CaptureImage,       // idx: _Capture[]
+            
+            using T = _Triggers::Event::Type;
+            switch (ev->type) {
+            case T::TimeTrigger:      _TimeTrigger((_Triggers::TimeTriggerEvent&)*ev);           break;
+            case T::MotionEnable:     _MotionEnable((_Triggers::MotionEnableEvent&)*ev);         break;
+            case T::MotionDisable:    _MotionDisable((_Triggers::MotionDisableEvent&)*ev);       break;
+            case T::MotionUnsuppress: _MotionUnsuppress((_Triggers::MotionUnsuppressEvent&)*ev); break;
+            case T::CaptureImage:     _CaptureImage((_Triggers::CaptureImageEvent&)*ev);         break;
+            }
+            
+//            // Light the red LED if this is a manual trigger
+//            if (trigger & _TriggerSources::Manual) {
+//                _LEDRed_.set(_LEDPriority::Capture, 0);
+//            }
+            
+            // Release power assertion
+            _State.power = false;
+            
+//            // Release control of the LED
+//            _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
+        }
+    }
+    
 //    static bool DeepSleepOK() {
 //        // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
 //        // This logic works because if _WaitingForMotion==true, then we've disabled both _TaskSD
@@ -728,27 +869,20 @@ struct _TaskMain {
 //               !_Scheduler::Running<_TaskImg>() ;
 //    }
     
-    static void ISR_MotionSignal(uint16_t iv) {
-        _TrigSrc |= _TriggerSources::Motion;
-    }
-    
-//    // _Init: stores whether this is the first
-//    [[gnu::section(".ram_backup.main")]]
-//    static inline bool _FirstRunDone = false;
-//    
-//    // _MotionTrigger: announces that motion occurred
-//    static volatile inline bool _MotionTrigger = false;
-//    
-//    // _ManualTrigger: manual capture trigger
-//    static volatile inline bool _ManualTrigger = false;
-    
-    static volatile inline _TriggerSource _TrigSrc = _TriggerSources::None;
-    
-    static inline _PowerAssertion _Power;
+    static inline struct {
+        // fastForward=true while initializing, where we execute events in 'fast-forward' mode,
+        // solely to arrive at the correct state for the current time.
+        // fastForward=false once we're done initializing and executing events normally.
+        bool fastForward;
+        // power: our active power assertion. This needs to be an ivar because TaskMain
+        // can be reset at any time via our Reset() function, so if the power assertion
+        // lived on the stack,
+        _Powered::Assertion power;
+    } _State = {};
     
     // Task stack
     [[gnu::section(".stack._TaskMain")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
@@ -760,6 +894,8 @@ static void _CaptureResume() {
     _TaskMain::Start();
 }
 
+// MARK: - _TaskI2C
+
 struct _TaskI2C {
     static void Run() {
         for (;;) {
@@ -767,31 +903,30 @@ struct _TaskI2C {
             _I2C::WaitUntilActive();
             
             // Maintain power while I2C is active
-            _PowerAssertion power;
-            power.acquire();
+            _Powered::Assertion power(true);
             
             for (;;) {
                 // Wait for a command
                 MSP::Cmd cmd;
-                
                 bool ok = _I2C::Recv(cmd);
                 if (!ok) break;
                 
                 // Handle command
                 const MSP::Resp resp = _CmdHandle(cmd);
                 
+                // Send response
                 ok = _I2C::Send(resp);
                 if (!ok) break;
             }
             
             // Cleanup
             
-//            // Relinquish LEDs
-            _LEDRed_::Set(_LEDPriority::I2C, std::nullopt);
-            _LEDGreen_::Set(_LEDPriority::I2C, std::nullopt);
+//            // Relinquish LEDs, which may have been set by _CmdHandle()
+            _LEDRed_.set(_LEDPriority::I2C, std::nullopt);
+            _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
             
-            // Release capture-pause assertion if it was held
-            _HostMode = {};
+            // Exit host mode, in case we were in it
+            _HostMode = false;
         }
     }
     
@@ -799,7 +934,7 @@ struct _TaskI2C {
         using namespace MSP;
         switch (cmd.op) {
         case Cmd::Op::StateRead: {
-            const size_t off = cmd.arg.StateRead.chunk * sizeof(MSP::Resp::arg.StateRead.data);
+            const size_t off = cmd.arg.StateRead.off;
             if (off > sizeof(_State)) return MSP::Resp{ .ok = false };
             const size_t rem = sizeof(_State)-off;
             const size_t len = std::min(rem, sizeof(MSP::Resp::arg.StateRead.data));
@@ -809,8 +944,9 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::StateWrite: {
-            const size_t off = cmd.arg.StateWrite.chunk * sizeof(MSP::Cmd::arg.StateWrite.data);
+            const size_t off = cmd.arg.StateWrite.off;
             if (off > sizeof(_State)) return MSP::Resp{ .ok = false };
+            FRAMWriteEn writeEn; // Enable FRAM writing
             const size_t rem = sizeof(_State)-off;
             const size_t len = std::min(rem, sizeof(MSP::Cmd::arg.StateWrite.data));
             memcpy((uint8_t*)&_State+off, cmd.arg.StateWrite.data, len);
@@ -818,8 +954,8 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::LEDSet:
-            _LEDRed_::Set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
-            _LEDGreen_::Set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
+            _LEDRed_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
+            _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::TimeGet:
@@ -829,15 +965,18 @@ struct _TaskI2C {
             };
         
         case Cmd::Op::TimeSet:
+            // Only allow setting the time while we're in host mode
+            // and therefore TaskMain isn't running
+            if (!_HostMode) return MSP::Resp{ .ok = false };
             _RTC::Init(cmd.arg.TimeSet.time);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
-            if (cmd.arg.HostModeSet.en != _HostMode.acquired()) {
+            if (cmd.arg.HostModeSet.en != _HostMode) {
                 if (cmd.arg.HostModeSet.en) {
-                    _HostMode.acquire();
+                    _HostMode = true;
                 } else {
-                    _HostMode.release();
+                    _HostMode = false;
                 }
             }
             return MSP::Resp{ .ok = true };
@@ -859,22 +998,149 @@ struct _TaskI2C {
     }
     
     static bool HostModeEnabled() {
-        return _HostMode.acquired();
+        return _HostMode;
     }
     
-    static inline _CapturePauseAssertion _HostMode;
+    static inline _CapturePaused::Assertion _HostMode;
     
     // Task stack
     [[gnu::section(".stack._TaskI2C")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
+// MARK: - _TaskMotion
+
+struct _TaskMotion {
+    static void Run() {
+        for (;;) {
+            _Motion::WaitForMotion();
+            // When motion occurs, start captures for each enabled motion trigger
+            for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+                _Triggers::MotionTrigger& trigger = *it;
+                // If this trigger is enabled...
+                if (trigger.enabled.get()) {
+                    const Time::Instant time = _RTC::TimeRead();
+                    // Start capture
+                    _CaptureStart(trigger, time);
+                    // Suppress motion for the specified duration, if suppression is enabled
+                    const uint32_t suppressMs = trigger.base().suppressMs;
+                    if (suppressMs) {
+                        trigger.enabled.suppress(true);
+                        _EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressMs);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Task stack
+    [[gnu::section(".stack._TaskMotion")]]
+    alignas(void*)
+    static inline uint8_t Stack[128];
+};
+
+static void _MotionEnable() {
+    _Motion::Enabled(true);
+}
+
+static void _MotionDisable() {
+    _Motion::Enabled(false);
+}
+
+// MARK: - _TaskButton
+
+#define _TaskButtonStackSize 128
+
+[[gnu::section(".stack._TaskButton")]]
+alignas(void*)
+uint8_t _TaskButtonStack[_TaskButtonStackSize];
+
+asm(".global _StartupStack");
+asm(".equ _StartupStack, _TaskButtonStack+" Stringify(_TaskButtonStackSize));
+
 struct _TaskButton {
     static void Run() {
+        // Stop watchdog timer
+        WDTCTL = WDTPW | WDTHOLD;
+        
+        // Init GPIOs
+        GPIO::Init<
+            // Power control
+            _Pin::VDD_B_EN,
+            _Pin::VDD_B_1V8_IMG_SD_EN,
+            _Pin::VDD_B_2V8_IMG_SD_EN,
+            
+            // Clock (config chosen by _RTC)
+            _RTC::Pin::XOUT,
+            _RTC::Pin::XIN,
+            
+            // SPI (config chosen by _SPI)
+            _SPI::Pin::Clk,
+            _SPI::Pin::DataOut,
+            _SPI::Pin::DataIn,
+            
+            // I2C (config chosen by _I2C)
+            _I2C::Pin::SCL,
+            _I2C::Pin::SDA,
+            _I2C::Pin::Active,
+            
+            // Motion (config chosen by _Motion)
+            _Motion::Pin::Power,
+            _Motion::Pin::Signal,
+            
+            // Battery (config chosen by _BatterySampler)
+            _BatterySampler::Pin::BatChrgLvlPin,
+            _BatterySampler::Pin::BatChrgLvlEn_Pin,
+            
+            // Button (config chosen by _Button)
+            _Button::Pin,
+            
+            // LEDs
+            _Pin::LED_GREEN_,
+            _Pin::LED_RED_
+        >();
+        
+        // Init clock
+        _Clock::Init();
+        
+        // Init RTC
+        // We need RTC to be unconditionally enabled for 2 reasons:
+        //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
+        //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
+        //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
+        _RTC::Init();
+        
+        // Init SysTick
+        _SysTick::Init();
+        
+        // Init BatterySampler
+        _BatterySampler::Init();
+        
+        // Init LEDs by setting their default-priority / 'backstop' values to off.
+        // This is necessary so that relinquishing the LEDs from I2C task causes
+        // them to turn off. If we didn't have a backstop value, the LEDs would
+        // remain in whatever state the I2C task set them to before relinquishing.
+        _LEDGreen_.set(_LEDPriority::Default, 1);
+        _LEDRed_.set(_LEDPriority::Default, 1);
+        
+    //    // Blink green LED to signal that we're turning off
+    //    for (;;) {
+    //        for (int i=0; i<5; i++) {
+    //            _Pin::LED_GREEN_::Write(0);
+    //            for (volatile int i=0; i<0xFFFF; i++);
+    //            _Pin::LED_GREEN_::Write(1);
+    //            for (volatile int i=0; i<0xFFFF; i++);
+    //        }
+    //    }
+        
+        // Start Scheduler
+    //    _Scheduler::Start<_TaskButton>();
+        _Scheduler::Start<_TaskI2C, _TaskMotion>();
+        
         // Pause captures upon power on. This is so that the device is off until
         // the user turns it on by holding the power button.
-        _OffAssertion.acquire();
+        _OffAssertion = true;
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -882,28 +1148,31 @@ struct _TaskButton {
             if (_TaskI2C::HostModeEnabled()) continue;
             
             // Keep the lights on until we're done handling the event
-            _PowerAssertion power;
-            power.acquire();
+            _Powered::Assertion power(true);
             
             switch (ev) {
-            case _Button::Event::Press:
+            case _Button::Event::Press: {
                 // Ignore button presses if we're off
-                if (_OffAssertion.acquired()) break;
-                _TaskMain::ManualTrigger();
+                if (_OffAssertion) break;
+                
+                for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
+                    _CaptureStart(*it, _RTC::TimeRead());
+                }
                 break;
+            }
             
             case _Button::Event::Hold:
-                if (_OffAssertion.acquired()) {
+                if (_OffAssertion) {
                     // Deassert capture pause -- ie, turn on
-                    _OffAssertion.release();
+                    _OffAssertion = false;
                     // Flash green LEDs
-                    _LEDFlash<_LEDGreen_>();
+                    _LEDFlash(_LEDGreen_);
                 
                 } else {
                     // Assert capture pause -- ie, turn off
-                    _OffAssertion.acquire();
+                    _OffAssertion = true;
                     // Flash red LEDs
-                    _LEDFlash<_LEDRed_>();
+                    _LEDFlash(_LEDRed_);
                 }
                 
                 _Button::WaitForDeassert();
@@ -933,27 +1202,24 @@ struct _TaskButton {
         }
     }
     
-    template <typename T_Pin>
-    static void _LEDFlash() {
+    static void _LEDFlash(OutputPriority& led) {
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
-            T_Pin::Set(_LEDPriority::Power, 0);
+            led.set(_LEDPriority::Power, 0);
             _Scheduler::Delay(_Scheduler::Ms(50));
-            T_Pin::Set(_LEDPriority::Power, 1);
+            led.set(_LEDPriority::Power, 1);
             _Scheduler::Delay(_Scheduler::Ms(50));
         }
-        T_Pin::Set(_LEDPriority::Power, std::nullopt);
+        led.set(_LEDPriority::Power, std::nullopt);
     }
     
     // _OffAssertion: controls user-visible on/off behavior
     // By default, captures are paused so that the device is off until
     // the user turns it on by holding the power button.
-    static inline _CapturePauseAssertion _OffAssertion;
+    static inline _CapturePaused::Assertion _OffAssertion;
     
     // Task stack
-    [[gnu::section(".stack._TaskButton")]]
-    alignas(alignof(void*))
-    static inline uint8_t Stack[128];
+    static constexpr auto& Stack = _TaskButtonStack;
 };
 
 // MARK: - IntState
@@ -1011,7 +1277,7 @@ static void _ISR_Port2() {
     
     // Motion
     case _Pin::MOTION_SIGNAL::IVPort2():
-        _TaskMain::ISR_MotionSignal(iv);
+        _Motion::ISR();
         __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
         break;
     
@@ -1059,59 +1325,18 @@ static void _ISR_ADC() {
 
 // MARK: - Abort
 
-namespace AbortDomain {
-    static constexpr uint16_t Invalid                   = 0;
-    static constexpr uint16_t SchedulerStackOverflow    = 1;
-    static constexpr uint16_t Main                      = 2;
-    static constexpr uint16_t ICE                       = 3;
-    static constexpr uint16_t SD                        = 4;
-    static constexpr uint16_t Img                       = 5;
-    static constexpr uint16_t I2C                       = 6;
-    static constexpr uint16_t BatterySampler            = 7;
-}
-
 [[noreturn]]
 static void _SchedulerStackOverflow() {
-    _Abort(AbortDomain::SchedulerStackOverflow, 0);
+    Abort(MSP::Domain_::SchedulerStackOverflow, 0);
 }
 
-[[noreturn]]
-static void _MainError(uint16_t line) {
-    _Abort(AbortDomain::Main, line);
-}
-
-[[noreturn]]
-static void _ICEError(uint16_t line) {
-    _Abort(AbortDomain::ICE, line);
-}
-
-[[noreturn]]
-static void _SDError(uint16_t line) {
-    _Abort(AbortDomain::SD, line);
-}
-
-[[noreturn]]
-static void _ImgError(uint16_t line) {
-    _Abort(AbortDomain::Img, line);
-}
-
-[[noreturn]]
-static void _I2CError(uint16_t line) {
-    _Abort(AbortDomain::I2C, line);
-}
-
-[[noreturn]]
-static void _BatterySamplerError(uint16_t line) {
-    _Abort(AbortDomain::BatterySampler, line);
-}
-
-static void _AbortRecord(const Time::Instant& timestamp, uint16_t domain, uint16_t line) {
+static void _AbortRecord(const Time::Instant& timestamp, MSP::Domain domain, uint16_t line) {
     using namespace MSP;
     FRAMWriteEn writeEn; // Enable FRAM writing
     
     AbortHistory* hist = nullptr;
     for (AbortHistory& h : _State.aborts) {
-        if (!h.count || (h.type.domain == domain && h.type.line == line)) {
+        if (!h.count || (h.type.domain==domain && h.type.line==line)) {
             hist = &h;
             break;
         }
@@ -1123,14 +1348,15 @@ static void _AbortRecord(const Time::Instant& timestamp, uint16_t domain, uint16
     // Prep the element if this is the first instance
     if (!hist->count) {
         hist->type = {
-            .domain = domain,
             .line = line,
+            .domain = domain,
         };
         
-        hist->timestampEarliest = timestamp;
+        // Figure out if we want to bring this back again
+        hist->earliest = timestamp;
     }
     
-    hist->timestampLatest = timestamp;
+    hist->latest = timestamp;
     hist->count++;
 }
 
@@ -1142,8 +1368,9 @@ static void _BOR() {
     for (;;);
 }
 
-[[noreturn]]
-static void _Abort(uint16_t domain, uint16_t line) {
+// Abort(): called various Assert's throughout our program
+extern "C" [[noreturn]]
+void Abort(MSP::Domain domain, uint16_t line) {
     const Time::Instant timestamp = _RTC::TimeRead();
     // Record the abort
     _AbortRecord(timestamp, domain, line);
@@ -1155,16 +1382,12 @@ void abort() {
     Assert(false);
 }
 
-// MARK: - Main
+extern "C"
+int atexit(void (*)(void)) {
+    return 0;
+}
 
-//static void _HostMode() {
-//    // Let power rails fully discharge before turning them on
-//    _Scheduler::Delay(_Scheduler::Ms(10));
-//    
-//    while (!_Pin::HOST_MODE_::Read()) {
-//        _Scheduler::Delay(_Scheduler::Ms(100));
-//    }
-//}
+// MARK: - Main
 
 //extern "C" void Blink() {
 //    for (;;) {
@@ -1176,78 +1399,6 @@ void abort() {
 //}
 
 int main() {
-    // Stop watchdog timer
-    WDTCTL = WDTPW | WDTHOLD;
-    
-    // Init GPIOs
-    GPIO::Init<
-        // General IO
-        _Pin::MOTION_SIGNAL,
-        _Pin::LED_GREEN_,
-        _Pin::LED_RED_,
-        _Pin::MOTION_EN_,
-        _Pin::VDD_B_EN,
-        
-        // Power control
-        _Pin::VDD_B_1V8_IMG_SD_EN,
-        _Pin::VDD_B_2V8_IMG_SD_EN,
-        
-        // Clock (config chosen by _RTCType)
-        _RTC::Pin::XOUT,
-        _RTC::Pin::XIN,
-        
-        // SPI (config chosen by _SPI)
-        _SPI::Pin::Clk,
-        _SPI::Pin::DataOut,
-        _SPI::Pin::DataIn,
-        
-        // I2C (config chosen by _I2C)
-        _I2C::Pin::SCL,
-        _I2C::Pin::SDA,
-        _I2C::Pin::Active,
-        
-        // Battery (config chosen by _BatterySampler)
-        _BatterySampler::Pin::BatChrgLvlPin,
-        _BatterySampler::Pin::BatChrgLvlEn_Pin,
-        
-        // Button
-        _Button::Pin
-    >();
-    
-    // Init clock
-    _Clock::Init();
-    
-    // Init RTC
-    // We need RTC to be unconditionally enabled for 2 reasons:
-    //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
-    //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
-    //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-    _RTC::Init();
-    
-    // Init SysTick
-    _SysTick::Init();
-    
-    // Init _BatterySampler
-    _BatterySampler::Init();
-    
-    // Init LEDs by setting their default-priority / 'backstop' values to off.
-    // This is necessary so that relinquishing the LEDs from I2C task causes
-    // them to turn off. If we didn't have a backstop value, the LEDs would
-    // remain in whatever state the I2C task set them to before relinquishing.
-    _LEDGreen_::Set(_LEDPriority::Default, 1);
-    _LEDRed_::Set(_LEDPriority::Default, 1);
-    
-//    // Blink green LED to signal that we're turning off
-//    for (;;) {
-//        for (int i=0; i<5; i++) {
-//            _Pin::LED_GREEN_::Write(0);
-//            for (volatile int i=0; i<0xFFFF; i++);
-//            _Pin::LED_GREEN_::Write(1);
-//            for (volatile int i=0; i<0xFFFF; i++);
-//        }
-//    }
-    
-//    _Scheduler::Start<_TaskButton>();
-    _Scheduler::Start<_TaskButton, _TaskI2C>();
+    // Invokes the first task's Run() function (_TaskButton::Run)
     _Scheduler::Run();
 }

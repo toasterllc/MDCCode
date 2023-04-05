@@ -35,7 +35,7 @@
 /* Default linker script, for normal executables */
 
 OUTPUT_ARCH(msp430)
-ENTRY(_start)
+ENTRY(_Startup)
 
 MEMORY {
   SFR              : ORIGIN = 0x0000, LENGTH = 0x0010 /* END=0x0010, size 16 */
@@ -185,7 +185,11 @@ SECTIONS
     *(.rodata .rodata.* .gnu.linkonce.r.* .const .const:*)
     *(.rodata1)
     KEEP (*(.gcc_except_table)) *(.gcc_except_table.*)
-  } > FRAM
+
+  /* We moved rodata/rodata2 from FRAM -> INFOMEM to make use of the otherwise unused FRAM 'Information Memory'.
+     If rodata/rodata2 overflow INFOMEM, switch rodata/rodata2 back to using the FRAM region, and find some
+     other region to make use of INFOMEM. */
+  } > INFOMEM
 
   /* Note: This is a separate .rodata section for sections which are
      read only but which older linkers treat as read-write.
@@ -231,8 +235,11 @@ SECTIONS
     KEEP (*(EXCLUDE_FILE (*crtend*.o ) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
-  } > FRAM
 
+  /* We moved rodata/rodata2 from FRAM -> INFOMEM to make use of the otherwise unused FRAM 'Information Memory'.
+     If rodata/rodata2 overflow INFOMEM, switch rodata/rodata2 back to using the FRAM region, and find some
+     other region to make use of INFOMEM. */
+  } > INFOMEM
 
   /* This section contains data that is initialised during load
      but not on application reset.  */
@@ -249,7 +256,6 @@ SECTIONS
   {
     . = ALIGN(2);
     PROVIDE (_start = .);
-    KEEP (*(SORT(.crt_*)))
     *(.lowtext .text .stub .text.* .gnu.linkonce.t.* .text:*)
     KEEP (*(.text.*personality*))
     /* .gnu.warning sections are handled specially by elf32.em.  */
@@ -268,6 +274,8 @@ SECTIONS
   {
     . = ALIGN(2);
     PROVIDE (__datastart = .);
+    _sdata_flash = LOADADDR(.data);
+    PROVIDE (_sdata_ram = .);
 
     KEEP (*(.jcr))
     *(.data.rel.ro.local) *(.data.rel.ro*)
@@ -289,7 +297,7 @@ SECTIONS
 
     _edata = .;
     PROVIDE (edata = .);
-    PROVIDE (__dataend = .);
+    PROVIDE (_edata_ram = .);
   } > RAM AT> FRAM
 
   /* Note that crt0 assumes this is a multiple of two; all the
@@ -302,12 +310,13 @@ SECTIONS
   {
     . = ALIGN(2);
     PROVIDE (__bssstart = .);
+    PROVIDE (_sbss = .);
     *(.dynbss)
     *(.sbss .sbss.*)
     *(.bss .bss.* .gnu.linkonce.b.*)
     . = ALIGN(2);
     *(COMMON)
-    PROVIDE (__bssend = .);
+    PROVIDE (_ebss = .);
   } > RAM
   PROVIDE (__bsssize = SIZEOF(.bss));
 

@@ -44,12 +44,12 @@
         NSLayoutConstraint* width = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeWidth
             relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
             constant:size.width];
+        [width setActive:true];
         
         NSLayoutConstraint* height = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
             relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
             constant:size.height];
-        
-        [NSLayoutConstraint activateConstraints:@[width, height]];
+        [height setActive:true];
     }
 }
 

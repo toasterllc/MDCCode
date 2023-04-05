@@ -2,9 +2,15 @@
 
 namespace Time {
 
+// Us: a duration in microseconds
+// Using a signed value here so we can represent negative durations.
+// (Clock.h needs negative durations for computing the difference between two timepoints,
+// so we define `Us` as signed so Clock.h can use this type.)
+using Us = int64_t;
+
 // Instant: represents a particular moment in time
 // Encoded as the linear count of microseconds since our epoch,
-// where our epoch is defined by `Epoch` in TimeConvert.h
+// where our epoch is defined by `Epoch` in Clock.h
 using Instant = uint64_t;
 
 static constexpr Instant AbsoluteBit = (Instant)1<<63;

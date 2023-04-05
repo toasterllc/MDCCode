@@ -6,7 +6,8 @@
 #include "STM.h"
 #include "MDCUSBDevice.h"
 #include "Toastbox/RuntimeError.h"
-#include "Toastbox/IntForStr.h"
+#include "Toastbox/NumForStr.h"
+#include "Toastbox/DurationString.h"
 #include "ChecksumFletcher32.h"
 #include "Img.h"
 #include "SD.h"
@@ -14,7 +15,9 @@
 #include "MSP.h"
 #include "ELF32Binary.h"
 #include "Time.h"
-#include "TimeConvert.h"
+#include "Clock.h"
+#include "date/date.h"
+#include "date/tz.h"
 
 using CmdStr = std::string;
 
@@ -39,6 +42,7 @@ const CmdStr MSPTimeGetCmd          = "MSPTimeGet";
 const CmdStr MSPTimeSetCmd          = "MSPTimeSet";
 const CmdStr MSPSBWReadCmd          = "MSPSBWRead";
 const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
+const CmdStr MSPSBWEraseCmd         = "MSPSBWErase";
 const CmdStr SDReadCmd              = "SDRead";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 
@@ -69,6 +73,7 @@ static void printUsage() {
     
     cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
     cout << "  " << MSPSBWWriteCmd          << " <file>\n";
+    cout << "  " << MSPSBWEraseCmd          << "\n";
     
     cout << "  " << SDReadCmd               << " <addr> <blockcount> <output>\n";
     cout << "  " << ImgCaptureCmd           << " <output.cfa>\n";
@@ -198,6 +203,8 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == lower(MSPSBWWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.MSPSBWWrite.filePath = strs[1];
+    
+    } else if (args.cmd == lower(MSPSBWEraseCmd)) {
     
     } else if (args.cmd == lower(SDReadCmd)) {
         if (strs.size() < 4) throw std::runtime_error("missing argument: address/length/file");
@@ -337,62 +344,167 @@ static void MSPHostModeSet(const Args& args, MDCUSBDevice& device) {
     device.mspHostModeSet(args.MSPHostModeSet.en);
 }
 
+static const char* _StringForRepeatType(MSP::Repeat::Type x) {
+    using X = MSP::Repeat::Type;
+    switch (x) {
+    case X::Never:  return "Never";  break;
+    case X::Daily:  return "Daily";  break;
+    case X::Weekly: return "Weekly"; break;
+    case X::Yearly: return "Yearly"; break;
+    }
+    abort();
+}
+
+static const char* _StringForTriggerEventType(MSP::Triggers::Event::Type x) {
+    using X = MSP::Triggers::Event::Type;
+    switch (x) {
+    case X::TimeTrigger:  return "TimeTrigger";
+    case X::MotionEnable: return "MotionEnable";
+    }
+    abort();
+}
+
+static const char* _StringForLEDs(MSP::LEDs x) {
+    switch (x) {
+    case MSP::LEDs_::None:                      return "none";
+    case MSP::LEDs_::Green:                     return "green";
+    case MSP::LEDs_::Red:                       return "red";
+    case MSP::LEDs_::Green | MSP::LEDs_::Red:   return "green|red";
+    }
+    abort();
+}
+
+static std::string _StringForTimeInstant(Time::Instant t, bool relative=false) {
+    using namespace std::chrono;
+    std::stringstream ss;
+    if (Time::Absolute(t)) {
+        const date::time_zone& tz = *date::current_zone();
+        const auto tpDevice = Time::Clock::TimePointFromTimeInstant(t);
+        const auto tpLocal = tz.to_local(date::clock_cast<std::chrono::system_clock>(tpDevice));
+        ss << tpLocal;
+        if (relative) {
+            const auto tpNow = Time::Clock::now();
+            ss << " (" << Toastbox::DurationString(true, duration_cast<seconds>(tpNow-tpDevice)) << " ago)";
+        } else {
+            ss << " (0x" << std::setfill('0') << std::setw(16) << std::hex << t << ")";
+        }
+    } else {
+        ss << "0x" << std::setfill('0') << std::setw(16) << std::hex << t << " [relative]";
+    }
+    return ss.str();
+}
+
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     // Read the device state
     MSP::State state = device.mspStateRead();
     
-    printf(     "header\n");
-    printf(     "  magic:                   0x%08jx\n",     (uintmax_t)state.header.magic);
-    printf(     "  version:                 0x%04jx\n",     (uintmax_t)state.header.version);
-    printf(     "  length:                  0x%04jx\n",     (uintmax_t)state.header.length);
-    printf(     "\n");
+    printf(         "header\n");
+    printf(         "  magic:                   0x%08jx\n",     (uintmax_t)state.header.magic);
+    printf(         "  version:                 0x%04jx\n",     (uintmax_t)state.header.version);
+    printf(         "  length:                  0x%04jx\n",     (uintmax_t)state.header.length);
+    printf(         "\n");
     
-    printf(     "sd\n");
-    printf(     "  cardId\n");
-    printf(     "    manufacturerId:        0x%02jx\n",     (uintmax_t)state.sd.cardId.manufacturerId);
-    printf(     "    oemId:                 0x%02jx\n",     (uintmax_t)state.sd.cardId.oemId);
-    printf(     "    productName:           %c%c%c%c%c\n",  state.sd.cardId.productName[0],
-                                                            state.sd.cardId.productName[1],
-                                                            state.sd.cardId.productName[2],
-                                                            state.sd.cardId.productName[3],
-                                                            state.sd.cardId.productName[4]);
-    printf(     "    productRevision:       0x%02jx\n",     (uintmax_t)state.sd.cardId.productRevision);
-    printf(     "    productSerialNumber:   0x%08jx\n",     (uintmax_t)state.sd.cardId.productSerialNumber);
-    printf(     "    manufactureDate:       0x%04jx\n",     (uintmax_t)state.sd.cardId.manufactureDate);
-    printf(     "    crc:                   0x%02jx\n",     (uintmax_t)state.sd.cardId.crc);
+    printf(         "sd\n");
+    printf(         "  cardId\n");
+    printf(         "    manufacturerId:        0x%02jx\n",     (uintmax_t)state.sd.cardId.manufacturerId);
+    printf(         "    oemId:                 0x%02jx\n",     (uintmax_t)state.sd.cardId.oemId);
+    printf(         "    productName:           %c%c%c%c%c\n",  state.sd.cardId.productName[0],
+                                                                state.sd.cardId.productName[1],
+                                                                state.sd.cardId.productName[2],
+                                                                state.sd.cardId.productName[3],
+                                                                state.sd.cardId.productName[4]);
+    printf(         "    productRevision:       0x%02jx\n",     (uintmax_t)state.sd.cardId.productRevision);
+    printf(         "    productSerialNumber:   0x%08jx\n",     (uintmax_t)state.sd.cardId.productSerialNumber);
+    printf(         "    manufactureDate:       0x%04jx\n",     (uintmax_t)state.sd.cardId.manufactureDate);
+    printf(         "    crc:                   0x%02jx\n",     (uintmax_t)state.sd.cardId.crc);
     
-    printf(     "  imgCap:                  %ju\n",         (uintmax_t)state.sd.imgCap);
-    printf(     "  baseFull:                %ju\n",         (uintmax_t)state.sd.baseFull);
-    printf(     "  baseThumb:               %ju\n",         (uintmax_t)state.sd.baseThumb);
+    printf(         "  imgCap:                  %ju\n",         (uintmax_t)state.sd.imgCap);
+    printf(         "  baseFull:                %ju\n",         (uintmax_t)state.sd.baseFull);
+    printf(         "  baseThumb:               %ju\n",         (uintmax_t)state.sd.baseThumb);
     
-    printf(     "  imgRingBufs[0]\n");
-    printf(     "    buf\n");
-    printf(     "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.id);
-    printf(     "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.idx);
-    printf(     "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].valid);
+    printf(         "  imgRingBufs[0]\n");
+    printf(         "    buf\n");
+    printf(         "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.id);
+    printf(         "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.idx);
+    printf(         "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].valid);
     
-    printf(     "  imgRingBufs[1]\n");
-    printf(     "    buf\n");
-    printf(     "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.id);
-    printf(     "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.idx);
-    printf(     "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].valid);
-    printf(     "\n");
+    printf(         "  imgRingBufs[1]\n");
+    printf(         "    buf\n");
+    printf(         "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.id);
+    printf(         "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.idx);
+    printf(         "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].valid);
+    printf(         "\n");
     
-    printf(     "aborts\n");
+    printf(         "settings\n");
+    printf(         "  triggers\n");
+    
+    const auto& triggers = state.settings.triggers;
+    
+    printf(         "    event\n");
+    for (auto it=std::begin(triggers.event); it!=std::begin(triggers.event)+triggers.eventCount; it++) {
+        printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.event));
+        printf(     "        time:                  %s\n",        _StringForTimeInstant(it->time).c_str());
+        printf(     "        type:                  %s\n",        _StringForTriggerEventType(it->type));
+        printf(     "        repeat\n");
+        printf(     "          type:                %s\n",        _StringForRepeatType(it->repeat.type));
+        printf(     "          arg:                 0x%jx\n",     (uintmax_t)it->repeat.Daily.interval);
+        printf(     "        idx:                   %ju\n",       (uintmax_t)it->idx);
+    }
+    
+    printf(         "    timeTrigger\n");
+    for (auto it=std::begin(triggers.timeTrigger); it!=std::begin(triggers.timeTrigger)+triggers.timeTriggerCount; it++) {
+        printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.timeTrigger));
+        printf(     "        capture\n");
+        printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
+        printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
+        printf(     "          leds:                %s\n",        _StringForLEDs(it->capture.leds));
+    }
+    
+    printf(         "    motionTrigger\n");
+    for (auto it=std::begin(triggers.motionTrigger); it!=std::begin(triggers.motionTrigger)+triggers.motionTriggerCount; it++) {
+        printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.motionTrigger));
+        printf(     "        capture\n");
+        printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
+        printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
+        printf(     "          leds:                %s\n",        _StringForLEDs(it->capture.leds));
+        printf(     "        count:                 %ju\n",       (uintmax_t)it->count);
+        printf(     "        durationMs:            %ju\n",       (uintmax_t)it->durationMs);
+        printf(     "        suppressMs:            %ju\n",       (uintmax_t)it->suppressMs);
+    }
+    
+    printf(         "    buttonTrigger\n");
+    for (auto it=std::begin(triggers.buttonTrigger); it!=std::begin(triggers.buttonTrigger)+triggers.buttonTriggerCount; it++) {
+        printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.buttonTrigger));
+        printf(     "        capture\n");
+        printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
+        printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
+        printf(     "          leds:                %s\n",        _StringForLEDs(it->capture.leds));
+    }
+    
+    printf(         "    source\n");
+    for (auto it=std::begin(triggers.source); it!=std::end(triggers.source);) {
+        printf(     "      ");
+        for (int i=0; i<16 && it!=std::end(triggers.source); i++, it++) {
+            printf("%02jx ", (uintmax_t)*it);
+        }
+        printf("\n");
+    }
+    printf(         "\n");
+    
+    printf(         "aborts\n");
     size_t i = 0;
     for (const auto& abort : state.aborts) {
         if (!abort.count) break;
-        
-        printf( "  #%ju\n",                                 (uintmax_t)i);
-        printf( "    type:\n");
-        printf( "      domain:              %ju\n",         (uintmax_t)abort.type.domain);
-        printf( "      line:                %ju\n",         (uintmax_t)abort.type.line);
-        printf( "    timestampEarliest:     0x%jx\n",       (uintmax_t)abort.timestampEarliest);
-        printf( "    timestampLatest:       0x%jx\n",       (uintmax_t)abort.timestampLatest);
-        printf( "    count:                 %ju\n",         (uintmax_t)abort.count);
+        printf(     "  #%ju\n",                                 (uintmax_t)i);
+        printf(     "    type\n");
+        printf(     "      domain:              %s\n",          MSP::StringForAbortDomain(abort.type.domain));
+        printf(     "      line:                %ju\n",         (uintmax_t)abort.type.line);
+        printf(     "    earliest:              %s\n",          _StringForTimeInstant(abort.earliest, true).c_str());
+        printf(     "    latest:                %s\n",          _StringForTimeInstant(abort.latest, true).c_str());
+        printf(     "    count:                 %ju\n",         (uintmax_t)abort.count);
         i++;
     }
-    printf(     "\n");
+    printf(         "\n");
 }
 
 static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
@@ -400,34 +512,35 @@ static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
 }
 
 static void MSPTimeGet(const Args& args, MDCUSBDevice& device) {
+    using namespace std::chrono;
+    using namespace date;
+    
     printf("MSPTimeGet:\n");
-    const Time::Instant mdcTime = device.mspTimeGet();
-    const Time::Instant actualTime = Time::Current();
+    const Time::Instant deviceTimeInstant = device.mspTimeGet();
+    const Time::Clock::time_point actualTime = Time::Clock::now();
+    const Time::Instant actualTimeInstant = Time::Clock::TimeInstantFromTimePoint(actualTime);
     
-    if (Time::Absolute(mdcTime)) {
-        using namespace std::chrono;
-        using namespace date;
-        const microseconds deltaUs = clock_cast<utc_clock>(mdcTime)-clock_cast<utc_clock>(actualTime);
-        
-        printf("   MDC time: 0x%016jx\n", (uintmax_t)mdcTime);
-        printf("Actual time: 0x%016jx\n", (uintmax_t)actualTime);
-        printf("      Delta: %+jd us\n",  (intmax_t)deltaUs.count());
-        printf("\n");
+    std::cout <<        "     MDC time: " << _StringForTimeInstant(deviceTimeInstant) << "\n";
+    std::cout <<        "  Actual time: " << _StringForTimeInstant(actualTimeInstant) << "\n";
     
-    } else {
-        printf("   MDC time: 0x%016jx [relative]\n", (uintmax_t)mdcTime);
-        printf("Actual time: 0x%016jx\n", (uintmax_t)actualTime);
-        printf("\n");
+    if (Time::Absolute(deviceTimeInstant)) {
+        const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(deviceTimeInstant);
+        const microseconds delta = deviceTime-actualTime;
+        std::cout <<    "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
     }
+    
+    std::cout <<    "\n";
 }
 
 static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
-    const Time::Instant time = args.MSPTimeSet.time.value_or(Time::Current());
-    printf("MSPTimeSet: 0x%016jx\n", (uintmax_t)time);
-    device.mspTimeSet(time);
+    const Time::Clock::time_point now = Time::Clock::now();
+    const Time::Instant timeInstant = Time::Clock::TimeInstantFromTimePoint(now);
+    std::cout << "MSPTimeSet: " << _StringForTimeInstant(timeInstant) << "\n";
+    device.mspTimeSet(timeInstant);
 }
 
 static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
+    device.mspSBWLock();
     device.mspSBWConnect();
     
     printf("Reading [0x%08jx,0x%08jx):\n",
@@ -445,11 +558,13 @@ static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
     printf("\n");
     
     device.mspSBWDisconnect();
+    device.mspSBWUnlock();
 }
 
 static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.MSPSBWWrite.filePath.c_str());
     
+    device.mspSBWLock();
     device.mspSBWConnect();
     
     // Write the data
@@ -476,6 +591,15 @@ static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
     });
     
     device.mspSBWDisconnect();
+    device.mspSBWUnlock();
+}
+
+static void MSPSBWErase(const Args& args, MDCUSBDevice& device) {
+    std::cout << "MSPSBWErase\n";
+    device.mspSBWLock();
+    device.mspSBWErase();
+    device.mspSBWUnlock();
+    std::cout << "-> OK\n\n";
 }
 
 static void SDRead(const Args& args, MDCUSBDevice& device) {
@@ -595,6 +719,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPTimeSetCmd))          MSPTimeSet(args, device);
         else if (args.cmd == lower(MSPSBWReadCmd))          MSPSBWRead(args, device);
         else if (args.cmd == lower(MSPSBWWriteCmd))         MSPSBWWrite(args, device);
+        else if (args.cmd == lower(MSPSBWEraseCmd))         MSPSBWErase(args, device);
         else if (args.cmd == lower(SDReadCmd))              SDRead(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))          ImgCapture(args, device);
     

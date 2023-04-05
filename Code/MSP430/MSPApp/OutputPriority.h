@@ -1,34 +1,48 @@
 #pragma once
 #include "GPIO.h"
-#include <bitset>
 
-template <typename T_Pin>
+// OutputPriority: allows a single output to be driven with different values (0, 1, or unspecified)
+// with varying priorities (0-7), where the specified value of highest priority wins.
+//
+// OutputPriority is intentionally not templated on a GPIO to save code space.
 class OutputPriority {
 public:
     using Priority = uint8_t;
     
-    static std::optional<bool> Get() {
+    template<typename T>
+    OutputPriority(const T&) : _write(T::Write) {}
+    
+    std::optional<bool> get() {
         for (size_t i=0; i<_Width; i++) {
-            if (_En[i]) return _Val[i];
+            if (_Get(_en, i)) return _Get(_val, i);
         }
         return std::nullopt;
     }
     
-    static void Set(Priority pri, std::optional<bool> val) {
-        _En[pri] = val.has_value();
-        _Val[pri] = val.value_or(false);
-        _Update();
+    void set(Priority pri, std::optional<bool> val) {
+        _Set(_en, pri, val.has_value());
+        _Set(_val, pri, val.value_or(false));
+        _update();
     }
     
 private:
-    static void _Update() {
-        const std::optional<bool> val = Get();
-        if (val) {
-            T_Pin::Write(*val);
-        }
+    using _WriteFn = void(&)(bool);
+    using _Bits = uint8_t;
+    static constexpr size_t _Width = sizeof(Priority)*8;
+    
+    static constexpr _Bits _Mask(Priority pri) { return ((_Bits)1) << pri; }
+    static constexpr bool _Get(_Bits bits, Priority pri) { return bits & _Mask(pri); }
+    static constexpr void _Set(_Bits& bits, Priority pri, bool b) {
+        bits &= ~_Mask(pri);
+        if (b) bits |= _Mask(pri);
     }
     
-    static constexpr size_t _Width = sizeof(Priority)*8;
-    static inline std::bitset<_Width> _En;
-    static inline std::bitset<_Width> _Val;
+    void _update() {
+        const std::optional<bool> val = get();
+        if (val) _write(*val);
+    }
+    
+    _Bits _en = 0;
+    _Bits _val = 0;
+    _WriteFn _write;
 };

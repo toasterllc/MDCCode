@@ -43,10 +43,13 @@ enum class Op : uint8_t {
     MSPTimeGet,
     MSPTimeSet,
     
+    MSPSBWLock,
+    MSPSBWUnlock,
     MSPSBWConnect,
     MSPSBWDisconnect,
     MSPSBWRead,
     MSPSBWWrite,
+    MSPSBWErase,
     MSPSBWDebug,
     
     SDInit,

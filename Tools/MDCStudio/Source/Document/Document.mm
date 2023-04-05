@@ -1,5 +1,6 @@
 #import "Document.h"
 #import <algorithm>
+#import "Toastbox/Cast.h"
 #import "Toastbox/Mac/ThreePartView.h"
 #import "SourceListView/SourceListView.h"
 #import "InspectorView/InspectorView.h"
@@ -8,14 +9,16 @@
 #import "FixedScrollView.h"
 #import "MockImageSource.h"
 #import "Prefs.h"
+#import "DeviceSettings/DeviceSettingsView.h"
 
 using namespace MDCStudio;
 
-@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate>
+@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate, DeviceSettingsViewDelegate>
 @end
 
 @implementation Document {
     IBOutlet NSSplitView* _splitView;
+    NSWindow* _window;
     
     struct {
         NSView* containerView;
@@ -39,6 +42,11 @@ using namespace MDCStudio;
     ImageScrollView* _imageScrollView;
     ImageGridScrollView* _imageGridScrollView;
     InspectorView* _inspectorView;
+    
+    struct {
+        MDCDevicePtr device;
+        DeviceSettingsView* view;
+    } _deviceSettings;
 }
 
 + (BOOL)autosavesInPlace {
@@ -50,13 +58,15 @@ static void _SetView(T& x, NSView* y) {
     if (x.view) [x.view removeFromSuperview];
     x.view = y;
     [x.containerView addSubview:x.view];
-    [x.containerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|"
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|"
         options:0 metrics:nil views:@{@"v":x.view}]];
-    [x.containerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|"
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|"
         options:0 metrics:nil views:@{@"v":x.view}]];
 }
 
 - (void)awakeFromNib {
+    _window = [_splitView window];
+    
     _left.containerView = [[NSView alloc] initWithFrame:{}];
     [_left.containerView setTranslatesAutoresizingMaskIntoConstraints:false];
     
@@ -222,73 +232,9 @@ static void _SetView(T& x, NSView* y) {
 //    }
 //}
 
-
-
-
 static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* view) {
     [view setSortNewestFirst:prefs.sortNewestFirst()];
 }
-
-
-
-
-- (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
-//    {
-//        auto imageSource = std::make_shared<MockImageSource>("/Users/dave/Desktop/ImageLibrary");
-//        
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
-//        [imageGridView setDelegate:self];
-//        
-//        [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
-//        [self setInspectorView:[[InspectorView alloc] initWithImageSource:imageSource]];
-//        
-//        [[_splitView window] makeFirstResponder:imageGridView];
-//    }
-    
-    
-    
-    
-    
-    
-    
-    
-    ImageSourcePtr imageSource = [_sourceListView selection];
-    if (imageSource) {
-        {
-            ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
-            [imageGridView setDelegate:self];
-            _UpdateImageGridViewFromPrefs(PrefsGlobal(), imageGridView);
-            _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
-        }
-        
-        {
-            ImageView* imageView = [[ImageView alloc] initWithImageSource:imageSource];
-            [imageView setDelegate:self];
-            _imageScrollView = [[ImageScrollView alloc] initWithFixedDocument:imageView];
-            [_imageScrollView setMagnifyToFit:true animate:false];
-        }
-        
-        {
-            _inspectorView = [[InspectorView alloc] initWithImageSource:imageSource];
-        }
-        
-        _SetView(_center, _imageGridScrollView);
-        _SetView(_right, _inspectorView);
-        
-        [[_splitView window] makeFirstResponder:[_imageGridScrollView document]];
-//        [_mainView setContentView:sv animation:MainViewAnimation::None];
-    
-    } else {
-//        [_mainView setCenterView:nil];
-    }
-}
-
-
-
-
-
-
-
 
 //static constexpr MDCTools::CFADesc _CFADesc = {
 //    MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
@@ -462,7 +408,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         _SetView(_center, _imageScrollView);
         ImageView* imageView = Toastbox::Cast<ImageView*>([_imageScrollView document]);
         [imageView setImageRecord:imageRecord];
-        [[_splitView window] makeFirstResponder:imageView];
+        [_window makeFirstResponder:imageView];
         
         ImageSet selection;
         selection.insert(imageRecord);
@@ -474,7 +420,58 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     }
 }
 
-// MARK: - ImageGridViewDelegate
+// MARK: - Source List
+- (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
+//    {
+//        auto imageSource = std::make_shared<MockImageSource>("/Users/dave/Desktop/ImageLibrary");
+//        
+//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
+//        [imageGridView setDelegate:self];
+//        
+//        [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
+//        [self setInspectorView:[[InspectorView alloc] initWithImageSource:imageSource]];
+//        
+//        [[_splitView window] makeFirstResponder:imageGridView];
+//    }
+    
+    assert(sourceListView == _sourceListView);
+    ImageSourcePtr imageSource = [_sourceListView selection];
+    if (imageSource) {
+        {
+            ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
+            [imageGridView setDelegate:self];
+            _UpdateImageGridViewFromPrefs(PrefsGlobal(), imageGridView);
+            _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
+        }
+        
+        {
+            ImageView* imageView = [[ImageView alloc] initWithImageSource:imageSource];
+            [imageView setDelegate:self];
+            _imageScrollView = [[ImageScrollView alloc] initWithFixedDocument:imageView];
+            [_imageScrollView setMagnifyToFit:true animate:false];
+        }
+        
+        {
+            _inspectorView = [[InspectorView alloc] initWithImageSource:imageSource];
+        }
+        
+        _SetView(_center, _imageGridScrollView);
+        _SetView(_right, _inspectorView);
+        
+        [_window makeFirstResponder:[_imageGridScrollView document]];
+//        [_mainView setContentView:sv animation:MainViewAnimation::None];
+    
+    } else {
+//        [_mainView setCenterView:nil];
+    }
+}
+
+- (void)sourceListView:(SourceListView*)sourceListView showDeviceSettings:(MDCDevicePtr)device {
+    assert(sourceListView == _sourceListView);
+    [self _showDeviceSettings:device];
+}
+
+// MARK: - Image Grid
 
 - (void)imageGridViewSelectionChanged:(ImageGridView*)imageGridView {
     [_inspectorView setSelection:[imageGridView selection]];
@@ -487,7 +484,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     [self _openImage:rec delta:0];
 }
 
-// MARK: - ImageViewDelegate
+// MARK: - Image View
 
 - (void)imageViewPreviousImage:(ImageView*)imageView {
     const bool ok = [self _openImage:[imageView imageRecord] delta:-1];
@@ -499,7 +496,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     if (!ok) NSBeep();
 }
 
-// MARK: - NSSplitViewDelegate
+// MARK: - Split View
 
 - (BOOL)splitView:(NSSplitView*)splitView canCollapseSubview:(NSView*)subview {
     return true;
@@ -514,6 +511,55 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 - (IBAction)_sortOldestFirst:(id)sender {
     NSLog(@"_sortOldestFirst");
     PrefsGlobal().sortNewestFirst(false);
+}
+
+// MARK: - Device Settings
+- (void)_showDeviceSettings:(MDCDevicePtr)device {
+//    ImageSourcePtr source = [_sourceListView selection];
+//    MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>(source);
+//    if (!device) return;
+    
+    _deviceSettings = {
+        .device = device,
+        .view = [[DeviceSettingsView alloc] initWithSettings:device->settings() delegate:self],
+    };
+    
+    NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
+        styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
+        backing:NSBackingStoreBuffered defer:false];
+    NSView* contentView = [sheetWindow contentView];
+    [contentView addSubview:_deviceSettings.view];
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|"
+        options:0 metrics:nil views:@{@"view":_deviceSettings.view}]];
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|"
+        options:0 metrics:nil views:@{@"view":_deviceSettings.view}]];
+    
+    [_window beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {
+        NSLog(@"sheet complete");
+    }];
+}
+
+- (void)deviceSettingsView:(DeviceSettingsView*)view dismiss:(bool)save {
+    assert(view == _deviceSettings.view);
+    
+    // Save settings to device if user so desires
+    if (save) {
+        try {
+            const MSP::Settings settings = [_deviceSettings.view settings];
+            _deviceSettings.device->settings(settings);
+        
+        } catch (const std::exception& e) {
+            NSAlert* alert = [NSAlert new];
+            [alert setAlertStyle:NSAlertStyleCritical];
+            [alert setMessageText:@"An error occurred when trying to save these settings"];
+            [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
+            [alert beginSheetModalForWindow:[view window] completionHandler:nil];
+            return;
+        }
+    }
+    
+    [_window endSheet:[_deviceSettings.view window]];
+    _deviceSettings = {};
 }
 
 @end

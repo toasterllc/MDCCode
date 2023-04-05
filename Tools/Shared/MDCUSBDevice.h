@@ -295,10 +295,10 @@ public:
                 .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
             };
             _sendCmd(cmd);
-            _checkStatus("MSPStateRead command failed (header)");
             
             MSP::State::Header header;
             _dev.read(STM::Endpoint::DataIn, header);
+            _checkStatus("MSPStateRead command failed (header)");
             
             if (header.magic != MSP::StateHeader.magic) {
                 throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
@@ -313,6 +313,13 @@ public:
                     (uintmax_t)header.version
                 );
             }
+            
+            if (header.length != sizeof(MSP::State)) {
+                throw Toastbox::RuntimeError("invalid MSP::State length (expected: 0x%jx, got: 0x%jx)",
+                    (uintmax_t)sizeof(MSP::State),
+                    (uintmax_t)header.length
+                );
+            }
         }
         
         // Header looks good; read the full MSP::State
@@ -322,13 +329,28 @@ public:
                 .arg = { .MSPStateRead = { .len = sizeof(MSP::State) } },
             };
             _sendCmd(cmd);
-            _checkStatus("MSPStateRead command failed (header+payload)");
             
             MSP::State state;
             _dev.read(STM::Endpoint::DataIn, state);
+            _checkStatus("MSPStateRead command failed (header+payload)");
             
             return state;
         }
+    }
+    
+    void mspStateWrite(const MSP::State& state) {
+        assert(_mode == STM::Status::Mode::STMApp);
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPStateWrite,
+            .arg = { .MSPStateWrite = { .len = sizeof(state) } },
+        };
+        // Send command
+        _sendCmd(cmd);
+        // Send data
+        _dev.write(STM::Endpoint::DataOut, &state, sizeof(state));
+        // Check status
+        _checkStatus("MSPStateWrite command failed");
     }
     
     Time::Instant mspTimeGet() {
@@ -350,6 +372,20 @@ public:
         };
         _sendCmd(cmd);
         _checkStatus("MSPTimeSet command failed");
+    }
+    
+    void mspSBWLock() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWLock };
+        _sendCmd(cmd);
+        _checkStatus("MSPSBWLock command failed");
+    }
+    
+    void mspSBWUnlock() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWUnlock };
+        _sendCmd(cmd);
+        _checkStatus("MSPSBWUnlock command failed");
     }
     
     void mspSBWConnect() {
@@ -412,6 +448,13 @@ public:
         // Send data
         _dev.write(STM::Endpoint::DataOut, data, len);
         _checkStatus("MSPSBWWrite command failed");
+    }
+    
+    void mspSBWErase() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWErase };
+        _sendCmd(cmd);
+        _checkStatus("MSPSBWErase command failed");
     }
     
     void mspSBWDebug(const STM::MSPSBWDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
@@ -624,7 +667,11 @@ private:
     void _checkStatus(const char* errMsg) {
         // Wait for completion and throw on failure
         bool s = false;
-        _dev.read(STM::Endpoint::DataIn, s);
+        try {
+            _dev.read(STM::Endpoint::DataIn, s);
+        } catch (const std::exception& e) {
+            throw Toastbox::RuntimeError("%s: failed to read status", e.what());
+        }
         if (!s) throw std::runtime_error(errMsg);
     }
     

@@ -6,159 +6,74 @@
 #import <cmath>
 #import <string>
 #import <set>
+#import "DeviceSettings.h"
+#import "Calendar.h"
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/NumForStr.h"
 #import "Toastbox/String.h"
-#import "DeviceSettings/DeviceSettings.h"
 #import "Toastbox/Defer.h"
+#import "Code/Shared/Clock.h"
+using namespace MDCStudio;
 using namespace DeviceSettings;
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
-struct [[gnu::packed]] Trigger {
-    enum class Type : uint8_t {
-        Time,
-        Motion,
-        Button,
-    };
-    
-    struct [[gnu::packed]] DayInterval {
-        uint32_t interval;
-    };
-    
-    struct [[gnu::packed]] Repeat {
-        enum class Type : uint8_t {
-            Daily,
-            WeekDays,
-            YearDays,
-            DayInterval,
-        };
-        
-        Type type;
-        union {
-            Calendar::WeekDays weekDays;
-            Calendar::YearDays yearDays;
-            DayInterval dayInterval;
-        };
-    };
-    
-    enum class LEDs : uint8_t {
-        None  = 0,
-        Green = 1<<0,
-        Red   = 1<<1,
-    };
-    
-    struct [[gnu::packed]] Duration {
-        enum class Unit : uint8_t {
-            Seconds,
-            Minutes,
-            Hours,
-            Days,
-        };
-        
-        float value;
-        Unit unit;
-    };
-    
-    struct [[gnu::packed]] Capture {
-        uint32_t count;
-        Duration interval;
-        LEDs flashLEDs;
-    };
-    
-    Type type = Type::Time;
-    
-    union {
-        struct [[gnu::packed]] {
-            struct [[gnu::packed]] {
-                uint32_t time;
-                Repeat repeat;
-            } schedule;
-            
-            Capture capture;
-            
-            struct [[gnu::packed]] {
-            } constraints;
-        } time;
-        
-        struct [[gnu::packed]] {
-            struct [[gnu::packed]] {
-                struct [[gnu::packed]] {
-                    bool enable;
-                    uint32_t start;
-                    uint32_t end;
-                } timeRange;
-                
-                Repeat repeat;
-            } schedule;
-            
-            Capture capture;
-            
-            struct [[gnu::packed]] {
-                struct [[gnu::packed]] {
-                    bool enable;
-                    Duration duration;
-                } ignoreTriggerDuration;
-                
-                struct [[gnu::packed]] {
-                    bool enable;
-                    uint32_t count;
-                } maxTriggerCount;
-            } constraints;
-        } motion;
-        
-        struct [[gnu::packed]] {
-            Capture capture;
-            
-            struct [[gnu::packed]] {
-            } constraints;
-        } button;
-    };
+constexpr Calendar::TimeOfDay _TimeStartInit(32400); // 9 AM
+constexpr Calendar::TimeOfDay _TimeEndInit  (61200); // 5 PM
+//static const Calendar::DaysOfWeek _DaysOfWeekInit = Calendar::DaysOfWeekFromVector({
+//    Calendar::DayOfWeek_::Mon,
+//    Calendar::DayOfWeek_::Tue,
+//    Calendar::DayOfWeek_::Wed,
+//    Calendar::DayOfWeek_::Thu,
+//    Calendar::DayOfWeek_::Fri,
+//});
+
+static const Calendar::DaysOfWeek _DaysOfWeekMonFri = {
+    Calendar::DaysOfWeekMask(date::Monday)    |
+    Calendar::DaysOfWeekMask(date::Tuesday)   |
+    Calendar::DaysOfWeekMask(date::Wednesday) |
+    Calendar::DaysOfWeekMask(date::Thursday)  |
+    Calendar::DaysOfWeekMask(date::Friday)
 };
 
-constexpr uint32_t _TimeStartInit = 32400; // 9 AM
-constexpr uint32_t _TimeEndInit = 61200;   // 5 PM
-constexpr Calendar::WeekDays _WeekDaysInit = (Calendar::WeekDays)(
-    std::to_underlying(Calendar::WeekDays::Mon) |
-    std::to_underlying(Calendar::WeekDays::Tue) |
-    std::to_underlying(Calendar::WeekDays::Wed) |
-    std::to_underlying(Calendar::WeekDays::Thu) |
-    std::to_underlying(Calendar::WeekDays::Fri)
-);
+static const Calendar::DaysOfWeek _DaysOfWeekInit = _DaysOfWeekMonFri;
 
-static const Calendar::YearDays _YearDaysInit = Calendar::YearDaysFromVector({Calendar::YearDay{9,20}, Calendar::YearDay{12,31}});
+static const Calendar::DaysOfYear _DaysOfYearInit = Calendar::DaysOfYearFromVector({
+    Calendar::DayOfYear{Calendar::MonthOfYear(9),  Calendar::DayOfMonth(20)},
+    Calendar::DayOfYear{Calendar::MonthOfYear(12), Calendar::DayOfMonth(31)},
+});
 
-static constexpr Trigger::DayInterval _DayIntervalInit = Trigger::DayInterval{ .interval = 2 };
+static constexpr DayInterval _DayIntervalInit = DayInterval{ 2 };
 
-//static Trigger::Repeat& _TriggerRepeatGet(Trigger& t) {
+//static Repeat& _TriggerRepeatGet(Trigger& t) {
 //    switch (t.type) {
-//    case Trigger::Type::Time:   return t.time.schedule.repeat;
-//    case Trigger::Type::Motion: return t.motion.schedule.repeat;
+//    case Type::Time:   return t.time.schedule.repeat;
+//    case Type::Motion: return t.motion.schedule.repeat;
 //    default:                    abort();
 //    }
 //}
 
-static void _InitTriggerRepeat(Trigger::Repeat& x) {
-    using X = Trigger::Repeat::Type;
+static void _TriggerInitRepeat(Repeat& x) {
+    using X = Repeat::Type;
     switch (x.type) {
     case X::Daily:
         break;
-    case X::WeekDays:
-        x.weekDays = _WeekDaysInit;
+    case X::DaysOfWeek:
+        x.DaysOfWeek = _DaysOfWeekInit;
         break;
-    case X::YearDays:
-        x.yearDays = _YearDaysInit;
+    case X::DaysOfYear:
+        x.DaysOfYear = _DaysOfYearInit;
         break;
     case X::DayInterval:
-        x.dayInterval = _DayIntervalInit;
+        x.DayInterval = _DayIntervalInit;
         break;
     default:
         abort();
     }
 }
 
-static void _InitTrigger(Trigger& t, Trigger::Type type) {
+static void _TriggerInit(Trigger& t, Trigger::Type type) {
     t.type = type;
     switch (t.type) {
     case Trigger::Type::Time: {
@@ -167,20 +82,17 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         x.schedule = {
             .time = _TimeStartInit,
             .repeat = {
-                .type = Trigger::Repeat::Type::Daily,
+                .type = Repeat::Type::Daily,
             },
         };
         
         x.capture = {
             .count = 1,
-            .interval = Trigger::Duration{
+            .interval = DeviceSettings::Duration{
                 .value = 5,
-                .unit = Trigger::Duration::Unit::Seconds,
+                .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .flashLEDs = Trigger::LEDs::None,
-        };
-        
-        x.constraints = {
+            .leds = LEDs_::None,
         };
         
         break;
@@ -196,25 +108,25 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
                 .end = _TimeEndInit,
             },
             .repeat = {
-                .type = Trigger::Repeat::Type::Daily,
+                .type = Repeat::Type::Daily,
             },
         };
         
         x.capture = {
             .count = 1,
-            .interval = Trigger::Duration{
+            .interval = DeviceSettings::Duration{
                 .value = 5,
-                .unit = Trigger::Duration::Unit::Seconds,
+                .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .flashLEDs = Trigger::LEDs::None,
+            .leds = LEDs_::None,
         };
         
         x.constraints = {
-            .ignoreTriggerDuration = {
+            .suppressDuration = {
                 .enable = false,
-                .duration = Trigger::Duration{
+                .duration = DeviceSettings::Duration{
                     .value = 5,
-                    .unit = Trigger::Duration::Unit::Minutes,
+                    .unit = DeviceSettings::Duration::Unit::Minutes,
                 }
             },
             .maxTriggerCount = {
@@ -231,14 +143,11 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
         
         x.capture = {
             .count = 1,
-            .interval = Trigger::Duration{
+            .interval = DeviceSettings::Duration{
                 .value = 5,
-                .unit = Trigger::Duration::Unit::Seconds,
+                .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .flashLEDs = Trigger::LEDs::None,
-        };
-        
-        x.constraints = {
+            .leds = LEDs_::None,
         };
         
         break;
@@ -248,37 +157,36 @@ static void _InitTrigger(Trigger& t, Trigger::Type type) {
     }
 }
 
-struct [[gnu::packed]] Triggers {
-    Trigger triggers[32];
-    uint8_t triggersCount = 0;
-};
+static Trigger _TriggerMake(Trigger::Type type) {
+    Trigger x;
+    _TriggerInit(x, type);
+    return x;
+}
 
-
-
-@interface MonthDayObj : NSObject {
+@interface DayOfMonthObj : NSObject {
 @public
-    Calendar::MonthDay x;
+    Calendar::DayOfMonth x;
 }
 @end
 
-@implementation MonthDayObj
+@implementation DayOfMonthObj
 @end
 
 
 
-@interface YearDayObj : NSObject {
+@interface DayOfYearObj : NSObject {
 @public
-    Calendar::YearDay x;
+    Calendar::DayOfYear x;
 }
 @end
 
-@implementation YearDayObj
+@implementation DayOfYearObj
 @end
 
 
 
 
-static std::string StringFromUnit(const Trigger::Duration::Unit& x) {
+static std::string StringFromUnit(const DeviceSettings::Duration::Unit& x) {
     using X = std::remove_reference_t<decltype(x)>;
     switch (x) {
     case X::Seconds: return "seconds";
@@ -289,8 +197,8 @@ static std::string StringFromUnit(const Trigger::Duration::Unit& x) {
     }
 }
 
-static Trigger::Duration::Unit UnitFromString(std::string x) {
-    using X = Trigger::Duration::Unit;
+static DeviceSettings::Duration::Unit UnitFromString(std::string x) {
+    using X = DeviceSettings::Duration::Unit;
     for (auto& c : x) c = std::tolower(c);
          if (x == "seconds") return X::Seconds;
     else if (x == "minutes") return X::Minutes;
@@ -299,148 +207,25 @@ static Trigger::Duration::Unit UnitFromString(std::string x) {
     else abort();
 }
 
-static std::string StringFromRepeatType(const Trigger::Repeat::Type& x) {
+static std::string StringFromRepeatType(const Repeat::Type& x) {
     using X = std::remove_reference_t<decltype(x)>;
     switch (x) {
     case X::Daily:       return "every day";
-    case X::WeekDays:    return "on days";
-    case X::YearDays:    return "on dates";
+    case X::DaysOfWeek:    return "on days";
+    case X::DaysOfYear:    return "on dates";
     case X::DayInterval: return "on interval";
     default:             abort();
     }
 }
 
-static Trigger::Repeat::Type RepeatTypeFromString(std::string x) {
-    using X = Trigger::Repeat::Type;
+static Repeat::Type RepeatTypeFromString(std::string x) {
+    using X = Repeat::Type;
     for (auto& c : x) c = std::tolower(c);
          if (x == "every day")     return X::Daily;
-    else if (x == "on days")       return X::WeekDays;
-    else if (x == "on dates")      return X::YearDays;
+    else if (x == "on days")       return X::DaysOfWeek;
+    else if (x == "on dates")      return X::DaysOfYear;
     else if (x == "on interval")   return X::DayInterval;
     else abort();
-}
-
-struct _TimeFormatState {
-    NSCalendar* calendar = nil;
-    NSDateFormatter* dateFormatterHH = nil;
-    NSDateFormatter* dateFormatterHHMM = nil;
-    NSDateFormatter* dateFormatterHHMMSS = nil;
-    bool showsAMPM = false;
-    char timeSeparator = 0;
-};
-
-static _TimeFormatState _TimeFormatStateCreate() {
-    _TimeFormatState x;
-    x.calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    
-    {
-        x.dateFormatterHH = [[NSDateFormatter alloc] init];
-        [x.dateFormatterHH setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterHH setCalendar:x.calendar];
-        [x.dateFormatterHH setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHH setLocalizedDateFormatFromTemplate:@"hh"];
-        [x.dateFormatterHH setLenient:true];
-    }
-    
-    {
-        x.dateFormatterHHMM = [[NSDateFormatter alloc] init];
-        [x.dateFormatterHHMM setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterHHMM setCalendar:x.calendar];
-        [x.dateFormatterHHMM setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHHMM setLocalizedDateFormatFromTemplate:@"hhmm"];
-        [x.dateFormatterHHMM setLenient:true];
-    }
-    
-    {
-        x.dateFormatterHHMMSS = [[NSDateFormatter alloc] init];
-        [x.dateFormatterHHMMSS setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterHHMMSS setCalendar:x.calendar];
-        [x.dateFormatterHHMMSS setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hhmmss"];
-        [x.dateFormatterHHMMSS setLenient:true];
-    }
-    
-    NSString* dateFormat = [x.dateFormatterHHMMSS dateFormat];
-    x.showsAMPM = [dateFormat containsString:@"a"];
-    x.timeSeparator = ([dateFormat containsString:@":"] ? ':' : 0);
-    
-    return x;
-}
-
-static _TimeFormatState& _TimeFormatStateGet() {
-    static _TimeFormatState x = _TimeFormatStateCreate();
-    return x;
-}
-
-// 56789 -> 3:46:29 PM / 15:46:29 (depending on locale)
-static std::string _TimeOfDayStringFromSeconds(uint32_t x) {
-//    uint32_t second = x%60;
-//    uint32_t minute = x/60*60;
-    const uint32_t h = x/(60*60);
-    x -= h*60*60;
-    const uint32_t m = x/60;
-    x -= m*60;
-    const uint32_t s = x;
-    
-    NSDateComponents* comp = [NSDateComponents new];
-    [comp setYear:2022];
-    [comp setMonth:1];
-    [comp setDay:1];
-    [comp setHour:h];
-    [comp setMinute:m];
-    [comp setSecond:s];
-    NSDate* date = [_TimeFormatStateGet().calendar dateFromComponents:comp];
-    
-//    if (full) return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
-    
-    if (_TimeFormatStateGet().showsAMPM && !s && !m) {
-        return [[_TimeFormatStateGet().dateFormatterHH stringFromDate:date] UTF8String];
-    } else if (!s) {
-        return [[_TimeFormatStateGet().dateFormatterHHMM stringFromDate:date] UTF8String];
-    } else {
-        return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
-    }
-}
-
-// 3:46:29 PM / 15:46:29 -> 56789
-static uint32_t _SecondsFromTimeOfDayString(std::string x, bool assumeAM=true) {
-    // Convert input to lowercase / remove all spaces
-    const char timeSeparator = _TimeFormatStateGet().timeSeparator;
-    bool hasSeparators = false;
-    for (auto it=x.begin(); it!=x.end();) {
-        *it = std::tolower(*it);
-        hasSeparators |= (timeSeparator && *it==timeSeparator);
-        if (std::isspace(*it))  it = x.erase(it);
-        else                    it++;
-    }
-    
-    // Insert time separators (112233 -> 11:22:33) if they're missing, so we don't reject the input if they are missing
-    if (timeSeparator && !hasSeparators && !x.empty()) {
-        bool started = false;
-        size_t count = 0;
-        for (auto it=x.end()-1; it!=x.begin(); it--) {
-            started |= std::isdigit(*it);
-            if (count == 1) x.insert(it, timeSeparator);
-            count += started;
-            if (count == 2) count = 0;
-        }
-    }
-    
-    // Add AM/PM if it isn't specified, so we don't reject the input if it's just missing am/pm
-    if (_TimeFormatStateGet().showsAMPM &&
-        !Toastbox::String::EndsWith("am", x) &&
-        !Toastbox::String::EndsWith("pm", x)) {
-        x += (assumeAM ? "am" : "pm");
-    }
-    
-    NSDate* date = [_TimeFormatStateGet().dateFormatterHHMMSS dateFromString:@(x.c_str())];
-    if (!date) date = [_TimeFormatStateGet().dateFormatterHHMM dateFromString:@(x.c_str())];
-    if (!date) date = [_TimeFormatStateGet().dateFormatterHH dateFromString:@(x.c_str())];
-    if (!date) throw Toastbox::RuntimeError("invalid time of day: %s", x.c_str());
-    
-    NSDateComponents* comp = [_TimeFormatStateGet().calendar
-        components:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond fromDate:date];
-    return (uint32_t)[comp hour]*60*60 + (uint32_t)[comp minute]*60 + (uint32_t)[comp second];
 }
 
 
@@ -488,8 +273,8 @@ static uint32_t _SecondsFromTimeOfDayString(std::string x, bool assumeAM=true) {
     Trigger trigger;
 }
 
-static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
-    using X = Trigger::Duration::Unit;
+static const char* _SuffixForDurationUnit(DeviceSettings::Duration::Unit x) {
+    using X = DeviceSettings::Duration::Unit;
     switch (x) {
     case X::Seconds: return "s";
     case X::Minutes: return "m";
@@ -499,63 +284,57 @@ static const char* _SuffixForDurationUnit(Trigger::Duration::Unit x) {
     }
 }
 
-static std::string _WeekDaysDescription(const Calendar::WeekDays& x) {
-    using X = Calendar::WeekDays;
+static std::string _DaysOfWeekDescription(const Calendar::DaysOfWeek& x) {
+    using namespace Calendar;
+    
+    // Monday-Friday special case
+    if (x.x == _DaysOfWeekMonFri.x) return "Mon-Fri";
+    
+    const auto days = VectorFromDaysOfWeek(x);
+    
     // Only one day set
-    switch (x) {
-    case X::Mon:  return "mondays";
-    case X::Tue:  return "tuesdays";
-    case X::Wed:  return "wednesdays";
-    case X::Thu:  return "thursdays";
-    case X::Fri:  return "fridays";
-    case X::Sat:  return "saturdays";
-    case X::Sun:  return "sundays";
-    default:      break;
+    if (days.size() == 1) {
+        const DayOfWeek d = days.at(0);
+        if (d == date::Sunday)    return "Sundays";
+        if (d == date::Monday)    return "Mondays";
+        if (d == date::Tuesday)   return "Tuesdays";
+        if (d == date::Wednesday) return "Wednesdays";
+        if (d == date::Thursday)  return "Thursdays";
+        if (d == date::Friday)    return "Fridays";
+        if (d == date::Saturday)  return "Saturdays";
+        abort();
     }
     
-    constexpr auto MF = (X)(std::to_underlying(X::Mon) |
-                            std::to_underlying(X::Tue) |
-                            std::to_underlying(X::Wed) |
-                            std::to_underlying(X::Thu) |
-                            std::to_underlying(X::Fri));
-    if (x == MF) return "Mon-Fri";
+    // 0 or >3 days set
+    if (days.empty() || days.size()>3) return std::to_string(days.size()) + " days per week";
     
-    static const char* Names[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-    
+    // 1-3 days set
     std::string r;
-    size_t i = 0;
-    size_t count = 0;
-    for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
-        if (std::to_underlying(x) & std::to_underlying(y)) {
-            if (!r.empty()) r.append(", ");
-            r.append(Names[i]);
-            count++;
-        }
-        i++;
+    for (auto day : days) {
+        if (!r.empty()) r.append(", ");
+        r.append(StringForDayOfWeek(day));
     }
-    
-    if (count>0 && count<4) return r;
-    return std::to_string(count) + " days per week";
+    return r;
 }
 
-static std::string _YearDaysDescription(const Calendar::YearDays& x) {
-    const size_t count = VectorFromYearDays(x).size();
+static std::string _DaysOfYearDescription(const Calendar::DaysOfYear& x) {
+    const size_t count = VectorFromDaysOfYear(x).size();
     if (count == 1) return "1 day per year";
     return std::to_string(count) + " days per year";
 }
 
-static std::string _DayIntervalDescription(const Trigger::DayInterval& x) {
-    if (x.interval == 0) return "every day";
-    if (x.interval == 1) return "every day";
-    if (x.interval == 2) return "every other day";
-    return "every " + std::to_string(x.interval) + " days";
+static std::string _DayIntervalDescription(const DayInterval& x) {
+    if (x.count() == 0) return "every day";
+    if (x.count() == 1) return "every day";
+    if (x.count() == 2) return "every other day";
+    return "every " + std::to_string(x.count()) + " days";
 }
 
-static std::string _DayIntervalDetailedDescription(const Trigger::DayInterval& x) {
-    if (x.interval == 0) return "every day";
-    if (x.interval == 1) return "every day";
-    if (x.interval == 2) return "every other day";
-    return "1 day on, " + std::to_string(x.interval-1) + " days off";
+static std::string _DayIntervalDetailedDescription(const DayInterval& x) {
+    if (x.count() == 0) return "every day";
+    if (x.count() == 1) return "every day";
+    if (x.count() == 2) return "every other day";
+    return "1 day on, " + std::to_string(x.count()-1) + " days off";
 }
 
 static std::string _Capitalize(std::string x) {
@@ -565,14 +344,14 @@ static std::string _Capitalize(std::string x) {
     return x;
 }
 
-static std::string _RepeatDescription(const Trigger::Repeat& x) {
-    using T = Trigger::Repeat::Type;
+static std::string _RepeatDescription(const Repeat& x) {
+    using T = Repeat::Type;
     std::string s;
     switch (x.type) {
     case T::Daily:       return "daily";
-    case T::WeekDays:    return _WeekDaysDescription(x.weekDays);
-    case T::YearDays:    return _YearDaysDescription(x.yearDays);
-    case T::DayInterval: return _DayIntervalDescription(x.dayInterval);
+    case T::DaysOfWeek:    return _DaysOfWeekDescription(x.DaysOfWeek);
+    case T::DaysOfYear:    return _DaysOfYearDescription(x.DaysOfYear);
+    case T::DayInterval: return _DayIntervalDescription(x.DayInterval);
     default:             abort();
     }
 }
@@ -602,7 +381,7 @@ static float _FloatFromString(std::string_view x) {
     return Toastbox::FloatForStr<float>(x);
 }
 
-static std::string _CaptureDescription(const Trigger::Capture& x) {
+static std::string _CaptureDescription(const Capture& x) {
     std::stringstream ss;
     ss << "capture " << x.count << " image" << (x.count!=1 ? "s" : "");
     if (x.count>1 && x.interval.value>0) {
@@ -612,11 +391,11 @@ static std::string _CaptureDescription(const Trigger::Capture& x) {
     return ss.str();
 }
 
-static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
+static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::TimeOfDay end) {
     std::string r;
-    r += _TimeOfDayStringFromSeconds(start);
+    r += Calendar::StringFromTimeOfDay(start);
     r += " – ";
-    r += _TimeOfDayStringFromSeconds(end);
+    r += Calendar::StringFromTimeOfDay(end);
     return r;
 }
 
@@ -626,7 +405,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time-Large"]];
         [_titlePrefixLabel setStringValue: @"At"];
-        [_titleLabel setStringValue: @((_TimeOfDayStringFromSeconds(trigger.time.schedule.time) + ",").c_str())];
+        [_titleLabel setStringValue: @((Calendar::StringFromTimeOfDay(trigger.time.schedule.time) + ",").c_str())];
         break;
     case Trigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion-Large"]];
@@ -654,7 +433,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     case Trigger::Type::Motion: {
         auto& x = trigger.motion;
         auto& repeat = trigger.motion.schedule.repeat;
-        if (repeat.type != Trigger::Repeat::Type::Daily) {
+        if (repeat.type != Repeat::Type::Daily) {
             subtitle = _Capitalize(_RepeatDescription(repeat));
         }
         
@@ -796,7 +575,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTextField*        _capture_IntervalLabel;
     IBOutlet NSTextField*        _capture_IntervalField;
     IBOutlet NSPopUpButton*      _capture_IntervalUnitMenu;
-    IBOutlet NSSegmentedControl* _capture_FlashLEDsControl;
+    IBOutlet NSSegmentedControl* _capture_LEDsControl;
     
     // Constraints
     IBOutlet NSView*            _battery_ContainerView;
@@ -810,6 +589,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_Label;
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_DetailLabel;
     
+    MSP::Triggers _triggers;
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
 }
@@ -832,24 +612,50 @@ static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
     [self->_separatorLineOffset setConstant:(emptyMode ? 1000 : 8)];
 }
 
-static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
+static ListItem* _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool select=false) {
     assert(self);
     NSTableView* tv = self->_tableView;
     ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
-    Trigger& t = it->trigger;
-    _InitTrigger(t, type);
+    it->trigger = trigger;
     [it updateView];
     
     self->_items.push_back(it);
     const size_t idx = self->_items.size()-1;
     NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
     [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
-    [tv selectRowIndexes:idxs byExtendingSelection:false];
-    [tv scrollRowToVisible:idx];
+    if (select) {
+        // Make the table view the first responder before changing the selection.
+        // This is necessary in case a text field is currently being edited, so that the field commits
+        // its changes before we change the table view selection, triggering all fields to be reloaded
+        // for the new selection.
+        [[tv window] makeFirstResponder:tv];
+        [tv selectRowIndexes:idxs byExtendingSelection:false];
+        [tv scrollRowToVisible:idx];
+    }
     
     _SetEmptyMode(self, false);
     return it;
 }
+
+
+//static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
+//    assert(self);
+//    NSTableView* tv = self->_tableView;
+//    ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
+//    Trigger& t = it->trigger;
+//    _TriggerInit(t, type);
+//    [it updateView];
+//    
+//    self->_items.push_back(it);
+//    const size_t idx = self->_items.size()-1;
+//    NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
+//    [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
+//    [tv selectRowIndexes:idxs byExtendingSelection:false];
+//    [tv scrollRowToVisible:idx];
+//    
+//    _SetEmptyMode(self, false);
+//    return it;
+//}
 
 static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     assert(self);
@@ -872,7 +678,27 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     }
 }
 
-static void _Init(CaptureTriggersView* self) {
+// MARK: - Creation
+
+//template<typename T>
+//static void _Serialize(CaptureTriggers& x, T& d) {
+//    CaptureTriggersSerialized s;
+//    static_assert(sizeof(s) == sizeof(d));
+//    memcpy(&s, d, sizeof(s));
+//    x = Deserialize(s);
+//}
+//
+//template<typename T>
+//static void _Deserialize(CaptureTriggers& x, T& d) {
+//    CaptureTriggersSerialized s;
+//    static_assert(sizeof(s) == sizeof(d));
+//    memcpy(&s, d, sizeof(s));
+//    x = Deserialize(s);
+//}
+
+- (instancetype)initWithTriggers:(const MSP::Triggers&)triggers {
+    if (!(self = [super initWithFrame:{}])) return nil;
+    
     // Load view from nib
     {
         [self setTranslatesAutoresizingMaskIntoConstraints:false];
@@ -883,31 +709,51 @@ static void _Init(CaptureTriggersView* self) {
         NSView* nibView = self->_nibView;
         [nibView setTranslatesAutoresizingMaskIntoConstraints:false];
         [self addSubview:nibView];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
-    [self->_tableView registerForDraggedTypes:@[_PboardDragItemsType]];
-    [self->_tableView reloadData];
+    [_tableView registerForDraggedTypes:@[_PboardDragItemsType]];
+    [_tableView reloadData];
 //    _ListItemAdd(self, Trigger::Type::Time);
 //    _ListItemAdd(self, Trigger::Type::Motion);
-    _ListItemAdd(self, Trigger::Type::Button);
+//    _ListItemAdd(self, _TriggerMake(Trigger::Type::Button));
     
-    [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
-}
-
-// MARK: - Creation
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    _Init(self);
+    [_dateSelector_Field setPlaceholderString:@(Calendar::DayOfYearPlaceholderString().c_str())];
+    
+    // By default, be in empty mode
+    // We'll exit empty mode if we successfully deserialize the triggers
+    _SetEmptyMode(self, true);
+    
+    // Deserialize data
+    try {
+        Triggers t;
+        Deserialize(t, triggers.source);
+        for (auto it=std::begin(t.triggers); it!=std::begin(t.triggers)+t.count; it++) {
+            _ListItemAdd(self, *it);
+        }
+        if (t.count) [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:false];
+    } catch (const std::exception& e) {
+        printf("[CaptureTriggersView] Failed to deserailize triggers: %s\n", e.what());
+    }
+    
     return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
-    _Init(self);
-    return self;
+- (Triggers)_triggers {
+    Triggers triggers;
+    triggers.count = _items.size();
+    size_t i = 0;
+    for (ListItem* it : _items) {
+        triggers.triggers[i] = it->trigger;
+        i++;
+    }
+    return triggers;
+}
+
+- (const MSP::Triggers&)triggers {
+    _triggers = Convert([self _triggers]);
+    return _triggers;
 }
 
 static void _ContainerSubviewAdd(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
@@ -949,7 +795,7 @@ static void _Copy(bool& x, NSButton* checkbox) {
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::Repeat::Type& x, NSPopUpButton* menu) {
+static void _Copy(Repeat::Type& x, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         std::string xstr = StringFromRepeatType(x);
@@ -967,19 +813,20 @@ static void _Copy(Trigger::Repeat::Type& x, NSPopUpButton* menu) {
 }
 
 template<bool T_Forward>
-static void _CopyTime(uint32_t& x, NSTextField* field) {
+static void _CopyTime(Calendar::TimeOfDay& x, NSTextField* field) {
+    static constexpr Calendar::TimeOfDay Morning(12*60*60);
     if constexpr (T_Forward) {
-        [field setStringValue:@(_TimeOfDayStringFromSeconds(x).c_str())];
+        [field setStringValue:@(Calendar::StringFromTimeOfDay(x).c_str())];
     } else {
         try {
-            const bool assumeAM = x < 12*60*60;
-            x = _SecondsFromTimeOfDayString([[field stringValue] UTF8String], assumeAM);
+            const bool assumeAM = x < Morning;
+            x = Calendar::TimeOfDayFromString([[field stringValue] UTF8String], assumeAM);
         } catch (...) {}
     }
 }
 
 template<bool T_Forward>
-static void _Copy(uint32_t& x, NSTextField* field, uint32_t min=0) {
+static void _Copy(uint16_t& x, NSTextField* field, uint16_t min=0) {
     if constexpr (T_Forward) {
         [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x]];
     } else {
@@ -988,16 +835,16 @@ static void _Copy(uint32_t& x, NSTextField* field, uint32_t min=0) {
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::DayInterval& x, NSTextField* field) {
+static void _Copy(DayInterval& x, NSTextField* field) {
     if constexpr (T_Forward) {
-        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.interval]];
+        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.count()]];
     } else {
-        x.interval = std::max(2, [field intValue]);
+        x = DayInterval(std::max(2, [field intValue]));
     }
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu) {
+static void _Copy(DeviceSettings::Duration& x, NSTextField* field, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         [field setStringValue:@(_StringFromFloat(x.value).c_str())];
@@ -1011,34 +858,54 @@ static void _Copy(Trigger::Duration& x, NSTextField* field, NSPopUpButton* menu)
     }
 }
 
+static NSInteger _SegmentForDayOfWeek(Calendar::DayOfWeek x) {
+    if (x == date::Monday)    return 0;
+    if (x == date::Tuesday)   return 1;
+    if (x == date::Wednesday) return 2;
+    if (x == date::Thursday)  return 3;
+    if (x == date::Friday)    return 4;
+    if (x == date::Saturday)  return 5;
+    if (x == date::Sunday)    return 6;
+    abort();
+}
+
+//static Calendar::DayOfWeek _DayOfWeekFromSegment(NSInteger x) {
+//    switch (x) {
+//    case 0:  return date::Monday;
+//    case 1:  return date::Tuesday;
+//    case 2:  return date::Wednesday;
+//    case 3:  return date::Thursday;
+//    case 4:  return date::Friday;
+//    case 5:  return date::Saturday;
+//    case 6:  return date::Sunday;
+//    default: abort();
+//    }
+//}
+
 template<bool T_Forward>
-static void _Copy(Calendar::WeekDays& x, NSSegmentedControl* control) {
+static void _Copy(Calendar::DaysOfWeek& x, NSSegmentedControl* control) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        size_t idx = 0;
-        for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
-            [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
-            idx++;
+        for (uint8_t i=0; i<7; i++) {
+            const Calendar::DayOfWeek d = Calendar::DayOfWeek(i);
+            [control setSelected:Calendar::DaysOfWeekGet(x, d) forSegment:_SegmentForDayOfWeek(d)];
         }
     } else {
-        std::underlying_type_t<X> r = 0;
-        size_t idx = 0;
-        for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
-            r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
-            idx++;
+        for (uint8_t i=0; i<7; i++) {
+            const Calendar::DayOfWeek d = Calendar::DayOfWeek(i);
+            Calendar::DaysOfWeekSet(x, d, [control isSelectedForSegment:_SegmentForDayOfWeek(d)]);
         }
-        x = static_cast<X>(r);
     }
 }
 
 template<bool T_Forward>
-static void _Copy(Calendar::YearDays& x, NSTokenField* field) {
+static void _Copy(Calendar::DaysOfYear& x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         NSMutableArray* tokens = [NSMutableArray new];
-        std::vector<Calendar::YearDay> days = VectorFromYearDays(x);
-        for (Calendar::YearDay day : days) {
-            YearDayObj* x = [YearDayObj new];
+        std::vector<Calendar::DayOfYear> days = VectorFromDaysOfYear(x);
+        for (Calendar::DayOfYear day : days) {
+            DayOfYearObj* x = [DayOfYearObj new];
             x->x = day;
             [tokens addObject:x];
         }
@@ -1046,60 +913,59 @@ static void _Copy(Calendar::YearDays& x, NSTokenField* field) {
     
     } else {
         NSArray* tokens = Toastbox::CastOrNull<NSArray*>([field objectValue]);
-        std::vector<Calendar::YearDay> days;
+        std::vector<Calendar::DayOfYear> days;
         for (id t : tokens) {
-            YearDayObj* x = Toastbox::CastOrNull<YearDayObj*>(t);
+            DayOfYearObj* x = Toastbox::CastOrNull<DayOfYearObj*>(t);
             if (!x) continue;
             days.push_back(x->x);
         }
-        x = YearDaysFromVector(days);
+        x = Calendar::DaysOfYearFromVector(days);
     }
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::LEDs& x, NSSegmentedControl* control) {
-    using X = std::remove_reference_t<decltype(x)>;
+static void _Copy(LEDs& x, NSSegmentedControl* control) {
     if constexpr (T_Forward) {
         size_t idx = 0;
-        for (auto y : { X::Green, X::Red }) {
-            [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
+        for (auto y : { LEDs_::Green, LEDs_::Red }) {
+            [control setSelected:(x & y) forSegment:idx];
             idx++;
         }
     } else {
-        std::underlying_type_t<X> r = 0;
+        LEDs r = LEDs_::None;
         size_t idx = 0;
-        for (auto y : { X::Green, X::Red }) {
-            r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
+        for (auto y : { LEDs_::Green, LEDs_::Red }) {
+            r |= ([control isSelectedForSegment:idx] ? y : 0);
             idx++;
         }
-        x = static_cast<X>(r);
+        x = r;
     }
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::Repeat& x, CaptureTriggersView* view, const char* menuLabel) {
+static void _Copy(Repeat& x, CaptureTriggersView* view, const char* menuLabel) {
     auto& v = *view;
     
     if (T_Forward) [v._repeat_MenuLabel setStringValue:@(menuLabel)];
     
     _Copy<T_Forward>(x.type, v._repeat_Menu);
     switch (x.type) {
-    case Trigger::Repeat::Type::Daily:
+    case Repeat::Type::Daily:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, nil);
         break;
-    case Trigger::Repeat::Type::WeekDays:
+    case Repeat::Type::DaysOfWeek:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._daySelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.weekDays, v._daySelector_Control);
+        _Copy<T_Forward>(x.DaysOfWeek, v._daySelector_Control);
         break;
-    case Trigger::Repeat::Type::YearDays:
+    case Repeat::Type::DaysOfYear:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._dateSelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.yearDays, v._dateSelector_Field);
+        _Copy<T_Forward>(x.DaysOfYear, v._dateSelector_Field);
         break;
-    case Trigger::Repeat::Type::DayInterval:
+    case Repeat::Type::DayInterval:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._intervalSelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.dayInterval, v._intervalSelector_Field);
+        _Copy<T_Forward>(x.DayInterval, v._intervalSelector_Field);
         if constexpr (T_Forward) {
-            [v._intervalSelector_DescriptionLabel setStringValue:@(("(" + _DayIntervalDetailedDescription(x.dayInterval) + ")").c_str())];
+            [v._intervalSelector_DescriptionLabel setStringValue:@(("(" + _DayIntervalDetailedDescription(x.DayInterval) + ")").c_str())];
         }
         break;
     default:
@@ -1130,7 +996,7 @@ static void _CopyTimeRange(T_TimeRange& x, CaptureTriggersView* view) {
 }
 
 template<bool T_Forward>
-static void _Copy(Trigger::Capture& x, CaptureTriggersView* view) {
+static void _Copy(Capture& x, CaptureTriggersView* view) {
     auto& v = *view;
     _Copy<T_Forward>(x.count, v._capture_CountField);
     _Copy<T_Forward>(x.interval, v._capture_IntervalField, v._capture_IntervalUnitMenu);
@@ -1141,7 +1007,7 @@ static void _Copy(Trigger::Capture& x, CaptureTriggersView* view) {
         [v._capture_IntervalUnitMenu setEnabled:x.count>1];
     }
     
-    _Copy<T_Forward>(x.flashLEDs, v._capture_FlashLEDsControl);
+    _Copy<T_Forward>(x.leds, v._capture_LEDsControl);
 }
 
 template<bool T_Forward>
@@ -1190,8 +1056,8 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         {
             if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_Motion_View);
             
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, v._battery_Motion_IgnoreTrigger_Checkbox);
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration, v._battery_Motion_IgnoreTrigger_DurationField, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
+            _Copy<T_Forward>(x.constraints.suppressDuration.enable, v._battery_Motion_IgnoreTrigger_Checkbox);
+            _Copy<T_Forward>(x.constraints.suppressDuration.duration, v._battery_Motion_IgnoreTrigger_DurationField, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
             
             _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, v._battery_Motion_MaxTriggerCount_Checkbox);
             _Copy<T_Forward>(x.constraints.maxTriggerCount.count, v._battery_Motion_MaxTriggerCount_Field, 1);
@@ -1278,8 +1144,8 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     
     if (initRepeat) {
         switch (trigger.type) {
-        case Trigger::Type::Time:   _InitTriggerRepeat(trigger.time.schedule.repeat); break;
-        case Trigger::Type::Motion: _InitTriggerRepeat(trigger.motion.schedule.repeat); break;
+        case Trigger::Type::Time:   _TriggerInitRepeat(trigger.time.schedule.repeat); break;
+        case Trigger::Type::Motion: _TriggerInitRepeat(trigger.motion.schedule.repeat); break;
         default:                    abort();
         }
     }
@@ -1297,15 +1163,15 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 }
 
 - (IBAction)_actionAddTimeTrigger:(id)sender {
-    _ListItemAdd(self, Trigger::Type::Time);
+    _ListItemAdd(self, _TriggerMake(Trigger::Type::Time), true);
 }
 
 - (IBAction)_actionAddMotionTrigger:(id)sender {
-    _ListItemAdd(self, Trigger::Type::Motion);
+    _ListItemAdd(self, _TriggerMake(Trigger::Type::Motion), true);
 }
 
 - (IBAction)_actionAddButtonTrigger:(id)sender {
-    _ListItemAdd(self, Trigger::Type::Button);
+    _ListItemAdd(self, _TriggerMake(Trigger::Type::Button), true);
 }
 
 - (IBAction)_actionRemove:(id)sender {
@@ -1353,9 +1219,9 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     NSLog(@"_dateSelector_Field");
     NSMutableArray* filtered = [NSMutableArray new];
     for (NSString* x : tokens) {
-        auto day = Calendar::YearDayFromString([x UTF8String]);
+        auto day = Calendar::DayOfYearFromString([x UTF8String]);
         if (!day) continue;
-        YearDayObj* obj = [YearDayObj new];
+        DayOfYearObj* obj = [DayOfYearObj new];
         obj->x = *day;
         [filtered addObject:obj];
     }
@@ -1365,8 +1231,8 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 - (NSString*)tokenField:(NSTokenField*)field displayStringForRepresentedObject:(id)obj {
     if (field != _dateSelector_Field) abort();
     
-    if (YearDayObj* x = Toastbox::CastOrNull<YearDayObj*>(obj)) {
-        return @(Calendar::StringFromYearDay(x->x).c_str());
+    if (DayOfYearObj* x = Toastbox::CastOrNull<DayOfYearObj*>(obj)) {
+        return @(Calendar::StringFromDayOfYear(x->x).c_str());
     }
     return obj;
 }
@@ -1456,15 +1322,14 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
 
 @end
 
-@interface RedView : NSView
-@end
-
-@implementation RedView
-
-//- (void)drawRect:(NSRect)rect {
-//    [[NSColor redColor] set];
-//    NSRectFill(rect);
-//}
-
-@end
-
+//@interface RedView : NSView
+//@end
+//
+//@implementation RedView
+//
+////- (void)drawRect:(NSRect)rect {
+////    [[NSColor redColor] set];
+////    NSRectFill(rect);
+////}
+//
+//@end

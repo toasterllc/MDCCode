@@ -90,6 +90,8 @@ public:
     }
     
     static Status Erase() {
+        _Connected = false;
+        
         // Perform JTAG entry sequence with RST_=0
         _JTAGStart(0);
         // Reset JTAG TAP

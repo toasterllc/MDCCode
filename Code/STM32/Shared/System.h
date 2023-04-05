@@ -1,5 +1,6 @@
 #pragma once
 #include <cstring>
+#include <tuple>
 #include "GPIO.h"
 #include "STM.h"
 #include "USB.h"
@@ -10,7 +11,7 @@
 #include "Assert.h"
 #include "MSP430JTAG.h"
 #include "Toastbox/Scheduler.h"
-#include "Toastbox/Stringify.h"
+#include "Toastbox/Util.h"
 
 // MARK: - Interrupt Stack
 // This is the stack that's used to handle interrupts.
@@ -19,22 +20,43 @@
 #define _StackInterruptSize 1024
 
 [[gnu::section(".stack.interrupt")]]
-alignas(alignof(void*))
+alignas(void*)
 uint8_t _StackInterrupt[_StackInterruptSize];
 
-asm(".global _StackInterruptEnd");
-asm(".equ _StackInterruptEnd, _StackInterrupt+" Stringify(_StackInterruptSize));
+asm(".global _StartupStackInterrupt");
+asm(".equ _StartupStackInterrupt, _StackInterrupt+" Stringify(_StackInterruptSize));
+
+#define _TaskCmdRecvStackSize 512
+
+[[gnu::section(".stack._TaskCmdRecv")]]
+alignas(void*)
+uint8_t _TaskCmdRecvStack[_TaskCmdRecvStackSize];
+
+asm(".global _StartupStack");
+asm(".equ _StartupStack, _TaskCmdRecvStack+" Stringify(_TaskCmdRecvStackSize));
 
 // MARK: - System
 
-template <
+// This crazniness is necessary to allow System to accept 2 parameter packs (T_Pins and T_Tasks).
+// We do that by way of template class specialization, hence the two `class System` occurences.
+template<
 STM::Status::Mode T_Mode,
 bool T_USBDMAEn,
 auto T_CmdHandle,
 auto T_Reset,
+typename...
+>
+class System;
+
+template<
+STM::Status::Mode T_Mode,
+bool T_USBDMAEn,
+auto T_CmdHandle,
+auto T_Reset,
+typename... T_Pins,
 typename... T_Tasks
 >
-class System {
+class System<T_Mode, T_USBDMAEn, T_CmdHandle, T_Reset, std::tuple<T_Pins...>, std::tuple<T_Tasks...>> {
 public:
     static constexpr uint8_t CPUFreqMHz = 128;
     static constexpr uint32_t SysTickPeriodUs = 1000;
@@ -64,7 +86,7 @@ private:
     
     [[noreturn]]
     static void _SchedulerStackOverflow() {
-        Abort();
+        Assert(false);
     }
     
     static void _Sleep() {
@@ -76,37 +98,6 @@ private:
     struct _TaskMSPComms;
     
 public:
-    template <typename... T_Pins>
-    [[noreturn]]
-    static void Run() {
-        GPIO::Init<
-            LED0,
-            LED1,
-            LED2,
-            LED3,
-            
-            MSPJTAG::Pin::Test,
-            MSPJTAG::Pin::Rst_,
-            
-            _USB_DM,
-            _USB_DP,
-            
-            _OSC_IN,
-            _OSC_OUT,
-            
-            _BAT_CHRG_STAT,
-            
-            typename _I2C::Pin::SCL,
-            typename _I2C::Pin::SDA,
-            
-            T_Pins...
-        >();
-        
-        // Start our default tasks running
-        Scheduler::template Start<_TaskCmdRecv, _TaskMSPComms>();
-        Scheduler::Run();
-    }
-    
     // LEDs
     using LED0 = GPIO::PortB::Pin<10, GPIO::Option::Output0>;
     using LED1 = GPIO::PortB::Pin<12, GPIO::Option::Output0>;
@@ -141,7 +132,7 @@ public:
     >;
     
     static void USBSendStatus(bool s) {
-        alignas(alignof(void*)) // Aligned to send via USB
+        alignas(void*) // Aligned to send via USB
         bool status = s;
         
         USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
@@ -211,9 +202,7 @@ private:
         }
         
         // Task stack
-        [[gnu::section(".stack._TaskCmdRecv")]]
-        alignas(alignof(void*))
-        static inline uint8_t Stack[512];
+        static constexpr auto& Stack = _TaskCmdRecvStack;
     };
     
     struct _TaskCmdHandle {
@@ -248,7 +237,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskCmdHandle")]]
-        alignas(alignof(void*))
+        alignas(void*)
         static inline uint8_t Stack[1024];
     };
     
@@ -340,7 +329,7 @@ private:
         
         static void _MSPReset() {
             #warning TODO: remove this assert in the future. we're just using it for debugging so that we know if this occurs
-            Assert(false);
+//            Assert(false);
             _MSP_RST_::Write(0);
             Scheduler::Sleep(Scheduler::Ms(1));
             _MSP_RST_::Write(1);
@@ -453,11 +442,34 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskMSPComms")]]
-        alignas(alignof(void*))
+        alignas(void*)
         static inline uint8_t Stack[512];
     };
     
     static void _Init() {
+        GPIO::Init<
+            LED0,
+            LED1,
+            LED2,
+            LED3,
+            
+            MSPJTAG::Pin::Test,
+            MSPJTAG::Pin::Rst_,
+            
+            _USB_DM,
+            _USB_DP,
+            
+            _OSC_IN,
+            _OSC_OUT,
+            
+            _BAT_CHRG_STAT,
+            
+            typename _I2C::Pin::SCL,
+            typename _I2C::Pin::SDA,
+            
+            T_Pins...
+        >();
+        
         // Reset peripherals, initialize flash interface, initialize SysTick
         HAL_Init();
         
@@ -482,6 +494,9 @@ private:
         constexpr uint32_t InterruptPriority = 2; // Should be >0 so that SysTick can still preempt
         HAL_NVIC_SetPriority(EXTI15_10_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+        
+        // Start _TaskMSPComms task
+        Scheduler::template Start<_TaskMSPComms>();
     }
     
     static void _ClockInit() {
@@ -551,7 +566,7 @@ private:
         USBAcceptCommand(true);
         
         // Send status struct
-        alignas(alignof(void*)) // Aligned to send via USB
+        alignas(void*) // Aligned to send via USB
         const STM::Status status = {
             .magic      = STM::Status::MagicNumber,
             .version    = STM::Version,
@@ -565,7 +580,7 @@ private:
         // Accept command
         USBAcceptCommand(true);
         
-        alignas(alignof(void*)) // Aligned to send via USB
+        alignas(void*) // Aligned to send via USB
         const STM::BatteryStatus status = _TaskMSPComms::BatteryStatus();
         USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
     }
@@ -576,7 +591,7 @@ private:
         // Perform software reset
         HAL_NVIC_SystemReset();
         // Unreachable
-        abort();
+        Assert(false);
     }
     
     static void _LEDSet(const STM::Cmd& cmd) {

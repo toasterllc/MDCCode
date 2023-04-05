@@ -30,7 +30,7 @@
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="Capture Triggers" identifier="" id="t1H-wv-Rdu">
-                            <view key="view" translatesAutoresizingMaskIntoConstraints="NO" id="Opp-py-5Rd" customClass="CaptureTriggersView">
+                            <view key="view" translatesAutoresizingMaskIntoConstraints="NO" id="Opp-py-5Rd">
                                 <rect key="frame" x="0.0" y="0.0" width="600" height="685"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </view>
@@ -72,7 +72,7 @@
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="_actionDismiss:" target="-2" id="1ia-Az-FoL"/>
+                        <action selector="_actionOK:" target="-2" id="v43-sd-cBs"/>
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="HXO-cR-ctO">
@@ -85,7 +85,7 @@ Gw
 </string>
                     </buttonCell>
                     <connections>
-                        <action selector="_actionDismiss:" target="-2" id="aU7-Zg-hDq"/>
+                        <action selector="_actionCancel:" target="-2" id="rrp-b7-Fbk"/>
                     </connections>
                 </button>
             </subviews>

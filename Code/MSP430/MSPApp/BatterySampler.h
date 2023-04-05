@@ -2,17 +2,18 @@
 #include <msp430.h>
 #include "MSP.h"
 #include "RegLocker.h"
+#include "Assert.h"
 
 template <
+auto T_Domain,
 typename T_Scheduler,
 typename T_BatChrgLvlPin,
-typename T_BatChrgLvlEn_Pin,
-[[noreturn]] void T_Error(uint16_t)
+typename T_BatChrgLvlEn_Pin
 >
 class BatterySamplerType {
-#define Assert(x) if (!(x)) T_Error(__LINE__)
-    
 public:
+    static constexpr auto AssertDomain = T_Domain;
+    
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
         #warning TODO: Keep BatChrgLvlEn_ asserted because it makes BAT_CHRG_STAT work for some reason.
@@ -110,12 +111,20 @@ public:
         
         // Calculate the battery voltage in millivolts, correcting the sample using the 1.5V reference
         // voltage, and the voltage divider ratio.
+        // We did a quick analysis (see Tools/OrderOfDivision project) to determine the average error
+        // and optimal order of operations when using 32-bit math instead of 64-bit math (which
+        // is very expensive space-wise). With our random test data, the following 32-bit
+        // implementation results in 0.0009% average error in the resulting millivolts value compared
+        // to the 64-bit implementation.
         constexpr uint16_t VoltageDividerNumer = 4;
         constexpr uint16_t VoltageDividerDenom = 3;
-        const uint16_t mv =
-            (UINT64_C(1500) * sampleBat * _ADC1V5RefFactor * VoltageDividerNumer) /
-            ((uint64_t)sample1V5 * 0x8000 * VoltageDividerDenom);
-        
+        uint32_t mv = sampleBat;
+        // Correct using 1V5 calibration reference factor
+        mv *= _ADC1V5RefFactor;
+        mv /= 0x8000;
+        // Convert to millivolts, correcting for the effect of the voltage divider
+        mv *= 1500 * VoltageDividerNumer;
+        mv /= sample1V5 * VoltageDividerDenom;
         return _BatteryChargeLevelForMillivolts(mv);
     }
     
@@ -295,6 +304,4 @@ private:
         volatile uint16_t count = 0;
         volatile uint16_t val = 0;
     } _Sample;
-    
-#undef Assert
 };

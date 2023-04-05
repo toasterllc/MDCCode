@@ -3,10 +3,11 @@
 #import "Util.h"
 #import "ImageCornerButton/ImageCornerButton.h"
 #import "Code/Shared/Time.h"
-#import "Code/Shared/TimeConvert.h"
+#import "Code/Shared/Clock.h"
 #import "Toastbox/DurationString.h"
 #import "Toastbox/Mac/Util.h"
 #import "ImageUtil.h"
+#import "Calendar.h"
 using namespace MDCStudio;
 
 struct _ModelData {
@@ -693,8 +694,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         
         [_nibView setTranslatesAutoresizingMaskIntoConstraints:false];
         [self addSubview:_nibView];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
     }
     
     // Create NSOutlineView items
@@ -1047,23 +1048,33 @@ static ImageCornerButtonTypes::Corner _Convert(ImageOptions::Corner x) {
     }
 }
 
+struct _DateFormatterState {
+    NSCalendar* cal = nil;
+    NSDateFormatter* fmt = nil;
+};
 
-static NSDateFormatter* _DateFormatterCreate() {
-    NSDateFormatter* x = [[NSDateFormatter alloc] init];
-    [x setLocale:[NSLocale autoupdatingCurrentLocale]];
-    [x setDateStyle:NSDateFormatterMediumStyle];
-    [x setTimeStyle:NSDateFormatterMediumStyle];
-    // Update date format to show milliseconds
-    [x setDateFormat:[[x dateFormat] stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
+static _DateFormatterState _DateFormatterStateCreate() {
+    _DateFormatterState x;
+    x.cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    
+    {
+        x.fmt = [[NSDateFormatter alloc] init];
+        [x.fmt setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.fmt setCalendar:x.cal];
+        [x.fmt setTimeZone:[x.cal timeZone]];
+        [x.fmt setDateStyle:NSDateFormatterMediumStyle];
+        [x.fmt setTimeStyle:NSDateFormatterMediumStyle];
+        // Update date format to show milliseconds
+        [x.fmt setDateFormat:[[x.fmt dateFormat] stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
+    }
+    
     return x;
 }
 
-static NSDateFormatter* _DateFormatter() {
-    static NSDateFormatter* x = _DateFormatterCreate();
+static _DateFormatterState& _DateFormatterStateGet() {
+    static _DateFormatterState x = _DateFormatterStateCreate();
     return x;
 }
-
-
 
 static id _Get_id(const ImageRecord& rec) {
     return @(rec.info.id);
@@ -1073,12 +1084,30 @@ static id _Get_timestamp(const ImageRecord& rec) {
     using namespace std::chrono;
     const Time::Instant t = rec.info.timestamp;
     if (Time::Absolute(t)) {
-        auto timestamp = clock_cast<system_clock>(rec.info.timestamp);
+        auto timestampDevice = Time::Clock::TimePointFromTimeInstant(rec.info.timestamp);
+        auto timestamp = date::clock_cast<system_clock>(timestampDevice);
         const milliseconds ms = duration_cast<milliseconds>(timestamp.time_since_epoch());
-        return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.]];
+        NSDate* date = [NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.];
+        return [_DateFormatterStateGet().fmt stringFromDate:date];
+        
+//        const auto days = std::chrono::floor<date::days>(timestamp);
+//        const auto sec = std::chrono::floor<std::chrono::seconds>(timestamp-days);
+//        const date::year_month_day ymd(days);
+//        const date::hh_mm_ss hms(sec);
+//        
+//        NSDateComponents* comp = [NSDateComponents new];
+//        [comp setYear:(int)ymd.year()];
+//        [comp setMonth:(unsigned)ymd.month()];
+//        [comp setDay:(unsigned)ymd.day()];
+//        [comp setHour:hms.hours().count()];
+//        [comp setMinute:hms.minutes().count()];
+//        [comp setSecond:hms.seconds().count()];
+//        NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
+//        return [_DateFormatterStateGet().fmt stringFromDate:date];
     
     } else {
-        const seconds sec = Time::DurationRelative<seconds>(rec.info.timestamp);
+        const auto dur = Time::Clock::DurationFromTimeInstant(rec.info.timestamp);
+        const seconds sec = std::chrono::duration_cast<seconds>(dur);
         const std::string relTimeStr = Toastbox::DurationString(true, sec);
         return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
     }

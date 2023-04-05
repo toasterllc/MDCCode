@@ -1,25 +1,3 @@
-//#define GPIOPort(name, addr)                            \
-//    extern "C" GPIO_TypeDef name;                       \
-//    __asm__(                                            \
-//        ".global " #name                        "\n"    \
-//        ".equ    " #name ", " Stringify(addr)   "\n"    \
-//    )
-//
-//GPIOPort(GPIOPortA, GPIOA_BASE);
-//GPIOPort(GPIOPortB, GPIOB_BASE);
-//GPIOPort(GPIOPortC, GPIOC_BASE);
-//GPIOPort(GPIOPortD, GPIOD_BASE);
-//GPIOPort(GPIOPortE, GPIOE_BASE);
-//GPIOPort(GPIOPortF, GPIOF_BASE);
-//GPIOPort(GPIOPortG, GPIOG_BASE);
-//GPIOPort(GPIOPortH, GPIOH_BASE);
-//GPIOPort(GPIOPortI, GPIOI_BASE);
-
-
-
-
-
-
 #pragma once
 #include "Toastbox/Scheduler.h"
 #include "stm32f7xx.h"

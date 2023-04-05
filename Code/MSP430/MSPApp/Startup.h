@@ -2,6 +2,8 @@
 #include <msp430.h>
 #include <cstring>
 
+extern "C" void __libc_init_array();
+
 class Startup {
 public:
     static bool ColdStart() {
@@ -9,61 +11,54 @@ public:
         static bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
         return coldStart;
     }
+};
+
+extern "C"
+[[noreturn, gnu::naked]]
+void _Startup() {
+    extern uint8_t _sdata_flash[];
+    extern uint8_t _sdata_ram[];
+    extern uint8_t _edata_ram[];
+    extern uint8_t _sbss[];
+    extern uint8_t _ebss[];
     
-private:
-//    static bool _ColdStart() {
-//        // We're using this technique so that the first run always triggers _ColdStart()==true,
-//        // regardless of the reset cause (SYSRSTIV). We want that behavior so that the first
-//        // time we load the program via a debugger, it runs as if it's a cold start, even
-//        // though it's actually a warm start.
-//        [[gnu::section(".fram_info.startup")]]
-//        static bool init = false;
-//        
-//        FRAMWriteEn writeEn; // Enable FRAM writing
-//        bool initPrev = init;
-//        init = true;
-//        return !initPrev || (SYSRSTIV != SYSRSTIV__LPM5WU);
-//    }
-    
-    // _Startup() is called before main() via the crt machinery, because it's placed in
-    // a .crt_NNNN_xxx section. The NNNN part of the section name defines the order that
-    // this function is called relative to the other crt functions.
-    //
-    // We chose 0401 because 0400 is the `move_highdata` crt function (which copies data
-    // into memory), while 0500 is the `run_preinit_array` crt function (which
-    // calls C++ constructors). We need the correct values stored in BAKMEM after other
-    // data is copied into memory, but before C++ constructors are called, so 0401 makes
-    // sense. Additionally, because _Startup() relies on ColdStart(), it must come after
-    // the init_bss/init_highbss sections (0100/0200), because ColdStart() has a static
-    // variable that's initialized upon the first call, which implicitly requires a
-    // zeroed variable to track whether it's been initialized.
-    //
-    // See the `crt0.S` file in the newlib project for more info.
-    [[gnu::section(".crt_0401._Startup"), gnu::naked, gnu::used]]
-    static void _Startup() {
-        // Debug code to signal that _Startup() was called by toggling pin A.E
-//        {
-//            WDTCTL = WDTPW | WDTHOLD;
-//            PM5CTL0 &= ~LOCKLPM5;
-//            
-//            using DEBUG_OUT = GPIO::PortA::Pin<0xE, GPIO::Option::Output0>;
-//            DEBUG_OUT::Init();
-//            for (int i=0; i<10; i++) {
-//                DEBUG_OUT::Write(0);
-//                for (volatile uint16_t i=0; i<10000; i++);
-//                DEBUG_OUT::Write(1);
-//                for (volatile uint16_t i=0; i<10000; i++);
-//            }
-//        }
-        
-        // Only copy the data from FRAM -> BAKMEM if this is a cold start.
-        // Otherwise, BAKMEM content should remain untouched, because it's
-        // supposed to persist during sleep.
-        if (ColdStart()) {
-            extern uint8_t _ram_backup_src[];
-            extern uint8_t _ram_backup_dststart[];
-            extern uint8_t _ram_backup_dstend[];
-            memcpy(_ram_backup_dststart, _ram_backup_src, _ram_backup_dstend-_ram_backup_dststart);
-        }
+    // Load stack pointer
+    if constexpr (sizeof(void*) == 2) {
+        // Small memory model
+        asm("mov #_StartupStack, sp");
+    } else {
+        // Large memory model
+        asm("mov.a #_StartupStack, sp");
     }
+    
+    // Copy .data section from flash to RAM
+    memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
+    
+    // Zero .bss section
+    memset(_sbss, 0, _ebss-_sbss);
+    
+    // Only copy the data from FRAM -> BAKMEM if this is a cold start.
+    // Otherwise, BAKMEM content should remain untouched, because it's
+    // supposed to persist during sleep.
+    if (Startup::ColdStart()) {
+        extern uint8_t _ram_backup_src[];
+        extern uint8_t _ram_backup_dststart[];
+        extern uint8_t _ram_backup_dstend[];
+        memcpy(_ram_backup_dststart, _ram_backup_src, _ram_backup_dstend-_ram_backup_dststart);
+    }
+    
+    // Call static constructors
+    __libc_init_array();
+    
+    // Call main function
+    [[noreturn]] extern int main();
+    main();
+}
+
+extern "C"
+void _init() {}
+
+[[gnu::section(".resetvec"), gnu::used]]
+void* _ResetVector[] = {
+    (void*)&_Startup,
 };

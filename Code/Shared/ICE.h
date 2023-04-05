@@ -7,16 +7,16 @@
 #include "Toastbox/Scheduler.h"
 #include "Img.h"
 #include "GetBits.h"
+#include "Assert.h"
 
 template <
-    typename T_Scheduler,
-    [[noreturn]] void T_Error(uint16_t)
+auto T_Domain,
+typename T_Scheduler
 >
 class ICE {
-#define Assert(x) if (!(x)) T_Error(__LINE__)
-
 public:
     // MARK: - Types
+    static constexpr auto AssertDomain = T_Domain;
     
     struct MsgType {
         static constexpr uint8_t StartBit   = 0x80;
@@ -404,6 +404,4 @@ public:
 private:
     static constexpr auto _Ms = T_Scheduler::Ms;
     static constexpr auto _Sleep = T_Scheduler::Sleep;
-
-#undef Assert
 };

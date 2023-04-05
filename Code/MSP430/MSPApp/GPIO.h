@@ -269,6 +269,8 @@ public:
         }
     };
 #undef OnlyPortA
+#undef OnlyPort1
+#undef OnlyPort2
 };
 
 struct _Regs {

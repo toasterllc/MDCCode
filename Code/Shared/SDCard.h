@@ -4,21 +4,21 @@
 #include "Img.h"
 #include "SD.h"
 #include "ImgSD.h"
+#include "Assert.h"
 
 namespace SD {
 
 template <
-    typename T_Scheduler,
-    typename T_ICE,
-    [[noreturn]] void T_Error(uint16_t),
-    uint8_t T_ClkDelaySlow,
-    uint8_t T_ClkDelayFast
+auto T_Domain,
+typename T_Scheduler,
+typename T_ICE,
+uint8_t T_ClkDelaySlow,
+uint8_t T_ClkDelayFast
 >
 class Card {
-#define Assert(x) if (!(x)) T_Error(__LINE__)
-#define AssertArg(x) if (!(x)) T_Error(__LINE__)
-
 public:
+    static constexpr auto AssertDomain = T_Domain;
+    
     static void Reset() {
         // Reset SDController
         T_ICE::Transfer(_ConfigReset);
@@ -424,8 +424,6 @@ private:
 //    uint16_t _rca = 0;
 //    CardId _cardId;
 //    CardData _cardData;
-#undef Assert
-#undef AssertArg
 };
 
 } // namespace SD

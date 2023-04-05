@@ -1,3 +1,4 @@
+#include <cstdint>
 #define SchedulerARM32
 #include "Toastbox/Scheduler.h"
 #include "Toastbox/Queue.h"
@@ -21,22 +22,6 @@ struct _TaskUSBDataOut;
 struct _TaskUSBDataIn;
 struct _TaskReadout;
 
-using _System = System<
-    STM::Status::Mode::STMApp,  // T_Mode
-    true,                       // T_USBDMAEn
-    _CmdHandle,                 // T_CmdHandle
-    _Reset,                     // T_Reset
-    
-    // T_Tasks
-    _TaskUSBDataOut,
-    _TaskUSBDataIn,
-    _TaskReadout
->;
-
-using _Scheduler = _System::Scheduler;
-using _USB = _System::USB;
-using _MSPJTAG = _System::MSPJTAG;
-
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
 static void _BufQueueAssert(bool c) { Assert(c); }
@@ -52,33 +37,79 @@ using _BufQueue = Toastbox::Queue<_Buf, 2, false, _BufQueueAssert>;
 [[gnu::section(".sram1")]]
 static _BufQueue _Bufs;
 
-using _QSPI = QSPIType<_Scheduler>;
+using _ICE_CRST_                = GPIO::PortF::Pin<11, GPIO::Option::Output1>;
+using _ICE_CDONE                = GPIO::PortB::Pin<1,  GPIO::Option::Input>;
+using _ICE_STM_SPI_CS_          = GPIO::PortE::Pin<12, GPIO::Option::Output1, GPIO::Option::Speed3>;
+using _ICE_STM_SPI_D_READY      = GPIO::PortA::Pin<3,  GPIO::Option::Input>;
+using _ICE_STM_FLASH_EN         = GPIO::PortF::Pin<5,  GPIO::Option::Output0>;
 
-using _ICE_CRST_          = GPIO::PortF::Pin<11, GPIO::Option::Output1>;
-using _ICE_CDONE          = GPIO::PortB::Pin<1,  GPIO::Option::Input>;
-using _ICE_ST_SPI_CS_     = GPIO::PortE::Pin<12, GPIO::Option::Output1, GPIO::Option::Speed3>;
-using _ICE_ST_SPI_D_READY = GPIO::PortA::Pin<3,  GPIO::Option::Input>;
-using _ICE_ST_FLASH_EN    = GPIO::PortF::Pin<5,  GPIO::Option::Output0>;
+using _ICE_STM_SPI_CLK          = GPIO::PortB::Pin<2,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+using _ICE_STM_SPI_D0           = GPIO::PortF::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+using _ICE_STM_SPI_D1           = GPIO::PortF::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+using _ICE_STM_SPI_D2           = GPIO::PortF::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+using _ICE_STM_SPI_D3           = GPIO::PortF::Pin<6,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+using _ICE_STM_SPI_D4           = GPIO::PortE::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+using _ICE_STM_SPI_D5           = GPIO::PortE::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+using _ICE_STM_SPI_D6           = GPIO::PortE::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+using _ICE_STM_SPI_D7           = GPIO::PortE::Pin<10, GPIO::Option::Speed3, GPIO::Option::AltFn10>;
 
-using _ICE_ST_SPI_CLK     = _QSPI::Pin::Clk::Opts<GPIO::Option::Output0>;
-using _ICE_ST_SPI_D4      = _QSPI::Pin::D4::Opts<GPIO::Option::Input>;
-using _ICE_ST_SPI_D5      = _QSPI::Pin::D5::Opts<GPIO::Option::Output0>;
+using _ICE_STM_SPI_CLK_MANUAL   = GPIO::PortB::Pin<2,  GPIO::Option::Output0>;
+using _ICE_STM_SPI_D4_MANUAL    = GPIO::PortE::Pin<7,  GPIO::Option::Input>;
+using _ICE_STM_SPI_D5_MANUAL    = GPIO::PortE::Pin<8,  GPIO::Option::Output0>;
 
-[[noreturn]] static void _ICEError(uint16_t line);
-using _ICE = ::ICE<_Scheduler, _ICEError>;
-
-[[noreturn]] static void _ImgError(uint16_t line);
-using _ImgSensor = Img::Sensor<
-    _Scheduler, // T_Scheduler
-    _ICE,       // T_ICE
-    _ImgError   // T_Error
+using _System = System<
+    STM::Status::Mode::STMApp,  // T_Mode
+    true,                       // T_USBDMAEn
+    _CmdHandle,                 // T_CmdHandle
+    _Reset,                     // T_Reset
+    
+    // T_Pins
+    std::tuple<
+        _ICE_CRST_,
+        _ICE_CDONE,
+        _ICE_STM_SPI_CS_,
+        _ICE_STM_SPI_D_READY,
+        _ICE_STM_FLASH_EN,
+        
+        _ICE_STM_SPI_CLK,
+        _ICE_STM_SPI_D0,
+        _ICE_STM_SPI_D1,
+        _ICE_STM_SPI_D2,
+        _ICE_STM_SPI_D3,
+        _ICE_STM_SPI_D4,
+        _ICE_STM_SPI_D5,
+        _ICE_STM_SPI_D6,
+        _ICE_STM_SPI_D7
+    >,
+    
+    // T_Tasks
+    std::tuple<
+        _TaskUSBDataOut,
+        _TaskUSBDataIn,
+        _TaskReadout
+    >
 >;
 
-[[noreturn]] static void _SDError(uint16_t line);
+using _Scheduler = _System::Scheduler;
+using _USB = _System::USB;
+using _MSPJTAG = _System::MSPJTAG;
+using _QSPI = QSPIType<_Scheduler>;
+
+using _ICE = ::ICE<
+    0,          // T_Domain
+    _Scheduler  // T_Scheduler
+>;
+
+using _ImgSensor = Img::Sensor<
+    0,          // T_Domain
+    _Scheduler, // T_Scheduler
+    _ICE        // T_ICE
+>;
+
 using _SDCard = SD::Card<
+    0,          // T_Domain
     _Scheduler, // T_Scheduler
     _ICE,       // T_ICE
-    _SDError,   // T_Error
     1,          // T_ClkDelaySlow (odd values invert the clock)
     1           // T_ClkDelayFast (odd values invert the clock)
 >;
@@ -117,10 +148,10 @@ public:
 private:
     static inline uint16_t _RCA = 0;
     
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     static inline SD::CardId _CardId;
     
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     static inline SD::CardData _CardData;
     
     static inline bool _Reading = false;
@@ -261,32 +292,32 @@ void _QSPIConfigSet(const _QSPI::Config* config) {
     if (config) {
         _QSPI::ConfigSet(*config);
         
-        _QSPI::Pin::Clk::Init<_ICE_ST_SPI_CLK>();
-        _QSPI::Pin::D4::Init<_ICE_ST_SPI_D4>();
-        _QSPI::Pin::D5::Init<_ICE_ST_SPI_D5>();
+        _ICE_STM_SPI_CLK::Init<_ICE_STM_SPI_CLK_MANUAL>();
+        _ICE_STM_SPI_D4::Init<_ICE_STM_SPI_D4_MANUAL>();
+        _ICE_STM_SPI_D5::Init<_ICE_STM_SPI_D5_MANUAL>();
     
     // Manual mode
     } else {
-        _ICE_ST_SPI_CLK::Init<_QSPI::Pin::Clk>();
-        _ICE_ST_SPI_D4::Init<_QSPI::Pin::D4>();
-        _ICE_ST_SPI_D5::Init<_QSPI::Pin::D5>();
+        _ICE_STM_SPI_CLK_MANUAL::Init<_ICE_STM_SPI_CLK>();
+        _ICE_STM_SPI_D4_MANUAL::Init<_ICE_STM_SPI_D4>();
+        _ICE_STM_SPI_D5_MANUAL::Init<_ICE_STM_SPI_D5>();
     }
     
     // We manually control chip-select
-    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_STM_SPI_CS_::Write(1);
 }
 
 template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
     
-    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_STM_SPI_CS_::Write(0);
     if (resp) {
         _QSPI::Read(_QSPICmd::ICEApp(msg, sizeof(*resp)), resp);
     } else {
         _QSPI::Command(_QSPICmd::ICEApp(msg, 0));
     }
-    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_STM_SPI_CS_::Write(1);
 }
 
 static void _ICEAppInit() {
@@ -300,11 +331,6 @@ static void _ICEAppInit() {
         ok = _ICE::Init();
     }
     Assert(ok);
-}
-
-[[noreturn]]
-static void _ICEError(uint16_t line) {
-    _System::Abort();
 }
 
 // MARK: - SD Card
@@ -351,11 +377,6 @@ static void _ICEError(uint16_t line) {
 //    return true;
 //}
 
-[[noreturn]]
-static void _SDError(uint16_t line) {
-    _System::Abort();
-}
-
 //static bool _ImgSetPowerEnabled(bool en) {
 //    constexpr uint16_t BIT0             = 1<<0;
 //    constexpr uint16_t BIT2             = 1<<2;
@@ -390,11 +411,6 @@ static void _SDError(uint16_t line) {
 //    return true;
 //}
 
-[[noreturn]]
-static void _ImgError(uint16_t line) {
-    _System::Abort();
-}
-
 // MARK: - Tasks
 
 struct _TaskUSBDataIn {
@@ -420,7 +436,7 @@ struct _TaskUSBDataIn {
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataIn")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
@@ -467,7 +483,7 @@ struct _TaskUSBDataOut {
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataOut")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
@@ -487,7 +503,7 @@ struct _TaskReadout {
         
         // Send the Readout message, which causes us to enter the readout mode until
         // we release the chip select
-        _ICE_ST_SPI_CS_::Write(0);
+        _ICE_STM_SPI_CS_::Write(0);
         _QSPI::Command(_QSPICmd::ICEApp(_ICE::ReadoutMsg(), 0));
         
         // Read data over QSPI and write it to USB, indefinitely
@@ -505,7 +521,7 @@ struct _TaskReadout {
                 
                 // Wait until ICE40 signals that data is ready to be read
                 #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
-                while (!_ICE_ST_SPI_D_READY::Read());
+                while (!_ICE_STM_SPI_D_READY::Read());
                 
                 _QSPI::Read(_QSPICmd::ICEAppReadOnly(lenRead), buf.data+buf.len);
                 buf.len += lenRead;
@@ -517,14 +533,14 @@ struct _TaskReadout {
         }
         
         // Release chip-select to exit readout mode
-        _ICE_ST_SPI_CS_::Write(1);
+        _ICE_STM_SPI_CS_::Write(1);
     }
     
     static inline std::optional<size_t> _LenRem;
     
     // Task stack
     [[gnu::section(".stack._TaskReadout")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[512];
 };
 
@@ -540,13 +556,13 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     _QSPIConfigSet(nullptr);
     
     // Disable flash
-    _ICE_ST_FLASH_EN::Write(0);
+    _ICE_STM_FLASH_EN::Write(0);
     
     // Put ICE40 into configuration mode
-    _ICE_ST_SPI_CLK::Write(1);
+    _ICE_STM_SPI_CLK::Write(1);
     
     // Assert chip select
-    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_STM_SPI_CS_::Write(0);
     
     // Assert reset
     _ICE_CRST_::Write(0);
@@ -575,11 +591,10 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
         
         // Write the data over QSPI and wait for completion
         auto& buf = _Bufs.rget();
-        if (buf.len) {
-            _QSPI::Write(_QSPICmd::ICEWrite(buf.len), buf.data);
-        }
-        _Bufs.rpop();
         if (!buf.len) break; // We're done when we receive an empty buffer
+        
+        _QSPI::Write(_QSPICmd::ICEWrite(buf.len), buf.data);
+        _Bufs.rpop();
     }
     
     // Wait for CDONE to be asserted
@@ -612,7 +627,7 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     }
     
     // Release chip-select now that we're done
-    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_STM_SPI_CS_::Write(1);
     
     _System::USBSendStatus(true);
 }
@@ -621,12 +636,12 @@ static void __ICEFlashIn(uint8_t* d, size_t len) {
     for (size_t i=0; i<len; i++) {
         uint8_t& b = d[i];
         for (int ii=0; ii<8; ii++) {
-            _ICE_ST_SPI_CLK::Write(1);
+            _ICE_STM_SPI_CLK::Write(1);
             
             b <<= 1;
-            b |= _ICE_ST_SPI_D4::Read();
+            b |= _ICE_STM_SPI_D4::Read();
             
-            _ICE_ST_SPI_CLK::Write(0);
+            _ICE_STM_SPI_CLK::Write(0);
         }
     }
 }
@@ -635,35 +650,35 @@ static void __ICEFlashOut(const uint8_t* d, size_t len) {
     for (size_t i=0; i<len; i++) {
         uint8_t b = d[i];
         for (int ii=0; ii<8; ii++) {
-            _ICE_ST_SPI_D5::Write(b & 0x80);
+            _ICE_STM_SPI_D5::Write(b & 0x80);
             b <<= 1;
             
-            _ICE_ST_SPI_CLK::Write(1);
-            _ICE_ST_SPI_CLK::Write(0);
+            _ICE_STM_SPI_CLK::Write(1);
+            _ICE_STM_SPI_CLK::Write(0);
         }
     }
 }
 
 //static uint8_t _ICEFlashIn() {
-//    _ICE_ST_SPI_CS_::Write(0);
+//    _ICE_STM_SPI_CS_::Write(0);
 //    uint8_t d = 0;
 //    __ICEFlashIn(&d, 1);
-//    _ICE_ST_SPI_CS_::Write(1);
+//    _ICE_STM_SPI_CS_::Write(1);
 //    return d;
 //}
 
 static void _ICEFlashOut(uint8_t out) {
-    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_STM_SPI_CS_::Write(0);
     __ICEFlashOut(&out, 1);
-    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_STM_SPI_CS_::Write(1);
 }
 
 static uint8_t _ICEFlashOutIn(uint8_t out) {
     uint8_t in = 0;
-    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_STM_SPI_CS_::Write(0);
     __ICEFlashOut(&out, 1);
     __ICEFlashIn(&in, 1);
-    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_STM_SPI_CS_::Write(1);
     return in;
 }
 
@@ -678,19 +693,19 @@ static void _ICEFlashWait() {
 
 //static void __ICEFlashWriteWrite(uint8_t w, const uint8_t* d, size_t len) {
 //    for (int i=0; i<8; i++) {
-//        _ICE_ST_SPI_D4::Write(w & 0x80);
+//        _ICE_STM_SPI_D4::Write(w & 0x80);
 //        w <<= 1;
 //        
-//        _ICE_ST_SPI_CLK::Write(1);
-//        _ICE_ST_SPI_CLK::Write(0);
+//        _ICE_STM_SPI_CLK::Write(1);
+//        _ICE_STM_SPI_CLK::Write(0);
 //    }
 //}
 //
 //static void _ICEFlashCmd(const uint8_t* instr, size_t instrLen, const uint8_t* data=nullptr, size_t dataLen=0) {
-//    _ICE_ST_SPI_CS_::Write(0);
+//    _ICE_STM_SPI_CS_::Write(0);
 //    __ICEFlashCmd(instr, instrLen);
 //    if (data) __ICEFlashCmd(data, dataLen);
-//    _ICE_ST_SPI_CS_::Write(1);
+//    _ICE_STM_SPI_CS_::Write(1);
 //}
 //
 //static void _ICEFlashCmd(uint8_t w, const uint8_t* d=nullptr, size_t len=0) {
@@ -698,10 +713,10 @@ static void _ICEFlashWait() {
 //}
 //
 //static uint8_t _ICEFlashCmd(uint8_t w) {
-//    _ICE_ST_SPI_CS_::Write(0);
+//    _ICE_STM_SPI_CS_::Write(0);
 //    __ICEFlashCmd(&w, 1);
 //    const uint8_t r = __ICEFlashWriteRead();
-//    _ICE_ST_SPI_CS_::Write(1);
+//    _ICE_STM_SPI_CS_::Write(1);
 //    return r;
 //}
 
@@ -718,13 +733,13 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
     _ICE_CRST_::Write(0);
     
     // Set default clock state before enabling flash
-    _ICE_ST_SPI_CLK::Write(0);
+    _ICE_STM_SPI_CLK::Write(0);
     
     // De-assert chip select before enabling flash
-    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_STM_SPI_CS_::Write(1);
     
     // Enable flash
-    _ICE_ST_FLASH_EN::Write(1);
+    _ICE_STM_FLASH_EN::Write(1);
     
     // Reset flash
     _ICEFlashOut(0x66);
@@ -737,7 +752,7 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
     // Start the USB DataIn task
     _TaskUSBDataIn::Start();
     
-    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_STM_SPI_CS_::Write(0);
     
     // Start flash read
     {
@@ -770,7 +785,7 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
     _Scheduler::Wait([] { return !_Bufs.rok(); });
     
     // Disable flash
-    _ICE_ST_FLASH_EN::Write(0);
+    _ICE_STM_FLASH_EN::Write(0);
     
     // Revert to default QSPI config
     _QSPIConfigSet(&_QSPIConfigs::ICEApp);
@@ -795,13 +810,13 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     _ICE_CRST_::Write(0);
     
     // Set default clock state before enabling flash
-    _ICE_ST_SPI_CLK::Write(0);
+    _ICE_STM_SPI_CLK::Write(0);
     
     // De-assert chip select before enabling flash
-    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_STM_SPI_CS_::Write(1);
     
     // Enable flash
-    _ICE_ST_FLASH_EN::Write(1);
+    _ICE_STM_FLASH_EN::Write(1);
     
     // Reset flash
     _ICEFlashOut(0x66);
@@ -857,10 +872,10 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
                         (uint8_t)((addr&0x0000FF)>>0),
                     };
                     
-                    _ICE_ST_SPI_CS_::Write(0);
+                    _ICE_STM_SPI_CS_::Write(0);
                     __ICEFlashOut(instr, sizeof(instr));
                     __ICEFlashOut(buf.data+chunkOff, chunkLen);
-                    _ICE_ST_SPI_CS_::Write(1);
+                    _ICE_STM_SPI_CS_::Write(1);
                 }
                 
                 // Wait until write is complete
@@ -876,7 +891,7 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     }
     
     // Disable flash
-    _ICE_ST_FLASH_EN::Write(0);
+    _ICE_STM_FLASH_EN::Write(0);
     
     // Revert to default QSPI config
     _QSPIConfigSet(&_QSPIConfigs::ICEApp);
@@ -909,29 +924,39 @@ static void _MSPHostModeSet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static bool __MSPStateRead(uint8_t* data, size_t len) {
-    using ChunkIdx = decltype(MSP::Cmd::arg.StateRead.chunk);
+static bool __MSPStateRead(size_t off, uint8_t* data, size_t len) {
     constexpr size_t ChunkSize = sizeof(MSP::Resp::arg.StateRead.data);
-    
-    // Make sure `chunkCount-1` won't overflow our struct field
-    const size_t chunkCount = (len+ChunkSize-1) / ChunkSize;
-    if (chunkCount-1 > std::numeric_limits<ChunkIdx>::max())
-        return false;
-    
-    for (size_t off=0, chunk=0; chunk<chunkCount; chunk++) {
+    while (len) {
+        const size_t l = std::min(len, ChunkSize);
         const MSP::Cmd mspCmd = {
             .op = MSP::Cmd::Op::StateRead,
-            .arg = { .StateRead = { .chunk = (ChunkIdx)chunk } },
+            .arg = { .StateRead = { .off = (uint16_t)off } },
         };
         const auto mspResp = _System::MSPSend(mspCmd);
         if (!mspResp || !mspResp->ok) return false;
-        
-        const size_t l = std::min(len, ChunkSize);
-        memcpy(data+off, mspResp->arg.StateRead.data, l);
+        memcpy(data, mspResp->arg.StateRead.data, l);
         off += l;
+        data += l;
         len -= l;
     }
-    
+    return true;
+}
+
+static bool __MSPStateWrite(size_t off, const uint8_t* data, size_t len) {
+    constexpr size_t ChunkSize = sizeof(MSP::Cmd::arg.StateWrite.data);
+    while (len) {
+        const size_t l = std::min(len, ChunkSize);
+        MSP::Cmd mspCmd = {
+            .op = MSP::Cmd::Op::StateWrite,
+            .arg = { .StateWrite = { .off = (uint16_t)off } },
+        };
+        memcpy(mspCmd.arg.StateWrite.data, data, l);
+        const auto mspResp = _System::MSPSend(mspCmd);
+        if (!mspResp || !mspResp->ok) return false;
+        off += l;
+        data += l;
+        len -= l;
+    }
     return true;
 }
 
@@ -957,41 +982,68 @@ static bool __MSPStateRead(uint8_t* data, size_t len) {
 //}
 
 static void _MSPStateRead(const STM::Cmd& cmd) {
-    // Reset state
-    _Bufs.reset();
-    _Buf& buf = _Bufs.wget();
-    
     auto& arg = cmd.arg.MSPStateRead;
-    if (arg.len > sizeof(buf.data)) {
-        // Reject command if the requested amount of data doesn't fit in our buffer
-        _System::USBAcceptCommand(false);
-        return;
-    }
     
     // Accept command
     _System::USBAcceptCommand(true);
     
-    bool ok = __MSPStateRead(buf.data, arg.len);
-    if (!ok) {
-        _System::USBSendStatus(false);
-        return;
+    // Reset state
+    _Bufs.reset();
+    
+    // Start the USB DataIn task
+    _TaskUSBDataIn::Start();
+    
+    size_t off = 0;
+    size_t len = arg.len;
+    bool ok = true;
+    while (len) {
+        // Wait for an available buffer to write into
+        _Scheduler::Wait([] { return _Bufs.wok(); });
+        _Buf& buf = _Bufs.wget();
+        buf.len = std::min(len, sizeof(buf.data));
+        
+        // Read state into the buffer
+        ok &= __MSPStateRead(off, buf.data, buf.len);
+        
+        // Enqueue the buffer
+        _Bufs.wpush();
+        len -= buf.len;
+        off += buf.len;
+    }
+    
+    // Wait for DataIn task to complete
+    _Scheduler::Wait([] { return !_Bufs.rok(); });
+    // Send status
+    _System::USBSendStatus(ok);
+}
+
+static void _MSPStateWrite(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPStateWrite;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Trigger the USB DataOut task with the amount of data
+    _TaskUSBDataOut::Start(arg.len);
+    
+    size_t off = 0;
+    for (;;) {
+        // Wait for a buffer containing more data to write
+        _Scheduler::Wait([] { return _Bufs.rok(); });
+        auto& buf = _Bufs.rget();
+        if (!buf.len) break; // We're done when we receive an empty buffer
+        
+        // Write the data over Spy-bi-wire
+        __MSPStateWrite(off, buf.data, buf.len);
+        off += buf.len;
+        _Bufs.rpop();
     }
     
     // Send status
     _System::USBSendStatus(true);
-    
-    // Send data
-    _USB::Send(Endpoint::DataIn, buf.data, arg.len);
-}
-
-static void _MSPStateWrite(const STM::Cmd& cmd) {
-    // Accept command
-    _System::USBAcceptCommand(true);
-    
-    // TODO: implement? not sure we actually need this though...
-    
-    // Send status
-    _System::USBSendStatus(false);
 }
 
 static void _MSPTimeGet(const STM::Cmd& cmd) {
@@ -1009,7 +1061,7 @@ static void _MSPTimeGet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Send time
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     const Time::Instant time = mspResp->arg.TimeGet.time;
     _USB::Send(Endpoint::DataIn, &time, sizeof(time));
 }
@@ -1036,12 +1088,33 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
 }
 
 // _MSPSBWLock: ensures mutual exclusion between MSP I2C comms (via System::_TaskMSPComms) and MSP Spy-bi-wire IO
-static _System::MSPLock _MSPSBWLock;
+static _System::MSPLock __MSPSBWLock;
 
 static void _MSPSBWReset() {
     _MSPJTAG::Disconnect();
     // Relinquish the lock if it was held (no-op otherwise)
-    _MSPSBWLock = {};
+    __MSPSBWLock = {};
+}
+
+static void _MSPSBWLock(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Acquire mutex to block MSP I2C comms until our SBW IO is done (and _MSPSBWDisconnect() is called)
+    __MSPSBWLock.lock();
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _MSPSBWUnlock(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    __MSPSBWLock.unlock();
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 static void _MSPSBWConnect(const STM::Cmd& cmd) {
@@ -1049,7 +1122,6 @@ static void _MSPSBWConnect(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Acquire mutex to block MSP I2C comms until our SBW IO is done (and _MSPSBWDisconnect() is called)
-    _MSPSBWLock.lock();
     const auto mspr = _MSPJTAG::Connect();
     
     // Send status
@@ -1060,7 +1132,7 @@ static void _MSPSBWDisconnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    _MSPSBWReset();
+    _MSPJTAG::Disconnect();
     
     // Send status
     _System::USBSendStatus(true);
@@ -1117,15 +1189,23 @@ static void _MSPSBWWrite(const STM::Cmd& cmd) {
         
         // Write the data over Spy-bi-wire
         auto& buf = _Bufs.rget();
-        if (buf.len) {
-            _MSPJTAG::Write(addr, buf.data, buf.len);
-            addr += buf.len; // Update the MSP430 address to write to
-        }
-        _Bufs.rpop();
         if (!buf.len) break; // We're done when we receive an empty buffer
+        
+        _MSPJTAG::Write(addr, buf.data, buf.len);
+        addr += buf.len; // Update the MSP430 address to write to
+        _Bufs.rpop();
     }
     
     _System::USBSendStatus(true);
+}
+
+static void _MSPSBWErase(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const auto mspr = _MSPJTAG::Erase();
+    
+    _System::USBSendStatus(mspr == _MSPJTAG::Status::OK);
 }
 
 struct _MSPSBWDebugState {
@@ -1170,7 +1250,7 @@ static void _MSPSBWDebugHandleCmd(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& 
     case MSPSBWDebugCmd::Op::RstSet:        _MSPJTAG::DebugRstSet(cmd.pinValGet());     break;
     case MSPSBWDebugCmd::Op::TestPulse:     _MSPJTAG::DebugTestPulse();                 break;
     case MSPSBWDebugCmd::Op::SBWIO:         _MSPSBWDebugHandleSBWIO(cmd, state, buf);	break;
-    default:                                abort();
+    default:                                Assert(false);
     }
 }
 
@@ -1265,7 +1345,7 @@ void _SDInit(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Send SD card info
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     const SDCardInfo cardInfo = {
         .cardId = _SD::CardId(),
         .cardData = _SD::CardData(),
@@ -1281,7 +1361,7 @@ static void _SDRead(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Reset chip select in case a read was in progress
-    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_STM_SPI_CS_::Write(1);
     
     _SD::ReadStart(arg.block);
     
@@ -1345,7 +1425,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     
     const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstRAMBlock, arg.skipCount);
     
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     const ImgCaptureStats stats = {
         .len            = imagePaddedLen,
         .highlightCount = resp.highlightCount(),
@@ -1393,10 +1473,13 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPTimeGet:            _MSPTimeGet(cmd);                   break;
     case Op::MSPTimeSet:            _MSPTimeSet(cmd);                   break;
     // MSP430 SBW
+    case Op::MSPSBWLock:            _MSPSBWLock(cmd);                   break;
+    case Op::MSPSBWUnlock:          _MSPSBWUnlock(cmd);                 break;
     case Op::MSPSBWConnect:         _MSPSBWConnect(cmd);                break;
     case Op::MSPSBWDisconnect:      _MSPSBWDisconnect(cmd);             break;
     case Op::MSPSBWRead:            _MSPSBWRead(cmd);                   break;
     case Op::MSPSBWWrite:           _MSPSBWWrite(cmd);                  break;
+    case Op::MSPSBWErase:           _MSPSBWErase(cmd);                  break;
     case Op::MSPSBWDebug:           _MSPSBWDebug(cmd);                  break;
     // SD Card
     case Op::SDInit:                _SDInit(cmd);                       break;
@@ -1411,15 +1494,6 @@ static void _CmdHandle(const STM::Cmd& cmd) {
 }
 
 // MARK: - ISRs
-
-extern "C" [[gnu::section(".isr")]] void ISR_NMI() {}
-extern "C" [[gnu::section(".isr")]] void ISR_HardFault() { for (;;); }
-extern "C" [[gnu::section(".isr")]] void ISR_MemManage() { for (;;); }
-extern "C" [[gnu::section(".isr")]] void ISR_BusFault() { for (;;); }
-extern "C" [[gnu::section(".isr")]] void ISR_UsageFault() { for (;;); }
-extern "C" [[gnu::section(".isr")]] void ISR_SVC() {}
-extern "C" [[gnu::section(".isr")]] void ISR_DebugMon() {}
-extern "C" [[gnu::section(".isr")]] void ISR_PendSV() {}
 
 extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
     _Scheduler::Tick();
@@ -1451,33 +1525,15 @@ extern "C" [[gnu::section(".isr")]] void ISR_EXTI15_10() {
 }
 
 // MARK: - Abort
-
-extern "C" [[noreturn]]
-void abort() {
+extern "C"
+[[noreturn]]
+void Abort(uint8_t domain, uint16_t line) {
     _System::Abort();
 }
 
 // MARK: - Main
-
 int main() {
-    _System::Run<
-        _ICE_CRST_,
-        _ICE_CDONE,
-        _ICE_ST_SPI_CS_,
-        _ICE_ST_SPI_D_READY,
-        _ICE_ST_FLASH_EN,
-        
-        _QSPI::Pin::Clk,
-        _QSPI::Pin::D0,
-        _QSPI::Pin::D1,
-        _QSPI::Pin::D2,
-        _QSPI::Pin::D3,
-        _QSPI::Pin::D4,
-        _QSPI::Pin::D5,
-        _QSPI::Pin::D6,
-        _QSPI::Pin::D7
-    >();
-    
+    _Scheduler::Run();
     return 0;
 }
 

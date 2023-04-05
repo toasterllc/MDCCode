@@ -5,18 +5,19 @@
 #include "SD.h"
 #include "ImgSD.h"
 #include "Time.h"
+#include "Toastbox/Util.h"
 
 namespace MSP {
 
 using BatteryChargeLevel = uint8_t;
-static constexpr BatteryChargeLevel BatteryChargeLevelMin = 0;
-static constexpr BatteryChargeLevel BatteryChargeLevelMax = 100;
+constexpr BatteryChargeLevel BatteryChargeLevelMin = 0;
+constexpr BatteryChargeLevel BatteryChargeLevelMax = 100;
 
-static constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
+constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
     return base - ((idx+1) * ImgSD::Full::ImageBlockCount);
 }
 
-static constexpr SD::Block SDBlockThumb(SD::Block base, uint32_t idx) {
+constexpr SD::Block SDBlockThumb(SD::Block base, uint32_t idx) {
     return base - ((idx+1) * ImgSD::Thumb::ImageBlockCount);
 }
 
@@ -54,21 +55,191 @@ struct [[gnu::packed]] ImgRingBuf {
     }
 };
 
+using Domain = uint8_t;
+struct Domain_ { enum : Domain {
+    Invalid,
+    SchedulerStackOverflow,
+    Main,
+    ICE,
+    SD,
+    Img,
+    I2C,
+    Motion,
+    Triggers,
+    BatterySampler,
+    AssertionCounter,
+}; };
+
+constexpr const char* StringForDomain(Domain x) {
+    switch (x) {
+    case Domain_::Invalid:                return "Invalid";
+    case Domain_::SchedulerStackOverflow: return "SchedulerStackOverflow";
+    case Domain_::Main:                   return "Main";
+    case Domain_::ICE:                    return "ICE";
+    case Domain_::SD:                     return "SD";
+    case Domain_::Img:                    return "Img";
+    case Domain_::I2C:                    return "I2C";
+    case Domain_::Motion:                 return "Motion";
+    case Domain_::Triggers:               return "Triggers";
+    case Domain_::BatterySampler:         return "BatterySampler";
+    case Domain_::AssertionCounter:       return "AssertionCounter";
+    }
+    abort();
+}
+
 // AbortType: a (domain,line) tuple that uniquely identifies a type of abort
 struct [[gnu::packed]] AbortType {
-    uint16_t domain = 0;
-    uint16_t line   = 0;
+    uint16_t line = 0;
+    Domain domain = Domain_::Invalid;
+    uint8_t _pad  = 0;
 };
 static_assert(!(sizeof(AbortType) % 2)); // Check alignment
 
 // AbortHistory: records history of an abort type, where an abort type is a (domain,line) tuple
 struct [[gnu::packed]] AbortHistory {
-    AbortType type                   = {};
-    Time::Instant timestampEarliest  = {};
-    Time::Instant timestampLatest    = {};
-    uint16_t count                   = 0;
+    AbortType type         = {};
+    Time::Instant earliest = {};
+    Time::Instant latest   = {};
+    uint16_t count         = 0;
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
+
+struct [[gnu::packed]] Repeat {
+    enum class Type : uint8_t {
+        Never,
+        Daily,
+        Weekly,
+        Yearly,
+    };
+    
+    Type type = Type::Never;
+    union [[gnu::packed]] {
+        struct [[gnu::packed]] {
+            uint8_t interval;
+        } Daily;
+        
+        struct [[gnu::packed]] {
+            uint8_t days;
+        } Weekly;
+        
+        struct [[gnu::packed]] {
+            uint8_t leapPhase;
+        } Yearly;
+    };
+};
+static_assert(sizeof(Repeat) == 2);
+
+using LEDs = uint8_t;
+struct LEDs_ { enum : LEDs {
+    None  = 0,
+    Green = 1<<0,
+    Red   = 1<<1,
+}; };
+
+// Capture: describes the capture action when a trigger occurs
+struct [[gnu::packed]] Capture {
+    uint32_t delayMs = 0;
+    uint16_t count = 0;
+    LEDs leds = LEDs_::None;
+    uint8_t _pad = 0;
+};
+static_assert(!(sizeof(Capture) % 2)); // Check alignment
+
+struct [[gnu::packed]] Triggers {
+    struct [[gnu::packed]] Event {
+        enum class Type : uint8_t {
+            TimeTrigger,
+            MotionEnable,
+        };
+        Time::Instant time = 0;
+        Type type = Type::TimeTrigger;
+        Repeat repeat;
+        uint8_t idx = 0;
+    };
+    static_assert(!(sizeof(Event) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] TimeTrigger {
+        Capture capture;
+    };
+    static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] MotionTrigger {
+        Capture capture;
+        // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
+        uint16_t count = 0;
+        // durationMs: duration for which motion should be enabled (0 == forever)
+        uint32_t durationMs = 0;
+        // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
+        uint32_t suppressMs = 0;
+    };
+    static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] ButtonTrigger {
+        Capture capture;
+    };
+    static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
+    
+    Event         event[32];
+    TimeTrigger   timeTrigger[8];
+    MotionTrigger motionTrigger[8];
+    ButtonTrigger buttonTrigger[2];
+    
+    uint8_t eventCount         = 0;
+    uint8_t timeTriggerCount   = 0;
+    uint8_t motionTriggerCount = 0;
+    uint8_t buttonTriggerCount = 0;
+    
+    // source: opaque data used by software to hold its representation of this struct
+    uint8_t source[256] = {};
+};
+//StaticPrint(sizeof(Triggers));
+
+
+//struct [[gnu::packed]] Triggers {
+//    struct [[gnu::packed]] TimeTrigger {
+//        Time::Instant time = 0;
+//        Repeat repeat;
+//        Capture capture;
+//    };
+//    static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
+//    
+//    struct [[gnu::packed]] MotionTrigger {
+//        Time::Instant time = 0;
+//        Repeat repeat;
+//        Capture capture;
+//        // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
+//        uint16_t count = 0;
+//        // durationMs: duration for which motion should be enabled (0 == forever)
+//        uint32_t durationMs = 0;
+//        // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
+//        uint32_t suppressMs = 0;
+//    };
+//    static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
+//    
+//    struct [[gnu::packed]] ButtonTrigger {
+//        Capture capture;
+//    };
+//    static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
+//    
+//    TimeTrigger   timeTrigger[32];
+//    MotionTrigger motionTrigger[8];
+//    ButtonTrigger buttonTrigger[2];
+//    
+//    uint8_t timeTriggerCount   = 0;
+//    uint8_t motionTriggerCount = 0;
+//    uint8_t buttonTriggerCount = 0;
+//    uint8_t _pad               = 0;
+//    
+//    // source: opaque data used by software to hold its representation of this struct
+//    uint8_t source[256] = {};
+//};
+//StaticPrint(sizeof(Triggers));
+
+struct [[gnu::packed]] Settings {
+    Triggers triggers = {};
+//    StaticPrint(sizeof(triggers));
+    static_assert(sizeof(triggers) == 868); // Debug
+};
 
 struct [[gnu::packed]] State {
     struct [[gnu::packed]] Header {
@@ -78,6 +249,7 @@ struct [[gnu::packed]] State {
     };
     
     Header header = {};
+    static_assert(sizeof(header) == 8);
     
     struct [[gnu::packed]] {
         // cardId: the SD card's CID, used to determine when the SD card has been
@@ -96,20 +268,32 @@ struct [[gnu::packed]] State {
         bool valid = false;
         uint8_t _pad = 0;
     } sd = {};
+//    StaticPrint(sizeof(sd));
     static_assert(!(sizeof(sd) % 2)); // Check alignment
+    static_assert(sizeof(sd) == 56); // Debug
+    
+    Settings settings = {};
+//    StaticPrint(sizeof(settings));
+    static_assert(!(sizeof(settings) % 2)); // Check alignment
+    static_assert(sizeof(settings) == 868); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
+//    StaticPrint(sizeof(aborts));
     static_assert(!(sizeof(aborts) % 2)); // Check alignment
+    static_assert(sizeof(aborts) == 110); // Debug
 };
+//StaticPrint(sizeof(State));
+static_assert(!(sizeof(State) % 2)); // Check alignment
+static_assert(sizeof(State) == 1042); // Debug
 
-static constexpr State::Header StateHeader = {
+constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,
     .version = 0,
-    .length  = sizeof(State)-sizeof(State::Header),
+    .length  = sizeof(State),
 };
 
-static constexpr uint8_t I2CAddr = 0x55;
+constexpr uint8_t I2CAddr = 0x55;
 
 struct [[gnu::packed]] Cmd {
     enum class Op : uint8_t {
@@ -127,11 +311,11 @@ struct [[gnu::packed]] Cmd {
     Op op = Op::None;
     union {
         struct [[gnu::packed]] {
-            uint8_t chunk;
+            uint16_t off;
         } StateRead;
         
         struct [[gnu::packed]] {
-            uint8_t chunk;
+            uint16_t off;
             uint8_t data[8];
         } StateWrite;
         
@@ -170,5 +354,35 @@ struct [[gnu::packed]] Resp {
         } BatteryChargeLevelGet;
     } arg;
 };
+
+
+
+
+
+
+//struct [[gnu::packed]] Triggers {
+//    struct [[gnu::packed]] TimeTrigger {
+//        enum class Type : uint8_t {
+//            Capture,
+//            MotionEnable,
+//            MotionDisable,
+//        };
+//        
+//        Type type;
+//        Time::Instant time;
+//        size_t idx;
+//    };
+//    
+//    struct [[gnu::packed]] Capture {
+//        
+//    };
+//    
+//    TimeTrigger time[64];
+//    Capture capture[8];
+//    Motion motion[8];
+//    Button button[2];
+//};
+
+
 
 } // namespace MSP

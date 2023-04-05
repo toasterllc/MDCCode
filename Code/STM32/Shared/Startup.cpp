@@ -1,25 +1,34 @@
 #include <string.h>
 #include "stm32f7xx.h"
 
+#warning TODO: if RAM gets tight, STMApp and STMLoader could share the same stacks (such as _StackInterrupt and the task stacks) instead of having their own stacks
+
 extern "C" void __libc_init_array();
 
 [[gnu::always_inline]]
-static inline void _PSPStackActivate() {
-    // Set the PSP stack pointer to the MSP stack pointer, and switch to using PSP stack.
-    // Scheduler and its tasks use the PSP stack, while interrupts are handled on the MSP stack.
-    asm volatile("mrs r0, msp" : : : );         // r0 = msp
-    asm volatile("msr psp, r0" : : : );         // psp = r0
-    asm volatile("mrs r0, CONTROL" : : : );     // r0 = CONTROL
-    asm volatile("orrs r0, r0, #2" : : : );     // Set SPSEL bit (enable using PSP stack)
-    asm volatile("msr CONTROL, r0" : : : );     // CONTROL = r0
-    asm volatile("isb" : : : );                 // Instruction Synchronization Barrier
+static inline void _StackInit() {
+    // Set the MSP+PSP stack pointers
+    // Hardware typically initializes MSP to the SP value at the start of the vector table, but we
+    // still need to set MSP here (in addition to PSP) because in the STMApp case, we're executing
+    // because the bootloader invoked our ISR_Reset() directly (not via hardware). Therefore in
+    // that case, hardware didn't initialize MSP, so we need to initialize it manually here.
+    asm volatile("ldr r0, =_StartupStackInterrupt" : : : ); // r0  = _StackInterrupt
+    asm volatile("msr msp, r0" : : : );                     // msp = r0
+    asm volatile("ldr r0, =_StartupStack" : : : );          // r0  = _Stack
+    asm volatile("msr psp, r0" : : : );                     // psp = r0
+    
+    // Make PSP the active stack
+    asm volatile("mrs r0, CONTROL" : : : );             // r0 = CONTROL
+    asm volatile("orrs r0, r0, #2" : : : );             // Set SPSEL bit (enable using PSP stack)
+    asm volatile("msr CONTROL, r0" : : : );             // CONTROL = r0
+    asm volatile("isb" : : : );                         // Instruction Synchronization Barrier
 }
 
 // Startup() needs to be in the .isr section so that it's near ISR_Reset,
 // otherwise we can get a linker error.
 extern "C"
-[[noreturn, gnu::section(".isr")]]
-void Startup() {
+[[noreturn, gnu::naked, gnu::section(".isr")]]
+void _Startup() {
     extern uint8_t _sdata_flash[];
     extern uint8_t _sdata_ram[];
     extern uint8_t _edata_ram[];
@@ -27,24 +36,11 @@ void Startup() {
     extern uint8_t _ebss[];
     extern uint8_t VectorTable[];
     
-    // Disable interrupts so that they don't occur until Scheduler explicitly enables them.
-    //
-    // Disabling interrupts is necessary because _PSPStackActivate() sets the PSP stack
-    // to the same region as the MSP stack, and then activates the PSP stack. (We want
-    // to activate the PSP stack so that Scheduler and our tasks all execute using the
-    // PSP stack, and only interrupt handling executes using the MSP stack.) Therefore
-    // if an interrupt occurred after calling _PSPStackActivate(), the interrupt would
-    // be serviced using the MSP stack and would clobber the PSP stack since they
-    // share the same region of memory, so we disable interrupts to prevent this
-    // clobbering.
-    //
-    // Scheduler enables interrupts only after setting the stack pointer (ie PSP) to
-    // the first task's stack, which is safe at that point because PSP and MSP no
-    // longer share the same memory region.
+    // Disable interrupts so that they don't occur until we enter our first Scheduler task.
     __disable_irq();
     
-    // Switch from MSP stack -> PSP stack
-    _PSPStackActivate();
+    // Initialize our stack
+    _StackInit();
     
     // Copy .data section from flash to RAM
     memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
@@ -67,3 +63,6 @@ void Startup() {
     [[noreturn]] extern int main();
     main();
 }
+
+extern "C" [[noreturn, gnu::naked, gnu::section(".isr")]] void ISR_Reset()      { _Startup(); }
+extern "C" [[noreturn, gnu::naked, gnu::section(".isr")]] void ISR_Default()    { Assert(false); }
