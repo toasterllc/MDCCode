@@ -40,3 +40,21 @@ static void _Init(DeviceSettingsView* self) {
 }
 
 @end
+
+
+//@interface MyTabView : NSTabView
+//@end
+//
+//@implementation MyTabView
+//
+//- (instancetype)initWithCoder:(NSCoder*)coder{
+//    if (!(self = [super initWithCoder:coder])) return nil;
+//    NSLog(@"%@", [self subviews]);
+//    NSSegmentedControl
+//    [self setTabViewType:NSNoTabsNoBorder];
+////    NSLog(@"%@", [self subviews]);
+////    [self setTabViewBorderType:NSTabViewBorderTypeNone];
+//    return self;
+//}
+//
+//@end
