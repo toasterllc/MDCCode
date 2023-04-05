@@ -1,6 +1,7 @@
 #pragma once
 
 namespace DeviceSettings {
+
 namespace Calendar {
 
 enum class WeekDays : uint8_t {
@@ -235,4 +236,119 @@ inline std::string YearDayPlaceholderString() {
 
 
 } // namespace Calendar
+
+
+
+
+
+
+
+
+
+struct [[gnu::packed]] CaptureTrigger {
+    enum class Type : uint8_t {
+        Time,
+        Motion,
+        Button,
+    };
+    
+    struct [[gnu::packed]] DayInterval {
+        uint32_t interval;
+    };
+    
+    struct [[gnu::packed]] Repeat {
+        enum class Type : uint8_t {
+            Daily,
+            WeekDays,
+            YearDays,
+            DayInterval,
+        };
+        
+        Type type;
+        union {
+            Calendar::WeekDays weekDays;
+            Calendar::YearDays yearDays;
+            DayInterval dayInterval;
+        };
+    };
+    
+    enum class LEDs : uint8_t {
+        None  = 0,
+        Green = 1<<0,
+        Red   = 1<<1,
+    };
+    
+    struct [[gnu::packed]] Duration {
+        enum class Unit : uint8_t {
+            Seconds,
+            Minutes,
+            Hours,
+            Days,
+        };
+        
+        float value;
+        Unit unit;
+    };
+    
+    struct [[gnu::packed]] Capture {
+        uint32_t count;
+        Duration interval;
+        LEDs flashLEDs;
+    };
+    
+    Type type = Type::Time;
+    
+    union {
+        struct [[gnu::packed]] {
+            struct [[gnu::packed]] {
+                uint32_t time;
+                Repeat repeat;
+            } schedule;
+            
+            Capture capture;
+        } time;
+        
+        struct [[gnu::packed]] {
+            struct [[gnu::packed]] {
+                struct [[gnu::packed]] {
+                    bool enable;
+                    uint32_t start;
+                    uint32_t end;
+                } timeRange;
+                
+                Repeat repeat;
+            } schedule;
+            
+            Capture capture;
+            
+            struct [[gnu::packed]] {
+                struct [[gnu::packed]] {
+                    bool enable;
+                    Duration duration;
+                } ignoreTriggerDuration;
+                
+                struct [[gnu::packed]] {
+                    bool enable;
+                    uint32_t count;
+                } maxTriggerCount;
+            } constraints;
+        } motion;
+        
+        struct [[gnu::packed]] {
+            Capture capture;
+        } button;
+    };
+};
+
+struct [[gnu::packed]] CaptureTriggers {
+    CaptureTrigger triggers[32] = {};
+    uint8_t count = 0;
+};
+
+
+
+
+
+
+
 } // namespace DeviceSettings
