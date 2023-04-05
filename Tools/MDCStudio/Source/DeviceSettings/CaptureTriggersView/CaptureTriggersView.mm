@@ -757,7 +757,6 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTableView*       _tableView;
     IBOutlet NSView*            _containerView;
     IBOutlet ContainerSubview*  _detailView;
-    IBOutlet ContainerSubview*  _noSelectionView;
     IBOutlet NSButton*          _removeButton;
     
     // Schedule
@@ -870,7 +869,6 @@ static void _Init(CaptureTriggersView* self) {
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
     
     _ContainerSubviewAdd(self->_containerView, self->_detailView);
-    _ContainerSubviewAdd(self->_containerView, self->_noSelectionView);
 }
 
 // MARK: - Creation
@@ -1307,7 +1305,6 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     NSInteger idx = [_tableView selectedRow];
     ListItem* it = (idx>=0 ? _items.at(idx) : nil);
     
-    [_noSelectionView setHidden:(bool)it];
     [_detailView setHidden:!it];
     [_removeButton setEnabled:(bool)it];
     if (!it) return;
