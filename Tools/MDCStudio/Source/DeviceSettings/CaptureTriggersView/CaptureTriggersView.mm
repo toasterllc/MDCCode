@@ -755,9 +755,14 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
 @public
     IBOutlet NSView*            _nibView;
     IBOutlet NSTableView*       _tableView;
+    IBOutlet NSView*            _containerView;
     IBOutlet ContainerSubview*  _detailView;
-    IBOutlet NSButton*          _removeButton;
+    IBOutlet NSControl*         _addButton;
+    IBOutlet NSControl*         _removeButton;
     IBOutlet NSView*            _noTriggersView;
+    
+    IBOutlet NSView*             _separatorLine;
+    IBOutlet NSLayoutConstraint* _separatorLineOffset;
     
     // Schedule
     IBOutlet NSView*            _schedule_ContainerView;
@@ -809,6 +814,13 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     bool _actionViewChangedUnderway;
 }
 
+static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
+    [self->_noTriggersView setHidden:!emptyMode];
+    [self->_addButton setHidden:emptyMode];
+    [self->_removeButton setHidden:emptyMode];
+    [self->_separatorLineOffset setConstant:(emptyMode ? 1000 : 8)];
+}
+
 static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
     assert(self);
     NSTableView* tv = self->_tableView;
@@ -824,7 +836,7 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
     [tv selectRowIndexes:idxs byExtendingSelection:false];
     [tv scrollRowToVisible:idx];
     
-    [self->_noTriggersView setHidden:true];
+    _SetEmptyMode(self, false);
     return it;
 }
 
@@ -845,7 +857,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:std::min(self->_items.size()-1, idx)];
         [tv selectRowIndexes:idxs byExtendingSelection:false];
     } else {
-        [self->_noTriggersView setHidden:false];
+        _SetEmptyMode(self, true);
     }
 }
 
@@ -1307,7 +1319,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     NSInteger idx = [_tableView selectedRow];
     ListItem* it = (idx>=0 ? _items.at(idx) : nil);
     
-    [_detailView setHidden:!it];
+    _ContainerSubviewSet(_containerView, (it ? _detailView : nil));
     [_removeButton setEnabled:(bool)it];
     if (!it) return;
     _Load(self, it->trigger);
@@ -1411,12 +1423,32 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
     return true;
 }
 
-- (NSLayoutYAxisAnchor*)deviceSettingsView_HeaderBottomAnchor {
-    return [_detailView topAnchor];
+- (NSView*)deviceSettingsView_HeaderEndView {
+    return _separatorLine;
 }
 
-- (CGFloat)deviceSettingsView_HeaderBottomAnchorOffset {
-    return 8;
-}
+//- (NSLayoutYAxisAnchor*)deviceSettingsView_HeaderBottomAnchor {
+//    return [_containerView topAnchor];
+//}
+//
+//- (CGFloat)deviceSettingsView_HeaderBottomAnchorOffset {
+//    if ([_detailView superview]) {
+//        return 8;
+//    }
+//    return 0;
+//}
 
 @end
+
+@interface RedView : NSView
+@end
+
+@implementation RedView
+
+//- (void)drawRect:(NSRect)rect {
+//    [[NSColor redColor] set];
+//    NSRectFill(rect);
+//}
+
+@end
+

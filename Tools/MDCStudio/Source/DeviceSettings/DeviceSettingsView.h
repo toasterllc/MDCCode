@@ -2,8 +2,7 @@
 
 // Informal protocol so sections don't depend on this header
 @interface NSView (DeviceSettingsViewSection)
-- (NSLayoutYAxisAnchor*)deviceSettingsView_HeaderBottomAnchor;
-- (CGFloat)deviceSettingsView_HeaderBottomAnchorOffset;
+- (NSView*)deviceSettingsView_HeaderEndView;
 @end
 
 @interface DeviceSettingsView : NSView

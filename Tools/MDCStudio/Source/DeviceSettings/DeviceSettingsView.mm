@@ -47,9 +47,11 @@ static void _Init(DeviceSettingsView* self) {
     [_tabView selectTabViewItemAtIndex:idx];
     
     NSView* view = [[_tabView tabViewItemAtIndex:idx] view];
-    NSLayoutYAxisAnchor*const anchor = [view deviceSettingsView_HeaderBottomAnchor];
-    const CGFloat offset = [view deviceSettingsView_HeaderBottomAnchorOffset];
-    [[[_headerBackground bottomAnchor] constraintEqualToAnchor:anchor constant:offset] setActive:true];
+//    static int i = 0;
+//    i++;
+//    if (i > 3) {
+    [[[_headerBackground bottomAnchor] constraintEqualToAnchor:[[view deviceSettingsView_HeaderEndView] topAnchor]] setActive:true];
+//    }
 }
 
 - (IBAction)_actionDismiss:(id)sender {
