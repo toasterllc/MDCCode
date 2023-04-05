@@ -49,22 +49,21 @@
             </connections>
         </customObject>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
-            <rect key="frame" x="0.0" y="0.0" width="600" height="792"/>
+            <rect key="frame" x="0.0" y="0.0" width="600" height="734"/>
             <subviews>
-                <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="52" horizontalPageScroll="10" verticalLineScroll="52" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RYD-Tl-az2">
-                    <rect key="frame" x="0.0" y="434" width="600" height="358"/>
+                <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="50" horizontalPageScroll="10" verticalLineScroll="50" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RYD-Tl-az2">
+                    <rect key="frame" x="0.0" y="534" width="600" height="200"/>
                     <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="358"/>
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="200"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnSelection="YES" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="50" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
-                                <rect key="frame" x="0.0" y="0.0" width="600" height="358"/>
+                            <tableView verticalHuggingPriority="750" misplaced="YES" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnSelection="YES" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="50" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
+                                <rect key="frame" x="0.0" y="0.0" width="600" height="200"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" red="0.11764705882352941" green="0.11764705882352941" blue="0.11764705882352941" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn width="597" minWidth="40" maxWidth="1000" id="GfJ-4C-MOX">
+                                    <tableColumn width="600" minWidth="40" maxWidth="1000" id="GfJ-4C-MOX">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
@@ -77,7 +76,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="CaptureTriggersView_ListItem" translatesAutoresizingMaskIntoConstraints="NO" id="IYl-4H-9xr" customClass="CaptureTriggersView_ListItem">
-                                                <rect key="frame" x="1" y="1" width="597" height="50"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="600" height="50"/>
                                                 <subviews>
                                                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="l0s-ak-E4D">
                                                         <rect key="frame" x="40" y="9" width="32" height="32"/>
@@ -156,7 +155,7 @@
                         <nil key="backgroundColor"/>
                     </clipView>
                     <constraints>
-                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="158" id="C8G-lq-B4Y"/>
+                        <constraint firstAttribute="height" constant="200" id="C8G-lq-B4Y"/>
                     </constraints>
                     <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="F2D-sw-at7">
                         <rect key="frame" x="1" y="349" width="598" height="16"/>
@@ -168,7 +167,7 @@
                     </scroller>
                 </scrollView>
                 <popUpButton translatesAutoresizingMaskIntoConstraints="NO" id="RBu-R2-DJH" userLabel="Add">
-                    <rect key="frame" x="526" y="400" width="62" height="26"/>
+                    <rect key="frame" x="526" y="500" width="62" height="26"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="26" id="yiX-pu-feH"/>
                     </constraints>
@@ -201,7 +200,7 @@
                     </popUpButtonCell>
                 </popUpButton>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="EQc-nq-cmH">
-                    <rect key="frame" x="455" y="405" width="71" height="16"/>
+                    <rect key="frame" x="455" y="505" width="71" height="16"/>
                     <buttonCell key="cell" type="square" title="  Remove" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="leading" alignment="left" state="on" imageScaling="proportionallyDown" inset="2" id="9SZ-6i-XVB">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -215,11 +214,7 @@ CA
                     </connections>
                 </button>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="fUr-DU-jha">
-                    <rect key="frame" x="0.0" y="0.0" width="600" height="400"/>
-                    <constraints>
-                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="400" id="GH8-LS-Cfu"/>
-                        <constraint firstAttribute="height" priority="750" constant="400" id="uiH-mA-Oyq"/>
-                    </constraints>
+                    <rect key="frame" x="0.0" y="0.0" width="600" height="500"/>
                 </customView>
             </subviews>
             <constraints>
@@ -229,7 +224,6 @@ CA
                 <constraint firstAttribute="trailing" secondItem="fUr-DU-jha" secondAttribute="trailing" id="Fip-Ky-KtD"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="Jcp-3s-WDp"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="centerY" secondItem="EQc-nq-cmH" secondAttribute="centerY" id="LLE-8n-ub1"/>
-                <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="400" id="QiN-5n-jjt"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" constant="-12" id="Vx3-Pn-lP8"/>
                 <constraint firstAttribute="bottom" secondItem="fUr-DU-jha" secondAttribute="bottom" id="cDY-05-1JP"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="top" secondItem="RYD-Tl-az2" secondAttribute="bottom" constant="8" id="eyo-cv-mc1"/>
@@ -294,7 +288,7 @@ CA
                 <segmentedControl horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
                     <rect key="frame" x="99" y="128" width="92" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectAny" id="8hR-9j-fJM">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Green"/>
                             <segment label="Red" selected="YES" tag="1"/>
@@ -397,7 +391,7 @@ CA
                 </textField>
             </subviews>
             <constraints>
-                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="2Xg-db-P6E" secondAttribute="bottom" id="4kv-Ad-55Q"/>
+                <constraint firstAttribute="bottom" secondItem="2Xg-db-P6E" secondAttribute="bottom" id="4kv-Ad-55Q"/>
                 <constraint firstItem="zlI-fc-Hnz" firstAttribute="firstBaseline" secondItem="Rsa-ll-JvR" secondAttribute="firstBaseline" id="8ia-QT-YbF"/>
                 <constraint firstItem="UR7-ZS-KAS" firstAttribute="top" secondItem="4R1-In-Kbb" secondAttribute="bottom" id="ACe-Vi-mNf"/>
                 <constraint firstItem="u1N-yv-zO7" firstAttribute="leading" secondItem="UR7-ZS-KAS" secondAttribute="trailing" constant="8" id="BLC-MG-fXO"/>
@@ -677,7 +671,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZhD-fg-EKZ">
                     <rect key="frame" x="38" y="118" width="534" height="28"/>
                     <textFieldCell key="cell" title="After this number of triggers, your Photon ignores motion until the next day to prolong its battery life." id="77K-Wk-abH">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -685,7 +679,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="icX-od-xa4">
                     <rect key="frame" x="38" y="30" width="534" height="28"/>
                     <textFieldCell key="cell" id="Org-0X-drC">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <string key="title">After motion occurs, your Photon will ignore further motion for this amount of time. This can help limit the number of triggers during long periods of continuous motion, prolonging battery life.</string>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -694,7 +688,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
                     <rect key="frame" x="38" y="394" width="425" height="14"/>
                     <textFieldCell key="cell" title="You can restrict when your Photon responds to motion to prolong its battery life." id="Oar-aS-K64">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -823,7 +817,7 @@ CA
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
                     <rect key="frame" x="-2" y="-2" width="301" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>
