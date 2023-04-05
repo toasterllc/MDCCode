@@ -814,6 +814,17 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     bool _actionViewChangedUnderway;
 }
 
+//- (void)description {
+//    Trigger triggers[32] = {};
+//    size_t i = 0;
+//    for (ListItem* it : _items) {
+//        triggers[i] = it->trigger;
+//        i++;
+//    }
+//    NSData* data = [NSData dataWithBytes:&triggers length:sizeof(triggers)];
+//    [data writeToFile:@"/Users/dave/Desktop/test.bin" atomically:true];
+//}
+
 static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
     [self->_noTriggersView setHidden:!emptyMode];
     [self->_addButton setHidden:emptyMode];
@@ -1386,6 +1397,8 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
     std::vector<ListItem*> movedItems;
     NSMutableIndexSet* idxsOld = [NSMutableIndexSet new];
     size_t dstIdx = row;
+    NSIndexSet* selection = [_tableView selectedRowIndexes];
+    bool reselect = false;
     
     // Compose `movedItems`
     for (NSPasteboardItem* it : items) {
@@ -1394,6 +1407,7 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
         rows.insert(idx);
         [idxsOld addIndex:idx];
         movedItems.push_back(_items[idx]);
+        reselect |= [selection containsIndex:idx];
         if (idx < dstIdx) {
             dstIdx--;
         }
@@ -1415,9 +1429,11 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
     {
         _items.insert(_items.begin()+dstIdx, movedItems.begin(), movedItems.end());
         [_tableView insertRowsAtIndexes:idxsNew withAnimation:NSTableViewAnimationEffectNone];
-        // Select new rows
-        [_tableView selectRowIndexes:idxsNew byExtendingSelection:false];
-        [_tableView scrollRowToVisible:dstIdx];
+        // Select new rows, if the dragged items were originally selected
+        if (reselect) {
+            [_tableView selectRowIndexes:idxsNew byExtendingSelection:false];
+            [_tableView scrollRowToVisible:dstIdx];
+        }
     }
     
     return true;

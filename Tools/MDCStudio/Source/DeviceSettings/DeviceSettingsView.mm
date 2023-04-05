@@ -56,6 +56,7 @@ static void _Init(DeviceSettingsView* self) {
 
 - (IBAction)_actionDismiss:(id)sender {
     [[[self window] sheetParent] endSheet:[self window]];
+//    [(id)[[_tabView selectedTabViewItem] view] description];
 }
 
 @end
