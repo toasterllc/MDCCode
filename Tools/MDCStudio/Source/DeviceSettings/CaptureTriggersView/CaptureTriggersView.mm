@@ -755,7 +755,6 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
 @public
     IBOutlet NSView*            _nibView;
     IBOutlet NSTableView*       _tableView;
-    IBOutlet NSView*            _containerView;
     IBOutlet ContainerSubview*  _detailView;
     IBOutlet NSButton*          _removeButton;
     
@@ -867,8 +866,6 @@ static void _Init(CaptureTriggersView* self) {
     _ListItemAdd(self, Trigger::Type::Button);
     
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
-    
-    _ContainerSubviewAdd(self->_containerView, self->_detailView);
 }
 
 // MARK: - Creation
@@ -1410,7 +1407,7 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
 }
 
 - (NSLayoutYAxisAnchor*)deviceSettingsView_HeaderBottomAnchor {
-    return [_containerView topAnchor];
+    return [_detailView topAnchor];
 }
 
 - (CGFloat)deviceSettingsView_HeaderBottomAnchorOffset {
