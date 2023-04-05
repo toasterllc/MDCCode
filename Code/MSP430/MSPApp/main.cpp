@@ -773,20 +773,20 @@ struct _TaskI2C {
             for (;;) {
                 // Wait for a command
                 MSP::Cmd cmd;
-                
                 bool ok = _I2C::Recv(cmd);
                 if (!ok) break;
                 
                 // Handle command
                 const MSP::Resp resp = _CmdHandle(cmd);
                 
+                // Send response
                 ok = _I2C::Send(resp);
                 if (!ok) break;
             }
             
             // Cleanup
             
-//            // Relinquish LEDs
+//            // Relinquish LEDs, which may have been set by _CmdHandle()
             _LEDRed_::Set(_LEDPriority::I2C, std::nullopt);
             _LEDGreen_::Set(_LEDPriority::I2C, std::nullopt);
             
