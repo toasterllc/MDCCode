@@ -26,12 +26,12 @@
                     </constraints>
                 </visualEffectView>
                 <tabView drawsBackground="NO" type="noTabsNoBorder" translatesAutoresizingMaskIntoConstraints="NO" id="NLY-ZL-vCb">
-                    <rect key="frame" x="0.0" y="61" width="600" height="685"/>
+                    <rect key="frame" x="0.0" y="41" width="600" height="705"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="Capture Triggers" identifier="" id="t1H-wv-Rdu">
                             <view key="view" translatesAutoresizingMaskIntoConstraints="NO" id="Opp-py-5Rd" customClass="CaptureTriggersView">
-                                <rect key="frame" x="0.0" y="0.0" width="600" height="685"/>
+                                <rect key="frame" x="0.0" y="0.0" width="600" height="705"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </view>
                         </tabViewItem>
@@ -111,7 +111,7 @@ Gw
                 <constraint firstItem="htS-Zh-S2s" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="bCa-pb-x1k"/>
                 <constraint firstItem="NLY-ZL-vCb" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="dwS-vm-SoD"/>
                 <constraint firstItem="nZd-r3-PiT" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="gKH-dh-4e1"/>
-                <constraint firstItem="loq-oF-BLr" firstAttribute="top" secondItem="NLY-ZL-vCb" secondAttribute="bottom" constant="20" id="pe6-sx-tNw"/>
+                <constraint firstItem="loq-oF-BLr" firstAttribute="top" secondItem="NLY-ZL-vCb" secondAttribute="bottom" id="pe6-sx-tNw"/>
                 <constraint firstItem="fEs-i7-uB3" firstAttribute="centerY" secondItem="0mG-ww-k7b" secondAttribute="centerY" id="rJ3-v4-iIo"/>
                 <constraint firstItem="0mG-ww-k7b" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" constant="15" id="s4J-Wv-uaE"/>
                 <constraint firstItem="0mG-ww-k7b" firstAttribute="leading" secondItem="nZd-r3-PiT" secondAttribute="trailing" id="u3w-X1-oah"/>
