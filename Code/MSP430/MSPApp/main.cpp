@@ -158,6 +158,72 @@ static void _CaptureResume();
 static volatile uint8_t _CapturePauseAssertionCounter = 0;
 using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter, _CapturePause, _CaptureResume>;
 
+
+
+
+
+
+
+
+
+struct Event {
+    enum class Type : uint8_t {
+        CaptureImage,
+        TimeTrigger,
+        MotionEnable,
+        MotionDisable,
+        MotionUnsuppress,
+    };
+    
+    Time::Instant time = 0;
+    Type type = Type::CaptureImage;
+    uint8_t stateIdx = 0;
+    Event* next = nullptr;
+};
+
+#warning TODO: make these counts match MSP::State counts?
+static Event _Events[32];
+static Event* _EventsFront = 0;
+
+struct TimeTriggerState {
+    Time::Instant periodStart = 0;
+};
+
+struct CaptureImageState {
+    Time::Instant periodStart = 0;
+    uint16_t countRem = 0;
+};
+
+static CaptureState _CaptureStates[16];
+
+struct MotionState {
+    Time::Instant periodStart = 0;
+    uint16_t countRem = 0;
+    ResourceCounter enabled;
+};
+
+static MotionState _MotionStates[8];
+
+struct ButtonState {};
+static ButtonState _ButtonStates[2];
+
+
+
+
+static Event* _EventPop() {
+    if (!_EventsFront) return nullptr;
+    Event*const front = _EventsFront;
+    _EventsFront = front->next;
+    return front;
+}
+
+
+
+
+
+
+
+
 // MARK: - Power
 
 static void _VDDBSet(bool en) {
@@ -404,7 +470,7 @@ struct _TaskSD {
     
     // Task stack
     [[gnu::section(".stack._TaskSD")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
@@ -508,7 +574,7 @@ struct _TaskImg {
     
     // Task stack
     [[gnu::section(".stack._TaskImg")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
@@ -534,21 +600,117 @@ struct _TaskMain {
         _VDDBSet(false);
     }
     
-    using _TriggerSource = uint8_t;
-    struct _TriggerSources {
-        static constexpr _TriggerSource None    = 0;
-        static constexpr _TriggerSource Motion  = 1<<0;
-        static constexpr _TriggerSource Manual  = 1<<1;
-    };
+//    using _TriggerSource = uint8_t;
+//    struct _TriggerSources {
+//        static constexpr _TriggerSource None    = 0;
+//        static constexpr _TriggerSource Motion  = 1<<0;
+//        static constexpr _TriggerSource Manual  = 1<<1;
+//    };
     
-    static _TriggerSource _TriggerPoll() {
-        const _TriggerSource x = _TrigSrc;
-        _TrigSrc = _TriggerSources::None;
-        return x;
+//    static _TriggerSource _TriggerPoll() {
+//        const _TriggerSource x = _TrigSrc;
+//        _TrigSrc = _TriggerSources::None;
+//        return x;
+//    }
+    
+//    static void ManualTrigger() {
+//        _TrigSrc |= _TriggerSources::Manual;
+//    }
+    
+    static void _ImageCapture(const CaptureState& state) {
+        // Turn on VDD_B power (turns on ICE40)
+        _VDDBSet(true);
+        
+        // Wait for ICE40 to start
+        // We specify (within the bitstream itself, via icepack) that ICE40 should load
+        // the bitstream at high-frequency (40 MHz).
+        // According to the datasheet, this takes 70ms.
+        _Scheduler::Sleep(_Scheduler::Ms(30));
+        _ICEInit();
+        
+        // Reset SD nets before we turn on SD power
+        _TaskSD::CardReset();
+        _TaskSD::Wait();
+        
+        // Turn on IMG/SD power
+        _VDDIMGSDSet(true);
+        
+        // Init image sensor / SD card
+        _TaskImg::SensorInit();
+        _TaskSD::CardInit();
+        
+        // Capture an image
+        {
+            // Wait for _TaskSD to be initialized and done with writing, which is necessary
+            // for 2 reasons:
+            //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
+            //      access it,
+            //   2. we can't initiate a new capture until writing to the SD card (from a
+            //      previous capture) is complete (because the SDRAM is single-port, so
+            //      we can only read or write at one time)
+            _TaskSD::WaitForInitAndWrite();
+            
+            // Capture image to RAM
+            _TaskImg::Capture(imgRingBuf.buf.id);
+            const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
+            
+            // Copy image from RAM -> SD card
+            _TaskSD::Write(srcRAMBlock);
+            _TaskSD::Wait();
+        }
+        
+//            for (;;) {
+//                // Capture an image
+//                {
+//                    // Wait for _TaskSD to be initialized and done with writing, which is necessary
+//                    // for 2 reasons:
+//                    //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
+//                    //      access it,
+//                    //   2. we can't initiate a new capture until writing to the SD card (from a
+//                    //      previous capture) is complete (because the SDRAM is single-port, so
+//                    //      we can only read or write at one time)
+//                    _TaskSD::WaitForInitAndWrite();
+//                    
+//                    // Capture image to RAM
+//                    _TaskImg::Capture(imgRingBuf.buf.id);
+//                    const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
+//                    
+//                    // Copy image from RAM -> SD card
+//                    _TaskSD::Write(srcRAMBlock);
+//                    _TaskSD::Wait();
+//                }
+//                
+//                break;
+//                
+////                // Wait up to 1s for further motion
+////                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
+////                if (!motion) break;
+////                
+////                // Only reset _Motion if we've observed motion; otherwise, if we always reset
+////                // _Motion, there'd be a race window where we could first observe
+////                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
+////                // the true value by resetting it to false.
+////                _Motion = false;
+//            }
+//        
+//        if (trigger & _TriggerSources::Manual) {
+//            _LEDRed_::Set(_LEDPriority::Capture, 1);
+//        }
+        
+        _VDDIMGSDSet(false);
+        _VDDBSet(false);
     }
     
-    static void ManualTrigger() {
-        _TrigSrc |= _TriggerSources::Manual;
+    static void _MotionEnable(const MotionState& state) {
+        _MotionStates[ev->stateIdx].enabled.acquire();
+    }
+    
+    static void _MotionDisable(const MotionState& state) {
+        _MotionStates[ev->stateIdx].enabled.release();
+    }
+    
+    static void _MotionUnsuppress(const MotionState& state) {
+        _MotionStates[ev->stateIdx].enabled.suppress(false);
     }
     
     static void Run() {
@@ -606,107 +768,40 @@ struct _TaskMain {
 //            }
             
             // Wait until we're triggered to capture an image
-            static _TriggerSource trigger = _TriggerSources::None;
-            _Scheduler::Wait([] {
-                trigger = _TriggerPoll();
-                return trigger!=_TriggerSources::None;
-            });
+            static Event* ev = nullptr;
+            _Scheduler::Wait([] { return ev = _EventPop(); });
             
-            // Light the red LED if this is a manual trigger
-            if (trigger & _TriggerSources::Manual) {
-                _LEDRed_::Set(_LEDPriority::Capture, 0);
-            }
-            
-            // Stay powered until we finish capturing the image
+            // Stay powered while we handle the event
             _Power.acquire();
             
-            // Turn on VDD_B power (turns on ICE40)
-            _VDDBSet(true);
-            
-            // Wait for ICE40 to start
-            // We specify (within the bitstream itself, via icepack) that ICE40 should load
-            // the bitstream at high-frequency (40 MHz).
-            // According to the datasheet, this takes 70ms.
-            _Scheduler::Sleep(_Scheduler::Ms(30));
-            _ICEInit();
-            
-            // Reset SD nets before we turn on SD power
-            _TaskSD::CardReset();
-            _TaskSD::Wait();
-            
-            // Turn on IMG/SD power
-            _VDDIMGSDSet(true);
-            
-            // Init image sensor / SD card
-            _TaskImg::SensorInit();
-            _TaskSD::CardInit();
-            
-            // Capture an image
-            {
-                // Wait for _TaskSD to be initialized and done with writing, which is necessary
-                // for 2 reasons:
-                //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
-                //      access it,
-                //   2. we can't initiate a new capture until writing to the SD card (from a
-                //      previous capture) is complete (because the SDRAM is single-port, so
-                //      we can only read or write at one time)
-                _TaskSD::WaitForInitAndWrite();
-                
-                // Capture image to RAM
-                _TaskImg::Capture(imgRingBuf.buf.id);
-                const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
-                
-                // Copy image from RAM -> SD card
-                _TaskSD::Write(srcRAMBlock);
-                _TaskSD::Wait();
+            switch (ev->type) {
+            case Capture:
+                _ImageCapture(*ev);
+                break;
+            case MotionEnable:
+                _MotionEnable(*ev);
+//                _MotionStates[ev->stateIdx].enabled.acquire();
+                break;
+            case MotionDisable:
+                _MotionDisable(*ev);
+//                _MotionStates[ev->stateIdx].enabled.release();
+                break;
+            case MotionUnsuppress:
+                _MotionUnsuppress(*ev);
+//                _MotionStates[ev->stateIdx].enabled.suppress(false);
+                break;
             }
             
-//            for (;;) {
-//                // Capture an image
-//                {
-//                    // Wait for _TaskSD to be initialized and done with writing, which is necessary
-//                    // for 2 reasons:
-//                    //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
-//                    //      access it,
-//                    //   2. we can't initiate a new capture until writing to the SD card (from a
-//                    //      previous capture) is complete (because the SDRAM is single-port, so
-//                    //      we can only read or write at one time)
-//                    _TaskSD::WaitForInitAndWrite();
-//                    
-//                    // Capture image to RAM
-//                    _TaskImg::Capture(imgRingBuf.buf.id);
-//                    const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
-//                    
-//                    // Copy image from RAM -> SD card
-//                    _TaskSD::Write(srcRAMBlock);
-//                    _TaskSD::Wait();
-//                }
-//                
-//                break;
-//                
-////                // Wait up to 1s for further motion
-////                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-////                if (!motion) break;
-////                
-////                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-////                // _Motion, there'd be a race window where we could first observe
-////                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-////                // the true value by resetting it to false.
-////                _Motion = false;
+//            // Light the red LED if this is a manual trigger
+//            if (trigger & _TriggerSources::Manual) {
+//                _LEDRed_::Set(_LEDPriority::Capture, 0);
 //            }
-            
-            if (trigger & _TriggerSources::Manual) {
-                _LEDRed_::Set(_LEDPriority::Capture, 1);
-            }
-            
-            _VDDIMGSDSet(false);
-            _VDDBSet(false);
             
             // Release power assertion
             _Power.release();
             
-            // Release control of the LED
-            _LEDRed_::Set(_LEDPriority::Capture, std::nullopt);
+//            // Release control of the LED
+//            _LEDRed_::Set(_LEDPriority::Capture, std::nullopt);
         }
     }
     
@@ -748,7 +843,7 @@ struct _TaskMain {
     
     // Task stack
     [[gnu::section(".stack._TaskMain")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
@@ -866,7 +961,7 @@ struct _TaskI2C {
     
     // Task stack
     [[gnu::section(".stack._TaskI2C")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
@@ -952,7 +1047,7 @@ struct _TaskButton {
     
     // Task stack
     [[gnu::section(".stack._TaskButton")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[128];
 };
 

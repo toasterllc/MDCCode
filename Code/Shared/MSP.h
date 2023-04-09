@@ -98,6 +98,51 @@ struct [[gnu::packed]] State {
     } sd = {};
     static_assert(!(sizeof(sd) % 2)); // Check alignment
     
+    struct [[gnu::packed]] CaptureState {
+        struct [[gnu::packed]] Time {
+            enum class Type : uint8_t {
+                Capture,
+                MotionEnable,
+                MotionDisable,
+            };
+            
+            Time::Instant time = 0;
+            Type type = Type::Capture;
+            uint8_t idx = 0;
+        };
+        
+        struct [[gnu::packed]] Capture {
+            uint32_t delayMs = 0;
+            uint32_t periodMs = 0;
+            uint16_t count = 0;
+        };
+        
+        struct [[gnu::packed]] Motion {
+            uint16_t count = 0;
+            uint32_t periodMs = 0;
+            uint32_t suppressDurationMs = 0;
+            uint8_t captureIdx = 0;
+        };
+        
+        struct [[gnu::packed]] Button {
+            uint8_t captureIdx = 0;
+        };
+        
+        Time time[32];
+        uint8_t timeCount = 0;
+        
+        Capture capture[16];
+        uint8_t captureCount = 0;
+        
+        Motion motion[8];
+        uint8_t motionCount = 0;
+        
+        Button button[2];
+        uint8_t buttonCount = 0;
+    };
+    
+    CaptureState captureState = {};
+    
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
     static_assert(!(sizeof(aborts) % 2)); // Check alignment
@@ -170,5 +215,35 @@ struct [[gnu::packed]] Resp {
         } BatteryChargeLevelGet;
     } arg;
 };
+
+
+
+
+
+
+//struct [[gnu::packed]] Triggers {
+//    struct [[gnu::packed]] TimeTrigger {
+//        enum class Type : uint8_t {
+//            Capture,
+//            MotionEnable,
+//            MotionDisable,
+//        };
+//        
+//        Type type;
+//        Time::Instant time;
+//        size_t idx;
+//    };
+//    
+//    struct [[gnu::packed]] Capture {
+//        
+//    };
+//    
+//    TimeTrigger time[64];
+//    Capture capture[8];
+//    Motion motion[8];
+//    Button button[2];
+//};
+
+
 
 } // namespace MSP
