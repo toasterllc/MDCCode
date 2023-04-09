@@ -117,10 +117,10 @@ public:
 private:
     static inline uint16_t _RCA = 0;
     
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     static inline SD::CardId _CardId;
     
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     static inline SD::CardData _CardData;
     
     static inline bool _Reading = false;
@@ -420,7 +420,7 @@ struct _TaskUSBDataIn {
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataIn")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
@@ -467,7 +467,7 @@ struct _TaskUSBDataOut {
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataOut")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[256];
 };
 
@@ -524,7 +524,7 @@ struct _TaskReadout {
     
     // Task stack
     [[gnu::section(".stack._TaskReadout")]]
-    alignas(alignof(void*))
+    alignas(void*)
     static inline uint8_t Stack[512];
 };
 
@@ -1009,7 +1009,7 @@ static void _MSPTimeGet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Send time
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     const Time::Instant time = mspResp->arg.TimeGet.time;
     _USB::Send(Endpoint::DataIn, &time, sizeof(time));
 }
@@ -1265,7 +1265,7 @@ void _SDInit(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Send SD card info
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     const SDCardInfo cardInfo = {
         .cardId = _SD::CardId(),
         .cardData = _SD::CardData(),
@@ -1345,7 +1345,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     
     const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstRAMBlock, arg.skipCount);
     
-    alignas(alignof(void*)) // Aligned to send via USB
+    alignas(void*) // Aligned to send via USB
     const ImgCaptureStats stats = {
         .len            = imagePaddedLen,
         .highlightCount = resp.highlightCount(),
