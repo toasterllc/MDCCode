@@ -25,6 +25,7 @@
 #include "BatterySampler.h"
 #include "Button.h"
 #include "ResourceCounter.h"
+#include "Events.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -149,87 +150,37 @@ static MSP::State _State = {
     .header = MSP::StateHeader,
 };
 
+// Power assertion
 static volatile uint8_t _PowerAssertionCounter = 0;
 using _PowerAssertion = T_ResourceCounter<_PowerAssertionCounter>;
 
+// Capture pause/resume
 static void _CapturePause();
 static void _CaptureResume();
 
 static volatile uint8_t _CapturePauseAssertionCounter = 0;
 using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter, _CapturePause, _CaptureResume>;
 
+// Motion enable/disable
+#warning TODO: implement for real
+static volatile uint8_t _MotionEnabledAssertionCounter = 0;
+using _MotionEnabledAssertion = T_ResourceCounter<_MotionEnabledAssertionCounter>;
+
+// _Events: stores our current event state
+using _Events = T_Events<_State, _MotionEnabledAssertion>;
+
+static void _CaptureStart(_Events::Event& captureEvent) {
+    _Events::Capture& capture = captureEvent.capture();
+    // Reset capture state
+    captureEvent.instant = 0;
+    capture.countRem = capture.base().count;
+    // Push the capture event
+    _Events::Push(captureEvent);
+}
 
 
 
 
-
-struct Events {
-    struct [[gnu::packed]] Event {
-        enum class Type : uint8_t {
-            TimeTrigger,        // idx: time[]
-            CaptureImage,       // idx: capture[]
-            MotionEnable,       // idx: motion[]
-            MotionDisable,      // idx: motion[]
-            MotionUnsuppress,   // idx: motion[]
-        };
-        
-        Time::Instant time = 0;
-        Event* next = nullptr;
-        Type type = Type::TimeTrigger;
-        uint8_t idx = 0;
-    };
-    
-    struct [[gnu::packed]] Time {
-        Event captureEv;
-    };
-    
-    struct [[gnu::packed]] Motion {
-        ResourceCounter enabled;
-        Event captureEv;
-        Event unsuppressEv;
-    };
-    
-    struct [[gnu::packed]] Button {
-        Event captureEv;
-    };
-    
-    struct [[gnu::packed]] Capture {
-        uint16_t countRem = 0;
-    };
-    
-    void push(const Event& ev) {
-        
-    }
-    
-    Event* pop() {
-        if (!_front) return nullptr;
-        Event*const f = _front;
-        _front = f->next;
-        return f;
-    }
-    
-    auto& time(const Event& ev)    { return _time[ev.idx];    }
-    auto& motion(const Event& ev)  { return _motion[ev.idx];  }
-    auto& button(const Event& ev)  { return _button[ev.idx];  }
-    auto& capture(const Event& ev) { return _capture[ev.idx]; }
-    
-    auto& base(const Time& x)    { return _State.events.time[&x-_time];       }
-    auto& base(const Motion& x)  { return _State.events.motion[&x-_motion];   }
-    auto& base(const Button& x)  { return _State.events.button[&x-_button];   }
-    auto& base(const Event& x)   { return _State.events.event[&x-_event];     }
-    auto& base(const Capture& x) { return _State.events.capture[&x-_capture]; }
-    
-    using E = MSP::State::Events;
-    Time    _time[E::TimeCap];
-    Motion  _motion[E::MotionCap];
-    Button  _button[E::ButtonCap];
-    Event   _event[E::EventCap];
-    Capture _capture[E::CaptureCap];
-    
-    Event*  _front = nullptr;
-};
-
-static Events _Events;
 
 
 
@@ -602,7 +553,7 @@ struct _TaskMain {
     static void Reset() {
         // Reset our state
         _Power = {};
-        _TrigSrc = _TriggerSources::None;
+//        _TrigSrc = _TriggerSources::None;
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Init();
@@ -633,20 +584,12 @@ struct _TaskMain {
 //        _TrigSrc |= _TriggerSources::Manual;
 //    }
     
-    static void _TimeTrigger(Events::Event& ev) {
-        Events::Event& captureEv = _Events.time(ev).captureEv;
-        Events::Capture& capture = _Events.capture(captureEv);
-        MSP::State::Events::Capture& captureBase = _Events.base(capture);
-        // Reset capture count
-        captureEv.time = 0;
-        capture.countRem = captureBase.count;
-        // Push the capture event
-        _Events.push(captureEv);
+    static void _TimeTrigger(_Events::Event& ev) {
+        _CaptureStart(ev.timeTrigger().captureEvent);
     }
     
-    static void _CaptureImage(Events::Event& ev) {
-        auto& capture = _Events.capture(ev);
-        const auto& base = _Events.base(capture);
+    static void _CaptureImage(_Events::Event& ev) {
+        constexpr MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         // Turn on VDD_B power (turns on ICE40)
         _VDDBSet(true);
@@ -730,26 +673,27 @@ struct _TaskMain {
         _VDDIMGSDSet(false);
         _VDDBSet(false);
         
+        _Events::Capture& capture = ev.capture();
         capture.countRem--;
         if (capture.countRem) {
-            ev.time = _RTC::TimeRead() + ((_Time::Instant)base.delayMs)*1000;
-            _Events.push(ev);
+            ev.instant = _RTC::TimeRead() + ((Time::Instant)capture.base().delayMs)*1000;
+            _Events::Push(ev);
         }
     }
     
-    static void _MotionEnable(Events::Event& ev) {
-        Events::Motion& motion = _Events.motion(ev);
+    static void _MotionEnable(_Events::Event& ev) {
+        _Events::MotionTrigger& motion = ev.motionTrigger();
         motion.enabled.acquire();
     }
     
-    static void _MotionDisable(Events::Event& ev) {
-        Events::Motion& motion = _Events.motion(ev);
+    static void _MotionDisable(_Events::Event& ev) {
+        _Events::MotionTrigger& motion = ev.motionTrigger();
         motion.enabled.release();
     }
     
-    static void _MotionUnsuppress(Events::Event& ev) {
-        Events::Motion& motion = _Events.motion(ev);
-        motion.enabled.suppress(false);
+    static void _MotionUnsuppress(_Events::Event& ev) {
+        _Events::MotionTrigger& motion = ev.motionTrigger();
+//        motion.enabled.suppress(false);
     }
     
     static void Run() {
@@ -789,8 +733,6 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms(1000));
 //        }
         
-        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
-        
         // Reset our state
         Reset();
         
@@ -807,29 +749,19 @@ struct _TaskMain {
 //            }
             
             // Wait until we're triggered to capture an image
-            static Events::Event* ev = nullptr;
-            _Scheduler::Wait([] { return ev = _Events.pop(); });
+            static _Events::Event* ev = nullptr;
+            _Scheduler::Wait([] { return (bool)(ev = _Events::Pop()); });
             
             // Stay powered while we handle the event
             _Power.acquire();
             
-            using T = Events::Event::Type;
+            using T = _Events::Event::Type;
             switch (ev->type) {
-            case T::TimeTrigger:
-                _TimeTrigger(*ev);
-                break;
-            case T::CaptureImage:
-                _CaptureImage(*ev);
-                break;
-            case T::MotionEnable:
-                _MotionEnable(*ev);
-                break;
-            case T::MotionDisable:
-                _MotionDisable(*ev);
-                break;
-            case T::MotionUnsuppress:
-                _MotionUnsuppress(*ev);
-                break;
+            case T::TimeTrigger:      _TimeTrigger(*ev);      break;
+            case T::CaptureImage:     _CaptureImage(*ev);     break;
+            case T::MotionEnable:     _MotionEnable(*ev);     break;
+            case T::MotionDisable:    _MotionDisable(*ev);    break;
+            case T::MotionUnsuppress: _MotionUnsuppress(*ev); break;
             }
             
 //            // Light the red LED if this is a manual trigger
@@ -864,7 +796,8 @@ struct _TaskMain {
 //    }
     
     static void ISR_MotionSignal(uint16_t iv) {
-        _TrigSrc |= _TriggerSources::Motion;
+        #warning TODO: implement
+//        _TrigSrc |= _TriggerSources::Motion;
     }
     
 //    // _Init: stores whether this is the first
@@ -877,7 +810,7 @@ struct _TaskMain {
 //    // _ManualTrigger: manual capture trigger
 //    static volatile inline bool _ManualTrigger = false;
     
-    static volatile inline _TriggerSource _TrigSrc = _TriggerSources::None;
+//    static volatile inline _TriggerSource _TrigSrc = _TriggerSources::None;
     
     static inline _PowerAssertion _Power;
     
@@ -1021,11 +954,15 @@ struct _TaskButton {
             power.acquire();
             
             switch (ev) {
-            case _Button::Event::Press:
+            case _Button::Event::Press: {
                 // Ignore button presses if we're off
                 if (_OffAssertion.acquired()) break;
-                _TaskMain::ManualTrigger();
+                
+                for (auto it=_Events::ButtonTriggerBegin(); it!=_Events::ButtonTriggerEnd(); it++) {
+                    _CaptureStart(it->captureEvent);
+                }
                 break;
+            }
             
             case _Button::Event::Hold:
                 if (_OffAssertion.acquired()) {
@@ -1262,10 +1199,11 @@ static void _AbortRecord(const Time::Instant& timestamp, uint16_t domain, uint16
             .line = line,
         };
         
-        hist->timestampEarliest = timestamp;
+        // Figure out if we want to bring this back again
+//        hist->timestampEarliest = timestamp;
     }
     
-    hist->timestampLatest = timestamp;
+//    hist->timestampLatest = timestamp;
     hist->count++;
 }
 

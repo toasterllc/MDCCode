@@ -1,0 +1,100 @@
+#pragma once
+
+// TODO: when we move to using >=C++20, we want to give _State.events as T_Base, but we have to give the whole _State
+//       while we're on C++17, because C++17 doesn't allow giving subojects as non-type template parameters.
+//       We created _T_Base for this reason, and can remove it and replace all uses with T_Base when we switch.
+template<auto& T_Base, typename T_MotionEnabled>
+struct T_Events {
+    struct [[gnu::packed]] Event {
+        enum class Type : uint8_t {
+            TimeTrigger,        // idx: _TimeTrigger[]
+            CaptureImage,       // idx: _Capture[]
+            MotionEnable,       // idx: _MotionTrigger[]
+            MotionDisable,      // idx: _MotionTrigger[]
+            MotionUnsuppress,   // idx: _MotionTrigger[]
+        };
+        
+        Event() {} // Necessary to workaround Clang bug that gives compiler error
+        Time::Instant instant = 0;
+        Event* next = nullptr;
+        Type type = Type::TimeTrigger;
+        uint8_t idx = 0;
+        
+        auto& timeTrigger()     { return _TimeTrigger[idx];    }
+        auto& motionTrigger()   { return _MotionTrigger[idx];  }
+        auto& buttonTrigger()   { return _ButtonTrigger[idx];  }
+        auto& capture()         { return _Capture[idx]; }
+        auto& base()            { return _Base(_T_Base.event, _Event, *this); }
+    };
+    
+    struct [[gnu::packed]] TimeTrigger {
+        Event captureEvent;
+        auto& base() { return _Base(_T_Base.time, _TimeTrigger, *this); }
+    };
+    
+    struct [[gnu::packed]] MotionTrigger {
+        T_MotionEnabled enabled;
+        Event captureEvent;
+        Event unsuppressEvent;
+        auto& base() { return _Base(_T_Base.motion, _MotionTrigger, *this); }
+    };
+    
+    struct [[gnu::packed]] ButtonTrigger {
+        Event captureEvent;
+        auto& base() { return _Base(_T_Base.button, _ButtonTrigger, *this); }
+    };
+    
+    struct [[gnu::packed]] Capture {
+        Capture() {} // Necessary to workaround Clang bug that gives compiler error
+        // countRem: remaining number of images to be captured until the current burst is complete
+        uint16_t countRem = 0;
+        auto& base() { return _Base(_T_Base.capture, _Capture, *this); }
+    };
+    
+    static void Push(const Event& ev) {
+        
+    }
+    
+    static Event* Pop() {
+        if (!_Front) return nullptr;
+        Event*const f = _Front;
+        _Front = f->next;
+        return f;
+    }
+    
+    static auto TimeTriggerBegin() { return std::begin(_TimeTrigger); }
+    static auto TimeTriggerEnd() { return std::begin(_TimeTrigger)+_T_Base.timeTriggerCount; }
+    
+    static auto MotionTriggerBegin() { return std::begin(_MotionTrigger); }
+    static auto MotionTriggerEnd() { return std::begin(_MotionTrigger)+_T_Base.motionTriggerCount; }
+    
+    static auto ButtonTriggerBegin() { return std::begin(_ButtonTrigger); }
+    static auto ButtonTriggerEnd() { return std::begin(_ButtonTrigger)+_T_Base.buttonTriggerCount; }
+    
+    static constexpr auto& _T_Base = T_Base.events;
+    
+    template<typename T_Dst, typename T_Src, size_t T_Count>
+    static T_Dst& _Base(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
+        Assert(&elm>=src && &elm<(src+T_Count));
+        const size_t idx = &elm-src;
+        return dst[idx];
+    }
+    
+    // Triggers
+    static inline TimeTrigger   _TimeTrigger[std::size(_T_Base.timeTrigger)];
+    static inline MotionTrigger _MotionTrigger[std::size(_T_Base.motionTrigger)];
+    static inline ButtonTrigger _ButtonTrigger[std::size(_T_Base.buttonTrigger)];
+    // Events
+    static inline Event _Event[std::size(_T_Base.event)];
+    // Capture descriptors
+    static inline Capture _Capture[std::size(_T_Base.capture)];
+    // Event linked list
+    static inline Event*  _Front = nullptr;
+    
+    static constexpr size_t _TotalSize = sizeof(_TimeTrigger)   +
+                                         sizeof(_MotionTrigger) +
+                                         sizeof(_ButtonTrigger) +
+                                         sizeof(_Event)         +
+                                         sizeof(_Capture)       +
+                                         sizeof(_Front)         ;
+};

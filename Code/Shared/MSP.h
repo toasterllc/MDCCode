@@ -5,6 +5,7 @@
 #include "SD.h"
 #include "ImgSD.h"
 #include "Time.h"
+#include "Toastbox/Util.h"
 
 namespace MSP {
 
@@ -64,9 +65,9 @@ static_assert(!(sizeof(AbortType) % 2)); // Check alignment
 // AbortHistory: records history of an abort type, where an abort type is a (domain,line) tuple
 struct [[gnu::packed]] AbortHistory {
     AbortType type                   = {};
-    Time::Instant timestampEarliest  = {};
-    Time::Instant timestampLatest    = {};
-    uint16_t count                   = 0;
+//    Time::Instant timestampEarliest  = {};
+//    Time::Instant timestampLatest    = {};
+    uint16_t count                    = 0;
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
@@ -78,6 +79,7 @@ struct [[gnu::packed]] State {
     };
     
     Header header = {};
+    static_assert(sizeof(header) == 8);
     
     struct [[gnu::packed]] {
         // cardId: the SD card's CID, used to determine when the SD card has been
@@ -97,17 +99,17 @@ struct [[gnu::packed]] State {
         uint8_t _pad = 0;
     } sd = {};
     static_assert(!(sizeof(sd) % 2)); // Check alignment
+//    StaticPrint(sizeof(sd));
+    static_assert(sizeof(sd) == 56); // Debug
     
     struct [[gnu::packed]] Events {
-        // Time: time trigger
-        struct [[gnu::packed]] Time {
+        struct [[gnu::packed]] TimeTrigger {
             // periodMs: the duration between triggers
             uint32_t periodMs = 0;
             uint8_t captureIdx = 0;
         };
         
-        // Motion: motion trigger
-        struct [[gnu::packed]] Motion {
+        struct [[gnu::packed]] MotionTrigger {
             // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
             uint16_t count = 0;
             // periodMs: time between MotionEnabled events
@@ -117,8 +119,7 @@ struct [[gnu::packed]] State {
             uint8_t captureIdx = 0;
         };
         
-        // Button: button trigger
-        struct [[gnu::packed]] Button {
+        struct [[gnu::packed]] ButtonTrigger {
             uint8_t captureIdx = 0;
         };
         
@@ -140,31 +141,37 @@ struct [[gnu::packed]] State {
             uint16_t count = 0;
         };
         
-        static constexpr size_t TimeCap    = 8;
-        static constexpr size_t MotionCap  = 8;
-        static constexpr size_t ButtonCap  = 2;
-        static constexpr size_t EventCap   = 32;
-        static constexpr size_t CaptureCap = TimeCap+MotionCap+ButtonCap;
+        static constexpr size_t TimeTriggerCap    = 5;
+        static constexpr size_t MotionTriggerCap  = 5;
+        static constexpr size_t ButtonTriggerCap  = 2;
+        static constexpr size_t EventCap          = 25;
+        static constexpr size_t CaptureCap        = TimeTriggerCap+MotionTriggerCap+ButtonTriggerCap;
         
-        // time/motion/button triggers
-        Time    time[TimeCap];
-        Motion  motion[MotionCap];
-        Button  button[ButtonCap];
-        Event   event[EventCap];
+        // Triggers
+        TimeTrigger   timeTrigger[TimeTriggerCap];
+        MotionTrigger motionTrigger[MotionTriggerCap];
+        ButtonTrigger buttonTrigger[ButtonTriggerCap];
+        // Events
+        Event event[EventCap];
+        // Capture descriptors
         Capture capture[CaptureCap];
         
-        uint8_t timeCount    = 0;
-        uint8_t motionCount  = 0;
-        uint8_t buttonCount  = 0;
-        uint8_t eventCount   = 0;
-        uint8_t captureCount = 0;
+        uint8_t timeTriggerCount   = 0;
+        uint8_t motionTriggerCount = 0;
+        uint8_t buttonTriggerCount = 0;
+        uint8_t eventCount         = 0;
+        uint8_t captureCount       = 0;
     };
     
     Events events = {};
+//    StaticPrint(sizeof(events));
+//    static_assert(sizeof(events) == 507); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
     static_assert(!(sizeof(aborts) % 2)); // Check alignment
+//    StaticPrint(sizeof(aborts));
+    static_assert(sizeof(aborts) == 30); // Debug
 };
 
 static constexpr State::Header StateHeader = {
