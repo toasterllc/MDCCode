@@ -98,57 +98,69 @@ struct [[gnu::packed]] State {
     } sd = {};
     static_assert(!(sizeof(sd) % 2)); // Check alignment
     
-    struct [[gnu::packed]] EventState {
+    struct [[gnu::packed]] Events {
+        // Time: time trigger
+        struct [[gnu::packed]] Time {
+            // periodMs: the duration between triggers
+            uint32_t periodMs = 0;
+            uint8_t captureIdx = 0;
+        };
+        
+        // Motion: motion trigger
+        struct [[gnu::packed]] Motion {
+            // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
+            uint16_t count = 0;
+            // periodMs: time between MotionEnabled events
+            uint32_t periodMs = 0;
+            // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
+            uint32_t suppressMs = 0;
+            uint8_t captureIdx = 0;
+        };
+        
+        // Button: button trigger
+        struct [[gnu::packed]] Button {
+            uint8_t captureIdx = 0;
+        };
+        
         struct [[gnu::packed]] Event {
             enum class Type : uint8_t {
-                Capture,
+                TimeTrigger,
                 MotionEnable,
                 MotionDisable,
             };
             
             Time::Instant time = 0;
-            Type type = Type::Capture;
+            Type type = Type::TimeTrigger;
             uint8_t idx = 0;
         };
         
-        struct [[gnu::packed]] Time {
-            uint32_t periodMs = 0;
-            uint8_t captureIdx = 0;
-        };
-        
-        struct [[gnu::packed]] Motion {
-            uint16_t count = 0;
-            uint32_t periodMs = 0;
-            uint32_t suppressMs = 0;
-            uint8_t captureIdx = 0;
-        };
-        
-        struct [[gnu::packed]] Button {
-            uint8_t captureIdx = 0;
-        };
-        
+        // Capture: describes the capture action when a trigger occurs
         struct [[gnu::packed]] Capture {
             uint32_t delayMs = 0;
             uint16_t count = 0;
         };
         
-        Event event[32];
-        uint8_t eventCount = 0;
+        static constexpr size_t TimeCap    = 8;
+        static constexpr size_t MotionCap  = 8;
+        static constexpr size_t ButtonCap  = 2;
+        static constexpr size_t EventCap   = 32;
+        static constexpr size_t CaptureCap = TimeCap+MotionCap+ButtonCap;
         
-        Time time[16];
-        uint8_t timeCount = 0;
+        // time/motion/button triggers
+        Time    time[TimeCap];
+        Motion  motion[MotionCap];
+        Button  button[ButtonCap];
+        Event   event[EventCap];
+        Capture capture[CaptureCap];
         
-        Motion motion[8];
-        uint8_t motionCount = 0;
-        
-        Button button[2];
-        uint8_t buttonCount = 0;
-        
-        Capture capture[16];
+        uint8_t timeCount    = 0;
+        uint8_t motionCount  = 0;
+        uint8_t buttonCount  = 0;
+        uint8_t eventCount   = 0;
         uint8_t captureCount = 0;
     };
     
-    EventState eventState = {};
+    Events events = {};
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};

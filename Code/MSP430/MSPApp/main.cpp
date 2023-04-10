@@ -163,59 +163,75 @@ using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter, 
 
 
 
-
-
-
-struct Event {
-    enum class Type : uint8_t {
-        CaptureImage,
-        TimeTrigger,
-        MotionEnable,
-        MotionDisable,
-        MotionUnsuppress,
+struct Events {
+    struct [[gnu::packed]] Event {
+        enum class Type : uint8_t {
+            TimeTrigger,        // idx: time[]
+            CaptureImage,       // idx: capture[]
+            MotionEnable,       // idx: motion[]
+            MotionDisable,      // idx: motion[]
+            MotionUnsuppress,   // idx: motion[]
+        };
+        
+        Time::Instant time = 0;
+        Event* next = nullptr;
+        Type type = Type::TimeTrigger;
+        uint8_t idx = 0;
     };
     
-    Time::Instant time = 0;
-    Type type = Type::CaptureImage;
-    uint8_t stateIdx = 0;
-    Event* next = nullptr;
+    struct [[gnu::packed]] Time {
+        Event captureEv;
+    };
+    
+    struct [[gnu::packed]] Motion {
+        ResourceCounter enabled;
+        Event captureEv;
+        Event unsuppressEv;
+    };
+    
+    struct [[gnu::packed]] Button {
+        Event captureEv;
+    };
+    
+    struct [[gnu::packed]] Capture {
+        uint16_t countRem = 0;
+    };
+    
+    void push(const Event& ev) {
+        
+    }
+    
+    Event* pop() {
+        if (!_front) return nullptr;
+        Event*const f = _front;
+        _front = f->next;
+        return f;
+    }
+    
+    auto& time(const Event& ev)    { return _time[ev.idx];    }
+    auto& motion(const Event& ev)  { return _motion[ev.idx];  }
+    auto& button(const Event& ev)  { return _button[ev.idx];  }
+    auto& capture(const Event& ev) { return _capture[ev.idx]; }
+    
+    auto& base(const Time& x)    { return _State.events.time[&x-_time];       }
+    auto& base(const Motion& x)  { return _State.events.motion[&x-_motion];   }
+    auto& base(const Button& x)  { return _State.events.button[&x-_button];   }
+    auto& base(const Event& x)   { return _State.events.event[&x-_event];     }
+    auto& base(const Capture& x) { return _State.events.capture[&x-_capture]; }
+    
+    using E = MSP::State::Events;
+    Time    _time[E::TimeCap];
+    Motion  _motion[E::MotionCap];
+    Button  _button[E::ButtonCap];
+    Event   _event[E::EventCap];
+    Capture _capture[E::CaptureCap];
+    
+    Event*  _front = nullptr;
 };
 
-#warning TODO: make these counts match MSP::State counts?
-static Event _Events[32];
-static Event* _EventsFront = 0;
-
-struct TimeTriggerState {
-    Time::Instant periodStart = 0;
-};
-
-struct CaptureImageState {
-    Time::Instant periodStart = 0;
-    uint16_t countRem = 0;
-};
-
-static CaptureState _CaptureStates[16];
-
-struct MotionState {
-    Time::Instant periodStart = 0;
-    uint16_t countRem = 0;
-    ResourceCounter enabled;
-};
-
-static MotionState _MotionStates[8];
-
-struct ButtonState {};
-static ButtonState _ButtonStates[2];
+static Events _Events;
 
 
-
-
-static Event* _EventPop() {
-    if (!_EventsFront) return nullptr;
-    Event*const front = _EventsFront;
-    _EventsFront = front->next;
-    return front;
-}
 
 
 
@@ -617,7 +633,21 @@ struct _TaskMain {
 //        _TrigSrc |= _TriggerSources::Manual;
 //    }
     
-    static void _ImageCapture(const CaptureState& state) {
+    static void _TimeTrigger(Events::Event& ev) {
+        Events::Event& captureEv = _Events.time(ev).captureEv;
+        Events::Capture& capture = _Events.capture(captureEv);
+        MSP::State::Events::Capture& captureBase = _Events.base(capture);
+        // Reset capture count
+        captureEv.time = 0;
+        capture.countRem = captureBase.count;
+        // Push the capture event
+        _Events.push(captureEv);
+    }
+    
+    static void _CaptureImage(Events::Event& ev) {
+        auto& capture = _Events.capture(ev);
+        const auto& base = _Events.base(ev);
+        
         // Turn on VDD_B power (turns on ICE40)
         _VDDBSet(true);
         
@@ -699,18 +729,27 @@ struct _TaskMain {
         
         _VDDIMGSDSet(false);
         _VDDBSet(false);
+        
+        capture.countRem--;
+        if (capture.countRem) {
+            ev.time = _RTC::TimeRead() + ((_Time::Instant)base.delayMs)*1000;
+            _Events.push(ev);
+        }
     }
     
-    static void _MotionEnable(const MotionState& state) {
-        _MotionStates[ev->stateIdx].enabled.acquire();
+    static void _MotionEnable(Events::Event& ev) {
+        Events::Motion& motion = _Events.motion(ev);
+        motion.enabled.acquire();
     }
     
-    static void _MotionDisable(const MotionState& state) {
-        _MotionStates[ev->stateIdx].enabled.release();
+    static void _MotionDisable(Events::Event& ev) {
+        Events::Motion& motion = _Events.motion(ev);
+        motion.enabled.release();
     }
     
-    static void _MotionUnsuppress(const MotionState& state) {
-        _MotionStates[ev->stateIdx].enabled.suppress(false);
+    static void _MotionUnsuppress(Events::Event& ev) {
+        Events::Motion& motion = _Events.motion(ev);
+        motion.enabled.suppress(false);
     }
     
     static void Run() {
@@ -768,27 +807,28 @@ struct _TaskMain {
 //            }
             
             // Wait until we're triggered to capture an image
-            static Event* ev = nullptr;
-            _Scheduler::Wait([] { return ev = _EventPop(); });
+            static Events::Event* ev = nullptr;
+            _Scheduler::Wait([] { return ev = _Events.pop(); });
             
             // Stay powered while we handle the event
             _Power.acquire();
             
+            using T = Events::Event::Type;
             switch (ev->type) {
-            case Capture:
-                _ImageCapture(*ev);
+            case T::TimeTrigger:
+                _TimeTrigger(*ev);
                 break;
-            case MotionEnable:
+            case T::CaptureImage:
+                _CaptureImage(*ev);
+                break;
+            case T::MotionEnable:
                 _MotionEnable(*ev);
-//                _MotionStates[ev->stateIdx].enabled.acquire();
                 break;
-            case MotionDisable:
+            case T::MotionDisable:
                 _MotionDisable(*ev);
-//                _MotionStates[ev->stateIdx].enabled.release();
                 break;
-            case MotionUnsuppress:
+            case T::MotionUnsuppress:
                 _MotionUnsuppress(*ev);
-//                _MotionStates[ev->stateIdx].enabled.suppress(false);
                 break;
             }
             
