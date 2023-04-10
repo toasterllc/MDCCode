@@ -4,6 +4,25 @@
 #include "MSP.h"
 #include "Time.h"
 
+// _RTCTime: the current time (either absolute or relative, depending on the
+// value supplied to Init()).
+//
+// _RTCTime is volatile because it's updated from the interrupt context.
+//
+// _RTCTime is stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// it's maintained during sleep.
+//
+// _RTCTime needs to live in the _noinit variant of BAKMEM so that RTC
+// memory is never automatically initialized, because we don't want it
+// to be reset when we abort.
+//
+// _RTCTime is declared outside of RTCType because apparently with GCC, the
+// gnu::section() attribute doesn't work for static member variables within
+// templated classes.
+
+[[gnu::section(".ram_backup_noinit.rtc")]]
+static volatile Time::Instant _RTCTime;
+
 template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>
 class RTCType {
 public:
@@ -46,7 +65,7 @@ public:
         
         // Start RTC if it's not yet running, or restart it if we were given a new time
         if (!Enabled() || time) {
-            _Time = time;
+            _RTCTime = time;
             
             RTCMOD = InterruptCount;
             RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
@@ -62,12 +81,12 @@ public:
     // TimeRead(): returns the current time, which is either absolute (wall time) or
     // relative (to the device start time), depending on the value supplied to Init().
     //
-    // TimeRead() reads _Time in an safe, overflow-aware manner.
+    // TimeRead() reads _RTCTime in an safe, overflow-aware manner.
     //
     // Interrupts must be *enabled* (not disabled!) when calling to properly handle overflow!
     static Time::Instant TimeRead() {
         // This 2x _TimeRead() loop is necessary to handle the race related to RTCCNT overflowing:
-        // When we read _Time and RTCCNT, we don't know if _Time has been updated for the most
+        // When we read _RTCTime and RTCCNT, we don't know if _RTCTime has been updated for the most
         // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
         // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
         for (;;) {
@@ -82,7 +101,7 @@ public:
         switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
         case RTCIV_RTCIF:
             // Update our time
-            _Time += InterruptIntervalUs;
+            _RTCTime += InterruptIntervalUs;
             break;
         
         default:
@@ -112,20 +131,6 @@ private:
         // This is especially necessary because reading _Time isn't atomic
         // since it's 64 bits.
         Toastbox::IntState ints(false);
-        return _Time + RTCCNT*UsPerTick;
+        return _RTCTime + RTCCNT*UsPerTick;
     }
-    
-    // _Time: the current time (either absolute or relative, depending on the
-    // value supplied to Init()).
-    //
-    // _Time is volatile because it's updated from the interrupt context.
-    //
-    // _Time is stored in BAKMEM (RAM that's retained in LPM3.5) so that
-    // it's maintained during sleep.
-    //
-    // _Time needs to live in the _noinit variant of BAKMEM so that RTC
-    // memory is never automatically initialized, because we don't want it
-    // to be reset when we abort.
-    [[gnu::section(".ram_backup_noinit.main")]]
-    static inline volatile Time::Instant _Time;
 };
