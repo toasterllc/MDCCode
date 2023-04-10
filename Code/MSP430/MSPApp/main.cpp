@@ -646,7 +646,7 @@ struct _TaskMain {
     
     static void _CaptureImage(Events::Event& ev) {
         auto& capture = _Events.capture(ev);
-        const auto& base = _Events.base(ev);
+        const auto& base = _Events.base(capture);
         
         // Turn on VDD_B power (turns on ICE40)
         _VDDBSet(true);
