@@ -51,12 +51,22 @@ struct T_Events {
         auto& base() { return _Base(_T_Base.capture, _Capture, *this); }
     };
     
-    static void Push(const Event& ev) {
+    static void Insert(Event& ev) {
+        Event** curr = &_Front;
+        Event** prev = curr;
+        while (*curr && (ev.instant > (*curr)->instant)) {
+            prev = curr;
+            curr = &((*curr)->next);
+        }
         
+        ev.next = (*prev)->next;
+        *prev = &ev;
     }
     
-    static Event* Pop() {
+    static Event* Pop(const Time::Instant& t) {
         if (!_Front) return nullptr;
+        // If the front event occurs after the current time, no events are ready yet.
+        if (_Front->instant >= t) return nullptr;
         Event*const f = _Front;
         _Front = f->next;
         return f;

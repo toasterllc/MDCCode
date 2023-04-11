@@ -174,8 +174,8 @@ static void _CaptureStart(_Events::Event& captureEvent) {
     // Reset capture state
     captureEvent.instant = 0;
     capture.countRem = capture.base().count;
-    // Push the capture event
-    _Events::Push(captureEvent);
+    // Insert the capture event
+    _Events::Insert(captureEvent);
 }
 
 
@@ -677,7 +677,7 @@ struct _TaskMain {
         capture.countRem--;
         if (capture.countRem) {
             ev.instant = _RTC::TimeRead() + ((Time::Instant)capture.base().delayMs)*1000;
-            _Events::Push(ev);
+            _Events::Insert(ev);
         }
     }
     
@@ -750,7 +750,7 @@ struct _TaskMain {
             
             // Wait until we're triggered to capture an image
             static _Events::Event* ev = nullptr;
-            _Scheduler::Wait([] { return (bool)(ev = _Events::Pop()); });
+            _Scheduler::Wait([] { return (bool)(ev = _Events::Pop(_RTC::TimeRead())); });
             
             // Stay powered while we handle the event
             _Power.acquire();
