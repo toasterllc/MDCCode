@@ -6,6 +6,7 @@
 @protocol SourceListViewDelegate
 @required
 - (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView;
+- (void)sourceListViewShowDeviceSettings:(SourceListView*)sourceListView;
 @end
 
 @interface SourceListView : NSView

@@ -1344,15 +1344,14 @@ static NSString*const _PboardDragItemsType = @"com.heytoaster.mdcstudio.CaptureT
 
 @end
 
-@interface RedView : NSView
-@end
-
-@implementation RedView
-
-//- (void)drawRect:(NSRect)rect {
-//    [[NSColor redColor] set];
-//    NSRectFill(rect);
-//}
-
-@end
-
+//@interface RedView : NSView
+//@end
+//
+//@implementation RedView
+//
+////- (void)drawRect:(NSRect)rect {
+////    [[NSColor redColor] set];
+////    NSRectFill(rect);
+////}
+//
+//@end

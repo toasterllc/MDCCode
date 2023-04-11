@@ -271,7 +271,7 @@ CA
                         <action selector="_actionRemove:" target="-2" id="rxK-gJ-uvG"/>
                     </connections>
                 </button>
-                <customView translatesAutoresizingMaskIntoConstraints="NO" id="Py0-Ga-GEC" customClass="RedView">
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="Py0-Ga-GEC">
                     <rect key="frame" x="0.0" y="0.0" width="600" height="200"/>
                     <constraints>
                         <constraint firstAttribute="height" priority="750" id="ijg-ir-gia"/>

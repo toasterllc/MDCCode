@@ -3,8 +3,12 @@
 #import "Util.h"
 #import "MDCDevicesManager.h"
 #import "Toastbox/Mac/Util.h"
-#import "DeviceSettings/DeviceSettingsView.h"
+@class SourceListView;
 using namespace MDCStudio;
+
+@interface SourceListView ()
+- (void)_showDeviceSettings;
+@end
 
 // MARK: - Outline View Items
 
@@ -12,6 +16,9 @@ using namespace MDCStudio;
 @end
 
 @implementation SourceListView_Item {
+@public
+    SourceListView* sourceListView;
+@protected
     IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
 }
@@ -97,22 +104,7 @@ using namespace MDCStudio;
 }
 
 - (IBAction)settingsAction:(id)sender {
-    NSLog(@"SETTINGS");
-    NSWindow* parentWindow = [self window];
-    
-    DeviceSettingsView* view = [[DeviceSettingsView alloc] initWithFrame:{}];
-    
-    NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
-        styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
-        backing:NSBackingStoreBuffered defer:false];
-    NSView* contentView = [sheetWindow contentView];
-    [contentView addSubview:view];
-    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
-    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
-    
-    [parentWindow beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {
-        NSLog(@"sheet complete");
-    }];
+    [sourceListView _showDeviceSettings];
 }
 
 @end
@@ -147,6 +139,7 @@ using namespace MDCStudio;
 // MARK: - SourceListView
 
 @implementation SourceListView {
+@public
     IBOutlet NSView* _nibView;
     IBOutlet NSOutlineView* _outlineView;
     
@@ -264,9 +257,9 @@ using namespace MDCStudio;
     NSParameterAssert(itemClass);
     Item* view = Toastbox::Cast<Item*>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
     assert(view);
+    view->sourceListView = self;
     return view;
 }
-
 
 - (void)_updateDevices {
     // Collect the old and new device sets
@@ -313,6 +306,10 @@ using namespace MDCStudio;
     // we don't want)
     CGFloat usableWidth = [self bounds].size.width-4;
     [[_outlineView tableColumns][0] setWidth:usableWidth];
+}
+
+- (void)_showDeviceSettings {
+    [_delegate sourceListViewShowDeviceSettings:self];
 }
 
 //- (void)_handleDevicesChanged {

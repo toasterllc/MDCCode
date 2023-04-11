@@ -7,9 +7,17 @@
     IBOutlet NSTabView* _tabView;
     IBOutlet NSSegmentedControl* _segmentedControl;
     IBOutlet NSView* _headerBackground;
+    
+    __weak id<DeviceSettingsViewDelegate> _delegate;
 }
 
-static void _Init(DeviceSettingsView* self) {
+// MARK: - Creation
+
+- (instancetype)initWithSettings:(const MSP::Settings&)settings
+    delegate:(id<DeviceSettingsViewDelegate>)delegate {
+    
+    if (!(self = [super initWithFrame:{}])) return nil;
+    
     // Load view from nib
     {
         [self setTranslatesAutoresizingMaskIntoConstraints:false];
@@ -26,21 +34,22 @@ static void _Init(DeviceSettingsView* self) {
 //    [self->_tabView selectTabViewItem:[self->_tabView tabViewItemAtIndex:0]];
     [self->_segmentedControl setSelectedSegment:0];
     [self _actionSectionChanged:nil];
-}
-
-// MARK: - Creation
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    _Init(self);
+    
+    _delegate = delegate;
     return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
-    _Init(self);
-    return self;
-}
+//- (instancetype)initWithFrame:(NSRect)frame {
+//    if (!(self = [super initWithFrame:frame])) return nil;
+//    _Init(self);
+//    return self;
+//}
+//
+//- (instancetype)initWithCoder:(NSCoder*)coder {
+//    if (!(self = [super initWithCoder:coder])) return nil;
+//    _Init(self);
+//    return self;
+//}
 
 - (IBAction)_actionSectionChanged:(id)sender {
     const NSInteger idx = [_segmentedControl selectedSegment];
@@ -54,9 +63,16 @@ static void _Init(DeviceSettingsView* self) {
 //    }
 }
 
-- (IBAction)_actionDismiss:(id)sender {
-    [[[self window] sheetParent] endSheet:[self window]];
-//    [(id)[[_tabView selectedTabViewItem] view] description];
+- (IBAction)_actionOK:(id)sender {
+    [_delegate deviceSettingsView:self dismiss:true];
+}
+
+- (IBAction)_actionCancel:(id)sender {
+    [_delegate deviceSettingsView:self dismiss:false];
+}
+
+- (const MSP::Settings&)settings {
+    abort();
 }
 
 @end
