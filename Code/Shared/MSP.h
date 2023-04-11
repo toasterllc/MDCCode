@@ -196,7 +196,7 @@ struct [[gnu::packed]] State {
 static constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,
     .version = 0,
-    .length  = sizeof(State)-sizeof(State::Header),
+    .length  = sizeof(State),
 };
 
 static constexpr uint8_t I2CAddr = 0x55;

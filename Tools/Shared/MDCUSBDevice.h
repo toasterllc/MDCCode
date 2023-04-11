@@ -313,6 +313,13 @@ public:
                     (uintmax_t)header.version
                 );
             }
+            
+            if (header.length != sizeof(MSP::State)) {
+                throw Toastbox::RuntimeError("invalid MSP::State length (expected: 0x%jx, got: 0x%jx)",
+                    (uintmax_t)sizeof(MSP::State),
+                    (uintmax_t)header.length
+                );
+            }
         }
         
         // Header looks good; read the full MSP::State
