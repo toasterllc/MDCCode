@@ -113,7 +113,8 @@ public:
         // We did a quick analysis (see Tools/OrderOfDivision project) to determine the average error
         // and optimal order of operations when using 32-bit math instead of 64-bit math (which
         // is very expensive space-wise). With our random test data, the following implementation
-        // results in 0.0009% average error compared to using 64-bit math.
+        // results in 0.0009% average error in the resulting millivolts value compared to using
+        // 64-bit math.
         constexpr uint16_t VoltageDividerNumer = 4;
         constexpr uint16_t VoltageDividerDenom = 3;
         uint32_t mv = sampleBat;
