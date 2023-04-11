@@ -77,7 +77,9 @@ struct [[gnu::packed]] Settings {
             // periodMs: the duration between triggers
             uint32_t periodMs = 0;
             uint8_t captureIdx = 0;
+            uint8_t _pad = 0;
         };
+        static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
         
         struct [[gnu::packed]] MotionTrigger {
             // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
@@ -87,11 +89,15 @@ struct [[gnu::packed]] Settings {
             // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
             uint32_t suppressMs = 0;
             uint8_t captureIdx = 0;
+            uint8_t _pad = 0;
         };
+        static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
         
         struct [[gnu::packed]] ButtonTrigger {
             uint8_t captureIdx = 0;
+            uint8_t _pad = 0;
         };
+        static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
         
         struct [[gnu::packed]] Event {
             enum class Type : uint8_t {
@@ -104,12 +110,14 @@ struct [[gnu::packed]] Settings {
             Type type = Type::TimeTrigger;
             uint8_t idx = 0;
         };
+        static_assert(!(sizeof(Event) % 2)); // Check alignment
         
         // Capture: describes the capture action when a trigger occurs
         struct [[gnu::packed]] Capture {
             uint32_t delayMs = 0;
             uint16_t count = 0;
         };
+        static_assert(!(sizeof(Capture) % 2)); // Check alignment
         
         static constexpr size_t TimeTriggerCap    = 8;
         static constexpr size_t MotionTriggerCap  = 8;
@@ -131,11 +139,12 @@ struct [[gnu::packed]] Settings {
         uint8_t buttonTriggerCount = 0;
         uint8_t eventCount         = 0;
         uint8_t captureCount       = 0;
+        uint8_t _pad               = 0;
     };
     
     Events events = {};
 //    StaticPrint(sizeof(events));
-    static_assert(sizeof(events) == 563); // Debug
+    static_assert(sizeof(events) == 582); // Debug
     
     // eventsSource: opaque data used by software to hold its representation of the `events` struct
     uint8_t eventsSource[256] = {};
@@ -168,18 +177,19 @@ struct [[gnu::packed]] State {
         bool valid = false;
         uint8_t _pad = 0;
     } sd = {};
-    static_assert(!(sizeof(sd) % 2)); // Check alignment
 //    StaticPrint(sizeof(sd));
+    static_assert(!(sizeof(sd) % 2)); // Check alignment
     static_assert(sizeof(sd) == 56); // Debug
     
     Settings settings;
 //    StaticPrint(sizeof(settings));
-    static_assert(sizeof(settings) == 819); // Debug
+    static_assert(!(sizeof(settings) % 2)); // Check alignment
+    static_assert(sizeof(settings) == 838); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
-    static_assert(!(sizeof(aborts) % 2)); // Check alignment
 //    StaticPrint(sizeof(aborts));
+    static_assert(!(sizeof(aborts) % 2)); // Check alignment
     static_assert(sizeof(aborts) == 110); // Debug
 };
 

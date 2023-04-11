@@ -1,6 +1,6 @@
 #import "Document.h"
 #import <algorithm>
-#import "Toastbox/Mac/Util.h"
+#import "Toastbox/Cast.h"
 #import "Toastbox/Mac/ThreePartView.h"
 #import "SourceListView/SourceListView.h"
 #import "InspectorView/InspectorView.h"

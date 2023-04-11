@@ -202,6 +202,7 @@
 		557ABCEE29DD24230032619E /* BatteryLifeView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BatteryLifeView.xib; sourceTree = "<group>"; };
 		557ABCEF29DD24230032619E /* BatteryLifeView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BatteryLifeView.h; sourceTree = "<group>"; };
 		557ABD2329E600DF0032619E /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		557ABD2429E603380032619E /* Cast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cast.h; sourceTree = "<group>"; };
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
 		558FFC4629C7EF920022E840 /* IterAny.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IterAny.h; sourceTree = "<group>"; };
@@ -472,6 +473,7 @@
 			isa = PBXGroup;
 			children = (
 				55F755DE29C3D9D700241672 /* Atomic.h */,
+				557ABD2429E603380032619E /* Cast.h */,
 				5544AE1F27B5E58F006AB473 /* Defer.h */,
 				55D30A4629A9A0A90080BCBD /* DurationString.h */,
 				5544AE1A27B5E58F006AB473 /* Endian.h */,
