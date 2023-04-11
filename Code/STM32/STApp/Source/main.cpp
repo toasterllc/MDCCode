@@ -991,6 +991,7 @@ static void _MSPStateRead(const STM::Cmd& cmd) {
             _System::USBSendStatus(false);
             return;
         }
+        
         // Enqueue the buffer
         _Bufs.wpush();
         len -= buf.len;
@@ -1017,12 +1018,12 @@ static void _MSPStateWrite(const STM::Cmd& cmd) {
     
     size_t off = 0;
     for (;;) {
+        // Wait for a buffer containing more data to write
         _Scheduler::Wait([] { return _Bufs.rok(); });
-        
-        // Write the data over Spy-bi-wire
         auto& buf = _Bufs.rget();
         if (!buf.len) break; // We're done when we receive an empty buffer
         
+        // Write the data over Spy-bi-wire
         __MSPStateWrite(off, buf.data, buf.len);
         off += buf.len;
         _Bufs.rpop();
