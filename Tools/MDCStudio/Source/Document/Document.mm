@@ -519,19 +519,20 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 //    MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>(source);
 //    if (!device) return;
     
-    DeviceSettingsView* view = [[DeviceSettingsView alloc] initWithSettings:{} delegate:self];
     _deviceSettings = {
         .device = device,
-        .view = view,
+        .view = [[DeviceSettingsView alloc] initWithSettings:{} delegate:self],
     };
     
     NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
         styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
         backing:NSBackingStoreBuffered defer:false];
     NSView* contentView = [sheetWindow contentView];
-    [contentView addSubview:view];
-    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
-    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
+    [contentView addSubview:_deviceSettings.view];
+    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|"
+        options:0 metrics:nil views:@{@"view":_deviceSettings.view}]];
+    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|"
+        options:0 metrics:nil views:@{@"view":_deviceSettings.view}]];
     
     [_window beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {
         NSLog(@"sheet complete");
@@ -539,9 +540,12 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 }
 
 - (void)deviceSettingsView:(DeviceSettingsView*)view dismiss:(bool)save {
-    MSP::Settings settings = [view settings];
+    assert(view == _deviceSettings.view);
     
-    [_window endSheet:[view window]];
+    const MSP::Settings settings = [_deviceSettings.view settings];
+    _deviceSettings.device->settings(settings);
+    [_window endSheet:[_deviceSettings.view window]];
+    _deviceSettings = {};
 }
 
 @end

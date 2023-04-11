@@ -217,11 +217,11 @@ struct [[gnu::packed]] Cmd {
     Op op = Op::None;
     union {
         struct [[gnu::packed]] {
-            uint8_t chunk;
+            uint16_t off;
         } StateRead;
         
         struct [[gnu::packed]] {
-            uint8_t chunk;
+            uint16_t off;
             uint8_t data[8];
         } StateWrite;
         

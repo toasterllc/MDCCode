@@ -10,7 +10,7 @@
 #include "Assert.h"
 #include "MSP430JTAG.h"
 #include "Toastbox/Scheduler.h"
-#include "Toastbox/Stringify.h"
+#include "Toastbox/Util.h"
 
 // MARK: - Interrupt Stack
 // This is the stack that's used to handle interrupts.

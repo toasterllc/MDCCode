@@ -575,11 +575,10 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
         
         // Write the data over QSPI and wait for completion
         auto& buf = _Bufs.rget();
-        if (buf.len) {
-            _QSPI::Write(_QSPICmd::ICEWrite(buf.len), buf.data);
-        }
-        _Bufs.rpop();
         if (!buf.len) break; // We're done when we receive an empty buffer
+        
+        _QSPI::Write(_QSPICmd::ICEWrite(buf.len), buf.data);
+        _Bufs.rpop();
     }
     
     // Wait for CDONE to be asserted
@@ -909,29 +908,39 @@ static void _MSPHostModeSet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static bool __MSPStateRead(uint8_t* data, size_t len) {
-    using ChunkIdx = decltype(MSP::Cmd::arg.StateRead.chunk);
+static bool __MSPStateRead(size_t off, uint8_t* data, size_t len) {
     constexpr size_t ChunkSize = sizeof(MSP::Resp::arg.StateRead.data);
-    
-    // Make sure `chunkCount-1` won't overflow our struct field
-    const size_t chunkCount = (len+ChunkSize-1) / ChunkSize;
-    if (chunkCount-1 > std::numeric_limits<ChunkIdx>::max())
-        return false;
-    
-    for (size_t off=0, chunk=0; chunk<chunkCount; chunk++) {
+    while (len) {
+        const size_t l = std::min(len, ChunkSize);
         const MSP::Cmd mspCmd = {
             .op = MSP::Cmd::Op::StateRead,
-            .arg = { .StateRead = { .chunk = (ChunkIdx)chunk } },
+            .arg = { .StateRead = { .off = (uint16_t)off } },
         };
         const auto mspResp = _System::MSPSend(mspCmd);
         if (!mspResp || !mspResp->ok) return false;
-        
-        const size_t l = std::min(len, ChunkSize);
-        memcpy(data+off, mspResp->arg.StateRead.data, l);
+        memcpy(data, mspResp->arg.StateRead.data, l);
         off += l;
+        data += l;
         len -= l;
     }
-    
+    return true;
+}
+
+static bool __MSPStateWrite(size_t off, const uint8_t* data, size_t len) {
+    constexpr size_t ChunkSize = sizeof(MSP::Cmd::arg.StateWrite.data);
+    while (len) {
+        const size_t l = std::min(len, ChunkSize);
+        MSP::Cmd mspCmd = {
+            .op = MSP::Cmd::Op::StateWrite,
+            .arg = { .StateWrite = { .off = (uint16_t)off } },
+        };
+        memcpy(mspCmd.arg.StateWrite.data, data, l);
+        const auto mspResp = _System::MSPSend(mspCmd);
+        if (!mspResp || !mspResp->ok) return false;
+        off += l;
+        data += l;
+        len -= l;
+    }
     return true;
 }
 
@@ -957,41 +966,70 @@ static bool __MSPStateRead(uint8_t* data, size_t len) {
 //}
 
 static void _MSPStateRead(const STM::Cmd& cmd) {
-    // Reset state
-    _Bufs.reset();
-    _Buf& buf = _Bufs.wget();
-    
     auto& arg = cmd.arg.MSPStateRead;
-    if (arg.len > sizeof(buf.data)) {
-        // Reject command if the requested amount of data doesn't fit in our buffer
-        _System::USBAcceptCommand(false);
-        return;
-    }
     
     // Accept command
     _System::USBAcceptCommand(true);
     
-    bool ok = __MSPStateRead(buf.data, arg.len);
-    if (!ok) {
-        _System::USBSendStatus(false);
-        return;
+    // Reset state
+    _Bufs.reset();
+    
+    // Start the USB DataIn task
+    _TaskUSBDataIn::Start();
+    
+    size_t off = 0;
+    size_t len = arg.len;
+    while (len) {
+        // Wait for an available buffer to write into
+        _Scheduler::Wait([] { return _Bufs.wok(); });
+        _Buf& buf = _Bufs.wget();
+        buf.len = std::min(len, sizeof(buf.data));
+        
+        // Read state into the buffer
+        bool ok = __MSPStateRead(off, buf.data, buf.len);
+        if (!ok) {
+            _System::USBSendStatus(false);
+            return;
+        }
+        // Enqueue the buffer
+        _Bufs.wpush();
+        len -= buf.len;
+        off += buf.len;
+    }
+    
+    // Wait for DataIn task to complete
+    _Scheduler::Wait([] { return !_Bufs.rok(); });
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _MSPStateWrite(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPStateWrite;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Trigger the USB DataOut task with the amount of data
+    _TaskUSBDataOut::Start(arg.len);
+    
+    size_t off = 0;
+    for (;;) {
+        _Scheduler::Wait([] { return _Bufs.rok(); });
+        
+        // Write the data over Spy-bi-wire
+        auto& buf = _Bufs.rget();
+        if (!buf.len) break; // We're done when we receive an empty buffer
+        
+        __MSPStateWrite(off, buf.data, buf.len);
+        off += buf.len;
+        _Bufs.rpop();
     }
     
     // Send status
     _System::USBSendStatus(true);
-    
-    // Send data
-    _USB::Send(Endpoint::DataIn, buf.data, arg.len);
-}
-
-static void _MSPStateWrite(const STM::Cmd& cmd) {
-    // Accept command
-    _System::USBAcceptCommand(true);
-    
-    // TODO: implement? not sure we actually need this though...
-    
-    // Send status
-    _System::USBSendStatus(false);
 }
 
 static void _MSPTimeGet(const STM::Cmd& cmd) {
@@ -1117,12 +1155,11 @@ static void _MSPSBWWrite(const STM::Cmd& cmd) {
         
         // Write the data over Spy-bi-wire
         auto& buf = _Bufs.rget();
-        if (buf.len) {
-            _MSPJTAG::Write(addr, buf.data, buf.len);
-            addr += buf.len; // Update the MSP430 address to write to
-        }
-        _Bufs.rpop();
         if (!buf.len) break; // We're done when we receive an empty buffer
+        
+        _MSPJTAG::Write(addr, buf.data, buf.len);
+        addr += buf.len; // Update the MSP430 address to write to
+        _Bufs.rpop();
     }
     
     _System::USBSendStatus(true);

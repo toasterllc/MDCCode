@@ -842,7 +842,7 @@ struct _TaskI2C {
         using namespace MSP;
         switch (cmd.op) {
         case Cmd::Op::StateRead: {
-            const size_t off = cmd.arg.StateRead.chunk * sizeof(MSP::Resp::arg.StateRead.data);
+            const size_t off = cmd.arg.StateRead.off;
             if (off > sizeof(_State)) return MSP::Resp{ .ok = false };
             const size_t rem = sizeof(_State)-off;
             const size_t len = std::min(rem, sizeof(MSP::Resp::arg.StateRead.data));
@@ -852,7 +852,7 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::StateWrite: {
-            const size_t off = cmd.arg.StateWrite.chunk * sizeof(MSP::Cmd::arg.StateWrite.data);
+            const size_t off = cmd.arg.StateWrite.off;
             if (off > sizeof(_State)) return MSP::Resp{ .ok = false };
             const size_t rem = sizeof(_State)-off;
             const size_t len = std::min(rem, sizeof(MSP::Cmd::arg.StateWrite.data));
