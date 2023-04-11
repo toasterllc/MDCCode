@@ -17,7 +17,7 @@ struct T_Events {
         };
         
 //        Event() {} // Necessary to workaround Clang bug that emits compiler error
-        Time::Instant instant = 0;
+        Time::Instant time = 0;
         Type type = Type::TimeTrigger;
         uint8_t idx = 0;
         Event* next = nullptr;
@@ -73,7 +73,7 @@ struct T_Events {
                 Event& ev = *it;
                 const _EventBase& bev = it->base();
                 
-                ev.instant = bev.time;
+                ev.time = bev.time;
                 ev.type = _EventTypeForBaseEventType(bev.type);
                 ev.idx = bev.idx;
                 
@@ -86,7 +86,7 @@ struct T_Events {
     static void Insert(Event& ev) {
         Event** curr = &_Front;
         Event** prev = curr;
-        while (*curr && (ev.instant > (*curr)->instant)) {
+        while (*curr && (ev.time > (*curr)->time)) {
             prev = curr;
             curr = &((*curr)->next);
         }
@@ -98,7 +98,7 @@ struct T_Events {
     static Event* Pop(const Time::Instant& t) {
         if (!_Front) return nullptr;
         // If the front event occurs after the current time, no events are ready yet.
-        if (_Front->instant >= t) return nullptr;
+        if (_Front->time >= t) return nullptr;
         Event*const f = _Front;
         _Front = f->next;
         return f;

@@ -179,7 +179,7 @@ using _MotionEnabledAssertion = T_MotionEnabledAssertion<_MotionEnabledAssertion
 using _Events = T_Events<_State, _MotionEnabledAssertion>;
 
 static void _EventInsert(_Events::Event& ev, const Time::Instant& t) {
-    ev.instant = t;
+    ev.time = t;
     _Events::Insert(ev);
 }
 
