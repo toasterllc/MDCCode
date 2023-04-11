@@ -29,19 +29,19 @@ struct T_Events {
     
     struct TimeTrigger {
         Event captureEvent;
-        auto& base() { return _Base(_T_Base.time, _TimeTrigger, *this); }
+        auto& base() { return _Base(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
     struct MotionTrigger {
         T_MotionEnabled enabled;
         Event captureEvent;
         Event unsuppressEvent;
-        auto& base() { return _Base(_T_Base.motion, _MotionTrigger, *this); }
+        auto& base() { return _Base(_T_Base.motionTrigger, _MotionTrigger, *this); }
     };
     
     struct ButtonTrigger {
         Event captureEvent;
-        auto& base() { return _Base(_T_Base.button, _ButtonTrigger, *this); }
+        auto& base() { return _Base(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
     };
     
     struct Capture {

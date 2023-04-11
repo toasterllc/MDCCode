@@ -27,6 +27,7 @@
 #include "ResourceCounter.h"
 #include "Events.h"
 #include "Motion.h"
+#include "MotionEnabledAssertion.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -168,20 +169,30 @@ static volatile uint8_t _CapturePauseAssertionCounter = 0;
 using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter, _CapturePause, _CaptureResume>;
 
 // Motion enable/disable
-#warning TODO: implement for real
+static void _MotionEnable();
+static void _MotionDisable();
+
 static volatile uint8_t _MotionEnabledAssertionCounter = 0;
-using _MotionEnabledAssertion = T_ResourceCounter<_MotionEnabledAssertionCounter>;
+using _MotionEnabledAssertion = T_MotionEnabledAssertion<_MotionEnabledAssertionCounter, _MotionEnable, _MotionDisable>;
 
 // _Events: stores our current event state
 using _Events = T_Events<_State, _MotionEnabledAssertion>;
 
-static void _CaptureStart(_Events::Event& captureEvent) {
-    _Events::Capture& capture = captureEvent.capture();
+static void _EventInsert(_Events::Event& ev, const Time::Instant& t) {
+    ev.instant = t;
+    _Events::Insert(ev);
+}
+
+static void _EventInsertDelayed(_Events::Event& ev, uint32_t delayMs) {
+    _EventInsert(ev, _RTC::TimeRead() + ((Time::Instant)delayMs)*1000);
+}
+
+static void _CaptureStart(_Events::Event& ev) {
+    _Events::Capture& capture = ev.capture();
     // Reset capture state
-    captureEvent.instant = 0;
     capture.countRem = capture.base().count;
-    // Insert the capture event
-    _Events::Insert(captureEvent);
+    // Insert the event at time 0
+    _EventInsert(ev, 0);
 }
 
 
@@ -682,8 +693,7 @@ struct _TaskMain {
         _Events::Capture& capture = ev.capture();
         capture.countRem--;
         if (capture.countRem) {
-            ev.instant = _RTC::TimeRead() + ((Time::Instant)capture.base().delayMs)*1000;
-            _Events::Insert(ev);
+            _EventInsertDelayed(ev, capture.base().delayMs);
         }
     }
     
@@ -699,7 +709,7 @@ struct _TaskMain {
     
     static void _MotionUnsuppress(_Events::Event& ev) {
         _Events::MotionTrigger& motion = ev.motionTrigger();
-//        motion.enabled.suppress(false);
+        motion.enabled.suppress(false);
     }
     
     static void Run() {
@@ -950,8 +960,16 @@ struct _TaskMotion {
             _Motion::WaitForMotion();
             // When motion occurs, start captures for each enabled motion trigger
             for (auto it=_Events::MotionTriggerBegin(); it!=_Events::MotionTriggerEnd(); it++) {
-                if (it->enabled.acquired()) {
-                    _CaptureStart(it->captureEvent);
+                _Events::MotionTrigger& motion = *it;
+                // If this trigger is enabled...
+                if (motion.enabled.acquired()) {
+                    // Start capture
+                    _CaptureStart(motion.captureEvent);
+                    // Suppress motion for the specified duration, if suppression is enabled
+                    if (motion.base().suppressMs) {
+                        motion.enabled.suppress(true);
+                        _EventInsertDelayed(motion.unsuppressEvent, motion.base().suppressMs);
+                    }
                 }
             }
         }
@@ -962,6 +980,14 @@ struct _TaskMotion {
     alignas(void*)
     static inline uint8_t Stack[128];
 };
+
+static void _MotionEnable() {
+    _Motion::Enabled(true);
+}
+
+static void _MotionDisable() {
+    _Motion::Enabled(false);
+}
 
 struct _TaskButton {
     static void Run() {
