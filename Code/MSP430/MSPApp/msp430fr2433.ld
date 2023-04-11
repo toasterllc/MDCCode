@@ -185,7 +185,11 @@ SECTIONS
     *(.rodata .rodata.* .gnu.linkonce.r.* .const .const:*)
     *(.rodata1)
     KEEP (*(.gcc_except_table)) *(.gcc_except_table.*)
-  } > FRAM
+
+  /* We moved rodata/rodata2 from FRAM -> INFOMEM to make use of the otherwise unused FRAM 'Information Memory'.
+     If rodata/rodata2 overflow INFOMEM, switch rodata/rodata2 back to using the FRAM region, and find some
+     other region to make use of INFOMEM. */
+  } > INFOMEM
 
   /* Note: This is a separate .rodata section for sections which are
      read only but which older linkers treat as read-write.
@@ -231,7 +235,11 @@ SECTIONS
     KEEP (*(EXCLUDE_FILE (*crtend*.o ) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
-  } > FRAM
+
+  /* We moved rodata/rodata2 from FRAM -> INFOMEM to make use of the otherwise unused FRAM 'Information Memory'.
+     If rodata/rodata2 overflow INFOMEM, switch rodata/rodata2 back to using the FRAM region, and find some
+     other region to make use of INFOMEM. */
+  } > INFOMEM
 
 
   /* This section contains data that is initialised during load

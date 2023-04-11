@@ -144,8 +144,8 @@ using _SDCard = SD::Card<
 using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
-// Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
-[[gnu::section(".fram_info.main")]]
+// Stored in FRAM because it needs to persist indefinitely.
+[[gnu::section(".persistent")]]
 static MSP::State _State = {
     .header = MSP::StateHeader,
 };
@@ -1200,10 +1200,10 @@ static void _AbortRecord(const Time::Instant& timestamp, uint16_t domain, uint16
         };
         
         // Figure out if we want to bring this back again
-//        hist->timestampEarliest = timestamp;
+        hist->timestampEarliest = timestamp;
     }
     
-//    hist->timestampLatest = timestamp;
+    hist->timestampLatest = timestamp;
     hist->count++;
 }
 

@@ -65,9 +65,9 @@ static_assert(!(sizeof(AbortType) % 2)); // Check alignment
 // AbortHistory: records history of an abort type, where an abort type is a (domain,line) tuple
 struct [[gnu::packed]] AbortHistory {
     AbortType type                   = {};
-//    Time::Instant timestampEarliest  = {};
-//    Time::Instant timestampLatest    = {};
-    uint16_t count                    = 0;
+    Time::Instant timestampEarliest  = {};
+    Time::Instant timestampLatest    = {};
+    uint16_t count                   = 0;
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
@@ -141,10 +141,10 @@ struct [[gnu::packed]] State {
             uint16_t count = 0;
         };
         
-        static constexpr size_t TimeTriggerCap    = 5;
-        static constexpr size_t MotionTriggerCap  = 5;
+        static constexpr size_t TimeTriggerCap    = 8;
+        static constexpr size_t MotionTriggerCap  = 8;
         static constexpr size_t ButtonTriggerCap  = 2;
-        static constexpr size_t EventCap          = 25;
+        static constexpr size_t EventCap          = 32;
         static constexpr size_t CaptureCap        = TimeTriggerCap+MotionTriggerCap+ButtonTriggerCap;
         
         // Triggers
@@ -165,13 +165,13 @@ struct [[gnu::packed]] State {
     
     Events events = {};
 //    StaticPrint(sizeof(events));
-//    static_assert(sizeof(events) == 507); // Debug
+    static_assert(sizeof(events) == 563); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
     static_assert(!(sizeof(aborts) % 2)); // Check alignment
 //    StaticPrint(sizeof(aborts));
-    static_assert(sizeof(aborts) == 30); // Debug
+    static_assert(sizeof(aborts) == 110); // Debug
 };
 
 static constexpr State::Header StateHeader = {
