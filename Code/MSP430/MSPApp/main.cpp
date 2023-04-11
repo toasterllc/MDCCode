@@ -570,7 +570,6 @@ struct _TaskMain {
     static void Reset() {
         // Reset our state
         _Power = {};
-//        _TrigSrc = _TriggerSources::None;
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Init();
@@ -583,23 +582,6 @@ struct _TaskMain {
         _VDDIMGSDSet(false);
         _VDDBSet(false);
     }
-    
-//    using _TriggerSource = uint8_t;
-//    struct _TriggerSources {
-//        static constexpr _TriggerSource None    = 0;
-//        static constexpr _TriggerSource Motion  = 1<<0;
-//        static constexpr _TriggerSource Manual  = 1<<1;
-//    };
-    
-//    static _TriggerSource _TriggerPoll() {
-//        const _TriggerSource x = _TrigSrc;
-//        _TrigSrc = _TriggerSources::None;
-//        return x;
-//    }
-    
-//    static void ManualTrigger() {
-//        _TrigSrc |= _TriggerSources::Manual;
-//    }
     
     static void _TimeTrigger(_Events::Event& ev) {
         _CaptureStart(ev.timeTrigger().captureEvent);
@@ -764,7 +746,7 @@ struct _TaskMain {
 //                _WaitingForMotion = false;
 //            }
             
-            // Wait until we're triggered to capture an image
+            // Wait for an event
             static _Events::Event* ev = nullptr;
             _Scheduler::Wait([] { return (bool)(ev = _Events::Pop(_RTC::TimeRead())); });
             
@@ -793,12 +775,6 @@ struct _TaskMain {
         }
     }
     
-//    static void _Init() {
-//        // Reset our shared state
-//        // This is used to init our task after it's been stopped in an arbitrary state.
-//        _Motion = false;
-//    }
-//    
 //    static bool DeepSleepOK() {
 //        // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
 //        // This logic works because if _WaitingForMotion==true, then we've disabled both _TaskSD
@@ -810,23 +786,6 @@ struct _TaskMain {
 //               !_Scheduler::Running<_TaskSD>()  &&
 //               !_Scheduler::Running<_TaskImg>() ;
 //    }
-    
-    static void ISR_MotionSignal(uint16_t iv) {
-        #warning TODO: implement
-//        _TrigSrc |= _TriggerSources::Motion;
-    }
-    
-//    // _Init: stores whether this is the first
-//    [[gnu::section(".ram_backup.main")]]
-//    static inline bool _FirstRunDone = false;
-//    
-//    // _MotionTrigger: announces that motion occurred
-//    static volatile inline bool _MotionTrigger = false;
-//    
-//    // _ManualTrigger: manual capture trigger
-//    static volatile inline bool _ManualTrigger = false;
-    
-//    static volatile inline _TriggerSource _TrigSrc = _TriggerSources::None;
     
     static inline _PowerAssertion _Power;
     
