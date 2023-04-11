@@ -52,12 +52,13 @@ struct _Pin {
     using MSP_XIN                   = PortA::Pin<0x9>;
     using LED_RED_                  = PortA::Pin<0xA, Option::Output1>;
     using VDD_B_2V8_IMG_SD_EN       = PortA::Pin<0xB, Option::Output0>;
-    using MOTION_SIGNAL             = PortA::Pin<0xC, Option::Input, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only drive 1, so we have a pulldown
+    using MOTION_SIGNAL             = PortA::Pin<0xC>;
     using BUTTON_SIGNAL_            = PortA::Pin<0xD>;
     using BAT_CHRG_LVL_EN_          = PortA::Pin<0xE, Option::Output1>;
     using VDD_B_3V3_STM             = PortA::Pin<0xF, Option::Input, Option::Resistor0>;
+    
     // Port B
-    using MOTION_EN_                = PortB::Pin<0x0, Option::Output1>;
+    using MOTION_EN_                = PortB::Pin<0x0>;
     using VDD_B_EN                  = PortB::Pin<0x1, Option::Output0>;
     using _UNUSED0                  = PortB::Pin<0x2>;
 };
@@ -67,6 +68,7 @@ class _TaskSD;
 class _TaskImg;
 class _TaskI2C;
 class _TaskButton;
+class _TaskMotion;
 
 static void _Sleep();
 
@@ -95,7 +97,8 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskSD,
     _TaskImg,
     _TaskI2C,
-    _TaskButton
+    _TaskButton,
+    _TaskMotion
 >;
 
 using _Clock = ClockType<_MCLKFreqHz>;
@@ -104,6 +107,7 @@ using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_
 using _ICE = ICE<_Scheduler, _ICEError>;
 
 using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr, _I2CError>;
+using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
 
 using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_, _BatterySamplerError>;
 
@@ -938,6 +942,25 @@ struct _TaskI2C {
     static inline uint8_t Stack[256];
 };
 
+struct _TaskMotion {
+    static void Run() {
+        for (;;) {
+            _Motion::WaitForMotion();
+            // When motion occurs, start captures for each enabled motion trigger
+            for (auto it=_Events::MotionTriggerBegin(); it!=_Events::MotionTriggerEnd(); it++) {
+                if (it->enabled.acquired()) {
+                    _CaptureStart(it->captureEvent);
+                }
+            }
+        }
+    }
+    
+    // Task stack
+    [[gnu::section(".stack._TaskMotion")]]
+    alignas(void*)
+    static inline uint8_t Stack[128];
+};
+
 struct _TaskButton {
     static void Run() {
         // Pause captures upon power on. This is so that the device is off until
@@ -1083,7 +1106,7 @@ static void _ISR_Port2() {
     
     // Motion
     case _Pin::MOTION_SIGNAL::IVPort2():
-        _TaskMain::ISR_MotionSignal(iv);
+        _Motion::ISR();
         __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
         break;
     
@@ -1254,18 +1277,12 @@ int main() {
     
     // Init GPIOs
     GPIO::Init<
-        // General IO
-        _Pin::MOTION_SIGNAL,
-        _Pin::LED_GREEN_,
-        _Pin::LED_RED_,
-        _Pin::MOTION_EN_,
-        _Pin::VDD_B_EN,
-        
         // Power control
+        _Pin::VDD_B_EN,
         _Pin::VDD_B_1V8_IMG_SD_EN,
         _Pin::VDD_B_2V8_IMG_SD_EN,
         
-        // Clock (config chosen by _RTCType)
+        // Clock (config chosen by _RTC)
         _RTC::Pin::XOUT,
         _RTC::Pin::XIN,
         
@@ -1279,12 +1296,20 @@ int main() {
         _I2C::Pin::SDA,
         _I2C::Pin::Active,
         
+        // Motion (config chosen by _Motion)
+        _Motion::Pin::Power,
+        _Motion::Pin::Signal,
+        
         // Battery (config chosen by _BatterySampler)
         _BatterySampler::Pin::BatChrgLvlPin,
         _BatterySampler::Pin::BatChrgLvlEn_Pin,
         
-        // Button
-        _Button::Pin
+        // Button (config chosen by _Button)
+        _Button::Pin,
+        
+        // LEDs
+        _Pin::LED_GREEN_,
+        _Pin::LED_RED_
     >();
     
     // Init clock
@@ -1321,6 +1346,6 @@ int main() {
 //    }
     
 //    _Scheduler::Start<_TaskButton>();
-    _Scheduler::Start<_TaskButton, _TaskI2C>();
+    _Scheduler::Start<_TaskI2C, _TaskButton, _TaskMotion>();
     _Scheduler::Run();
 }
