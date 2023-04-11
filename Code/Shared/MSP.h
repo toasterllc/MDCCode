@@ -140,14 +140,14 @@ struct [[gnu::packed]] Settings {
         uint8_t eventCount         = 0;
         uint8_t captureCount       = 0;
         uint8_t _pad               = 0;
+        
+        // source: opaque data used by software to hold its representation of this struct
+        uint8_t source[256] = {};
     };
     
     Events events = {};
 //    StaticPrint(sizeof(events));
-    static_assert(sizeof(events) == 582); // Debug
-    
-    // eventsSource: opaque data used by software to hold its representation of the `events` struct
-    uint8_t eventsSource[256] = {};
+    static_assert(sizeof(events) == 838); // Debug
 };
 
 struct [[gnu::packed]] State {

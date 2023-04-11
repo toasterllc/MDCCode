@@ -289,12 +289,12 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _width = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeWidth
         relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
         constant:0];
+    [_width setActive:true];
     
     _height = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
         relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
         constant:0];
-    
-    [NSLayoutConstraint activateConstraints:@[_width, _height]];
+    [_height setActive:true];
 }
 
 //- (CGSize)preferredFrameSize {
@@ -544,20 +544,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     
     _imageLayer = imageLayer;
     
-//    // Set document view's size
-//    {
-//        [_docWidth setConstant:imageThumb.imageWidth*2];
-//        [_docHeight setConstant:imageThumb.imageHeight*2];
-////        NSView* doc = [_scrollView documentView];
-////        [doc setTranslatesAutoresizingMaskIntoConstraints:false];
-////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeWidth
-////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-////            constant:imageThumb.ref.imageWidth*2]];
-////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeHeight
-////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-////            constant:imageThumb.ref.imageHeight*2]];
-//    }
-    
 //    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer* timer) {
 //        NSLog(@"[self bounds]: %@", NSStringFromRect([self bounds]));
 //        NSLog(@"[_scrollView bounds]: %@", NSStringFromRect([_scrollView bounds]));
@@ -618,35 +604,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     [[self window] makeFirstResponder:self];
 }
-
-//- (void)fixedCreateConstraintsForContainer:(NSView*)container {
-//    NSLog(@"fixedCreateConstraintsForContainer");
-//}
-
-//// MARK: - NSView Overrides
-//- (void)fixedCreateConstraintsForContainer:(NSView*)container {
-//    
-////        [_docWidth setConstant:imageThumb.imageWidth*2];
-////        [_docHeight setConstant:imageThumb.imageHeight*2];
-//////        NSView* doc = [_scrollView documentView];
-//////        [doc setTranslatesAutoresizingMaskIntoConstraints:false];
-//////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeWidth
-//////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-//////            constant:imageThumb.ref.imageWidth*2]];
-//////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeHeight
-//////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-//////            constant:imageThumb.ref.imageHeight*2]];
-//    
-//    NSLayoutConstraint* width = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeWidth
-//        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-//        constant:_imageLayer->imageThumb.imageWidth*2];
-//    
-//    NSLayoutConstraint* height = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
-//        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-//        constant:_imageLayer->imageThumb.imageHeight*2];
-//    
-//    [NSLayoutConstraint activateConstraints:@[width, height]];
-//}
 
 @end
 

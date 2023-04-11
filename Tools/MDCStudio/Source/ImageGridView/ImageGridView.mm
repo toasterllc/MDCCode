@@ -974,11 +974,12 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     NSLayoutConstraint* docHeightMin = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
         relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:containerSuperview attribute:NSLayoutAttributeHeight
         multiplier:1 constant:0];
+    [docHeightMin setActive:true];
     
     _docHeight = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
         relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
         multiplier:1 constant:0];
-    [NSLayoutConstraint activateConstraints:@[docHeightMin, _docHeight]];
+    [_docHeight setActive:true];
 }
 
 @end

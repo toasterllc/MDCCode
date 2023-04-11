@@ -58,9 +58,9 @@ static void _SetView(T& x, NSView* y) {
     if (x.view) [x.view removeFromSuperview];
     x.view = y;
     [x.containerView addSubview:x.view];
-    [x.containerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|"
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|"
         options:0 metrics:nil views:@{@"v":x.view}]];
-    [x.containerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|"
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|"
         options:0 metrics:nil views:@{@"v":x.view}]];
 }
 
@@ -529,9 +529,9 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         backing:NSBackingStoreBuffered defer:false];
     NSView* contentView = [sheetWindow contentView];
     [contentView addSubview:_deviceSettings.view];
-    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|"
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|"
         options:0 metrics:nil views:@{@"view":_deviceSettings.view}]];
-    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|"
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|"
         options:0 metrics:nil views:@{@"view":_deviceSettings.view}]];
     
     [_window beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {

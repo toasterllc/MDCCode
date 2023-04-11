@@ -698,6 +698,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_Label;
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_DetailLabel;
     
+    MSP::Settings::Events _events;
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
 }
@@ -760,7 +761,11 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     }
 }
 
-static void _Init(CaptureTriggersView* self) {
+// MARK: - Creation
+
+- (instancetype)initWithEvents:(const MSP::Settings::Events&)events {
+    if (!(self = [super initWithFrame:{}])) return nil;
+    
     // Load view from nib
     {
         [self setTranslatesAutoresizingMaskIntoConstraints:false];
@@ -771,8 +776,8 @@ static void _Init(CaptureTriggersView* self) {
         NSView* nibView = self->_nibView;
         [nibView setTranslatesAutoresizingMaskIntoConstraints:false];
         [self addSubview:nibView];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
     [self->_tableView registerForDraggedTypes:@[_PboardDragItemsType]];
@@ -782,20 +787,13 @@ static void _Init(CaptureTriggersView* self) {
     _ListItemAdd(self, CaptureTrigger::Type::Button);
     
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
-}
-
-// MARK: - Creation
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    _Init(self);
+    
+    _events = events;
     return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
-    _Init(self);
-    return self;
+- (const MSP::Settings::Events&)events {
+    abort();
 }
 
 static void _ContainerSubviewAdd(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {

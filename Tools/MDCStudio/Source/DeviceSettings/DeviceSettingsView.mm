@@ -1,14 +1,19 @@
 #import "DeviceSettingsView.h"
 #import "Toastbox/Mac/Util.h"
+#import "CaptureTriggersView/CaptureTriggersView.h"
 
 @implementation DeviceSettingsView {
 @public
+    MSP::Settings _settings;
+    __weak id<DeviceSettingsViewDelegate> _delegate;
+    
     IBOutlet NSView* _nibView;
     IBOutlet NSTabView* _tabView;
+    IBOutlet NSView* _captureTriggersContainerView;
     IBOutlet NSSegmentedControl* _segmentedControl;
     IBOutlet NSView* _headerBackground;
     
-    __weak id<DeviceSettingsViewDelegate> _delegate;
+    CaptureTriggersView* _captureTriggersView;
 }
 
 // MARK: - Creation
@@ -17,6 +22,9 @@
     delegate:(id<DeviceSettingsViewDelegate>)delegate {
     
     if (!(self = [super initWithFrame:{}])) return nil;
+    
+    _settings = settings;
+    _delegate = delegate;
     
     // Load view from nib
     {
@@ -28,14 +36,19 @@
         NSView* nibView = self->_nibView;
         [nibView setTranslatesAutoresizingMaskIntoConstraints:false];
         [self addSubview:nibView];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
-//    [self->_tabView selectTabViewItem:[self->_tabView tabViewItemAtIndex:0]];
     [self->_segmentedControl setSelectedSegment:0];
     [self _actionSectionChanged:nil];
     
-    _delegate = delegate;
+    _captureTriggersView = [[CaptureTriggersView alloc] initWithEvents:_settings.events];
+    [_captureTriggersContainerView addSubview:_captureTriggersView];
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_captureTriggersView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_captureTriggersView)]];
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_captureTriggersView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_captureTriggersView)]];
+    
     return self;
 }
 
@@ -72,7 +85,9 @@
 }
 
 - (const MSP::Settings&)settings {
-    abort();
+    // Update settings before returning
+    _settings.events = [_captureTriggersView events];
+    return _settings;
 }
 
 @end
