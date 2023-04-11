@@ -2,6 +2,13 @@
 #include "ResourceCounter.h"
 #include "Assert.h"
 
+// T_MotionEnabledAssertion: a T_ResourceCounter that has the additional ability to
+// suppress the acquired state.
+//
+// When supress=false, T_MotionEnabledAssertion behaves identically to T_ResourceCounter.
+//
+// When supress=true, T_MotionEnabledAssertion defers acquire()/release() until exiting
+// the suppressed state (via suppress(false)).
 template<auto& T_Counter, auto T_AcquireFn, auto T_ReleaseFn>
 struct T_MotionEnabledAssertion : T_ResourceCounter<T_Counter, T_AcquireFn, T_ReleaseFn> {
     void suppress(bool x) {
