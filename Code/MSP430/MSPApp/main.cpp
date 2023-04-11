@@ -1309,7 +1309,7 @@ int main() {
     // Init SysTick
     _SysTick::Init();
     
-    // Init _BatterySampler
+    // Init BatterySampler
     _BatterySampler::Init();
     
     // Init Events
@@ -1332,6 +1332,7 @@ int main() {
 //        }
 //    }
     
+    // Start Scheduler
 //    _Scheduler::Start<_TaskButton>();
     _Scheduler::Start<_TaskI2C, _TaskButton, _TaskMotion>();
     _Scheduler::Run();
