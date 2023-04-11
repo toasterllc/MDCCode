@@ -1312,6 +1312,9 @@ int main() {
     // Init _BatterySampler
     _BatterySampler::Init();
     
+    // Init Events
+    _Events::Init();
+    
     // Init LEDs by setting their default-priority / 'backstop' values to off.
     // This is necessary so that relinquishing the LEDs from I2C task causes
     // them to turn off. If we didn't have a backstop value, the LEDs would

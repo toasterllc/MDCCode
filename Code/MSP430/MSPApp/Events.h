@@ -15,7 +15,7 @@ struct T_Events {
             MotionUnsuppress,   // idx: _MotionTrigger[]
         };
         
-        Event() {} // Necessary to workaround Clang bug that emits compiler error
+//        Event() {} // Necessary to workaround Clang bug that emits compiler error
         Time::Instant instant = 0;
         Event* next = nullptr;
         Type type = Type::TimeTrigger;
@@ -29,28 +29,42 @@ struct T_Events {
     };
     
     struct TimeTrigger {
-        Event captureEvent;
+        Event captureEvent = { .type = Event::Type::CaptureImage };
         auto& base() { return _Base(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
     struct MotionTrigger {
         T_MotionEnabled enabled;
-        Event captureEvent;
-        Event unsuppressEvent;
+        Event captureEvent = { .type = Event::Type::CaptureImage };
+        Event unsuppressEvent = { .type = Event::Type::MotionUnsuppress };
         auto& base() { return _Base(_T_Base.motionTrigger, _MotionTrigger, *this); }
     };
     
     struct ButtonTrigger {
-        Event captureEvent;
+        Event captureEvent = { .type = Event::Type::CaptureImage };
         auto& base() { return _Base(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
     };
     
     struct Capture {
-        Capture() {} // Necessary to workaround Clang bug that emits compiler error
+//        Capture() {} // Necessary to workaround Clang bug that emits compiler error
         // countRem: remaining number of images to be captured until the current burst is complete
         uint16_t countRem = 0;
         auto& base() { return _Base(_T_Base.capture, _Capture, *this); }
     };
+    
+    static void Init() {
+        for (auto it=TimeTriggerBegin(); it!=TimeTriggerEnd(); it++) {
+            it->captureEvent.idx = it->base().captureIdx;
+        }
+        
+        for (auto it=MotionTriggerBegin(); it!=MotionTriggerEnd(); it++) {
+            it->captureEvent.idx = it->base().captureIdx;
+        }
+        
+        for (auto it=ButtonTriggerBegin(); it!=ButtonTriggerEnd(); it++) {
+            it->captureEvent.idx = it->base().captureIdx;
+        }
+    }
     
     static void Insert(Event& ev) {
         Event** curr = &_Front;
