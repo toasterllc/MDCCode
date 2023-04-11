@@ -5,7 +5,7 @@
 //       We created _T_Base for this reason, and can remove it and replace all uses with T_Base when we switch.
 template<auto& T_Base, typename T_MotionEnabled>
 struct T_Events {
-    struct [[gnu::packed]] Event {
+    struct Event {
         enum class Type : uint8_t {
             TimeTrigger,        // idx: _TimeTrigger[]
             CaptureImage,       // idx: _Capture[]
@@ -27,24 +27,24 @@ struct T_Events {
         auto& base()            { return _Base(_T_Base.event, _Event, *this); }
     };
     
-    struct [[gnu::packed]] TimeTrigger {
+    struct TimeTrigger {
         Event captureEvent;
         auto& base() { return _Base(_T_Base.time, _TimeTrigger, *this); }
     };
     
-    struct [[gnu::packed]] MotionTrigger {
+    struct MotionTrigger {
         T_MotionEnabled enabled;
         Event captureEvent;
         Event unsuppressEvent;
         auto& base() { return _Base(_T_Base.motion, _MotionTrigger, *this); }
     };
     
-    struct [[gnu::packed]] ButtonTrigger {
+    struct ButtonTrigger {
         Event captureEvent;
         auto& base() { return _Base(_T_Base.button, _ButtonTrigger, *this); }
     };
     
-    struct [[gnu::packed]] Capture {
+    struct Capture {
         Capture() {} // Necessary to workaround Clang bug that gives compiler error
         // countRem: remaining number of images to be captured until the current burst is complete
         uint16_t countRem = 0;
