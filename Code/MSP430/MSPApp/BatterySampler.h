@@ -110,12 +110,19 @@ public:
         
         // Calculate the battery voltage in millivolts, correcting the sample using the 1.5V reference
         // voltage, and the voltage divider ratio.
+        // We did a quick analysis (see Tools/OrderOfDivision project) to determine the average error
+        // and optimal order of operations when using 32-bit math instead of 64-bit math (which
+        // is very expensive space-wise). With our random test data, the following implementation
+        // results in 0.0009% average error compared to using 64-bit math.
         constexpr uint16_t VoltageDividerNumer = 4;
         constexpr uint16_t VoltageDividerDenom = 3;
-        const uint16_t mv =
-            (UINT64_C(1500) * sampleBat * _ADC1V5RefFactor * VoltageDividerNumer) /
-            ((uint64_t)sample1V5 * 0x8000 * VoltageDividerDenom);
-        
+        uint32_t mv = sampleBat;
+        // Correct using 1V5 calibration reference factor
+        mv *= _ADC1V5RefFactor;
+        mv /= 0x8000;
+        // Convert to millivolts, correcting for the effect of the voltage divider
+        mv *= 1500 * VoltageDividerNumer;
+        mv /= sample1V5 * VoltageDividerDenom;
         return _BatteryChargeLevelForMillivolts(mv);
     }
     

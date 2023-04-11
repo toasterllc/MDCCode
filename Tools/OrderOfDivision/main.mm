@@ -5,18 +5,31 @@
 constexpr uint16_t VoltageDividerNumer = 4;
 constexpr uint16_t VoltageDividerDenom = 3;
 
-static uint16_t Millivolts_Original(uint16_t sample1V5, uint16_t sampleBat, uint16_t adc1V5RefFactor) {
+static uint16_t Millivolts64(uint16_t sample1V5, uint16_t sampleBat, uint16_t adc1V5RefFactor) {
     return (UINT64_C(1500) * sampleBat * adc1V5RefFactor * VoltageDividerNumer) /
         ((uint64_t)sample1V5 * 0x8000 * VoltageDividerDenom);
 }
 
-static uint16_t Millivolts_Compact1(uint16_t sample1V5, uint16_t sampleBat, uint16_t adc1V5RefFactor) {
-    const uint32_t x = ((uint32_t)sampleBat * (uint32_t)adc1V5RefFactor) / 0x8000;
-    return (UINT32_C(1500) * x * VoltageDividerNumer) /
-        ((uint32_t)sample1V5 * VoltageDividerDenom);
+static uint16_t Millivolts32a(uint16_t sample1V5, uint16_t sampleBat, uint16_t adc1V5RefFactor) {
+    const auto _ADC1V5RefFactor = adc1V5RefFactor;
+    
+    // Calculate the battery voltage in millivolts, correcting the sample using the 1.5V reference
+    // voltage, and the voltage divider ratio.
+    uint32_t x = sampleBat;
+    // Correct using 1V5 calibration reference factor
+    x *= _ADC1V5RefFactor;
+    x /= 0x8000;
+    // Convert to millivolts, correcting for the voltage divider
+    x *= 1500 * VoltageDividerNumer;
+    x /= sample1V5 * VoltageDividerDenom;
+    return x;
+    
+//    const uint32_t x = ((uint32_t)sampleBat * (uint32_t)adc1V5RefFactor) / 0x8000;
+//    return (UINT32_C(1500) * x * VoltageDividerNumer) /
+//        ((uint32_t)sample1V5 * VoltageDividerDenom);
 }
 
-static uint16_t Millivolts_Compact2(uint16_t sample1V5, uint16_t sampleBat, uint16_t adc1V5RefFactor) {
+static uint16_t Millivolts32b(uint16_t sample1V5, uint16_t sampleBat, uint16_t adc1V5RefFactor) {
     const uint32_t x = ((UINT32_C(1500) * sampleBat * VoltageDividerNumer) /
         ((uint32_t)sample1V5 * VoltageDividerDenom));
     return (x * adc1V5RefFactor) / 0x8000;
@@ -29,7 +42,10 @@ static uint16_t AddNoise(uint16_t nominal, uint8_t noisePercent) {
 }
 
 int main(int argc, const char* argv[]) {
-    for (;;) {
+    constexpr size_t TrialCount = 1000000;
+    double errora = 0;
+    double errorb = 0;
+    for (size_t i=0; i<TrialCount; i++) {
         constexpr uint16_t Sample1V5Nominal = (1500*65535)/3300; // 1.5/3.3, normalized to u16
 //        constexpr uint16_t SampleBatNominal = (((3*4300/4)*65535)/3300); // 4.3V, after voltage divider, normalized to u16
         constexpr uint16_t SampleBatNominal = (((3*3600/4)*65535)/3300); // 3.6V, after voltage divider, normalized to u16
@@ -39,17 +55,23 @@ int main(int argc, const char* argv[]) {
         const uint16_t sampleBat = AddNoise(SampleBatNominal, 10);
         const uint16_t adc1V5RefFactor = AddNoise(Adc1V5RefFactorNominal, 10);
         
-        const uint16_t original = Millivolts_Original(sample1V5, sampleBat, adc1V5RefFactor);
-        const uint16_t compact1 = Millivolts_Compact1(sample1V5, sampleBat, adc1V5RefFactor);
-        const uint16_t compact2 = Millivolts_Compact2(sample1V5, sampleBat, adc1V5RefFactor);
-        const uint16_t diff1 = (original>compact1 ? original-compact1 : compact1-original);
-        const uint16_t diff2 = (original>compact2 ? original-compact2 : compact2-original);
+        const uint16_t mv64 = Millivolts64(sample1V5, sampleBat, adc1V5RefFactor);
+        const uint16_t mv32a = Millivolts32a(sample1V5, sampleBat, adc1V5RefFactor);
+        const uint16_t mv32b = Millivolts32b(sample1V5, sampleBat, adc1V5RefFactor);
+        const uint16_t diffa = (mv64>mv32a ? mv64-mv32a : mv32a-mv64);
+        const uint16_t diffb = (mv64>mv32b ? mv64-mv32b : mv32b-mv64);
         
-        printf("%ju | %ju (%ju / %.1f%%) | %ju (%ju / %.1f%%) \n", (uintmax_t)original,
-            (uintmax_t)compact1, (uintmax_t)diff1, ((float)diff1 / original)*100,
-            (uintmax_t)compact2, (uintmax_t)diff2, ((float)diff2 / original)*100
+        errora += ((double)diffa / mv64);
+        errorb += ((double)diffb / mv64);
+        
+        printf("%ju | %ju (%ju / %.1f%%) | %ju (%ju / %.1f%%) \n", (uintmax_t)mv64,
+            (uintmax_t)mv32a, (uintmax_t)diffa, ((float)diffa / mv64)*100,
+            (uintmax_t)mv32b, (uintmax_t)diffb, ((float)diffb / mv64)*100
         );
-//        usleep(100000);
     }
+    
+    printf("Average error, Millivolts32a: %f\n", errora/TrialCount);
+    printf("Average error, Millivolts32b: %f\n", errorb/TrialCount);
+    
     return 0;
 }
