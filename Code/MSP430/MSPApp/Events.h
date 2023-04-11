@@ -5,6 +5,7 @@
 //       We created _T_Base for this reason, and can remove it and replace all uses with T_Base when we switch.
 template<auto& T_Base, typename T_MotionEnabled>
 struct T_Events {
+    // TODO: write Init() function that initializes Events, and ?????? then implement alt where we don't need an idx ivar because all Events are in an array that reflects its base array, which removes most of Init function. which impl is smaller?
     struct Event {
         enum class Type : uint8_t {
             TimeTrigger,        // idx: _TimeTrigger[]
@@ -14,7 +15,7 @@ struct T_Events {
             MotionUnsuppress,   // idx: _MotionTrigger[]
         };
         
-        Event() {} // Necessary to workaround Clang bug that gives compiler error
+        Event() {} // Necessary to workaround Clang bug that emits compiler error
         Time::Instant instant = 0;
         Event* next = nullptr;
         Type type = Type::TimeTrigger;
@@ -45,7 +46,7 @@ struct T_Events {
     };
     
     struct Capture {
-        Capture() {} // Necessary to workaround Clang bug that gives compiler error
+        Capture() {} // Necessary to workaround Clang bug that emits compiler error
         // countRem: remaining number of images to be captured until the current burst is complete
         uint16_t countRem = 0;
         auto& base() { return _Base(_T_Base.capture, _Capture, *this); }
