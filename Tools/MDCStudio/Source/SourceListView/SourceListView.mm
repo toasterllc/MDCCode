@@ -7,7 +7,7 @@
 using namespace MDCStudio;
 
 @interface SourceListView ()
-- (void)_showDeviceSettings;
+- (void)_showDeviceSettings:(MDCDevicePtr)device;
 @end
 
 // MARK: - Outline View Items
@@ -104,7 +104,7 @@ using namespace MDCStudio;
 }
 
 - (IBAction)settingsAction:(id)sender {
-    [sourceListView _showDeviceSettings];
+    [sourceListView _showDeviceSettings:device];
 }
 
 @end
@@ -308,8 +308,8 @@ using namespace MDCStudio;
     [[_outlineView tableColumns][0] setWidth:usableWidth];
 }
 
-- (void)_showDeviceSettings {
-    [_delegate sourceListViewShowDeviceSettings:self];
+- (void)_showDeviceSettings:(MDCDevicePtr)device {
+    [_delegate sourceListView:self showDeviceSettings:device];
 }
 
 //- (void)_handleDevicesChanged {

@@ -1,5 +1,6 @@
 #import "Document.h"
 #import <algorithm>
+#import "Toastbox/Mac/Util.h"
 #import "Toastbox/Mac/ThreePartView.h"
 #import "SourceListView/SourceListView.h"
 #import "InspectorView/InspectorView.h"
@@ -17,6 +18,7 @@ using namespace MDCStudio;
 
 @implementation Document {
     IBOutlet NSSplitView* _splitView;
+    NSWindow* _window;
     
     struct {
         NSView* containerView;
@@ -58,6 +60,8 @@ static void _SetView(T& x, NSView* y) {
 }
 
 - (void)awakeFromNib {
+    _window = [_splitView window];
+    
     _left.containerView = [[NSView alloc] initWithFrame:{}];
     [_left.containerView setTranslatesAutoresizingMaskIntoConstraints:false];
     
@@ -399,7 +403,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         _SetView(_center, _imageScrollView);
         ImageView* imageView = Toastbox::Cast<ImageView*>([_imageScrollView document]);
         [imageView setImageRecord:imageRecord];
-        [[_splitView window] makeFirstResponder:imageView];
+        [_window makeFirstResponder:imageView];
         
         ImageSet selection;
         selection.insert(imageRecord);
@@ -411,7 +415,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     }
 }
 
-// MARK: - SourceListViewDelegate Delegate
+// MARK: - Source List
 - (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
 //    {
 //        auto imageSource = std::make_shared<MockImageSource>("/Users/dave/Desktop/ImageLibrary");
@@ -449,7 +453,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         _SetView(_center, _imageGridScrollView);
         _SetView(_right, _inspectorView);
         
-        [[_splitView window] makeFirstResponder:[_imageGridScrollView document]];
+        [_window makeFirstResponder:[_imageGridScrollView document]];
 //        [_mainView setContentView:sv animation:MainViewAnimation::None];
     
     } else {
@@ -457,28 +461,12 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     }
 }
 
-- (void)sourceListViewShowDeviceSettings:(SourceListView*)sourceListView {
+- (void)sourceListView:(SourceListView*)sourceListView showDeviceSettings:(MDCDevicePtr)device {
     assert(sourceListView == _sourceListView);
-    
-    NSLog(@"SETTINGS");
-    NSWindow* parentWindow = [_splitView window];
-    
-    DeviceSettingsView* view = [[DeviceSettingsView alloc] initWithSettings:{} delegate:self];
-    
-    NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
-        styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
-        backing:NSBackingStoreBuffered defer:false];
-    NSView* contentView = [sheetWindow contentView];
-    [contentView addSubview:view];
-    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
-    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
-    
-    [parentWindow beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {
-        NSLog(@"sheet complete");
-    }];
+    [self _showDeviceSettings:device];
 }
 
-// MARK: - ImageGridViewDelegate
+// MARK: - Image Grid
 
 - (void)imageGridViewSelectionChanged:(ImageGridView*)imageGridView {
     [_inspectorView setSelection:[imageGridView selection]];
@@ -491,7 +479,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     [self _openImage:rec delta:0];
 }
 
-// MARK: - ImageViewDelegate
+// MARK: - Image View
 
 - (void)imageViewPreviousImage:(ImageView*)imageView {
     const bool ok = [self _openImage:[imageView imageRecord] delta:-1];
@@ -503,7 +491,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     if (!ok) NSBeep();
 }
 
-// MARK: - NSSplitViewDelegate
+// MARK: - Split View
 
 - (BOOL)splitView:(NSSplitView*)splitView canCollapseSubview:(NSView*)subview {
     return true;
@@ -521,8 +509,29 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 }
 
 // MARK: - Device Settings
-- (void)deviceSettingsView:(DeviceSettingsView*)view dismiss:(bool)save {
+- (void)_showDeviceSettings:(MDCDevicePtr)device {
+//    ImageSourcePtr source = [_sourceListView selection];
+//    MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>(source);
+//    if (!device) return;
     
+    NSLog(@"SETTINGS");
+    DeviceSettingsView* view = [[DeviceSettingsView alloc] initWithSettings:{} delegate:self];
+    
+    NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
+        styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
+        backing:NSBackingStoreBuffered defer:false];
+    NSView* contentView = [sheetWindow contentView];
+    [contentView addSubview:view];
+    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
+    [contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)]];
+    
+    [_window beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {
+        NSLog(@"sheet complete");
+    }];
+}
+
+- (void)deviceSettingsView:(DeviceSettingsView*)view dismiss:(bool)save {
+    [_window endSheet:[view window]];
 }
 
 @end
