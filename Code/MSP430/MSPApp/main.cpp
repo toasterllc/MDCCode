@@ -26,6 +26,7 @@
 #include "Button.h"
 #include "ResourceCounter.h"
 #include "Events.h"
+#include "Motion.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -78,6 +79,7 @@ static void _ICEError(uint16_t line);
 static void _SDError(uint16_t line);
 static void _ImgError(uint16_t line);
 static void _I2CError(uint16_t line);
+static void _MotionError(uint16_t line);
 static void _BatterySamplerError(uint16_t line);
 
 #warning TODO: disable stack guard for production
@@ -107,7 +109,7 @@ using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_
 using _ICE = ICE<_Scheduler, _ICEError>;
 
 using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr, _I2CError>;
-using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
+using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL, _MotionError>;
 
 using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_, _BatterySamplerError>;
 
@@ -1162,7 +1164,8 @@ namespace AbortDomain {
     static constexpr uint16_t SD                        = 4;
     static constexpr uint16_t Img                       = 5;
     static constexpr uint16_t I2C                       = 6;
-    static constexpr uint16_t BatterySampler            = 7;
+    static constexpr uint16_t Motion                    = 7;
+    static constexpr uint16_t BatterySampler            = 8;
 }
 
 [[noreturn]]
@@ -1193,6 +1196,11 @@ static void _ImgError(uint16_t line) {
 [[noreturn]]
 static void _I2CError(uint16_t line) {
     _Abort(AbortDomain::I2C, line);
+}
+
+[[noreturn]]
+static void _MotionError(uint16_t line) {
+    _Abort(AbortDomain::Motion, line);
 }
 
 [[noreturn]]
