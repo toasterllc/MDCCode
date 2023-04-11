@@ -81,6 +81,12 @@ struct T_Events {
     static auto ButtonTriggerBegin() { return std::begin(_ButtonTrigger); }
     static auto ButtonTriggerEnd() { return std::begin(_ButtonTrigger)+_T_Base.buttonTriggerCount; }
     
+    static auto EventBegin() { return std::begin(_Event); }
+    static auto EventEnd() { return std::begin(_Event)+_T_Base.eventCount; }
+    
+    static auto CaptureBegin() { return std::begin(_Capture); }
+    static auto CaptureEnd() { return std::begin(_Capture)+_T_Base.captureCount; }
+    
     static constexpr auto& _T_Base = T_Base.events;
     
     template<typename T_Dst, typename T_Src, size_t T_Count>

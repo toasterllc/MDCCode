@@ -1246,15 +1246,6 @@ void abort() {
 
 // MARK: - Main
 
-//static void _HostMode() {
-//    // Let power rails fully discharge before turning them on
-//    _Scheduler::Delay(_Scheduler::Ms(10));
-//    
-//    while (!_Pin::HOST_MODE_::Read()) {
-//        _Scheduler::Delay(_Scheduler::Ms(100));
-//    }
-//}
-
 //extern "C" void Blink() {
 //    for (;;) {
 //        _Pin::LED_GREEN_::Write(0);
