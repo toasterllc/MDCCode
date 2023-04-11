@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdlib>
 
 // TODO: when we move to using >=C++20, we want to give _State.events as T_Base, but we have to give the whole _State
 //       while we're on C++17, because C++17 doesn't allow giving subojects as non-type template parameters.
@@ -17,39 +18,39 @@ struct T_Events {
         
 //        Event() {} // Necessary to workaround Clang bug that emits compiler error
         Time::Instant instant = 0;
-        Event* next = nullptr;
         Type type = Type::TimeTrigger;
         uint8_t idx = 0;
+        Event* next = nullptr;
         
         auto& timeTrigger()     { return _TimeTrigger[idx];    }
         auto& motionTrigger()   { return _MotionTrigger[idx];  }
         auto& buttonTrigger()   { return _ButtonTrigger[idx];  }
         auto& capture()         { return _Capture[idx]; }
-        auto& base()            { return _Base(_T_Base.event, _Event, *this); }
+        auto& base()            { return _BaseElm(_T_Base.event, _Event, *this); }
     };
     
     struct TimeTrigger {
         Event captureEvent = { .type = Event::Type::CaptureImage };
-        auto& base() { return _Base(_T_Base.timeTrigger, _TimeTrigger, *this); }
+        auto& base() { return _BaseElm(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
     struct MotionTrigger {
         T_MotionEnabled enabled;
         Event captureEvent = { .type = Event::Type::CaptureImage };
         Event unsuppressEvent = { .type = Event::Type::MotionUnsuppress };
-        auto& base() { return _Base(_T_Base.motionTrigger, _MotionTrigger, *this); }
+        auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }
     };
     
     struct ButtonTrigger {
         Event captureEvent = { .type = Event::Type::CaptureImage };
-        auto& base() { return _Base(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
+        auto& base() { return _BaseElm(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
     };
     
     struct Capture {
 //        Capture() {} // Necessary to workaround Clang bug that emits compiler error
         // countRem: remaining number of images to be captured until the current burst is complete
         uint16_t countRem = 0;
-        auto& base() { return _Base(_T_Base.capture, _Capture, *this); }
+        auto& base() { return _BaseElm(_T_Base.capture, _Capture, *this); }
     };
     
     static void Init() {
@@ -69,7 +70,15 @@ struct T_Events {
         {
             Event** prev = &_Front;
             for (auto it=EventBegin(); it!=EventEnd(); it++) {
+                Event& ev = *it;
+                const _EventBase& bev = it->base();
+                
+                ev.instant = bev.time;
+                ev.type = _EventTypeForBaseEventType(bev.type);
+                ev.idx = bev.idx;
+                
                 *prev = &*it;
+                prev = &it->next;
             }
         }
     }
@@ -111,12 +120,23 @@ struct T_Events {
     static auto CaptureEnd() { return std::begin(_Capture)+_T_Base.captureCount; }
     
     static constexpr auto& _T_Base = T_Base.events;
+    using _Base = std::remove_reference_t<decltype(_T_Base)>;
+    using _EventBase = typename _Base::Event;
     
     template<typename T_Dst, typename T_Src, size_t T_Count>
-    static T_Dst& _Base(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
+    static T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
         Assert(&elm>=src && &elm<(src+T_Count));
         const size_t idx = &elm-src;
         return dst[idx];
+    }
+    
+    static typename Event::Type _EventTypeForBaseEventType(typename _EventBase::Type x) {
+        switch (x) {
+        case _EventBase::Type::TimeTrigger:   return Event::Type::TimeTrigger;
+        case _EventBase::Type::MotionEnable:  return Event::Type::MotionEnable;
+        case _EventBase::Type::MotionDisable: return Event::Type::MotionDisable;
+        }
+        abort();
     }
     
     // Triggers
@@ -128,7 +148,7 @@ struct T_Events {
     // Capture descriptors
     static inline Capture _Capture[std::size(_T_Base.capture)];
     // Event linked list
-    static inline Event*  _Front = nullptr;
+    static inline Event* _Front = nullptr;
     
     static constexpr size_t _TotalSize = sizeof(_TimeTrigger)   +
                                          sizeof(_MotionTrigger) +
