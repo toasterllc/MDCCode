@@ -71,37 +71,7 @@ struct [[gnu::packed]] AbortHistory {
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
-struct [[gnu::packed]] State {
-    struct [[gnu::packed]] Header {
-        uint32_t magic   = 0;
-        uint16_t version = 0;
-        uint16_t length  = 0;
-    };
-    
-    Header header = {};
-    static_assert(sizeof(header) == 8);
-    
-    struct [[gnu::packed]] {
-        // cardId: the SD card's CID, used to determine when the SD card has been
-        // changed, and therefore we need to update `imgCap` and reset `ringBufs`
-        SD::CardId cardId;
-        // imgCap: image capacity; the number of images that bounds the ring buffer
-        uint32_t imgCap = 0;
-        // baseFull / baseThumb: the first block of the full-size and thumb image regions.
-        // The SD card is broken into 2 regions (fullSize, thumbnails), to allow the host
-        // to quickly read the thumbnails.
-        SD::Block baseFull = 0;
-        SD::Block baseThumb = 0;
-        // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
-        // power failure while updating one
-        ImgRingBuf imgRingBufs[2] = {};
-        bool valid = false;
-        uint8_t _pad = 0;
-    } sd = {};
-    static_assert(!(sizeof(sd) % 2)); // Check alignment
-//    StaticPrint(sizeof(sd));
-    static_assert(sizeof(sd) == 56); // Debug
-    
+struct [[gnu::packed]] Settings {
     struct [[gnu::packed]] Events {
         struct [[gnu::packed]] TimeTrigger {
             // periodMs: the duration between triggers
@@ -169,6 +139,42 @@ struct [[gnu::packed]] State {
     
     // eventsSource: opaque data used by software to hold its representation of the `events` struct
     uint8_t eventsSource[256] = {};
+};
+
+struct [[gnu::packed]] State {
+    struct [[gnu::packed]] Header {
+        uint32_t magic   = 0;
+        uint16_t version = 0;
+        uint16_t length  = 0;
+    };
+    
+    Header header = {};
+    static_assert(sizeof(header) == 8);
+    
+    struct [[gnu::packed]] {
+        // cardId: the SD card's CID, used to determine when the SD card has been
+        // changed, and therefore we need to update `imgCap` and reset `ringBufs`
+        SD::CardId cardId;
+        // imgCap: image capacity; the number of images that bounds the ring buffer
+        uint32_t imgCap = 0;
+        // baseFull / baseThumb: the first block of the full-size and thumb image regions.
+        // The SD card is broken into 2 regions (fullSize, thumbnails), to allow the host
+        // to quickly read the thumbnails.
+        SD::Block baseFull = 0;
+        SD::Block baseThumb = 0;
+        // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
+        // power failure while updating one
+        ImgRingBuf imgRingBufs[2] = {};
+        bool valid = false;
+        uint8_t _pad = 0;
+    } sd = {};
+    static_assert(!(sizeof(sd) % 2)); // Check alignment
+//    StaticPrint(sizeof(sd));
+    static_assert(sizeof(sd) == 56); // Debug
+    
+    Settings settings;
+//    StaticPrint(sizeof(settings));
+    static_assert(sizeof(settings) == 819); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};

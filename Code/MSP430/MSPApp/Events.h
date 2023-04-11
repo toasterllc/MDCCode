@@ -1,8 +1,9 @@
 #pragma once
 #include <cstdlib>
 
-// TODO: when we move to using >=C++20, we want to give _State.events as T_Base, but we have to give the whole _State
-//       while we're on C++17, because C++17 doesn't allow giving subojects as non-type template parameters.
+// TODO: when we move to using >=C++20, we want to give _State.settings.events as T_Base, but we have to give
+//       the whole _State while we're on C++17, because C++17 doesn't allow giving subojects as non-type
+//       template parameters.
 //       We created _T_Base for this reason, and can remove it and replace all uses with T_Base when we switch.
 template<auto& T_Base, typename T_MotionEnabled>
 struct T_Events {
@@ -119,7 +120,7 @@ struct T_Events {
     static auto CaptureBegin() { return std::begin(_Capture); }
     static auto CaptureEnd() { return std::begin(_Capture)+_T_Base.captureCount; }
     
-    static constexpr auto& _T_Base = T_Base.events;
+    static constexpr auto& _T_Base = T_Base.settings.events;
     using _Base = std::remove_reference_t<decltype(_T_Base)>;
     using _EventBase = typename _Base::Event;
     
