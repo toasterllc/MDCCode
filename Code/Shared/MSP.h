@@ -167,6 +167,9 @@ struct [[gnu::packed]] State {
 //    StaticPrint(sizeof(events));
     static_assert(sizeof(events) == 563); // Debug
     
+    // eventsSource: opaque data used by software to hold its representation of the `events` struct
+    uint8_t eventsSource[256] = {};
+    
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
     static_assert(!(sizeof(aborts) % 2)); // Check alignment
