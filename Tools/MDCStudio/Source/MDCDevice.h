@@ -175,6 +175,10 @@ public:
     
     void settings(const MSP::Settings& x) {
         _mspState.settings = x;
+        {
+            auto lock = _deviceLock();
+            _device.device.mspStateWrite(_mspState);
+        }
     }
     
     // MARK: - ImageSource

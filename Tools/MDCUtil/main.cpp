@@ -6,7 +6,7 @@
 #include "STM.h"
 #include "MDCUSBDevice.h"
 #include "Toastbox/RuntimeError.h"
-#include "Toastbox/IntForStr.h"
+#include "Toastbox/NumForStr.h"
 #include "ChecksumFletcher32.h"
 #include "Img.h"
 #include "SD.h"

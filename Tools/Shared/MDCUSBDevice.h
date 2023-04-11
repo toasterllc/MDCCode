@@ -331,6 +331,21 @@ public:
         }
     }
     
+    void mspStateWrite(const MSP::State& state) {
+        assert(_mode == STM::Status::Mode::STMApp);
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPStateWrite,
+            .arg = { .MSPStateWrite = { .len = sizeof(state) } },
+        };
+        // Send command
+        _sendCmd(cmd);
+        // Send data
+        _dev.write(STM::Endpoint::DataOut, &state, sizeof(state));
+        // Check status
+        _checkStatus("MSPStateWrite command failed");
+    }
+    
     Time::Instant mspTimeGet() {
         assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPTimeGet };

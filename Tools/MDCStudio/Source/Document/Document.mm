@@ -521,7 +521,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     
     _deviceSettings = {
         .device = device,
-        .view = [[DeviceSettingsView alloc] initWithSettings:{} delegate:self],
+        .view = [[DeviceSettingsView alloc] initWithSettings:device->settings() delegate:self],
     };
     
     NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
@@ -542,8 +542,12 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 - (void)deviceSettingsView:(DeviceSettingsView*)view dismiss:(bool)save {
     assert(view == _deviceSettings.view);
     
-    const MSP::Settings settings = [_deviceSettings.view settings];
-    _deviceSettings.device->settings(settings);
+    // Save settings to device if user so desires
+    if (save) {
+        const MSP::Settings settings = [_deviceSettings.view settings];
+        _deviceSettings.device->settings(settings);
+    }
+    
     [_window endSheet:[_deviceSettings.view window]];
     _deviceSettings = {};
 }
