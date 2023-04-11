@@ -64,6 +64,14 @@ struct T_Events {
         for (auto it=ButtonTriggerBegin(); it!=ButtonTriggerEnd(); it++) {
             it->captureEvent.idx = it->base().captureIdx;
         }
+        
+        // Prepare events linked list
+        {
+            Event** prev = &_Front;
+            for (auto it=EventBegin(); it!=EventEnd(); it++) {
+                *prev = &*it;
+            }
+        }
     }
     
     static void Insert(Event& ev) {
