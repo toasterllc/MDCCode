@@ -42,6 +42,11 @@ using namespace MDCStudio;
     ImageScrollView* _imageScrollView;
     ImageGridScrollView* _imageGridScrollView;
     InspectorView* _inspectorView;
+    
+    struct {
+        MDCDevicePtr device;
+        DeviceSettingsView* view;
+    } _deviceSettings;
 }
 
 + (BOOL)autosavesInPlace {
@@ -514,8 +519,11 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 //    MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>(source);
 //    if (!device) return;
     
-    NSLog(@"SETTINGS");
     DeviceSettingsView* view = [[DeviceSettingsView alloc] initWithSettings:{} delegate:self];
+    _deviceSettings = {
+        .device = device,
+        .view = view,
+    };
     
     NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
         styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
@@ -531,6 +539,8 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 }
 
 - (void)deviceSettingsView:(DeviceSettingsView*)view dismiss:(bool)save {
+    MSP::Settings settings = [view settings];
+    
     [_window endSheet:[view window]];
 }
 

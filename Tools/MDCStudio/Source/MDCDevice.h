@@ -169,6 +169,14 @@ public:
         _SerializedStateWrite(_dir, state);
     }
     
+    const MSP::Settings& settings() {
+        return _mspState.settings;
+    }
+    
+    void settings(const MSP::Settings& x) {
+        _mspState.settings = x;
+    }
+    
     // MARK: - ImageSource
     
     ImageLibrary& imageLibrary() override { return _imageLibrary; }
