@@ -1102,15 +1102,6 @@ static void _CopyTime(uint32_t& x, NSTextField* field) {
 }
 
 template<bool T_Forward>
-static void _Copy(uint32_t& x, NSTextField* field, uint32_t min=0) {
-    if constexpr (T_Forward) {
-        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x]];
-    } else {
-        x = std::max((int)min, [field intValue]);
-    }
-}
-
-template<bool T_Forward>
 static void _Copy(uint16_t& x, NSTextField* field, uint16_t min=0) {
     if constexpr (T_Forward) {
         [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x]];
