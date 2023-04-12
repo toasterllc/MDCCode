@@ -349,7 +349,7 @@ inline uint32_t MsForDuration(const Duration& x) {
 }
 
 struct [[gnu::packed]] Capture {
-    uint32_t count;
+    uint16_t count;
     Duration interval;
     LEDs flashLEDs;
 };
@@ -394,7 +394,7 @@ struct [[gnu::packed]] CaptureTrigger {
                 
                 struct [[gnu::packed]] {
                     bool enable;
-                    uint32_t count;
+                    uint16_t count;
                 } maxTriggerCount;
             } constraints;
         } motion;

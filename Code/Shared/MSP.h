@@ -105,15 +105,15 @@ static_assert(!(sizeof(Capture) % 2)); // Check alignment
 struct [[gnu::packed]] Triggers {
     struct [[gnu::packed]] TimeTrigger {
         Time::Instant time = 0;
-        Capture capture;
         Repeat repeat;
+        Capture capture;
     };
     static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
     
     struct [[gnu::packed]] MotionTrigger {
         Time::Instant time = 0;
-        Capture capture;
         Repeat repeat;
+        Capture capture;
         // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
         uint16_t count = 0;
         // durationMs: duration for which motion should be enabled (0 == forever)

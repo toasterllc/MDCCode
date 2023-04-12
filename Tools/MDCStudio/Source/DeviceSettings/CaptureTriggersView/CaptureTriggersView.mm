@@ -874,16 +874,17 @@ T_Dst _Cast(const T_Src& x) {
     if (x > DstMaxValue) {
         throw Toastbox::RuntimeError("value too large (value: %ju, max: %ju)", (uintmax_t)x, (uintmax_t)DstMaxValue);
     }
+    return x;
 }
 
 static MSP::Capture _Convert(const Capture& x) {
     return MSP::Capture{
         .delayMs = MsForDuration(x.interval),
-        .count = _Cast<decltype(MSP::Capture::count)>(x.count),
+        .count = x.count,
     };
 }
 
-static MSP::Repeat _Convert(const Repeat& x) {
+static std::pair<Time::Instant,MSP::Repeat> _Convert(uint32_t time, const Repeat& x) {
 //    enum class Type : uint8_t {
 //        None,
 //        Daily,
@@ -905,24 +906,25 @@ static MSP::Repeat _Convert(const Repeat& x) {
 //            uint8_t leapPhase;
 //        } Yearly;
 //    };
-    
     switch (x.type) {
     case Repeat::Type::Daily:
-        return {
+        #warning TODO: return time
+        return std::make_pair(0, MSP::Repeat{
             .type = MSP::Repeat::Type::Daily,
             .Daily = { .interval = 1 },
-        };
+        });
     case Repeat::Type::WeekDays:
-        
-        break;
+        #warning TODO: implement
+        return std::make_pair(0, MSP::Repeat{});
     case Repeat::Type::YearDays:
-        
-        break;
+        #warning TODO: implement
+        return std::make_pair(0, MSP::Repeat{});
     case Repeat::Type::DayInterval:
-        return {
+        #warning TODO: return time
+        return std::make_pair(0, MSP::Repeat{
             .type = MSP::Repeat::Type::Daily,
             .Daily = { .interval = _Cast<decltype(MSP::Repeat::Daily.interval)>(x.DayInterval.interval) },
-        };
+        });
     default:
         abort();
     }
@@ -952,6 +954,15 @@ static uint32_t _MotionSuppressMs(const T& x) {
     return 0;
 }
 
+template<typename T>
+static uint32_t _MotionTime(const T& x) {
+    if (x.schedule.timeRange.enable) {
+        return x.schedule.timeRange.start;
+    }
+    // Start at midnight
+    return 0;
+}
+
 - (const MSP::Triggers&)triggers {
     CaptureTriggers triggers = [self _triggers];
     _triggers.timeTriggerCount = 0;
@@ -967,10 +978,12 @@ static uint32_t _MotionSuppressMs(const T& x) {
             }
             
             const auto& x = src.time;
+            const auto [time, repeat] = _Convert(x.schedule.time, x.schedule.repeat);
+            
             _triggers.timeTrigger[_triggers.timeTriggerCount] = {
-                .time    = XXX,
+                .time    = time,
+                .repeat  = repeat,
                 .capture = _Convert(x.capture),
-                .repeat  = _Convert(x.schedule.repeat),
             };
             _triggers.timeTriggerCount++;
             break;
@@ -982,15 +995,15 @@ static uint32_t _MotionSuppressMs(const T& x) {
             }
             
             const auto& x = src.motion;
-            
-            const uint32_t count = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0);
+            const auto [time, repeat] = _Convert(_MotionTime(x), x.schedule.repeat);
+            const uint16_t count = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0);
             const uint32_t durationMs = _MotionEnableDurationMs(x);
             const uint32_t suppressMs = _MotionSuppressMs(x);
             
             _triggers.motionTrigger[_triggers.motionTriggerCount] = {
-                .time       = XXX,
+                .time       = time,
+                .repeat     = repeat,
                 .capture    = _Convert(x.capture),
-                .repeat     = _Convert(x.schedule.repeat),
                 .count      = count,
                 .durationMs = durationMs,
                 .suppressMs = suppressMs,
@@ -1090,6 +1103,15 @@ static void _CopyTime(uint32_t& x, NSTextField* field) {
 
 template<bool T_Forward>
 static void _Copy(uint32_t& x, NSTextField* field, uint32_t min=0) {
+    if constexpr (T_Forward) {
+        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x]];
+    } else {
+        x = std::max((int)min, [field intValue]);
+    }
+}
+
+template<bool T_Forward>
+static void _Copy(uint16_t& x, NSTextField* field, uint16_t min=0) {
     if constexpr (T_Forward) {
         [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x]];
     } else {
