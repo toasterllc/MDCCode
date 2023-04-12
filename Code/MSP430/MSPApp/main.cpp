@@ -183,9 +183,6 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Us Year        = (Time::Us) 365*24*60*60*1000000;
     static constexpr Time::Us YearPlusDay = (Time::Us) 366*24*60*60*1000000;
     switch (x.type) {
-    case MSP::Repeat::Type::None:
-        return 0;
-    
     case MSP::Repeat::Type::Daily:
         Assert(x.Daily.interval);
         return Day*x.Daily.interval;

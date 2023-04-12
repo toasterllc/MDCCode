@@ -56,13 +56,13 @@ static void _TriggerInitRepeat(Repeat& x) {
     case X::Daily:
         break;
     case X::WeekDays:
-        x.weekDays = _WeekDaysInit;
+        x.WeekDays = _WeekDaysInit;
         break;
     case X::YearDays:
-        x.yearDays = _YearDaysInit;
+        x.YearDays = _YearDaysInit;
         break;
     case X::DayInterval:
-        x.dayInterval = _DayIntervalInit;
+        x.DayInterval = _DayIntervalInit;
         break;
     default:
         abort();
@@ -476,9 +476,9 @@ static std::string _RepeatDescription(const Repeat& x) {
     std::string s;
     switch (x.type) {
     case T::Daily:       return "daily";
-    case T::WeekDays:    return _WeekDaysDescription(x.weekDays);
-    case T::YearDays:    return _YearDaysDescription(x.yearDays);
-    case T::DayInterval: return _DayIntervalDescription(x.dayInterval);
+    case T::WeekDays:    return _WeekDaysDescription(x.WeekDays);
+    case T::YearDays:    return _YearDaysDescription(x.YearDays);
+    case T::DayInterval: return _DayIntervalDescription(x.DayInterval);
     default:             abort();
     }
 }
@@ -844,9 +844,10 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
     
-    CaptureTriggers triggers;
-    Deserialize(triggers, triggers.source);
-    for (auto it=std::begin(triggers.triggers); it!=std::begin(triggers.triggers)+triggers.count; it++) {
+    // Deserialize data
+    CaptureTriggers t;
+    Deserialize(t, triggers.source);
+    for (auto it=std::begin(t.triggers); it!=std::begin(t.triggers)+t.count; it++) {
         _ListItemAdd(self, *it);
     }
     
@@ -864,21 +865,67 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     return triggers;
 }
 
-static MSP::Capture _Convert(const Capture& x) {
-    using CaptureCountType = decltype(MSP::Capture::count);
-    const CaptureCountType CaptureCountMax = std::numeric_limits<CaptureCountType>::max();
-    if (x.count > CaptureCountMax) {
-        throw Toastbox::RuntimeError("capture count too large (value: %ju, max: %ju)", (uintmax_t)x.count, (uintmax_t)CaptureCountMax);
+template<typename T_Dst, typename T_Src>
+T_Dst _Cast(const T_Src& x) {
+    // Only support unsigned for now
+    static_assert(!std::numeric_limits<T_Src>::is_signed);
+    static_assert(!std::numeric_limits<T_Dst>::is_signed);
+    const T_Dst DstMaxValue = std::numeric_limits<T_Dst>::max();
+    if (x > DstMaxValue) {
+        throw Toastbox::RuntimeError("value too large (value: %ju, max: %ju)", (uintmax_t)x, (uintmax_t)DstMaxValue);
     }
+}
+
+static MSP::Capture _Convert(const Capture& x) {
     return MSP::Capture{
         .delayMs = MsForDuration(x.interval),
-        .count = (CaptureCountType)x.count,
+        .count = _Cast<decltype(MSP::Capture::count)>(x.count),
     };
 }
 
 static MSP::Repeat _Convert(const Repeat& x) {
-    #warning TODO: implement
-    abort();
+//    enum class Type : uint8_t {
+//        None,
+//        Daily,
+//        Weekly,
+//        Yearly,
+//    };
+//    
+//    Type type = Type::None;
+//    union [[gnu::packed]] {
+//        struct [[gnu::packed]] {
+//            uint8_t interval;
+//        } Daily;
+//        
+//        struct [[gnu::packed]] {
+//            uint8_t days;
+//        } Weekly;
+//        
+//        struct [[gnu::packed]] {
+//            uint8_t leapPhase;
+//        } Yearly;
+//    };
+    
+    switch (x.type) {
+    case Repeat::Type::Daily:
+        return {
+            .type = MSP::Repeat::Type::Daily,
+            .Daily = { .interval = 1 },
+        };
+    case Repeat::Type::WeekDays:
+        
+        break;
+    case Repeat::Type::YearDays:
+        
+        break;
+    case Repeat::Type::DayInterval:
+        return {
+            .type = MSP::Repeat::Type::Daily,
+            .Daily = { .interval = _Cast<decltype(MSP::Repeat::Daily.interval)>(x.DayInterval.interval) },
+        };
+    default:
+        abort();
+    }
 }
 
 template<typename T>
@@ -1146,17 +1193,17 @@ static void _Copy(Repeat& x, CaptureTriggersView* view, const char* menuLabel) {
         break;
     case Repeat::Type::WeekDays:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._daySelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.weekDays, v._daySelector_Control);
+        _Copy<T_Forward>(x.WeekDays, v._daySelector_Control);
         break;
     case Repeat::Type::YearDays:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._dateSelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.yearDays, v._dateSelector_Field);
+        _Copy<T_Forward>(x.YearDays, v._dateSelector_Field);
         break;
     case Repeat::Type::DayInterval:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._intervalSelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.dayInterval, v._intervalSelector_Field);
+        _Copy<T_Forward>(x.DayInterval, v._intervalSelector_Field);
         if constexpr (T_Forward) {
-            [v._intervalSelector_DescriptionLabel setStringValue:@(("(" + _DayIntervalDetailedDescription(x.dayInterval) + ")").c_str())];
+            [v._intervalSelector_DescriptionLabel setStringValue:@(("(" + _DayIntervalDetailedDescription(x.DayInterval) + ")").c_str())];
         }
         break;
     default:

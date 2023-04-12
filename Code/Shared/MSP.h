@@ -73,13 +73,12 @@ static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
 struct [[gnu::packed]] Repeat {
     enum class Type : uint8_t {
-        None,
         Daily,
         Weekly,
         Yearly,
     };
     
-    Type type = Type::None;
+    Type type = Type::Daily;
     union [[gnu::packed]] {
         struct [[gnu::packed]] {
             uint8_t interval;

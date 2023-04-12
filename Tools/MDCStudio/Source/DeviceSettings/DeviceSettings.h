@@ -10,15 +10,7 @@ using Month = uint8_t;
 
 // WeekDay: a particular day of an unspecified week
 using WeekDay = uint8_t;
-enum WeekDay_ {
-    Mon,
-    Tue,
-    Wed,
-    Thu,
-    Fri,
-    Sat,
-    Sun,
-};
+enum WeekDay_ { Mon, Tue, Wed, Thu, Fri, Sat, Sun };
 
 // MonthDay: a particular day of an unspecified month
 struct [[gnu::packed]] MonthDay {
@@ -62,17 +54,7 @@ inline void MonthValidate(const Month& x) {
 }
 
 inline void WeekDayValidate(const WeekDay& x) {
-    using X = WeekDay_;
-    switch (x) {
-    case X::Mon:  break;
-    case X::Tue:  break;
-    case X::Wed:  break;
-    case X::Thu:  break;
-    case X::Fri:  break;
-    case X::Sat:  break;
-    case X::Sun:  break;
-    default: throw Toastbox::RuntimeError("invalid WeekDay: %ju", (uintmax_t)x);
-    }
+    if (x >= 7) throw Toastbox::RuntimeError("invalid WeekDay: %ju", (uintmax_t)x);
 }
 
 inline void MonthDayValidate(const MonthDay& x) {
@@ -328,9 +310,9 @@ struct [[gnu::packed]] Repeat {
     
     Type type;
     union {
-        Calendar::WeekDays weekDays;
-        Calendar::YearDays yearDays;
-        DayInterval dayInterval;
+        Calendar::WeekDays WeekDays;
+        Calendar::YearDays YearDays;
+        DayInterval DayInterval;
     };
 };
 
