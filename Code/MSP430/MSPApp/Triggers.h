@@ -39,6 +39,10 @@ struct T_Triggers {
         Event captureEvent = { .type = Event::Type::CaptureImage };
     };
     
+    
+    
+    
+    
     struct TimeTrigger : Trigger {
         MSP::Repeat repeat;
         Event triggerEvent = { .type = Event::Type::TimeTrigger };
@@ -58,37 +62,60 @@ struct T_Triggers {
         auto& base() { return _BaseElm(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
     };
     
+    
+    
     static void Init() {
-        #warning TODO: reimplement
-//        for (auto it=TimeTriggerBegin(); it!=TimeTriggerEnd(); it++) {
-//            it->repeat = it->base().repeat;
-//            it->captureEvent.idx = it->base().captureIdx;
-//        }
-//        
-//        for (auto it=MotionTriggerBegin(); it!=MotionTriggerEnd(); it++) {
-//            it->repeat = it->base().repeat;
-//            it->captureEvent.idx = it->base().captureIdx;
-//        }
-//        
-//        for (auto it=ButtonTriggerBegin(); it!=ButtonTriggerEnd(); it++) {
-//            it->captureEvent.idx = it->base().captureIdx;
-//        }
-//        
-//        // Prepare events linked list
-//        {
-//            Event** prev = &_Front;
-//            for (auto it=EventBegin(); it!=EventEnd(); it++) {
-//                Event& ev = *it;
-//                const _EventBase& bev = it->base();
-//                
-//                ev.time = bev.time;
-//                ev.type = _EventTypeForBaseEventType(bev.type);
-//                ev.idx = bev.idx;
-//                
-//                *prev = &*it;
-//                prev = &it->next;
-//            }
-//        }
+        for (auto it=TimeTriggerBegin(); it!=TimeTriggerEnd(); it++) {
+            auto& base = it->base();
+            // Init capture
+            it->capture = base.capture;
+            // Init repeat
+            it->repeat = base.repeat;
+            // Init events
+            it->captureEvent.trigger = &*it;
+            it->triggerEvent.trigger = &*it;
+            // Schedule
+            it->triggerEvent.time = base.time;
+        }
+        
+        for (auto it=MotionTriggerBegin(); it!=MotionTriggerEnd(); it++) {
+            auto& base = it->base();
+            // Init capture
+            it->capture = base.capture;
+            // Init repeat
+            it->repeat = base.repeat;
+            // Init events
+            it->captureEvent.trigger = &*it;
+            it->enableEvent.trigger = &*it;
+            it->disableEvent.trigger = &*it;
+            it->unsuppressEvent.trigger = &*it;
+            // Schedule
+            it->triggerEvent.time = base.time;
+        }
+        
+        for (auto it=ButtonTriggerBegin(); it!=ButtonTriggerEnd(); it++) {
+            auto& base = it->base();
+            // Init capture
+            it->capture = base.capture;
+            // Init events
+            it->captureEvent.trigger = &*it;
+        }
+        
+        // Prepare events linked list
+        {
+            Event** prev = &_Front;
+            for (auto it=EventBegin(); it!=EventEnd(); it++) {
+                Event& ev = *it;
+                const _EventBase& bev = it->base();
+                
+                ev.time = bev.time;
+                ev.type = _EventTypeForBaseEventType(bev.type);
+                ev.idx = bev.idx;
+                
+                *prev = &*it;
+                prev = &it->next;
+            }
+        }
     }
     
     static void EventInsert(Event& ev) {
