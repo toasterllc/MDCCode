@@ -86,22 +86,6 @@ struct T_Triggers {
             // Init capture
             ((CaptureImageEvent&)*it).capture = base.capture;
         }
-        
-//        // Prepare events linked list
-//        {
-//            Event** prev = &_Front;
-//            for (auto it=EventBegin(); it!=EventEnd(); it++) {
-//                Event& ev = *it;
-//                const _EventBase& bev = it->base();
-//                
-//                ev.time = bev.time;
-//                ev.type = _EventTypeForBaseEventType(bev.type);
-//                ev.idx = bev.idx;
-//                
-//                *prev = &*it;
-//                prev = &it->next;
-//            }
-//        }
     }
     
     static void EventInsert(Event& ev, const Time::Instant& t) {
