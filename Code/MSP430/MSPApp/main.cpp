@@ -220,48 +220,25 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     }
 }
 
-static void _EventInsert(_Triggers::Event& ev, const Time::Instant& t) {
-    _Triggers::EventInsert(ev, t);
-}
+//static void _EventInsert(_Triggers::Event& ev, const Time::Instant& t) {
+//    _Triggers::EventInsert(ev, t);
+//}
 
 static void _EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
     _Triggers::EventInsert(ev, ev.time+_RepeatAdvance(repeat));
 }
 
-static void _EventInsertDelayed(_Triggers::Event& ev, uint32_t delayMs) {
-    _EventInsert(ev, _RTC::TimeRead() + ((Time::Instant)delayMs)*1000);
+static void _EventInsert(_Triggers::Event& ev, Time::Instant time, uint32_t deltaMs) {
+    _Triggers::EventInsert(ev, time + ((Time::Us)deltaMs)*1000);
 }
 
-static void _CaptureStart(_Triggers::CaptureImageEvent& ev) {
+static void _CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) {
     // Reset capture count
     ev.countRem = ev.capture.count;
     if (ev.countRem) {
-        // Insert the event at time 0
-        _EventInsert(ev, 0);
+        _Triggers::EventInsert(ev, time);
     }
 }
-
-
-//static void _CaptureSchedule(_Triggers::Event& ev) {
-//    _Triggers::Capture& capture = ev.trigger->capture;
-//    if (capture.countRem) {
-//        // If there are additional images that need to be captured, schedule them to be
-//        // captured after the specified delay
-//        capture.countRem--;
-//        _EventInsertDelayed(ev, capture.delayMs);
-//    } else {
-//        // Reset capture count
-//        capture.countRem = capture.count;
-//        if (capture.countRem) {
-//            capture.countRem--;
-//            _EventInsert(ev, 0);
-//        }
-//    }
-//}
-
-
-
-
 
 
 
@@ -648,19 +625,29 @@ struct _TaskMain {
     }
     
     static void _TimeTrigger(_Triggers::TimeTrigger& trigger) {
-        _CaptureStart(trigger);
-        _EventInsert((_Triggers::TimeTriggerEvent&)trigger, trigger.repeat);
+        _Triggers::TimeTriggerEvent& timeTriggerEvent = trigger;
+        // Schedule the CaptureImageEvent
+        _CaptureStart(trigger, timeTriggerEvent.time);
+        // Reschedule TimeTriggerEvent event for its next trigger time
+        _EventInsert(timeTriggerEvent, trigger.repeat);
     }
     
     static void _MotionEnable(_Triggers::MotionTrigger& trigger) {
+        _Triggers::MotionEnableEvent& motionEnableEvent = trigger;
+        
+        // Enable motion
         trigger.enabled.acquire();
-        // Reschedule MotionEnable event for its next trigger time
-        _EventInsert((_Triggers::MotionEnableEvent&)trigger, trigger.repeat);
+        
         // Schedule the MotionDisable event, if applicable
+        // This needs to happen before we reschedule `motionEnableEvent` because we need its .time to
+        // properly schedule the MotionDisableEvent!
         const uint32_t durationMs = trigger.base().durationMs;
         if (durationMs) {
-            _EventInsertDelayed((_Triggers::MotionDisableEvent&)trigger, durationMs);
+            _EventInsert((_Triggers::MotionDisableEvent&)trigger, motionEnableEvent.time, durationMs);
         }
+        
+        // Reschedule MotionEnable event for its next trigger time
+        _EventInsert(motionEnableEvent, trigger.repeat);
     }
     
     static void _MotionDisable(_Triggers::MotionTrigger& trigger) {
@@ -758,7 +745,7 @@ struct _TaskMain {
         
         ev.countRem--;
         if (ev.countRem) {
-            _EventInsertDelayed(ev, ev.capture.delayMs);
+            _EventInsert(ev, ev.time, ev.capture.delayMs);
         }
     }
     
@@ -996,13 +983,14 @@ struct _TaskMotion {
                 _Triggers::MotionTrigger& trigger = *it;
                 // If this trigger is enabled...
                 if (trigger.enabled.acquired()) {
+                    const Time::Instant time = _RTC::TimeRead();
                     // Start capture
-                    _CaptureStart(trigger);
+                    _CaptureStart(trigger, time);
                     // Suppress motion for the specified duration, if suppression is enabled
                     const uint32_t suppressMs = trigger.base().suppressMs;
                     if (suppressMs) {
                         trigger.enabled.suppress(true);
-                        _EventInsertDelayed((_Triggers::MotionUnsuppressEvent&)trigger, suppressMs);
+                        _EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressMs);
                     }
                 }
             }
@@ -1044,7 +1032,7 @@ struct _TaskButton {
                 if (_OffAssertion.acquired()) break;
                 
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _CaptureStart(*it);
+                    _CaptureStart(*it, _RTC::TimeRead());
                 }
                 break;
             }

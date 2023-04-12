@@ -877,8 +877,6 @@ static MSP::Capture _Convert(const Capture& x) {
 }
 
 - (const MSP::Triggers&)triggers {
-//    using namespace MSP;
-    static constexpr uint32_t DayMs = 24*60*60*1000;
     CaptureTriggers triggers = [self _triggers];
     _triggers.timeTriggerCount = 0;
     _triggers.motionTriggerCount = 0;
