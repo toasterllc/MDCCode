@@ -221,13 +221,11 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
 }
 
 static void _EventInsert(_Triggers::Event& ev, const Time::Instant& t) {
-    ev.time = t;
-    _Triggers::EventInsert(ev);
+    _Triggers::EventInsert(ev, t);
 }
 
 static void _EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-    ev.time += _RepeatAdvance(repeat);
-    _Triggers::EventInsert(ev);
+    _Triggers::EventInsert(ev, ev.time+_RepeatAdvance(repeat));
 }
 
 static void _EventInsertDelayed(_Triggers::Event& ev, uint32_t delayMs) {

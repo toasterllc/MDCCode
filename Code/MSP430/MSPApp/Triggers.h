@@ -66,10 +66,9 @@ struct T_Triggers {
             // Init repeat
             it->repeat = base.repeat;
             // Init capture
-            ((CaptureImageEvent&)*it).capture = base.capture;
+            it->capture = base.capture;
             // Schedule TimeTriggerEvent
-            ((TimeTriggerEvent&)*it).time = base.time;
-            EventInsert(*(TimeTriggerEvent*)it);
+            EventInsert(*(TimeTriggerEvent*)it, base.time);
         }
         
         for (auto it=MotionTriggerBegin(); it!=MotionTriggerEnd(); it++) {
@@ -77,10 +76,9 @@ struct T_Triggers {
             // Init repeat
             it->repeat = base.repeat;
             // Init capture
-            ((CaptureImageEvent&)*it).capture = base.capture;
+            it->capture = base.capture;
             // Schedule MotionEnableEvent
-            ((MotionEnableEvent&)*it).time = base.time;
-            EventInsert(*(MotionEnableEvent*)it);
+            EventInsert(*(MotionEnableEvent*)it, base.time);
         }
         
         for (auto it=ButtonTriggerBegin(); it!=ButtonTriggerEnd(); it++) {
@@ -106,7 +104,9 @@ struct T_Triggers {
 //        }
     }
     
-    static void EventInsert(Event& ev) {
+    static void EventInsert(Event& ev, const Time::Instant& t) {
+        ev.time = t;
+        
         Event** curr = &_Front;
         Event** prev = curr;
         while (*curr && (ev.time > (*curr)->time)) {
