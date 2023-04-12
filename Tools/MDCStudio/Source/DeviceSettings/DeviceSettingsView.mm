@@ -42,7 +42,7 @@
     [self->_segmentedControl setSelectedSegment:0];
     [self _actionSectionChanged:nil];
     
-    _captureTriggersView = [[CaptureTriggersView alloc] initWithEvents:_settings.events];
+    _captureTriggersView = [[CaptureTriggersView alloc] initWithTriggers:_settings.triggers];
     [_captureTriggersContainerView addSubview:_captureTriggersView];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_captureTriggersView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_captureTriggersView)]];
@@ -86,7 +86,7 @@
 
 - (const MSP::Settings&)settings {
     // Update settings before returning
-    _settings.events = [_captureTriggersView events];
+    _settings.triggers = [_captureTriggersView triggers];
     return _settings;
 }
 

@@ -717,7 +717,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_DetailLabel;
     
 //    CaptureTriggers _triggers;
-    MSP::Settings::Events _events;
+    MSP::Triggers _triggers;
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
 }
@@ -817,10 +817,10 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 //    x = Deserialize(s);
 //}
 
-- (instancetype)initWithEvents:(const MSP::Settings::Events&)events {
+- (instancetype)initWithTriggers:(const MSP::Triggers&)triggers {
     if (!(self = [super initWithFrame:{}])) return nil;
     
-    _events = events;
+    _triggers = triggers;
     
     // Load view from nib
     {
@@ -845,7 +845,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
     
     CaptureTriggers triggers;
-    Deserialize(triggers, events.source);
+    Deserialize(triggers, triggers.source);
     for (auto it=std::begin(triggers.triggers); it!=std::begin(triggers.triggers)+triggers.count; it++) {
         _ListItemAdd(self, *it);
     }
@@ -864,8 +864,15 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     return triggers;
 }
 
-- (const MSP::Settings::Events&)events {
-    using Events = MSP::Settings::Events;
+static MSP::Capture _Convert(const Capture& x) {
+    return MSP::Capture{
+        .delayMs = MsForDuration(srcCapture.interval),
+        .count = x.count,
+    };
+}
+
+- (const MSP::Triggers&)triggers {
+//    using namespace MSP;
     static constexpr uint32_t DayMs = 24*60*60*1000;
     CaptureTriggers triggers = [self _triggers];
 //    size_t timeTriggerIdx = 0;
@@ -873,11 +880,9 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 //    size_t buttonTriggerIdx = 0;
 //    size_t eventIdx = 0;
 //    size_t captureIdx = 0;
-    _events.timeTriggerCount = 0;
-    _events.motionTriggerCount = 0;
-    _events.buttonTriggerCount = 0;
-    _events.eventCount = 0;
-    _events.captureCount = 0;
+    _triggers.timeTriggerCount = 0;
+    _triggers.motionTriggerCount = 0;
+    _triggers.buttonTriggerCount = 0;
     
     for (size_t i=0; i<triggers.count; i++) {
         const CaptureTrigger& srcTrigger = triggers.triggers[i];
@@ -885,35 +890,74 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         case CaptureTrigger::Type::Time: {
             const Capture& srcCapture = srcTrigger.time.capture;
             
-            if (_events.timeTriggerCount >= std::size(_events.timeTrigger)) {
+            if (_triggers.timeTriggerCount >= std::size(_triggers.timeTrigger)) {
                 throw;
             }
-            Events::TimeTrigger& dstTrigger = _events.timeTrigger[_events.timeTriggerCount++];
+            MSP::Triggers::TimeTrigger& dstTrigger = _triggers.timeTrigger[_triggers.timeTriggerCount++];
             
-            if (_events.captureCount >= std::size(_events.capture)) {
-                throw;
-            }
-            Events::Capture& dstCapture = _events.capture[_events.captureCount++];
+//            Time::Instant time = 0;
+//            
+//            Capture capture {
+//                uint32_t delayMs = 0;
+//                uint16_t count = 0;
+//            };
+//            
+//            Repeat repeat {
+//                enum class Type : uint8_t {
+//                    None,
+//                    Daily,
+//                    Weekly,
+//                    Yearly,
+//                };
+//                
+//                Type type = Type::None;
+//                union [[gnu::packed]] {
+//                    struct [[gnu::packed]] {
+//                        uint8_t interval;
+//                    } Daily;
+//                    
+//                    struct [[gnu::packed]] {
+//                        uint8_t days;
+//                    } Weekly;
+//                    
+//                    struct [[gnu::packed]] {
+//                        uint8_t leapPhase;
+//                    } Yearly;
+//                };
+//            };
             
-            switch (srcTrigger.time.schedule.repeat.type) {
-            case Repeat::Type::Daily:
-                dstTrigger.periodMs = 1*DayMs;
-                dstTrigger.captureIdx = &dstCapture-_events.capture;
-                
-                dstCapture.delayMs = MsForDuration(srcCapture.interval);
-                dstCapture.count = srcCapture.count;
-                break;
+            dstTrigger.time = XXX;
+            dstTrigger.capture = _Convert(srcCapture);
+            dstTrigger.repeat = _Convert(srcTrigger.time.schedule.repeat);
             
-            case Repeat::Type::WeekDays:
-                
-                break;
-            
-            case Repeat::Type::YearDays:
-                break;
-            
-            case Repeat::Type::DayInterval:
-                break;
-            }
+//            switch (srcTrigger.time.schedule.repeat.type) {
+//            case Repeat::Type::Daily:
+//                dstTrigger.time = XXX;
+//                
+//                dstTrigger.capture = _Convert(srcCapture);
+//                
+//                dstTrigger.repeat = {
+//                    .type = ,
+//                    .Daily = { .interval =  },
+//                },
+//                
+//                dstTrigger.periodMs = 1*DayMs;
+//                dstTrigger.captureIdx = &dstCapture-_triggers.capture;
+//                
+//                dstCapture.delayMs = MsForDuration(srcCapture.interval);
+//                dstCapture.count = srcCapture.count;
+//                break;
+//            
+//            case Repeat::Type::WeekDays:
+//                
+//                break;
+//            
+//            case Repeat::Type::YearDays:
+//                break;
+//            
+//            case Repeat::Type::DayInterval:
+//                break;
+//            }
             
 //            struct [[gnu::packed]] Repeat {
 //                enum class Type : uint8_t {
@@ -939,8 +983,8 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         }
     }
     
-    Serialize(_events.source, triggers);
-    return _events;
+    Serialize(_triggers.source, triggers);
+    return _triggers;
 }
 
 static void _ContainerSubviewAdd(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {

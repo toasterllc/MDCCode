@@ -2,6 +2,6 @@
 #import "Code/Shared/MSP.h"
 
 @interface CaptureTriggersView : NSView
-- (instancetype)initWithEvents:(const MSP::Settings::Events&)events;
-- (const MSP::Settings::Events&)events;
+- (instancetype)initWithTriggers:(const MSP::Triggers&)triggers;
+- (const MSP::Triggers&)triggers;
 @end
