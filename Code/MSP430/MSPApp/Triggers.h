@@ -9,9 +9,6 @@
 template<auto& T_Base, typename T_MotionEnabled>
 struct T_Triggers {
     struct Trigger;
-    struct Capture : MSP::Capture {
-        uint16_t countRem = 0;
-    };
     
     struct Event {
         enum class Type : uint8_t {
@@ -22,100 +19,91 @@ struct T_Triggers {
             CaptureImage,
         };
         
-//        Event() {} // Necessary to workaround Clang bug that emits compiler error
         Time::Instant time = 0;
         Type type = Type::TimeTrigger;
-        Trigger* trigger = nullptr;
         Event* next = nullptr;
-        
-        auto& timeTrigger()   { return *static_cast<TimeTrigger*>(trigger);   }
-        auto& motionTrigger() { return *static_cast<MotionTrigger*>(trigger); }
-        auto& buttonTrigger() { return *static_cast<ButtonTrigger*>(trigger); }
     };
     
-    // TODO: write Init() function that initializes Events, and ?????? then implement alt where we don't need an idx ivar because all Events are in an array that reflects its base array, which removes most of Init function. which impl is smaller?
-    struct Trigger {
-        Capture capture;
-        Event captureEvent = { .type = Event::Type::CaptureImage };
+    template<typename Event::Type T_Init>
+    struct T_Event : Event {
+        T_Event() : Event{ .type=T_Init } {}
+        template<typename T>
+        operator T&() { return (T&)*this; }
     };
     
+    struct TimeTriggerEvent      : T_Event<Event::Type::TimeTrigger> {};
+    struct MotionEnableEvent     : T_Event<Event::Type::MotionEnable> {};
+    struct MotionDisableEvent    : T_Event<Event::Type::MotionDisable> {};
+    struct MotionUnsuppressEvent : T_Event<Event::Type::MotionUnsuppress> {};
+    struct CaptureImageEvent     : T_Event<Event::Type::CaptureImage> {
+        MSP::Capture capture;
+        uint16_t countRem = 0;
+    };
     
-    
-    
-    
-    struct TimeTrigger : Trigger {
+    struct TimeTrigger : CaptureImageEvent, TimeTriggerEvent {
         MSP::Repeat repeat;
-        Event triggerEvent = { .type = Event::Type::TimeTrigger };
         auto& base() { return _BaseElm(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
-    struct MotionTrigger : Trigger {
+    struct MotionTrigger : CaptureImageEvent, MotionEnableEvent, MotionDisableEvent, MotionUnsuppressEvent {
         MSP::Repeat repeat;
         T_MotionEnabled enabled;
-        Event enableEvent     = { .type = Event::Type::MotionEnable };
-        Event disableEvent    = { .type = Event::Type::MotionDisable };
-        Event unsuppressEvent = { .type = Event::Type::MotionUnsuppress };
         auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }
     };
     
-    struct ButtonTrigger : Trigger {
+    struct ButtonTrigger : CaptureImageEvent {
         auto& base() { return _BaseElm(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
     };
     
-    
+//    static TimeTrigger& TriggerCast(TimeTriggerEvent& ev) { return (TimeTrigger&)ev; }
+//    static MotionTrigger& TriggerCast(MotionEnableEvent& ev) { return (MotionTrigger&)ev; }
+//    static MotionTrigger& TriggerCast(MotionDisableEvent& ev) { return (MotionTrigger&)ev; }
+//    static MotionTrigger& TriggerCast(MotionUnsuppressEvent& ev) { return (MotionTrigger&)ev; }
     
     static void Init() {
         for (auto it=TimeTriggerBegin(); it!=TimeTriggerEnd(); it++) {
             auto& base = it->base();
-            // Init capture
-            it->capture = base.capture;
             // Init repeat
             it->repeat = base.repeat;
-            // Init events
-            it->captureEvent.trigger = &*it;
-            it->triggerEvent.trigger = &*it;
-            // Schedule
-            it->triggerEvent.time = base.time;
+            // Init capture
+            ((CaptureImageEvent&)*it).capture = base.capture;
+            // Schedule TimeTriggerEvent
+            ((TimeTriggerEvent&)*it).time = base.time;
+            EventInsert(*(TimeTriggerEvent*)it);
         }
         
         for (auto it=MotionTriggerBegin(); it!=MotionTriggerEnd(); it++) {
             auto& base = it->base();
-            // Init capture
-            it->capture = base.capture;
             // Init repeat
             it->repeat = base.repeat;
-            // Init events
-            it->captureEvent.trigger = &*it;
-            it->enableEvent.trigger = &*it;
-            it->disableEvent.trigger = &*it;
-            it->unsuppressEvent.trigger = &*it;
-            // Schedule
-            it->triggerEvent.time = base.time;
+            // Init capture
+            ((CaptureImageEvent&)*it).capture = base.capture;
+            // Schedule MotionEnableEvent
+            ((MotionEnableEvent&)*it).time = base.time;
+            EventInsert(*(MotionEnableEvent*)it);
         }
         
         for (auto it=ButtonTriggerBegin(); it!=ButtonTriggerEnd(); it++) {
             auto& base = it->base();
             // Init capture
-            it->capture = base.capture;
-            // Init events
-            it->captureEvent.trigger = &*it;
+            ((CaptureImageEvent&)*it).capture = base.capture;
         }
         
-        // Prepare events linked list
-        {
-            Event** prev = &_Front;
-            for (auto it=EventBegin(); it!=EventEnd(); it++) {
-                Event& ev = *it;
-                const _EventBase& bev = it->base();
-                
-                ev.time = bev.time;
-                ev.type = _EventTypeForBaseEventType(bev.type);
-                ev.idx = bev.idx;
-                
-                *prev = &*it;
-                prev = &it->next;
-            }
-        }
+//        // Prepare events linked list
+//        {
+//            Event** prev = &_Front;
+//            for (auto it=EventBegin(); it!=EventEnd(); it++) {
+//                Event& ev = *it;
+//                const _EventBase& bev = it->base();
+//                
+//                ev.time = bev.time;
+//                ev.type = _EventTypeForBaseEventType(bev.type);
+//                ev.idx = bev.idx;
+//                
+//                *prev = &*it;
+//                prev = &it->next;
+//            }
+//        }
     }
     
     static void EventInsert(Event& ev) {

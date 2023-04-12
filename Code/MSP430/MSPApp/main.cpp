@@ -234,11 +234,10 @@ static void _EventInsertDelayed(_Triggers::Event& ev, uint32_t delayMs) {
     _EventInsert(ev, _RTC::TimeRead() + ((Time::Instant)delayMs)*1000);
 }
 
-static void _CaptureStart(_Triggers::Event& ev) {
-    _Triggers::Capture& capture = ev.trigger->capture;
+static void _CaptureStart(_Triggers::CaptureImageEvent& ev) {
     // Reset capture count
-    capture.countRem = capture.count;
-    if (capture.countRem) {
+    ev.countRem = ev.capture.count;
+    if (ev.countRem) {
         // Insert the event at time 0
         _EventInsert(ev, 0);
     }
@@ -650,35 +649,31 @@ struct _TaskMain {
         _VDDBSet(false);
     }
     
-    static void _TimeTrigger(_Triggers::Event& ev) {
-        _Triggers::TimeTrigger& time = ev.timeTrigger();
-        _CaptureStart(time.captureEvent);
-        _EventInsert(ev, time.repeat);
+    static void _TimeTrigger(_Triggers::TimeTrigger& trigger) {
+        _CaptureStart(trigger);
+        _EventInsert((_Triggers::TimeTriggerEvent&)trigger, trigger.repeat);
     }
     
-    static void _MotionEnable(_Triggers::Event& ev) {
-        _Triggers::MotionTrigger& motion = ev.motionTrigger();
-        motion.enabled.acquire();
+    static void _MotionEnable(_Triggers::MotionTrigger& trigger) {
+        trigger.enabled.acquire();
         // Reschedule MotionEnable event for its next trigger time
-        _EventInsert(ev, motion.repeat);
+        _EventInsert((_Triggers::MotionEnableEvent&)trigger, trigger.repeat);
         // Schedule the MotionDisable event, if applicable
-        const uint32_t durationMs = motion.base().durationMs;
+        const uint32_t durationMs = trigger.base().durationMs;
         if (durationMs) {
-            _EventInsertDelayed(motion.disableEvent, durationMs);
+            _EventInsertDelayed((_Triggers::MotionDisableEvent&)trigger, durationMs);
         }
     }
     
-    static void _MotionDisable(_Triggers::Event& ev) {
-        _Triggers::MotionTrigger& motion = ev.motionTrigger();
-        motion.enabled.release();
+    static void _MotionDisable(_Triggers::MotionTrigger& trigger) {
+        trigger.enabled.release();
     }
     
-    static void _MotionUnsuppress(_Triggers::Event& ev) {
-        _Triggers::MotionTrigger& motion = ev.motionTrigger();
-        motion.enabled.suppress(false);
+    static void _MotionUnsuppress(_Triggers::MotionTrigger& trigger) {
+        trigger.enabled.suppress(false);
     }
     
-    static void _CaptureImage(_Triggers::Event& ev) {
+    static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
         constexpr MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         // Turn on VDD_B power (turns on ICE40)
@@ -763,10 +758,9 @@ struct _TaskMain {
         _VDDIMGSDSet(false);
         _VDDBSet(false);
         
-        _Triggers::Capture& capture = ev.trigger->capture;
-        capture.countRem--;
-        if (capture.countRem) {
-            _EventInsertDelayed(ev, capture.delayMs);
+        ev.countRem--;
+        if (ev.countRem) {
+            _EventInsertDelayed(ev, ev.capture.delayMs);
         }
     }
     
@@ -837,11 +831,11 @@ struct _TaskMain {
             
             using T = _Triggers::Event::Type;
             switch (ev->type) {
-            case T::TimeTrigger:      _TimeTrigger(*ev);      break;
-            case T::MotionEnable:     _MotionEnable(*ev);     break;
-            case T::MotionDisable:    _MotionDisable(*ev);    break;
-            case T::MotionUnsuppress: _MotionUnsuppress(*ev); break;
-            case T::CaptureImage:     _CaptureImage(*ev);     break;
+            case T::TimeTrigger:      _TimeTrigger((_Triggers::TimeTriggerEvent&)*ev);           break;
+            case T::MotionEnable:     _MotionEnable((_Triggers::MotionEnableEvent&)*ev);         break;
+            case T::MotionDisable:    _MotionDisable((_Triggers::MotionDisableEvent&)*ev);       break;
+            case T::MotionUnsuppress: _MotionUnsuppress((_Triggers::MotionUnsuppressEvent&)*ev); break;
+            case T::CaptureImage:     _CaptureImage((_Triggers::CaptureImageEvent&)*ev);         break;
             }
             
 //            // Light the red LED if this is a manual trigger
@@ -1001,15 +995,16 @@ struct _TaskMotion {
             _Motion::WaitForMotion();
             // When motion occurs, start captures for each enabled motion trigger
             for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
-                _Triggers::MotionTrigger& motion = *it;
+                _Triggers::MotionTrigger& trigger = *it;
                 // If this trigger is enabled...
-                if (motion.enabled.acquired()) {
+                if (trigger.enabled.acquired()) {
                     // Start capture
-                    _CaptureStart(motion.captureEvent);
+                    _CaptureStart(trigger);
                     // Suppress motion for the specified duration, if suppression is enabled
-                    if (motion.base().suppressMs) {
-                        motion.enabled.suppress(true);
-                        _EventInsertDelayed(motion.unsuppressEvent, motion.base().suppressMs);
+                    const uint32_t suppressMs = trigger.base().suppressMs;
+                    if (suppressMs) {
+                        trigger.enabled.suppress(true);
+                        _EventInsertDelayed((_Triggers::MotionUnsuppressEvent&)trigger, suppressMs);
                     }
                 }
             }
@@ -1051,7 +1046,7 @@ struct _TaskButton {
                 if (_OffAssertion.acquired()) break;
                 
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _CaptureStart(it->captureEvent);
+                    _CaptureStart(*it);
                 }
                 break;
             }
