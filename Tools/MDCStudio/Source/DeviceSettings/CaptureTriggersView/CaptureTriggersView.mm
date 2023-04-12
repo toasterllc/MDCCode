@@ -698,7 +698,8 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_Label;
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_DetailLabel;
     
-    MSP::Settings::Events _events;
+//    CaptureTriggers _triggers;
+//    MSP::Settings::Events _events;
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
 }
@@ -788,7 +789,14 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
     
-    _events = events;
+    CaptureTriggersSerialized triggersSerialized;
+    static_assert(sizeof(triggersSerialized) == sizeof(events.source));
+    memcpy(&triggersSerialized, events.source, sizeof(triggersSerialized));
+    CaptureTriggers triggers = Deserialize(triggersSerialized);
+    
+    
+    
+//    _events = events;
     return self;
 }
 
