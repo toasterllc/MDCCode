@@ -96,70 +96,46 @@ struct [[gnu::packed]] Repeat {
 };
 static_assert(sizeof(Repeat) == 2);
 
-struct [[gnu::packed]] Events {
+// Capture: describes the capture action when a trigger occurs
+struct [[gnu::packed]] Capture {
+    uint32_t delayMs = 0;
+    uint16_t count = 0;
+};
+static_assert(!(sizeof(Capture) % 2)); // Check alignment
+
+struct [[gnu::packed]] Triggers {
     struct [[gnu::packed]] TimeTrigger {
+        Time::Instant time = 0;
+        Capture capture;
         Repeat repeat;
-        uint8_t captureIdx = 0;
-        uint8_t _pad = 0;
     };
     static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
     
     struct [[gnu::packed]] MotionTrigger {
+        Time::Instant time = 0;
+        Capture capture;
         Repeat repeat;
         // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
         uint16_t count = 0;
+        // durationMs: duration for which motion should be enabled (0 == forever)
+        uint32_t durationMs = 0;
         // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
         uint32_t suppressMs = 0;
-        uint8_t captureIdx = 0;
-        uint8_t _pad = 0;
     };
     static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
     
     struct [[gnu::packed]] ButtonTrigger {
-        uint8_t captureIdx = 0;
-        uint8_t _pad = 0;
+        Capture capture;
     };
     static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
     
-    struct [[gnu::packed]] Event {
-        enum class Type : uint8_t {
-            TimeTrigger,
-            MotionEnable,
-        };
-        
-        Time::Instant time = 0;
-        Type type = Type::TimeTrigger;
-        uint8_t idx = 0;
-    };
-    static_assert(!(sizeof(Event) % 2)); // Check alignment
-    
-    // Capture: describes the capture action when a trigger occurs
-    struct [[gnu::packed]] Capture {
-        uint32_t delayMs = 0;
-        uint16_t count = 0;
-    };
-    static_assert(!(sizeof(Capture) % 2)); // Check alignment
-    
-    static constexpr size_t TimeTriggerCap    = 8;
-    static constexpr size_t MotionTriggerCap  = 8;
-    static constexpr size_t ButtonTriggerCap  = 2;
-    static constexpr size_t EventCap          = TimeTriggerCap+MotionTriggerCap+ButtonTriggerCap;
-    static constexpr size_t CaptureCap        = TimeTriggerCap+MotionTriggerCap+ButtonTriggerCap;
-    
-    // Triggers
-    TimeTrigger   timeTrigger[TimeTriggerCap];
-    MotionTrigger motionTrigger[MotionTriggerCap];
-    ButtonTrigger buttonTrigger[ButtonTriggerCap];
-    // Events
-    Event event[EventCap];
-    // Capture descriptors
-    Capture capture[CaptureCap];
+    TimeTrigger   timeTrigger[8];
+    MotionTrigger motionTrigger[8];
+    ButtonTrigger buttonTrigger[2];
     
     uint8_t timeTriggerCount   = 0;
     uint8_t motionTriggerCount = 0;
     uint8_t buttonTriggerCount = 0;
-    uint8_t eventCount         = 0;
-    uint8_t captureCount       = 0;
     uint8_t _pad               = 0;
     
     // source: opaque data used by software to hold its representation of this struct
@@ -167,9 +143,9 @@ struct [[gnu::packed]] Events {
 };
 
 struct [[gnu::packed]] Settings {
-    Events events = {};
-    StaticPrint(sizeof(events));
-    static_assert(sizeof(events) == 666); // Debug
+    Triggers triggers = {};
+//    StaticPrint(sizeof(triggers));
+    static_assert(sizeof(triggers) == 608); // Debug
 };
 
 struct [[gnu::packed]] State {
@@ -206,7 +182,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 806); // Debug
+    static_assert(sizeof(settings) == 608); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
@@ -214,6 +190,9 @@ struct [[gnu::packed]] State {
     static_assert(!(sizeof(aborts) % 2)); // Check alignment
     static_assert(sizeof(aborts) == 110); // Debug
 };
+//StaticPrint(sizeof(State));
+static_assert(!(sizeof(State) % 2)); // Check alignment
+static_assert(sizeof(State) == 782); // Debug
 
 static constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,

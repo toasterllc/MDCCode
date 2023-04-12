@@ -25,7 +25,7 @@
 #include "BatterySampler.h"
 #include "Button.h"
 #include "ResourceCounter.h"
-#include "Events.h"
+#include "Triggers.h"
 #include "Motion.h"
 #include "MotionEnabledAssertion.h"
 using namespace GPIO;
@@ -175,8 +175,8 @@ static void _MotionDisable();
 static volatile uint8_t _MotionEnabledAssertionCounter = 0;
 using _MotionEnabledAssertion = T_MotionEnabledAssertion<_MotionEnabledAssertionCounter, _MotionEnable, _MotionDisable>;
 
-// _Events: stores our current event state
-using _Events = T_Events<_State, _MotionEnabledAssertion>;
+// _Triggers: stores our current event state
+using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
 static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Us Day         = (Time::Us)     24*60*60*1000000;
@@ -220,27 +220,47 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     }
 }
 
-static void _EventInsert(_Events::Event& ev, const Time::Instant& t) {
+static void _EventInsert(_Triggers::Event& ev, const Time::Instant& t) {
     ev.time = t;
-    _Events::Insert(ev);
+    _Triggers::EventInsert(ev);
 }
 
-static void _EventInsert(_Events::Event& ev, MSP::Repeat& repeat) {
+static void _EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
     ev.time += _RepeatAdvance(repeat);
-    _Events::Insert(ev);
+    _Triggers::EventInsert(ev);
 }
 
-static void _EventInsertDelayed(_Events::Event& ev, uint32_t delayMs) {
+static void _EventInsertDelayed(_Triggers::Event& ev, uint32_t delayMs) {
     _EventInsert(ev, _RTC::TimeRead() + ((Time::Instant)delayMs)*1000);
 }
 
-static void _CaptureStart(_Events::Event& ev) {
-    _Events::Capture& capture = ev.capture();
+static void _CaptureStart(_Triggers::Event& ev) {
+    _Triggers::Capture& capture = ev.trigger->capture;
     // Reset capture count
-    capture.countRem = capture.base().count;
-    // Insert the event at time 0
-    _EventInsert(ev, 0);
+    capture.countRem = capture.count;
+    if (capture.countRem) {
+        // Insert the event at time 0
+        _EventInsert(ev, 0);
+    }
 }
+
+
+//static void _CaptureSchedule(_Triggers::Event& ev) {
+//    _Triggers::Capture& capture = ev.trigger->capture;
+//    if (capture.countRem) {
+//        // If there are additional images that need to be captured, schedule them to be
+//        // captured after the specified delay
+//        capture.countRem--;
+//        _EventInsertDelayed(ev, capture.delayMs);
+//    } else {
+//        // Reset capture count
+//        capture.countRem = capture.count;
+//        if (capture.countRem) {
+//            capture.countRem--;
+//            _EventInsert(ev, 0);
+//        }
+//    }
+//}
 
 
 
@@ -630,30 +650,35 @@ struct _TaskMain {
         _VDDBSet(false);
     }
     
-    static void _TimeTrigger(_Events::Event& ev) {
-        _Events::TimeTrigger& time = ev.timeTrigger();
+    static void _TimeTrigger(_Triggers::Event& ev) {
+        _Triggers::TimeTrigger& time = ev.timeTrigger();
         _CaptureStart(time.captureEvent);
         _EventInsert(ev, time.repeat);
     }
     
-    static void _MotionEnable(_Events::Event& ev) {
-        _Events::MotionTrigger& motion = ev.motionTrigger();
+    static void _MotionEnable(_Triggers::Event& ev) {
+        _Triggers::MotionTrigger& motion = ev.motionTrigger();
         motion.enabled.acquire();
+        // Reschedule MotionEnable event for its next trigger time
         _EventInsert(ev, motion.repeat);
-        _EventInsertDelayed();
+        // Schedule the MotionDisable event, if applicable
+        const uint32_t durationMs = motion.base().durationMs;
+        if (durationMs) {
+            _EventInsertDelayed(motion.disableEvent, durationMs);
+        }
     }
     
-    static void _MotionDisable(_Events::Event& ev) {
-        _Events::MotionTrigger& motion = ev.motionTrigger();
+    static void _MotionDisable(_Triggers::Event& ev) {
+        _Triggers::MotionTrigger& motion = ev.motionTrigger();
         motion.enabled.release();
     }
     
-    static void _MotionUnsuppress(_Events::Event& ev) {
-        _Events::MotionTrigger& motion = ev.motionTrigger();
+    static void _MotionUnsuppress(_Triggers::Event& ev) {
+        _Triggers::MotionTrigger& motion = ev.motionTrigger();
         motion.enabled.suppress(false);
     }
     
-    static void _CaptureImage(_Events::Event& ev) {
+    static void _CaptureImage(_Triggers::Event& ev) {
         constexpr MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         // Turn on VDD_B power (turns on ICE40)
@@ -738,10 +763,10 @@ struct _TaskMain {
         _VDDIMGSDSet(false);
         _VDDBSet(false);
         
-        _Events::Capture& capture = ev.capture();
+        _Triggers::Capture& capture = ev.trigger->capture;
         capture.countRem--;
         if (capture.countRem) {
-            _EventInsertDelayed(ev, capture.base().delayMs);
+            _EventInsertDelayed(ev, capture.delayMs);
         }
     }
     
@@ -798,8 +823,8 @@ struct _TaskMain {
 //            }
             
             // Wait for an event
-            static _Events::Event* ev = nullptr;
-            _Scheduler::Wait([] { return (bool)(ev = _Events::Pop(_RTC::TimeRead())); });
+            static _Triggers::Event* ev = nullptr;
+            _Scheduler::Wait([] { return (bool)(ev = _Triggers::EventPop(_RTC::TimeRead())); });
             
             // Stay powered while we handle the event
             _Power.acquire();
@@ -810,7 +835,7 @@ struct _TaskMain {
 //            MotionUnsuppress,   // idx: _MotionTrigger[]
 //            CaptureImage,       // idx: _Capture[]
             
-            using T = _Events::Event::Type;
+            using T = _Triggers::Event::Type;
             switch (ev->type) {
             case T::TimeTrigger:      _TimeTrigger(*ev);      break;
             case T::MotionEnable:     _MotionEnable(*ev);     break;
@@ -975,8 +1000,8 @@ struct _TaskMotion {
         for (;;) {
             _Motion::WaitForMotion();
             // When motion occurs, start captures for each enabled motion trigger
-            for (auto it=_Events::MotionTriggerBegin(); it!=_Events::MotionTriggerEnd(); it++) {
-                _Events::MotionTrigger& motion = *it;
+            for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+                _Triggers::MotionTrigger& motion = *it;
                 // If this trigger is enabled...
                 if (motion.enabled.acquired()) {
                     // Start capture
@@ -1025,7 +1050,7 @@ struct _TaskButton {
                 // Ignore button presses if we're off
                 if (_OffAssertion.acquired()) break;
                 
-                for (auto it=_Events::ButtonTriggerBegin(); it!=_Events::ButtonTriggerEnd(); it++) {
+                for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
                     _CaptureStart(it->captureEvent);
                 }
                 break;
@@ -1369,8 +1394,8 @@ int main() {
     // Init BatterySampler
     _BatterySampler::Init();
     
-    // Init Events
-    _Events::Init();
+    // Init Triggers
+    _Triggers::Init();
     
     // Init LEDs by setting their default-priority / 'backstop' values to off.
     // This is necessary so that relinquishing the LEDs from I2C task causes
