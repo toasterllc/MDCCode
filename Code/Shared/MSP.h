@@ -64,10 +64,10 @@ static_assert(!(sizeof(AbortType) % 2)); // Check alignment
 
 // AbortHistory: records history of an abort type, where an abort type is a (domain,line) tuple
 struct [[gnu::packed]] AbortHistory {
-    AbortType type                   = {};
-    Time::Instant timestampEarliest  = {};
-    Time::Instant timestampLatest    = {};
-    uint16_t count                   = 0;
+    AbortType type          = {};
+    Time::Instant earliest  = {};
+    Time::Instant latest    = {};
+    uint16_t count          = 0;
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
@@ -79,7 +79,8 @@ struct [[gnu::packed]] Repeat {
         Yearly,
     };
     
-    union [[gnu::packed]] Context {
+    Type type = Type::None;
+    union [[gnu::packed]] {
         struct [[gnu::packed]] {
             uint8_t interval;
         } Daily;
@@ -92,10 +93,6 @@ struct [[gnu::packed]] Repeat {
             uint8_t leapPhase;
         } Yearly;
     };
-    static_assert(sizeof(Context) == 1);
-    
-    Type type = Type::None;
-    Context ctx;
 };
 static_assert(sizeof(Repeat) == 2);
 

@@ -178,13 +178,55 @@ using _MotionEnabledAssertion = T_MotionEnabledAssertion<_MotionEnabledAssertion
 // _Events: stores our current event state
 using _Events = T_Events<_State, _MotionEnabledAssertion>;
 
+static Time::Us _RepeatAdvance(MSP::Repeat& x) {
+    static constexpr Time::Us Day         = (Time::Us)     24*60*60*1000000;
+    static constexpr Time::Us Year        = (Time::Us) 365*24*60*60*1000000;
+    static constexpr Time::Us YearPlusDay = (Time::Us) 366*24*60*60*1000000;
+    switch (x.type) {
+    case MSP::Repeat::Type::None:
+        return 0;
+    
+    case MSP::Repeat::Type::Daily:
+        Assert(x.Daily.interval);
+        return Day*x.Daily.interval;
+    
+    case MSP::Repeat::Type::Weekly: {
+        #warning TODO: verify this works properly
+        // Determine the next trigger day, calculating the duration of time until then
+        Assert(x.Weekly.days & 1); // Weekly.days must always rest on an active day
+        x.Weekly.days |= 0x80;
+        uint8_t count = 0;
+        do {
+            x.Weekly.days >>= 1;
+            count++;
+        } while (!(x.Weekly.days & 1));
+        return count*Day;
+    }
+    
+    case MSP::Repeat::Type::Yearly: {
+        #warning TODO: verify this works properly
+        // Return 1 year in microseconds, appropriately handling leap years by referencing `leapPhase`
+        if (x.Yearly.leapPhase) {
+            x.Yearly.leapPhase--;
+            return Year;
+        } else {
+            x.Yearly.leapPhase = 3;
+            return YearPlusDay;
+        }
+    }
+    
+    default:
+        abort();
+    }
+}
+
 static void _EventInsert(_Events::Event& ev, const Time::Instant& t) {
     ev.time = t;
     _Events::Insert(ev);
 }
 
-static void _EventInsert(_Events::Event& ev, const MSP::Repeat& r) {
-//    ev.time = t;
+static void _EventInsert(_Events::Event& ev, MSP::Repeat& repeat) {
+    ev.time += _RepeatAdvance(repeat);
     _Events::Insert(ev);
 }
 
@@ -194,7 +236,7 @@ static void _EventInsertDelayed(_Events::Event& ev, uint32_t delayMs) {
 
 static void _CaptureStart(_Events::Event& ev) {
     _Events::Capture& capture = ev.capture();
-    // Reset capture state
+    // Reset capture count
     capture.countRem = capture.base().count;
     // Insert the event at time 0
     _EventInsert(ev, 0);
@@ -589,12 +631,16 @@ struct _TaskMain {
     }
     
     static void _TimeTrigger(_Events::Event& ev) {
-        _CaptureStart(ev.timeTrigger().captureEvent);
+        _Events::TimeTrigger& time = ev.timeTrigger();
+        _CaptureStart(time.captureEvent);
+        _EventInsert(ev, time.repeat);
     }
     
     static void _MotionEnable(_Events::Event& ev) {
         _Events::MotionTrigger& motion = ev.motionTrigger();
         motion.enabled.acquire();
+        _EventInsert(ev, motion.repeat);
+        _EventInsertDelayed();
     }
     
     static void _MotionDisable(_Events::Event& ev) {
@@ -1227,10 +1273,10 @@ static void _AbortRecord(const Time::Instant& timestamp, uint16_t domain, uint16
         };
         
         // Figure out if we want to bring this back again
-        hist->timestampEarliest = timestamp;
+        hist->earliest = timestamp;
     }
     
-    hist->timestampLatest = timestamp;
+    hist->latest = timestamp;
     hist->count++;
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdlib>
+#include "MSP.h"
 
 // TODO: when we move to using >=C++20, we want to give _State.settings.events as T_Base, but we have to give
 //       the whole _State while we're on C++17, because C++17 doesn't allow giving subojects as non-type
@@ -31,13 +32,13 @@ struct T_Events {
     };
     
     struct TimeTrigger {
-        Repeat::Context repeatCtx;
+        MSP::Repeat repeat;
         Event captureEvent = { .type = Event::Type::CaptureImage };
         auto& base() { return _BaseElm(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
     struct MotionTrigger {
-        Repeat::Context repeatCtx;
+        MSP::Repeat repeat;
         T_MotionEnabled enabled;
         Event captureEvent = { .type = Event::Type::CaptureImage };
         Event unsuppressEvent = { .type = Event::Type::MotionUnsuppress };
@@ -58,10 +59,12 @@ struct T_Events {
     
     static void Init() {
         for (auto it=TimeTriggerBegin(); it!=TimeTriggerEnd(); it++) {
+            it->repeat = it->base().repeat;
             it->captureEvent.idx = it->base().captureIdx;
         }
         
         for (auto it=MotionTriggerBegin(); it!=MotionTriggerEnd(); it++) {
+            it->repeat = it->base().repeat;
             it->captureEvent.idx = it->base().captureIdx;
         }
         

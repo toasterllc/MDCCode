@@ -2,6 +2,9 @@
 
 namespace Time {
 
+// Us: a duration in microseconds
+using Us = uint64_t;
+
 // Instant: represents a particular moment in time
 // Encoded as the linear count of microseconds since our epoch,
 // where our epoch is defined by `Epoch` in TimeConvert.h
