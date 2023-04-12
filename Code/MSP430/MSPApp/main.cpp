@@ -183,6 +183,11 @@ static void _EventInsert(_Events::Event& ev, const Time::Instant& t) {
     _Events::Insert(ev);
 }
 
+static void _EventInsert(_Events::Event& ev, const MSP::Repeat& r) {
+//    ev.time = t;
+    _Events::Insert(ev);
+}
+
 static void _EventInsertDelayed(_Events::Event& ev, uint32_t delayMs) {
     _EventInsert(ev, _RTC::TimeRead() + ((Time::Instant)delayMs)*1000);
 }
@@ -587,6 +592,21 @@ struct _TaskMain {
         _CaptureStart(ev.timeTrigger().captureEvent);
     }
     
+    static void _MotionEnable(_Events::Event& ev) {
+        _Events::MotionTrigger& motion = ev.motionTrigger();
+        motion.enabled.acquire();
+    }
+    
+    static void _MotionDisable(_Events::Event& ev) {
+        _Events::MotionTrigger& motion = ev.motionTrigger();
+        motion.enabled.release();
+    }
+    
+    static void _MotionUnsuppress(_Events::Event& ev) {
+        _Events::MotionTrigger& motion = ev.motionTrigger();
+        motion.enabled.suppress(false);
+    }
+    
     static void _CaptureImage(_Events::Event& ev) {
         constexpr MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
@@ -679,21 +699,6 @@ struct _TaskMain {
         }
     }
     
-    static void _MotionEnable(_Events::Event& ev) {
-        _Events::MotionTrigger& motion = ev.motionTrigger();
-        motion.enabled.acquire();
-    }
-    
-    static void _MotionDisable(_Events::Event& ev) {
-        _Events::MotionTrigger& motion = ev.motionTrigger();
-        motion.enabled.release();
-    }
-    
-    static void _MotionUnsuppress(_Events::Event& ev) {
-        _Events::MotionTrigger& motion = ev.motionTrigger();
-        motion.enabled.suppress(false);
-    }
-    
     static void Run() {
 //        for (bool x=false;; x=!x) {
 //            _Pin::LED_RED_::Write(x);
@@ -753,13 +758,19 @@ struct _TaskMain {
             // Stay powered while we handle the event
             _Power.acquire();
             
+//            TimeTrigger,        // idx: _TimeTrigger[]
+//            MotionEnable,       // idx: _MotionTrigger[]
+//            MotionDisable,      // idx: _MotionTrigger[]
+//            MotionUnsuppress,   // idx: _MotionTrigger[]
+//            CaptureImage,       // idx: _Capture[]
+            
             using T = _Events::Event::Type;
             switch (ev->type) {
             case T::TimeTrigger:      _TimeTrigger(*ev);      break;
-            case T::CaptureImage:     _CaptureImage(*ev);     break;
             case T::MotionEnable:     _MotionEnable(*ev);     break;
             case T::MotionDisable:    _MotionDisable(*ev);    break;
             case T::MotionUnsuppress: _MotionUnsuppress(*ev); break;
+            case T::CaptureImage:     _CaptureImage(*ev);     break;
             }
             
 //            // Light the red LED if this is a manual trigger

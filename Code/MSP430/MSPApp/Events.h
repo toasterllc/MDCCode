@@ -31,11 +31,13 @@ struct T_Events {
     };
     
     struct TimeTrigger {
+        Repeat::Context repeatCtx;
         Event captureEvent = { .type = Event::Type::CaptureImage };
         auto& base() { return _BaseElm(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
     struct MotionTrigger {
+        Repeat::Context repeatCtx;
         T_MotionEnabled enabled;
         Event captureEvent = { .type = Event::Type::CaptureImage };
         Event unsuppressEvent = { .type = Event::Type::MotionUnsuppress };

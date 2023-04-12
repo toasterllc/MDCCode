@@ -71,101 +71,105 @@ struct [[gnu::packed]] AbortHistory {
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
-struct [[gnu::packed]] Settings {
-    struct [[gnu::packed]] Events {
-        struct [[gnu::packed]] Repeat {
-            enum class Type : uint8_t {
-                Daily,
-                Weekly,
-                Yearly,
-            };
-            
-            Type type;
-            union {
-                struct [[gnu::packed]] {
-                    uint8_t interval;
-                } Daily;
-                
-                struct [[gnu::packed]] {
-                    uint8_t days;
-                } Weekly;
-                
-                struct [[gnu::packed]] {
-                    uint8_t leapPhase;
-                } Yearly;
-            };
-        };
-        static_assert(sizeof(Repeat) == 2);
-        
-        struct [[gnu::packed]] TimeTrigger {
-            Repeat repeat;
-            uint8_t captureIdx = 0;
-            uint8_t _pad = 0;
-        };
-        static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
-        
-        struct [[gnu::packed]] MotionTrigger {
-            Repeat repeat;
-            // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
-            uint16_t count = 0;
-            // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
-            uint32_t suppressMs = 0;
-            uint8_t captureIdx = 0;
-            uint8_t _pad = 0;
-        };
-        static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
-        
-        struct [[gnu::packed]] ButtonTrigger {
-            uint8_t captureIdx = 0;
-            uint8_t _pad = 0;
-        };
-        static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
-        
-        struct [[gnu::packed]] Event {
-            enum class Type : uint8_t {
-                TimeTrigger,
-                MotionEnable,
-            };
-            
-            Time::Instant time = 0;
-            Type type = Type::TimeTrigger;
-            uint8_t idx = 0;
-        };
-        static_assert(!(sizeof(Event) % 2)); // Check alignment
-        
-        // Capture: describes the capture action when a trigger occurs
-        struct [[gnu::packed]] Capture {
-            uint32_t delayMs = 0;
-            uint16_t count = 0;
-        };
-        static_assert(!(sizeof(Capture) % 2)); // Check alignment
-        
-        static constexpr size_t TimeTriggerCap    = 8;
-        static constexpr size_t MotionTriggerCap  = 8;
-        static constexpr size_t ButtonTriggerCap  = 2;
-        static constexpr size_t EventCap          = 32;
-        static constexpr size_t CaptureCap        = TimeTriggerCap+MotionTriggerCap+ButtonTriggerCap;
-        
-        // Triggers
-        TimeTrigger   timeTrigger[TimeTriggerCap];
-        MotionTrigger motionTrigger[MotionTriggerCap];
-        ButtonTrigger buttonTrigger[ButtonTriggerCap];
-        // Events
-        Event event[EventCap];
-        // Capture descriptors
-        Capture capture[CaptureCap];
-        
-        uint8_t timeTriggerCount   = 0;
-        uint8_t motionTriggerCount = 0;
-        uint8_t buttonTriggerCount = 0;
-        uint8_t eventCount         = 0;
-        uint8_t captureCount       = 0;
-        uint8_t _pad               = 0;
-        
-        // source: opaque data used by software to hold its representation of this struct
-        uint8_t source[256] = {};
+struct [[gnu::packed]] Repeat {
+    enum class Type : uint8_t {
+        None,
+        Daily,
+        Weekly,
+        Yearly,
     };
     
+    union [[gnu::packed]] Context {
+        struct [[gnu::packed]] {
+            uint8_t interval;
+        } Daily;
+        
+        struct [[gnu::packed]] {
+            uint8_t days;
+        } Weekly;
+        
+        struct [[gnu::packed]] {
+            uint8_t leapPhase;
+        } Yearly;
+    };
+    static_assert(sizeof(Context) == 1);
+    
+    Type type = Type::None;
+    Context ctx;
+};
+static_assert(sizeof(Repeat) == 2);
+
+struct [[gnu::packed]] Events {
+    struct [[gnu::packed]] TimeTrigger {
+        Repeat repeat;
+        uint8_t captureIdx = 0;
+        uint8_t _pad = 0;
+    };
+    static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] MotionTrigger {
+        Repeat repeat;
+        // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
+        uint16_t count = 0;
+        // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
+        uint32_t suppressMs = 0;
+        uint8_t captureIdx = 0;
+        uint8_t _pad = 0;
+    };
+    static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] ButtonTrigger {
+        uint8_t captureIdx = 0;
+        uint8_t _pad = 0;
+    };
+    static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] Event {
+        enum class Type : uint8_t {
+            TimeTrigger,
+            MotionEnable,
+        };
+        
+        Time::Instant time = 0;
+        Type type = Type::TimeTrigger;
+        uint8_t idx = 0;
+    };
+    static_assert(!(sizeof(Event) % 2)); // Check alignment
+    
+    // Capture: describes the capture action when a trigger occurs
+    struct [[gnu::packed]] Capture {
+        uint32_t delayMs = 0;
+        uint16_t count = 0;
+    };
+    static_assert(!(sizeof(Capture) % 2)); // Check alignment
+    
+    static constexpr size_t TimeTriggerCap    = 8;
+    static constexpr size_t MotionTriggerCap  = 8;
+    static constexpr size_t ButtonTriggerCap  = 2;
+    static constexpr size_t EventCap          = 32;
+    static constexpr size_t CaptureCap        = TimeTriggerCap+MotionTriggerCap+ButtonTriggerCap;
+    
+    // Triggers
+    TimeTrigger   timeTrigger[TimeTriggerCap];
+    MotionTrigger motionTrigger[MotionTriggerCap];
+    ButtonTrigger buttonTrigger[ButtonTriggerCap];
+    // Events
+    Event event[EventCap];
+    // Capture descriptors
+    Capture capture[CaptureCap];
+    
+    uint8_t timeTriggerCount   = 0;
+    uint8_t motionTriggerCount = 0;
+    uint8_t buttonTriggerCount = 0;
+    uint8_t eventCount         = 0;
+    uint8_t captureCount       = 0;
+    uint8_t _pad               = 0;
+    
+    // source: opaque data used by software to hold its representation of this struct
+    uint8_t source[256] = {};
+};
+
+struct [[gnu::packed]] Settings {
     Events events = {};
 //    StaticPrint(sizeof(events));
     static_assert(sizeof(events) == 806); // Debug
