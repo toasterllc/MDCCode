@@ -18,15 +18,27 @@ using namespace DeviceSettings;
 
 constexpr uint32_t _TimeStartInit = 32400; // 9 AM
 constexpr uint32_t _TimeEndInit = 61200;   // 5 PM
-constexpr Calendar::WeekDays _WeekDaysInit = (Calendar::WeekDays)(
-    std::to_underlying(Calendar::WeekDays::Mon) |
-    std::to_underlying(Calendar::WeekDays::Tue) |
-    std::to_underlying(Calendar::WeekDays::Wed) |
-    std::to_underlying(Calendar::WeekDays::Thu) |
-    std::to_underlying(Calendar::WeekDays::Fri)
-);
+//static const Calendar::WeekDays _WeekDaysInit = Calendar::WeekDaysFromVector({
+//    Calendar::WeekDay_::Mon,
+//    Calendar::WeekDay_::Tue,
+//    Calendar::WeekDay_::Wed,
+//    Calendar::WeekDay_::Thu,
+//    Calendar::WeekDay_::Fri,
+//});
 
-static const Calendar::YearDays _YearDaysInit = Calendar::YearDaysFromVector({Calendar::YearDay{9,20}, Calendar::YearDay{12,31}});
+static const Calendar::WeekDays _WeekDaysInit = {
+    Calendar::WeekDaysMask(Calendar::WeekDay_::Mon) |
+    Calendar::WeekDaysMask(Calendar::WeekDay_::Tue) |
+    Calendar::WeekDaysMask(Calendar::WeekDay_::Wed) |
+    Calendar::WeekDaysMask(Calendar::WeekDay_::Thu) |
+    Calendar::WeekDaysMask(Calendar::WeekDay_::Fri)
+};
+
+
+static const Calendar::YearDays _YearDaysInit = Calendar::YearDaysFromVector({
+    Calendar::YearDay{9,20},
+    Calendar::YearDay{12,31},
+});
 
 static constexpr CaptureTrigger::DayInterval _DayIntervalInit = CaptureTrigger::DayInterval{ .interval = 2 };
 
@@ -392,42 +404,44 @@ static const char* _SuffixForDurationUnit(CaptureTrigger::Duration::Unit x) {
 }
 
 static std::string _WeekDaysDescription(const Calendar::WeekDays& x) {
-    using X = Calendar::WeekDays;
+    using namespace Calendar;
+    constexpr Calendar::WeekDays MF = {
+        WeekDaysMask(WeekDay_::Mon) |
+        WeekDaysMask(WeekDay_::Tue) |
+        WeekDaysMask(WeekDay_::Wed) |
+        WeekDaysMask(WeekDay_::Thu) |
+        WeekDaysMask(WeekDay_::Fri)
+    };
+    
+    // Monday-Friday special case
+    if (x.x == MF.x) return "Mon-Fri";
+    
+    const auto days = VectorFromWeekDays(x);
+    
     // Only one day set
-    switch (x) {
-    case X::Mon:  return "mondays";
-    case X::Tue:  return "tuesdays";
-    case X::Wed:  return "wednesdays";
-    case X::Thu:  return "thursdays";
-    case X::Fri:  return "fridays";
-    case X::Sat:  return "saturdays";
-    case X::Sun:  return "sundays";
-    default:      break;
-    }
-    
-    constexpr auto MF = (X)(std::to_underlying(X::Mon) |
-                            std::to_underlying(X::Tue) |
-                            std::to_underlying(X::Wed) |
-                            std::to_underlying(X::Thu) |
-                            std::to_underlying(X::Fri));
-    if (x == MF) return "Mon-Fri";
-    
-    static const char* Names[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-    
-    std::string r;
-    size_t i = 0;
-    size_t count = 0;
-    for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
-        if (std::to_underlying(x) & std::to_underlying(y)) {
-            if (!r.empty()) r.append(", ");
-            r.append(Names[i]);
-            count++;
+    if (days.size() == 1) {
+        switch (days.at(0)) {
+        case WeekDay_::Mon: return "Mondays";
+        case WeekDay_::Tue: return "Tuesdays";
+        case WeekDay_::Wed: return "Wednesdays";
+        case WeekDay_::Thu: return "Thursdays";
+        case WeekDay_::Fri: return "Fridays";
+        case WeekDay_::Sat: return "Saturdays";
+        case WeekDay_::Sun: return "Sundays";
+        default:            abort();
         }
-        i++;
     }
     
-    if (count>0 && count<4) return r;
-    return std::to_string(count) + " days per week";
+    // 0 or >3 days set
+    if (days.empty() || days.size()>3) return std::to_string(days.size()) + " days per week";
+    
+    // 1-3 days set
+    std::string r;
+    for (auto day : days) {
+        if (!r.empty()) r.append(", ");
+        r.append(StringForWeekDay(day));
+    }
+    return r;
 }
 
 static std::string _YearDaysDescription(const Calendar::YearDays& x) {
@@ -851,7 +865,58 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 }
 
 - (const MSP::Settings::Events&)events {
-    Serialize(_events.source, [self _triggers]);
+    static constexpr uint32_t DayMs = 24*60*60*1000;
+    CaptureTriggers triggers = [self _triggers];
+//    size_t timeTriggerIdx = 0;
+//    size_t motionTriggerIdx = 0;
+//    size_t buttonTriggerIdx = 0;
+//    size_t eventIdx = 0;
+//    size_t captureIdx = 0;
+    _events.timeTriggerCount = 0;
+    _events.motionTriggerCount = 0;
+    _events.buttonTriggerCount = 0;
+    _events.eventCount = 0;
+    _events.captureCount = 0;
+//    for (size_t i=0; i<triggers.count; i++) {
+//        const CaptureTrigger& srcTrigger = triggers.triggers[i];
+//        switch (srcTrigger.type) {
+//        case CaptureTrigger::Type::Time:
+//            if (_events.timeTriggerCount >= std::size(_events.timeTrigger)) {
+//                throw;
+//            }
+//            
+//            TimeTrigger& dstTrigger = _events.timeTrigger[_events.timeTriggerCount++];
+//            switch (srcTrigger.time.schedule.repeat.type) {
+//            case Repeat::Type::Daily:
+//                dstTrigger.periodMs = 1*DayMs;
+//                dstTrigger.captureIdx = _events.captureCount++;
+//                break;
+//            case Repeat::Type::WeekDays:
+//                break;
+//            case Repeat::Type::YearDays:
+//                break;
+//            case Repeat::Type::DayInterval:
+//                break;
+//            }
+//            
+////            struct [[gnu::packed]] Repeat {
+////                enum class Type : uint8_t {
+////                    Daily,
+////                    WeekDays,
+////                    YearDays,
+////                    DayInterval,
+////                };
+////            }
+//            
+//            break;
+//        case CaptureTrigger::Type::Motion:
+//            break;
+//        case CaptureTrigger::Type::Button:
+//            break;
+//        }
+//    }
+    
+    Serialize(_events.source, triggers);
     return _events;
 }
 
@@ -960,19 +1025,13 @@ template<bool T_Forward>
 static void _Copy(Calendar::WeekDays& x, NSSegmentedControl* control) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        size_t idx = 0;
-        for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
-            [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
-            idx++;
+        for (Calendar::WeekDay i=0; i<7; i++) {
+            [control setSelected:Calendar::WeekDaysGet(x, i) forSegment:i];
         }
     } else {
-        std::underlying_type_t<X> r = 0;
-        size_t idx = 0;
-        for (auto y : { X::Mon, X::Tue, X::Wed, X::Thu, X::Fri, X::Sat, X::Sun }) {
-            r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
-            idx++;
+        for (Calendar::WeekDay i=0; i<7; i++) {
+            Calendar::WeekDaysSet(x, i, [control isSelectedForSegment:i]);
         }
-        x = static_cast<X>(r);
     }
 }
 

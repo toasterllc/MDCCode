@@ -5,19 +5,20 @@ namespace DeviceSettings {
 
 namespace Calendar {
 
-enum class WeekDays : uint8_t {
-    None = 0,
-    Mon  = 1<<0,
-    Tue  = 1<<1,
-    Wed  = 1<<2,
-    Thu  = 1<<3,
-    Fri  = 1<<4,
-    Sat  = 1<<5,
-    Sun  = 1<<6,
-};
-
 using Day = uint8_t;
 using Month = uint8_t;
+
+// WeekDay: a particular day of an unspecified week
+using WeekDay = uint8_t;
+enum WeekDay_ {
+    Mon,
+    Tue,
+    Wed,
+    Thu,
+    Fri,
+    Sat,
+    Sun,
+};
 
 // MonthDay: a particular day of an unspecified month
 struct [[gnu::packed]] MonthDay {
@@ -28,6 +29,11 @@ struct [[gnu::packed]] MonthDay {
 struct [[gnu::packed]] YearDay {
     Month month;
     Day day;
+};
+
+// WeekDays: a set of days of an unspecified week
+struct [[gnu::packed]] WeekDays {
+    uint8_t x;
 };
 
 // MonthDays: a set of days of an unspecified month
@@ -55,6 +61,20 @@ inline void MonthValidate(const Month& x) {
     if (x<1 || x>12) throw Toastbox::RuntimeError("invalid Month: %ju", (uintmax_t)x);
 }
 
+inline void WeekDayValidate(const WeekDay& x) {
+    using X = WeekDay_;
+    switch (x) {
+    case X::Mon:  break;
+    case X::Tue:  break;
+    case X::Wed:  break;
+    case X::Thu:  break;
+    case X::Fri:  break;
+    case X::Sat:  break;
+    case X::Sun:  break;
+    default: throw Toastbox::RuntimeError("invalid WeekDay: %ju", (uintmax_t)x);
+    }
+}
+
 inline void MonthDayValidate(const MonthDay& x) {
     DayValidate(x.day);
 }
@@ -66,6 +86,71 @@ inline void YearDayValidate(const YearDay& x) {
 
 
 
+
+
+inline std::string StringForWeekDay(const WeekDay& x) {
+    switch (x) {
+    case WeekDay_::Mon: return "Mon";
+    case WeekDay_::Tue: return "Tue";
+    case WeekDay_::Wed: return "Wed";
+    case WeekDay_::Thu: return "Thu";
+    case WeekDay_::Fri: return "Fri";
+    case WeekDay_::Sat: return "Sat";
+    case WeekDay_::Sun: return "Sun";
+    }
+    abort();
+}
+
+inline constexpr uint8_t WeekDaysMask(WeekDay day) {
+    return 1 << day;
+}
+
+inline bool WeekDaysGet(const WeekDays& x, WeekDay day) {
+    return x.x & WeekDaysMask(day);
+}
+
+inline void WeekDaysSet(WeekDays& x, WeekDay day, bool y) {
+    x.x &= ~WeekDaysMask(day);
+    if (y) x.x |= WeekDaysMask(day);
+}
+
+inline std::vector<WeekDay> VectorFromWeekDays(const WeekDays& x) {
+    std::vector<WeekDay> r;
+    for (WeekDay i=0; i<7; i++) {
+        if (x.x & WeekDaysMask(i)) {
+            r.push_back(i);
+        }
+    }
+    return r;
+}
+
+inline WeekDays WeekDaysFromVector(const std::vector<WeekDay>& x) {
+    WeekDays r = {};
+    for (const WeekDay& d : x) {
+        WeekDayValidate(d);
+        WeekDaysSet(r, d, true);
+    }
+    return r;
+}
+
+
+
+
+
+
+
+inline std::optional<MonthDay> MonthDayFromString(std::string_view x) {
+    Day day = 0;
+    try {
+        Toastbox::IntForStr(day, x);
+        DayValidate(day);
+    } catch (...) { return std::nullopt; }
+    return MonthDay{ .day = day };
+}
+
+inline std::string StringFromMonthDay(const MonthDay& x) {
+    return std::to_string(x.day);
+}
 
 inline constexpr uint32_t MonthDaysMask(Day day) {
     return 1 << (day-1);
@@ -79,8 +164,6 @@ inline void MonthDaysSet(MonthDays& x, Day day, bool y) {
     x.x &= ~MonthDaysMask(day);
     if (y) x.x |= MonthDaysMask(day);
 }
-
-
 
 inline std::vector<MonthDay> VectorFromMonthDays(const MonthDays& x) {
     std::vector<MonthDay> r;
@@ -101,19 +184,6 @@ inline MonthDays MonthDaysFromVector(const std::vector<MonthDay>& x) {
         MonthDaysSet(r, day.day, true);
     }
     return r;
-}
-
-inline std::optional<MonthDay> MonthDayFromString(std::string_view x) {
-    Day day = 0;
-    try {
-        Toastbox::IntForStr(day, x);
-        DayValidate(day);
-    } catch (...) { return std::nullopt; }
-    return MonthDay{ .day = day };
-}
-
-inline std::string StringFromMonthDay(const MonthDay& x) {
-    return std::to_string(x.day);
 }
 
 
