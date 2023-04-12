@@ -314,57 +314,55 @@ inline std::string YearDayPlaceholderString() {
 
 
 
+struct [[gnu::packed]] DayInterval {
+    uint32_t interval;
+};
 
+struct [[gnu::packed]] Repeat {
+    enum class Type : uint8_t {
+        Daily,
+        WeekDays,
+        YearDays,
+        DayInterval,
+    };
+    
+    Type type;
+    union {
+        Calendar::WeekDays weekDays;
+        Calendar::YearDays yearDays;
+        DayInterval dayInterval;
+    };
+};
+
+enum class LEDs : uint8_t {
+    None  = 0,
+    Green = 1<<0,
+    Red   = 1<<1,
+};
+
+struct [[gnu::packed]] Duration {
+    enum class Unit : uint8_t {
+        Seconds,
+        Minutes,
+        Hours,
+        Days,
+    };
+    
+    float value;
+    Unit unit;
+};
+
+struct [[gnu::packed]] Capture {
+    uint32_t count;
+    Duration interval;
+    LEDs flashLEDs;
+};
 
 struct [[gnu::packed]] CaptureTrigger {
     enum class Type : uint8_t {
         Time,
         Motion,
         Button,
-    };
-    
-    struct [[gnu::packed]] DayInterval {
-        uint32_t interval;
-    };
-    
-    struct [[gnu::packed]] Repeat {
-        enum class Type : uint8_t {
-            Daily,
-            WeekDays,
-            YearDays,
-            DayInterval,
-        };
-        
-        Type type;
-        union {
-            Calendar::WeekDays weekDays;
-            Calendar::YearDays yearDays;
-            DayInterval dayInterval;
-        };
-    };
-    
-    enum class LEDs : uint8_t {
-        None  = 0,
-        Green = 1<<0,
-        Red   = 1<<1,
-    };
-    
-    struct [[gnu::packed]] Duration {
-        enum class Unit : uint8_t {
-            Seconds,
-            Minutes,
-            Hours,
-            Days,
-        };
-        
-        float value;
-        Unit unit;
-    };
-    
-    struct [[gnu::packed]] Capture {
-        uint32_t count;
-        Duration interval;
-        LEDs flashLEDs;
     };
     
     Type type = Type::Time;
