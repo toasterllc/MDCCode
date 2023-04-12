@@ -352,6 +352,20 @@ struct [[gnu::packed]] Duration {
     Unit unit;
 };
 
+inline float _MsForDuration(const Duration& x) {
+    switch (x.unit) {
+    case Duration::Unit::Seconds: return x.value * 1000;
+    case Duration::Unit::Minutes: return x.value * 60 * 1000;
+    case Duration::Unit::Hours:   return x.value * 60 * 60 * 1000;
+    case Duration::Unit::Days:    return x.value * 24 * 60 * 60 * 1000;
+    default:                      abort();
+    }
+}
+
+inline uint32_t MsForDuration(const Duration& x) {
+    return std::clamp(_MsForDuration(x), 0.f, (float)UINT32_MAX);
+}
+
 struct [[gnu::packed]] Capture {
     uint32_t count;
     Duration interval;

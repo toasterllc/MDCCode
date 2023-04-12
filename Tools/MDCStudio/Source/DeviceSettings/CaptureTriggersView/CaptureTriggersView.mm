@@ -864,10 +864,6 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     return triggers;
 }
 
-static uint32_t _MsForDuration(const DeviceSettings::Duration& x) {
-    return 0;
-}
-
 - (const MSP::Settings::Events&)events {
     using Events = MSP::Settings::Events;
     static constexpr uint32_t DayMs = 24*60*60*1000;
@@ -904,9 +900,8 @@ static uint32_t _MsForDuration(const DeviceSettings::Duration& x) {
                 dstTrigger.periodMs = 1*DayMs;
                 dstTrigger.captureIdx = &dstCapture-_events.capture;
                 
-                dstCapture.delayMs = _MsForDuration(srcCapture.interval);
+                dstCapture.delayMs = MsForDuration(srcCapture.interval);
                 dstCapture.count = srcCapture.count;
-                
                 break;
             
             case Repeat::Type::WeekDays:
