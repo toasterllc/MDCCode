@@ -876,6 +876,11 @@ static MSP::Capture _Convert(const Capture& x) {
     };
 }
 
+static MSP::Repeat _Convert(const Repeat& x) {
+    #warning TODO: implement
+    abort();
+}
+
 - (const MSP::Triggers&)triggers {
     CaptureTriggers triggers = [self _triggers];
     _triggers.timeTriggerCount = 0;
