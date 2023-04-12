@@ -864,7 +864,12 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     return triggers;
 }
 
+static uint32_t _MsForDuration(const Duration& x) {
+    return 0;
+}
+
 - (const MSP::Settings::Events&)events {
+    using Events = MSP::Settings::Events;
     static constexpr uint32_t DayMs = 24*60*60*1000;
     CaptureTriggers triggers = [self _triggers];
 //    size_t timeTriggerIdx = 0;
@@ -877,44 +882,67 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     _events.buttonTriggerCount = 0;
     _events.eventCount = 0;
     _events.captureCount = 0;
-//    for (size_t i=0; i<triggers.count; i++) {
-//        const CaptureTrigger& srcTrigger = triggers.triggers[i];
-//        switch (srcTrigger.type) {
-//        case CaptureTrigger::Type::Time:
-//            if (_events.timeTriggerCount >= std::size(_events.timeTrigger)) {
-//                throw;
+    
+    for (size_t i=0; i<triggers.count; i++) {
+        const CaptureTrigger& srcTrigger = triggers.triggers[i];
+        switch (srcTrigger.type) {
+        case CaptureTrigger::Type::Time: {
+            const CaptureTrigger::Capture& srcCapture = srcTrigger.time.capture;
+            
+            if (_events.timeTriggerCount >= std::size(_events.timeTrigger)) {
+                throw;
+            }
+            Events::TimeTrigger& dstTrigger = _events.timeTrigger[_events.timeTriggerCount++];
+            
+            if (_events.captureCount >= std::size(_events.capture)) {
+                throw;
+            }
+            Events::Capture& dstCapture = _events.capture[_events.captureCount++];
+            
+            switch (srcTrigger.time.schedule.repeat.type) {
+            case CaptureTrigger::Repeat::Type::Daily:
+                dstTrigger.periodMs = 1*DayMs;
+                dstTrigger.captureIdx = &dstCapture-_events.capture;
+                
+//                dstCapture.delayMs = srcCapture.interval.;
+                dstCapture.count = srcCapture.count;
+                
+                break;
+            
+            case CaptureTrigger::Repeat::Type::WeekDays:
+                
+                break;
+            
+            case CaptureTrigger::Repeat::Type::YearDays:
+                break;
+            
+            case CaptureTrigger::Repeat::Type::DayInterval:
+                break;
+            }
+            
+//            struct [[gnu::packed]] Repeat {
+//                enum class Type : uint8_t {
+//                    Daily,
+//                    WeekDays,
+//                    YearDays,
+//                    DayInterval,
+//                };
 //            }
-//            
-//            TimeTrigger& dstTrigger = _events.timeTrigger[_events.timeTriggerCount++];
-//            switch (srcTrigger.time.schedule.repeat.type) {
-//            case Repeat::Type::Daily:
-//                dstTrigger.periodMs = 1*DayMs;
-//                dstTrigger.captureIdx = _events.captureCount++;
-//                break;
-//            case Repeat::Type::WeekDays:
-//                break;
-//            case Repeat::Type::YearDays:
-//                break;
-//            case Repeat::Type::DayInterval:
-//                break;
-//            }
-//            
-////            struct [[gnu::packed]] Repeat {
-////                enum class Type : uint8_t {
-////                    Daily,
-////                    WeekDays,
-////                    YearDays,
-////                    DayInterval,
-////                };
-////            }
-//            
-//            break;
-//        case CaptureTrigger::Type::Motion:
-//            break;
-//        case CaptureTrigger::Type::Button:
-//            break;
-//        }
-//    }
+            
+            break;
+        }
+        
+        case CaptureTrigger::Type::Motion: {
+            break;
+        }
+        
+        case CaptureTrigger::Type::Button: {
+            break;
+        }
+        
+        default: abort();
+        }
+    }
     
     Serialize(_events.source, triggers);
     return _events;
