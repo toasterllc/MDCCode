@@ -118,7 +118,7 @@ static void _TriggerInit(CaptureTrigger& t, CaptureTrigger::Type type) {
         };
         
         x.constraints = {
-            .ignoreTriggerDuration = {
+            .suppressDuration = {
                 .enable = false,
                 .duration = DeviceSettings::Duration{
                     .value = 5,
@@ -865,9 +865,14 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 }
 
 static MSP::Capture _Convert(const Capture& x) {
+    using CaptureCountType = decltype(MSP::Capture::count);
+    const CaptureCountType CaptureCountMax = std::numeric_limits<CaptureCountType>::max();
+    if (x.count > CaptureCountMax) {
+        throw Toastbox::RuntimeError("capture count too large (value: %ju, max: %ju)", (uintmax_t)x.count, (uintmax_t)CaptureCountMax);
+    }
     return MSP::Capture{
-        .delayMs = MsForDuration(srcCapture.interval),
-        .count = x.count,
+        .delayMs = MsForDuration(x.interval),
+        .count = (CaptureCountType)x.count,
     };
 }
 
@@ -875,107 +880,56 @@ static MSP::Capture _Convert(const Capture& x) {
 //    using namespace MSP;
     static constexpr uint32_t DayMs = 24*60*60*1000;
     CaptureTriggers triggers = [self _triggers];
-//    size_t timeTriggerIdx = 0;
-//    size_t motionTriggerIdx = 0;
-//    size_t buttonTriggerIdx = 0;
-//    size_t eventIdx = 0;
-//    size_t captureIdx = 0;
     _triggers.timeTriggerCount = 0;
     _triggers.motionTriggerCount = 0;
     _triggers.buttonTriggerCount = 0;
     
     for (size_t i=0; i<triggers.count; i++) {
-        const CaptureTrigger& srcTrigger = triggers.triggers[i];
-        switch (srcTrigger.type) {
+        const CaptureTrigger& src = triggers.triggers[i];
+        switch (src.type) {
         case CaptureTrigger::Type::Time: {
-            const Capture& srcCapture = srcTrigger.time.capture;
-            
             if (_triggers.timeTriggerCount >= std::size(_triggers.timeTrigger)) {
-                throw;
+                throw Toastbox::RuntimeError("no remaining time triggers");
             }
-            MSP::Triggers::TimeTrigger& dstTrigger = _triggers.timeTrigger[_triggers.timeTriggerCount++];
             
-//            Time::Instant time = 0;
-//            
-//            Capture capture {
-//                uint32_t delayMs = 0;
-//                uint16_t count = 0;
-//            };
-//            
-//            Repeat repeat {
-//                enum class Type : uint8_t {
-//                    None,
-//                    Daily,
-//                    Weekly,
-//                    Yearly,
-//                };
-//                
-//                Type type = Type::None;
-//                union [[gnu::packed]] {
-//                    struct [[gnu::packed]] {
-//                        uint8_t interval;
-//                    } Daily;
-//                    
-//                    struct [[gnu::packed]] {
-//                        uint8_t days;
-//                    } Weekly;
-//                    
-//                    struct [[gnu::packed]] {
-//                        uint8_t leapPhase;
-//                    } Yearly;
-//                };
-//            };
-            
-            dstTrigger.time = XXX;
-            dstTrigger.capture = _Convert(srcCapture);
-            dstTrigger.repeat = _Convert(srcTrigger.time.schedule.repeat);
-            
-//            switch (srcTrigger.time.schedule.repeat.type) {
-//            case Repeat::Type::Daily:
-//                dstTrigger.time = XXX;
-//                
-//                dstTrigger.capture = _Convert(srcCapture);
-//                
-//                dstTrigger.repeat = {
-//                    .type = ,
-//                    .Daily = { .interval =  },
-//                },
-//                
-//                dstTrigger.periodMs = 1*DayMs;
-//                dstTrigger.captureIdx = &dstCapture-_triggers.capture;
-//                
-//                dstCapture.delayMs = MsForDuration(srcCapture.interval);
-//                dstCapture.count = srcCapture.count;
-//                break;
-//            
-//            case Repeat::Type::WeekDays:
-//                
-//                break;
-//            
-//            case Repeat::Type::YearDays:
-//                break;
-//            
-//            case Repeat::Type::DayInterval:
-//                break;
-//            }
-            
-//            struct [[gnu::packed]] Repeat {
-//                enum class Type : uint8_t {
-//                    Daily,
-//                    WeekDays,
-//                    YearDays,
-//                    DayInterval,
-//                };
-//            }
-            
+            const auto& x = src.time;
+            _triggers.timeTrigger[_triggers.timeTriggerCount] = {
+                .time    = XXX,
+                .capture = _Convert(x.capture),
+                .repeat  = _Convert(x.schedule.repeat),
+            };
+            _triggers.timeTriggerCount++;
             break;
         }
         
         case CaptureTrigger::Type::Motion: {
+            if (_triggers.motionTriggerCount >= std::size(_triggers.motionTrigger)) {
+                throw Toastbox::RuntimeError("no remaining motion triggers");
+            }
+            
+            const auto& x = src.motion;
+            _triggers.motionTrigger[_triggers.motionTriggerCount] = {
+                .time       = XXX,
+                .capture    = _Convert(x.capture),
+                .repeat     = _Convert(x.schedule.repeat),
+                .count      = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0),
+                .durationMs = XXX,
+                .suppressMs = (x.constraints.suppressDuration.enable ? MsForDuration(x.constraints.suppressDuration.duration) : 0),
+            };
+            _triggers.motionTriggerCount++;
             break;
         }
         
         case CaptureTrigger::Type::Button: {
+            if (_triggers.buttonTriggerCount >= std::size(_triggers.buttonTrigger)) {
+                throw Toastbox::RuntimeError("no remaining button triggers");
+            }
+            
+            const auto& x = src.button;
+            _triggers.buttonTrigger[_triggers.buttonTriggerCount] = {
+                .capture = _Convert(x.capture),
+            };
+            _triggers.buttonTriggerCount++;
             break;
         }
         
@@ -1261,8 +1215,8 @@ static void _Copy(CaptureTrigger& trigger, CaptureTriggersView* view) {
         {
             if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_Motion_View);
             
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.enable, v._battery_Motion_IgnoreTrigger_Checkbox);
-            _Copy<T_Forward>(x.constraints.ignoreTriggerDuration.duration, v._battery_Motion_IgnoreTrigger_DurationField, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
+            _Copy<T_Forward>(x.constraints.suppressDuration.enable, v._battery_Motion_IgnoreTrigger_Checkbox);
+            _Copy<T_Forward>(x.constraints.suppressDuration.duration, v._battery_Motion_IgnoreTrigger_DurationField, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
             
             _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, v._battery_Motion_MaxTriggerCount_Checkbox);
             _Copy<T_Forward>(x.constraints.maxTriggerCount.count, v._battery_Motion_MaxTriggerCount_Field, 1);

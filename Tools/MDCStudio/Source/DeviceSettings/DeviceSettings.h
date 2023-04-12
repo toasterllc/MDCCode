@@ -408,7 +408,7 @@ struct [[gnu::packed]] CaptureTrigger {
                 struct [[gnu::packed]] {
                     bool enable;
                     Duration duration;
-                } ignoreTriggerDuration;
+                } suppressDuration;
                 
                 struct [[gnu::packed]] {
                     bool enable;
