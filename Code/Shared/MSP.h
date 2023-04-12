@@ -143,7 +143,7 @@ struct [[gnu::packed]] Events {
     static constexpr size_t TimeTriggerCap    = 8;
     static constexpr size_t MotionTriggerCap  = 8;
     static constexpr size_t ButtonTriggerCap  = 2;
-    static constexpr size_t EventCap          = 32;
+    static constexpr size_t EventCap          = TimeTriggerCap+MotionTriggerCap+ButtonTriggerCap;
     static constexpr size_t CaptureCap        = TimeTriggerCap+MotionTriggerCap+ButtonTriggerCap;
     
     // Triggers
@@ -168,8 +168,8 @@ struct [[gnu::packed]] Events {
 
 struct [[gnu::packed]] Settings {
     Events events = {};
-//    StaticPrint(sizeof(events));
-    static_assert(sizeof(events) == 806); // Debug
+    StaticPrint(sizeof(events));
+    static_assert(sizeof(events) == 666); // Debug
 };
 
 struct [[gnu::packed]] State {
