@@ -397,35 +397,95 @@ std::vector<uint8_t> _Decompress(T begin, T end) {
     return x;
 }
 
-inline CaptureTriggersSerialized Serialize(const CaptureTriggers& x) {
-    CaptureTriggersSerialized y = {
+template<typename T>
+inline void Serialize(T& data, const CaptureTriggers& x) {
+    static_assert(sizeof(data) == sizeof(CaptureTriggersSerialized));
+    
+    CaptureTriggersSerialized s = {
         .version = CaptureTriggersSerialized::Version,
     };
     
-    auto d = _Compress((uint8_t*)&x, (uint8_t*)&x+sizeof(x));
-    if (d.size() > sizeof(y.payload)) {
-        throw Toastbox::RuntimeError("data doesn't fit in CaptureTriggersSerialized (length: %ju, capacity: %ju)",
-            (uintmax_t)d.size(), (uintmax_t)sizeof(y.payload));
-    }
-    memcpy(y.payload, d.data(), d.size());
-    return y;
-}
-
-inline CaptureTriggers Deserialize(const CaptureTriggersSerialized& x) {
-    if (x.version != CaptureTriggersSerialized::Version) {
-        throw Toastbox::RuntimeError("CaptureTriggersSerialized version invalid (expected: %ju, got: %ju)",
-            (uintmax_t)CaptureTriggersSerialized::Version, (uintmax_t)x.version);
+    // CaptureTriggers -> CaptureTriggersSerialized
+    {
+        auto d = _Compress((uint8_t*)&x, (uint8_t*)&x+sizeof(x));
+        if (d.size() > sizeof(s.payload)) {
+            throw Toastbox::RuntimeError("data doesn't fit in CaptureTriggersSerialized (length: %ju, capacity: %ju)",
+                (uintmax_t)d.size(), (uintmax_t)sizeof(s.payload));
+        }
+        memcpy(s.payload, d.data(), d.size());
     }
     
-    CaptureTriggers y;
-    auto d = _Decompress(x.payload, x.payload+sizeof(x.payload));
-    if (d.size() != sizeof(y)) {
-        throw Toastbox::RuntimeError("deserialized data length doesn't match sizeof(CaptureTriggers) (expected: %ju, got: %ju)",
-            (uintmax_t)sizeof(y), (uintmax_t)d.size());
+    // CaptureTriggersSerialized -> data
+    {
+        memcpy(&data, &s, sizeof(s));
     }
-    memcpy(&y, d.data(), d.size());
-    return y;
 }
+
+template<typename T>
+inline void Deserialize(CaptureTriggers& x, const T& data) {
+    static_assert(sizeof(data) == sizeof(CaptureTriggersSerialized));
+    
+    CaptureTriggersSerialized s;
+    
+    // data -> CaptureTriggersSerialized
+    {
+        memcpy(&s, &data, sizeof(data));
+        
+        if (s.version != CaptureTriggersSerialized::Version) {
+            throw Toastbox::RuntimeError("CaptureTriggersSerialized version invalid (expected: %ju, got: %ju)",
+                (uintmax_t)CaptureTriggersSerialized::Version, (uintmax_t)s.version);
+        }
+    }
+    
+    // CaptureTriggersSerialized -> CaptureTriggers
+    {
+        auto d = _Decompress(s.payload, s.payload+sizeof(s.payload));
+        if (d.size() != sizeof(x)) {
+            throw Toastbox::RuntimeError("deserialized data length doesn't match sizeof(CaptureTriggers) (expected: %ju, got: %ju)",
+                (uintmax_t)sizeof(x), (uintmax_t)d.size());
+        }
+        memcpy(&x, d.data(), d.size());
+        if (x.count > std::size(x.triggers)) {
+            throw Toastbox::RuntimeError("invalid deserialized trigger count (got: %ju, max: %ju)",
+                (uintmax_t)x.count, (uintmax_t)std::size(x.triggers));
+        }
+    }
+}
+
+
+//inline CaptureTriggersSerialized Serialize(const CaptureTriggers& x) {
+//    CaptureTriggersSerialized y = {
+//        .version = CaptureTriggersSerialized::Version,
+//    };
+//    
+//    auto d = _Compress((uint8_t*)&x, (uint8_t*)&x+sizeof(x));
+//    if (d.size() > sizeof(y.payload)) {
+//        throw Toastbox::RuntimeError("data doesn't fit in CaptureTriggersSerialized (length: %ju, capacity: %ju)",
+//            (uintmax_t)d.size(), (uintmax_t)sizeof(y.payload));
+//    }
+//    memcpy(y.payload, d.data(), d.size());
+//    return y;
+//}
+//
+//inline CaptureTriggers Deserialize(const CaptureTriggersSerialized& x) {
+//    if (x.version != CaptureTriggersSerialized::Version) {
+//        throw Toastbox::RuntimeError("CaptureTriggersSerialized version invalid (expected: %ju, got: %ju)",
+//            (uintmax_t)CaptureTriggersSerialized::Version, (uintmax_t)x.version);
+//    }
+//    
+//    CaptureTriggers y;
+//    auto d = _Decompress(x.payload, x.payload+sizeof(x.payload));
+//    if (d.size() != sizeof(y)) {
+//        throw Toastbox::RuntimeError("deserialized data length doesn't match sizeof(CaptureTriggers) (expected: %ju, got: %ju)",
+//            (uintmax_t)sizeof(y), (uintmax_t)d.size());
+//    }
+//    memcpy(&y, d.data(), d.size());
+//    if (y.count > std::size(y.triggers)) {
+//        throw Toastbox::RuntimeError("invalid deserialized trigger count (got: %ju, max: %ju)",
+//            (uintmax_t)y.count, (uintmax_t)std::size(y.triggers));
+//    }
+//    return y;
+//}
 
 
 

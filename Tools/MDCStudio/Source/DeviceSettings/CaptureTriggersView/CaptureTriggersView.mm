@@ -38,7 +38,7 @@ static constexpr CaptureTrigger::DayInterval _DayIntervalInit = CaptureTrigger::
 //    }
 //}
 
-static void _InitTriggerRepeat(CaptureTrigger::Repeat& x) {
+static void _TriggerInitRepeat(CaptureTrigger::Repeat& x) {
     using X = CaptureTrigger::Repeat::Type;
     switch (x.type) {
     case X::Daily:
@@ -57,7 +57,7 @@ static void _InitTriggerRepeat(CaptureTrigger::Repeat& x) {
     }
 }
 
-static void _InitTrigger(CaptureTrigger& t, CaptureTrigger::Type type) {
+static void _TriggerInit(CaptureTrigger& t, CaptureTrigger::Type type) {
     t.type = type;
     switch (t.type) {
     case CaptureTrigger::Type::Time: {
@@ -141,7 +141,11 @@ static void _InitTrigger(CaptureTrigger& t, CaptureTrigger::Type type) {
     }
 }
 
-
+static CaptureTrigger _TriggerMake(CaptureTrigger::Type type) {
+    CaptureTrigger x;
+    _TriggerInit(x, type);
+    return x;
+}
 
 @interface MonthDayObj : NSObject {
 @public
@@ -699,7 +703,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_DetailLabel;
     
 //    CaptureTriggers _triggers;
-//    MSP::Settings::Events _events;
+    MSP::Settings::Events _events;
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
 }
@@ -722,12 +726,11 @@ static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
     [self->_separatorLineOffset setConstant:(emptyMode ? 1000 : 8)];
 }
 
-static ListItem* _ListItemAdd(CaptureTriggersView* self, CaptureTrigger::Type type) {
+static ListItem* _ListItemAdd(CaptureTriggersView* self, const CaptureTrigger& trigger) {
     assert(self);
     NSTableView* tv = self->_tableView;
     ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
-    CaptureTrigger& t = it->trigger;
-    _InitTrigger(t, type);
+    it->trigger = trigger;
     [it updateView];
     
     self->_items.push_back(it);
@@ -740,6 +743,26 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, CaptureTrigger::Type ty
     _SetEmptyMode(self, false);
     return it;
 }
+
+
+//static ListItem* _ListItemAdd(CaptureTriggersView* self, CaptureTrigger::Type type) {
+//    assert(self);
+//    NSTableView* tv = self->_tableView;
+//    ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
+//    CaptureTrigger& t = it->trigger;
+//    _TriggerInit(t, type);
+//    [it updateView];
+//    
+//    self->_items.push_back(it);
+//    const size_t idx = self->_items.size()-1;
+//    NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
+//    [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
+//    [tv selectRowIndexes:idxs byExtendingSelection:false];
+//    [tv scrollRowToVisible:idx];
+//    
+//    _SetEmptyMode(self, false);
+//    return it;
+//}
 
 static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     assert(self);
@@ -764,8 +787,26 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 
 // MARK: - Creation
 
+//template<typename T>
+//static void _Serialize(CaptureTriggers& x, T& d) {
+//    CaptureTriggersSerialized s;
+//    static_assert(sizeof(s) == sizeof(d));
+//    memcpy(&s, d, sizeof(s));
+//    x = Deserialize(s);
+//}
+//
+//template<typename T>
+//static void _Deserialize(CaptureTriggers& x, T& d) {
+//    CaptureTriggersSerialized s;
+//    static_assert(sizeof(s) == sizeof(d));
+//    memcpy(&s, d, sizeof(s));
+//    x = Deserialize(s);
+//}
+
 - (instancetype)initWithEvents:(const MSP::Settings::Events&)events {
     if (!(self = [super initWithFrame:{}])) return nil;
+    
+    _events = events;
     
     // Load view from nib
     {
@@ -785,23 +826,33 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     [self->_tableView reloadData];
 //    _ListItemAdd(self, CaptureTrigger::Type::Time);
 //    _ListItemAdd(self, CaptureTrigger::Type::Motion);
-    _ListItemAdd(self, CaptureTrigger::Type::Button);
+//    _ListItemAdd(self, _TriggerMake(CaptureTrigger::Type::Button));
     
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
     
-    CaptureTriggersSerialized triggersSerialized;
-    static_assert(sizeof(triggersSerialized) == sizeof(events.source));
-    memcpy(&triggersSerialized, events.source, sizeof(triggersSerialized));
-    CaptureTriggers triggers = Deserialize(triggersSerialized);
+    CaptureTriggers triggers;
+    Deserialize(triggers, events.source);
+    for (auto it=std::begin(triggers.triggers); it!=std::begin(triggers.triggers)+triggers.count; it++) {
+        _ListItemAdd(self, *it);
+    }
     
-    
-    
-//    _events = events;
     return self;
 }
 
+- (CaptureTriggers)_triggers {
+    CaptureTriggers triggers;
+    triggers.count = _items.size();
+    size_t i = 0;
+    for (ListItem* it : _items) {
+        triggers.triggers[i] = it->trigger;
+        i++;
+    }
+    return triggers;
+}
+
 - (const MSP::Settings::Events&)events {
-    abort();
+    Serialize(_events.source, [self _triggers]);
+    return _events;
 }
 
 static void _ContainerSubviewAdd(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
@@ -1172,8 +1223,8 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     
     if (initRepeat) {
         switch (trigger.type) {
-        case CaptureTrigger::Type::Time:   _InitTriggerRepeat(trigger.time.schedule.repeat); break;
-        case CaptureTrigger::Type::Motion: _InitTriggerRepeat(trigger.motion.schedule.repeat); break;
+        case CaptureTrigger::Type::Time:   _TriggerInitRepeat(trigger.time.schedule.repeat); break;
+        case CaptureTrigger::Type::Motion: _TriggerInitRepeat(trigger.motion.schedule.repeat); break;
         default:                    abort();
         }
     }
@@ -1191,15 +1242,15 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 }
 
 - (IBAction)_actionAddTimeTrigger:(id)sender {
-    _ListItemAdd(self, CaptureTrigger::Type::Time);
+    _ListItemAdd(self, _TriggerMake(CaptureTrigger::Type::Time));
 }
 
 - (IBAction)_actionAddMotionTrigger:(id)sender {
-    _ListItemAdd(self, CaptureTrigger::Type::Motion);
+    _ListItemAdd(self, _TriggerMake(CaptureTrigger::Type::Motion));
 }
 
 - (IBAction)_actionAddButtonTrigger:(id)sender {
-    _ListItemAdd(self, CaptureTrigger::Type::Button);
+    _ListItemAdd(self, _TriggerMake(CaptureTrigger::Type::Button));
 }
 
 - (IBAction)_actionRemove:(id)sender {
