@@ -881,6 +881,30 @@ static MSP::Repeat _Convert(const Repeat& x) {
     abort();
 }
 
+template<typename T>
+static uint32_t _MotionEnableDurationMs(const T& x) {
+    static constexpr uint32_t DayMs = 24*60*60*1000;
+    if (x.schedule.timeRange.enable) {
+        // Enabled for part of the day
+        return x.schedule.timeRange.end-x.schedule.timeRange.start;
+    
+    } else if (x.schedule.repeat.type != Repeat::Type::Daily) {
+        // Enabled all day (0:00 to 23:59)
+        return DayMs;
+    }
+    // Motion always enabled
+    return 0;
+}
+
+template<typename T>
+static uint32_t _MotionSuppressMs(const T& x) {
+    if (x.constraints.suppressDuration.enable) {
+        return MsForDuration(x.constraints.suppressDuration.duration);
+    }
+    // Suppression feature disabled
+    return 0;
+}
+
 - (const MSP::Triggers&)triggers {
     CaptureTriggers triggers = [self _triggers];
     _triggers.timeTriggerCount = 0;
@@ -911,13 +935,18 @@ static MSP::Repeat _Convert(const Repeat& x) {
             }
             
             const auto& x = src.motion;
+            
+            const uint32_t count = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0);
+            const uint32_t durationMs = _MotionEnableDurationMs(x);
+            const uint32_t suppressMs = _MotionSuppressMs(x);
+            
             _triggers.motionTrigger[_triggers.motionTriggerCount] = {
                 .time       = XXX,
                 .capture    = _Convert(x.capture),
                 .repeat     = _Convert(x.schedule.repeat),
-                .count      = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0),
-                .durationMs = XXX,
-                .suppressMs = (x.constraints.suppressDuration.enable ? MsForDuration(x.constraints.suppressDuration.duration) : 0),
+                .count      = count,
+                .durationMs = durationMs,
+                .suppressMs = suppressMs,
             };
             _triggers.motionTriggerCount++;
             break;
