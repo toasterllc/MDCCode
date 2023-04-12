@@ -11,10 +11,10 @@ struct T_Events {
     struct Event {
         enum class Type : uint8_t {
             TimeTrigger,        // idx: _TimeTrigger[]
-            CaptureImage,       // idx: _Capture[]
             MotionEnable,       // idx: _MotionTrigger[]
             MotionDisable,      // idx: _MotionTrigger[]
             MotionUnsuppress,   // idx: _MotionTrigger[]
+            CaptureImage,       // idx: _Capture[]
         };
         
 //        Event() {} // Necessary to workaround Clang bug that emits compiler error
@@ -135,7 +135,6 @@ struct T_Events {
         switch (x) {
         case _EventBase::Type::TimeTrigger:   return Event::Type::TimeTrigger;
         case _EventBase::Type::MotionEnable:  return Event::Type::MotionEnable;
-        case _EventBase::Type::MotionDisable: return Event::Type::MotionDisable;
         }
         abort();
     }

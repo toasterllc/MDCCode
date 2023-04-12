@@ -73,19 +73,41 @@ static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
 struct [[gnu::packed]] Settings {
     struct [[gnu::packed]] Events {
+        struct [[gnu::packed]] Repeat {
+            enum class Type : uint8_t {
+                Daily,
+                Weekly,
+                Yearly,
+            };
+            
+            Type type;
+            union {
+                struct [[gnu::packed]] {
+                    uint8_t interval;
+                } Daily;
+                
+                struct [[gnu::packed]] {
+                    uint8_t days;
+                } Weekly;
+                
+                struct [[gnu::packed]] {
+                    uint8_t leapPhase;
+                } Yearly;
+            };
+        };
+        static_assert(sizeof(Repeat) == 2);
+        
         struct [[gnu::packed]] TimeTrigger {
-            // periodMs: the duration between triggers
-            uint32_t periodMs = 0;
+            Repeat repeat;
             uint8_t captureIdx = 0;
             uint8_t _pad = 0;
         };
         static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
         
         struct [[gnu::packed]] MotionTrigger {
+            Repeat repeat;
             // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
             uint16_t count = 0;
-            // periodMs: time between MotionEnabled events
-            uint32_t periodMs = 0;
             // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
             uint32_t suppressMs = 0;
             uint8_t captureIdx = 0;
@@ -103,7 +125,6 @@ struct [[gnu::packed]] Settings {
             enum class Type : uint8_t {
                 TimeTrigger,
                 MotionEnable,
-                MotionDisable,
             };
             
             Time::Instant time = 0;
@@ -147,7 +168,7 @@ struct [[gnu::packed]] Settings {
     
     Events events = {};
 //    StaticPrint(sizeof(events));
-    static_assert(sizeof(events) == 838); // Debug
+    static_assert(sizeof(events) == 806); // Debug
 };
 
 struct [[gnu::packed]] State {
@@ -184,7 +205,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 838); // Debug
+    static_assert(sizeof(settings) == 806); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
