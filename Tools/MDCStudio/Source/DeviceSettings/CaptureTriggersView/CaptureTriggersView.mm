@@ -844,6 +844,12 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
     
     case Repeat::Type::DaysOfYear: {
         #warning TODO: implement
+        
+        system_clock::time_point timeSys;
+        date::sys_days day = floor<date::days>(now);
+        date::year_month_day ymd(floor<date::days>(now));
+        ymd = 
+        
         const Time::Instant timeInstant = 0;
         uint8_t leapPhase = 0;
         return std::make_pair(timeInstant, MSP::Repeat{

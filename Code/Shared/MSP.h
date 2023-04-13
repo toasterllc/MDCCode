@@ -64,10 +64,10 @@ static_assert(!(sizeof(AbortType) % 2)); // Check alignment
 
 // AbortHistory: records history of an abort type, where an abort type is a (domain,line) tuple
 struct [[gnu::packed]] AbortHistory {
-    AbortType type          = {};
-    Time::Instant earliest  = {};
-    Time::Instant latest    = {};
-    uint16_t count          = 0;
+    AbortType type         = {};
+    Time::Instant earliest = {};
+    Time::Instant latest   = {};
+    uint16_t count         = 0;
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
@@ -103,16 +103,24 @@ struct [[gnu::packed]] Capture {
 static_assert(!(sizeof(Capture) % 2)); // Check alignment
 
 struct [[gnu::packed]] Triggers {
-    struct [[gnu::packed]] TimeTrigger {
+    struct [[gnu::packed]] Event {
+        enum class Type : uint8_t {
+            TimeTrigger,
+            MotionEnable,
+        };
         Time::Instant time = 0;
+        Type type = Type::TimeTrigger;
         Repeat repeat;
+        uint8_t idx = 0;
+    };
+    static_assert(!(sizeof(Event) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] TimeTrigger {
         Capture capture;
     };
     static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
     
     struct [[gnu::packed]] MotionTrigger {
-        Time::Instant time = 0;
-        Repeat repeat;
         Capture capture;
         // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
         uint16_t count = 0;
@@ -131,20 +139,63 @@ struct [[gnu::packed]] Triggers {
     TimeTrigger   timeTrigger[8];
     MotionTrigger motionTrigger[8];
     ButtonTrigger buttonTrigger[2];
+    Event         events[32];
     
     uint8_t timeTriggerCount   = 0;
     uint8_t motionTriggerCount = 0;
     uint8_t buttonTriggerCount = 0;
-    uint8_t _pad               = 0;
+    uint8_t eventCount         = 0;
     
     // source: opaque data used by software to hold its representation of this struct
     uint8_t source[256] = {};
 };
+StaticPrint(sizeof(Triggers));
+
+
+//struct [[gnu::packed]] Triggers {
+//    struct [[gnu::packed]] TimeTrigger {
+//        Time::Instant time = 0;
+//        Repeat repeat;
+//        Capture capture;
+//    };
+//    static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
+//    
+//    struct [[gnu::packed]] MotionTrigger {
+//        Time::Instant time = 0;
+//        Repeat repeat;
+//        Capture capture;
+//        // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
+//        uint16_t count = 0;
+//        // durationMs: duration for which motion should be enabled (0 == forever)
+//        uint32_t durationMs = 0;
+//        // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
+//        uint32_t suppressMs = 0;
+//    };
+//    static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
+//    
+//    struct [[gnu::packed]] ButtonTrigger {
+//        Capture capture;
+//    };
+//    static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
+//    
+//    TimeTrigger   timeTrigger[24];
+//    MotionTrigger motionTrigger[8];
+//    ButtonTrigger buttonTrigger[2];
+//    
+//    uint8_t timeTriggerCount   = 0;
+//    uint8_t motionTriggerCount = 0;
+//    uint8_t buttonTriggerCount = 0;
+//    uint8_t _pad               = 0;
+//    
+//    // source: opaque data used by software to hold its representation of this struct
+//    uint8_t source[256] = {};
+//};
+//StaticPrint(sizeof(Triggers));
 
 struct [[gnu::packed]] Settings {
     Triggers triggers = {};
 //    StaticPrint(sizeof(triggers));
-    static_assert(sizeof(triggers) == 608); // Debug
+    static_assert(sizeof(triggers) == 776); // Debug
 };
 
 struct [[gnu::packed]] State {
@@ -181,7 +232,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 608); // Debug
+    static_assert(sizeof(settings) == 736); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
@@ -191,7 +242,7 @@ struct [[gnu::packed]] State {
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 782); // Debug
+static_assert(sizeof(State) == 910); // Debug
 
 static constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,
