@@ -871,8 +871,23 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
     }
 }
 
+
 template<typename T>
-static Ms _MotionEnableDurationMs(const T& x) {
+std::vector<MSP::Triggers::Event> _EventsForTimeTrigger(const T& x, uint32_t idx) {
+    std::vector<MSP::Triggers::Event> events;
+    
+    return events;
+}
+
+template<typename T>
+std::vector<MSP::Triggers::Event> _EventsForMotionTrigger(const T& x, uint32_t idx) {
+    std::vector<MSP::Triggers::Event> events;
+    
+    return events;
+}
+
+template<typename T>
+Ms _MotionEnableDurationMs(const T& x) {
     if (x.schedule.timeRange.enable) {
         // Enabled for part of the day
         return x.schedule.timeRange.end-x.schedule.timeRange.start;
@@ -886,7 +901,7 @@ static Ms _MotionEnableDurationMs(const T& x) {
 }
 
 template<typename T>
-static Ms _MotionSuppressMs(const T& x) {
+Ms _MotionSuppressMs(const T& x) {
     if (x.constraints.suppressDuration.enable) {
         return MsForDuration(x.constraints.suppressDuration.duration);
     }
@@ -895,7 +910,7 @@ static Ms _MotionSuppressMs(const T& x) {
 }
 
 template<typename T>
-static Calendar::TimeOfDay _MotionTime(const T& x) {
+Calendar::TimeOfDay _MotionTime(const T& x) {
     if (x.schedule.timeRange.enable) {
         return x.schedule.timeRange.start;
     }
@@ -903,11 +918,48 @@ static Calendar::TimeOfDay _MotionTime(const T& x) {
     return {};
 }
 
+static void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers::Event>& events) {
+    const size_t eventsRem = std::size(triggers.event)-triggers.eventCount;
+    if (events.size() > eventsRem) {
+        throw Toastbox::RuntimeError("too many events");
+    }
+    std::copy(events.begin(), events.end(), triggers.event+triggers.eventCount);
+    triggers.eventCount += events.size();
+}
+
 - (const MSP::Triggers&)triggers {
     CaptureTriggers triggers = [self _triggers];
+    _triggers.eventCount = 0;
     _triggers.timeTriggerCount = 0;
     _triggers.motionTriggerCount = 0;
     _triggers.buttonTriggerCount = 0;
+    
+    
+//    struct [[gnu::packed]] TimeTrigger {
+//        Capture capture;
+//    };
+//    
+//    struct [[gnu::packed]] MotionTrigger {
+//        Capture capture;
+//        uint16_t count = 0;
+//        uint32_t durationMs = 0;
+//        uint32_t suppressMs = 0;
+//    };
+//    
+//    struct [[gnu::packed]] ButtonTrigger {
+//        Capture capture;
+//    };
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     for (size_t i=0; i<triggers.count; i++) {
         const CaptureTrigger& src = triggers.triggers[i];
@@ -920,12 +972,19 @@ static Calendar::TimeOfDay _MotionTime(const T& x) {
             const auto& x = src.time;
             const auto [time, repeat] = _Convert(x.schedule.time, x.schedule.repeat);
             
-            _triggers.timeTrigger[_triggers.timeTriggerCount] = {
-                .time    = time,
-                .repeat  = repeat,
-                .capture = _Convert(x.capture),
-            };
-            _triggers.timeTriggerCount++;
+            // Create events for the trigger
+            {
+                const auto events = _EventsForTimeTrigger(x, _triggers.timeTriggerCount);
+                _AddEvents(_triggers, events);
+            }
+            
+            // Create trigger
+            {
+                _triggers.timeTrigger[_triggers.timeTriggerCount] = {
+                    .capture = _Convert(x.capture),
+                };
+                _triggers.timeTriggerCount++;
+            }
             break;
         }
         
@@ -936,19 +995,27 @@ static Calendar::TimeOfDay _MotionTime(const T& x) {
             
             const auto& x = src.motion;
             const auto [time, repeat] = _Convert(_MotionTime(x), x.schedule.repeat);
-            const uint16_t count = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0);
-            const Ms durationMs = _MotionEnableDurationMs(x);
-            const Ms suppressMs = _MotionSuppressMs(x);
             
-            _triggers.motionTrigger[_triggers.motionTriggerCount] = {
-                .time       = time,
-                .repeat     = repeat,
-                .capture    = _Convert(x.capture),
-                .count      = count,
-                .durationMs = durationMs.count(),
-                .suppressMs = suppressMs.count(),
-            };
-            _triggers.motionTriggerCount++;
+            // Create events for the trigger
+            {
+                const auto events = _EventsForMotionTrigger(x, _triggers.motionTriggerCount);
+                _AddEvents(_triggers, events);
+            }
+            
+            // Create trigger
+            {
+                const uint16_t count = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0);
+                const Ms durationMs = _MotionEnableDurationMs(x);
+                const Ms suppressMs = _MotionSuppressMs(x);
+                
+                _triggers.motionTrigger[_triggers.motionTriggerCount] = {
+                    .capture    = _Convert(x.capture),
+                    .count      = count,
+                    .durationMs = durationMs.count(),
+                    .suppressMs = suppressMs.count(),
+                };
+                _triggers.motionTriggerCount++;
+            }
             break;
         }
         
