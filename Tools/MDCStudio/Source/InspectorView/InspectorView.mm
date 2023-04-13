@@ -7,6 +7,7 @@
 #import "Toastbox/DurationString.h"
 #import "Toastbox/Mac/Util.h"
 #import "ImageUtil.h"
+#import "Calendar.h"
 using namespace MDCStudio;
 
 struct _ModelData {
@@ -1047,23 +1048,33 @@ static ImageCornerButtonTypes::Corner _Convert(ImageOptions::Corner x) {
     }
 }
 
+struct _DateFormatterState {
+    NSCalendar* cal = nil;
+    NSDateFormatter* fmt = nil;
+};
 
-static NSDateFormatter* _DateFormatterCreate() {
-    NSDateFormatter* x = [[NSDateFormatter alloc] init];
-    [x setLocale:[NSLocale autoupdatingCurrentLocale]];
-    [x setDateStyle:NSDateFormatterMediumStyle];
-    [x setTimeStyle:NSDateFormatterMediumStyle];
-    // Update date format to show milliseconds
-    [x setDateFormat:[[x dateFormat] stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
+static _DateFormatterState _DateFormatterStateCreate() {
+    _DateFormatterState x;
+    x.cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    
+    {
+        x.fmt = [[NSDateFormatter alloc] init];
+        [x.fmt setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.fmt setCalendar:x.cal];
+        [x.fmt setTimeZone:[x.cal timeZone]];
+        [x.fmt setDateStyle:NSDateFormatterMediumStyle];
+        [x.fmt setTimeStyle:NSDateFormatterMediumStyle];
+        // Update date format to show milliseconds
+        [x.fmt setDateFormat:[[x.fmt dateFormat] stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
+    }
+    
     return x;
 }
 
-static NSDateFormatter* _DateFormatter() {
-    static NSDateFormatter* x = _DateFormatterCreate();
+static _DateFormatterState& _DateFormatterStateGet() {
+    static _DateFormatterState x = _DateFormatterStateCreate();
     return x;
 }
-
-
 
 static id _Get_id(const ImageRecord& rec) {
     return @(rec.info.id);
@@ -1082,22 +1093,14 @@ static id _Get_timestamp(const ImageRecord& rec) {
         const date::hh_mm_ss hms(sec);
         
         NSDateComponents* comp = [NSDateComponents new];
-        [comp setYear:ymd.year()];
-        [comp setMonth:ymd.month()];
-        [comp setDay:ymd.day()];
-        [comp setHour:hms.hours()];
-        [comp setMinute:hms.minutes()];
-        [comp setSecond:hms.seconds()];
+        [comp setYear:(int)ymd.year()];
+        [comp setMonth:(unsigned)ymd.month()];
+        [comp setDay:(unsigned)ymd.day()];
+        [comp setHour:hms.hours().count()];
+        [comp setMinute:hms.minutes().count()];
+        [comp setSecond:hms.seconds().count()];
         NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
-        
-        
-        
-        
-        
-        
-        
-        const milliseconds ms = duration_cast<milliseconds>(timestamp.time_since_epoch());
-        return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.]];
+        return [_DateFormatterStateGet().fmt stringFromDate:date];
     
     } else {
         const auto dur = Time::Clock::DurationFromTimeInstant(rec.info.timestamp);

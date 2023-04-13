@@ -6,13 +6,15 @@
 #import <cmath>
 #import <string>
 #import <set>
+#import "DeviceSettings.h"
+#import "Calendar.h"
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/NumForStr.h"
 #import "Toastbox/String.h"
 #import "Toastbox/Defer.h"
-#import "DeviceSettings/DeviceSettings.h"
 #import "Code/Shared/Clock.h"
+using namespace MDCStudio;
 using namespace DeviceSettings;
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
