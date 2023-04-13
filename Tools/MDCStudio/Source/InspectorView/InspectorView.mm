@@ -1086,21 +1086,24 @@ static id _Get_timestamp(const ImageRecord& rec) {
     if (Time::Absolute(t)) {
         auto timestampDevice = Time::Clock::TimePointFromTimeInstant(rec.info.timestamp);
         auto timestamp = date::clock_cast<system_clock>(timestampDevice);
-        
-        const auto days = std::chrono::floor<date::days>(timestamp);
-        const auto sec = std::chrono::floor<std::chrono::seconds>(timestamp-days);
-        const date::year_month_day ymd(days);
-        const date::hh_mm_ss hms(sec);
-        
-        NSDateComponents* comp = [NSDateComponents new];
-        [comp setYear:(int)ymd.year()];
-        [comp setMonth:(unsigned)ymd.month()];
-        [comp setDay:(unsigned)ymd.day()];
-        [comp setHour:hms.hours().count()];
-        [comp setMinute:hms.minutes().count()];
-        [comp setSecond:hms.seconds().count()];
-        NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
+        const milliseconds ms = duration_cast<milliseconds>(timestamp.time_since_epoch());
+        NSDate* date = [NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.];
         return [_DateFormatterStateGet().fmt stringFromDate:date];
+        
+//        const auto days = std::chrono::floor<date::days>(timestamp);
+//        const auto sec = std::chrono::floor<std::chrono::seconds>(timestamp-days);
+//        const date::year_month_day ymd(days);
+//        const date::hh_mm_ss hms(sec);
+//        
+//        NSDateComponents* comp = [NSDateComponents new];
+//        [comp setYear:(int)ymd.year()];
+//        [comp setMonth:(unsigned)ymd.month()];
+//        [comp setDay:(unsigned)ymd.day()];
+//        [comp setHour:hms.hours().count()];
+//        [comp setMinute:hms.minutes().count()];
+//        [comp setSecond:hms.seconds().count()];
+//        NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
+//        return [_DateFormatterStateGet().fmt stringFromDate:date];
     
     } else {
         const auto dur = Time::Clock::DurationFromTimeInstant(rec.info.timestamp);
