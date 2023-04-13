@@ -813,12 +813,12 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
         // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
         // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
         // then it doesn't qualify.)
-        system_clock::time_point timePoint;
+        system_clock::time_point timeSys;
         date::sys_days day = floor<date::days>(now);
         for (;;) {
-            timePoint = day+time;
-            // If `timePoint` is in the past and `day` is in x.DaysOfWeek, we're done
-            if (timePoint<now && DaysOfWeekGet(x.DaysOfWeek, day)) {
+            timeSys = day+time;
+            // If `timeSys` is in the past and `day` is in x.DaysOfWeek, we're done
+            if (timeSys<now && DaysOfWeekGet(x.DaysOfWeek, day)) {
                 break;
             }
             day -= date::days(1);
@@ -835,12 +835,10 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
         // Low bit of `days` should be set, otherwise it's a logic bug
         assert(days & 1);
         
-//        date::utc_clock::time_point instant = date::utc_clock::from_sys(timePoint);
+        const auto timeDevice = date::clock_cast<Time::Clock>(timeSys);
+        const Time::Instant timeInstant = Time::Clock::TimeInstantFromTimePoint(timeDevice);
         
-        date::utc_clock::time_point instant = date::clock_cast<date::utc_clock>(timePoint);
-        
-        
-        return std::make_pair(0, MSP::Repeat{
+        return std::make_pair(timeInstant, MSP::Repeat{
             .type = MSP::Repeat::Type::Weekly,
             .Weekly = { days },
         });

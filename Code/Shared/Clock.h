@@ -30,7 +30,7 @@ struct Clock {
     template<class Duration>
     static _TimePoint<std::common_type_t<Duration, std::chrono::seconds>>
     from_utc(const date::utc_time<Duration>& x) noexcept {
-        return x.time_since_epoch() - Time::Epoch;
+        return time_point(x - Time::Epoch);
     }
     
     template<class Duration>
