@@ -27,7 +27,6 @@ struct T_Triggers {
             abort();
         }
         
-//        Event() {}
         Event(Type type) : type(type) {}
         
         Time::Instant time = 0;
@@ -35,33 +34,20 @@ struct T_Triggers {
         Type type = Type::TimeTrigger;
     };
     
-//    template<typename Event::Type T_Init>
-//    struct T_Event : Event {
-//        T_Event() : Event{ .type=T_Init } {}
-////        template<typename T>
-////        operator T&() { return (T&)*this; }
-//    };
-    
     struct RepeatEvent : Event {
         RepeatEvent() : Event(Event::Convert(base().type)), repeat(base().repeat) {}
-        MSP::Repeat repeat;
         auto& base() { return _BaseElm(_T_Base.event, _Event, *this); }
+        
+        MSP::Repeat repeat;
     };
     
     struct TimeTriggerEvent : RepeatEvent {
-//        TimeTriggerEvent(const MSP::Repeat& repeat) : RepeatEvent(Event::Type::TimeTrigger, repeat) {}
         auto& trigger() { return _TimeTrigger[RepeatEvent::base().idx]; }
     };
     
     struct MotionEnableEvent : RepeatEvent {
-//        MotionEnableEvent(const MSP::Repeat& repeat) : RepeatEvent(Event::Type::MotionEnable, repeat) {}
         auto& trigger() { return _MotionTrigger[RepeatEvent::base().idx]; }
     };
-    
-//    struct TriggerEvent : Event {
-//        template<typename T>
-//        operator T&() { return (T&)*this; }
-//    };
     
     struct MotionDisableEvent : Event {
         MotionDisableEvent() : Event(Event::Type::MotionDisable) {}
@@ -72,8 +58,8 @@ struct T_Triggers {
     };
     
     struct CaptureImageEvent : Event {
-//        CaptureImageEvent() : Event(Event::Type::CaptureImage) {}
         CaptureImageEvent(const MSP::Capture& capture) : Event(Event::Type::CaptureImage), capture(&capture) {}
+        
         const MSP::Capture* capture = nullptr;
         uint16_t countRem = 0;
     };
@@ -85,8 +71,9 @@ struct T_Triggers {
     
     struct MotionTrigger : CaptureImageEvent, MotionDisableEvent, MotionUnsuppressEvent {
         MotionTrigger() : CaptureImageEvent(base().capture) {}
-        T_MotionEnabled enabled;
         auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }
+        
+        T_MotionEnabled enabled;
     };
     
     struct ButtonTrigger : CaptureImageEvent {
