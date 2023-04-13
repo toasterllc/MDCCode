@@ -231,7 +231,7 @@ static void _EventInsert(_Triggers::Event& ev, Time::Instant time, uint32_t delt
 
 static void _CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) {
     // Reset capture count
-    ev.countRem = ev.capture.count;
+    ev.countRem = ev.capture->count;
     if (ev.countRem) {
         _Triggers::EventInsert(ev, time);
     }
@@ -621,16 +621,16 @@ struct _TaskMain {
         _VDDBSet(false);
     }
     
-    static void _TimeTrigger(_Triggers::TimeTrigger& trigger) {
-        _Triggers::TimeTriggerEvent& timeTriggerEvent = trigger;
+    static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
+        _Triggers::TimeTrigger& trigger = ev.trigger();
         // Schedule the CaptureImageEvent
-        _CaptureStart(trigger, timeTriggerEvent.time);
-        // Reschedule TimeTriggerEvent event for its next trigger time
-        _EventInsert(timeTriggerEvent, trigger.repeat);
+        _CaptureStart(trigger, ev.time);
+        // Reschedule TimeTriggerEvent for its next trigger time
+        _EventInsert(ev, ev.repeat);
     }
     
-    static void _MotionEnable(_Triggers::MotionTrigger& trigger) {
-        _Triggers::MotionEnableEvent& motionEnableEvent = trigger;
+    static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
+        _Triggers::MotionTrigger& trigger = ev.trigger();
         
         // Enable motion
         trigger.enabled.acquire();
@@ -640,18 +640,20 @@ struct _TaskMain {
         // properly schedule the MotionDisableEvent!
         const uint32_t durationMs = trigger.base().durationMs;
         if (durationMs) {
-            _EventInsert((_Triggers::MotionDisableEvent&)trigger, motionEnableEvent.time, durationMs);
+            _EventInsert((_Triggers::MotionDisableEvent&)trigger, ev.time, durationMs);
         }
         
-        // Reschedule MotionEnable event for its next trigger time
-        _EventInsert(motionEnableEvent, trigger.repeat);
+        // Reschedule MotionEnableEvent for its next trigger time
+        _EventInsert(ev, ev.repeat);
     }
     
-    static void _MotionDisable(_Triggers::MotionTrigger& trigger) {
+    static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
+        _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.enabled.release();
     }
     
-    static void _MotionUnsuppress(_Triggers::MotionTrigger& trigger) {
+    static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
+        _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.enabled.suppress(false);
     }
     
@@ -742,7 +744,7 @@ struct _TaskMain {
         
         ev.countRem--;
         if (ev.countRem) {
-            _EventInsert(ev, ev.time, ev.capture.delayMs);
+            _EventInsert(ev, ev.time, ev.capture->delayMs);
         }
     }
     

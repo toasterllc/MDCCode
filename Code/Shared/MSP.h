@@ -149,7 +149,7 @@ struct [[gnu::packed]] Triggers {
     // source: opaque data used by software to hold its representation of this struct
     uint8_t source[256] = {};
 };
-StaticPrint(sizeof(Triggers));
+//StaticPrint(sizeof(Triggers));
 
 
 //struct [[gnu::packed]] Triggers {
@@ -195,7 +195,7 @@ StaticPrint(sizeof(Triggers));
 struct [[gnu::packed]] Settings {
     Triggers triggers = {};
 //    StaticPrint(sizeof(triggers));
-    static_assert(sizeof(triggers) == 776); // Debug
+    static_assert(sizeof(triggers) == 832); // Debug
 };
 
 struct [[gnu::packed]] State {
@@ -232,7 +232,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 736); // Debug
+    static_assert(sizeof(settings) == 832); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
@@ -242,7 +242,7 @@ struct [[gnu::packed]] State {
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 910); // Debug
+static_assert(sizeof(State) == 1006); // Debug
 
 static constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,
