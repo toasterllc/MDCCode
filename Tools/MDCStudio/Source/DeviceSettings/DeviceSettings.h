@@ -14,7 +14,7 @@ using TimeOfDay = std::chrono::duration<uint32_t>;
 using DayOfWeek = date::weekday;
 
 // DayOfMonth: a particular day of an unspecified month [1,31]
-struct [[gnu::packed]] DayOfMonth { uint8_t x; };
+using DayOfMonth = date::day;
 
 // MonthOfYear: a particular month of an unspecified year [1,12]
 struct [[gnu::packed]] MonthOfYear { uint8_t x; };
@@ -48,7 +48,7 @@ inline void DayOfWeekValidate(DayOfWeek x) {
 }
 
 inline void DayOfMonthValidate(DayOfMonth x) {
-    if (x.x<1 || x.x>31) throw Toastbox::RuntimeError("invalid DayOfMonth: %ju", (uintmax_t)x.x);
+    if (!x.ok()) throw Toastbox::RuntimeError("invalid DayOfMonth: %ju", (uintmax_t)(unsigned)(x));
 }
 
 inline void MonthOfYearValidate(MonthOfYear x) {
@@ -115,20 +115,19 @@ inline DaysOfWeek DaysOfWeekFromVector(const std::vector<DayOfWeek>& x) {
 
 
 inline std::optional<DayOfMonth> DayOfMonthFromString(std::string_view x) {
-    DayOfMonth y = {};
     try {
-        Toastbox::IntForStr(y.x, x);
+        DayOfMonth y(Toastbox::IntForStr<unsigned>(x));
         DayOfMonthValidate(y);
+        return y;
     } catch (...) { return std::nullopt; }
-    return y;
 }
 
 inline std::string StringFromDayOfMonth(DayOfMonth x) {
-    return std::to_string(x.x);
+    return std::to_string((unsigned)x);
 }
 
 inline constexpr uint32_t DaysOfMonthMask(DayOfMonth day) {
-    return 1 << (day.x-1);
+    return 1 << ((unsigned)day-1);
 }
 
 inline bool DaysOfMonthGet(DaysOfMonth x, DayOfMonth day) {
@@ -142,7 +141,7 @@ inline void DaysOfMonthSet(DaysOfMonth& x, DayOfMonth day, bool y) {
 
 inline std::vector<DayOfMonth> VectorFromDaysOfMonth(DaysOfMonth x) {
     std::vector<DayOfMonth> r;
-    for (DayOfMonth day={1}; day.x<=31; day.x++) {
+    for (DayOfMonth day(1); day<=DayOfMonth(31); day++) {
         if (DaysOfMonthGet(x, day)) {
             r.push_back(day);
         }
@@ -332,7 +331,7 @@ inline std::optional<DayOfYear> DayOfYearFromString(std::string_view x) {
         components:NSCalendarUnitMonth|NSCalendarUnitDay fromDate:date];
     if (!comp) return std::nullopt;
     
-    const DayOfYear r = DayOfYear{ {(uint8_t)[comp month]}, {(uint8_t)[comp day]} };
+    const DayOfYear r = DayOfYear{ {(uint8_t)[comp month]}, DayOfMonth((int)[comp day]) };
     try {
         DayOfYearValidate(r);
     } catch (...) { return std::nullopt; }
@@ -343,7 +342,7 @@ inline std::optional<DayOfYear> DayOfYearFromString(std::string_view x) {
 inline std::string StringFromDayOfYear(DayOfYear x) {
     NSDateComponents* comp = [NSDateComponents new];
     [comp setMonth:x.month.x];
-    [comp setDay:x.day.x];
+    [comp setDay:(unsigned)x.day];
     NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
     return [[_DateFormatterStateGet().dayOfYearFormatter stringFromDate:date] UTF8String];
 }
@@ -351,7 +350,7 @@ inline std::string StringFromDayOfYear(DayOfYear x) {
 inline std::string DayOfYearPlaceholderString() {
     static std::string X = StringFromDayOfYear(DayOfYear{
         .month = 10,
-        .day = 31,
+        .day = DayOfMonth(31),
     });
     return X;
 }
