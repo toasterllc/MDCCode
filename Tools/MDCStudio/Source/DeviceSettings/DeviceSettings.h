@@ -9,6 +9,7 @@ namespace Calendar {
 
 // TimeOfDay: a particular time of an unspecified day, in seconds [0,86400]
 using TimeOfDay = std::chrono::duration<uint32_t>;
+using TimeOfDayHHMMSS = date::hh_mm_ss<TimeOfDay>;
 
 // DayOfWeek: a particular day of an unspecified week
 using DayOfWeek = date::weekday;
@@ -20,10 +21,7 @@ using DayOfMonth = date::day;
 using MonthOfYear = date::month;
 
 // DayOfYear: a particular day of an unspecified year
-struct [[gnu::packed]] DayOfYear {
-    MonthOfYear month;
-    DayOfMonth day;
-};
+using DayOfYear = date::month_day;
 
 // DaysOfWeek: a set of days of an unspecified week
 struct [[gnu::packed]] DaysOfWeek { uint8_t x; };
@@ -33,8 +31,6 @@ struct [[gnu::packed]] DaysOfMonth { uint32_t x; };
 
 // DaysOfYear: a set of days of an unspecified year
 struct [[gnu::packed]] DaysOfYear { DaysOfMonth x[12]; };
-
-using HHMMSS = date::hh_mm_ss<TimeOfDay>;
 
 
 
@@ -56,8 +52,8 @@ inline void MonthOfYearValidate(MonthOfYear x) {
 }
 
 inline void DayOfYearValidate(DayOfYear x) {
-    MonthOfYearValidate(x.month);
-    DayOfMonthValidate(x.day);
+    if (!x.ok()) throw Toastbox::RuntimeError("invalid DayOfYear: %ju/%ju",
+        (uintmax_t)(unsigned)(x.month()), (uintmax_t)(unsigned)(x.day()));
 }
 
 
@@ -179,7 +175,7 @@ inline DaysOfYear DaysOfYearFromVector(const std::vector<DayOfYear>& x) {
     DaysOfYear r = {};
     for (const DayOfYear& d : x) {
         DayOfYearValidate(d);
-        DaysOfMonthSet(r.x[(unsigned)d.month-1], d.day, true);
+        DaysOfMonthSet(r.x[(unsigned)d.month()-1], d.day(), true);
     }
     return r;
 }
@@ -255,7 +251,7 @@ static _DateFormatterState& _DateFormatterStateGet() {
 
 // 56789 -> 3:46:29 PM / 15:46:29 (depending on locale)
 inline std::string StringFromTimeOfDay(TimeOfDay x) {
-    const HHMMSS parts(x);
+    const TimeOfDayHHMMSS parts(x);
     const auto h = parts.hours().count();
     const auto m = parts.minutes().count();
     const auto s = parts.seconds().count();
@@ -342,17 +338,14 @@ inline std::optional<DayOfYear> DayOfYearFromString(std::string_view x) {
 
 inline std::string StringFromDayOfYear(DayOfYear x) {
     NSDateComponents* comp = [NSDateComponents new];
-    [comp setMonth:(unsigned)x.month];
-    [comp setDay:(unsigned)x.day];
+    [comp setMonth:(unsigned)x.month()];
+    [comp setDay:(unsigned)x.day()];
     NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
     return [[_DateFormatterStateGet().dayOfYearFormatter stringFromDate:date] UTF8String];
 }
 
 inline std::string DayOfYearPlaceholderString() {
-    static std::string X = StringFromDayOfYear(DayOfYear{
-        .month = MonthOfYear(10),
-        .day   = DayOfMonth(31),
-    });
+    static std::string X = StringFromDayOfYear(DayOfYear(MonthOfYear(10), DayOfMonth(31)));
     return X;
 }
 

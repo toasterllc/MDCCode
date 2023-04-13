@@ -1072,7 +1072,7 @@ static void _Copy(Calendar::DaysOfYear& x, NSTokenField* field) {
             if (!x) continue;
             days.push_back(x->x);
         }
-        x = DaysOfYearFromVector(days);
+        x = Calendar::DaysOfYearFromVector(days);
     }
 }
 
