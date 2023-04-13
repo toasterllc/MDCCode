@@ -191,55 +191,65 @@ inline DaysOfYear DaysOfYearFromVector(const std::vector<DayOfYear>& x) {
 
 
 
-struct _TimeFormatState {
-    NSCalendar* calendar = nil;
-    NSDateFormatter* dateFormatterHH = nil;
-    NSDateFormatter* dateFormatterHHMM = nil;
-    NSDateFormatter* dateFormatterHHMMSS = nil;
+struct _DateFormatterState {
+    NSCalendar* cal = nil;
+    NSDateFormatter* timeFormatterHH = nil;
+    NSDateFormatter* timeFormatterHHMM = nil;
+    NSDateFormatter* timeFormatterHHMMSS = nil;
+    NSDateFormatter* dayOfYearFormatter = nil;
     bool showsAMPM = false;
     char timeSeparator = 0;
 };
 
-static _TimeFormatState _TimeFormatStateCreate() {
-    _TimeFormatState x;
-    x.calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+static _DateFormatterState _DateFormatterStateCreate() {
+    _DateFormatterState x;
+    x.cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     
     {
-        x.dateFormatterHH = [[NSDateFormatter alloc] init];
-        [x.dateFormatterHH setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterHH setCalendar:x.calendar];
-        [x.dateFormatterHH setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHH setLocalizedDateFormatFromTemplate:@"hh"];
-        [x.dateFormatterHH setLenient:true];
+        x.timeFormatterHH = [[NSDateFormatter alloc] init];
+        [x.timeFormatterHH setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.timeFormatterHH setCalendar:x.cal];
+        [x.timeFormatterHH setTimeZone:[x.cal timeZone]];
+        [x.timeFormatterHH setLocalizedDateFormatFromTemplate:@"hh"];
+        [x.timeFormatterHH setLenient:true];
     }
     
     {
-        x.dateFormatterHHMM = [[NSDateFormatter alloc] init];
-        [x.dateFormatterHHMM setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterHHMM setCalendar:x.calendar];
-        [x.dateFormatterHHMM setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHHMM setLocalizedDateFormatFromTemplate:@"hhmm"];
-        [x.dateFormatterHHMM setLenient:true];
+        x.timeFormatterHHMM = [[NSDateFormatter alloc] init];
+        [x.timeFormatterHHMM setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.timeFormatterHHMM setCalendar:x.cal];
+        [x.timeFormatterHHMM setTimeZone:[x.cal timeZone]];
+        [x.timeFormatterHHMM setLocalizedDateFormatFromTemplate:@"hhmm"];
+        [x.timeFormatterHHMM setLenient:true];
     }
     
     {
-        x.dateFormatterHHMMSS = [[NSDateFormatter alloc] init];
-        [x.dateFormatterHHMMSS setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterHHMMSS setCalendar:x.calendar];
-        [x.dateFormatterHHMMSS setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hhmmss"];
-        [x.dateFormatterHHMMSS setLenient:true];
+        x.timeFormatterHHMMSS = [[NSDateFormatter alloc] init];
+        [x.timeFormatterHHMMSS setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.timeFormatterHHMMSS setCalendar:x.cal];
+        [x.timeFormatterHHMMSS setTimeZone:[x.cal timeZone]];
+        [x.timeFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hhmmss"];
+        [x.timeFormatterHHMMSS setLenient:true];
     }
     
-    NSString* dateFormat = [x.dateFormatterHHMMSS dateFormat];
+    {
+        x.dayOfYearFormatter = [[NSDateFormatter alloc] init];
+        [x.dayOfYearFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.dayOfYearFormatter setCalendar:x.cal];
+        [x.dayOfYearFormatter setTimeZone:[x.cal timeZone]];
+        [x.dayOfYearFormatter setLocalizedDateFormatFromTemplate:@"MMMd"];
+        [x.dayOfYearFormatter setLenient:true];
+    }
+    
+    NSString* dateFormat = [x.timeFormatterHHMMSS dateFormat];
     x.showsAMPM = [dateFormat containsString:@"a"];
     x.timeSeparator = ([dateFormat containsString:@":"] ? ':' : 0);
     
     return x;
 }
 
-static _TimeFormatState& _TimeFormatStateGet() {
-    static _TimeFormatState x = _TimeFormatStateCreate();
+static _DateFormatterState& _DateFormatterStateGet() {
+    static _DateFormatterState x = _DateFormatterStateCreate();
     return x;
 }
 
@@ -258,23 +268,23 @@ inline std::string StringFromTimeOfDay(TimeOfDay x) {
     [comp setHour:h];
     [comp setMinute:m];
     [comp setSecond:s];
-    NSDate* date = [_TimeFormatStateGet().calendar dateFromComponents:comp];
+    NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
     
-//    if (full) return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
+//    if (full) return [[_DateFormatterStateGet().timeFormatterHHMMSS stringFromDate:date] UTF8String];
     
-    if (_TimeFormatStateGet().showsAMPM && !s && !m) {
-        return [[_TimeFormatStateGet().dateFormatterHH stringFromDate:date] UTF8String];
+    if (_DateFormatterStateGet().showsAMPM && !s && !m) {
+        return [[_DateFormatterStateGet().timeFormatterHH stringFromDate:date] UTF8String];
     } else if (!s) {
-        return [[_TimeFormatStateGet().dateFormatterHHMM stringFromDate:date] UTF8String];
+        return [[_DateFormatterStateGet().timeFormatterHHMM stringFromDate:date] UTF8String];
     } else {
-        return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
+        return [[_DateFormatterStateGet().timeFormatterHHMMSS stringFromDate:date] UTF8String];
     }
 }
 
 // 3:46:29 PM / 15:46:29 -> 56789
 inline TimeOfDay TimeOfDayFromString(std::string x, bool assumeAM=true) {
     // Convert input to lowercase / remove all spaces
-    const char timeSeparator = _TimeFormatStateGet().timeSeparator;
+    const char timeSeparator = _DateFormatterStateGet().timeSeparator;
     bool hasSeparators = false;
     for (auto it=x.begin(); it!=x.end();) {
         *it = std::tolower(*it);
@@ -296,18 +306,18 @@ inline TimeOfDay TimeOfDayFromString(std::string x, bool assumeAM=true) {
     }
     
     // Add AM/PM if it isn't specified, so we don't reject the input if it's just missing am/pm
-    if (_TimeFormatStateGet().showsAMPM &&
+    if (_DateFormatterStateGet().showsAMPM &&
         !Toastbox::String::EndsWith("am", x) &&
         !Toastbox::String::EndsWith("pm", x)) {
         x += (assumeAM ? "am" : "pm");
     }
     
-    NSDate* date = [_TimeFormatStateGet().dateFormatterHHMMSS dateFromString:@(x.c_str())];
-    if (!date) date = [_TimeFormatStateGet().dateFormatterHHMM dateFromString:@(x.c_str())];
-    if (!date) date = [_TimeFormatStateGet().dateFormatterHH dateFromString:@(x.c_str())];
+    NSDate* date = [_DateFormatterStateGet().timeFormatterHHMMSS dateFromString:@(x.c_str())];
+    if (!date) date = [_DateFormatterStateGet().timeFormatterHHMM dateFromString:@(x.c_str())];
+    if (!date) date = [_DateFormatterStateGet().timeFormatterHH dateFromString:@(x.c_str())];
     if (!date) throw Toastbox::RuntimeError("invalid time of day: %s", x.c_str());
     
-    NSDateComponents* comp = [_TimeFormatStateGet().calendar
+    NSDateComponents* comp = [_DateFormatterStateGet().cal
         components:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond fromDate:date];
     
     const TimeOfDay t = { (uint32_t)([comp hour]*60*60 + [comp minute]*60 + [comp second]) };
@@ -315,57 +325,11 @@ inline TimeOfDay TimeOfDayFromString(std::string x, bool assumeAM=true) {
     return t;
 }
 
-
-
-
-struct _DayOfYearState {
-    NSCalendar* cal = nil;
-    NSDateFormatter* fmt = nil;
-};
-
-inline _DayOfYearState _DayOfYearStateCreate() {
-    _DayOfYearState x;
-    x.cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    
-    x.fmt = [[NSDateFormatter alloc] init];
-    [x.fmt setLocale:[NSLocale autoupdatingCurrentLocale]];
-    [x.fmt setCalendar:x.cal];
-    [x.fmt setTimeZone:[x.cal timeZone]];
-    [x.fmt setLocalizedDateFormatFromTemplate:@"MMMd"];
-    [x.fmt setLenient:true];
-    
-    return x;
-}
-
-inline _DayOfYearState& _DayOfYearStateGet() {
-    static _DayOfYearState x = _DayOfYearStateCreate();
-    return x;
-}
-
-
-
-
-
-
-
-//inline NSDateFormatter* _DayOfYearDateFormatterCreate() {
-//    NSDateFormatter* x = [[NSDateFormatter alloc] init];
-//    [x setLocale:[NSLocale autoupdatingCurrentLocale]];
-//    [x setLocalizedDateFormatFromTemplate:@"Md"];
-//    [x setLenient:true];
-//    return x;
-//}
-//
-//inline NSDateFormatter* _DayOfYearDateFormatter() {
-//    static NSDateFormatter* X = _DayOfYearDateFormatterCreate();
-//    return X;
-//}
-
 inline std::optional<DayOfYear> DayOfYearFromString(std::string_view x) {
-    NSDate* date = [_DayOfYearStateGet().fmt dateFromString:@(std::string(x).c_str())];
+    NSDate* date = [_DateFormatterStateGet().dayOfYearFormatter dateFromString:@(std::string(x).c_str())];
     if (!date) return std::nullopt;
     
-    NSDateComponents* comp = [_DayOfYearStateGet().cal
+    NSDateComponents* comp = [_DateFormatterStateGet().cal
         components:NSCalendarUnitMonth|NSCalendarUnitDay fromDate:date];
     if (!comp) return std::nullopt;
     
@@ -381,8 +345,8 @@ inline std::string StringFromDayOfYear(const DayOfYear& x) {
     NSDateComponents* comp = [NSDateComponents new];
     [comp setMonth:x.month.x];
     [comp setDay:x.day.x];
-    NSDate* date = [_DayOfYearStateGet().cal dateFromComponents:comp];
-    return [[_DayOfYearStateGet().fmt stringFromDate:date] UTF8String];
+    NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
+    return [[_DateFormatterStateGet().dayOfYearFormatter stringFromDate:date] UTF8String];
 }
 
 inline std::string DayOfYearPlaceholderString() {
