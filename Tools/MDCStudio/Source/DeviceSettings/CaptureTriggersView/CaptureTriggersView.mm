@@ -797,8 +797,6 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
 //    };
     
     using namespace std::chrono;
-//    using namespace date;
-    
     const auto now = system_clock::now();
     
     switch (x.type) {
@@ -844,15 +842,24 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
         });
     }
     
-    case Repeat::Type::DaysOfYear:
+    case Repeat::Type::DaysOfYear: {
         #warning TODO: implement
-        return std::make_pair(0, MSP::Repeat{});
-    case Repeat::Type::DayInterval:
+        const Time::Instant timeInstant = 0;
+        uint8_t leapPhase = 0;
+        return std::make_pair(timeInstant, MSP::Repeat{
+            .type = MSP::Repeat::Type::Yearly,
+            .Yearly = { leapPhase },
+        });
+    }
+    
+    case Repeat::Type::DayInterval: {
         #warning TODO: return time
         return std::make_pair(0, MSP::Repeat{
             .type = MSP::Repeat::Type::Daily,
             .Daily = { _Cast<decltype(MSP::Repeat::Daily.interval)>(x.DayInterval.x) },
         });
+    }
+    
     default:
         abort();
     }
