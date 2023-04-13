@@ -224,127 +224,6 @@ static Repeat::Type RepeatTypeFromString(std::string x) {
     else abort();
 }
 
-struct _TimeFormatState {
-    NSCalendar* calendar = nil;
-    NSDateFormatter* dateFormatterHH = nil;
-    NSDateFormatter* dateFormatterHHMM = nil;
-    NSDateFormatter* dateFormatterHHMMSS = nil;
-    bool showsAMPM = false;
-    char timeSeparator = 0;
-};
-
-static _TimeFormatState _TimeFormatStateCreate() {
-    _TimeFormatState x;
-    x.calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    
-    {
-        x.dateFormatterHH = [[NSDateFormatter alloc] init];
-        [x.dateFormatterHH setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterHH setCalendar:x.calendar];
-        [x.dateFormatterHH setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHH setLocalizedDateFormatFromTemplate:@"hh"];
-        [x.dateFormatterHH setLenient:true];
-    }
-    
-    {
-        x.dateFormatterHHMM = [[NSDateFormatter alloc] init];
-        [x.dateFormatterHHMM setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterHHMM setCalendar:x.calendar];
-        [x.dateFormatterHHMM setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHHMM setLocalizedDateFormatFromTemplate:@"hhmm"];
-        [x.dateFormatterHHMM setLenient:true];
-    }
-    
-    {
-        x.dateFormatterHHMMSS = [[NSDateFormatter alloc] init];
-        [x.dateFormatterHHMMSS setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dateFormatterHHMMSS setCalendar:x.calendar];
-        [x.dateFormatterHHMMSS setTimeZone:[x.calendar timeZone]];
-        [x.dateFormatterHHMMSS setLocalizedDateFormatFromTemplate:@"hhmmss"];
-        [x.dateFormatterHHMMSS setLenient:true];
-    }
-    
-    NSString* dateFormat = [x.dateFormatterHHMMSS dateFormat];
-    x.showsAMPM = [dateFormat containsString:@"a"];
-    x.timeSeparator = ([dateFormat containsString:@":"] ? ':' : 0);
-    
-    return x;
-}
-
-static _TimeFormatState& _TimeFormatStateGet() {
-    static _TimeFormatState x = _TimeFormatStateCreate();
-    return x;
-}
-
-// 56789 -> 3:46:29 PM / 15:46:29 (depending on locale)
-static std::string _StringFromTimeOfDay(Calendar::TimeOfDay x) {
-    const uint32_t h = x.x/(60*60);
-    x.x -= h*60*60;
-    const uint32_t m = x.x/60;
-    x.x -= m*60;
-    const uint32_t s = x.x;
-    
-    NSDateComponents* comp = [NSDateComponents new];
-    [comp setYear:2022];
-    [comp setMonth:1];
-    [comp setDay:1];
-    [comp setHour:h];
-    [comp setMinute:m];
-    [comp setSecond:s];
-    NSDate* date = [_TimeFormatStateGet().calendar dateFromComponents:comp];
-    
-//    if (full) return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
-    
-    if (_TimeFormatStateGet().showsAMPM && !s && !m) {
-        return [[_TimeFormatStateGet().dateFormatterHH stringFromDate:date] UTF8String];
-    } else if (!s) {
-        return [[_TimeFormatStateGet().dateFormatterHHMM stringFromDate:date] UTF8String];
-    } else {
-        return [[_TimeFormatStateGet().dateFormatterHHMMSS stringFromDate:date] UTF8String];
-    }
-}
-
-// 3:46:29 PM / 15:46:29 -> 56789
-static Calendar::TimeOfDay _TimeOfDayFromString(std::string x, bool assumeAM=true) {
-    // Convert input to lowercase / remove all spaces
-    const char timeSeparator = _TimeFormatStateGet().timeSeparator;
-    bool hasSeparators = false;
-    for (auto it=x.begin(); it!=x.end();) {
-        *it = std::tolower(*it);
-        hasSeparators |= (timeSeparator && *it==timeSeparator);
-        if (std::isspace(*it))  it = x.erase(it);
-        else                    it++;
-    }
-    
-    // Insert time separators (112233 -> 11:22:33) if they're missing, so we don't reject the input if they are missing
-    if (timeSeparator && !hasSeparators && !x.empty()) {
-        bool started = false;
-        size_t count = 0;
-        for (auto it=x.end()-1; it!=x.begin(); it--) {
-            started |= std::isdigit(*it);
-            if (count == 1) x.insert(it, timeSeparator);
-            count += started;
-            if (count == 2) count = 0;
-        }
-    }
-    
-    // Add AM/PM if it isn't specified, so we don't reject the input if it's just missing am/pm
-    if (_TimeFormatStateGet().showsAMPM &&
-        !Toastbox::String::EndsWith("am", x) &&
-        !Toastbox::String::EndsWith("pm", x)) {
-        x += (assumeAM ? "am" : "pm");
-    }
-    
-    NSDate* date = [_TimeFormatStateGet().dateFormatterHHMMSS dateFromString:@(x.c_str())];
-    if (!date) date = [_TimeFormatStateGet().dateFormatterHHMM dateFromString:@(x.c_str())];
-    if (!date) date = [_TimeFormatStateGet().dateFormatterHH dateFromString:@(x.c_str())];
-    if (!date) throw Toastbox::RuntimeError("invalid time of day: %s", x.c_str());
-    
-    NSDateComponents* comp = [_TimeFormatStateGet().calendar
-        components:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond fromDate:date];
-    return { (uint32_t)([comp hour]*60*60 + [comp minute]*60 + [comp second]) };
-}
-
 
 
 
@@ -518,9 +397,9 @@ static std::string _CaptureDescription(const Capture& x) {
 
 static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::TimeOfDay end) {
     std::string r;
-    r += _StringFromTimeOfDay(start);
+    r += Calendar::StringFromTimeOfDay(start);
     r += " – ";
-    r += _StringFromTimeOfDay(end);
+    r += Calendar::StringFromTimeOfDay(end);
     return r;
 }
 
@@ -530,7 +409,7 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     case CaptureTrigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time-Large"]];
         [_titlePrefixLabel setStringValue: @"At"];
-        [_titleLabel setStringValue: @((_StringFromTimeOfDay(trigger.time.schedule.time) + ",").c_str())];
+        [_titleLabel setStringValue: @((Calendar::StringFromTimeOfDay(trigger.time.schedule.time) + ",").c_str())];
         break;
     case CaptureTrigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion-Large"]];
@@ -1090,11 +969,11 @@ static void _Copy(Repeat::Type& x, NSPopUpButton* menu) {
 template<bool T_Forward>
 static void _CopyTime(Calendar::TimeOfDay& x, NSTextField* field) {
     if constexpr (T_Forward) {
-        [field setStringValue:@(_StringFromTimeOfDay(x).c_str())];
+        [field setStringValue:@(Calendar::StringFromTimeOfDay(x).c_str())];
     } else {
         try {
             const bool assumeAM = x.x < 12*60*60;
-            x = _TimeOfDayFromString([[field stringValue] UTF8String], assumeAM);
+            x = Calendar::TimeOfDayFromString([[field stringValue] UTF8String], assumeAM);
         } catch (...) {}
     }
 }
