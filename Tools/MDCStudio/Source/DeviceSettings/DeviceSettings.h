@@ -38,23 +38,23 @@ struct [[gnu::packed]] DaysOfYear { DaysOfMonth x[12]; };
 
 
 
-inline void TimeOfDayValidate(const TimeOfDay& x) {
+inline void TimeOfDayValidate(TimeOfDay x) {
     if (x.x > 24*60*60) throw Toastbox::RuntimeError("invalid TimeOfDay: %ju", (uintmax_t)x.x);
 }
 
-inline void DayOfWeekValidate(const DayOfWeek& x) {
+inline void DayOfWeekValidate(DayOfWeek x) {
     if (x.x >= 7) throw Toastbox::RuntimeError("invalid DayOfWeek: %ju", (uintmax_t)x.x);
 }
 
-inline void DayOfMonthValidate(const DayOfMonth& x) {
+inline void DayOfMonthValidate(DayOfMonth x) {
     if (x.x<1 || x.x>31) throw Toastbox::RuntimeError("invalid DayOfMonth: %ju", (uintmax_t)x.x);
 }
 
-inline void MonthOfYearValidate(const MonthOfYear& x) {
+inline void MonthOfYearValidate(MonthOfYear x) {
     if (x.x<1 || x.x>12) throw Toastbox::RuntimeError("invalid MonthOfYear: %ju", (uintmax_t)x.x);
 }
 
-inline void DayOfYearValidate(const DayOfYear& x) {
+inline void DayOfYearValidate(DayOfYear x) {
     MonthOfYearValidate(x.month);
     DayOfMonthValidate(x.day);
 }
@@ -63,7 +63,7 @@ inline void DayOfYearValidate(const DayOfYear& x) {
 
 
 
-inline std::string StringForDayOfWeek(const DayOfWeek& x) {
+inline std::string StringForDayOfWeek(DayOfWeek x) {
     switch (x.x) {
     case DayOfWeek_::Mon: return "Mon";
     case DayOfWeek_::Tue: return "Tue";
@@ -80,7 +80,7 @@ inline constexpr uint8_t DaysOfWeekMask(DayOfWeek day) {
     return 1 << day.x;
 }
 
-inline bool DaysOfWeekGet(const DaysOfWeek& x, DayOfWeek day) {
+inline bool DaysOfWeekGet(DaysOfWeek x, DayOfWeek day) {
     return x.x & DaysOfWeekMask(day);
 }
 
@@ -89,7 +89,7 @@ inline void DaysOfWeekSet(DaysOfWeek& x, DayOfWeek day, bool y) {
     if (y) x.x |= DaysOfWeekMask(day);
 }
 
-inline std::vector<DayOfWeek> VectorFromDaysOfWeek(const DaysOfWeek& x) {
+inline std::vector<DayOfWeek> VectorFromDaysOfWeek(DaysOfWeek x) {
     std::vector<DayOfWeek> r;
     for (DayOfWeek i={0}; i.x<7; i.x++) {
         if (x.x & DaysOfWeekMask(i)) {
@@ -123,7 +123,7 @@ inline std::optional<DayOfMonth> DayOfMonthFromString(std::string_view x) {
     return y;
 }
 
-inline std::string StringFromDayOfMonth(const DayOfMonth& x) {
+inline std::string StringFromDayOfMonth(DayOfMonth x) {
     return std::to_string(x.x);
 }
 
@@ -131,7 +131,7 @@ inline constexpr uint32_t DaysOfMonthMask(DayOfMonth day) {
     return 1 << (day.x-1);
 }
 
-inline bool DaysOfMonthGet(const DaysOfMonth& x, DayOfMonth day) {
+inline bool DaysOfMonthGet(DaysOfMonth x, DayOfMonth day) {
     return x.x & DaysOfMonthMask(day);
 }
 
@@ -140,7 +140,7 @@ inline void DaysOfMonthSet(DaysOfMonth& x, DayOfMonth day, bool y) {
     if (y) x.x |= DaysOfMonthMask(day);
 }
 
-inline std::vector<DayOfMonth> VectorFromDaysOfMonth(const DaysOfMonth& x) {
+inline std::vector<DayOfMonth> VectorFromDaysOfMonth(DaysOfMonth x) {
     std::vector<DayOfMonth> r;
     for (DayOfMonth day={1}; day.x<=31; day.x++) {
         if (DaysOfMonthGet(x, day)) {
@@ -341,7 +341,7 @@ inline std::optional<DayOfYear> DayOfYearFromString(std::string_view x) {
     return r;
 }
 
-inline std::string StringFromDayOfYear(const DayOfYear& x) {
+inline std::string StringFromDayOfYear(DayOfYear x) {
     NSDateComponents* comp = [NSDateComponents new];
     [comp setMonth:x.month.x];
     [comp setDay:x.day.x];
