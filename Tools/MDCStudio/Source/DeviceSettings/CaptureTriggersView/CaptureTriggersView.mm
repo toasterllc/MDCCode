@@ -10,8 +10,9 @@
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/NumForStr.h"
 #import "Toastbox/String.h"
-#import "DeviceSettings/DeviceSettings.h"
 #import "Toastbox/Defer.h"
+#import "DeviceSettings/DeviceSettings.h"
+#import "Code/Shared/TimeConvert.h"
 using namespace DeviceSettings;
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
@@ -783,6 +784,12 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
 //            uint8_t leapPhase;
 //        } Yearly;
 //    };
+    
+    using namespace std::chrono;
+    using namespace date;
+    const year_month_day ymd = floor<days>(system_clock::now());
+    const weekday w{ymd};
+    
     switch (x.type) {
     case Repeat::Type::Daily:
         #warning TODO: return time
