@@ -33,8 +33,6 @@ struct [[gnu::packed]] DaysOfMonth { uint32_t x; };
 struct [[gnu::packed]] DaysOfYear { DaysOfMonth x[12]; };
 
 
-
-
 inline void TimeOfDayValidate(TimeOfDay x) {
     if (x.count() > 24*60*60) throw Toastbox::RuntimeError("invalid TimeOfDay: %ju", (uintmax_t)x.count());
 }
