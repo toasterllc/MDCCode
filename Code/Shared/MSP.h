@@ -136,15 +136,15 @@ struct [[gnu::packed]] Triggers {
     };
     static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
     
+    Event         event[32];
     TimeTrigger   timeTrigger[8];
     MotionTrigger motionTrigger[8];
     ButtonTrigger buttonTrigger[2];
-    Event         events[32];
     
+    uint8_t eventCount         = 0;
     uint8_t timeTriggerCount   = 0;
     uint8_t motionTriggerCount = 0;
     uint8_t buttonTriggerCount = 0;
-    uint8_t eventCount         = 0;
     
     // source: opaque data used by software to hold its representation of this struct
     uint8_t source[256] = {};
@@ -178,7 +178,7 @@ StaticPrint(sizeof(Triggers));
 //    };
 //    static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
 //    
-//    TimeTrigger   timeTrigger[24];
+//    TimeTrigger   timeTrigger[32];
 //    MotionTrigger motionTrigger[8];
 //    ButtonTrigger buttonTrigger[2];
 //    

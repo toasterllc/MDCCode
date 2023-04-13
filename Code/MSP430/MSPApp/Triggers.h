@@ -10,6 +10,11 @@ template<auto& T_Base, typename T_MotionEnabled>
 struct T_Triggers {
     struct Trigger;
     
+    struct Capture {
+        const MSP::Capture* capture = nullptr;
+        uint16_t countRem = 0;
+    };
+    
     struct Event {
         enum class Type : uint8_t {
             TimeTrigger,
@@ -22,6 +27,19 @@ struct T_Triggers {
         Time::Instant time = 0;
         Type type = Type::TimeTrigger;
         Event* next = nullptr;
+        union {
+            struct {
+                MSP::Repeat repeat;
+            } TimeTrigger;
+            
+            struct {
+                MSP::Repeat repeat;
+            } MotionEnable;
+            
+            struct {
+                Capture* capture;
+            } CaptureImage;
+        };
     };
     
     template<typename Event::Type T_Init>
@@ -35,23 +53,23 @@ struct T_Triggers {
     struct MotionEnableEvent     : T_Event<Event::Type::MotionEnable> {};
     struct MotionDisableEvent    : T_Event<Event::Type::MotionDisable> {};
     struct MotionUnsuppressEvent : T_Event<Event::Type::MotionUnsuppress> {};
-    struct CaptureImageEvent     : T_Event<Event::Type::CaptureImage> {
-        MSP::Capture capture;
-        uint16_t countRem = 0;
-    };
+    struct CaptureImageEvent     : T_Event<Event::Type::CaptureImage> {};
     
-    struct TimeTrigger : CaptureImageEvent, TimeTriggerEvent {
-        MSP::Repeat repeat;
+    struct TimeTrigger {
+        CaptureImageEvent captureImageEvent;
         auto& base() { return _BaseElm(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
-    struct MotionTrigger : CaptureImageEvent, MotionEnableEvent, MotionDisableEvent, MotionUnsuppressEvent {
-        MSP::Repeat repeat;
+    struct MotionTrigger {
         T_MotionEnabled enabled;
+        CaptureImageEvent captureImageEvent;
+        MotionDisableEvent motionDisableEvent;
+        MotionUnsuppressEvent motionUnsuppressEvent;
         auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }
     };
     
-    struct ButtonTrigger : CaptureImageEvent {
+    struct ButtonTrigger {
+        CaptureImageEvent captureImageEvent;
         auto& base() { return _BaseElm(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
     };
     
@@ -131,6 +149,7 @@ struct T_Triggers {
     }
     
     // Triggers
+    static inline Event         _Event[std::size(_T_Base.event)];
     static inline TimeTrigger   _TimeTrigger[std::size(_T_Base.timeTrigger)];
     static inline MotionTrigger _MotionTrigger[std::size(_T_Base.motionTrigger)];
     static inline ButtonTrigger _ButtonTrigger[std::size(_T_Base.buttonTrigger)];
