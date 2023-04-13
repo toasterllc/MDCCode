@@ -755,6 +755,22 @@ static MSP::Capture _Convert(const Capture& x) {
     };
 }
 
+static uint8_t _DaysOfWeekAdvance(uint8_t x, int dir) {
+    if (dir > 0) {
+        // Forward (into future)
+        x |= (x&0x01)<<7;
+        x >>= 1;
+        return x;
+    } else if (dir < 0) {
+        // Reverse (into past)
+        x <<= 1;
+        x |= ((x&0x80)>>7);
+        x &= 0x7F;
+        return x;
+    }
+    abort();
+}
+
 static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, const Repeat& x) {
 //    enum class Type : uint8_t {
 //        None,
@@ -788,7 +804,7 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
         #warning TODO: return time
         return std::make_pair(0, MSP::Repeat{
             .type = MSP::Repeat::Type::Daily,
-            .Daily = { .interval = 1 },
+            .Daily = { 1 },
         });
     
     case Repeat::Type::DaysOfWeek: {
@@ -796,17 +812,36 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
         // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
         // then it doesn't qualify.)
         system_clock::time_point timePoint;
-        for (date::sys_days day=floor<date::days>(now);; day -= date::days(1)) {
+        date::sys_days day = floor<date::days>(now);
+        for (;;) {
             timePoint = day+time;
             // If `timePoint` is in the past and `day` is in x.DaysOfWeek, we're done
             if (timePoint<now && DaysOfWeekGet(x.DaysOfWeek, day)) {
                 break;
             }
+            day -= date::days(1);
         }
         
+        // Generate the days bitfield by advancing x.DaysOfWeek backwards until we
+        // hit whatever day of week that `day` is. This is necessary because the time
+        // that we return and the days bitfield need to be aligned so they represent
+        // the same day.
+        uint8_t days = x.DaysOfWeek.x;
+        for (Calendar::DayOfWeek i=date::Sunday; i!=day; i--) {
+            days = _DaysOfWeekAdvance(days, -1);
+        }
+        // Low bit of `days` should be set; otherwise it's a logic error
+        assert(days & 1);
+        
+//        date::utc_clock::time_point instant = date::utc_clock::from_sys(timePoint);
+        
+        date::utc_clock::time_point instant = date::clock_cast<date::utc_clock>(timePoint);
         
         
-        return std::make_pair(0, MSP::Repeat{});
+        return std::make_pair(0, MSP::Repeat{
+            .type = MSP::Repeat::Type::Weekly,
+            .Weekly = { days },
+        });
     }
     
     case Repeat::Type::DaysOfYear:
