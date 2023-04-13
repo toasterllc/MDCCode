@@ -18,26 +18,26 @@ using namespace DeviceSettings;
 
 constexpr uint32_t _TimeStartInit = 32400; // 9 AM
 constexpr uint32_t _TimeEndInit = 61200;   // 5 PM
-//static const Calendar::WeekDays _WeekDaysInit = Calendar::WeekDaysFromVector({
-//    Calendar::WeekDay_::Mon,
-//    Calendar::WeekDay_::Tue,
-//    Calendar::WeekDay_::Wed,
-//    Calendar::WeekDay_::Thu,
-//    Calendar::WeekDay_::Fri,
+//static const Calendar::DaysOfWeek _DaysOfWeekInit = Calendar::DaysOfWeekFromVector({
+//    Calendar::DayOfWeek_::Mon,
+//    Calendar::DayOfWeek_::Tue,
+//    Calendar::DayOfWeek_::Wed,
+//    Calendar::DayOfWeek_::Thu,
+//    Calendar::DayOfWeek_::Fri,
 //});
 
-static const Calendar::WeekDays _WeekDaysInit = {
-    Calendar::WeekDaysMask(Calendar::WeekDay_::Mon) |
-    Calendar::WeekDaysMask(Calendar::WeekDay_::Tue) |
-    Calendar::WeekDaysMask(Calendar::WeekDay_::Wed) |
-    Calendar::WeekDaysMask(Calendar::WeekDay_::Thu) |
-    Calendar::WeekDaysMask(Calendar::WeekDay_::Fri)
+static const Calendar::DaysOfWeek _DaysOfWeekInit = {
+    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Mon }) |
+    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Tue }) |
+    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Wed }) |
+    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Thu }) |
+    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Fri })
 };
 
 
-static const Calendar::YearDays _YearDaysInit = Calendar::YearDaysFromVector({
-    Calendar::YearDay{9,20},
-    Calendar::YearDay{12,31},
+static const Calendar::DaysOfYear _DaysOfYearInit = Calendar::DaysOfYearFromVector({
+    Calendar::DayOfYear{9,20},
+    Calendar::DayOfYear{12,31},
 });
 
 static constexpr DayCount _DayIntervalInit = DayCount{ 2 };
@@ -55,11 +55,11 @@ static void _TriggerInitRepeat(Repeat& x) {
     switch (x.type) {
     case X::Daily:
         break;
-    case X::WeekDays:
-        x.WeekDays = _WeekDaysInit;
+    case X::DaysOfWeek:
+        x.DaysOfWeek = _DaysOfWeekInit;
         break;
-    case X::YearDays:
-        x.YearDays = _YearDaysInit;
+    case X::DaysOfYear:
+        x.DaysOfYear = _DaysOfYearInit;
         break;
     case X::DayInterval:
         x.DayInterval = _DayIntervalInit;
@@ -159,24 +159,24 @@ static CaptureTrigger _TriggerMake(CaptureTrigger::Type type) {
     return x;
 }
 
-@interface MonthDayObj : NSObject {
+@interface DayOfMonthObj : NSObject {
 @public
-    Calendar::MonthDay x;
+    Calendar::DayOfMonth x;
 }
 @end
 
-@implementation MonthDayObj
+@implementation DayOfMonthObj
 @end
 
 
 
-@interface YearDayObj : NSObject {
+@interface DayOfYearObj : NSObject {
 @public
-    Calendar::YearDay x;
+    Calendar::DayOfYear x;
 }
 @end
 
-@implementation YearDayObj
+@implementation DayOfYearObj
 @end
 
 
@@ -207,8 +207,8 @@ static std::string StringFromRepeatType(const Repeat::Type& x) {
     using X = std::remove_reference_t<decltype(x)>;
     switch (x) {
     case X::Daily:       return "every day";
-    case X::WeekDays:    return "on days";
-    case X::YearDays:    return "on dates";
+    case X::DaysOfWeek:    return "on days";
+    case X::DaysOfYear:    return "on dates";
     case X::DayInterval: return "on interval";
     default:             abort();
     }
@@ -218,8 +218,8 @@ static Repeat::Type RepeatTypeFromString(std::string x) {
     using X = Repeat::Type;
     for (auto& c : x) c = std::tolower(c);
          if (x == "every day")     return X::Daily;
-    else if (x == "on days")       return X::WeekDays;
-    else if (x == "on dates")      return X::YearDays;
+    else if (x == "on days")       return X::DaysOfWeek;
+    else if (x == "on dates")      return X::DaysOfYear;
     else if (x == "on interval")   return X::DayInterval;
     else abort();
 }
@@ -277,14 +277,14 @@ static _TimeFormatState& _TimeFormatStateGet() {
 }
 
 // 56789 -> 3:46:29 PM / 15:46:29 (depending on locale)
-static std::string _TimeOfDayStringFromSeconds(uint32_t x) {
+static std::string _StringFromTimeOfDay(Calendar::TimeOfDay x) {
 //    uint32_t second = x%60;
 //    uint32_t minute = x/60*60;
-    const uint32_t h = x/(60*60);
-    x -= h*60*60;
-    const uint32_t m = x/60;
-    x -= m*60;
-    const uint32_t s = x;
+    const uint32_t h = x.x/(60*60);
+    x.x -= h*60*60;
+    const uint32_t m = x.x/60;
+    x.x -= m*60;
+    const uint32_t s = x.x;
     
     NSDateComponents* comp = [NSDateComponents new];
     [comp setYear:2022];
@@ -307,7 +307,7 @@ static std::string _TimeOfDayStringFromSeconds(uint32_t x) {
 }
 
 // 3:46:29 PM / 15:46:29 -> 56789
-static uint32_t _SecondsFromTimeOfDayString(std::string x, bool assumeAM=true) {
+static Calendar::TimeOfDay _TimeOfDayFromString(std::string x, bool assumeAM=true) {
     // Convert input to lowercase / remove all spaces
     const char timeSeparator = _TimeFormatStateGet().timeSeparator;
     bool hasSeparators = false;
@@ -344,7 +344,7 @@ static uint32_t _SecondsFromTimeOfDayString(std::string x, bool assumeAM=true) {
     
     NSDateComponents* comp = [_TimeFormatStateGet().calendar
         components:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond fromDate:date];
-    return (uint32_t)[comp hour]*60*60 + (uint32_t)[comp minute]*60 + (uint32_t)[comp second];
+    return { (uint32_t)[comp hour]*60*60 + (uint32_t)[comp minute]*60 + (uint32_t)[comp second] };
 }
 
 
@@ -403,31 +403,31 @@ static const char* _SuffixForDurationUnit(DeviceSettings::Duration::Unit x) {
     }
 }
 
-static std::string _WeekDaysDescription(const Calendar::WeekDays& x) {
+static std::string _DaysOfWeekDescription(const Calendar::DaysOfWeek& x) {
     using namespace Calendar;
-    constexpr Calendar::WeekDays MF = {
-        WeekDaysMask(WeekDay_::Mon) |
-        WeekDaysMask(WeekDay_::Tue) |
-        WeekDaysMask(WeekDay_::Wed) |
-        WeekDaysMask(WeekDay_::Thu) |
-        WeekDaysMask(WeekDay_::Fri)
+    constexpr Calendar::DaysOfWeek MF = {
+        DaysOfWeekMask({ DayOfWeek_::Mon }) |
+        DaysOfWeekMask({ DayOfWeek_::Tue }) |
+        DaysOfWeekMask({ DayOfWeek_::Wed }) |
+        DaysOfWeekMask({ DayOfWeek_::Thu }) |
+        DaysOfWeekMask({ DayOfWeek_::Fri })
     };
     
     // Monday-Friday special case
     if (x.x == MF.x) return "Mon-Fri";
     
-    const auto days = VectorFromWeekDays(x);
+    const auto days = VectorFromDaysOfWeek(x);
     
     // Only one day set
     if (days.size() == 1) {
-        switch (days.at(0)) {
-        case WeekDay_::Mon: return "Mondays";
-        case WeekDay_::Tue: return "Tuesdays";
-        case WeekDay_::Wed: return "Wednesdays";
-        case WeekDay_::Thu: return "Thursdays";
-        case WeekDay_::Fri: return "Fridays";
-        case WeekDay_::Sat: return "Saturdays";
-        case WeekDay_::Sun: return "Sundays";
+        switch (days.at(0).x) {
+        case DayOfWeek_::Mon: return "Mondays";
+        case DayOfWeek_::Tue: return "Tuesdays";
+        case DayOfWeek_::Wed: return "Wednesdays";
+        case DayOfWeek_::Thu: return "Thursdays";
+        case DayOfWeek_::Fri: return "Fridays";
+        case DayOfWeek_::Sat: return "Saturdays";
+        case DayOfWeek_::Sun: return "Sundays";
         default:            abort();
         }
     }
@@ -439,13 +439,13 @@ static std::string _WeekDaysDescription(const Calendar::WeekDays& x) {
     std::string r;
     for (auto day : days) {
         if (!r.empty()) r.append(", ");
-        r.append(StringForWeekDay(day));
+        r.append(StringForDayOfWeek(day));
     }
     return r;
 }
 
-static std::string _YearDaysDescription(const Calendar::YearDays& x) {
-    const size_t count = VectorFromYearDays(x).size();
+static std::string _DaysOfYearDescription(const Calendar::DaysOfYear& x) {
+    const size_t count = VectorFromDaysOfYear(x).size();
     if (count == 1) return "1 day per year";
     return std::to_string(count) + " days per year";
 }
@@ -476,8 +476,8 @@ static std::string _RepeatDescription(const Repeat& x) {
     std::string s;
     switch (x.type) {
     case T::Daily:       return "daily";
-    case T::WeekDays:    return _WeekDaysDescription(x.WeekDays);
-    case T::YearDays:    return _YearDaysDescription(x.YearDays);
+    case T::DaysOfWeek:    return _DaysOfWeekDescription(x.DaysOfWeek);
+    case T::DaysOfYear:    return _DaysOfYearDescription(x.DaysOfYear);
     case T::DayInterval: return _DayIntervalDescription(x.DayInterval);
     default:             abort();
     }
@@ -518,11 +518,11 @@ static std::string _CaptureDescription(const Capture& x) {
     return ss.str();
 }
 
-static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
+static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::TimeOfDay end) {
     std::string r;
-    r += _TimeOfDayStringFromSeconds(start);
+    r += _StringFromTimeOfDay(start);
     r += " – ";
-    r += _TimeOfDayStringFromSeconds(end);
+    r += _StringFromTimeOfDay(end);
     return r;
 }
 
@@ -532,7 +532,7 @@ static std::string _TimeRangeDescription(uint32_t start, uint32_t end) {
     case CaptureTrigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time-Large"]];
         [_titlePrefixLabel setStringValue: @"At"];
-        [_titleLabel setStringValue: @((_TimeOfDayStringFromSeconds(trigger.time.schedule.time) + ",").c_str())];
+        [_titleLabel setStringValue: @((_StringFromTimeOfDay(trigger.time.schedule.time) + ",").c_str())];
         break;
     case CaptureTrigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion-Large"]];
@@ -842,7 +842,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 //    _ListItemAdd(self, CaptureTrigger::Type::Motion);
 //    _ListItemAdd(self, _TriggerMake(CaptureTrigger::Type::Button));
     
-    [self->_dateSelector_Field setPlaceholderString:@(Calendar::YearDayPlaceholderString().c_str())];
+    [self->_dateSelector_Field setPlaceholderString:@(Calendar::DayOfYearPlaceholderString().c_str())];
     
     // Deserialize data
     CaptureTriggers t;
@@ -884,7 +884,7 @@ static MSP::Capture _Convert(const Capture& x) {
     };
 }
 
-static std::pair<Time::Instant,MSP::Repeat> _Convert(uint32_t time, const Repeat& x) {
+static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, const Repeat& x) {
 //    enum class Type : uint8_t {
 //        None,
 //        Daily,
@@ -913,10 +913,10 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(uint32_t time, const Repeat
             .type = MSP::Repeat::Type::Daily,
             .Daily = { .interval = 1 },
         });
-    case Repeat::Type::WeekDays:
+    case Repeat::Type::DaysOfWeek:
         #warning TODO: implement
         return std::make_pair(0, MSP::Repeat{});
-    case Repeat::Type::YearDays:
+    case Repeat::Type::DaysOfYear:
         #warning TODO: implement
         return std::make_pair(0, MSP::Repeat{});
     case Repeat::Type::DayInterval:
@@ -935,7 +935,7 @@ static uint32_t _MotionEnableDurationMs(const T& x) {
     static constexpr uint32_t DayMs = 24*60*60*1000;
     if (x.schedule.timeRange.enable) {
         // Enabled for part of the day
-        return x.schedule.timeRange.end-x.schedule.timeRange.start;
+        return x.schedule.timeRange.end.x-x.schedule.timeRange.start.x;
     
     } else if (x.schedule.repeat.type != Repeat::Type::Daily) {
         // Enabled all day (0:00 to 23:59)
@@ -955,12 +955,12 @@ static uint32_t _MotionSuppressMs(const T& x) {
 }
 
 template<typename T>
-static uint32_t _MotionTime(const T& x) {
+static Calendar::TimeOfDay _MotionTime(const T& x) {
     if (x.schedule.timeRange.enable) {
         return x.schedule.timeRange.start;
     }
     // Start at midnight
-    return 0;
+    return {};
 }
 
 - (const MSP::Triggers&)triggers {
@@ -1090,13 +1090,13 @@ static void _Copy(Repeat::Type& x, NSPopUpButton* menu) {
 }
 
 template<bool T_Forward>
-static void _CopyTime(Calendar::DayTime& x, NSTextField* field) {
+static void _CopyTime(Calendar::TimeOfDay& x, NSTextField* field) {
     if constexpr (T_Forward) {
-        [field setStringValue:@(_TimeOfDayStringFromSeconds(x).c_str())];
+        [field setStringValue:@(_StringFromTimeOfDay(x).c_str())];
     } else {
         try {
-            const bool assumeAM = x < 12*60*60;
-            x = _SecondsFromTimeOfDayString([[field stringValue] UTF8String], assumeAM);
+            const bool assumeAM = x.x < 12*60*60;
+            x = _TimeOfDayFromString([[field stringValue] UTF8String], assumeAM);
         } catch (...) {}
     }
 }
@@ -1135,27 +1135,27 @@ static void _Copy(DeviceSettings::Duration& x, NSTextField* field, NSPopUpButton
 }
 
 template<bool T_Forward>
-static void _Copy(Calendar::WeekDays& x, NSSegmentedControl* control) {
+static void _Copy(Calendar::DaysOfWeek& x, NSSegmentedControl* control) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        for (Calendar::WeekDay i=0; i<7; i++) {
-            [control setSelected:Calendar::WeekDaysGet(x, i) forSegment:i];
+        for (Calendar::DayOfWeek i={0}; i.x<7; i.x++) {
+            [control setSelected:Calendar::DaysOfWeekGet(x, i) forSegment:i.x];
         }
     } else {
-        for (Calendar::WeekDay i=0; i<7; i++) {
-            Calendar::WeekDaysSet(x, i, [control isSelectedForSegment:i]);
+        for (Calendar::DayOfWeek i={0}; i.x<7; i.x++) {
+            Calendar::DaysOfWeekSet(x, i, [control isSelectedForSegment:i.x]);
         }
     }
 }
 
 template<bool T_Forward>
-static void _Copy(Calendar::YearDays& x, NSTokenField* field) {
+static void _Copy(Calendar::DaysOfYear& x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         NSMutableArray* tokens = [NSMutableArray new];
-        std::vector<Calendar::YearDay> days = VectorFromYearDays(x);
-        for (Calendar::YearDay day : days) {
-            YearDayObj* x = [YearDayObj new];
+        std::vector<Calendar::DayOfYear> days = VectorFromDaysOfYear(x);
+        for (Calendar::DayOfYear day : days) {
+            DayOfYearObj* x = [DayOfYearObj new];
             x->x = day;
             [tokens addObject:x];
         }
@@ -1163,13 +1163,13 @@ static void _Copy(Calendar::YearDays& x, NSTokenField* field) {
     
     } else {
         NSArray* tokens = Toastbox::CastOrNull<NSArray*>([field objectValue]);
-        std::vector<Calendar::YearDay> days;
+        std::vector<Calendar::DayOfYear> days;
         for (id t : tokens) {
-            YearDayObj* x = Toastbox::CastOrNull<YearDayObj*>(t);
+            DayOfYearObj* x = Toastbox::CastOrNull<DayOfYearObj*>(t);
             if (!x) continue;
             days.push_back(x->x);
         }
-        x = YearDaysFromVector(days);
+        x = DaysOfYearFromVector(days);
     }
 }
 
@@ -1204,13 +1204,13 @@ static void _Copy(Repeat& x, CaptureTriggersView* view, const char* menuLabel) {
     case Repeat::Type::Daily:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, nil);
         break;
-    case Repeat::Type::WeekDays:
+    case Repeat::Type::DaysOfWeek:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._daySelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.WeekDays, v._daySelector_Control);
+        _Copy<T_Forward>(x.DaysOfWeek, v._daySelector_Control);
         break;
-    case Repeat::Type::YearDays:
+    case Repeat::Type::DaysOfYear:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._dateSelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.YearDays, v._dateSelector_Field);
+        _Copy<T_Forward>(x.DaysOfYear, v._dateSelector_Field);
         break;
     case Repeat::Type::DayInterval:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._intervalSelector_View, v._repeat_Menu);
@@ -1470,9 +1470,9 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     NSLog(@"_dateSelector_Field");
     NSMutableArray* filtered = [NSMutableArray new];
     for (NSString* x : tokens) {
-        auto day = Calendar::YearDayFromString([x UTF8String]);
+        auto day = Calendar::DayOfYearFromString([x UTF8String]);
         if (!day) continue;
-        YearDayObj* obj = [YearDayObj new];
+        DayOfYearObj* obj = [DayOfYearObj new];
         obj->x = *day;
         [filtered addObject:obj];
     }
@@ -1482,8 +1482,8 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 - (NSString*)tokenField:(NSTokenField*)field displayStringForRepresentedObject:(id)obj {
     if (field != _dateSelector_Field) abort();
     
-    if (YearDayObj* x = Toastbox::CastOrNull<YearDayObj*>(obj)) {
-        return @(Calendar::StringFromYearDay(x->x).c_str());
+    if (DayOfYearObj* x = Toastbox::CastOrNull<DayOfYearObj*>(obj)) {
+        return @(Calendar::StringFromDayOfYear(x->x).c_str());
     }
     return obj;
 }
