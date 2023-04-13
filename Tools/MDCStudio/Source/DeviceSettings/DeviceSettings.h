@@ -5,7 +5,13 @@ namespace DeviceSettings {
 
 namespace Calendar {
 
+// DayTime: a particular time of an unspecified day, in seconds [0,86400]
+using DayTime = uint32_t;
+
+// Day: a particular day of an unspecified month [1,31]
 using Day = uint8_t;
+
+// Month: a particular month of an unspecified year [1,12]
 using Month = uint8_t;
 
 // WeekDay: a particular day of an unspecified week
@@ -280,24 +286,12 @@ inline std::string YearDayPlaceholderString() {
     return X;
 }
 
-
-
-
-
-
-
-
-
 } // namespace Calendar
 
 
 
-
-
-
-
-struct [[gnu::packed]] DayInterval {
-    uint32_t interval;
+struct [[gnu::packed]] DayCount {
+    uint32_t x;
 };
 
 struct [[gnu::packed]] Repeat {
@@ -312,7 +306,7 @@ struct [[gnu::packed]] Repeat {
     union {
         Calendar::WeekDays WeekDays;
         Calendar::YearDays YearDays;
-        DayInterval DayInterval;
+        DayCount DayInterval;
     };
 };
 
@@ -336,9 +330,9 @@ struct [[gnu::packed]] Duration {
 
 inline float _MsForDuration(const Duration& x) {
     switch (x.unit) {
-    case Duration::Unit::Seconds: return x.value * 1000;
-    case Duration::Unit::Minutes: return x.value * 60 * 1000;
-    case Duration::Unit::Hours:   return x.value * 60 * 60 * 1000;
+    case Duration::Unit::Seconds: return x.value                * 1000;
+    case Duration::Unit::Minutes: return x.value           * 60 * 1000;
+    case Duration::Unit::Hours:   return x.value      * 60 * 60 * 1000;
     case Duration::Unit::Days:    return x.value * 24 * 60 * 60 * 1000;
     default:                      abort();
     }
@@ -366,7 +360,7 @@ struct [[gnu::packed]] CaptureTrigger {
     union {
         struct [[gnu::packed]] {
             struct [[gnu::packed]] {
-                uint32_t time;
+                Calendar::DayTime time;
                 Repeat repeat;
             } schedule;
             
@@ -377,8 +371,8 @@ struct [[gnu::packed]] CaptureTrigger {
             struct [[gnu::packed]] {
                 struct [[gnu::packed]] {
                     bool enable;
-                    uint32_t start;
-                    uint32_t end;
+                    Calendar::DayTime start;
+                    Calendar::DayTime end;
                 } timeRange;
                 
                 Repeat repeat;

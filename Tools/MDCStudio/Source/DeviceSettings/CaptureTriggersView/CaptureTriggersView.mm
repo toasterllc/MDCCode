@@ -40,7 +40,7 @@ static const Calendar::YearDays _YearDaysInit = Calendar::YearDaysFromVector({
     Calendar::YearDay{12,31},
 });
 
-static constexpr DayInterval _DayIntervalInit = DayInterval{ .interval = 2 };
+static constexpr DayCount _DayIntervalInit = DayCount{ 2 };
 
 //static Repeat& _TriggerRepeatGet(CaptureTrigger& t) {
 //    switch (t.type) {
@@ -450,18 +450,18 @@ static std::string _YearDaysDescription(const Calendar::YearDays& x) {
     return std::to_string(count) + " days per year";
 }
 
-static std::string _DayIntervalDescription(const DayInterval& x) {
-    if (x.interval == 0) return "every day";
-    if (x.interval == 1) return "every day";
-    if (x.interval == 2) return "every other day";
-    return "every " + std::to_string(x.interval) + " days";
+static std::string _DayIntervalDescription(const DayCount& x) {
+    if (x.x == 0) return "every day";
+    if (x.x == 1) return "every day";
+    if (x.x == 2) return "every other day";
+    return "every " + std::to_string(x.x) + " days";
 }
 
-static std::string _DayIntervalDetailedDescription(const DayInterval& x) {
-    if (x.interval == 0) return "every day";
-    if (x.interval == 1) return "every day";
-    if (x.interval == 2) return "every other day";
-    return "1 day on, " + std::to_string(x.interval-1) + " days off";
+static std::string _DayIntervalDetailedDescription(const DayCount& x) {
+    if (x.x == 0) return "every day";
+    if (x.x == 1) return "every day";
+    if (x.x == 2) return "every other day";
+    return "1 day on, " + std::to_string(x.x-1) + " days off";
 }
 
 static std::string _Capitalize(std::string x) {
@@ -923,7 +923,7 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(uint32_t time, const Repeat
         #warning TODO: return time
         return std::make_pair(0, MSP::Repeat{
             .type = MSP::Repeat::Type::Daily,
-            .Daily = { .interval = _Cast<decltype(MSP::Repeat::Daily.interval)>(x.DayInterval.interval) },
+            .Daily = { _Cast<decltype(MSP::Repeat::Daily.interval)>(x.DayInterval.x) },
         });
     default:
         abort();
@@ -1090,7 +1090,7 @@ static void _Copy(Repeat::Type& x, NSPopUpButton* menu) {
 }
 
 template<bool T_Forward>
-static void _CopyTime(uint32_t& x, NSTextField* field) {
+static void _CopyTime(Calendar::DayTime& x, NSTextField* field) {
     if constexpr (T_Forward) {
         [field setStringValue:@(_TimeOfDayStringFromSeconds(x).c_str())];
     } else {
@@ -1111,11 +1111,11 @@ static void _Copy(uint16_t& x, NSTextField* field, uint16_t min=0) {
 }
 
 template<bool T_Forward>
-static void _Copy(DayInterval& x, NSTextField* field) {
+static void _Copy(DayCount& x, NSTextField* field) {
     if constexpr (T_Forward) {
-        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.interval]];
+        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.x]];
     } else {
-        x.interval = std::max(2, [field intValue]);
+        x.x = std::max(2, [field intValue]);
     }
 }
 
