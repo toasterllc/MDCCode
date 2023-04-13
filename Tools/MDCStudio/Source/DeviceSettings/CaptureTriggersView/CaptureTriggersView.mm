@@ -38,8 +38,8 @@ static const Calendar::DaysOfWeek _DaysOfWeekMonFri = {
 static const Calendar::DaysOfWeek _DaysOfWeekInit = _DaysOfWeekMonFri;
 
 static const Calendar::DaysOfYear _DaysOfYearInit = Calendar::DaysOfYearFromVector({
-    Calendar::DayOfYear{9,  Calendar::DayOfMonth(20)},
-    Calendar::DayOfYear{12, Calendar::DayOfMonth(31)},
+    Calendar::DayOfYear{Calendar::MonthOfYear(9),  Calendar::DayOfMonth(20)},
+    Calendar::DayOfYear{Calendar::MonthOfYear(12), Calendar::DayOfMonth(31)},
 });
 
 static constexpr DayCount _DayIntervalInit = DayCount{ 2 };
