@@ -11,8 +11,7 @@ namespace Calendar {
 using TimeOfDay = std::chrono::duration<uint32_t>;
 
 // DayOfWeek: a particular day of an unspecified week
-struct [[gnu::packed]] DayOfWeek { uint8_t x; };
-enum DayOfWeek_ { Mon, Tue, Wed, Thu, Fri, Sat, Sun };
+using DayOfWeek = date::weekday;
 
 // DayOfMonth: a particular day of an unspecified month [1,31]
 struct [[gnu::packed]] DayOfMonth { uint8_t x; };
@@ -45,7 +44,7 @@ inline void TimeOfDayValidate(TimeOfDay x) {
 }
 
 inline void DayOfWeekValidate(DayOfWeek x) {
-    if (x.x >= 7) throw Toastbox::RuntimeError("invalid DayOfWeek: %ju", (uintmax_t)x.x);
+    if (!x.ok()) throw Toastbox::RuntimeError("invalid DayOfWeek: %ju", (uintmax_t)x.c_encoding());
 }
 
 inline void DayOfMonthValidate(DayOfMonth x) {
@@ -66,20 +65,18 @@ inline void DayOfYearValidate(DayOfYear x) {
 
 
 inline std::string StringForDayOfWeek(DayOfWeek x) {
-    switch (x.x) {
-    case DayOfWeek_::Mon: return "Mon";
-    case DayOfWeek_::Tue: return "Tue";
-    case DayOfWeek_::Wed: return "Wed";
-    case DayOfWeek_::Thu: return "Thu";
-    case DayOfWeek_::Fri: return "Fri";
-    case DayOfWeek_::Sat: return "Sat";
-    case DayOfWeek_::Sun: return "Sun";
-    }
+    if (x == date::Sunday)    return "Sun";
+    if (x == date::Monday)    return "Mon";
+    if (x == date::Tuesday)   return "Tue";
+    if (x == date::Wednesday) return "Wed";
+    if (x == date::Thursday)  return "Thu";
+    if (x == date::Friday)    return "Fri";
+    if (x == date::Saturday)  return "Sat";
     abort();
 }
 
 inline constexpr uint8_t DaysOfWeekMask(DayOfWeek day) {
-    return 1 << day.x;
+    return 1 << day.c_encoding();
 }
 
 inline bool DaysOfWeekGet(DaysOfWeek x, DayOfWeek day) {
@@ -93,9 +90,10 @@ inline void DaysOfWeekSet(DaysOfWeek& x, DayOfWeek day, bool y) {
 
 inline std::vector<DayOfWeek> VectorFromDaysOfWeek(DaysOfWeek x) {
     std::vector<DayOfWeek> r;
-    for (DayOfWeek i={0}; i.x<7; i.x++) {
-        if (x.x & DaysOfWeekMask(i)) {
-            r.push_back(i);
+    for (uint8_t i=0; i<7; i++) {
+        const DayOfWeek d(i);
+        if (x.x & DaysOfWeekMask(d)) {
+            r.push_back(d);
         }
     }
     return r;

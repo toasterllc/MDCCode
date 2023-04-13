@@ -27,14 +27,15 @@ constexpr Calendar::TimeOfDay _TimeEndInit  (61200); // 5 PM
 //    Calendar::DayOfWeek_::Fri,
 //});
 
-static const Calendar::DaysOfWeek _DaysOfWeekInit = {
-    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Mon }) |
-    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Tue }) |
-    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Wed }) |
-    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Thu }) |
-    Calendar::DaysOfWeekMask({ Calendar::DayOfWeek_::Fri })
+static const Calendar::DaysOfWeek _DaysOfWeekMonFri = {
+    Calendar::DaysOfWeekMask(date::Monday)    |
+    Calendar::DaysOfWeekMask(date::Tuesday)   |
+    Calendar::DaysOfWeekMask(date::Wednesday) |
+    Calendar::DaysOfWeekMask(date::Thursday)  |
+    Calendar::DaysOfWeekMask(date::Friday)
 };
 
+static const Calendar::DaysOfWeek _DaysOfWeekInit = _DaysOfWeekMonFri;
 
 static const Calendar::DaysOfYear _DaysOfYearInit = Calendar::DaysOfYearFromVector({
     Calendar::DayOfYear{9,20},
@@ -283,31 +284,23 @@ static const char* _SuffixForDurationUnit(DeviceSettings::Duration::Unit x) {
 
 static std::string _DaysOfWeekDescription(const Calendar::DaysOfWeek& x) {
     using namespace Calendar;
-    constexpr Calendar::DaysOfWeek MF = {
-        DaysOfWeekMask({ DayOfWeek_::Mon }) |
-        DaysOfWeekMask({ DayOfWeek_::Tue }) |
-        DaysOfWeekMask({ DayOfWeek_::Wed }) |
-        DaysOfWeekMask({ DayOfWeek_::Thu }) |
-        DaysOfWeekMask({ DayOfWeek_::Fri })
-    };
     
     // Monday-Friday special case
-    if (x.x == MF.x) return "Mon-Fri";
+    if (x.x == _DaysOfWeekMonFri.x) return "Mon-Fri";
     
     const auto days = VectorFromDaysOfWeek(x);
     
     // Only one day set
     if (days.size() == 1) {
-        switch (days.at(0).x) {
-        case DayOfWeek_::Mon: return "Mondays";
-        case DayOfWeek_::Tue: return "Tuesdays";
-        case DayOfWeek_::Wed: return "Wednesdays";
-        case DayOfWeek_::Thu: return "Thursdays";
-        case DayOfWeek_::Fri: return "Fridays";
-        case DayOfWeek_::Sat: return "Saturdays";
-        case DayOfWeek_::Sun: return "Sundays";
-        default:            abort();
-        }
+        const DayOfWeek d = days.at(0);
+        if (d == date::Sunday)    return "Sundays";
+        if (d == date::Monday)    return "Mondays";
+        if (d == date::Tuesday)   return "Tuesdays";
+        if (d == date::Wednesday) return "Wednesdays";
+        if (d == date::Thursday)  return "Thursdays";
+        if (d == date::Friday)    return "Fridays";
+        if (d == date::Saturday)  return "Saturdays";
+        abort();
     }
     
     // 0 or >3 days set
@@ -1018,16 +1011,42 @@ static void _Copy(DeviceSettings::Duration& x, NSTextField* field, NSPopUpButton
     }
 }
 
+static NSInteger _SegmentForDayOfWeek(Calendar::DayOfWeek x) {
+    if (x == date::Monday)    return 0;
+    if (x == date::Tuesday)   return 1;
+    if (x == date::Wednesday) return 2;
+    if (x == date::Thursday)  return 3;
+    if (x == date::Friday)    return 4;
+    if (x == date::Saturday)  return 5;
+    if (x == date::Sunday)    return 6;
+    abort();
+}
+
+//static Calendar::DayOfWeek _DayOfWeekFromSegment(NSInteger x) {
+//    switch (x) {
+//    case 0:  return date::Monday;
+//    case 1:  return date::Tuesday;
+//    case 2:  return date::Wednesday;
+//    case 3:  return date::Thursday;
+//    case 4:  return date::Friday;
+//    case 5:  return date::Saturday;
+//    case 6:  return date::Sunday;
+//    default: abort();
+//    }
+//}
+
 template<bool T_Forward>
 static void _Copy(Calendar::DaysOfWeek& x, NSSegmentedControl* control) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        for (Calendar::DayOfWeek i={0}; i.x<7; i.x++) {
-            [control setSelected:Calendar::DaysOfWeekGet(x, i) forSegment:i.x];
+        for (uint8_t i=0; i<7; i++) {
+            const Calendar::DayOfWeek d = Calendar::DayOfWeek(i);
+            [control setSelected:Calendar::DaysOfWeekGet(x, d) forSegment:_SegmentForDayOfWeek(d)];
         }
     } else {
-        for (Calendar::DayOfWeek i={0}; i.x<7; i.x++) {
-            Calendar::DaysOfWeekSet(x, i, [control isSelectedForSegment:i.x]);
+        for (uint8_t i=0; i<7; i++) {
+            const Calendar::DayOfWeek d = Calendar::DayOfWeek(i);
+            Calendar::DaysOfWeekSet(x, d, [control isSelectedForSegment:_SegmentForDayOfWeek(d)]);
         }
     }
 }
