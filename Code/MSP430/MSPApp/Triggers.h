@@ -24,36 +24,49 @@ struct T_Triggers {
             CaptureImage,
         };
         
+        Event(Type t) : type(t) {}
+        
         Time::Instant time = 0;
-        Type type = Type::TimeTrigger;
         Event* next = nullptr;
-        union {
-            struct {
-                MSP::Repeat repeat;
-            } TimeTrigger;
-            
-            struct {
-                MSP::Repeat repeat;
-            } MotionEnable;
-            
-            struct {
-                Capture* capture;
-            } CaptureImage;
-        };
+        Type type = Type::TimeTrigger;
     };
     
-    template<typename Event::Type T_Init>
-    struct T_Event : Event {
-        T_Event() : Event{ .type=T_Init } {}
-        template<typename T>
-        operator T&() { return (T&)*this; }
+//    template<typename Event::Type T_Init>
+//    struct T_Event : Event {
+//        T_Event() : Event{ .type=T_Init } {}
+////        template<typename T>
+////        operator T&() { return (T&)*this; }
+//    };
+    
+    struct RepeatEvent : Event {
+        using Event::Event;
+        MSP::Repeat repeat;
+        auto& base() { return _BaseElm(_T_Base.event, _Event, *this); }
     };
     
-    struct TimeTriggerEvent      : T_Event<Event::Type::TimeTrigger> {};
-    struct MotionEnableEvent     : T_Event<Event::Type::MotionEnable> {};
-    struct MotionDisableEvent    : T_Event<Event::Type::MotionDisable> {};
-    struct MotionUnsuppressEvent : T_Event<Event::Type::MotionUnsuppress> {};
-    struct CaptureImageEvent     : T_Event<Event::Type::CaptureImage> {};
+    struct TimeTriggerEvent : RepeatEvent {
+        TimeTriggerEvent() : RepeatEvent(Event::Type::TimeTrigger) {}
+        auto& trigger() { return _TimeTrigger[base().idx]; }
+    };
+    
+    struct MotionEnableEvent : RepeatEvent {
+        MotionEnableEvent() : RepeatEvent(Event::Type::MotionEnable) {}
+        auto& trigger() { return _MotionTrigger[base().idx]; }
+    };
+    
+    struct MotionDisableEvent : Event {
+        MotionDisableEvent() : Event(Event::Type::MotionDisable) {}
+    };
+    
+    struct MotionUnsuppressEvent : Event {
+        MotionUnsuppressEvent() : Event(Event::Type::MotionUnsuppress) {}
+    };
+    
+    struct CaptureImageEvent : Event {
+        CaptureImageEvent() : Event(Event::Type::CaptureImage) {}
+        const MSP::Capture* capture = nullptr;
+        uint16_t countRem = 0;
+    };
     
     struct TimeTrigger {
         CaptureImageEvent captureImageEvent;
@@ -149,14 +162,15 @@ struct T_Triggers {
     }
     
     // Triggers
-    static inline Event         _Event[std::size(_T_Base.event)];
+    static inline RepeatEvent   _Event[std::size(_T_Base.event)];
     static inline TimeTrigger   _TimeTrigger[std::size(_T_Base.timeTrigger)];
     static inline MotionTrigger _MotionTrigger[std::size(_T_Base.motionTrigger)];
     static inline ButtonTrigger _ButtonTrigger[std::size(_T_Base.buttonTrigger)];
     // Event linked list
     static inline Event* _Front = nullptr;
     
-    static constexpr size_t _TotalSize = sizeof(_TimeTrigger)   +
+    static constexpr size_t _TotalSize = sizeof(_Event)         +
+                                         sizeof(_TimeTrigger)   +
                                          sizeof(_MotionTrigger) +
                                          sizeof(_ButtonTrigger) +
                                          sizeof(_Front)         ;
