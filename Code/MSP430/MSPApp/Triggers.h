@@ -10,11 +10,6 @@ template<auto& T_Base, typename T_MotionEnabled>
 struct T_Triggers {
     struct Trigger;
     
-    struct Capture {
-        const MSP::Capture* capture = nullptr;
-        uint16_t countRem = 0;
-    };
-    
     struct Event {
         enum class Type : uint8_t {
             TimeTrigger,
