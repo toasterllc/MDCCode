@@ -9,29 +9,23 @@ namespace Calendar {
 
 // TimeOfDay: a particular time of an unspecified day, in seconds [0,86400]
 using TimeOfDay = std::chrono::duration<uint32_t>;
+// TimeOfDayHHMMSS: the extracted hour/minute/second components of a TimeOfDay
 using TimeOfDayHHMMSS = date::hh_mm_ss<TimeOfDay>;
-
 // DayOfWeek: a particular day of an unspecified week
 using DayOfWeek = date::weekday;
-
 // DayOfMonth: a particular day of an unspecified month [1,31]
 using DayOfMonth = date::day;
-
 // MonthOfYear: a particular month of an unspecified year [1,12]
 using MonthOfYear = date::month;
-
 // DayOfYear: a particular day of an unspecified year
 using DayOfYear = date::month_day;
 
 // DaysOfWeek: a set of days of an unspecified week
 struct [[gnu::packed]] DaysOfWeek { uint8_t x; };
-
 // DaysOfMonth: a set of days of an unspecified month
 struct [[gnu::packed]] DaysOfMonth { uint32_t x; };
-
 // DaysOfYear: a set of days of an unspecified year
 struct [[gnu::packed]] DaysOfYear { DaysOfMonth x[12]; };
-
 
 inline void TimeOfDayValidate(TimeOfDay x) {
     if (x.count() > 24*60*60) throw Toastbox::RuntimeError("invalid TimeOfDay: %ju", (uintmax_t)x.count());
@@ -53,10 +47,6 @@ inline void DayOfYearValidate(DayOfYear x) {
     if (!x.ok()) throw Toastbox::RuntimeError("invalid DayOfYear: %ju/%ju",
         (uintmax_t)(unsigned)(x.month()), (uintmax_t)(unsigned)(x.day()));
 }
-
-
-
-
 
 inline std::string StringForDayOfWeek(DayOfWeek x) {
     if (x == date::Sunday)    return "Sun";

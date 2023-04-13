@@ -779,9 +779,9 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
 //    };
     
     using namespace std::chrono;
-    using namespace date;
-    const year_month_day ymd = floor<days>(system_clock::now());
-    const weekday w{ymd};
+//    using namespace date;
+    
+    const auto now = system_clock::now();
     
     switch (x.type) {
     case Repeat::Type::Daily:
@@ -790,9 +790,25 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
             .type = MSP::Repeat::Type::Daily,
             .Daily = { .interval = 1 },
         });
-    case Repeat::Type::DaysOfWeek:
-        #warning TODO: implement
+    
+    case Repeat::Type::DaysOfWeek: {
+        // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
+        // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
+        // then it doesn't qualify.)
+        system_clock::time_point timePoint;
+        for (date::sys_days day=floor<date::days>(now);; day -= date::days(1)) {
+            timePoint = day+time;
+            // If `timePoint` is in the past and `day` is in x.DaysOfWeek, we're done
+            if (timePoint<now && DaysOfWeekGet(x.DaysOfWeek, day)) {
+                break;
+            }
+        }
+        
+        
+        
         return std::make_pair(0, MSP::Repeat{});
+    }
+    
     case Repeat::Type::DaysOfYear:
         #warning TODO: implement
         return std::make_pair(0, MSP::Repeat{});
