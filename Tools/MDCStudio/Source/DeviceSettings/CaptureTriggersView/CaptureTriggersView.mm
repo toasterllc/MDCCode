@@ -12,7 +12,7 @@
 #import "Toastbox/String.h"
 #import "Toastbox/Defer.h"
 #import "DeviceSettings/DeviceSettings.h"
-#import "Code/Shared/TimeConvert.h"
+#import "Code/Shared/Clock.h"
 using namespace DeviceSettings;
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
@@ -824,13 +824,13 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
         
         // Generate the days bitfield by advancing x.DaysOfWeek backwards until we
         // hit whatever day of week that `day` is. This is necessary because the time
-        // that we return and the days bitfield need to be aligned so they represent
-        // the same day.
+        // that we return and the days bitfield need to be aligned so that they
+        // represent the same day.
         uint8_t days = x.DaysOfWeek.x;
         for (Calendar::DayOfWeek i=date::Sunday; i!=day; i--) {
             days = _DaysOfWeekAdvance(days, -1);
         }
-        // Low bit of `days` should be set; otherwise it's a logic error
+        // Low bit of `days` should be set, otherwise it's a logic bug
         assert(days & 1);
         
 //        date::utc_clock::time_point instant = date::utc_clock::from_sys(timePoint);

@@ -228,7 +228,7 @@
 		55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = bc7enc_rdo.xcodeproj; path = ../../Code/Lib/bc7enc_rdo/bc7enc_rdo.xcodeproj; sourceTree = "<group>"; };
 		55C90C7329B79651007CC97E /* BC7Encoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BC7Encoder.h; sourceTree = "<group>"; };
 		55D3097E29A80F2E0080BCBD /* Time.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Time.h; sourceTree = "<group>"; };
-		55D3099229A822D60080BCBD /* TimeConvert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeConvert.h; sourceTree = "<group>"; };
+		55D3099229A822D60080BCBD /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
 		55D30A1B29A828070080BCBD /* tz_private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz_private.h; sourceTree = "<group>"; };
 		55D30A1C29A828070080BCBD /* ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios.h; sourceTree = "<group>"; };
 		55D30A1D29A828070080BCBD /* ptz.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ptz.h; sourceTree = "<group>"; };
@@ -455,7 +455,7 @@
 				5544AE1327B5E585006AB473 /* SD.h */,
 				5544AE1427B5E585006AB473 /* Assert.h */,
 				55D3097E29A80F2E0080BCBD /* Time.h */,
-				55D3099229A822D60080BCBD /* TimeConvert.h */,
+				55D3099229A822D60080BCBD /* Clock.h */,
 			);
 			path = Shared;
 			sourceTree = "<group>";

@@ -12,7 +12,7 @@
 #import "Toastbox/Signal.h"
 #import "Toastbox/LRU.h"
 #import "Code/Shared/Time.h"
-#import "Code/Shared/TimeConvert.h"
+#import "Code/Shared/Clock.h"
 #import "Code/Shared/MSP.h"
 #import "Code/Shared/ImgSD.h"
 #import "Tools/Shared/MDCUSBDevice.h"
@@ -66,23 +66,29 @@ public:
                 using namespace std::chrono;
                 using namespace date;
                 
-                const Time::Instant mdcTime = _device.device.mspTimeGet();
-                const Time::Instant actualTime = Time::Current();
+                const Time::Instant mdcTimeInstant = _device.device.mspTimeGet();
+                const Time::Clock::time_point actualTime = Time::Clock::now();
+                const Time::Instant actualTimeInstant = Time::Clock::TimeInstantFromTimePoint(actualTime);
+                
+//                const Time::Instant actualTime = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
                 
                 auto startTime = steady_clock::now();
-                _device.device.mspTimeSet(actualTime);
+                _device.device.mspTimeSet(actualTimeInstant);
                 const milliseconds timeSetDuration = duration_cast<milliseconds>(steady_clock::now()-startTime);
                 
-                if (Time::Absolute(mdcTime)) {
-                    const microseconds deltaUs = clock_cast<utc_clock>(mdcTime)-clock_cast<utc_clock>(actualTime);
+                if (Time::Absolute(mdcTimeInstant)) {
+                    const Time::Clock::time_point mdcTime = Time::Clock::TimePointFromTimeInstant(mdcTimeInstant);
+                    const microseconds deltaUs = mdcTime-actualTime;
                     
-                    printf("[Set device time] Time before update: 0x%016jx [absolute] (delta from actual time: %+jd us)\n", (uintmax_t)mdcTime,
+                    printf("[Set device time] Time before update: 0x%016jx [absolute] (delta from actual time: %+jd us)\n", (uintmax_t)mdcTimeInstant,
                         (intmax_t)deltaUs.count());
                 } else {
-                    printf("[Set device time] Time before update: 0x%016jx [relative]\n", (uintmax_t)mdcTime);
+                    printf("[Set device time] Time before update: 0x%016jx [relative]\n",
+                        (uintmax_t)mdcTimeInstant);
                 }
                 
-                printf("[Set device time] Time after update: 0x%016jx (took %ju ms)\n", (uintmax_t)actualTime,
+                printf("[Set device time] Time after update: 0x%016jx (took %ju ms)\n",
+                    (uintmax_t)actualTimeInstant,
                     (uintmax_t)timeSetDuration.count());
             }
             

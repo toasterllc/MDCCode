@@ -3,7 +3,7 @@
 #import "Util.h"
 #import "ImageCornerButton/ImageCornerButton.h"
 #import "Code/Shared/Time.h"
-#import "Code/Shared/TimeConvert.h"
+#import "Code/Shared/Clock.h"
 #import "Toastbox/DurationString.h"
 #import "Toastbox/Mac/Util.h"
 #import "ImageUtil.h"
@@ -1073,12 +1073,35 @@ static id _Get_timestamp(const ImageRecord& rec) {
     using namespace std::chrono;
     const Time::Instant t = rec.info.timestamp;
     if (Time::Absolute(t)) {
-        auto timestamp = clock_cast<system_clock>(rec.info.timestamp);
+        auto timestampDevice = Time::Clock::TimePointFromTimeInstant(rec.info.timestamp);
+        auto timestamp = date::clock_cast<system_clock>(timestampDevice);
+        
+        const auto days = std::chrono::floor<date::days>(timestamp);
+        const auto sec = std::chrono::floor<std::chrono::seconds>(timestamp-days);
+        const date::year_month_day ymd(days);
+        const date::hh_mm_ss hms(sec);
+        
+        NSDateComponents* comp = [NSDateComponents new];
+        [comp setYear:ymd.year()];
+        [comp setMonth:ymd.month()];
+        [comp setDay:ymd.day()];
+        [comp setHour:hms.hours()];
+        [comp setMinute:hms.minutes()];
+        [comp setSecond:hms.seconds()];
+        NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
+        
+        
+        
+        
+        
+        
+        
         const milliseconds ms = duration_cast<milliseconds>(timestamp.time_since_epoch());
         return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.]];
     
     } else {
-        const seconds sec = Time::DurationRelative<seconds>(rec.info.timestamp);
+        const auto dur = Time::Clock::DurationFromTimeInstant(rec.info.timestamp);
+        const seconds sec = std::chrono::duration_cast<seconds>(dur);
         const std::string relTimeStr = Toastbox::DurationString(true, sec);
         return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
     }
