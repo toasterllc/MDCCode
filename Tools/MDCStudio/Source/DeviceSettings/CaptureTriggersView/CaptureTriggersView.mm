@@ -16,8 +16,8 @@ using namespace DeviceSettings;
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
-constexpr uint32_t _TimeStartInit = 32400; // 9 AM
-constexpr uint32_t _TimeEndInit = 61200;   // 5 PM
+constexpr Calendar::TimeOfDay _TimeStartInit = { 32400 }; // 9 AM
+constexpr Calendar::TimeOfDay _TimeEndInit   = { 61200 };   // 5 PM
 //static const Calendar::DaysOfWeek _DaysOfWeekInit = Calendar::DaysOfWeekFromVector({
 //    Calendar::DayOfWeek_::Mon,
 //    Calendar::DayOfWeek_::Tue,
@@ -278,8 +278,6 @@ static _TimeFormatState& _TimeFormatStateGet() {
 
 // 56789 -> 3:46:29 PM / 15:46:29 (depending on locale)
 static std::string _StringFromTimeOfDay(Calendar::TimeOfDay x) {
-//    uint32_t second = x%60;
-//    uint32_t minute = x/60*60;
     const uint32_t h = x.x/(60*60);
     x.x -= h*60*60;
     const uint32_t m = x.x/60;
@@ -344,7 +342,7 @@ static Calendar::TimeOfDay _TimeOfDayFromString(std::string x, bool assumeAM=tru
     
     NSDateComponents* comp = [_TimeFormatStateGet().calendar
         components:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond fromDate:date];
-    return { (uint32_t)[comp hour]*60*60 + (uint32_t)[comp minute]*60 + (uint32_t)[comp second] };
+    return { (uint32_t)([comp hour]*60*60 + [comp minute]*60 + [comp second]) };
 }
 
 
