@@ -1,12 +1,14 @@
 #pragma once
 #include <vector>
+#include <chrono>
+#include "date/date.h"
 
 namespace DeviceSettings {
 
 namespace Calendar {
 
 // TimeOfDay: a particular time of an unspecified day, in seconds [0,86400]
-struct [[gnu::packed]] TimeOfDay { uint32_t x; };
+using TimeOfDay = std::chrono::duration<uint32_t>;
 
 // DayOfWeek: a particular day of an unspecified week
 struct [[gnu::packed]] DayOfWeek { uint8_t x; };
@@ -33,13 +35,13 @@ struct [[gnu::packed]] DaysOfMonth { uint32_t x; };
 // DaysOfYear: a set of days of an unspecified year
 struct [[gnu::packed]] DaysOfYear { DaysOfMonth x[12]; };
 
-
+using HHMMSS = date::hh_mm_ss<TimeOfDay>;
 
 
 
 
 inline void TimeOfDayValidate(TimeOfDay x) {
-    if (x.x > 24*60*60) throw Toastbox::RuntimeError("invalid TimeOfDay: %ju", (uintmax_t)x.x);
+    if (x.count() > 24*60*60) throw Toastbox::RuntimeError("invalid TimeOfDay: %ju", (uintmax_t)x.count());
 }
 
 inline void DayOfWeekValidate(DayOfWeek x) {
@@ -255,11 +257,10 @@ static _DateFormatterState& _DateFormatterStateGet() {
 
 // 56789 -> 3:46:29 PM / 15:46:29 (depending on locale)
 inline std::string StringFromTimeOfDay(TimeOfDay x) {
-    const uint32_t h = x.x/(60*60);
-    x.x -= h*60*60;
-    const uint32_t m = x.x/60;
-    x.x -= m*60;
-    const uint32_t s = x.x;
+    const HHMMSS parts(x);
+    const auto h = parts.hours().count();
+    const auto m = parts.minutes().count();
+    const auto s = parts.seconds().count();
     
     NSDateComponents* comp = [NSDateComponents new];
     [comp setYear:2022];
@@ -320,7 +321,7 @@ inline TimeOfDay TimeOfDayFromString(std::string x, bool assumeAM=true) {
     NSDateComponents* comp = [_DateFormatterStateGet().cal
         components:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond fromDate:date];
     
-    const TimeOfDay t = { (uint32_t)([comp hour]*60*60 + [comp minute]*60 + [comp second]) };
+    const TimeOfDay t([comp hour]*60*60 + [comp minute]*60 + [comp second]);
     TimeOfDayValidate(t);
     return t;
 }
@@ -359,7 +360,7 @@ inline std::string DayOfYearPlaceholderString() {
 
 } // namespace Calendar
 
-
+using Ms = std::chrono::duration<uint32_t, std::milli>;
 
 struct [[gnu::packed]] DayCount {
     uint32_t x;
@@ -399,18 +400,29 @@ struct [[gnu::packed]] Duration {
     Unit unit;
 };
 
-inline float _MsForDuration(const Duration& x) {
+//inline float _MsForDuration(const Duration& x) {
+//    switch (x.unit) {
+//    case Duration::Unit::Seconds: return x.value                * 1000;
+//    case Duration::Unit::Minutes: return x.value           * 60 * 1000;
+//    case Duration::Unit::Hours:   return x.value      * 60 * 60 * 1000;
+//    case Duration::Unit::Days:    return x.value * 24 * 60 * 60 * 1000;
+//    default:                      abort();
+//    }
+//}
+
+inline Ms MsForDuration(const Duration& x) {
+    #warning TODO: how does this handle overflow? how do we want to handle overflow -- throw?
     switch (x.unit) {
-    case Duration::Unit::Seconds: return x.value                * 1000;
-    case Duration::Unit::Minutes: return x.value           * 60 * 1000;
-    case Duration::Unit::Hours:   return x.value      * 60 * 60 * 1000;
-    case Duration::Unit::Days:    return x.value * 24 * 60 * 60 * 1000;
+    case Duration::Unit::Seconds: return std::chrono::seconds((long)x.value);
+    case Duration::Unit::Minutes: return std::chrono::minutes((long)x.value);
+    case Duration::Unit::Hours:   return std::chrono::hours((long)x.value);
+    case Duration::Unit::Days:    return date::days((long)x.value);
     default:                      abort();
     }
-}
-
-inline uint32_t MsForDuration(const Duration& x) {
-    return std::clamp(_MsForDuration(x), 0.f, (float)UINT32_MAX);
+    
+//    #warning TODO: how does this handle overflow? do we want to clamp or throw?
+//    return std::chrono::seconds((long)_MsForDuration(x));
+//    return std::clamp(_MsForDuration(x), 0.f, (float)UINT32_MAX);
 }
 
 struct [[gnu::packed]] Capture {

@@ -17,8 +17,8 @@ using namespace DeviceSettings;
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
-constexpr Calendar::TimeOfDay _TimeStartInit = { 32400 }; // 9 AM
-constexpr Calendar::TimeOfDay _TimeEndInit   = { 61200 };   // 5 PM
+constexpr Calendar::TimeOfDay _TimeStartInit(32400); // 9 AM
+constexpr Calendar::TimeOfDay _TimeEndInit  (61200); // 5 PM
 //static const Calendar::DaysOfWeek _DaysOfWeekInit = Calendar::DaysOfWeekFromVector({
 //    Calendar::DayOfWeek_::Mon,
 //    Calendar::DayOfWeek_::Tue,
@@ -757,7 +757,7 @@ T_Dst _Cast(const T_Src& x) {
 
 static MSP::Capture _Convert(const Capture& x) {
     return MSP::Capture{
-        .delayMs = MsForDuration(x.interval),
+        .delayMs = MsForDuration(x.interval).count(),
         .count = x.count,
     };
 }
@@ -815,27 +815,26 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
 }
 
 template<typename T>
-static uint32_t _MotionEnableDurationMs(const T& x) {
-    static constexpr uint32_t DayMs = 24*60*60*1000;
+static Ms _MotionEnableDurationMs(const T& x) {
     if (x.schedule.timeRange.enable) {
         // Enabled for part of the day
-        return x.schedule.timeRange.end.x-x.schedule.timeRange.start.x;
+        return x.schedule.timeRange.end-x.schedule.timeRange.start;
     
     } else if (x.schedule.repeat.type != Repeat::Type::Daily) {
         // Enabled all day (0:00 to 23:59)
-        return DayMs;
+        return date::days(1);
     }
     // Motion always enabled
-    return 0;
+    return {};
 }
 
 template<typename T>
-static uint32_t _MotionSuppressMs(const T& x) {
+static Ms _MotionSuppressMs(const T& x) {
     if (x.constraints.suppressDuration.enable) {
         return MsForDuration(x.constraints.suppressDuration.duration);
     }
     // Suppression feature disabled
-    return 0;
+    return {};
 }
 
 template<typename T>
@@ -881,16 +880,16 @@ static Calendar::TimeOfDay _MotionTime(const T& x) {
             const auto& x = src.motion;
             const auto [time, repeat] = _Convert(_MotionTime(x), x.schedule.repeat);
             const uint16_t count = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0);
-            const uint32_t durationMs = _MotionEnableDurationMs(x);
-            const uint32_t suppressMs = _MotionSuppressMs(x);
+            const Ms durationMs = _MotionEnableDurationMs(x);
+            const Ms suppressMs = _MotionSuppressMs(x);
             
             _triggers.motionTrigger[_triggers.motionTriggerCount] = {
                 .time       = time,
                 .repeat     = repeat,
                 .capture    = _Convert(x.capture),
                 .count      = count,
-                .durationMs = durationMs,
-                .suppressMs = suppressMs,
+                .durationMs = durationMs.count(),
+                .suppressMs = suppressMs.count(),
             };
             _triggers.motionTriggerCount++;
             break;
@@ -975,11 +974,12 @@ static void _Copy(Repeat::Type& x, NSPopUpButton* menu) {
 
 template<bool T_Forward>
 static void _CopyTime(Calendar::TimeOfDay& x, NSTextField* field) {
+    static constexpr Calendar::TimeOfDay Morning(12*60*60);
     if constexpr (T_Forward) {
         [field setStringValue:@(Calendar::StringFromTimeOfDay(x).c_str())];
     } else {
         try {
-            const bool assumeAM = x.x < 12*60*60;
+            const bool assumeAM = x < Morning;
             x = Calendar::TimeOfDayFromString([[field stringValue] UTF8String], assumeAM);
         } catch (...) {}
     }
