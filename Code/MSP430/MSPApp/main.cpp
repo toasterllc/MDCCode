@@ -81,6 +81,7 @@ static void _SDError(uint16_t line);
 static void _ImgError(uint16_t line);
 static void _I2CError(uint16_t line);
 static void _MotionError(uint16_t line);
+static void _TriggersError(uint16_t line);
 static void _BatterySamplerError(uint16_t line);
 
 #warning TODO: disable stack guard for production
@@ -176,7 +177,7 @@ static volatile uint8_t _MotionEnabledAssertionCounter = 0;
 using _MotionEnabledAssertion = T_MotionEnabledAssertion<_MotionEnabledAssertionCounter, _MotionEnable, _MotionDisable>;
 
 // _Triggers: stores our current event state
-using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
+using _Triggers = T_Triggers<_State, _MotionEnabledAssertion, _TriggersError>;
 
 static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Us Day         = (Time::Us)     24*60*60*1000000;
@@ -215,7 +216,7 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
             return YearPlusDay;
         }
     }
-    abort();
+    Assert(false);
 }
 
 //static void _EventInsert(_Triggers::Event& ev, const Time::Instant& t) {
@@ -665,6 +666,11 @@ struct _TaskMain {
     static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
         constexpr MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
+        const bool green = ev.capture->leds & MSP::LEDs_::Green;
+        const bool red = ev.capture->leds & MSP::LEDs_::Red;
+        _LEDGreen_::Set(_LEDPriority::Capture, !green);
+        _LEDRed_::Set(_LEDPriority::Capture, !red);
+        
         // Turn on VDD_B power (turns on ICE40)
         _VDDBSet(true);
         
@@ -743,6 +749,9 @@ struct _TaskMain {
 //        if (trigger & _TriggerSources::Manual) {
 //            _LEDRed_::Set(_LEDPriority::Capture, 1);
 //        }
+        
+        _LEDGreen_::Set(_LEDPriority::Capture, std::nullopt);
+        _LEDRed_::Set(_LEDPriority::Capture, std::nullopt);
         
         _VDDIMGSDSet(false);
         _VDDBSet(false);
@@ -1218,7 +1227,8 @@ namespace AbortDomain {
     static constexpr uint16_t Img                       = 5;
     static constexpr uint16_t I2C                       = 6;
     static constexpr uint16_t Motion                    = 7;
-    static constexpr uint16_t BatterySampler            = 8;
+    static constexpr uint16_t Triggers                  = 8;
+    static constexpr uint16_t BatterySampler            = 9;
 }
 
 [[noreturn]]
@@ -1254,6 +1264,11 @@ static void _I2CError(uint16_t line) {
 [[noreturn]]
 static void _MotionError(uint16_t line) {
     _Abort(AbortDomain::Motion, line);
+}
+
+[[noreturn]]
+static void _TriggersError(uint16_t line) {
+    _Abort(AbortDomain::Triggers, line);
 }
 
 [[noreturn]]

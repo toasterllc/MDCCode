@@ -646,7 +646,11 @@ private:
     void _checkStatus(const char* errMsg) {
         // Wait for completion and throw on failure
         bool s = false;
-        _dev.read(STM::Endpoint::DataIn, s);
+        try {
+            _dev.read(STM::Endpoint::DataIn, s);
+        } catch (const std::exception& e) {
+            throw Toastbox::RuntimeError("%s: failed to read status", e.what());
+        }
         if (!s) throw std::runtime_error(errMsg);
     }
     

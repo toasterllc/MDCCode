@@ -714,6 +714,7 @@ private:
                     {
                         const Img::Id libImgIdEnd = (!_imageLibrary.empty() ? _imageLibrary.back()->info.id+1 : 0);
                         if (libImgIdEnd > deviceImgIdEnd) {
+                            #warning TODO: how do we properly handle this situation?
                             throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
                                 (uintmax_t)libImgIdEnd,
                                 (uintmax_t)deviceImgIdEnd
@@ -769,7 +770,7 @@ private:
             printf("[_sync_thread] Stopping\n");
         
         } catch (const std::exception& e) {
-            printf("[_sync_thread] Error: %s", e.what());
+            printf("[_sync_thread] Error: %s\n", e.what());
         }
     }
     
@@ -919,10 +920,12 @@ private:
     
     std::unique_lock<std::mutex> _deviceLock() {
         auto lock = std::unique_lock(_device.lock);
-        // We're locking the device for unknown purposes, so clear sdReadEnd so we don't try to continue SD readout
-        // from where we left off, because we have to assume readout was cancelled by whatever the client did with
-        // the device
-        _device.sdReadEnd = std::nullopt;
+        if (_device.sdReadEnd) {
+            // Readout is in progress; stop it by resetting the device
+            _device.device.reset();
+            // Clear sdReadEnd to indicate that readout is no longer underway
+            _device.sdReadEnd = std::nullopt;
+        }
         return lock;
     }
     
@@ -930,7 +933,6 @@ private:
         auto lock = std::unique_lock(_device.lock);
         if (!_device.sdReadEnd || *_device.sdReadEnd!=block) {
             printf("[_deviceSDRead] Starting readout at %ju\n", (uintmax_t)block);
-            _device.device.reset();
             // Verify that blockBegin can be safely cast to SD::Block
             assert(std::numeric_limits<SD::Block>::max() >= block);
             _device.device.sdRead((SD::Block)block);

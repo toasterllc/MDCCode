@@ -6,8 +6,13 @@
 //       the whole _State while we're on C++17, because C++17 doesn't allow giving subojects as non-type
 //       template parameters.
 //       We created _T_Base for this reason, and can remove it and replace all uses with T_Base when we switch.
-template<auto& T_Base, typename T_MotionEnabled>
+template<
+auto& T_Base,
+typename T_MotionEnabled,
+[[noreturn]] void T_Error(uint16_t)
+>
 struct T_Triggers {
+#define Assert(x) if (!(x)) T_Error(__LINE__)
     struct Trigger;
     
     struct Event {
@@ -24,7 +29,7 @@ struct T_Triggers {
             case MSP::Triggers::Event::Type::TimeTrigger:  return Type::TimeTrigger;
             case MSP::Triggers::Event::Type::MotionEnable: return Type::MotionEnable;
             }
-            abort();
+            Assert(false);
         }
         
         Event(Type type) : type(type) {}
@@ -147,4 +152,5 @@ struct T_Triggers {
                                          sizeof(_ButtonTrigger) +
                                          sizeof(_Front)         ;
 //    StaticPrint(_TotalSize);
+#undef Assert
 };
