@@ -260,12 +260,10 @@ T_Dst _Cast(const T_Src& x) {
 }
 
 inline MSP::LEDs _Convert(const LEDs& x) {
-    switch (x) {
-    case LEDs_::None:   return MSP::LEDs_::None;
-    case LEDs_::Green:  return MSP::LEDs_::Green;
-    case LEDs_::Red:    return MSP::LEDs_::Red;
-    }
-    abort();
+    MSP::LEDs r = MSP::LEDs_::None;
+    if (x & LEDs_::Green) r |= MSP::LEDs_::Green;
+    if (x & LEDs_::Red)   r |= MSP::LEDs_::Red;
+    return r;
 }
 
 inline MSP::Capture _Convert(const Capture& x) {

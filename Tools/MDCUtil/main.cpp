@@ -357,6 +357,16 @@ static const char* _StringForTriggerEventType(MSP::Triggers::Event::Type x) {
     abort();
 }
 
+static const char* _StringForLEDs(MSP::LEDs x) {
+    switch (x) {
+    case MSP::LEDs_::None:                      return "none";
+    case MSP::LEDs_::Green:                     return "green";
+    case MSP::LEDs_::Red:                       return "red";
+    case MSP::LEDs_::Green | MSP::LEDs_::Red:   return "green|red";
+    }
+    abort();
+}
+
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     // Read the device state
     MSP::State state = device.mspStateRead();
@@ -420,6 +430,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         printf(     "        capture\n");
         printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
         printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
+        printf(     "          leds:                %s\n",        _StringForLEDs(it->capture.leds));
     }
     
     printf(         "    motionTrigger\n");
@@ -428,6 +439,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         printf(     "        capture\n");
         printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
         printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
+        printf(     "          leds:                %s\n",        _StringForLEDs(it->capture.leds));
         printf(     "        count:                 %ju\n",       (uintmax_t)it->count);
         printf(     "        durationMs:            %ju\n",       (uintmax_t)it->durationMs);
         printf(     "        suppressMs:            %ju\n",       (uintmax_t)it->suppressMs);
@@ -439,6 +451,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         printf(     "        capture\n");
         printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
         printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
+        printf(     "          leds:                %s\n",        _StringForLEDs(it->capture.leds));
     }
     
     printf(         "    source\n");
