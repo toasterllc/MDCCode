@@ -782,7 +782,52 @@ static uint8_t _DaysOfWeekAdvance(uint8_t x, int dir) {
 //    abort();
 //}
 
-static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type, Calendar::TimeOfDay time, const Repeat* repeat, uint8_t idx) {
+// _LeapYearPhase(): returns a number between [0,7] indicating the leap year
+// cadence relative to `tp`. The value can be as high as 7 due to the skipped
+// leap years (skipped if divisible by 100 but not by 400; eg 1900 and 2100
+// aren't leap years despite being divisible by 4.)
+//
+// For example, to get the same date as `tp` but N years in the future:
+//
+//   - if 0 is returned:
+//       - for N=1, 366                 days must be added to `tp`
+//       - for N=2, 366+365             days must be added to `tp`
+//       - for N=3, 366+365+365         days must be added to `tp`
+//       - for N=4, 366+365+365+365     days must be added to `tp`
+//       - for N=5, 366+365+365+365+366 days must be added to `tp`
+//   - if 1 is returned:
+//       - for N=1, 365                 days must be added to `tp`
+//       - for N=2, 365+366             days must be added to `tp`
+//       - for N=3, 365+366+365         days must be added to `tp`
+//       - for N=4, 365+366+365+365     days must be added to `tp`
+//       - for N=5, 365+366+365+365+365 days must be added to `tp`
+//   ... and so on ...
+static uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_seconds& tp) {
+    using namespace std::chrono;
+    const auto days = floor<date::days>(tp);
+    const auto time = tp-days;
+    date::year_month_day ymd(days);
+    
+    // Try up to 8 years to find the next leap year.
+    for (uint8_t i=0; i<8; i++) {
+        const date::year_month_day ymdNext((ymd.year()+date::years(1)) / ymd.month() / ymd.day());
+        const seconds delta = (date::local_days(ymdNext)+time) - (date::local_days(ymd)+time);
+        const date::days days = duration_cast<date::days>(delta);
+        
+        switch (days.count()) {
+        case 365: break;
+        case 366: return i;
+        default: abort();
+        }
+        
+        ymd = ymdNext;
+    }
+    
+    // Couldn't 
+    abort();
+}
+
+static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type, Calendar::TimeOfDay timeOfDay, const Repeat* repeat, uint8_t idx) {
 //    enum class Type : uint8_t {
 //        None,
 //        Daily,
@@ -806,7 +851,11 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
 //    };
     
     using namespace std::chrono;
-    const auto now = system_clock::now();
+//    const auto now = system_clock::now();
+    
+//    const date::zoned_time now(date::current_zone(), system_clock::now());
+    const date::time_zone& tz = *date::current_zone();
+    const auto now = tz.to_local(system_clock::now());
     
     // Handle non-repeating events
     if (!repeat) {
@@ -873,19 +922,34 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
     }
     
     case Repeat::Type::DaysOfYear: {
-        #warning TODO: implement
-        
-        system_clock::time_point timeSys;
-        date::sys_days day = floor<date::days>(now);
-        date::year_month_day ymd(floor<date::days>(now));
-        ymd = 
-        
-        const Time::Instant timeInstant = 0;
-        uint8_t leapPhase = 0;
-        return std::make_pair(timeInstant, MSP::Repeat{
-            .type = MSP::Repeat::Type::Yearly,
-            .Yearly = { leapPhase },
-        });
+        const auto daysOfYear = Calendar::VectorFromDaysOfYear(repeat->DaysOfYear);
+        const auto nowDays = floor<date::days>(now);
+        std::vector<MSP::Triggers::Event> events;
+        for (Calendar::DayOfYear doy : daysOfYear) {
+            // Determine if doy's month+day of the current year is in the past.
+            // If it's in the future, subtract one year and use that.
+            const date::year nowYear = date::year_month_day(nowDays).year();
+            auto tp = date::local_days{ nowYear / doy.month() / doy.day() } + timeOfDay;
+            if (tp >= now) {
+                tp = date::local_days{ (nowYear-date::years(1)) / doy.month() / doy.day() } + timeOfDay;
+                // Logic error if tp is still in the future, even after subtracting a year
+                assert(tp < now);
+            }
+            
+            const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
+            const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
+            const Time::Instant timeInstant = Time::Clock::TimeInstantFromTimePoint(tpDevice);
+            events.push_back({
+                .time = timeInstant,
+                .type = type,
+                .repeat = {
+                    .type = MSP::Repeat::Type::Yearly,
+                    .Yearly = { _LeapYearPhase(tz, tp) },
+                },
+                .idx = idx,
+            });
+        }
+        return events;
     }
     
     case Repeat::Type::DayInterval: {
