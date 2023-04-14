@@ -8,10 +8,8 @@ namespace MDCStudio {
 namespace DeviceSettings {
 
 using Ms = std::chrono::duration<uint32_t, std::milli>;
-
-struct [[gnu::packed]] DayCount {
-    uint32_t x;
-};
+using Days = std::chrono::duration<uint32_t, std::ratio<86400>>;
+using DayInterval = Days;
 
 struct [[gnu::packed]] Repeat {
     enum class Type : uint8_t {
@@ -25,7 +23,7 @@ struct [[gnu::packed]] Repeat {
     union {
         Calendar::DaysOfWeek DaysOfWeek;
         Calendar::DaysOfYear DaysOfYear;
-        DayCount DayInterval;
+        DayInterval DayInterval;
     };
 };
 

@@ -183,6 +183,9 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Us Year        = (Time::Us) 365*24*60*60*1000000;
     static constexpr Time::Us YearPlusDay = (Time::Us) 366*24*60*60*1000000;
     switch (x.type) {
+    case MSP::Repeat::Type::Never:
+        return 0;
+    
     case MSP::Repeat::Type::Daily:
         Assert(x.Daily.interval);
         return Day*x.Daily.interval;
@@ -200,9 +203,10 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
         return count*Day;
     }
     
-    case MSP::Repeat::Type::Yearly: {
+    case MSP::Repeat::Type::Yearly:
         #warning TODO: verify this works properly
-        // Return 1 year in microseconds, appropriately handling leap years by referencing `leapPhase`
+        // Return 1 year (either 365 or 366 days) in microseconds
+        // We appropriately handle leap years by referencing `leapPhase`
         if (x.Yearly.leapPhase) {
             x.Yearly.leapPhase--;
             return Year;
@@ -211,10 +215,7 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
             return YearPlusDay;
         }
     }
-    
-    default:
-        abort();
-    }
+    abort();
 }
 
 //static void _EventInsert(_Triggers::Event& ev, const Time::Instant& t) {
@@ -222,7 +223,11 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
 //}
 
 static void _EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-    _Triggers::EventInsert(ev, ev.time+_RepeatAdvance(repeat));
+    const Time::Us delta = _RepeatAdvance(repeat);
+    // delta=0 means Repeat=never, in which case we don't reschedule the event
+    if (delta) {
+        _Triggers::EventInsert(ev, ev.time+delta);
+    }
 }
 
 static void _EventInsert(_Triggers::Event& ev, Time::Instant time, uint32_t deltaMs) {

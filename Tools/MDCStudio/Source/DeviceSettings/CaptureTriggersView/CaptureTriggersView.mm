@@ -44,7 +44,7 @@ static const Calendar::DaysOfYear _DaysOfYearInit = Calendar::DaysOfYearFromVect
     Calendar::DayOfYear{Calendar::MonthOfYear(12), Calendar::DayOfMonth(31)},
 });
 
-static constexpr DayCount _DayIntervalInit = DayCount{ 2 };
+static constexpr DayInterval _DayIntervalInit = DayInterval{ 2 };
 
 //static Repeat& _TriggerRepeatGet(CaptureTrigger& t) {
 //    switch (t.type) {
@@ -323,18 +323,18 @@ static std::string _DaysOfYearDescription(const Calendar::DaysOfYear& x) {
     return std::to_string(count) + " days per year";
 }
 
-static std::string _DayIntervalDescription(const DayCount& x) {
-    if (x.x == 0) return "every day";
-    if (x.x == 1) return "every day";
-    if (x.x == 2) return "every other day";
-    return "every " + std::to_string(x.x) + " days";
+static std::string _DayIntervalDescription(const DayInterval& x) {
+    if (x.count() == 0) return "every day";
+    if (x.count() == 1) return "every day";
+    if (x.count() == 2) return "every other day";
+    return "every " + std::to_string(x.count()) + " days";
 }
 
-static std::string _DayIntervalDetailedDescription(const DayCount& x) {
-    if (x.x == 0) return "every day";
-    if (x.x == 1) return "every day";
-    if (x.x == 2) return "every other day";
-    return "1 day on, " + std::to_string(x.x-1) + " days off";
+static std::string _DayIntervalDetailedDescription(const DayInterval& x) {
+    if (x.count() == 0) return "every day";
+    if (x.count() == 1) return "every day";
+    if (x.count() == 2) return "every other day";
+    return "1 day on, " + std::to_string(x.count()-1) + " days off";
 }
 
 static std::string _Capitalize(std::string x) {
@@ -773,7 +773,16 @@ static uint8_t _DaysOfWeekAdvance(uint8_t x, int dir) {
     abort();
 }
 
-static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, const Repeat& x) {
+//static MSP::Triggers::Event::Type _Convert(CaptureTrigger::Type type) {
+//    switch (type) {
+//    CaptureTrigger::Type::Time:   return MSP::Triggers::Event::Type::TimeTrigger;
+//    CaptureTrigger::Type::Motion: return MSP::Triggers::Event::Type::MotionEnable;
+//    CaptureTrigger::Type::Button: return ;    
+//    }
+//    abort();
+//}
+
+static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type, Calendar::TimeOfDay time, const Repeat* repeat, uint8_t idx) {
 //    enum class Type : uint8_t {
 //        None,
 //        Daily,
@@ -799,13 +808,29 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
     using namespace std::chrono;
     const auto now = system_clock::now();
     
-    switch (x.type) {
+    // Handle non-repeating events
+    if (!repeat) {
+        return { MSP::Triggers::Event{
+            #warning TODO: implement time field -- use the most recent `time` that's in the past
+            .time = 0,
+            .type = type,
+            .repeat = { .type = MSP::Repeat::Type::Never, },
+            .idx = idx,
+        }};
+    }
+    
+    switch (repeat->type) {
     case Repeat::Type::Daily:
-        #warning TODO: return time
-        return std::make_pair(0, MSP::Repeat{
-            .type = MSP::Repeat::Type::Daily,
-            .Daily = { 1 },
-        });
+        #warning TODO: implement time field
+        return { MSP::Triggers::Event{
+            .time = 0,
+            .type = type,
+            .repeat = {
+                .type = MSP::Repeat::Type::Daily,
+                .Daily = { 1 },
+            },
+            .idx = idx,
+        }};
     
     case Repeat::Type::DaysOfWeek: {
         // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
@@ -816,7 +841,7 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
         for (;;) {
             timeSys = day+time;
             // If `timeSys` is in the past and `day` is in x.DaysOfWeek, we're done
-            if (timeSys<now && DaysOfWeekGet(x.DaysOfWeek, day)) {
+            if (timeSys<now && DaysOfWeekGet(repeat->DaysOfWeek, day)) {
                 break;
             }
             day -= date::days(1);
@@ -826,8 +851,8 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
         // hit whatever day of week that `day` is. This is necessary because the time
         // that we return and the days bitfield need to be aligned so that they
         // represent the same day.
-        uint8_t days = x.DaysOfWeek.x;
-        for (Calendar::DayOfWeek i=date::Sunday; i!=day; i--) {
+        uint8_t days = repeat->DaysOfWeek.x;
+        for (Calendar::DayOfWeek i=Calendar::DayOfWeek(0); i!=day; i--) {
             days = _DaysOfWeekAdvance(days, -1);
         }
         // Low bit of `days` should be set, otherwise it's a logic bug
@@ -836,10 +861,15 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
         const auto timeDevice = date::clock_cast<Time::Clock>(timeSys);
         const Time::Instant timeInstant = Time::Clock::TimeInstantFromTimePoint(timeDevice);
         
-        return std::make_pair(timeInstant, MSP::Repeat{
-            .type = MSP::Repeat::Type::Weekly,
-            .Weekly = { days },
-        });
+        return { MSP::Triggers::Event{
+            .time = timeInstant,
+            .type = type,
+            .repeat = {
+                .type = MSP::Repeat::Type::Weekly,
+                .Weekly = { days },
+            },
+            .idx = idx,
+        }};
     }
     
     case Repeat::Type::DaysOfYear: {
@@ -860,10 +890,15 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
     
     case Repeat::Type::DayInterval: {
         #warning TODO: return time
-        return std::make_pair(0, MSP::Repeat{
-            .type = MSP::Repeat::Type::Daily,
-            .Daily = { _Cast<decltype(MSP::Repeat::Daily.interval)>(x.DayInterval.x) },
-        });
+        return { MSP::Triggers::Event{
+            .time = 0,
+            .type = type,
+            .repeat = {
+                .type = MSP::Repeat::Type::Daily,
+                .Daily = { _Cast<decltype(MSP::Repeat::Daily.interval)>(repeat->DayInterval.count()) },
+            },
+            .idx = idx,
+        }};
     }
     
     default:
@@ -872,50 +907,60 @@ static std::pair<Time::Instant,MSP::Repeat> _Convert(Calendar::TimeOfDay time, c
 }
 
 
-template<typename T>
-std::vector<MSP::Triggers::Event> _EventsForTimeTrigger(const T& x, uint32_t idx) {
-    std::vector<MSP::Triggers::Event> events;
-    
-    return events;
-}
+//template<typename T>
+//std::vector<MSP::Triggers::Event> _EventsForTimeTrigger(const T& x, uint32_t idx) {
+//    std::vector<MSP::Triggers::Event> events;
+//    
+//    return events;
+//}
+//
+//template<typename T>
+//std::vector<MSP::Triggers::Event> _EventsForMotionTrigger(const T& x, uint32_t idx) {
+//    std::vector<MSP::Triggers::Event> events;
+//    
+//    return events;
+//}
 
 template<typename T>
-std::vector<MSP::Triggers::Event> _EventsForMotionTrigger(const T& x, uint32_t idx) {
-    std::vector<MSP::Triggers::Event> events;
-    
-    return events;
+bool _MotionAlwaysEnabled(const T& x) {
+    return !x.schedule.timeRange.enable && x.schedule.repeat.type==Repeat::Type::Daily;
 }
 
 template<typename T>
 Ms _MotionEnableDurationMs(const T& x) {
-    if (x.schedule.timeRange.enable) {
-        // Enabled for part of the day
-        return x.schedule.timeRange.end-x.schedule.timeRange.start;
+    // Enabled all day, every day
+    if (_MotionAlwaysEnabled(x)) return {};
     
-    } else if (x.schedule.repeat.type != Repeat::Type::Daily) {
-        // Enabled all day (0:00 to 23:59)
-        return date::days(1);
+    // Enabled for part of the day
+    if (x.schedule.timeRange.enable) {
+        return x.schedule.timeRange.end-x.schedule.timeRange.start;
     }
-    // Motion always enabled
-    return {};
+    
+    // Enabled all day (0:00 to 23:59)
+    return date::days(1);
 }
 
 template<typename T>
 Ms _MotionSuppressMs(const T& x) {
-    if (x.constraints.suppressDuration.enable) {
-        return MsForDuration(x.constraints.suppressDuration.duration);
+    if (!x.constraints.suppressDuration.enable) {
+        // Suppression feature disabled
+        return {};
     }
-    // Suppression feature disabled
-    return {};
+    return MsForDuration(x.constraints.suppressDuration.duration);
 }
 
 template<typename T>
 Calendar::TimeOfDay _MotionTime(const T& x) {
-    if (x.schedule.timeRange.enable) {
-        return x.schedule.timeRange.start;
-    }
-    // Start at midnight
-    return {};
+    if (!x.schedule.timeRange.enable) return {}; // Midnight
+    return x.schedule.timeRange.start;
+}
+
+// _MotionRepeat(): get the Repeat for a motion trigger
+// Returns nullptr if motion is always supposed to be enabled
+template<typename T>
+const Repeat* _MotionRepeat(const T& x) {
+    if (_MotionAlwaysEnabled(x)) return nullptr;
+    return &x.schedule.repeat;
 }
 
 static void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers::Event>& events) {
@@ -970,11 +1015,10 @@ static void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
             }
             
             const auto& x = src.time;
-            const auto [time, repeat] = _Convert(x.schedule.time, x.schedule.repeat);
             
             // Create events for the trigger
             {
-                const auto events = _EventsForTimeTrigger(x, _triggers.timeTriggerCount);
+                const auto events = _EventsCreate(MSP::Triggers::Event::Type::TimeTrigger, x.schedule.time, &x.schedule.repeat, _triggers.timeTriggerCount);
                 _AddEvents(_triggers, events);
             }
             
@@ -994,11 +1038,10 @@ static void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
             }
             
             const auto& x = src.motion;
-            const auto [time, repeat] = _Convert(_MotionTime(x), x.schedule.repeat);
             
             // Create events for the trigger
             {
-                const auto events = _EventsForMotionTrigger(x, _triggers.motionTriggerCount);
+                const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionEnable, _MotionTime(x), _MotionRepeat(x), _triggers.motionTriggerCount);
                 _AddEvents(_triggers, events);
             }
             
@@ -1119,11 +1162,11 @@ static void _Copy(uint16_t& x, NSTextField* field, uint16_t min=0) {
 }
 
 template<bool T_Forward>
-static void _Copy(DayCount& x, NSTextField* field) {
+static void _Copy(DayInterval& x, NSTextField* field) {
     if constexpr (T_Forward) {
-        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.x]];
+        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.count()]];
     } else {
-        x.x = std::max(2, [field intValue]);
+        x = DayInterval(std::max(2, [field intValue]));
     }
 }
 
