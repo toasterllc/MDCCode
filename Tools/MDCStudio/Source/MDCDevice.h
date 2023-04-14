@@ -52,6 +52,7 @@ public:
         } catch (const std::exception& e) {}
         
         // Perform device IO
+        bool loadAndSync = false;
         {
             auto lock = _deviceLock();
             
@@ -95,20 +96,37 @@ public:
             // Load ICE40 with our app
             _ICEConfigure(_device.device);
             
-            // Init SD card
-            #warning TODO: how should we handle sdInit() failing (throwing)?
-            _sdCardInfo = _device.device.sdInit();
+            try {
+                // Init SD card
+                _sdCardInfo = _device.device.sdInit();
+                
+                if (!_mspState.sd.valid) {
+                    // _mspState.sd isn't valid, so there's no syncing that can be done
+                    throw Toastbox::RuntimeError("!_mspState.sd.valid");
+                }
+                
+                // Current SD card id doesn't match MSP's card id
+                // Don't sync photos because we don't know what we're actually reading from the device
+                if (memcmp(&_sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
+                    throw Toastbox::RuntimeError("_sdCardInfo.cardId != _mspState.sd.cardId");
+                }
+                
+                loadAndSync = true;
+            
+            } catch (const std::exception& e) {
+                printf("[MDCDevice()] Can't load/sync library: %s", e.what());
+            }
         }
         
         // Load the library
-        {
+        if (loadAndSync) {
             auto lock = std::unique_lock(_imageLibrary);
             _imageLibrary.read();
         }
         
         // Start threads
         {
-            _sync.thread = std::thread([&] { _sync_thread(); });
+            if (loadAndSync) _sync.thread = std::thread([&] { _sync_thread(); });
             
             _sdRead.thread = std::thread([&] { _sdRead_thread(); });
             
@@ -123,7 +141,7 @@ public:
         _thumbRender.signal.stop();
         
         // Wait for threads to stop
-        _sync.thread.join();
+        if (_sync.thread.joinable()) _sync.thread.join();
         _sdRead.thread.join();
         for (std::thread& t : _thumbRender.threads) t.join();
     }
@@ -667,17 +685,6 @@ private:
     
     void _sync_thread() {
         try {
-            if (!_mspState.sd.valid) {
-                // _mspState.sd isn't valid, so there's no syncing that can be done
-                throw Toastbox::RuntimeError("!_mspState.sd.valid");
-            }
-            
-            // Current SD card id doesn't match MSP's card id
-            if (memcmp(&_sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
-                #warning TODO: implement
-                throw Toastbox::RuntimeError("TODO: _sdCardInfo.cardId != _mspState.sd.cardId");
-            }
-            
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
             const Img::Id deviceImgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)_mspState.sd.imgCap);
             const Img::Id deviceImgIdEnd = imgRingBuf.buf.id;
