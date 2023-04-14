@@ -65,6 +65,7 @@
 		552F4BA629AD3ACB000CEAB2 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
 		55496F38278BAC5000BCA739 /* MSP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
 		557ABD2529E61A3D0032619E /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
+		557ABD8A29E9C3210032619E /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
 		55B2151327090FD2001423C1 /* VectorTable.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = VectorTable.s; sourceTree = "<group>"; };
 		55B2151927090FD2001423C1 /* GPIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GPIO.h; sourceTree = "<group>"; };
 		55B2151B27090FD2001423C1 /* QSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QSPI.h; sourceTree = "<group>"; };
@@ -250,6 +251,7 @@
 			isa = PBXGroup;
 			children = (
 				55B2153327091044001423C1 /* Assert.h */,
+				557ABD8A29E9C3210032619E /* Clock.h */,
 				55D08210270BAC6500B9BB97 /* ChecksumFletcher32.h */,
 				55B66B4A27176EC700AD39A5 /* ICE.h */,
 				55B66B3F271525F800AD39A5 /* Img.h */,

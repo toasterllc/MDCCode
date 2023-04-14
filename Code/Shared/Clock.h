@@ -54,7 +54,11 @@ struct Clock {
     }
     
     static Time::Instant TimeInstantFromTimePoint(time_point x) {
-        return AbsoluteBit | x.time_since_epoch().count();
+        // We can only represent values after our epoch
+        // (It's possible for time_points to to be before our epoch because rep == Time::Us,
+        // and Time::Us is a signed value which could be negative.)
+        assert(x.time_since_epoch().count() >= 0);
+        return AbsoluteBit | (Time::Instant)x.time_since_epoch().count();
     }
     
     static time_point TimePointFromTimeInstant(Time::Instant t) {

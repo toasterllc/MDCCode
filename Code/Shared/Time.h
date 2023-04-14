@@ -3,7 +3,10 @@
 namespace Time {
 
 // Us: a duration in microseconds
-using Us = uint64_t;
+// Using a signed value here so we can represent negative durations.
+// (Clock.h needs negative durations for computing the difference between two timepoints,
+// so we define `Us` as signed so Clock.h can use this type.)
+using Us = int64_t;
 
 // Instant: represents a particular moment in time
 // Encoded as the linear count of microseconds since our epoch,
