@@ -38,7 +38,7 @@ static constexpr uint32_t _XT1FreqHz        = 32768;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
 
 [[noreturn]]
-static void _Abort(uint16_t domain, uint16_t line);
+static void _Abort(MSP::AbortDomain domain, uint16_t line);
 
 struct _Pin {
     // Port A
@@ -1218,71 +1218,58 @@ static void _ISR_ADC() {
 
 // MARK: - Abort
 
-namespace AbortDomain {
-    static constexpr uint16_t Invalid                   = 0;
-    static constexpr uint16_t SchedulerStackOverflow    = 1;
-    static constexpr uint16_t Main                      = 2;
-    static constexpr uint16_t ICE                       = 3;
-    static constexpr uint16_t SD                        = 4;
-    static constexpr uint16_t Img                       = 5;
-    static constexpr uint16_t I2C                       = 6;
-    static constexpr uint16_t Motion                    = 7;
-    static constexpr uint16_t Triggers                  = 8;
-    static constexpr uint16_t BatterySampler            = 9;
-}
-
 [[noreturn]]
 static void _SchedulerStackOverflow() {
-    _Abort(AbortDomain::SchedulerStackOverflow, 0);
+    _Abort(MSP::AbortDomain::SchedulerStackOverflow, 0);
 }
 
 [[noreturn]]
 static void _MainError(uint16_t line) {
-    _Abort(AbortDomain::Main, line);
+    _Abort(MSP::AbortDomain::Main, line);
 }
 
 [[noreturn]]
 static void _ICEError(uint16_t line) {
-    _Abort(AbortDomain::ICE, line);
+    _Abort(MSP::AbortDomain::ICE, line);
 }
 
 [[noreturn]]
 static void _SDError(uint16_t line) {
-    _Abort(AbortDomain::SD, line);
+    _Abort(MSP::AbortDomain::SD, line);
 }
 
 [[noreturn]]
 static void _ImgError(uint16_t line) {
-    _Abort(AbortDomain::Img, line);
+    _Abort(MSP::AbortDomain::Img, line);
 }
 
 [[noreturn]]
 static void _I2CError(uint16_t line) {
-    _Abort(AbortDomain::I2C, line);
+    _Abort(MSP::AbortDomain::I2C, line);
 }
 
 [[noreturn]]
 static void _MotionError(uint16_t line) {
-    _Abort(AbortDomain::Motion, line);
+    _Abort(MSP::AbortDomain::Motion, line);
 }
 
 [[noreturn]]
 static void _TriggersError(uint16_t line) {
-    _Abort(AbortDomain::Triggers, line);
+    _Abort(MSP::AbortDomain::Triggers, line);
 }
 
 [[noreturn]]
 static void _BatterySamplerError(uint16_t line) {
-    _Abort(AbortDomain::BatterySampler, line);
+    _Abort(MSP::AbortDomain::BatterySampler, line);
 }
 
-static void _AbortRecord(const Time::Instant& timestamp, uint16_t domain, uint16_t line) {
+static void _AbortRecord(const Time::Instant& timestamp, MSP::AbortDomain domain, uint16_t line) {
     using namespace MSP;
     FRAMWriteEn writeEn; // Enable FRAM writing
     
     AbortHistory* hist = nullptr;
     for (AbortHistory& h : _State.aborts) {
-        if (!h.count || (h.type.domain == domain && h.type.line == line)) {
+        if (!h.count || (h.type.domain==domain && h.type.line==line)) {
             hist = &h;
             break;
         }
@@ -1315,7 +1302,7 @@ static void _BOR() {
 }
 
 [[noreturn]]
-static void _Abort(uint16_t domain, uint16_t line) {
+static void _Abort(MSP::AbortDomain domain, uint16_t line) {
     const Time::Instant timestamp = _RTC::TimeRead();
     // Record the abort
     _AbortRecord(timestamp, domain, line);

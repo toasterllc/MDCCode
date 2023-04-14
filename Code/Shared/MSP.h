@@ -10,14 +10,14 @@
 namespace MSP {
 
 using BatteryChargeLevel = uint8_t;
-static constexpr BatteryChargeLevel BatteryChargeLevelMin = 0;
-static constexpr BatteryChargeLevel BatteryChargeLevelMax = 100;
+constexpr BatteryChargeLevel BatteryChargeLevelMin = 0;
+constexpr BatteryChargeLevel BatteryChargeLevelMax = 100;
 
-static constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
+constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
     return base - ((idx+1) * ImgSD::Full::ImageBlockCount);
 }
 
-static constexpr SD::Block SDBlockThumb(SD::Block base, uint32_t idx) {
+constexpr SD::Block SDBlockThumb(SD::Block base, uint32_t idx) {
     return base - ((idx+1) * ImgSD::Thumb::ImageBlockCount);
 }
 
@@ -55,9 +55,38 @@ struct [[gnu::packed]] ImgRingBuf {
     }
 };
 
+enum class AbortDomain : uint16_t {
+    Invalid,
+    SchedulerStackOverflow,
+    Main,
+    ICE,
+    SD,
+    Img,
+    I2C,
+    Motion,
+    Triggers,
+    BatterySampler,
+};
+
+constexpr const char* StringForAbortDomain(AbortDomain x) {
+    switch (x) {
+    case AbortDomain::Invalid:                return "Invalid";
+    case AbortDomain::SchedulerStackOverflow: return "SchedulerStackOverflow";
+    case AbortDomain::Main:                   return "Main";
+    case AbortDomain::ICE:                    return "ICE";
+    case AbortDomain::SD:                     return "SD";
+    case AbortDomain::Img:                    return "Img";
+    case AbortDomain::I2C:                    return "I2C";
+    case AbortDomain::Motion:                 return "Motion";
+    case AbortDomain::Triggers:               return "Triggers";
+    case AbortDomain::BatterySampler:         return "BatterySampler";
+    }
+    abort();
+}
+
 // AbortType: a (domain,line) tuple that uniquely identifies a type of abort
 struct [[gnu::packed]] AbortType {
-    uint16_t domain = 0;
+    AbortDomain domain = AbortDomain::Invalid;
     uint16_t line   = 0;
 };
 static_assert(!(sizeof(AbortType) % 2)); // Check alignment
@@ -254,13 +283,13 @@ struct [[gnu::packed]] State {
 static_assert(!(sizeof(State) % 2)); // Check alignment
 static_assert(sizeof(State) == 1042); // Debug
 
-static constexpr State::Header StateHeader = {
+constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,
     .version = 0,
     .length  = sizeof(State),
 };
 
-static constexpr uint8_t I2CAddr = 0x55;
+constexpr uint8_t I2CAddr = 0x55;
 
 struct [[gnu::packed]] Cmd {
     enum class Op : uint8_t {

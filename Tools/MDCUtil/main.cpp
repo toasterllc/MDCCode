@@ -15,6 +15,8 @@
 #include "ELF32Binary.h"
 #include "Time.h"
 #include "Clock.h"
+#include "date/date.h"
+#include "date/tz.h"
 
 using CmdStr = std::string;
 
@@ -367,6 +369,20 @@ static const char* _StringForLEDs(MSP::LEDs x) {
     abort();
 }
 
+static std::string _StringForTimeInstant(Time::Instant t) {
+    std::stringstream ss;
+    if (Time::Absolute(t)) {
+        const date::time_zone& tz = *date::current_zone();
+        const auto tpDevice = Time::Clock::TimePointFromTimeInstant(t);
+        const auto tpLocal = tz.to_local(date::clock_cast<std::chrono::system_clock>(tpDevice));
+        ss << tpLocal;
+        ss << " (0x" << std::setfill('0') << std::setw(16) << std::hex << t << ")";
+    } else {
+        ss << "0x" << std::setfill('0') << std::setw(16) << std::hex << t << " [relative]";
+    }
+    return ss.str();
+}
+
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     // Read the device state
     MSP::State state = device.mspStateRead();
@@ -416,7 +432,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(         "    event\n");
     for (auto it=std::begin(triggers.event); it!=std::begin(triggers.event)+triggers.eventCount; it++) {
         printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.event));
-        printf(     "        time:                  0x%jx\n",     (uintmax_t)it->time);
+        printf(     "        time:                  %s\n",        _StringForTimeInstant(it->time).c_str());
         printf(     "        type:                  %s\n",        _StringForTriggerEventType(it->type));
         printf(     "        repeat\n");
         printf(     "          type:                %s\n",        _StringForRepeatType(it->repeat.type));
@@ -470,7 +486,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         if (!abort.count) break;
         printf(     "  #%ju\n",                                 (uintmax_t)i);
         printf(     "    type\n");
-        printf(     "      domain:              %ju\n",         (uintmax_t)abort.type.domain);
+        printf(     "      domain:              %s\n",          MSP::StringForAbortDomain(abort.type.domain));
         printf(     "      line:                %ju\n",         (uintmax_t)abort.type.line);
         printf(     "    earliest:              0x%jx\n",       (uintmax_t)abort.earliest);
         printf(     "    latest:                0x%jx\n",       (uintmax_t)abort.latest);
@@ -485,33 +501,30 @@ static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
 }
 
 static void MSPTimeGet(const Args& args, MDCUSBDevice& device) {
+    using namespace std::chrono;
+    using namespace date;
+    
     printf("MSPTimeGet:\n");
     const Time::Instant deviceTimeInstant = device.mspTimeGet();
     const Time::Clock::time_point actualTime = Time::Clock::now();
     const Time::Instant actualTimeInstant = Time::Clock::TimeInstantFromTimePoint(actualTime);
     
+    std::cout <<        "     MDC time: " << _StringForTimeInstant(deviceTimeInstant) << "\n";
+    std::cout <<        "  Actual time: " << _StringForTimeInstant(actualTimeInstant) << "\n";
+    
     if (Time::Absolute(deviceTimeInstant)) {
-        using namespace std::chrono;
-        using namespace date;
         const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(deviceTimeInstant);
         const microseconds delta = deviceTime-actualTime;
-        
-        printf("   MDC time: 0x%016jx\n", (uintmax_t)deviceTimeInstant);
-        printf("Actual time: 0x%016jx\n", (uintmax_t)actualTimeInstant);
-        printf("      Delta: %+jd us\n",  (intmax_t)delta.count());
-        printf("\n");
-    
-    } else {
-        printf("   MDC time: 0x%016jx [relative]\n", (uintmax_t)deviceTimeInstant);
-        printf("Actual time: 0x%016jx\n", (uintmax_t)actualTimeInstant);
-        printf("\n");
+        std::cout <<    "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
     }
+    
+    std::cout <<    "\n";
 }
 
 static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
     const Time::Clock::time_point now = Time::Clock::now();
     const Time::Instant timeInstant = Time::Clock::TimeInstantFromTimePoint(now);
-    printf("MSPTimeSet: 0x%016jx\n", (uintmax_t)timeInstant);
+    std::cout << "MSPTimeSet: " << _StringForTimeInstant(timeInstant) << "\n";
     device.mspTimeSet(timeInstant);
 }
 
