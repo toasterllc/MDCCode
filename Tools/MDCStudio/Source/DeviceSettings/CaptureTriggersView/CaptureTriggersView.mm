@@ -789,18 +789,19 @@ static uint8_t _DaysOfWeekAdvance(uint8_t x, int dir) {
 //
 // For example, to get the same date as `tp` but N years in the future:
 //
-//   - if 0 is returned:
-//       - for N=1, 366                 days must be added to `tp`
-//       - for N=2, 366+365             days must be added to `tp`
-//       - for N=3, 366+365+365         days must be added to `tp`
-//       - for N=4, 366+365+365+365     days must be added to `tp`
-//       - for N=5, 366+365+365+365+366 days must be added to `tp`
-//   - if 1 is returned:
-//       - for N=1, 365                 days must be added to `tp`
-//       - for N=2, 365+366             days must be added to `tp`
-//       - for N=3, 365+366+365         days must be added to `tp`
-//       - for N=4, 365+366+365+365     days must be added to `tp`
-//       - for N=5, 365+366+365+365+365 days must be added to `tp`
+//   - if _LeapYearPhase() returns 0:
+//       - to add 1 year  to `tp`, add 366                 days
+//       - to add 2 years to `tp`, add 366+365             days
+//       - to add 3 years to `tp`, add 366+365+365         days
+//       - to add 4 years to `tp`, add 366+365+365+365     days
+//       - to add 5 years to `tp`, add 366+365+365+365+366 days
+//
+//   - if _LeapYearPhase() returns 1:
+//       - to add 1 year  to `tp`, add 365                 days
+//       - to add 2 years to `tp`, add 365+366             days
+//       - to add 3 years to `tp`, add 365+366+365         days
+//       - to add 4 years to `tp`, add 365+366+365+365     days
+//       - to add 5 years to `tp`, add 365+366+365+365+365 days
 //   ... and so on ...
 static uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_seconds& tp) {
     using namespace std::chrono;
