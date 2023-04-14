@@ -919,6 +919,7 @@ struct _TaskI2C {
         case Cmd::Op::StateWrite: {
             const size_t off = cmd.arg.StateWrite.off;
             if (off > sizeof(_State)) return MSP::Resp{ .ok = false };
+            FRAMWriteEn writeEn; // Enable FRAM writing
             const size_t rem = sizeof(_State)-off;
             const size_t len = std::min(rem, sizeof(MSP::Cmd::arg.StateWrite.data));
             memcpy((uint8_t*)&_State+off, cmd.arg.StateWrite.data, len);

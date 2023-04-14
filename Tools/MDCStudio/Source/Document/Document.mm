@@ -544,8 +544,18 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     
     // Save settings to device if user so desires
     if (save) {
-        const MSP::Settings settings = [_deviceSettings.view settings];
-        _deviceSettings.device->settings(settings);
+        try {
+            const MSP::Settings settings = [_deviceSettings.view settings];
+            _deviceSettings.device->settings(settings);
+        
+        } catch (const std::exception& e) {
+            NSAlert* alert = [NSAlert new];
+            [alert setAlertStyle:NSAlertStyleCritical];
+            [alert setMessageText:@"An error occurred when trying to save these settings"];
+            [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
+            [alert beginSheetModalForWindow:[view window] completionHandler:nil];
+            return;
+        }
     }
     
     [_window endSheet:[_deviceSettings.view window]];

@@ -338,11 +338,21 @@ static void MSPHostModeSet(const Args& args, MDCUSBDevice& device) {
 }
 
 static const char* _StringForRepeatType(MSP::Repeat::Type x) {
+    using X = MSP::Repeat::Type;
     switch (x) {
-    case MSP::Repeat::Type::Never: return "Never"; break;
-    case MSP::Repeat::Type::Daily: return "Daily"; break;
-    case MSP::Repeat::Type::Weekly: return "Weekly"; break;
-    case MSP::Repeat::Type::Yearly: return "Yearly"; break;
+    case X::Never:  return "Never";  break;
+    case X::Daily:  return "Daily";  break;
+    case X::Weekly: return "Weekly"; break;
+    case X::Yearly: return "Yearly"; break;
+    }
+    abort();
+}
+
+static const char* _StringForTriggerEventType(MSP::Triggers::Event::Type x) {
+    using X = MSP::Triggers::Event::Type;
+    switch (x) {
+    case X::TimeTrigger:  return "TimeTrigger";
+    case X::MotionEnable: return "MotionEnable";
     }
     abort();
 }
@@ -397,8 +407,8 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     for (auto it=std::begin(triggers.event); it!=std::begin(triggers.event)+triggers.eventCount; it++) {
         printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.event));
         printf(     "        time:                  0x%jx\n",     (uintmax_t)it->time);
-        printf(     "        type:                  %ju\n",       (uintmax_t)it->type);
-        printf(     "        repeat:\n");
+        printf(     "        type:                  %s\n",        _StringForTriggerEventType(it->type));
+        printf(     "        repeat\n");
         printf(     "          type:                %s\n",        _StringForRepeatType(it->repeat.type));
         printf(     "          arg:                 0x%jx\n",     (uintmax_t)it->repeat.Daily.interval);
         printf(     "        idx:                   %ju\n",       (uintmax_t)it->idx);
@@ -407,7 +417,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(         "    timeTrigger\n");
     for (auto it=std::begin(triggers.timeTrigger); it!=std::begin(triggers.timeTrigger)+triggers.timeTriggerCount; it++) {
         printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.timeTrigger));
-        printf(     "        capture:\n");
+        printf(     "        capture\n");
         printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
         printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
     }
@@ -415,7 +425,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(         "    motionTrigger\n");
     for (auto it=std::begin(triggers.motionTrigger); it!=std::begin(triggers.motionTrigger)+triggers.motionTriggerCount; it++) {
         printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.motionTrigger));
-        printf(     "        capture:\n");
+        printf(     "        capture\n");
         printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
         printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
         printf(     "        count:                 %ju\n",       (uintmax_t)it->count);
@@ -426,7 +436,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(         "    buttonTrigger\n");
     for (auto it=std::begin(triggers.buttonTrigger); it!=std::begin(triggers.buttonTrigger)+triggers.buttonTriggerCount; it++) {
         printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.buttonTrigger));
-        printf(     "        capture:\n");
+        printf(     "        capture\n");
         printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
         printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
     }
@@ -446,7 +456,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     for (const auto& abort : state.aborts) {
         if (!abort.count) break;
         printf(     "  #%ju\n",                                 (uintmax_t)i);
-        printf(     "    type:\n");
+        printf(     "    type\n");
         printf(     "      domain:              %ju\n",         (uintmax_t)abort.type.domain);
         printf(     "      line:                %ju\n",         (uintmax_t)abort.type.line);
         printf(     "    earliest:              0x%jx\n",       (uintmax_t)abort.earliest);
