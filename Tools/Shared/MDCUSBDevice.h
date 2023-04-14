@@ -295,10 +295,10 @@ public:
                 .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
             };
             _sendCmd(cmd);
-            _checkStatus("MSPStateRead command failed (header)");
             
             MSP::State::Header header;
             _dev.read(STM::Endpoint::DataIn, header);
+            _checkStatus("MSPStateRead command failed (header)");
             
             if (header.magic != MSP::StateHeader.magic) {
                 throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
@@ -329,10 +329,10 @@ public:
                 .arg = { .MSPStateRead = { .len = sizeof(MSP::State) } },
             };
             _sendCmd(cmd);
-            _checkStatus("MSPStateRead command failed (header+payload)");
             
             MSP::State state;
             _dev.read(STM::Endpoint::DataIn, state);
+            _checkStatus("MSPStateRead command failed (header+payload)");
             
             return state;
         }

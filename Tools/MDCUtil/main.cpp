@@ -337,62 +337,124 @@ static void MSPHostModeSet(const Args& args, MDCUSBDevice& device) {
     device.mspHostModeSet(args.MSPHostModeSet.en);
 }
 
+static const char* _StringForRepeatType(MSP::Repeat::Type x) {
+    switch (x) {
+    case MSP::Repeat::Type::Never: return "Never"; break;
+    case MSP::Repeat::Type::Daily: return "Daily"; break;
+    case MSP::Repeat::Type::Weekly: return "Weekly"; break;
+    case MSP::Repeat::Type::Yearly: return "Yearly"; break;
+    }
+    abort();
+}
+
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     // Read the device state
     MSP::State state = device.mspStateRead();
     
-    printf(     "header\n");
-    printf(     "  magic:                   0x%08jx\n",     (uintmax_t)state.header.magic);
-    printf(     "  version:                 0x%04jx\n",     (uintmax_t)state.header.version);
-    printf(     "  length:                  0x%04jx\n",     (uintmax_t)state.header.length);
-    printf(     "\n");
+    printf(         "header\n");
+    printf(         "  magic:                   0x%08jx\n",     (uintmax_t)state.header.magic);
+    printf(         "  version:                 0x%04jx\n",     (uintmax_t)state.header.version);
+    printf(         "  length:                  0x%04jx\n",     (uintmax_t)state.header.length);
+    printf(         "\n");
     
-    printf(     "sd\n");
-    printf(     "  cardId\n");
-    printf(     "    manufacturerId:        0x%02jx\n",     (uintmax_t)state.sd.cardId.manufacturerId);
-    printf(     "    oemId:                 0x%02jx\n",     (uintmax_t)state.sd.cardId.oemId);
-    printf(     "    productName:           %c%c%c%c%c\n",  state.sd.cardId.productName[0],
-                                                            state.sd.cardId.productName[1],
-                                                            state.sd.cardId.productName[2],
-                                                            state.sd.cardId.productName[3],
-                                                            state.sd.cardId.productName[4]);
-    printf(     "    productRevision:       0x%02jx\n",     (uintmax_t)state.sd.cardId.productRevision);
-    printf(     "    productSerialNumber:   0x%08jx\n",     (uintmax_t)state.sd.cardId.productSerialNumber);
-    printf(     "    manufactureDate:       0x%04jx\n",     (uintmax_t)state.sd.cardId.manufactureDate);
-    printf(     "    crc:                   0x%02jx\n",     (uintmax_t)state.sd.cardId.crc);
+    printf(         "sd\n");
+    printf(         "  cardId\n");
+    printf(         "    manufacturerId:        0x%02jx\n",     (uintmax_t)state.sd.cardId.manufacturerId);
+    printf(         "    oemId:                 0x%02jx\n",     (uintmax_t)state.sd.cardId.oemId);
+    printf(         "    productName:           %c%c%c%c%c\n",  state.sd.cardId.productName[0],
+                                                                state.sd.cardId.productName[1],
+                                                                state.sd.cardId.productName[2],
+                                                                state.sd.cardId.productName[3],
+                                                                state.sd.cardId.productName[4]);
+    printf(         "    productRevision:       0x%02jx\n",     (uintmax_t)state.sd.cardId.productRevision);
+    printf(         "    productSerialNumber:   0x%08jx\n",     (uintmax_t)state.sd.cardId.productSerialNumber);
+    printf(         "    manufactureDate:       0x%04jx\n",     (uintmax_t)state.sd.cardId.manufactureDate);
+    printf(         "    crc:                   0x%02jx\n",     (uintmax_t)state.sd.cardId.crc);
     
-    printf(     "  imgCap:                  %ju\n",         (uintmax_t)state.sd.imgCap);
-    printf(     "  baseFull:                %ju\n",         (uintmax_t)state.sd.baseFull);
-    printf(     "  baseThumb:               %ju\n",         (uintmax_t)state.sd.baseThumb);
+    printf(         "  imgCap:                  %ju\n",         (uintmax_t)state.sd.imgCap);
+    printf(         "  baseFull:                %ju\n",         (uintmax_t)state.sd.baseFull);
+    printf(         "  baseThumb:               %ju\n",         (uintmax_t)state.sd.baseThumb);
     
-    printf(     "  imgRingBufs[0]\n");
-    printf(     "    buf\n");
-    printf(     "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.id);
-    printf(     "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.idx);
-    printf(     "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].valid);
+    printf(         "  imgRingBufs[0]\n");
+    printf(         "    buf\n");
+    printf(         "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.id);
+    printf(         "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.idx);
+    printf(         "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].valid);
     
-    printf(     "  imgRingBufs[1]\n");
-    printf(     "    buf\n");
-    printf(     "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.id);
-    printf(     "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.idx);
-    printf(     "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].valid);
-    printf(     "\n");
+    printf(         "  imgRingBufs[1]\n");
+    printf(         "    buf\n");
+    printf(         "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.id);
+    printf(         "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.idx);
+    printf(         "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].valid);
+    printf(         "\n");
     
-    printf(     "aborts\n");
+    printf(         "settings\n");
+    printf(         "  triggers\n");
+    
+    const auto& triggers = state.settings.triggers;
+    
+    printf(         "    event\n");
+    for (auto it=std::begin(triggers.event); it!=std::begin(triggers.event)+triggers.eventCount; it++) {
+        printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.event));
+        printf(     "        time:                  0x%jx\n",     (uintmax_t)it->time);
+        printf(     "        type:                  %ju\n",       (uintmax_t)it->type);
+        printf(     "        repeat:\n");
+        printf(     "          type:                %s\n",        _StringForRepeatType(it->repeat.type));
+        printf(     "          arg:                 0x%jx\n",     (uintmax_t)it->repeat.Daily.interval);
+        printf(     "        idx:                   %ju\n",       (uintmax_t)it->idx);
+    }
+    
+    printf(         "    timeTrigger\n");
+    for (auto it=std::begin(triggers.timeTrigger); it!=std::begin(triggers.timeTrigger)+triggers.timeTriggerCount; it++) {
+        printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.timeTrigger));
+        printf(     "        capture:\n");
+        printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
+        printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
+    }
+    
+    printf(         "    motionTrigger\n");
+    for (auto it=std::begin(triggers.motionTrigger); it!=std::begin(triggers.motionTrigger)+triggers.motionTriggerCount; it++) {
+        printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.motionTrigger));
+        printf(     "        capture:\n");
+        printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
+        printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
+        printf(     "        count:                 %ju\n",       (uintmax_t)it->count);
+        printf(     "        durationMs:            %ju\n",       (uintmax_t)it->durationMs);
+        printf(     "        suppressMs:            %ju\n",       (uintmax_t)it->suppressMs);
+    }
+    
+    printf(         "    buttonTrigger\n");
+    for (auto it=std::begin(triggers.buttonTrigger); it!=std::begin(triggers.buttonTrigger)+triggers.buttonTriggerCount; it++) {
+        printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.buttonTrigger));
+        printf(     "        capture:\n");
+        printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
+        printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
+    }
+    
+    printf(         "    source\n");
+    for (auto it=std::begin(triggers.source); it!=std::end(triggers.source);) {
+        printf(     "      ");
+        for (int i=0; i<16 && it!=std::end(triggers.source); i++, it++) {
+            printf("%02jx ", (uintmax_t)*it);
+        }
+        printf("\n");
+    }
+    printf(         "\n");
+    
+    printf(         "aborts\n");
     size_t i = 0;
     for (const auto& abort : state.aborts) {
         if (!abort.count) break;
-        
-        printf( "  #%ju\n",                                 (uintmax_t)i);
-        printf( "    type:\n");
-        printf( "      domain:              %ju\n",         (uintmax_t)abort.type.domain);
-        printf( "      line:                %ju\n",         (uintmax_t)abort.type.line);
-        printf( "    earliest:              0x%jx\n",       (uintmax_t)abort.earliest);
-        printf( "    latest:                0x%jx\n",       (uintmax_t)abort.latest);
-        printf( "    count:                 %ju\n",         (uintmax_t)abort.count);
+        printf(     "  #%ju\n",                                 (uintmax_t)i);
+        printf(     "    type:\n");
+        printf(     "      domain:              %ju\n",         (uintmax_t)abort.type.domain);
+        printf(     "      line:                %ju\n",         (uintmax_t)abort.type.line);
+        printf(     "    earliest:              0x%jx\n",       (uintmax_t)abort.earliest);
+        printf(     "    latest:                0x%jx\n",       (uintmax_t)abort.latest);
+        printf(     "    count:                 %ju\n",         (uintmax_t)abort.count);
         i++;
     }
-    printf(     "\n");
+    printf(         "\n");
 }
 
 static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
