@@ -77,6 +77,8 @@
 }
 
 - (IBAction)_actionOK:(id)sender {
+    // Commit changes for current field
+    [[self window] makeFirstResponder:nil];
     [_delegate deviceSettingsView:self dismiss:true];
 }
 

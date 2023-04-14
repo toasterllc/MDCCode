@@ -612,7 +612,7 @@ static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
     [self->_separatorLineOffset setConstant:(emptyMode ? 1000 : 8)];
 }
 
-static ListItem* _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger) {
+static ListItem* _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool select=false) {
     assert(self);
     NSTableView* tv = self->_tableView;
     ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
@@ -623,8 +623,10 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger)
     const size_t idx = self->_items.size()-1;
     NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
     [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
-    [tv selectRowIndexes:idxs byExtendingSelection:false];
-    [tv scrollRowToVisible:idx];
+    if (select) {
+        [tv selectRowIndexes:idxs byExtendingSelection:false];
+        [tv scrollRowToVisible:idx];
+    }
     
     _SetEmptyMode(self, false);
     return it;
@@ -706,13 +708,13 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
-    [self->_tableView registerForDraggedTypes:@[_PboardDragItemsType]];
-    [self->_tableView reloadData];
+    [_tableView registerForDraggedTypes:@[_PboardDragItemsType]];
+    [_tableView reloadData];
 //    _ListItemAdd(self, Trigger::Type::Time);
 //    _ListItemAdd(self, Trigger::Type::Motion);
 //    _ListItemAdd(self, _TriggerMake(Trigger::Type::Button));
     
-    [self->_dateSelector_Field setPlaceholderString:@(Calendar::DayOfYearPlaceholderString().c_str())];
+    [_dateSelector_Field setPlaceholderString:@(Calendar::DayOfYearPlaceholderString().c_str())];
     
     // By default, be in empty mode
     // We'll exit empty mode if we successfully deserialize the triggers
@@ -725,6 +727,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         for (auto it=std::begin(t.triggers); it!=std::begin(t.triggers)+t.count; it++) {
             _ListItemAdd(self, *it);
         }
+        if (t.count) [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:false];
     } catch (const std::exception& e) {
         printf("[CaptureTriggersView] Failed to deserailize triggers: %s\n", e.what());
     }
@@ -1156,15 +1159,15 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 }
 
 - (IBAction)_actionAddTimeTrigger:(id)sender {
-    _ListItemAdd(self, _TriggerMake(Trigger::Type::Time));
+    _ListItemAdd(self, _TriggerMake(Trigger::Type::Time), true);
 }
 
 - (IBAction)_actionAddMotionTrigger:(id)sender {
-    _ListItemAdd(self, _TriggerMake(Trigger::Type::Motion));
+    _ListItemAdd(self, _TriggerMake(Trigger::Type::Motion), true);
 }
 
 - (IBAction)_actionAddButtonTrigger:(id)sender {
-    _ListItemAdd(self, _TriggerMake(Trigger::Type::Button));
+    _ListItemAdd(self, _TriggerMake(Trigger::Type::Button), true);
 }
 
 - (IBAction)_actionRemove:(id)sender {
