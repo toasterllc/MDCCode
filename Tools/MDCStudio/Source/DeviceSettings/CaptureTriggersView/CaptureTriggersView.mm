@@ -862,12 +862,12 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
 //    const date::zoned_time now(date::current_zone(), system_clock::now());
     const date::time_zone& tz = *date::current_zone();
     const auto now = tz.to_local(system_clock::now());
+    const auto midnight = floor<date::days>(now);
     
     // Handle non-repeating events
     if (!repeat) {
-        const date::local_seconds tp = floor<date::days>(now);
         return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, tp),
+            .time = _TimeInstantForLocalTime(tz, midnight),
             .type = type,
             .repeat = { .type = MSP::Repeat::Type::Never, },
             .idx = idx,
@@ -875,10 +875,9 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
     }
     
     switch (repeat->type) {
-    case Repeat::Type::Daily: {
-        const date::local_seconds tp = floor<date::days>(now);
+    case Repeat::Type::Daily:
         return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, tp),
+            .time = _TimeInstantForLocalTime(tz, midnight),
             .type = type,
             .repeat = {
                 .type = MSP::Repeat::Type::Daily,
@@ -886,14 +885,13 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
             },
             .idx = idx,
         }};
-    }
     
     case Repeat::Type::DaysOfWeek: {
         // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
         // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
         // then it doesn't qualify.)
         date::local_seconds tp;
-        date::local_days day = floor<date::days>(now);
+        date::local_days day = midnight;
         for (;;) {
             tp = day+timeOfDay;
             // If `tp` is in the past and `day` is in x.DaysOfWeek, we're done
@@ -927,12 +925,11 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
     
     case Repeat::Type::DaysOfYear: {
         const auto daysOfYear = Calendar::VectorFromDaysOfYear(repeat->DaysOfYear);
-        const auto nowDays = floor<date::days>(now);
         std::vector<MSP::Triggers::Event> events;
         for (Calendar::DayOfYear doy : daysOfYear) {
             // Determine if doy's month+day of the current year is in the past.
             // If it's in the future, subtract one year and use that.
-            const date::year nowYear = date::year_month_day(nowDays).year();
+            const date::year nowYear = date::year_month_day(midnight).year();
             auto tp = date::local_days{ nowYear / doy.month() / doy.day() } + timeOfDay;
             if (tp >= now) {
                 tp = date::local_days{ (nowYear-date::years(1)) / doy.month() / doy.day() } + timeOfDay;
@@ -953,10 +950,9 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         return events;
     }
     
-    case Repeat::Type::DayInterval: {
-        #warning TODO: return time
+    case Repeat::Type::DayInterval:
         return { MSP::Triggers::Event{
-            .time = 0,
+            .time = _TimeInstantForLocalTime(tz, midnight),
             .type = type,
             .repeat = {
                 .type = MSP::Repeat::Type::Daily,
@@ -964,7 +960,6 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
             },
             .idx = idx,
         }};
-    }
     
     default:
         abort();
