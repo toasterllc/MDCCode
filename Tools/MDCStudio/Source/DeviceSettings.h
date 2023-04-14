@@ -69,7 +69,7 @@ struct [[gnu::packed]] Capture {
     LEDs flashLEDs;
 };
 
-struct [[gnu::packed]] CaptureTrigger {
+struct [[gnu::packed]] Trigger {
     enum class Type : uint8_t {
         Time,
         Motion,
@@ -120,12 +120,12 @@ struct [[gnu::packed]] CaptureTrigger {
     };
 };
 
-struct [[gnu::packed]] CaptureTriggers {
-    CaptureTrigger triggers[32] = {};
+struct [[gnu::packed]] Triggers {
+    Trigger triggers[32] = {};
     uint8_t count = 0;
 };
 
-struct [[gnu::packed]] CaptureTriggersSerialized {
+struct [[gnu::packed]] TriggersSerialized {
     static constexpr uint16_t Version = 0;
     static constexpr size_t Size = 256;
     union {
@@ -137,7 +137,7 @@ struct [[gnu::packed]] CaptureTriggersSerialized {
         uint8_t data[Size] = {};
     };
 };
-static_assert(sizeof(CaptureTriggersSerialized) == CaptureTriggersSerialized::Size);
+static_assert(sizeof(TriggersSerialized) == TriggersSerialized::Size);
 
 template<typename T>
 std::vector<uint8_t> _Compress(T begin, T end) {
@@ -177,50 +177,50 @@ std::vector<uint8_t> _Decompress(T begin, T end) {
 }
 
 template<typename T>
-inline void Serialize(T& data, const CaptureTriggers& x) {
-    static_assert(sizeof(data) == sizeof(CaptureTriggersSerialized));
+inline void Serialize(T& data, const Triggers& x) {
+    static_assert(sizeof(data) == sizeof(TriggersSerialized));
     
-    CaptureTriggersSerialized s = {
-        .version = CaptureTriggersSerialized::Version,
+    TriggersSerialized s = {
+        .version = TriggersSerialized::Version,
     };
     
-    // CaptureTriggers -> CaptureTriggersSerialized
+    // Triggers -> TriggersSerialized
     {
         auto d = _Compress((uint8_t*)&x, (uint8_t*)&x+sizeof(x));
         if (d.size() > sizeof(s.payload)) {
-            throw Toastbox::RuntimeError("data doesn't fit in CaptureTriggersSerialized (length: %ju, capacity: %ju)",
+            throw Toastbox::RuntimeError("data doesn't fit in TriggersSerialized (length: %ju, capacity: %ju)",
                 (uintmax_t)d.size(), (uintmax_t)sizeof(s.payload));
         }
         memcpy(s.payload, d.data(), d.size());
     }
     
-    // CaptureTriggersSerialized -> data
+    // TriggersSerialized -> data
     {
         memcpy(&data, &s, sizeof(s));
     }
 }
 
 template<typename T>
-inline void Deserialize(CaptureTriggers& x, const T& data) {
-    static_assert(sizeof(data) == sizeof(CaptureTriggersSerialized));
+inline void Deserialize(Triggers& x, const T& data) {
+    static_assert(sizeof(data) == sizeof(TriggersSerialized));
     
-    CaptureTriggersSerialized s;
+    TriggersSerialized s;
     
-    // data -> CaptureTriggersSerialized
+    // data -> TriggersSerialized
     {
         memcpy(&s, &data, sizeof(data));
         
-        if (s.version != CaptureTriggersSerialized::Version) {
-            throw Toastbox::RuntimeError("CaptureTriggersSerialized version invalid (expected: %ju, got: %ju)",
-                (uintmax_t)CaptureTriggersSerialized::Version, (uintmax_t)s.version);
+        if (s.version != TriggersSerialized::Version) {
+            throw Toastbox::RuntimeError("TriggersSerialized version invalid (expected: %ju, got: %ju)",
+                (uintmax_t)TriggersSerialized::Version, (uintmax_t)s.version);
         }
     }
     
-    // CaptureTriggersSerialized -> CaptureTriggers
+    // TriggersSerialized -> Triggers
     {
         auto d = _Decompress(s.payload, s.payload+sizeof(s.payload));
         if (d.size() != sizeof(x)) {
-            throw Toastbox::RuntimeError("deserialized data length doesn't match sizeof(CaptureTriggers) (expected: %ju, got: %ju)",
+            throw Toastbox::RuntimeError("deserialized data length doesn't match sizeof(Triggers) (expected: %ju, got: %ju)",
                 (uintmax_t)sizeof(x), (uintmax_t)d.size());
         }
         memcpy(&x, d.data(), d.size());
@@ -519,11 +519,11 @@ inline void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
     triggers.eventCount += events.size();
 }
 
-inline MSP::Triggers Convert(const CaptureTriggers& triggers) {
+inline MSP::Triggers Convert(const Triggers& triggers) {
     MSP::Triggers t;
     for (auto it=std::begin(triggers.triggers); it!=std::begin(triggers.triggers)+triggers.count; it++) {
         switch (it->type) {
-        case CaptureTrigger::Type::Time: {
+        case Trigger::Type::Time: {
             // Make sure there's an available slot for the trigger
             if (t.timeTriggerCount >= std::size(t.timeTrigger)) {
                 throw Toastbox::RuntimeError("no remaining time triggers");
@@ -547,7 +547,7 @@ inline MSP::Triggers Convert(const CaptureTriggers& triggers) {
             break;
         }
         
-        case CaptureTrigger::Type::Motion: {
+        case Trigger::Type::Motion: {
             // Make sure there's an available slot for the trigger
             if (t.motionTriggerCount >= std::size(t.motionTrigger)) {
                 throw Toastbox::RuntimeError("no remaining motion triggers");
@@ -578,7 +578,7 @@ inline MSP::Triggers Convert(const CaptureTriggers& triggers) {
             break;
         }
         
-        case CaptureTrigger::Type::Button: {
+        case Trigger::Type::Button: {
             // Make sure there's an available slot for the trigger
             if (t.buttonTriggerCount >= std::size(t.buttonTrigger)) {
                 throw Toastbox::RuntimeError("no remaining button triggers");

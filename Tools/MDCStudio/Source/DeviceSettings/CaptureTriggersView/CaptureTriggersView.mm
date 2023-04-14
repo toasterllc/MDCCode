@@ -46,7 +46,7 @@ static const Calendar::DaysOfYear _DaysOfYearInit = Calendar::DaysOfYearFromVect
 
 static constexpr DayInterval _DayIntervalInit = DayInterval{ 2 };
 
-//static Repeat& _TriggerRepeatGet(CaptureTrigger& t) {
+//static Repeat& _TriggerRepeatGet(Trigger& t) {
 //    switch (t.type) {
 //    case Type::Time:   return t.time.schedule.repeat;
 //    case Type::Motion: return t.motion.schedule.repeat;
@@ -73,10 +73,10 @@ static void _TriggerInitRepeat(Repeat& x) {
     }
 }
 
-static void _TriggerInit(CaptureTrigger& t, CaptureTrigger::Type type) {
+static void _TriggerInit(Trigger& t, Trigger::Type type) {
     t.type = type;
     switch (t.type) {
-    case CaptureTrigger::Type::Time: {
+    case Trigger::Type::Time: {
         auto& x = t.time;
         
         x.schedule = {
@@ -98,7 +98,7 @@ static void _TriggerInit(CaptureTrigger& t, CaptureTrigger::Type type) {
         break;
     }
     
-    case CaptureTrigger::Type::Motion: {
+    case Trigger::Type::Motion: {
         auto& x = t.motion;
         
         x.schedule = {
@@ -138,7 +138,7 @@ static void _TriggerInit(CaptureTrigger& t, CaptureTrigger::Type type) {
         break;
     }
     
-    case CaptureTrigger::Type::Button: {
+    case Trigger::Type::Button: {
         auto& x = t.button;
         
         x.capture = {
@@ -157,8 +157,8 @@ static void _TriggerInit(CaptureTrigger& t, CaptureTrigger::Type type) {
     }
 }
 
-static CaptureTrigger _TriggerMake(CaptureTrigger::Type type) {
-    CaptureTrigger x;
+static Trigger _TriggerMake(Trigger::Type type) {
+    Trigger x;
     _TriggerInit(x, type);
     return x;
 }
@@ -270,7 +270,7 @@ static Repeat::Type RepeatTypeFromString(std::string x) {
     IBOutlet NSTextField* _descriptionLabel;
     IBOutlet NSLayoutConstraint* _titleCenterYConstraint;
 @public
-    CaptureTrigger trigger;
+    Trigger trigger;
 }
 
 static const char* _SuffixForDurationUnit(DeviceSettings::Duration::Unit x) {
@@ -402,17 +402,17 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
 - (void)updateView {
     // Image, title
     switch (trigger.type) {
-    case CaptureTrigger::Type::Time:
+    case Trigger::Type::Time:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Time-Large"]];
         [_titlePrefixLabel setStringValue: @"At"];
         [_titleLabel setStringValue: @((Calendar::StringFromTimeOfDay(trigger.time.schedule.time) + ",").c_str())];
         break;
-    case CaptureTrigger::Type::Motion:
+    case Trigger::Type::Motion:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Motion-Large"]];
         [_titlePrefixLabel setStringValue: @"On"];
         [_titleLabel setStringValue:@"motion,"];
         break;
-    case CaptureTrigger::Type::Button:
+    case Trigger::Type::Button:
         [_imageView setImage:[NSImage imageNamed:@"CaptureTriggers-Icon-Button-Large"]];
         [_titlePrefixLabel setStringValue: @"On"];
         [_titleLabel setStringValue:@"button press,"];
@@ -424,13 +424,13 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     // Subtitle
     std::string subtitle;
     switch (trigger.type) {
-    case CaptureTrigger::Type::Time: {
+    case Trigger::Type::Time: {
         auto& x = trigger.time;
         subtitle = _Capitalize(_RepeatDescription(x.schedule.repeat));
         break;
     }
     
-    case CaptureTrigger::Type::Motion: {
+    case Trigger::Type::Motion: {
         auto& x = trigger.motion;
         auto& repeat = trigger.motion.schedule.repeat;
         if (repeat.type != Repeat::Type::Daily) {
@@ -444,7 +444,7 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
         break;
     }
     
-    case CaptureTrigger::Type::Button: {
+    case Trigger::Type::Button: {
         break;
     }
     
@@ -464,19 +464,19 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     
     // Description
     switch (trigger.type) {
-    case CaptureTrigger::Type::Time: {
+    case Trigger::Type::Time: {
         auto& x = trigger.time;
         [_descriptionLabel setStringValue:@(_CaptureDescription(x.capture).c_str())];
         break;
     }
     
-    case CaptureTrigger::Type::Motion: {
+    case Trigger::Type::Motion: {
         auto& x = trigger.motion;
         [_descriptionLabel setStringValue:@(_CaptureDescription(x.capture).c_str())];
         break;
     }
     
-    case CaptureTrigger::Type::Button: {
+    case Trigger::Type::Button: {
         auto& x = trigger.button;
         [_descriptionLabel setStringValue:@(_CaptureDescription(x.capture).c_str())];
         break;
@@ -612,7 +612,7 @@ static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
     [self->_separatorLineOffset setConstant:(emptyMode ? 1000 : 8)];
 }
 
-static ListItem* _ListItemAdd(CaptureTriggersView* self, const CaptureTrigger& trigger) {
+static ListItem* _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger) {
     assert(self);
     NSTableView* tv = self->_tableView;
     ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
@@ -631,11 +631,11 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, const CaptureTrigger& t
 }
 
 
-//static ListItem* _ListItemAdd(CaptureTriggersView* self, CaptureTrigger::Type type) {
+//static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
 //    assert(self);
 //    NSTableView* tv = self->_tableView;
 //    ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
-//    CaptureTrigger& t = it->trigger;
+//    Trigger& t = it->trigger;
 //    _TriggerInit(t, type);
 //    [it updateView];
 //    
@@ -708,9 +708,9 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     
     [self->_tableView registerForDraggedTypes:@[_PboardDragItemsType]];
     [self->_tableView reloadData];
-//    _ListItemAdd(self, CaptureTrigger::Type::Time);
-//    _ListItemAdd(self, CaptureTrigger::Type::Motion);
-//    _ListItemAdd(self, _TriggerMake(CaptureTrigger::Type::Button));
+//    _ListItemAdd(self, Trigger::Type::Time);
+//    _ListItemAdd(self, Trigger::Type::Motion);
+//    _ListItemAdd(self, _TriggerMake(Trigger::Type::Button));
     
     [self->_dateSelector_Field setPlaceholderString:@(Calendar::DayOfYearPlaceholderString().c_str())];
     
@@ -720,7 +720,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     
     // Deserialize data
     try {
-        CaptureTriggers t;
+        Triggers t;
         Deserialize(t, triggers.source);
         for (auto it=std::begin(t.triggers); it!=std::begin(t.triggers)+t.count; it++) {
             _ListItemAdd(self, *it);
@@ -732,8 +732,8 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     return self;
 }
 
-- (CaptureTriggers)_triggers {
-    CaptureTriggers triggers;
+- (Triggers)_triggers {
+    Triggers triggers;
     triggers.count = _items.size();
     size_t i = 0;
     for (ListItem* it : _items) {
@@ -1004,10 +1004,10 @@ static void _Copy(Capture& x, CaptureTriggersView* view) {
 }
 
 template<bool T_Forward>
-static void _Copy(CaptureTrigger& trigger, CaptureTriggersView* view) {
+static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
     auto& v = *view;
     switch (trigger.type) {
-    case CaptureTrigger::Type::Time: {
+    case Trigger::Type::Time: {
         auto& x = trigger.time;
         
         // Schedule
@@ -1030,7 +1030,7 @@ static void _Copy(CaptureTrigger& trigger, CaptureTriggersView* view) {
         break;
     }
     
-    case CaptureTrigger::Type::Motion: {
+    case Trigger::Type::Motion: {
         auto& x = trigger.motion;
         
         // Schedule
@@ -1072,7 +1072,7 @@ static void _Copy(CaptureTrigger& trigger, CaptureTriggersView* view) {
         break;
     }
     
-    case CaptureTrigger::Type::Button: {
+    case Trigger::Type::Button: {
         auto& x = trigger.button;
         
         // Schedule
@@ -1104,11 +1104,11 @@ static void _Copy(CaptureTrigger& trigger, CaptureTriggersView* view) {
     return _items.at(idx);
 }
 
-static void _Store(CaptureTriggersView* self, CaptureTrigger& trigger) {
+static void _Store(CaptureTriggersView* self, Trigger& trigger) {
     _Copy<false>(trigger, self);
 }
 
-static void _Load(CaptureTriggersView* self, CaptureTrigger& trigger) {
+static void _Load(CaptureTriggersView* self, Trigger& trigger) {
     _Copy<true>(trigger, self);
     [[self window] recalculateKeyViewLoop];
 }
@@ -1122,7 +1122,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     NSLog(@"_actionViewChanged");
     ListItem* it = [self _selectedItem];
     if (!it) return;
-    CaptureTrigger& trigger = it->trigger;
+    Trigger& trigger = it->trigger;
     
     // Commit editing the active editor
     if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
@@ -1137,8 +1137,8 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     
     if (initRepeat) {
         switch (trigger.type) {
-        case CaptureTrigger::Type::Time:   _TriggerInitRepeat(trigger.time.schedule.repeat); break;
-        case CaptureTrigger::Type::Motion: _TriggerInitRepeat(trigger.motion.schedule.repeat); break;
+        case Trigger::Type::Time:   _TriggerInitRepeat(trigger.time.schedule.repeat); break;
+        case Trigger::Type::Motion: _TriggerInitRepeat(trigger.motion.schedule.repeat); break;
         default:                    abort();
         }
     }
@@ -1156,15 +1156,15 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 }
 
 - (IBAction)_actionAddTimeTrigger:(id)sender {
-    _ListItemAdd(self, _TriggerMake(CaptureTrigger::Type::Time));
+    _ListItemAdd(self, _TriggerMake(Trigger::Type::Time));
 }
 
 - (IBAction)_actionAddMotionTrigger:(id)sender {
-    _ListItemAdd(self, _TriggerMake(CaptureTrigger::Type::Motion));
+    _ListItemAdd(self, _TriggerMake(Trigger::Type::Motion));
 }
 
 - (IBAction)_actionAddButtonTrigger:(id)sender {
-    _ListItemAdd(self, _TriggerMake(CaptureTrigger::Type::Button));
+    _ListItemAdd(self, _TriggerMake(Trigger::Type::Button));
 }
 
 - (IBAction)_actionRemove:(id)sender {
