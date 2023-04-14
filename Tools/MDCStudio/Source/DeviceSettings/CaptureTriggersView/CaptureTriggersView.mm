@@ -827,6 +827,12 @@ static uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_secon
     abort();
 }
 
+static Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz, const date::local_seconds& tp) {
+    const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
+    const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
+    return Time::Clock::TimeInstantFromTimePoint(tpDevice);
+}
+
 static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type, Calendar::TimeOfDay timeOfDay, const Repeat* repeat, uint8_t idx) {
 //    enum class Type : uint8_t {
 //        None,
@@ -859,9 +865,9 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
     
     // Handle non-repeating events
     if (!repeat) {
+        const date::local_seconds tp = floor<date::days>(now);
         return { MSP::Triggers::Event{
-            #warning TODO: implement time field -- use the most recent `time` that's in the past
-            .time = 0,
+            .time = _TimeInstantForLocalTime(tz, tp),
             .type = type,
             .repeat = { .type = MSP::Repeat::Type::Never, },
             .idx = idx,
@@ -869,10 +875,10 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
     }
     
     switch (repeat->type) {
-    case Repeat::Type::Daily:
-        #warning TODO: implement time field
+    case Repeat::Type::Daily: {
+        const date::local_seconds tp = floor<date::days>(now);
         return { MSP::Triggers::Event{
-            .time = 0,
+            .time = _TimeInstantForLocalTime(tz, tp),
             .type = type,
             .repeat = {
                 .type = MSP::Repeat::Type::Daily,
@@ -880,17 +886,18 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
             },
             .idx = idx,
         }};
+    }
     
     case Repeat::Type::DaysOfWeek: {
         // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
         // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
         // then it doesn't qualify.)
-        system_clock::time_point timeSys;
-        date::sys_days day = floor<date::days>(now);
+        date::local_seconds tp;
+        date::local_days day = floor<date::days>(now);
         for (;;) {
-            timeSys = day+time;
-            // If `timeSys` is in the past and `day` is in x.DaysOfWeek, we're done
-            if (timeSys<now && DaysOfWeekGet(repeat->DaysOfWeek, day)) {
+            tp = day+timeOfDay;
+            // If `tp` is in the past and `day` is in x.DaysOfWeek, we're done
+            if (tp<now && DaysOfWeekGet(repeat->DaysOfWeek, Calendar::DayOfWeek(day))) {
                 break;
             }
             day -= date::days(1);
@@ -901,17 +908,14 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         // that we return and the days bitfield need to be aligned so that they
         // represent the same day.
         uint8_t days = repeat->DaysOfWeek.x;
-        for (Calendar::DayOfWeek i=Calendar::DayOfWeek(0); i!=day; i--) {
+        for (Calendar::DayOfWeek i=Calendar::DayOfWeek(0); i!=Calendar::DayOfWeek(day); i--) {
             days = _DaysOfWeekAdvance(days, -1);
         }
         // Low bit of `days` should be set, otherwise it's a logic bug
         assert(days & 1);
         
-        const auto timeDevice = date::clock_cast<Time::Clock>(timeSys);
-        const Time::Instant timeInstant = Time::Clock::TimeInstantFromTimePoint(timeDevice);
-        
         return { MSP::Triggers::Event{
-            .time = timeInstant,
+            .time = _TimeInstantForLocalTime(tz, tp),
             .type = type,
             .repeat = {
                 .type = MSP::Repeat::Type::Weekly,
@@ -936,11 +940,8 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
                 assert(tp < now);
             }
             
-            const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
-            const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
-            const Time::Instant timeInstant = Time::Clock::TimeInstantFromTimePoint(tpDevice);
             events.push_back({
-                .time = timeInstant,
+                .time = _TimeInstantForLocalTime(tz, tp),
                 .type = type,
                 .repeat = {
                     .type = MSP::Repeat::Type::Yearly,
