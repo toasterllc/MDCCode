@@ -827,47 +827,33 @@ static uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_secon
     abort();
 }
 
+// _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
+template<typename T>
+static date::local_seconds _PastTime(const T& now, Calendar::TimeOfDay timeOfDay) {
+    const auto midnight = floor<date::days>(now);
+    const auto t = midnight+timeOfDay;
+    if (t < now) return t;
+    return t-date::days(1);
+}
+
 static Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz, const date::local_seconds& tp) {
     const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
     const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
     return Time::Clock::TimeInstantFromTimePoint(tpDevice);
 }
 
-static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type, Calendar::TimeOfDay timeOfDay, const Repeat* repeat, uint8_t idx) {
-//    enum class Type : uint8_t {
-//        None,
-//        Daily,
-//        Weekly,
-//        Yearly,
-//    };
-//    
-//    Type type = Type::None;
-//    union [[gnu::packed]] {
-//        struct [[gnu::packed]] {
-//            uint8_t interval;
-//        } Daily;
-//        
-//        struct [[gnu::packed]] {
-//            uint8_t days;
-//        } Weekly;
-//        
-//        struct [[gnu::packed]] {
-//            uint8_t leapPhase;
-//        } Yearly;
-//    };
+static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type,
+    Calendar::TimeOfDay timeOfDay, const Repeat* repeat, uint8_t idx) {
     
     using namespace std::chrono;
-//    const auto now = system_clock::now();
-    
-//    const date::zoned_time now(date::current_zone(), system_clock::now());
     const date::time_zone& tz = *date::current_zone();
     const auto now = tz.to_local(system_clock::now());
-    const auto midnight = floor<date::days>(now);
+    const auto pastTimeOfDay = _PastTime(now, timeOfDay);
     
     // Handle non-repeating events
     if (!repeat) {
         return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, midnight),
+            .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
             .type = type,
             .repeat = { .type = MSP::Repeat::Type::Never, },
             .idx = idx,
@@ -877,7 +863,7 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
     switch (repeat->type) {
     case Repeat::Type::Daily:
         return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, midnight),
+            .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
             .type = type,
             .repeat = {
                 .type = MSP::Repeat::Type::Daily,
@@ -890,8 +876,9 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
         // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
         // then it doesn't qualify.)
-        date::local_seconds tp;
+        const date::local_days midnight = floor<date::days>(now);
         date::local_days day = midnight;
+        date::local_seconds tp;
         for (;;) {
             tp = day+timeOfDay;
             // If `tp` is in the past and `day` is in x.DaysOfWeek, we're done
@@ -929,7 +916,7 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         for (Calendar::DayOfYear doy : daysOfYear) {
             // Determine if doy's month+day of the current year is in the past.
             // If it's in the future, subtract one year and use that.
-            const date::year nowYear = date::year_month_day(midnight).year();
+            const date::year nowYear = date::year_month_day(floor<date::days>(now)).year();
             auto tp = date::local_days{ nowYear / doy.month() / doy.day() } + timeOfDay;
             if (tp >= now) {
                 tp = date::local_days{ (nowYear-date::years(1)) / doy.month() / doy.day() } + timeOfDay;
@@ -952,7 +939,7 @@ static std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
     
     case Repeat::Type::DayInterval:
         return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, midnight),
+            .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
             .type = type,
             .repeat = {
                 .type = MSP::Repeat::Type::Daily,
@@ -1010,7 +997,7 @@ Ms _MotionSuppressMs(const T& x) {
 }
 
 template<typename T>
-Calendar::TimeOfDay _MotionTime(const T& x) {
+Calendar::TimeOfDay _MotionTimeOfDay(const T& x) {
     if (!x.schedule.timeRange.enable) return {}; // Midnight
     return x.schedule.timeRange.start;
 }
@@ -1039,37 +1026,11 @@ static void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
     _triggers.motionTriggerCount = 0;
     _triggers.buttonTriggerCount = 0;
     
-    
-//    struct [[gnu::packed]] TimeTrigger {
-//        Capture capture;
-//    };
-//    
-//    struct [[gnu::packed]] MotionTrigger {
-//        Capture capture;
-//        uint16_t count = 0;
-//        uint32_t durationMs = 0;
-//        uint32_t suppressMs = 0;
-//    };
-//    
-//    struct [[gnu::packed]] ButtonTrigger {
-//        Capture capture;
-//    };
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     for (size_t i=0; i<triggers.count; i++) {
         const CaptureTrigger& src = triggers.triggers[i];
         switch (src.type) {
         case CaptureTrigger::Type::Time: {
+            // Make sure there's an available slot for the trigger
             if (_triggers.timeTriggerCount >= std::size(_triggers.timeTrigger)) {
                 throw Toastbox::RuntimeError("no remaining time triggers");
             }
@@ -1093,6 +1054,7 @@ static void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
         }
         
         case CaptureTrigger::Type::Motion: {
+            // Make sure there's an available slot for the trigger
             if (_triggers.motionTriggerCount >= std::size(_triggers.motionTrigger)) {
                 throw Toastbox::RuntimeError("no remaining motion triggers");
             }
@@ -1101,7 +1063,7 @@ static void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
             
             // Create events for the trigger
             {
-                const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionEnable, _MotionTime(x), _MotionRepeat(x), _triggers.motionTriggerCount);
+                const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionEnable, _MotionTimeOfDay(x), _MotionRepeat(x), _triggers.motionTriggerCount);
                 _AddEvents(_triggers, events);
             }
             
@@ -1123,6 +1085,7 @@ static void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
         }
         
         case CaptureTrigger::Type::Button: {
+            // Make sure there's an available slot for the trigger
             if (_triggers.buttonTriggerCount >= std::size(_triggers.buttonTrigger)) {
                 throw Toastbox::RuntimeError("no remaining button triggers");
             }
