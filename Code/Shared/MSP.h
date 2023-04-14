@@ -96,10 +96,19 @@ struct [[gnu::packed]] Repeat {
 };
 static_assert(sizeof(Repeat) == 2);
 
+using LEDs = uint8_t;
+struct LEDs_ { enum : LEDs {
+    None  = 0,
+    Green = 1<<0,
+    Red   = 1<<1,
+}; };
+
 // Capture: describes the capture action when a trigger occurs
 struct [[gnu::packed]] Capture {
     uint32_t delayMs = 0;
     uint16_t count = 0;
+    LEDs leds = LEDs_::None;
+    uint8_t _pad = 0;
 };
 static_assert(!(sizeof(Capture) % 2)); // Check alignment
 
@@ -196,7 +205,7 @@ struct [[gnu::packed]] Triggers {
 struct [[gnu::packed]] Settings {
     Triggers triggers = {};
 //    StaticPrint(sizeof(triggers));
-    static_assert(sizeof(triggers) == 832); // Debug
+    static_assert(sizeof(triggers) == 868); // Debug
 };
 
 struct [[gnu::packed]] State {
@@ -233,7 +242,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 832); // Debug
+    static_assert(sizeof(settings) == 868); // Debug
     
     // aborts: records aborts that have occurred
     AbortHistory aborts[5] = {};
@@ -243,7 +252,7 @@ struct [[gnu::packed]] State {
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 1006); // Debug
+static_assert(sizeof(State) == 1042); // Debug
 
 static constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,

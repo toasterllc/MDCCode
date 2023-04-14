@@ -30,11 +30,12 @@ struct [[gnu::packed]] Repeat {
     };
 };
 
-enum class LEDs : uint8_t {
+using LEDs = uint8_t;
+struct LEDs_ { enum : LEDs {
     None  = 0,
     Green = 1<<0,
     Red   = 1<<1,
-};
+}; };
 
 struct [[gnu::packed]] Duration {
     enum class Unit : uint8_t {
@@ -66,7 +67,7 @@ inline Ms MsForDuration(const Duration& x) {
 struct [[gnu::packed]] Capture {
     uint16_t count;
     Duration interval;
-    LEDs flashLEDs;
+    LEDs leds;
 };
 
 struct [[gnu::packed]] Trigger {
@@ -258,10 +259,20 @@ T_Dst _Cast(const T_Src& x) {
     return x;
 }
 
+inline MSP::LEDs _Convert(const LEDs& x) {
+    switch (x) {
+    case LEDs_::None:   return MSP::LEDs_::None;
+    case LEDs_::Green:  return MSP::LEDs_::Green;
+    case LEDs_::Red:    return MSP::LEDs_::Red;
+    }
+    abort();
+}
+
 inline MSP::Capture _Convert(const Capture& x) {
     return MSP::Capture{
         .delayMs = MsForDuration(x.interval).count(),
         .count = x.count,
+        .leds = _Convert(x.leds),
     };
 }
 

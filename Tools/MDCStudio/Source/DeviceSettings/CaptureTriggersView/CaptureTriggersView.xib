@@ -18,10 +18,10 @@
                 <outlet property="_battery_Motion_MaxTriggerCount_Label" destination="1RP-5M-ifT" id="olZ-Ve-Vks"/>
                 <outlet property="_battery_Motion_View" destination="ZTq-dS-LMW" id="fsp-NB-bvO"/>
                 <outlet property="_capture_CountField" destination="Yym-4z-PG4" id="aUm-3a-YvK"/>
-                <outlet property="_capture_FlashLEDsControl" destination="Rsa-ll-JvR" id="KDt-px-fvg"/>
                 <outlet property="_capture_IntervalField" destination="WTE-Pb-dq9" id="JNC-FL-uMV"/>
                 <outlet property="_capture_IntervalLabel" destination="uDa-XG-QN2" id="JdT-Ls-hAH"/>
                 <outlet property="_capture_IntervalUnitMenu" destination="i1A-N3-hrL" id="hVp-b6-b5i"/>
+                <outlet property="_capture_LEDsControl" destination="Rsa-ll-JvR" id="KDt-px-fvg"/>
                 <outlet property="_containerView" destination="Py0-Ga-GEC" id="hAf-N0-Ct1"/>
                 <outlet property="_dateSelector_Field" destination="38b-nv-tEn" id="pe6-UW-ghG"/>
                 <outlet property="_dateSelector_View" destination="U49-dv-RHU" id="lCm-Lj-O6f"/>
@@ -58,7 +58,7 @@
                     <rect key="frame" x="0.0" y="234" width="600" height="200"/>
                     <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="200"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnSelection="YES" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="50" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
                                 <rect key="frame" x="0.0" y="0.0" width="600" height="200"/>
@@ -341,7 +341,7 @@ CA
                 <segmentedControl horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Rsa-ll-JvR">
                     <rect key="frame" x="99" y="128" width="92" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectAny" id="8hR-9j-fJM">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Green"/>
                             <segment label="Red" selected="YES" tag="1"/>
@@ -713,7 +713,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZhD-fg-EKZ">
                     <rect key="frame" x="38" y="118" width="514" height="28"/>
                     <textFieldCell key="cell" title="After this number of triggers, your Photon ignores motion until the next day to prolong its battery life." id="77K-Wk-abH">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -721,7 +721,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="icX-od-xa4">
                     <rect key="frame" x="38" y="30" width="514" height="28"/>
                     <textFieldCell key="cell" id="Org-0X-drC">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <string key="title">After motion occurs, your Photon will ignore further motion for this amount of time. This can help limit the number of triggers during long periods of continuous motion, prolonging battery life.</string>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -730,7 +730,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
                     <rect key="frame" x="38" y="394" width="425" height="14"/>
                     <textFieldCell key="cell" title="You can restrict when your Photon responds to motion to prolong its battery life." id="Oar-aS-K64">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -853,7 +853,7 @@ CA
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
                     <rect key="frame" x="-2" y="-2" width="301" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>

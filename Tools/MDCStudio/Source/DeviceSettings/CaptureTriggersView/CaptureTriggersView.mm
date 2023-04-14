@@ -92,7 +92,7 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
                 .value = 5,
                 .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .flashLEDs = LEDs::None,
+            .leds = LEDs_::None,
         };
         
         break;
@@ -118,7 +118,7 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
                 .value = 5,
                 .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .flashLEDs = LEDs::None,
+            .leds = LEDs_::None,
         };
         
         x.constraints = {
@@ -147,7 +147,7 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
                 .value = 5,
                 .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .flashLEDs = LEDs::None,
+            .leds = LEDs_::None,
         };
         
         break;
@@ -575,7 +575,7 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     IBOutlet NSTextField*        _capture_IntervalLabel;
     IBOutlet NSTextField*        _capture_IntervalField;
     IBOutlet NSPopUpButton*      _capture_IntervalUnitMenu;
-    IBOutlet NSSegmentedControl* _capture_FlashLEDsControl;
+    IBOutlet NSSegmentedControl* _capture_LEDsControl;
     
     // Constraints
     IBOutlet NSView*            _battery_ContainerView;
@@ -920,21 +920,20 @@ static void _Copy(Calendar::DaysOfYear& x, NSTokenField* field) {
 
 template<bool T_Forward>
 static void _Copy(LEDs& x, NSSegmentedControl* control) {
-    using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         size_t idx = 0;
-        for (auto y : { X::Green, X::Red }) {
-            [control setSelected:(std::to_underlying(x) & std::to_underlying(y)) forSegment:idx];
+        for (auto y : { LEDs_::Green, LEDs_::Red }) {
+            [control setSelected:(x & y) forSegment:idx];
             idx++;
         }
     } else {
-        std::underlying_type_t<X> r = 0;
+        LEDs r = LEDs_::None;
         size_t idx = 0;
-        for (auto y : { X::Green, X::Red }) {
-            r |= ([control isSelectedForSegment:idx] ? std::to_underlying(y) : 0);
+        for (auto y : { LEDs_::Green, LEDs_::Red }) {
+            r |= ([control isSelectedForSegment:idx] ? y : 0);
             idx++;
         }
-        x = static_cast<X>(r);
+        x = r;
     }
 }
 
@@ -1003,7 +1002,7 @@ static void _Copy(Capture& x, CaptureTriggersView* view) {
         [v._capture_IntervalUnitMenu setEnabled:x.count>1];
     }
     
-    _Copy<T_Forward>(x.flashLEDs, v._capture_FlashLEDsControl);
+    _Copy<T_Forward>(x.leds, v._capture_LEDsControl);
 }
 
 template<bool T_Forward>
