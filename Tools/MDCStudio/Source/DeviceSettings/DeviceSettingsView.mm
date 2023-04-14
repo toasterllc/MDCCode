@@ -9,7 +9,6 @@
     
     IBOutlet NSView* _nibView;
     IBOutlet NSTabView* _tabView;
-    IBOutlet NSView* _captureTriggersContainerView;
     IBOutlet NSSegmentedControl* _segmentedControl;
     IBOutlet NSView* _headerBackground;
     
@@ -39,15 +38,16 @@
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
-    [self->_segmentedControl setSelectedSegment:0];
-    [self _actionSectionChanged:nil];
     
     _captureTriggersView = [[CaptureTriggersView alloc] initWithTriggers:_settings.triggers];
-    [_captureTriggersContainerView addSubview:_captureTriggersView];
+    [[_tabView tabViewItems][0] setView:_captureTriggersView];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_captureTriggersView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_captureTriggersView)]];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_captureTriggersView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_captureTriggersView)]];
+    
+    [self->_segmentedControl setSelectedSegment:0];
+    [self _actionSectionChanged:nil];
     
     return self;
 }

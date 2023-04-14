@@ -114,7 +114,7 @@ public:
                 loadAndSync = true;
             
             } catch (const std::exception& e) {
-                printf("[MDCDevice()] Can't load/sync library: %s", e.what());
+                printf("[MDCDevice()] Can't load/sync library: %s\n", e.what());
             }
         }
         

@@ -7,7 +7,6 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="DeviceSettingsView">
             <connections>
-                <outlet property="_captureTriggersContainerView" destination="Opp-py-5Rd" id="gJh-HU-Oxv"/>
                 <outlet property="_headerBackground" destination="ZMn-44-fZX" id="XUJ-s4-M55"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="284-K1-4nm"/>
                 <outlet property="_segmentedControl" destination="0mG-ww-k7b" id="R9J-57-oV6"/>
