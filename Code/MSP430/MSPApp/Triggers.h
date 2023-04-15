@@ -96,15 +96,15 @@ struct T_Triggers {
     static void EventInsert(Event& ev, const Time::Instant& t) {
         ev.time = t;
         
-        Event** curr = &_Front;
-        Event** prev = curr;
-        while (*curr && (ev.time > (*curr)->time)) {
-            prev = curr;
-            curr = &((*curr)->next);
+        Event** prev = &_Front;
+        Event* curr = _Front;
+        while (curr && (ev.time > curr->time)) {
+            prev = &curr->next;
+            curr = curr->next;
         }
         
-        ev.next = (*prev)->next;
         *prev = &ev;
+        ev.next = curr;
     }
     
     static Event* EventPop(const Time::Instant& t) {
