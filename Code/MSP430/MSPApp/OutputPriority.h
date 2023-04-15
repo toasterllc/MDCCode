@@ -1,6 +1,10 @@
 #pragma once
 #include "GPIO.h"
 
+// OutputPriority: allows a single output to be driven with different values (0, 1, or unspecified)
+// with varying priorities (0-7), where the specified value of highest priority wins.
+//
+// OutputPriority is intentionally not templated on a GPIO to save code space.
 class OutputPriority {
 public:
     using Priority = uint8_t;
