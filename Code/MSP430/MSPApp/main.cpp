@@ -24,10 +24,10 @@
 #include "OutputPriority.h"
 #include "BatterySampler.h"
 #include "Button.h"
-#include "ResourceCounter.h"
+#include "AssertionCounter.h"
 #include "Triggers.h"
 #include "Motion.h"
-#include "MotionEnabledAssertion.h"
+#include "SuppressibleAssertion.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -159,22 +159,19 @@ static MSP::State _State = {
 };
 
 // Power assertion
-static volatile uint8_t _PowerAssertionCounter = 0;
-using _PowerAssertion = T_ResourceCounter<_PowerAssertionCounter>;
+static AssertionCounter _Powered;
 
 // Capture pause/resume
 static void _CapturePause();
 static void _CaptureResume();
-
-static volatile uint8_t _CapturePauseAssertionCounter = 0;
-using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter, _CapturePause, _CaptureResume>;
+static AssertionCounter _CapturePaused(_CapturePause, _CaptureResume);
 
 // Motion enable/disable
 static void _MotionEnable();
 static void _MotionDisable();
+static AssertionCounter _MotionEnabled(_MotionEnable, _MotionDisable);
 
-static volatile uint8_t _MotionEnabledAssertionCounter = 0;
-using _MotionEnabledAssertion = T_MotionEnabledAssertion<_MotionEnabledAssertionCounter, _MotionEnable, _MotionDisable>;
+using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion, _TriggersError>;
@@ -641,7 +638,7 @@ struct _TaskMain {
         _Triggers::MotionTrigger& trigger = ev.trigger();
         
         // Enable motion
-        trigger.enabled.acquire();
+        trigger.enabled.set(_MotionEnabled);
         
         // Schedule the MotionDisable event, if applicable
         // This needs to happen before we reschedule `motionEnableEvent` because we need its .time to
@@ -657,7 +654,7 @@ struct _TaskMain {
     
     static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
-        trigger.enabled.release();
+        trigger.enabled.set({});
     }
     
     static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
@@ -841,7 +838,7 @@ struct _TaskMain {
             _Scheduler::Wait([] { return (bool)(ev = _EventPop()); });
             
             // Stay powered while we handle the event
-            _State.power.acquire();
+            _State.power = _Powered;
             
 //            TimeTrigger,        // idx: _TimeTrigger[]
 //            MotionEnable,       // idx: _MotionTrigger[]
@@ -864,7 +861,7 @@ struct _TaskMain {
 //            }
             
             // Release power assertion
-            _State.power.release();
+            _State.power = {};
             
 //            // Release control of the LED
 //            _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
@@ -888,7 +885,10 @@ struct _TaskMain {
         // solely to arrive at the correct state for the current time.
         // fastForward=false once we're done initializing and executing events normally.
         bool fastForward;
-        _PowerAssertion power;
+        // power: our active power assertion. This needs to be an ivar because TaskMain
+        // can be reset at any time via our Reset() function, so if the power assertion
+        // lived on the stack,
+        AssertionCounter::Assertion power;
     } _State = {};
     
     // Task stack
@@ -912,8 +912,7 @@ struct _TaskI2C {
             _I2C::WaitUntilActive();
             
             // Maintain power while I2C is active
-            _PowerAssertion power;
-            power.acquire();
+            AssertionCounter::Assertion power = _Powered;
             
             for (;;) {
                 // Wait for a command
@@ -935,7 +934,7 @@ struct _TaskI2C {
             _LEDRed_.set(_LEDPriority::I2C, std::nullopt);
             _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
             
-            // Release capture-pause assertion if it was held
+            // Exit host mode, in case we were in it
             _HostMode = {};
         }
     }
@@ -977,16 +976,16 @@ struct _TaskI2C {
         case Cmd::Op::TimeSet:
             // Only allow setting the time while we're in host mode
             // and therefore TaskMain isn't running
-            if (!_HostMode.acquired()) return MSP::Resp{ .ok = false };
+            if (!_HostMode) return MSP::Resp{ .ok = false };
             _RTC::Init(cmd.arg.TimeSet.time);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
-            if (cmd.arg.HostModeSet.en != _HostMode.acquired()) {
+            if (cmd.arg.HostModeSet.en != _HostMode) {
                 if (cmd.arg.HostModeSet.en) {
-                    _HostMode.acquire();
+                    _HostMode = _CapturePaused;
                 } else {
-                    _HostMode.release();
+                    _HostMode = {};
                 }
             }
             return MSP::Resp{ .ok = true };
@@ -1008,10 +1007,10 @@ struct _TaskI2C {
     }
     
     static bool HostModeEnabled() {
-        return _HostMode.acquired();
+        return _HostMode;
     }
     
-    static inline _CapturePauseAssertion _HostMode;
+    static inline AssertionCounter::Assertion _HostMode;
     
     // Task stack
     [[gnu::section(".stack._TaskI2C")]]
@@ -1027,7 +1026,7 @@ struct _TaskMotion {
             for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
                 _Triggers::MotionTrigger& trigger = *it;
                 // If this trigger is enabled...
-                if (trigger.enabled.acquired()) {
+                if (trigger.enabled.get()) {
                     const Time::Instant time = _RTC::TimeRead();
                     // Start capture
                     _CaptureStart(trigger, time);
@@ -1060,7 +1059,7 @@ struct _TaskButton {
     static void Run() {
         // Pause captures upon power on. This is so that the device is off until
         // the user turns it on by holding the power button.
-        _OffAssertion.acquire();
+        _OffAssertion = _CapturePaused;
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -1068,13 +1067,12 @@ struct _TaskButton {
             if (_TaskI2C::HostModeEnabled()) continue;
             
             // Keep the lights on until we're done handling the event
-            _PowerAssertion power;
-            power.acquire();
+            AssertionCounter::Assertion power = _Powered;
             
             switch (ev) {
             case _Button::Event::Press: {
                 // Ignore button presses if we're off
-                if (_OffAssertion.acquired()) break;
+                if (_OffAssertion) break;
                 
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
                     _CaptureStart(*it, _RTC::TimeRead());
@@ -1083,15 +1081,15 @@ struct _TaskButton {
             }
             
             case _Button::Event::Hold:
-                if (_OffAssertion.acquired()) {
+                if (_OffAssertion) {
                     // Deassert capture pause -- ie, turn on
-                    _OffAssertion.release();
+                    _OffAssertion = {};
                     // Flash green LEDs
                     _LEDFlash(_LEDGreen_);
                 
                 } else {
                     // Assert capture pause -- ie, turn off
-                    _OffAssertion.acquire();
+                    _OffAssertion = _CapturePaused;
                     // Flash red LEDs
                     _LEDFlash(_LEDRed_);
                 }
@@ -1137,7 +1135,7 @@ struct _TaskButton {
     // _OffAssertion: controls user-visible on/off behavior
     // By default, captures are paused so that the device is off until
     // the user turns it on by holding the power button.
-    static inline _CapturePauseAssertion _OffAssertion;
+    static inline AssertionCounter::Assertion _OffAssertion;
     
     // Task stack
     [[gnu::section(".stack._TaskButton")]]
