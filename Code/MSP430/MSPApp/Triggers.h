@@ -37,6 +37,7 @@ struct T_Triggers {
         Time::Instant time = 0;
         Event* next = nullptr;
         Type type = Type::TimeTrigger;
+        bool inserted = false;
     };
     
     struct RepeatEvent : Event {
@@ -110,7 +111,25 @@ struct T_Triggers {
         }
     }
     
+    // _EventPop(): remove event from linked list
+    // Requires event to exist in the list!
+    static Event& _EventPop(Event& ev) {
+        Event** prev = &_Front;
+        Event* curr = _Front;
+        while (curr && curr!=&ev) {
+            prev = &curr->next;
+            curr = curr->next;
+        }
+        Assert(curr);
+        
+        *prev = ev.next;
+        ev.inserted = false;
+        return ev;
+    }
+    
     static void EventInsert(Event& ev, const Time::Instant& t) {
+        if (ev.inserted) _EventPop(ev);
+        
         ev.time = t;
         
         Event** prev = &_Front;
@@ -122,15 +141,14 @@ struct T_Triggers {
         
         *prev = &ev;
         ev.next = curr;
+        ev.inserted = true;
     }
     
     static Event* EventPop(const Time::Instant& t) {
         if (!_Front) return nullptr;
         // If the front event occurs after the current time, no events are ready yet.
         if (_Front->time >= t) return nullptr;
-        Event*const f = _Front;
-        _Front = f->next;
-        return f;
+        return &_EventPop(*_Front);
     }
     
     static auto EventBegin() { return std::begin(_Event); }
