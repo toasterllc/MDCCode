@@ -150,7 +150,7 @@ struct T_Triggers {
     using _Base = std::remove_reference_t<decltype(_T_Base)>;
     
     template<typename T_Dst, typename T_Src, size_t T_Count>
-    constexpr T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
+    static constexpr T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
         Assert(&elm>=src && &elm<(src+T_Count));
         const size_t idx = &elm-src;
         return dst[idx];

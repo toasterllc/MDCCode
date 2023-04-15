@@ -629,8 +629,8 @@ struct _TaskMain {
     
     static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
         _Triggers::TimeTrigger& trigger = ev.trigger();
-        // Schedule the CaptureImageEvent, but only if we're not in init mode
-        if (!_State.initMode) {
+        // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
+        if (!_State.fastForward) {
             _CaptureStart(trigger, ev.time);
         }
         // Reschedule TimeTriggerEvent for its next trigger time
@@ -661,12 +661,17 @@ struct _TaskMain {
     }
     
     static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
+        // We should never get a MotionUnsuppressEvent event while in fast-forward mode
+        Assert(!_State.fastForward);
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.enabled.suppress(false);
     }
     
     static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
-        constexpr MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
+        // We should never get a CaptureImageEvent event while in fast-forward mode
+        Assert(!_State.fastForward);
+        
+        constexpr MSP::ImgRingBuf& imgRingBuf = ::_State.sd.imgRingBufs[0];
         
         const bool green = ev.capture->leds & MSP::LEDs_::Green;
         const bool red = ev.capture->leds & MSP::LEDs_::Red;
@@ -764,16 +769,11 @@ struct _TaskMain {
         }
     }
     
-    static void _InitMode(bool x) {
-        _State.initMode = x;
-        _Motion::Paused(_State.initMode);
-    }
-    
     static _Triggers::Event* _EventPop() {
         _Triggers::Event* ev = _Triggers::EventPop(_RTC::TimeRead());
-        // Exit init mode when we no longer have any events in the past
-        if (_State.initMode && !ev) {
-            _InitMode(false);
+        // Exit fast-forward mode when we no longer have any events in the past
+        if (!ev) {
+            _State.fastForward = false;
         }
         return ev;
     }
@@ -824,9 +824,9 @@ struct _TaskMain {
         // Init Triggers
         _Triggers::Init(_RTC::TimeRead());
         
-        // Enter init mode while we pop every event that occurs in the past
-        // (_EventPop() will exit from init mode)
-        _InitMode(true);
+        // Enter fast-forward mode while we pop every event that occurs in the past
+        // (_EventPop() will exit from fast-forward mode)
+        _State.fastForward = true;
         for (;;) {
 //            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
 //            {
@@ -884,12 +884,12 @@ struct _TaskMain {
 //    }
     
     static inline struct {
-        // initMode=true while initializing, where we execute events in 'fast-forward' mode,
+        // fastForward=true while initializing, where we execute events in 'fast-forward' mode,
         // solely to arrive at the correct state for the current time.
-        // initMode=false once we're done initializing and executing events normally.
-        bool initMode = false;
+        // fastForward=false once we're done initializing and executing events normally.
+        bool fastForward;
         _PowerAssertion power;
-    } _State;
+    } _State = {};
     
     // Task stack
     [[gnu::section(".stack._TaskMain")]]
