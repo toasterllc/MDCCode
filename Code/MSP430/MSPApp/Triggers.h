@@ -88,8 +88,8 @@ struct T_Triggers {
     };
     
     static void Init(const Time::Instant& t) {
-        // Reset _Front since we allow _Init to be called multiple times
-        _Front = nullptr;
+        // Clear linked list
+        while (_Front) _EventPop(*_Front);
         
         // If we don't know the absolute time, run in 'relative time mode', where we still
         // execute events with the same relative timing as in 'absolute time mode', we just
