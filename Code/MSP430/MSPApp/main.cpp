@@ -613,7 +613,7 @@ struct _TaskMain {
     
     static void Reset() {
         // Reset our state
-        _Power = {};
+        _State = {};
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Init();
@@ -629,8 +629,10 @@ struct _TaskMain {
     
     static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
         _Triggers::TimeTrigger& trigger = ev.trigger();
-        // Schedule the CaptureImageEvent
-        _CaptureStart(trigger, ev.time);
+        // Schedule the CaptureImageEvent, but only if we're not in init mode
+        if (!_State.initMode) {
+            _CaptureStart(trigger, ev.time);
+        }
         // Reschedule TimeTriggerEvent for its next trigger time
         _EventInsert(ev, ev.repeat);
     }
@@ -762,6 +764,20 @@ struct _TaskMain {
         }
     }
     
+    static void _InitMode(bool x) {
+        _State.initMode = x;
+        _Motion::Paused(_State.initMode);
+    }
+    
+    static _Triggers::Event* _EventPop() {
+        _Triggers::Event* ev = _Triggers::EventPop(_RTC::TimeRead());
+        // Exit init mode when we no longer have any events in the past
+        if (_State.initMode && !ev) {
+            _InitMode(false);
+        }
+        return ev;
+    }
+    
     static void Run() {
 //        for (bool x=false;; x=!x) {
 //            _Pin::LED_RED_::Write(x);
@@ -805,6 +821,12 @@ struct _TaskMain {
         // Init SPI peripheral
         _SPI::Init();
         
+        // Init Triggers
+        _Triggers::Init(_RTC::TimeRead());
+        
+        // Enter init mode while we pop every event that occurs in the past
+        // (_EventPop() will exit from init mode)
+        _InitMode(true);
         for (;;) {
 //            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
 //            {
@@ -816,10 +838,10 @@ struct _TaskMain {
             
             // Wait for an event
             static _Triggers::Event* ev = nullptr;
-            _Scheduler::Wait([] { return (bool)(ev = _Triggers::EventPop(_RTC::TimeRead())); });
+            _Scheduler::Wait([] { return (bool)(ev = _EventPop()); });
             
             // Stay powered while we handle the event
-            _Power.acquire();
+            _State.power.acquire();
             
 //            TimeTrigger,        // idx: _TimeTrigger[]
 //            MotionEnable,       // idx: _MotionTrigger[]
@@ -842,7 +864,7 @@ struct _TaskMain {
 //            }
             
             // Release power assertion
-            _Power.release();
+            _State.power.release();
             
 //            // Release control of the LED
 //            _LEDRed_::Set(_LEDPriority::Capture, std::nullopt);
@@ -861,7 +883,13 @@ struct _TaskMain {
 //               !_Scheduler::Running<_TaskImg>() ;
 //    }
     
-    static inline _PowerAssertion _Power;
+    static inline struct {
+        // initMode=true while initializing, where we execute events in 'fast-forward' mode,
+        // solely to arrive at the correct state for the current time.
+        // initMode=false once we're done initializing and executing events normally.
+        bool initMode = false;
+        _PowerAssertion power;
+    } _State;
     
     // Task stack
     [[gnu::section(".stack._TaskMain")]]
@@ -947,6 +975,9 @@ struct _TaskI2C {
             };
         
         case Cmd::Op::TimeSet:
+            // Only allow setting the time while we're in host mode
+            // and therefore TaskMain isn't running
+            if (!_HostMode.acquired()) return MSP::Resp{ .ok = false };
             _RTC::Init(cmd.arg.TimeSet.time);
             return MSP::Resp{ .ok = true };
         
@@ -1381,9 +1412,6 @@ int main() {
     
     // Init BatterySampler
     _BatterySampler::Init();
-    
-    // Init Triggers
-    _Triggers::Init();
     
     // Init LEDs by setting their default-priority / 'backstop' values to off.
     // This is necessary so that relinquishing the LEDs from I2C task causes

@@ -86,10 +86,27 @@ struct T_Triggers {
         auto& base() { return _BaseElm(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
     };
     
-    static void Init() {
+    static void Init(const Time::Instant& t) {
+        // Reset _Front since we allow _Init to be called multiple times
+        _Front = nullptr;
+        
+        // If we don't know the absolute time, run in 'relative time mode', where we still
+        // execute events with the same relative timing as in 'absolute time mode', we just
+        // don't know the absolute time. To do so, we subtract the first event's absolute
+        // time from all events, such that the first event starts at Time::Instant=0.
+        Time::Instant sub = 0;
+        if (!Time::Absolute(t)) {
+            sub = _Event[0].base().time;
+        }
+        
+        // Reset T_MotionEnabled's
+        for (auto it=MotionTriggerBegin(); it!=MotionTriggerEnd(); it++) {
+            it->enabled = {};
+        }
+        
+        // Schedule events
         for (auto it=EventBegin(); it!=EventEnd(); it++) {
-            // Schedule event
-            EventInsert(*it, it->base().time);
+            EventInsert(*it, it->base().time-sub);
         }
     }
     
@@ -117,7 +134,8 @@ struct T_Triggers {
     }
     
     static auto EventBegin() { return std::begin(_Event); }
-    static auto EventEnd() { return std::begin(_Event)+_T_Base.eventCount; }
+    static auto EventEnd()   { return std::begin(_Event)+EventCount(); }
+    static auto EventCount() { return _T_Base.eventCount; }
     
     static auto TimeTriggerBegin() { return std::begin(_TimeTrigger); }
     static auto TimeTriggerEnd() { return std::begin(_TimeTrigger)+_T_Base.timeTriggerCount; }
@@ -132,7 +150,7 @@ struct T_Triggers {
     using _Base = std::remove_reference_t<decltype(_T_Base)>;
     
     template<typename T_Dst, typename T_Src, size_t T_Count>
-    static T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
+    constexpr T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
         Assert(&elm>=src && &elm<(src+T_Count));
         const size_t idx = &elm-src;
         return dst[idx];

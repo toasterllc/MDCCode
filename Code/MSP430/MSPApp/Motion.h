@@ -31,16 +31,20 @@ public:
         _EnabledRequest = x;
     }
     
+    static void Paused(bool x) {
+        _Paused = x;
+    }
+    
     static void WaitForMotion() {
         Toastbox::IntState ints(false);
         for (;;) {
             // Power on / off when requested
-            if (_Enabled != _EnabledRequest.load()) {
+            if (_EnabledChanged()) {
                 _Enable(_EnabledRequest.load());
             }
             
             // Wait for motion, or for a state-change request
-            T_Scheduler::Wait([] { return _Signal.load() || _Enabled!=_EnabledRequest.load(); });
+            T_Scheduler::Wait([] { return _Signal.load() || _EnabledChanged(); });
             
             // If motion occurred, clear the signal and return
             if (_Signal.load()) {
@@ -48,6 +52,10 @@ public:
                 return;
             }
         }
+    }
+    
+    static bool _EnabledChanged() {
+        return !_Paused && _Enabled!=_EnabledRequest.load();
     }
     
     static void _Enable(bool en) {
@@ -91,6 +99,7 @@ private:
     static constexpr uint32_t _PowerOnTimeMs = 30000;
     static inline bool _Enabled = false;
     static inline std::atomic<bool> _EnabledRequest = false;
+    static inline std::atomic<bool> _Paused = false;
     static inline std::atomic<bool> _Signal = false;
 
 #undef Assert
