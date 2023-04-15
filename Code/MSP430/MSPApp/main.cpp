@@ -118,8 +118,8 @@ using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin:
 constexpr uint16_t _ButtonHoldDurationMs = 1500;
 using _Button = ButtonType<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
 
-using _LEDGreen_ = OutputPriority<_Pin::LED_GREEN_>;
-using _LEDRed_ = OutputPriority<_Pin::LED_RED_>;
+static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
+static OutputPriority _LEDRed_(_Pin::LED_RED_{});
 
 struct _LEDPriority {
     static constexpr uint8_t Power   = 0;
@@ -675,8 +675,8 @@ struct _TaskMain {
         
         const bool green = ev.capture->leds & MSP::LEDs_::Green;
         const bool red = ev.capture->leds & MSP::LEDs_::Red;
-        _LEDGreen_::Set(_LEDPriority::Capture, !green);
-        _LEDRed_::Set(_LEDPriority::Capture, !red);
+        _LEDGreen_.set(_LEDPriority::Capture, !green);
+        _LEDRed_.set(_LEDPriority::Capture, !red);
         
         // Turn on VDD_B power (turns on ICE40)
         _VDDBSet(true);
@@ -754,11 +754,11 @@ struct _TaskMain {
 //            }
 //        
 //        if (trigger & _TriggerSources::Manual) {
-//            _LEDRed_::Set(_LEDPriority::Capture, 1);
+//            _LEDRed_.set(_LEDPriority::Capture, 1);
 //        }
         
-        _LEDGreen_::Set(_LEDPriority::Capture, std::nullopt);
-        _LEDRed_::Set(_LEDPriority::Capture, std::nullopt);
+        _LEDGreen_.set(_LEDPriority::Capture, std::nullopt);
+        _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
         
         _VDDIMGSDSet(false);
         _VDDBSet(false);
@@ -793,9 +793,9 @@ struct _TaskMain {
 //            // serves 2 purposes:
 //            //   1. it rate-limits aborts, in case there's a persistent issue
 //            //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-//            _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
+//            _LEDRed_.set(_LEDRed_::Priority::Low, 0);
 //            _Scheduler::Sleep(_Scheduler::Ms(3000));
-//            _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+//            _LEDRed_.set(_LEDRed_::Priority::Low, 1);
 //        }
 //        
 //        _Scheduler::Sleep(_Scheduler::Ms(10000));
@@ -860,14 +860,14 @@ struct _TaskMain {
             
 //            // Light the red LED if this is a manual trigger
 //            if (trigger & _TriggerSources::Manual) {
-//                _LEDRed_::Set(_LEDPriority::Capture, 0);
+//                _LEDRed_.set(_LEDPriority::Capture, 0);
 //            }
             
             // Release power assertion
             _State.power.release();
             
 //            // Release control of the LED
-//            _LEDRed_::Set(_LEDPriority::Capture, std::nullopt);
+//            _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
         }
     }
     
@@ -932,8 +932,8 @@ struct _TaskI2C {
             // Cleanup
             
 //            // Relinquish LEDs, which may have been set by _CmdHandle()
-            _LEDRed_::Set(_LEDPriority::I2C, std::nullopt);
-            _LEDGreen_::Set(_LEDPriority::I2C, std::nullopt);
+            _LEDRed_.set(_LEDPriority::I2C, std::nullopt);
+            _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
             
             // Release capture-pause assertion if it was held
             _HostMode = {};
@@ -964,8 +964,8 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::LEDSet:
-            _LEDRed_::Set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
-            _LEDGreen_::Set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
+            _LEDRed_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
+            _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::TimeGet:
@@ -1087,13 +1087,13 @@ struct _TaskButton {
                     // Deassert capture pause -- ie, turn on
                     _OffAssertion.release();
                     // Flash green LEDs
-                    _LEDFlash<_LEDGreen_>();
+                    _LEDFlash(_LEDGreen_);
                 
                 } else {
                     // Assert capture pause -- ie, turn off
                     _OffAssertion.acquire();
                     // Flash red LEDs
-                    _LEDFlash<_LEDRed_>();
+                    _LEDFlash(_LEDRed_);
                 }
                 
                 _Button::WaitForDeassert();
@@ -1123,16 +1123,15 @@ struct _TaskButton {
         }
     }
     
-    template <typename T_Pin>
-    static void _LEDFlash() {
+    static void _LEDFlash(OutputPriority& led) {
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
-            T_Pin::Set(_LEDPriority::Power, 0);
+            led.set(_LEDPriority::Power, 0);
             _Scheduler::Delay(_Scheduler::Ms(50));
-            T_Pin::Set(_LEDPriority::Power, 1);
+            led.set(_LEDPriority::Power, 1);
             _Scheduler::Delay(_Scheduler::Ms(50));
         }
-        T_Pin::Set(_LEDPriority::Power, std::nullopt);
+        led.set(_LEDPriority::Power, std::nullopt);
     }
     
     // _OffAssertion: controls user-visible on/off behavior
@@ -1417,8 +1416,8 @@ int main() {
     // This is necessary so that relinquishing the LEDs from I2C task causes
     // them to turn off. If we didn't have a backstop value, the LEDs would
     // remain in whatever state the I2C task set them to before relinquishing.
-    _LEDGreen_::Set(_LEDPriority::Default, 1);
-    _LEDRed_::Set(_LEDPriority::Default, 1);
+    _LEDGreen_.set(_LEDPriority::Default, 1);
+    _LEDRed_.set(_LEDPriority::Default, 1);
     
 //    // Blink green LED to signal that we're turning off
 //    for (;;) {
