@@ -624,6 +624,11 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger,
     NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
     [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
     if (select) {
+        // Make the table view the first responder before changing the selection.
+        // This is necessary in case a text field is currently being edited, so that the field commits
+        // its changes before we change the table view selection, triggering all fields to be reloaded
+        // for the new selection.
+        [[tv window] makeFirstResponder:tv];
         [tv selectRowIndexes:idxs byExtendingSelection:false];
         [tv scrollRowToVisible:idx];
     }

@@ -933,6 +933,11 @@ private:
         auto lock = std::unique_lock(_device.lock);
         if (!_device.sdReadEnd || *_device.sdReadEnd!=block) {
             printf("[_deviceSDRead] Starting readout at %ju\n", (uintmax_t)block);
+            // If readout was in progress at a different address, reset the device
+            if (_device.sdReadEnd) {
+                _device.device.reset();
+            }
+            
             // Verify that blockBegin can be safely cast to SD::Block
             assert(std::numeric_limits<SD::Block>::max() >= block);
             _device.device.sdRead((SD::Block)block);
