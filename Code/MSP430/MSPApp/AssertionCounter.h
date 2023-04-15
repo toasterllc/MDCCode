@@ -5,13 +5,13 @@ template <
 auto T_AcquireFn = nullptr,
 auto T_ReleaseFn = nullptr
 >
-class AssertionCounter {
+class T_AssertionCounter {
 public:
     // Copy/move: illegal
-    AssertionCounter(const AssertionCounter& x) = delete;
-    AssertionCounter& operator=(const AssertionCounter& x) = delete;
-    AssertionCounter(AssertionCounter&& x) = delete;
-    AssertionCounter& operator=(AssertionCounter&& x) = delete;
+    T_AssertionCounter(const T_AssertionCounter& x) = delete;
+    T_AssertionCounter& operator=(const T_AssertionCounter& x) = delete;
+    T_AssertionCounter(T_AssertionCounter&& x) = delete;
+    T_AssertionCounter& operator=(T_AssertionCounter&& x) = delete;
     
     struct Assertion {
         Assertion(bool x=false) : _asserted(x) { if (_asserted) _Assert(); }

@@ -159,17 +159,17 @@ static MSP::State _State = {
 };
 
 // Power assertion
-using _Powered = AssertionCounter<>;
+using _Powered = T_AssertionCounter<>;
 
 // Capture pause/resume
 static void _CapturePause();
 static void _CaptureResume();
-using _CapturePaused = AssertionCounter<_CapturePause, _CaptureResume>;
+using _CapturePaused = T_AssertionCounter<_CapturePause, _CaptureResume>;
 
 // Motion enable/disable
 static void _MotionEnable();
 static void _MotionDisable();
-using _MotionEnabled = AssertionCounter<_MotionEnable, _MotionDisable>;
+using _MotionEnabled = T_AssertionCounter<_MotionEnable, _MotionDisable>;
 using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
 
 // _Triggers: stores our current event state
