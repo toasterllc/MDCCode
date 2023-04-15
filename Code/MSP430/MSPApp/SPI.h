@@ -3,10 +3,16 @@
 
 template <uint32_t T_MCLKFreqHz, typename T_ClkPin, typename T_DataOutPin, typename T_DataInPin>
 class SPIType {
+private:
+    using _ClkManual = typename T_ClkPin::template Opts<GPIO::Option::Output1>;
+    using _ClkPeriph = typename T_ClkPin::template Opts<GPIO::Option::Sel01>;
+    using _DataOutDisabled = typename T_DataOutPin::template Opts<GPIO::Option::Input, GPIO::Option::Resistor0>; // Pulldown to prevent floating input (particularly when ICE40 is off)
+    using _DataOutEnabled = typename T_DataOutPin::template Opts<GPIO::Option::Sel01>;
+    
 public:
     struct Pin {
-        using Clk       = typename T_ClkPin::template Opts<GPIO::Option::Output1>;
-        using DataOut   = typename T_DataOutPin::template Opts<GPIO::Option::Input, GPIO::Option::Resistor0>; // Pulldown to prevent floating input (particularly when ICE40 is off)
+        using Clk       = _ClkManual;
+        using DataOut   = _DataOutDisabled;
         using DataIn    = typename T_DataInPin::template Opts<GPIO::Option::Sel01>;
     };
     
@@ -85,12 +91,6 @@ public:
     }
     
 private:
-    using _ClkManual = typename Pin::Clk::template Opts<GPIO::Option::Output1>;
-    using _ClkPeriph = typename Pin::Clk::template Opts<GPIO::Option::Sel01>;
-    
-    using _DataOutDisabled = typename Pin::DataOut;
-    using _DataOutEnabled = typename Pin::DataOut::template Opts<GPIO::Option::Sel01>;
-    
     static uint8_t _TxRx(uint8_t b) {
         // Wait until `UCA0TXBUF` can accept more data
         while (!(UCA0IFG & UCTXIFG));
