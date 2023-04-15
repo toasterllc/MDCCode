@@ -26,7 +26,7 @@ public:
     }
     
 private:
-    using _WriteFn = void(*)(bool);
+    using _WriteFn = void(&)(bool);
     using _Bits = uint8_t;
     static constexpr size_t _Width = sizeof(Priority)*8;
     
@@ -44,5 +44,5 @@ private:
     
     _Bits _en = 0;
     _Bits _val = 0;
-    _WriteFn _write = nullptr;
+    _WriteFn _write;
 };
