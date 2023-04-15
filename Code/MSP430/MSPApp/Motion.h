@@ -36,14 +36,14 @@ public:
         for (;;) {
             // Power on / off when requested
             if (_EnabledChanged()) {
-                _Enable(_EnabledRequest.load());
+                _Enable(_EnabledRequest);
             }
             
             // Wait for motion, or for a state-change request
-            T_Scheduler::Wait([] { return _Signal.load() || _EnabledChanged(); });
+            T_Scheduler::Wait([] { return _Signal || _EnabledChanged(); });
             
             // If motion occurred, clear the signal and return
-            if (_Signal.load()) {
+            if (_Signal) {
                 _Signal = false;
                 return;
             }
@@ -51,7 +51,7 @@ public:
     }
     
     static bool _EnabledChanged() {
-        return _Enabled != _EnabledRequest.load();
+        return _Enabled != _EnabledRequest;
     }
     
     static void _Enable(bool en) {
@@ -94,8 +94,8 @@ private:
     // _PowerOnTimeMs: time that it takes for the motion sensor to power on and stabilize
     static constexpr uint32_t _PowerOnTimeMs = 30000;
     static inline bool _Enabled = false;
-    static inline std::atomic<bool> _EnabledRequest = false;
-    static inline std::atomic<bool> _Signal = false;
+    static inline volatile bool _EnabledRequest = false;
+    static inline volatile bool _Signal = false;
 
 #undef Assert
 };

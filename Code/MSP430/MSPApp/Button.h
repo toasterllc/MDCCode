@@ -38,7 +38,7 @@ public:
         {
             _AssertedInterrupt::IESConfig();
             _Signal = false;
-            T_Scheduler::Wait([] { return _Signal.load(); });
+            T_Scheduler::Wait([] { return _Signal; });
             // Debounce delay
             T_Scheduler::Sleep(T_Scheduler::Ms(_DebounceDelayMs));
         }
@@ -47,7 +47,7 @@ public:
         {
             _DeassertedInterrupt::IESConfig();
             _Signal = false;
-            const bool ok = T_Scheduler::Wait(T_Scheduler::Ms(T_HoldDurationMs), [] { return _Signal.load(); });
+            const bool ok = T_Scheduler::Wait(T_Scheduler::Ms(T_HoldDurationMs), [] { return _Signal; });
             // If we timed-out, then the button's being held
             if (!ok) return Event::Hold;
             // Otherwise, we didn't timeout, so the button was simply pressed
@@ -59,7 +59,7 @@ public:
         // Wait for the button to be deasserted, in case it was already asserted when we entered this function
         _DeassertedInterrupt::IESConfig();
         _Signal = false;
-        T_Scheduler::Wait([] { return _Signal.load(); });
+        T_Scheduler::Wait([] { return _Signal; });
         // Debounce delay
         T_Scheduler::Sleep(T_Scheduler::Ms(_DebounceDelayMs));
     }
@@ -71,5 +71,5 @@ public:
 private:
     static constexpr uint16_t _DebounceDelayMs = 2;
     
-    static inline std::atomic<bool> _Signal = false;
+    static inline volatile bool _Signal = false;
 };
