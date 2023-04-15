@@ -66,6 +66,7 @@
 		55496F38278BAC5000BCA739 /* MSP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
 		557ABD2529E61A3D0032619E /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
 		557ABD8A29E9C3210032619E /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
+		557ABD8F29EA1BE70032619E /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
 		55B2151327090FD2001423C1 /* VectorTable.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = VectorTable.s; sourceTree = "<group>"; };
 		55B2151927090FD2001423C1 /* GPIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GPIO.h; sourceTree = "<group>"; };
 		55B2151B27090FD2001423C1 /* QSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QSPI.h; sourceTree = "<group>"; };
@@ -201,6 +202,7 @@
 				552F4BA429AD3ACB000CEAB2 /* RingBuffer.h */,
 				552F4BA529AD3ACB000CEAB2 /* SendRight.h */,
 				552F4BA629AD3ACB000CEAB2 /* String.h */,
+				557ABD8F29EA1BE70032619E /* DurationString.h */,
 			);
 			path = Toastbox;
 			sourceTree = "<group>";

@@ -7,6 +7,7 @@
 #include "MDCUSBDevice.h"
 #include "Toastbox/RuntimeError.h"
 #include "Toastbox/NumForStr.h"
+#include "Toastbox/DurationString.h"
 #include "ChecksumFletcher32.h"
 #include "Img.h"
 #include "SD.h"
@@ -369,14 +370,20 @@ static const char* _StringForLEDs(MSP::LEDs x) {
     abort();
 }
 
-static std::string _StringForTimeInstant(Time::Instant t) {
+static std::string _StringForTimeInstant(Time::Instant t, bool relative=false) {
+    using namespace std::chrono;
     std::stringstream ss;
     if (Time::Absolute(t)) {
         const date::time_zone& tz = *date::current_zone();
         const auto tpDevice = Time::Clock::TimePointFromTimeInstant(t);
         const auto tpLocal = tz.to_local(date::clock_cast<std::chrono::system_clock>(tpDevice));
         ss << tpLocal;
-        ss << " (0x" << std::setfill('0') << std::setw(16) << std::hex << t << ")";
+        if (relative) {
+            const auto tpNow = Time::Clock::now();
+            ss << " (" << Toastbox::DurationString(true, duration_cast<seconds>(tpNow-tpDevice)) << " ago)";
+        } else {
+            ss << " (0x" << std::setfill('0') << std::setw(16) << std::hex << t << ")";
+        }
     } else {
         ss << "0x" << std::setfill('0') << std::setw(16) << std::hex << t << " [relative]";
     }
@@ -488,8 +495,8 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         printf(     "    type\n");
         printf(     "      domain:              %s\n",          MSP::StringForAbortDomain(abort.type.domain));
         printf(     "      line:                %ju\n",         (uintmax_t)abort.type.line);
-        printf(     "    earliest:              0x%jx\n",       (uintmax_t)abort.earliest);
-        printf(     "    latest:                0x%jx\n",       (uintmax_t)abort.latest);
+        printf(     "    earliest:              %s\n",          _StringForTimeInstant(abort.earliest, true).c_str());
+        printf(     "    latest:                %s\n",          _StringForTimeInstant(abort.latest, true).c_str());
         printf(     "    count:                 %ju\n",         (uintmax_t)abort.count);
         i++;
     }
