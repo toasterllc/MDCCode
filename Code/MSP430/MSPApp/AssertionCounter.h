@@ -1,14 +1,12 @@
 #pragma once
 #include "Assert.h"
 
+template <
+auto T_AcquireFn = nullptr,
+auto T_ReleaseFn = nullptr
+>
 class AssertionCounter {
 public:
-    using Fn = void(*)();
-    
-    // Constructor
-    AssertionCounter() {}
-    AssertionCounter(Fn acquire, Fn release) : _acquire(acquire), _release(release) {}
-    
     // Copy/move: illegal
     AssertionCounter(const AssertionCounter& x) = delete;
     AssertionCounter& operator=(const AssertionCounter& x) = delete;
@@ -16,44 +14,41 @@ public:
     AssertionCounter& operator=(AssertionCounter&& x) = delete;
     
     struct Assertion {
-        Assertion() {}
-        Assertion(AssertionCounter& counter) : _counter(&counter) { _counter->_assert(); }
+        Assertion(bool x=false) : _asserted(x) { if (_asserted) _Assert(); }
         // Copy: illegal
         Assertion(const Assertion& x) = delete;
         Assertion& operator=(const Assertion& x) = delete;
         // Move: allowed
         Assertion(Assertion&& x) { swap(x); }
         Assertion& operator=(Assertion&& x) { swap(x); return *this; }
-        ~Assertion() { if (_counter) _counter->_deassert(); }
-        operator bool() const { return _counter; }
-        void swap(Assertion& x) { std::swap(_counter, x._counter); }
+        ~Assertion() { if (_asserted) _Deassert(); }
+        operator bool() const { return _asserted; }
+        void swap(Assertion& x) { std::swap(_asserted, x._asserted); }
     private:
-        AssertionCounter* _counter = nullptr;
+        bool _asserted = false;
     };
     
-    operator bool() const { return _counter; }
+    static bool Asserted() { return _Counter; }
     
 private:
-    void _assert() {
-        _counter++;
-        if (_acquire) {
-            if (_counter == 1) {
-                _acquire();
+    static void _Assert() {
+        _Counter++;
+        if constexpr (!std::is_null_pointer_v<decltype(T_AcquireFn)>) {
+            if (_Counter == 1) {
+                T_AcquireFn();
             }
         }
     }
     
-    void _deassert() {
-        Assert(_counter);
-        _counter--;
-        if (_release) {
-            if (_counter == 0) {
-                _release();
+    static void _Deassert() {
+        Assert(_Counter);
+        _Counter--;
+        if constexpr (!std::is_null_pointer_v<decltype(T_ReleaseFn)>) {
+            if (_Counter == 0) {
+                T_ReleaseFn();
             }
         }
     }
     
-    Fn _acquire = nullptr;
-    Fn _release = nullptr;
-    uint8_t _counter = 0;
+    static inline uint8_t _Counter = 0;
 };

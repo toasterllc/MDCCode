@@ -9,9 +9,9 @@
 //
 // When supress=true, T_SuppressibleAssertion defers acquire()/release() until exiting
 // the suppressed state (via suppress(false)).
-template<AssertionCounter& T_AssertionCounter>
+template<typename T>
 struct T_SuppressibleAssertion {
-    using Assertion = AssertionCounter::Assertion;
+    using Assertion = typename T::Assertion;
     
     void suppress(bool x) {
         // Short-circuit if nothing changed
@@ -20,11 +20,11 @@ struct T_SuppressibleAssertion {
         if (_suppress) {
             // Remember if we were asserted for when we unsuppress
             _suppressAsserted = _assertion;
-            _assertion = {};
+            _assertion = false;
         
         } else {
             if (_suppressAsserted) {
-                _assertion = Assertion(T_AssertionCounter);
+                _assertion = true;
             }
         }
     }
@@ -42,8 +42,7 @@ struct T_SuppressibleAssertion {
     }
     
 private:
-    using _Assertion = AssertionCounter::Assertion;
     bool _suppress = false;
     bool _suppressAsserted = false;
-    AssertionCounter::Assertion _assertion;
+    Assertion _assertion;
 };
