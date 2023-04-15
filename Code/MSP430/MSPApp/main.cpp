@@ -1341,6 +1341,11 @@ void abort() {
     Assert(false);
 }
 
+extern "C"
+int atexit(void (*)(void)) {
+    return 0;
+}
+
 // MARK: - Main
 
 //extern "C" void Blink() {
