@@ -23,7 +23,13 @@ void _Startup() {
     extern uint8_t _ebss[];
     
     // Load stack pointer
-    asm("mov.a #_StackEnd, sp");
+    if constexpr (sizeof(void*) == 2) {
+        // Small memory model
+        asm("mov #_Stack, sp");
+    } else {
+        // Large memory model
+        asm("mov.a #_Stack, sp");
+    }
     
     // Copy .data section from flash to RAM
     memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
