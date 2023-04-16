@@ -97,11 +97,11 @@ using _Scheduler = Toastbox::Scheduler<
     _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
     nullptr,                                    // T_StackInterrupt: unused
     
-    _TaskMain,                                  // T_Tasks: list of tasks
+    _TaskButton,                                // T_Tasks: list of tasks
+    _TaskMain,
     _TaskSD,
     _TaskImg,
     _TaskI2C,
-    _TaskButton,
     _TaskMotion
 >;
 
@@ -1054,8 +1054,93 @@ static void _MotionDisable() {
     _Motion::Enabled(false);
 }
 
+// Task stack
+[[gnu::section(".stack._TaskButton")]]
+alignas(void*)
+uint8_t ButtonStack[128];
+
+asm(".global _Stack");
+asm(".equ _Stack, ButtonStack+128");
+
 struct _TaskButton {
     static void Run() {
+        // Stop watchdog timer
+        WDTCTL = WDTPW | WDTHOLD;
+        
+        // Init GPIOs
+        GPIO::Init<
+            // Power control
+            _Pin::VDD_B_EN,
+            _Pin::VDD_B_1V8_IMG_SD_EN,
+            _Pin::VDD_B_2V8_IMG_SD_EN,
+            
+            // Clock (config chosen by _RTC)
+            _RTC::Pin::XOUT,
+            _RTC::Pin::XIN,
+            
+            // SPI (config chosen by _SPI)
+            _SPI::Pin::Clk,
+            _SPI::Pin::DataOut,
+            _SPI::Pin::DataIn,
+            
+            // I2C (config chosen by _I2C)
+            _I2C::Pin::SCL,
+            _I2C::Pin::SDA,
+            _I2C::Pin::Active,
+            
+            // Motion (config chosen by _Motion)
+            _Motion::Pin::Power,
+            _Motion::Pin::Signal,
+            
+            // Battery (config chosen by _BatterySampler)
+            _BatterySampler::Pin::BatChrgLvlPin,
+            _BatterySampler::Pin::BatChrgLvlEn_Pin,
+            
+            // Button (config chosen by _Button)
+            _Button::Pin,
+            
+            // LEDs
+            _Pin::LED_GREEN_,
+            _Pin::LED_RED_
+        >();
+        
+        // Init clock
+        _Clock::Init();
+        
+        // Init RTC
+        // We need RTC to be unconditionally enabled for 2 reasons:
+        //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
+        //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
+        //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
+        _RTC::Init();
+        
+        // Init SysTick
+        _SysTick::Init();
+        
+        // Init BatterySampler
+        _BatterySampler::Init();
+        
+        // Init LEDs by setting their default-priority / 'backstop' values to off.
+        // This is necessary so that relinquishing the LEDs from I2C task causes
+        // them to turn off. If we didn't have a backstop value, the LEDs would
+        // remain in whatever state the I2C task set them to before relinquishing.
+        _LEDGreen_.set(_LEDPriority::Default, 1);
+        _LEDRed_.set(_LEDPriority::Default, 1);
+        
+    //    // Blink green LED to signal that we're turning off
+    //    for (;;) {
+    //        for (int i=0; i<5; i++) {
+    //            _Pin::LED_GREEN_::Write(0);
+    //            for (volatile int i=0; i<0xFFFF; i++);
+    //            _Pin::LED_GREEN_::Write(1);
+    //            for (volatile int i=0; i<0xFFFF; i++);
+    //        }
+    //    }
+        
+        // Start Scheduler
+    //    _Scheduler::Start<_TaskButton>();
+        _Scheduler::Start<_TaskI2C, _TaskMotion>();
+        
         // Pause captures upon power on. This is so that the device is off until
         // the user turns it on by holding the power button.
         _OffAssertion = true;
@@ -1137,10 +1222,17 @@ struct _TaskButton {
     static inline _CapturePaused::Assertion _OffAssertion;
     
     // Task stack
-    [[gnu::section(".stack._TaskButton")]]
-    alignas(void*)
-    static inline uint8_t Stack[128];
+    static constexpr auto Stack = ButtonStack;
 };
+
+
+//asm(".global _Stack");
+//asm(".word _Stack");
+
+//[[gnu::used]]
+//static inline uint8_t Meowmix[128];
+//asm(".global _Stack");
+//asm(".equ _Stack, _TaskButton::Stack");
 
 // MARK: - IntState
 
@@ -1358,81 +1450,6 @@ int atexit(void (*)(void)) {
 //}
 
 int main() {
-    // Stop watchdog timer
-    WDTCTL = WDTPW | WDTHOLD;
-    
-    // Init GPIOs
-    GPIO::Init<
-        // Power control
-        _Pin::VDD_B_EN,
-        _Pin::VDD_B_1V8_IMG_SD_EN,
-        _Pin::VDD_B_2V8_IMG_SD_EN,
-        
-        // Clock (config chosen by _RTC)
-        _RTC::Pin::XOUT,
-        _RTC::Pin::XIN,
-        
-        // SPI (config chosen by _SPI)
-        _SPI::Pin::Clk,
-        _SPI::Pin::DataOut,
-        _SPI::Pin::DataIn,
-        
-        // I2C (config chosen by _I2C)
-        _I2C::Pin::SCL,
-        _I2C::Pin::SDA,
-        _I2C::Pin::Active,
-        
-        // Motion (config chosen by _Motion)
-        _Motion::Pin::Power,
-        _Motion::Pin::Signal,
-        
-        // Battery (config chosen by _BatterySampler)
-        _BatterySampler::Pin::BatChrgLvlPin,
-        _BatterySampler::Pin::BatChrgLvlEn_Pin,
-        
-        // Button (config chosen by _Button)
-        _Button::Pin,
-        
-        // LEDs
-        _Pin::LED_GREEN_,
-        _Pin::LED_RED_
-    >();
-    
-    // Init clock
-    _Clock::Init();
-    
-    // Init RTC
-    // We need RTC to be unconditionally enabled for 2 reasons:
-    //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
-    //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
-    //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-    _RTC::Init();
-    
-    // Init SysTick
-    _SysTick::Init();
-    
-    // Init BatterySampler
-    _BatterySampler::Init();
-    
-    // Init LEDs by setting their default-priority / 'backstop' values to off.
-    // This is necessary so that relinquishing the LEDs from I2C task causes
-    // them to turn off. If we didn't have a backstop value, the LEDs would
-    // remain in whatever state the I2C task set them to before relinquishing.
-    _LEDGreen_.set(_LEDPriority::Default, 1);
-    _LEDRed_.set(_LEDPriority::Default, 1);
-    
-//    // Blink green LED to signal that we're turning off
-//    for (;;) {
-//        for (int i=0; i<5; i++) {
-//            _Pin::LED_GREEN_::Write(0);
-//            for (volatile int i=0; i<0xFFFF; i++);
-//            _Pin::LED_GREEN_::Write(1);
-//            for (volatile int i=0; i<0xFFFF; i++);
-//        }
-//    }
-    
-    // Start Scheduler
-//    _Scheduler::Start<_TaskButton>();
-    _Scheduler::Start<_TaskI2C, _TaskButton, _TaskMotion>();
+    // Invokes the first task's Run() function (_TaskButton::Run)
     _Scheduler::Run();
 }

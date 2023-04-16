@@ -35,7 +35,7 @@
 /* Default linker script, for normal executables */
 
 OUTPUT_ARCH(msp430)
-ENTRY(_start)
+ENTRY(_Startup)
 
 MEMORY {
   SFR              : ORIGIN = 0x0000, LENGTH = 0x0010 /* END=0x0010, size 16 */
@@ -241,6 +241,11 @@ SECTIONS
      other region to make use of INFOMEM. */
   } > INFOMEM
 
+  .startup :
+  {
+    . = ALIGN(2);
+    *(.startup)
+  } > FRAM
 
   /* This section contains data that is initialised during load
      but not on application reset.  */
@@ -276,6 +281,8 @@ SECTIONS
   {
     . = ALIGN(2);
     PROVIDE (__datastart = .);
+    _sdata_flash = LOADADDR(.data);
+    PROVIDE (_sdata_ram = .);
 
     KEEP (*(.jcr))
     *(.data.rel.ro.local) *(.data.rel.ro*)
@@ -297,7 +304,7 @@ SECTIONS
 
     _edata = .;
     PROVIDE (edata = .);
-    PROVIDE (__dataend = .);
+    PROVIDE (_edata_ram = .);
   } > RAM AT> FRAM
 
   /* Note that crt0 assumes this is a multiple of two; all the
@@ -310,12 +317,13 @@ SECTIONS
   {
     . = ALIGN(2);
     PROVIDE (__bssstart = .);
+    PROVIDE (_sbss = .);
     *(.dynbss)
     *(.sbss .sbss.*)
     *(.bss .bss.* .gnu.linkonce.b.*)
     . = ALIGN(2);
     *(COMMON)
-    PROVIDE (__bssend = .);
+    PROVIDE (_ebss = .);
   } > RAM
   PROVIDE (__bsssize = SIZEOF(.bss));
 
@@ -359,6 +367,7 @@ SECTIONS
       . = ALIGN(2);
       *(.stack.*)
       . = ALIGN(2);
+      PROVIDE(__stack = .);
   } > RAM
 
   .infoA (NOLOAD) : {} > INFOA              /* MSP430 INFO FLASH MEMORY SEGMENTS */
