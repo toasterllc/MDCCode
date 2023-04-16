@@ -268,7 +268,7 @@ struct [[gnu::packed]] State {
     static_assert(!(sizeof(sd) % 2)); // Check alignment
     static_assert(sizeof(sd) == 56); // Debug
     
-    Settings settings;
+    Settings settings = {};
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
     static_assert(sizeof(settings) == 868); // Debug
