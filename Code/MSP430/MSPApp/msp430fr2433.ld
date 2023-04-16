@@ -241,12 +241,6 @@ SECTIONS
      other region to make use of INFOMEM. */
   } > INFOMEM
 
-  .startup :
-  {
-    . = ALIGN(2);
-    *(.startup)
-  } > FRAM
-
   /* This section contains data that is initialised during load
      but not on application reset.  */
   .persistent :
