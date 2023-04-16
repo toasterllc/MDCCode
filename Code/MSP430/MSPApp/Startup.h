@@ -58,7 +58,7 @@ void _Startup() {
 extern "C"
 void _init() {}
 
-[[gnu::section(".resetvec")]]
+[[gnu::section(".resetvec"), gnu::used]]
 void* _ResetVector[] = {
     (void*)&_Startup,
 };
