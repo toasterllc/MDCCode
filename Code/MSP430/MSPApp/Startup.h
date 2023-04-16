@@ -2,7 +2,7 @@
 #include <msp430.h>
 #include <cstring>
 
-//extern "C" void __libc_init_array();
+extern "C" void __libc_init_array();
 
 class Startup {
 public:
@@ -42,12 +42,16 @@ void _Startup() {
     }
     
     // Call static constructors
-//    __libc_init_array();
+    __libc_init_array();
     
     // Call main function
     [[noreturn]] extern int main();
     main();
 }
+
+extern "C"
+[[gnu::naked, gnu::section(".startup")]]
+void _init() {}
 
 [[gnu::section(".resetvec")]]
 void* _ResetVector[] = {
