@@ -979,6 +979,7 @@ static void _MSPStateRead(const STM::Cmd& cmd) {
     
     size_t off = 0;
     size_t len = arg.len;
+    bool ok = true;
     while (len) {
         // Wait for an available buffer to write into
         _Scheduler::Wait([] { return _Bufs.wok(); });
@@ -986,11 +987,7 @@ static void _MSPStateRead(const STM::Cmd& cmd) {
         buf.len = std::min(len, sizeof(buf.data));
         
         // Read state into the buffer
-        bool ok = __MSPStateRead(off, buf.data, buf.len);
-        if (!ok) {
-            _System::USBSendStatus(false);
-            return;
-        }
+        ok &= __MSPStateRead(off, buf.data, buf.len);
         
         // Enqueue the buffer
         _Bufs.wpush();
@@ -1001,7 +998,7 @@ static void _MSPStateRead(const STM::Cmd& cmd) {
     // Wait for DataIn task to complete
     _Scheduler::Wait([] { return !_Bufs.rok(); });
     // Send status
-    _System::USBSendStatus(true);
+    _System::USBSendStatus(ok);
 }
 
 static void _MSPStateWrite(const STM::Cmd& cmd) {
