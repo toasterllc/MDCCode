@@ -13,7 +13,6 @@
 		557ABD0929E47F450032619E /* Triggers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Triggers.h; sourceTree = "<group>"; };
 		557ABD0C29E513BF0032619E /* Motion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Motion.h; sourceTree = "<group>"; };
 		557ABD0D29E52D310032619E /* SuppressibleAssertion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SuppressibleAssertion.h; sourceTree = "<group>"; };
-		557ABD9329EBCC770032619E /* Startup.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = Startup.s; sourceTree = "<group>"; };
 		557C2F3229955ADE0063808A /* AssertionCounter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AssertionCounter.h; sourceTree = "<group>"; };
 		557CF80A297331F500470493 /* Button.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Button.h; sourceTree = "<group>"; };
 		55889121273B3D360004458F /* GPIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GPIO.h; sourceTree = "<group>"; };
@@ -53,7 +52,6 @@
 				557ABD0D29E52D310032619E /* SuppressibleAssertion.h */,
 				55C4567F29559E7D00A20363 /* BatterySampler.h */,
 				55FD016C27605D4F005505B5 /* Startup.h */,
-				557ABD9329EBCC770032619E /* Startup.s */,
 				55FD016D27609F93005505B5 /* RegLocker.h */,
 				55C4567E295580AB00A20363 /* OutputPriority.h */,
 				557C2F3229955ADE0063808A /* AssertionCounter.h */,

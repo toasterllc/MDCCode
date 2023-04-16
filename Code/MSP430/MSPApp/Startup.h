@@ -48,3 +48,8 @@ void _Startup() {
     [[noreturn]] extern int main();
     main();
 }
+
+[[gnu::section(".resetvec")]]
+void* _ResetVector[] = {
+    (void*)&_Startup,
+};

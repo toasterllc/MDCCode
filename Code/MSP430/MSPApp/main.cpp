@@ -298,7 +298,7 @@ static void _ICEInit() {
     Assert(ok);
 }
 
-// MARK: - Tasks
+// MARK: - _TaskSD
 
 //static void debugSignal() {
 //    _Pin::DEBUG_OUT::Init();
@@ -498,6 +498,8 @@ struct _TaskSD {
     static inline uint8_t Stack[256];
 };
 
+// MARK: - _TaskImg
+
 struct _TaskImg {
     static void Init() {
         _CaptureBlock = 0;
@@ -601,6 +603,8 @@ struct _TaskImg {
     alignas(void*)
     static inline uint8_t Stack[256];
 };
+
+// MARK: - _TaskMain
 
 struct _TaskMain {
     static void Start() {
@@ -904,6 +908,8 @@ static void _CaptureResume() {
     _TaskMain::Start();
 }
 
+// MARK: - _TaskI2C
+
 struct _TaskI2C {
     static void Run() {
         for (;;) {
@@ -1017,6 +1023,8 @@ struct _TaskI2C {
     static inline uint8_t Stack[256];
 };
 
+// MARK: - _TaskMotion
+
 struct _TaskMotion {
     static void Run() {
         for (;;) {
@@ -1054,13 +1062,16 @@ static void _MotionDisable() {
     _Motion::Enabled(false);
 }
 
-// Task stack
+// MARK: - _TaskButton
+
+#define _TaskButtonStackSize 128
+
 [[gnu::section(".stack._TaskButton")]]
 alignas(void*)
-uint8_t ButtonStack[128];
+uint8_t _TaskButtonStack[_TaskButtonStackSize];
 
 asm(".global _Stack");
-asm(".equ _Stack, ButtonStack+128");
+asm(".equ _Stack, _TaskButtonStack+" Stringify(_TaskButtonStackSize));
 
 struct _TaskButton {
     static void Run() {
@@ -1222,17 +1233,8 @@ struct _TaskButton {
     static inline _CapturePaused::Assertion _OffAssertion;
     
     // Task stack
-    static constexpr auto Stack = ButtonStack;
+    static constexpr auto& Stack = _TaskButtonStack;
 };
-
-
-//asm(".global _Stack");
-//asm(".word _Stack");
-
-//[[gnu::used]]
-//static inline uint8_t Meowmix[128];
-//asm(".global _Stack");
-//asm(".equ _Stack, _TaskButton::Stack");
 
 // MARK: - IntState
 
