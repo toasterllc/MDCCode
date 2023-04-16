@@ -42,6 +42,7 @@ const CmdStr MSPTimeGetCmd          = "MSPTimeGet";
 const CmdStr MSPTimeSetCmd          = "MSPTimeSet";
 const CmdStr MSPSBWReadCmd          = "MSPSBWRead";
 const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
+const CmdStr MSPSBWEraseCmd         = "MSPSBWErase";
 const CmdStr SDReadCmd              = "SDRead";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 
@@ -72,6 +73,7 @@ static void printUsage() {
     
     cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
     cout << "  " << MSPSBWWriteCmd          << " <file>\n";
+    cout << "  " << MSPSBWEraseCmd          << "\n";
     
     cout << "  " << SDReadCmd               << " <addr> <blockcount> <output>\n";
     cout << "  " << ImgCaptureCmd           << " <output.cfa>\n";
@@ -201,6 +203,8 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == lower(MSPSBWWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.MSPSBWWrite.filePath = strs[1];
+    
+    } else if (args.cmd == lower(MSPSBWEraseCmd)) {
     
     } else if (args.cmd == lower(SDReadCmd)) {
         if (strs.size() < 4) throw std::runtime_error("missing argument: address/length/file");
@@ -536,6 +540,7 @@ static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
 }
 
 static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
+    device.mspSBWLock();
     device.mspSBWConnect();
     
     printf("Reading [0x%08jx,0x%08jx):\n",
@@ -553,11 +558,13 @@ static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
     printf("\n");
     
     device.mspSBWDisconnect();
+    device.mspSBWUnlock();
 }
 
 static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.MSPSBWWrite.filePath.c_str());
     
+    device.mspSBWLock();
     device.mspSBWConnect();
     
     // Write the data
@@ -584,6 +591,15 @@ static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
     });
     
     device.mspSBWDisconnect();
+    device.mspSBWUnlock();
+}
+
+static void MSPSBWErase(const Args& args, MDCUSBDevice& device) {
+    std::cout << "MSPSBWErase\n";
+    device.mspSBWLock();
+    device.mspSBWErase();
+    device.mspSBWUnlock();
+    std::cout << "-> OK\n\n";
 }
 
 static void SDRead(const Args& args, MDCUSBDevice& device) {
@@ -703,6 +719,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPTimeSetCmd))          MSPTimeSet(args, device);
         else if (args.cmd == lower(MSPSBWReadCmd))          MSPSBWRead(args, device);
         else if (args.cmd == lower(MSPSBWWriteCmd))         MSPSBWWrite(args, device);
+        else if (args.cmd == lower(MSPSBWEraseCmd))         MSPSBWErase(args, device);
         else if (args.cmd == lower(SDReadCmd))              SDRead(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))          ImgCapture(args, device);
     

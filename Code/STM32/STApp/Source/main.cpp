@@ -1072,12 +1072,33 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
 }
 
 // _MSPSBWLock: ensures mutual exclusion between MSP I2C comms (via System::_TaskMSPComms) and MSP Spy-bi-wire IO
-static _System::MSPLock _MSPSBWLock;
+static _System::MSPLock __MSPSBWLock;
 
 static void _MSPSBWReset() {
     _MSPJTAG::Disconnect();
     // Relinquish the lock if it was held (no-op otherwise)
-    _MSPSBWLock = {};
+    __MSPSBWLock = {};
+}
+
+static void _MSPSBWLock(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Acquire mutex to block MSP I2C comms until our SBW IO is done (and _MSPSBWDisconnect() is called)
+    __MSPSBWLock.lock();
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _MSPSBWUnlock(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    __MSPSBWLock.unlock();
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 static void _MSPSBWConnect(const STM::Cmd& cmd) {
@@ -1085,7 +1106,6 @@ static void _MSPSBWConnect(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Acquire mutex to block MSP I2C comms until our SBW IO is done (and _MSPSBWDisconnect() is called)
-    _MSPSBWLock.lock();
     const auto mspr = _MSPJTAG::Connect();
     
     // Send status
@@ -1096,7 +1116,7 @@ static void _MSPSBWDisconnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    _MSPSBWReset();
+    _MSPJTAG::Disconnect();
     
     // Send status
     _System::USBSendStatus(true);
@@ -1161,6 +1181,15 @@ static void _MSPSBWWrite(const STM::Cmd& cmd) {
     }
     
     _System::USBSendStatus(true);
+}
+
+static void _MSPSBWErase(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const auto mspr = _MSPJTAG::Erase();
+    
+    _System::USBSendStatus(mspr == _MSPJTAG::Status::OK);
 }
 
 struct _MSPSBWDebugState {
@@ -1428,10 +1457,13 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPTimeGet:            _MSPTimeGet(cmd);                   break;
     case Op::MSPTimeSet:            _MSPTimeSet(cmd);                   break;
     // MSP430 SBW
+    case Op::MSPSBWLock:            _MSPSBWLock(cmd);                   break;
+    case Op::MSPSBWUnlock:          _MSPSBWUnlock(cmd);                 break;
     case Op::MSPSBWConnect:         _MSPSBWConnect(cmd);                break;
     case Op::MSPSBWDisconnect:      _MSPSBWDisconnect(cmd);             break;
     case Op::MSPSBWRead:            _MSPSBWRead(cmd);                   break;
     case Op::MSPSBWWrite:           _MSPSBWWrite(cmd);                  break;
+    case Op::MSPSBWErase:           _MSPSBWErase(cmd);                  break;
     case Op::MSPSBWDebug:           _MSPSBWDebug(cmd);                  break;
     // SD Card
     case Op::SDInit:                _SDInit(cmd);                       break;

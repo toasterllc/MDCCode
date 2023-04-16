@@ -374,6 +374,20 @@ public:
         _checkStatus("MSPTimeSet command failed");
     }
     
+    void mspSBWLock() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWLock };
+        _sendCmd(cmd);
+        _checkStatus("MSPSBWLock command failed");
+    }
+    
+    void mspSBWUnlock() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWUnlock };
+        _sendCmd(cmd);
+        _checkStatus("MSPSBWUnlock command failed");
+    }
+    
     void mspSBWConnect() {
         assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWConnect };
@@ -434,6 +448,13 @@ public:
         // Send data
         _dev.write(STM::Endpoint::DataOut, data, len);
         _checkStatus("MSPSBWWrite command failed");
+    }
+    
+    void mspSBWErase() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWErase };
+        _sendCmd(cmd);
+        _checkStatus("MSPSBWErase command failed");
     }
     
     void mspSBWDebug(const STM::MSPSBWDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
