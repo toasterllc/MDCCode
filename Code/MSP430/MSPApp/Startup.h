@@ -56,7 +56,6 @@ void _Startup() {
 }
 
 extern "C"
-[[gnu::naked, gnu::section(".startup")]]
 void _init() {}
 
 [[gnu::section(".resetvec")]]
