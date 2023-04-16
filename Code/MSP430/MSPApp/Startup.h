@@ -14,7 +14,7 @@ public:
 };
 
 extern "C"
-[[noreturn, gnu::naked, gnu::section(".startup")]]
+[[noreturn, gnu::naked]]
 void _Startup() {
     extern uint8_t _sdata_flash[];
     extern uint8_t _sdata_ram[];
@@ -23,7 +23,7 @@ void _Startup() {
     extern uint8_t _ebss[];
     
     // Load stack pointer
-    asm("mov sp, _Stack");
+    asm("mov.a #_StackEnd, sp");
     
     // Copy .data section from flash to RAM
     memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
