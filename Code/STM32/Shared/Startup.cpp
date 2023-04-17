@@ -18,8 +18,8 @@ static inline void _StackInit() {
     // Set the MSP+PSP stack pointers
     // Hardware typically initializes MSP to the SP value at the start of the vector table, but we
     // still need to set MSP here (in addition to PSP) because in the STMApp case, we're executing
-    // because the bootloader invoked our ISR_Reset() directly. Therefore in that case hardware
-    // didn't initialize MSP, so we need to set it directly here.
+    // because the bootloader invoked our ISR_Reset() directly (not via hardware). Therefore in
+    // that case, hardware didn't initialize MSP, so we need to initialize it manually here.
     asm volatile("ldr r0, =_StackInterrupt" : : : );    // r0  = _StackInterrupt
     asm volatile("msr msp, r0" : : : );                 // msp = r0
     asm volatile("ldr r0, =_Stack" : : : );             // r0  = _Stack
@@ -45,19 +45,6 @@ void _Startup() {
     extern uint8_t VectorTable[];
     
     // Disable interrupts so that they don't occur until we enter our first Scheduler task.
-    //
-    // Disabling interrupts is necessary because _PSPStackActivate() sets the PSP stack
-    // to the same region as the MSP stack, and then activates the PSP stack. (We want
-    // to activate the PSP stack so that Scheduler and our tasks all execute using the
-    // PSP stack, and only interrupt handling executes using the MSP stack.) Therefore
-    // if an interrupt occurred after calling _PSPStackActivate(), the interrupt would
-    // be serviced using the MSP stack and would clobber the PSP stack since they
-    // share the same region of memory, so we disable interrupts to prevent this
-    // clobbering.
-    //
-    // Scheduler enables interrupts only after setting the stack pointer (ie PSP) to
-    // the first task's stack, which is safe at that point because PSP and MSP no
-    // longer share the same memory region.
     __disable_irq();
     
     // Initialize our stack
