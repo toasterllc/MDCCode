@@ -86,7 +86,7 @@ void _Startup() {
 }
 
 extern "C"
-[[noreturn, gnu::section(".isr")]]
+[[noreturn, gnu::naked, gnu::section(".isr")]]
 void ISR_Reset() {
     _Startup();
 }
