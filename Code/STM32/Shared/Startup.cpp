@@ -1,9 +1,11 @@
 #include <string.h>
 #include "stm32f7xx.h"
 
+#warning TODO: if RAM gets tight, STMApp and STMLoader could share the same stacks (such as _StackInterrupt and the task stacks) instead of having their own stacks
+
 extern "C" void __libc_init_array();
 
-// - rename Startup -> _Startup to match MSP
+// √ rename Startup -> _Startup to match MSP
 // - define _Stack the same way we do with MSPApp (use _TaskCmdRecv's stack)
 // - _PSPStackActivate(): set PSP to _Stack
 // - update large comment below since it's no longer true that interrupts need to be disabled
@@ -12,15 +14,22 @@ extern "C" void __libc_init_array();
 //
 
 [[gnu::always_inline]]
-static inline void _PSPStackActivate() {
-    // Set the PSP stack pointer to the MSP stack pointer, and switch to using PSP stack.
-    // Scheduler and its tasks use the PSP stack, while interrupts are handled on the MSP stack.
-    asm volatile("mrs r0, msp" : : : );         // r0 = msp
-    asm volatile("msr psp, r0" : : : );         // psp = r0
-    asm volatile("mrs r0, CONTROL" : : : );     // r0 = CONTROL
-    asm volatile("orrs r0, r0, #2" : : : );     // Set SPSEL bit (enable using PSP stack)
-    asm volatile("msr CONTROL, r0" : : : );     // CONTROL = r0
-    asm volatile("isb" : : : );                 // Instruction Synchronization Barrier
+static inline void _StackInit() {
+    // Set the MSP+PSP stack pointers
+    // Hardware typically initializes MSP to the SP value at the start of the vector table, but we
+    // still need to set MSP here (in addition to PSP) because in the STMApp case, we're executing
+    // because the bootloader invoked our ISR_Reset() directly. Therefore in that case hardware
+    // didn't initialize MSP, so we need to set it directly here.
+    asm volatile("ldr r0, =_StackInterrupt" : : : );    // r0  = _StackInterrupt
+    asm volatile("msr msp, r0" : : : );                 // msp = r0
+    asm volatile("ldr r0, =_Stack" : : : );             // r0  = _Stack
+    asm volatile("msr psp, r0" : : : );                 // psp = r0
+    
+    // Make PSP the active stack
+    asm volatile("mrs r0, CONTROL" : : : );             // r0 = CONTROL
+    asm volatile("orrs r0, r0, #2" : : : );             // Set SPSEL bit (enable using PSP stack)
+    asm volatile("msr CONTROL, r0" : : : );             // CONTROL = r0
+    asm volatile("isb" : : : );                         // Instruction Synchronization Barrier
 }
 
 // Startup() needs to be in the .isr section so that it's near ISR_Reset,
@@ -35,7 +44,7 @@ void _Startup() {
     extern uint8_t _ebss[];
     extern uint8_t VectorTable[];
     
-    // Disable interrupts so that they don't occur until Scheduler explicitly enables them.
+    // Disable interrupts so that they don't occur until we enter our first Scheduler task.
     //
     // Disabling interrupts is necessary because _PSPStackActivate() sets the PSP stack
     // to the same region as the MSP stack, and then activates the PSP stack. (We want
@@ -51,8 +60,8 @@ void _Startup() {
     // longer share the same memory region.
     __disable_irq();
     
-    // Switch from MSP stack -> PSP stack
-    _PSPStackActivate();
+    // Initialize our stack
+    _StackInit();
     
     // Copy .data section from flash to RAM
     memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
@@ -74,4 +83,16 @@ void _Startup() {
     // Call main function
     [[noreturn]] extern int main();
     main();
+}
+
+extern "C"
+[[noreturn, gnu::section(".isr")]]
+void ISR_Reset() {
+    _Startup();
+}
+
+extern "C"
+[[noreturn, gnu::section(".isr")]]
+void ISR_Default() {
+    for (;;);
 }

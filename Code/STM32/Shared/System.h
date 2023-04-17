@@ -17,14 +17,23 @@
 // This is the stack that's used to handle interrupts.
 // It's large because STM's USB code is large and executes in the interrupt context.
 
-#define _StackInterruptSize 1024
+#define __StackInterruptSize 1024
 
 [[gnu::section(".stack.interrupt")]]
 alignas(void*)
-uint8_t _StackInterrupt[_StackInterruptSize];
+uint8_t __StackInterrupt[__StackInterruptSize];
 
-asm(".global _StackInterruptEnd");
-asm(".equ _StackInterruptEnd, _StackInterrupt+" Stringify(_StackInterruptSize));
+asm(".global _StackInterrupt");
+asm(".equ _StackInterrupt, __StackInterrupt+" Stringify(__StackInterruptSize));
+
+#define _TaskCmdRecvStackSize 512
+
+[[gnu::section(".stack._TaskCmdRecv")]]
+alignas(void*)
+uint8_t _TaskCmdRecvStack[_TaskCmdRecvStackSize];
+
+asm(".global _Stack");
+asm(".equ _Stack, _TaskCmdRecvStack+" Stringify(_TaskCmdRecvStackSize));
 
 // MARK: - System
 
@@ -103,7 +112,7 @@ public:
         
         _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
         _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
-        _StackInterrupt,                            // T_StackInterrupt: stack used for handling interrupts;
+        __StackInterrupt,                           // T_StackInterrupt: stack used for handling interrupts;
                                                     //                   Scheduler only uses this to detect stack overflow
         
         _TaskCmdRecv,                               // T_Tasks: list of tasks
@@ -193,9 +202,7 @@ private:
         }
         
         // Task stack
-        [[gnu::section(".stack._TaskCmdRecv")]]
-        alignas(void*)
-        static inline uint8_t Stack[512];
+        static constexpr auto& Stack = _TaskCmdRecvStack;
     };
     
     struct _TaskCmdHandle {

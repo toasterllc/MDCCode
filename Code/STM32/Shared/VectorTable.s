@@ -3,11 +3,9 @@
 .fpu softvfp
 .thumb
 
-
 .global VectorTable
 .global ISR_Default
 .global ISR_Reset
-
 
 // Vector table
 .section .isr.VectorTable
@@ -16,7 +14,7 @@
 .align 9
 .type VectorTable, %object
 VectorTable:
-    .word _StackInterruptEnd
+    .word _StackInterrupt
     .word ISR_Reset
 
     .word ISR_NMI
@@ -425,21 +423,3 @@ VectorTable:
     .thumb_set ISR_SDMMC2,ISR_Default
     
     .size VectorTable, .-VectorTable
-
-
-
-// Reset ISR handler
-.section .isr
-.type ISR_Reset, %function
-ISR_Reset:
-    // Set stack pointer
-    ldr sp, =_StackInterruptEnd
-    // Jump to init routine
-    b _Startup
-
-
-// Default ISR handler
-.section .isr
-.type ISR_Default, %function
-ISR_Default:
-    b  ISR_Default
