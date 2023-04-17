@@ -488,6 +488,7 @@ private:
         HAL_NVIC_SetPriority(EXTI15_10_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
         
+        // Start _TaskMSPComms task
         Scheduler::template Start<_TaskMSPComms>();
     }
     

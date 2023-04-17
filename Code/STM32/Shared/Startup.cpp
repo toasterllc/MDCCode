@@ -3,6 +3,14 @@
 
 extern "C" void __libc_init_array();
 
+// - rename Startup -> _Startup to match MSP
+// - define _Stack the same way we do with MSPApp (use _TaskCmdRecv's stack)
+// - _PSPStackActivate(): set PSP to _Stack
+// - update large comment below since it's no longer true that interrupts need to be disabled
+//   after we start using _TaskCmdRecv's stack. however we should keep interrupts disabled
+//   while performing this bootstrapping functions, as it's just good practice.
+//
+
 [[gnu::always_inline]]
 static inline void _PSPStackActivate() {
     // Set the PSP stack pointer to the MSP stack pointer, and switch to using PSP stack.
