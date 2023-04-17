@@ -1495,15 +1495,6 @@ static void _CmdHandle(const STM::Cmd& cmd) {
 
 // MARK: - ISRs
 
-extern "C" [[gnu::section(".isr")]] void ISR_NMI() {}
-extern "C" [[gnu::section(".isr")]] void ISR_HardFault() { for (;;); }
-extern "C" [[gnu::section(".isr")]] void ISR_MemManage() { for (;;); }
-extern "C" [[gnu::section(".isr")]] void ISR_BusFault() { for (;;); }
-extern "C" [[gnu::section(".isr")]] void ISR_UsageFault() { for (;;); }
-extern "C" [[gnu::section(".isr")]] void ISR_SVC() {}
-extern "C" [[gnu::section(".isr")]] void ISR_DebugMon() {}
-extern "C" [[gnu::section(".isr")]] void ISR_PendSV() {}
-
 extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
     _Scheduler::Tick();
     HAL_IncTick();

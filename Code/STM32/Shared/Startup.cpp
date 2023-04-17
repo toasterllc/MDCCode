@@ -20,10 +20,10 @@ static inline void _StackInit() {
     // still need to set MSP here (in addition to PSP) because in the STMApp case, we're executing
     // because the bootloader invoked our ISR_Reset() directly (not via hardware). Therefore in
     // that case, hardware didn't initialize MSP, so we need to initialize it manually here.
-    asm volatile("ldr r0, =_StackInterrupt" : : : );    // r0  = _StackInterrupt
-    asm volatile("msr msp, r0" : : : );                 // msp = r0
-    asm volatile("ldr r0, =_Stack" : : : );             // r0  = _Stack
-    asm volatile("msr psp, r0" : : : );                 // psp = r0
+    asm volatile("ldr r0, =_StartupStackInterrupt" : : : ); // r0  = _StackInterrupt
+    asm volatile("msr msp, r0" : : : );                     // msp = r0
+    asm volatile("ldr r0, =_StartupStack" : : : );          // r0  = _Stack
+    asm volatile("msr psp, r0" : : : );                     // psp = r0
     
     // Make PSP the active stack
     asm volatile("mrs r0, CONTROL" : : : );             // r0 = CONTROL
@@ -72,8 +72,5 @@ void _Startup() {
     main();
 }
 
-extern "C"
-[[noreturn, gnu::naked, gnu::section(".isr")]]
-void ISR_Reset() {
-    _Startup();
-}
+extern "C" [[noreturn, gnu::naked, gnu::section(".isr")]] void ISR_Reset()      { _Startup(); }
+extern "C" [[noreturn, gnu::naked, gnu::section(".isr")]] void ISR_Default()    { Assert(false); }

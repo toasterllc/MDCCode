@@ -12,9 +12,8 @@
 .align 9
 .type VectorTable, %object
 VectorTable:
-    .word _StackInterrupt
+    .word _StartupStackInterrupt
     .word ISR_Reset
-
     .word ISR_NMI
     .word ISR_HardFault
     .word ISR_MemManage

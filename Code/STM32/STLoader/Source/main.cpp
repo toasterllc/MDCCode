@@ -93,15 +93,6 @@ static void _Reset() {}
 
 // MARK: - ISRs
 
-extern "C" [[gnu::section(".isr")]] void ISR_NMI()          {}
-extern "C" [[gnu::section(".isr")]] void ISR_HardFault()    { Assert(false); }
-extern "C" [[gnu::section(".isr")]] void ISR_MemManage()    { Assert(false); }
-extern "C" [[gnu::section(".isr")]] void ISR_BusFault()     { Assert(false); }
-extern "C" [[gnu::section(".isr")]] void ISR_UsageFault()   { Assert(false); }
-extern "C" [[gnu::section(".isr")]] void ISR_SVC()          {}
-extern "C" [[gnu::section(".isr")]] void ISR_DebugMon()     {}
-extern "C" [[gnu::section(".isr")]] void ISR_PendSV()       {}
-
 extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
     _Scheduler::Tick();
     HAL_IncTick();
