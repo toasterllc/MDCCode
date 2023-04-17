@@ -11,7 +11,7 @@ extern "C" void __libc_init_array();
 // - update large comment below since it's no longer true that interrupts need to be disabled
 //   after we start using _TaskCmdRecv's stack. however we should keep interrupts disabled
 //   while performing this bootstrapping functions, as it's just good practice.
-//
+// - compare st library directories between STLoader and STApp
 
 [[gnu::always_inline]]
 static inline void _StackInit() {
@@ -35,7 +35,7 @@ static inline void _StackInit() {
 // Startup() needs to be in the .isr section so that it's near ISR_Reset,
 // otherwise we can get a linker error.
 extern "C"
-[[noreturn, gnu::section(".isr")]]
+[[noreturn, gnu::naked, gnu::section(".isr")]]
 void _Startup() {
     extern uint8_t _sdata_flash[];
     extern uint8_t _sdata_ram[];
@@ -89,10 +89,4 @@ extern "C"
 [[noreturn, gnu::section(".isr")]]
 void ISR_Reset() {
     _Startup();
-}
-
-extern "C"
-[[noreturn, gnu::section(".isr")]]
-void ISR_Default() {
-    for (;;);
 }

@@ -4,8 +4,6 @@
 .thumb
 
 .global VectorTable
-.global ISR_Default
-.global ISR_Reset
 
 // Vector table
 .section .isr.VectorTable
@@ -423,3 +421,9 @@ VectorTable:
     .thumb_set ISR_SDMMC2,ISR_Default
     
     .size VectorTable, .-VectorTable
+
+// Default ISR handler
+.section .isr
+.type ISR_Default, %function
+ISR_Default:
+    b  ISR_Default
