@@ -435,7 +435,7 @@ ISR_Reset:
     // Set stack pointer
     ldr sp, =_StackInterruptEnd
     // Jump to init routine
-    b Startup
+    b _Startup
 
 
 // Default ISR handler

@@ -27,7 +27,7 @@ static inline void _PSPStackActivate() {
 // otherwise we can get a linker error.
 extern "C"
 [[noreturn, gnu::section(".isr")]]
-void Startup() {
+void _Startup() {
     extern uint8_t _sdata_flash[];
     extern uint8_t _sdata_ram[];
     extern uint8_t _edata_ram[];
