@@ -570,7 +570,7 @@ private:
             if (eps.len == sizeof(_ResetSentinel)) eps.stage = _EndpointStage::Ready;
             break;
         default:
-            abort();
+            Assert(false);
         }
         
         // State actions
@@ -612,7 +612,7 @@ private:
         case _EndpointStage::ResetZLP1:     eps.stage = _EndpointStage::ResetZLP2;     break;
         case _EndpointStage::ResetZLP2:     eps.stage = _EndpointStage::ResetSentinel; break;
         case _EndpointStage::ResetSentinel: eps.stage = _EndpointStage::Ready;         break;
-        default:                            abort();
+        default:                            Assert(false);
         }
         
         // State actions

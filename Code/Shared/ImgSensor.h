@@ -5,13 +5,13 @@
 namespace Img {
 
 template <
-    auto T_Domain,
-    typename T_Scheduler,
-    typename T_ICE
+auto T_Domain,
+typename T_Scheduler,
+typename T_ICE
 >
 class Sensor {
 public:
-    static constexpr auto AbortDomain = T_Domain;
+    static constexpr auto AssertDomain = T_Domain;
     
     static void Init() {
         // Toggle IMG_RST_

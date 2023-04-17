@@ -17,7 +17,7 @@ private:
     using _InactiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
     
 public:
-    static constexpr auto AbortDomain = T_Domain;
+    static constexpr auto AssertDomain = T_Domain;
     
     struct Pin {
         using SCL = typename T_SCLPin::template Opts<GPIO::Option::Sel01>;

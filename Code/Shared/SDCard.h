@@ -17,7 +17,7 @@ uint8_t T_ClkDelayFast
 >
 class Card {
 public:
-    static constexpr auto AbortDomain = T_Domain;
+    static constexpr auto AssertDomain = T_Domain;
     
     static void Reset() {
         // Reset SDController

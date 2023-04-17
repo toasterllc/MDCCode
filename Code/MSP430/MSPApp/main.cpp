@@ -1,7 +1,6 @@
 #include <msp430.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <inttypes.h>
+#include <cstdint>
+#include <cstdbool>
 #include <cstddef>
 #include <atomic>
 #define SchedulerMSP430
@@ -31,7 +30,7 @@
 #include "Assert.h"
 using namespace GPIO;
 
-static constexpr auto AbortDomain = MSP::Domain_::Main;
+static constexpr auto AssertDomain = MSP::Domain_::Main;
 static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _XT1FreqHz        = 32768;
 static constexpr uint32_t _SysTickPeriodUs  = 512;

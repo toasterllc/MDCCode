@@ -22,7 +22,7 @@ private:
     using _SignalEnabled = typename T_SignalPin::template Opts<GPIO::Option::Input, GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
     
 public:
-    static constexpr auto AbortDomain = T_Domain;
+    static constexpr auto AssertDomain = T_Domain;
     
     struct Pin {
         using Power = _PowerDisabled;

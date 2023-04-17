@@ -74,7 +74,7 @@ static void _STMReset(const STM::Cmd& cmd) {
     // Perform software reset
     HAL_NVIC_SystemReset();
     // Unreachable
-    abort();
+    Assert(false);
 }
 
 static void _CmdHandle(const STM::Cmd& cmd) {
@@ -92,10 +92,10 @@ static void _Reset() {}
 // MARK: - ISRs
 
 extern "C" [[gnu::section(".isr")]] void ISR_NMI()          {}
-extern "C" [[gnu::section(".isr")]] void ISR_HardFault()    { abort(); }
-extern "C" [[gnu::section(".isr")]] void ISR_MemManage()    { abort(); }
-extern "C" [[gnu::section(".isr")]] void ISR_BusFault()     { abort(); }
-extern "C" [[gnu::section(".isr")]] void ISR_UsageFault()   { abort(); }
+extern "C" [[gnu::section(".isr")]] void ISR_HardFault()    { Assert(false); }
+extern "C" [[gnu::section(".isr")]] void ISR_MemManage()    { Assert(false); }
+extern "C" [[gnu::section(".isr")]] void ISR_BusFault()     { Assert(false); }
+extern "C" [[gnu::section(".isr")]] void ISR_UsageFault()   { Assert(false); }
 extern "C" [[gnu::section(".isr")]] void ISR_SVC()          {}
 extern "C" [[gnu::section(".isr")]] void ISR_DebugMon()     {}
 extern "C" [[gnu::section(".isr")]] void ISR_PendSV()       {}
@@ -146,9 +146,9 @@ static void _JumpToAppIfNeeded() {
 }
 
 // MARK: - Abort
-
-extern "C" [[noreturn]]
-void abort() {
+extern "C"
+[[noreturn]]
+void Abort(uint8_t domain, uint16_t line) {
     _System::Abort();
 }
 

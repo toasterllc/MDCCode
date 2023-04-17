@@ -8,7 +8,7 @@ auto T_ReleaseFn = nullptr
 >
 class T_AssertionCounter {
 public:
-    static constexpr auto AbortDomain = T_Domain;
+    static constexpr auto AssertDomain = T_Domain;
     
     // Copy/move: illegal
     T_AssertionCounter(const T_AssertionCounter& x) = delete;

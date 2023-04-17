@@ -231,7 +231,7 @@ private:
     }
     
     static void _CallbackError(QSPI_HandleTypeDef* me) {
-        abort();
+        Assert(false);
     }
     
     static inline const Config* _Config = nullptr;

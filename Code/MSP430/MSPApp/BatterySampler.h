@@ -12,7 +12,7 @@ typename T_BatChrgLvlEn_Pin
 >
 class BatterySamplerType {
 public:
-    static constexpr auto AbortDomain = T_Domain;
+    static constexpr auto AssertDomain = T_Domain;
     
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;

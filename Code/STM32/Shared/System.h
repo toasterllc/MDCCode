@@ -64,7 +64,7 @@ private:
     
     [[noreturn]]
     static void _SchedulerStackOverflow() {
-        Abort();
+        Assert(false);
     }
     
     static void _Sleep() {
@@ -576,7 +576,7 @@ private:
         // Perform software reset
         HAL_NVIC_SystemReset();
         // Unreachable
-        abort();
+        Assert(false);
     }
     
     static void _LEDSet(const STM::Cmd& cmd) {

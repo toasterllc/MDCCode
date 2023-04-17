@@ -13,7 +13,7 @@ auto& T_Base,
 typename T_MotionEnabled
 >
 struct T_Triggers {
-    static constexpr auto AbortDomain = T_Domain;
+    static constexpr auto AssertDomain = T_Domain;
     struct Trigger;
     
     struct Event {

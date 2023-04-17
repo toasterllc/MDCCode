@@ -1,3 +1,4 @@
+#include <cstdint>
 #define SchedulerARM32
 #include "Toastbox/Scheduler.h"
 #include "Toastbox/Queue.h"
@@ -64,21 +65,21 @@ using _ICE_ST_SPI_CLK     = _QSPI::Pin::Clk::Opts<GPIO::Option::Output0>;
 using _ICE_ST_SPI_D4      = _QSPI::Pin::D4::Opts<GPIO::Option::Input>;
 using _ICE_ST_SPI_D5      = _QSPI::Pin::D5::Opts<GPIO::Option::Output0>;
 
-[[noreturn]] static void _ICEError(uint16_t line);
-using _ICE = ::ICE<_Scheduler, _ICEError>;
-
-[[noreturn]] static void _ImgError(uint16_t line);
-using _ImgSensor = Img::Sensor<
-    _Scheduler, // T_Scheduler
-    _ICE,       // T_ICE
-    _ImgError   // T_Error
+using _ICE = ::ICE<
+    0,          // T_Domain
+    _Scheduler  // T_Scheduler
 >;
 
-[[noreturn]] static void _SDError(uint16_t line);
+using _ImgSensor = Img::Sensor<
+    0,          // T_Domain
+    _Scheduler, // T_Scheduler
+    _ICE        // T_ICE
+>;
+
 using _SDCard = SD::Card<
+    0,          // T_Domain
     _Scheduler, // T_Scheduler
     _ICE,       // T_ICE
-    _SDError,   // T_Error
     1,          // T_ClkDelaySlow (odd values invert the clock)
     1           // T_ClkDelayFast (odd values invert the clock)
 >;
@@ -302,11 +303,6 @@ static void _ICEAppInit() {
     Assert(ok);
 }
 
-[[noreturn]]
-static void _ICEError(uint16_t line) {
-    _System::Abort();
-}
-
 // MARK: - SD Card
 
 //static bool _MSPSBWConnect(bool unlockPins) {
@@ -351,11 +347,6 @@ static void _ICEError(uint16_t line) {
 //    return true;
 //}
 
-[[noreturn]]
-static void _SDError(uint16_t line) {
-    _System::Abort();
-}
-
 //static bool _ImgSetPowerEnabled(bool en) {
 //    constexpr uint16_t BIT0             = 1<<0;
 //    constexpr uint16_t BIT2             = 1<<2;
@@ -389,11 +380,6 @@ static void _SDError(uint16_t line) {
 //    
 //    return true;
 //}
-
-[[noreturn]]
-static void _ImgError(uint16_t line) {
-    _System::Abort();
-}
 
 // MARK: - Tasks
 
@@ -1234,7 +1220,7 @@ static void _MSPSBWDebugHandleCmd(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& 
     case MSPSBWDebugCmd::Op::RstSet:        _MSPJTAG::DebugRstSet(cmd.pinValGet());     break;
     case MSPSBWDebugCmd::Op::TestPulse:     _MSPJTAG::DebugTestPulse();                 break;
     case MSPSBWDebugCmd::Op::SBWIO:         _MSPSBWDebugHandleSBWIO(cmd, state, buf);	break;
-    default:                                abort();
+    default:                                Assert(false);
     }
 }
 
@@ -1518,9 +1504,9 @@ extern "C" [[gnu::section(".isr")]] void ISR_EXTI15_10() {
 }
 
 // MARK: - Abort
-
-extern "C" [[noreturn]]
-void abort() {
+extern "C"
+[[noreturn]]
+void Abort(uint8_t domain, uint16_t line) {
     _System::Abort();
 }
 
