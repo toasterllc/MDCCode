@@ -25,10 +25,10 @@ void _Startup() {
     // Load stack pointer
     if constexpr (sizeof(void*) == 2) {
         // Small memory model
-        asm("mov #_Stack, sp");
+        asm("mov #_StartupStack, sp");
     } else {
         // Large memory model
-        asm("mov.a #_Stack, sp");
+        asm("mov.a #_StartupStack, sp");
     }
     
     // Copy .data section from flash to RAM

@@ -1056,8 +1056,8 @@ static void _MotionDisable() {
 alignas(void*)
 uint8_t _TaskButtonStack[_TaskButtonStackSize];
 
-asm(".global _Stack");
-asm(".equ _Stack, _TaskButtonStack+" Stringify(_TaskButtonStackSize));
+asm(".global _StartupStack");
+asm(".equ _StartupStack, _TaskButtonStack+" Stringify(_TaskButtonStackSize));
 
 struct _TaskButton {
     static void Run() {
