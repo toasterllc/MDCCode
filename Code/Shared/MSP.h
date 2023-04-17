@@ -55,7 +55,8 @@ struct [[gnu::packed]] ImgRingBuf {
     }
 };
 
-enum class AbortDomain : uint16_t {
+using Domain = uint8_t;
+struct Domain_ { enum : Domain {
     Invalid,
     SchedulerStackOverflow,
     Main,
@@ -66,28 +67,31 @@ enum class AbortDomain : uint16_t {
     Motion,
     Triggers,
     BatterySampler,
-};
+    AssertionCounter,
+}; };
 
-constexpr const char* StringForAbortDomain(AbortDomain x) {
+constexpr const char* StringForDomain(Domain x) {
     switch (x) {
-    case AbortDomain::Invalid:                return "Invalid";
-    case AbortDomain::SchedulerStackOverflow: return "SchedulerStackOverflow";
-    case AbortDomain::Main:                   return "Main";
-    case AbortDomain::ICE:                    return "ICE";
-    case AbortDomain::SD:                     return "SD";
-    case AbortDomain::Img:                    return "Img";
-    case AbortDomain::I2C:                    return "I2C";
-    case AbortDomain::Motion:                 return "Motion";
-    case AbortDomain::Triggers:               return "Triggers";
-    case AbortDomain::BatterySampler:         return "BatterySampler";
+    case Domain_::Invalid:                return "Invalid";
+    case Domain_::SchedulerStackOverflow: return "SchedulerStackOverflow";
+    case Domain_::Main:                   return "Main";
+    case Domain_::ICE:                    return "ICE";
+    case Domain_::SD:                     return "SD";
+    case Domain_::Img:                    return "Img";
+    case Domain_::I2C:                    return "I2C";
+    case Domain_::Motion:                 return "Motion";
+    case Domain_::Triggers:               return "Triggers";
+    case Domain_::BatterySampler:         return "BatterySampler";
+    case Domain_::AssertionCounter:       return "AssertionCounter";
     }
     abort();
 }
 
 // AbortType: a (domain,line) tuple that uniquely identifies a type of abort
 struct [[gnu::packed]] AbortType {
-    AbortDomain domain = AbortDomain::Invalid;
-    uint16_t line   = 0;
+    uint16_t line = 0;
+    Domain domain = Domain_::Invalid;
+    uint8_t _pad  = 0;
 };
 static_assert(!(sizeof(AbortType) % 2)); // Check alignment
 

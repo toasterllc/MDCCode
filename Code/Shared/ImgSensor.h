@@ -1,17 +1,18 @@
 #pragma once
 #include "ICE.h"
+#include "Assert.h"
 
 namespace Img {
 
 template <
+    auto T_Domain,
     typename T_Scheduler,
-    typename T_ICE,
-    [[noreturn]] void T_Error(uint16_t)
+    typename T_ICE
 >
 class Sensor {
-#define Assert(x) if (!(x)) T_Error(__LINE__)
-
 public:
+    static constexpr auto AbortDomain = T_Domain;
+    
     static void Init() {
         // Toggle IMG_RST_
         {
@@ -250,8 +251,6 @@ private:
                                                               ParallelInterfaceEnable   |
                                                               SerialInterfaceDisable    ;
     };
-
-#undef Assert
 };
 
 } // namespace Img

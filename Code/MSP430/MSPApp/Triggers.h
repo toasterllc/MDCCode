@@ -1,18 +1,19 @@
 #pragma once
 #include <cstdlib>
 #include "MSP.h"
+#include "Assert.h"
 
 // TODO: when we move to using >=C++20, we want to give _State.settings.events as T_Base, but we have to give
 //       the whole _State while we're on C++17, because C++17 doesn't allow giving subojects as non-type
 //       template parameters.
 //       We created _T_Base for this reason, and can remove it and replace all uses with T_Base when we switch.
 template<
+auto T_Domain,
 auto& T_Base,
-typename T_MotionEnabled,
-[[noreturn]] void T_Error(uint16_t)
+typename T_MotionEnabled
 >
 struct T_Triggers {
-#define Assert(x) if (!(x)) T_Error(__LINE__)
+    static constexpr auto AbortDomain = T_Domain;
     struct Trigger;
     
     struct Event {
@@ -188,5 +189,4 @@ struct T_Triggers {
                                          sizeof(_ButtonTrigger) +
                                          sizeof(_Front)         ;
 //    StaticPrint(_TotalSize);
-#undef Assert
 };

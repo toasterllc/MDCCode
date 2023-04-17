@@ -1,11 +1,9 @@
 #pragma once
-#include <stdbool.h>
-#include <stdlib.h>
 
-inline void Assert(bool x) {
-    if (!x) abort();
-}
+// Abort(): provided by client
+extern "C"
+[[noreturn]]
+void Abort(uint8_t domain, uint16_t line);
 
-inline void AssertArg(bool x) {
-    if (!x) abort();
-}
+#define Assert(x)    if (!(x)) Abort(AbortDomain, __LINE__)
+#define AssertArg(x) if (!(x)) Abort(AbortDomain, __LINE__)

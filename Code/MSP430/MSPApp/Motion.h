@@ -3,15 +3,15 @@
 #include <atomic>
 #include "Toastbox/Scheduler.h"
 #include "GPIO.h"
+#include "Assert.h"
 
 template <
+auto T_Domain,
 typename T_Scheduler,
 typename T_PowerPin,
-typename T_SignalPin,
-[[noreturn]] void T_Error(uint16_t)
+typename T_SignalPin
 >
 class T_Motion {
-#define Assert(x) if (!(x)) T_Error(__LINE__)
 private:
     using _PowerDisabled = typename T_PowerPin::template Opts<GPIO::Option::Output1>;
     using _PowerEnabled = typename T_PowerPin::template Opts<GPIO::Option::Output0>;
@@ -22,6 +22,8 @@ private:
     using _SignalEnabled = typename T_SignalPin::template Opts<GPIO::Option::Input, GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
     
 public:
+    static constexpr auto AbortDomain = T_Domain;
+    
     struct Pin {
         using Power = _PowerDisabled;
         using Signal = _SignalDisabled;
@@ -96,6 +98,4 @@ private:
     static inline bool _Enabled = false;
     static inline volatile bool _EnabledRequest = false;
     static inline volatile bool _Signal = false;
-
-#undef Assert
 };

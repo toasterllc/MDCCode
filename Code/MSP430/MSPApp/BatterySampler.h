@@ -2,17 +2,18 @@
 #include <msp430.h>
 #include "MSP.h"
 #include "RegLocker.h"
+#include "Assert.h"
 
 template <
+auto T_Domain,
 typename T_Scheduler,
 typename T_BatChrgLvlPin,
-typename T_BatChrgLvlEn_Pin,
-[[noreturn]] void T_Error(uint16_t)
+typename T_BatChrgLvlEn_Pin
 >
 class BatterySamplerType {
-#define Assert(x) if (!(x)) T_Error(__LINE__)
-    
 public:
+    static constexpr auto AbortDomain = T_Domain;
+    
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
         #warning TODO: Keep BatChrgLvlEn_ asserted because it makes BAT_CHRG_STAT work for some reason.
@@ -303,6 +304,4 @@ private:
         volatile uint16_t count = 0;
         volatile uint16_t val = 0;
     } _Sample;
-    
-#undef Assert
 };
