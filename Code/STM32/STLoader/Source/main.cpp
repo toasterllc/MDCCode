@@ -1,4 +1,4 @@
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 #define SchedulerARM32
 #include "Toastbox/Scheduler.h"
@@ -16,7 +16,9 @@ using _System = System<
     STM::Status::Mode::STMLoader,   // T_Mode
     false,                          // T_USBDMAEn
     _CmdHandle,                     // T_CmdHandle
-    _Reset                          // T_Reset
+    _Reset,                         // T_Reset
+    std::tuple<>,                   // T_Pins
+    std::tuple<>                    // T_Tasks
 >;
 
 using _Scheduler = _System::Scheduler;
@@ -152,8 +154,9 @@ void Abort(uint8_t domain, uint16_t line) {
     _System::Abort();
 }
 
+// MARK: - Main
 int main() {
     _JumpToAppIfNeeded();
-    _System::Run();
+    _Scheduler::Run();
     return 0;
 }

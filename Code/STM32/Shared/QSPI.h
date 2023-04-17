@@ -24,17 +24,29 @@ public:
         Align align = Align::Byte;
     };
     
-    struct Pin {
-        using Clk = GPIO::PortB::Pin<2,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
-        using D0  = GPIO::PortF::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-        using D1  = GPIO::PortF::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-        using D2  = GPIO::PortF::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
-        using D3  = GPIO::PortF::Pin<6,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
-        using D4  = GPIO::PortE::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-        using D5  = GPIO::PortE::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-        using D6  = GPIO::PortE::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-        using D7  = GPIO::PortE::Pin<10, GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-    };
+//    struct Pin {
+//        using Clk = GPIO::PortB::Pin<2,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+//        using D0  = GPIO::PortF::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D1  = GPIO::PortF::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D2  = GPIO::PortF::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+//        using D3  = GPIO::PortF::Pin<6,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+//        using D4  = GPIO::PortE::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D5  = GPIO::PortE::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D6  = GPIO::PortE::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D7  = GPIO::PortE::Pin<10, GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//    };
+//    
+//    struct Pin {
+//        using Clk = typename T_PinClk::template Opts<GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+//        using D0  = typename  T_PinD0::template Opts<GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D1  = typename  T_PinD1::template Opts<GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D2  = typename  T_PinD2::template Opts<GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+//        using D3  = typename  T_PinD3::template Opts<GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+//        using D4  = typename  T_PinD4::template Opts<GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D5  = typename  T_PinD5::template Opts<GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D6  = typename  T_PinD6::template Opts<GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//        using D7  = typename  T_PinD7::template Opts<GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+//    };
     
     static void ConfigSet(const Config& config) {
         if (_Config) {

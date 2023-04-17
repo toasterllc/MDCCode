@@ -1,5 +1,6 @@
 #pragma once
 #include <cstring>
+#include <tuple>
 #include "GPIO.h"
 #include "STM.h"
 #include "USB.h"
@@ -27,14 +28,26 @@ asm(".equ _StackInterruptEnd, _StackInterrupt+" Stringify(_StackInterruptSize));
 
 // MARK: - System
 
-template <
+// This crazniness is necessary to allow System to accept 2 parameter packs (T_Pins and T_Tasks).
+// We do that by way of template class specialization, hence the two `class System` occurences.
+template<
 STM::Status::Mode T_Mode,
 bool T_USBDMAEn,
 auto T_CmdHandle,
 auto T_Reset,
+typename...
+>
+class System;
+
+template<
+STM::Status::Mode T_Mode,
+bool T_USBDMAEn,
+auto T_CmdHandle,
+auto T_Reset,
+typename... T_Pins,
 typename... T_Tasks
 >
-class System {
+class System<T_Mode, T_USBDMAEn, T_CmdHandle, T_Reset, std::tuple<T_Pins...>, std::tuple<T_Tasks...>> {
 public:
     static constexpr uint8_t CPUFreqMHz = 128;
     static constexpr uint32_t SysTickPeriodUs = 1000;
@@ -76,37 +89,6 @@ private:
     struct _TaskMSPComms;
     
 public:
-    template <typename... T_Pins>
-    [[noreturn]]
-    static void Run() {
-        GPIO::Init<
-            LED0,
-            LED1,
-            LED2,
-            LED3,
-            
-            MSPJTAG::Pin::Test,
-            MSPJTAG::Pin::Rst_,
-            
-            _USB_DM,
-            _USB_DP,
-            
-            _OSC_IN,
-            _OSC_OUT,
-            
-            _BAT_CHRG_STAT,
-            
-            typename _I2C::Pin::SCL,
-            typename _I2C::Pin::SDA,
-            
-            T_Pins...
-        >();
-        
-        // Start our default tasks running
-        Scheduler::template Start<_TaskCmdRecv, _TaskMSPComms>();
-        Scheduler::Run();
-    }
-    
     // LEDs
     using LED0 = GPIO::PortB::Pin<10, GPIO::Option::Output0>;
     using LED1 = GPIO::PortB::Pin<12, GPIO::Option::Output0>;
@@ -458,6 +440,29 @@ private:
     };
     
     static void _Init() {
+        GPIO::Init<
+            LED0,
+            LED1,
+            LED2,
+            LED3,
+            
+            MSPJTAG::Pin::Test,
+            MSPJTAG::Pin::Rst_,
+            
+            _USB_DM,
+            _USB_DP,
+            
+            _OSC_IN,
+            _OSC_OUT,
+            
+            _BAT_CHRG_STAT,
+            
+            typename _I2C::Pin::SCL,
+            typename _I2C::Pin::SDA,
+            
+            T_Pins...
+        >();
+        
         // Reset peripherals, initialize flash interface, initialize SysTick
         HAL_Init();
         
@@ -482,6 +487,8 @@ private:
         constexpr uint32_t InterruptPriority = 2; // Should be >0 so that SysTick can still preempt
         HAL_NVIC_SetPriority(EXTI15_10_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+        
+        Scheduler::template Start<_TaskMSPComms>();
     }
     
     static void _ClockInit() {
