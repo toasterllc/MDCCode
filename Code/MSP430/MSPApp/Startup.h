@@ -6,10 +6,21 @@ extern "C" void __libc_init_array();
 
 class Startup {
 public:
+    // ColdStart() truth table:
+    //
+    //   Initial power on:    true
+    //   Wake from LPM4.5:    false *
+    //   Wake from LPM3.5:    false
+    //   Startup after abort: false
+    //
+    //   * Ideally this case would return true because LPM4.5 is essentially 'off'
+    //     (it only retains IO pin states). But when waking there doesn't appear
+    //     to be a way to differentitate between waking from LPM3.5 vs LPM4.5,
+    //     so there doesn't seem to be a way to return true in the LPM4.5 case.
+    //     We don't use LPM4.5 though so it's not an issue.
     static bool ColdStart() {
-        // This is a cold start if we're not waking from LPM3.5
-        static bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
-        return coldStart;
+        static uint16_t IV = SYSRSTIV;
+        return (IV==SYSRSTIV_NONE || IV==SYSRSTIV_BOR);
     }
 };
 

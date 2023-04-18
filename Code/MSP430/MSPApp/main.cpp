@@ -116,8 +116,6 @@ struct _LEDPriority {
 };
 
 // _ImgSensor: image sensor object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
 using _ImgSensor = Img::Sensor<
     MSP::Domain_::Img,      // T_Domain,
     _Scheduler,             // T_Scheduler
@@ -125,8 +123,6 @@ using _ImgSensor = Img::Sensor<
 >;
 
 // _SDCard: SD card object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
 using _SDCard = SD::Card<
     MSP::Domain_::SD,   // T_Domain,
     _Scheduler,         // T_Scheduler
@@ -145,24 +141,32 @@ static MSP::State _State = {
     .header = MSP::StateHeader,
 };
 
-// Power assertion
-using _Powered = T_AssertionCounter<MSP::Domain_::AssertionCounter>;
+static void _TaskEventRunningUpdate();
+static void _HostModeUpdate() { _TaskEventRunningUpdate(); }
+static void _PoweredUpdate() { _TaskEventRunningUpdate(); }
+static void _CaffeinatedUpdate() {}
+static void _MotionEnabledUpdate();
+static void _VDDBEnabledUpdate();
+static void _VDDIMGSDEnabledUpdate();
 
-// Events pause/resume
-static void __EventsPaused(bool x);
-using _EventsPaused = T_AssertionCounter<MSP::Domain_::AssertionCounter, __EventsPaused>;
+// _HostMode: events pause/resume (for host mode)
+using _HostMode = T_AssertionCounter<MSP::Domain_::AssertionCounter, _HostModeUpdate>;
+
+// _Powered: power state assertion (the user-facing power state)
+using _Powered = T_AssertionCounter<MSP::Domain_::AssertionCounter, _PoweredUpdate>;
+
+// _Caffeinated: prevents sleep
+using _Caffeinated = T_AssertionCounter<MSP::Domain_::AssertionCounter, _CaffeinatedUpdate>;
 
 // Motion enable/disable
-using _MotionEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _Motion::Enabled>;
+using _MotionEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _MotionEnabledUpdate>;
 using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
 
 // VDDB enable/disable
-static void __VDDBEnabled(bool x);
-using _VDDBEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, __VDDBEnabled>;
+using _VDDBEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _VDDBEnabledUpdate>;
 
 // VDDIMGSD enable/disable
-static void __VDDIMGSDEnabled(bool x);
-using _VDDIMGSDEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, __VDDIMGSDEnabled>;
+using _VDDIMGSDEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _VDDIMGSDEnabledUpdate>;
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<MSP::Domain_::Triggers, _State, _MotionEnabledAssertion>;
@@ -242,14 +246,14 @@ static void _CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) 
 
 // MARK: - Power
 
-static void __VDDBEnabled(bool en) {
-    _Pin::VDD_B_EN::Write(en);
+static void _VDDBEnabledUpdate() {
+    _Pin::VDD_B_EN::Write(_VDDBEnabled::Asserted());
     // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
     _Scheduler::Sleep(_Scheduler::Ms(2));
 }
 
-static void __VDDIMGSDEnabled(bool en) {
-    if (en) {
+static void _VDDIMGSDEnabledUpdate() {
+    if (_VDDIMGSDEnabled::Asserted()) {
         _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
         _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
         _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
@@ -739,8 +743,8 @@ struct _TaskEvent {
             static _Triggers::Event* ev = nullptr;
             _Scheduler::Wait([] { return (bool)(ev = _EventPop()); });
             
-            // Stay powered while we handle the event
-            _State.power = true;
+            // Don't go to sleep until we handle the event
+            _State.caffeinated = true;
             
             using T = _Triggers::Event::Type;
             switch (ev->type) {
@@ -751,8 +755,8 @@ struct _TaskEvent {
             case T::CaptureImage:     _CaptureImage((_Triggers::CaptureImageEvent&)*ev);         break;
             }
             
-            // Release power assertion
-            _State.power = false;
+            // Allow sleep
+            _State.caffeinated = false;
         }
     }
     
@@ -767,7 +771,7 @@ struct _TaskEvent {
         // our Reset() function, so if the power assertion lived on the stack and
         // TaskMain is reset, its destructor would never be called and our state
         // would be corrupted.
-        _Powered::Assertion power;
+        _Caffeinated::Assertion caffeinated;
         _VDDBEnabled::Assertion vddb;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _State;
@@ -778,11 +782,11 @@ struct _TaskEvent {
     static inline uint8_t Stack[256];
 };
 
-static void __EventsPaused(bool x) {
-    if (x) {
-        _TaskEvent::Reset();
-    } else {
+static void _TaskEventRunningUpdate() {
+    if (_Powered::Asserted() && !_HostMode::Asserted()) {
         _TaskEvent::Start();
+    } else {
+        _TaskEvent::Reset();
     }
 }
 
@@ -795,7 +799,7 @@ struct _TaskI2C {
             _I2C::WaitUntilActive();
             
             // Maintain power while I2C is active
-            _Powered::Assertion power(true);
+            _Caffeinated::Assertion caffeinated(true);
             
             for (;;) {
                 // Wait for a command
@@ -817,8 +821,8 @@ struct _TaskI2C {
             _LEDRed_.set(_LEDPriority::I2C, std::nullopt);
             _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
             
-            // Exit host mode, in case we were in it
-            _State.hostMode = false;
+            // Reset state
+            _State = {};
         }
     }
     
@@ -884,12 +888,8 @@ struct _TaskI2C {
         return MSP::Resp{ .ok = false };
     }
     
-    static bool HostModeEnabled() {
-        return _State.hostMode;
-    }
-    
     static inline struct {
-        _EventsPaused::Assertion hostMode;
+        _HostMode::Assertion hostMode;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _State;
     
@@ -930,6 +930,10 @@ struct _TaskMotion {
     static inline uint8_t Stack[128];
 };
 
+static void _MotionEnabledUpdate() {
+    _Motion::Enabled(_MotionEnabled::Asserted());
+}
+
 // MARK: - _TaskButton
 
 #define _TaskButtonStackSize 128
@@ -941,8 +945,17 @@ uint8_t _TaskButtonStack[_TaskButtonStackSize];
 asm(".global _StartupStack");
 asm(".equ _StartupStack, _TaskButtonStack+" Stringify(_TaskButtonStackSize));
 
+// _OnSaved: remembers our power state across crashes and LPM3.5.
+// This is needed because we don't want the device to return to the
+// powered-off state after a crash.
+// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
+// For some reason when this is a static member of _TaskButton, it's
+// not placed in the .ram_backup section.
+[[gnu::section(".ram_backup._TaskButton")]]
+static inline bool _OnSaved = false;
+
 struct _TaskButton {
-    static void Run() {
+    static void _Init() {
         // Stop watchdog timer
         WDTCTL = WDTPW | WDTHOLD;
         
@@ -1006,36 +1019,32 @@ struct _TaskButton {
         _LEDGreen_.set(_LEDPriority::Default, 1);
         _LEDRed_.set(_LEDPriority::Default, 1);
         
-    //    // Blink green LED to signal that we're turning off
-    //    for (;;) {
-    //        for (int i=0; i<5; i++) {
-    //            _Pin::LED_GREEN_::Write(0);
-    //            for (volatile int i=0; i<0xFFFF; i++);
-    //            _Pin::LED_GREEN_::Write(1);
-    //            for (volatile int i=0; i<0xFFFF; i++);
-    //        }
-    //    }
-        
-        // Start Scheduler
-    //    _Scheduler::Start<_TaskButton>();
+        // Start tasks
         _Scheduler::Start<_TaskI2C, _TaskMotion>();
         
-        // Pause captures upon power on. This is so that the device is off until
-        // the user turns it on by holding the power button.
-        _OffAssertion = true;
+        // Restore our saved power state
+        // _OnSaved stores our power state across crashes/LPM3.5, so we need to
+        // restore our _On assertion based on it.
+        if (_OnSaved) {
+            _On = true;
+        }
+    }
+    
+    static void Run() {
+        _Init();
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
             // Ignore all interaction in host mode
-            if (_TaskI2C::HostModeEnabled()) continue;
+            if (_HostMode::Asserted()) continue;
             
             // Keep the lights on until we're done handling the event
-            _Powered::Assertion power(true);
+            _Caffeinated::Assertion caffeinated(true);
             
             switch (ev) {
             case _Button::Event::Press: {
                 // Ignore button presses if we're off
-                if (_OffAssertion) break;
+                if (!_On) break;
                 
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
                     _CaptureStart(*it, _RTC::TimeRead());
@@ -1044,41 +1053,10 @@ struct _TaskButton {
             }
             
             case _Button::Event::Hold:
-                if (_OffAssertion) {
-                    // Deassert capture pause -- ie, turn on
-                    _OffAssertion = false;
-                    // Flash green LEDs
-                    _LEDFlash(_LEDGreen_);
-                
-                } else {
-                    // Assert capture pause -- ie, turn off
-                    _OffAssertion = true;
-                    // Flash red LEDs
-                    _LEDFlash(_LEDRed_);
-                }
-                
+                _On = !_On;
+                _OnSaved = _On;
+                _LEDFlash(_On ? _LEDGreen_ : _LEDRed_);
                 _Button::WaitForDeassert();
-                
-//                _Pause.toggle();
-//                if (_Pause.asserted()) {
-//                    // Flash red LED to signal that we're turning off
-//                    for (int i=0; i<5; i++) {
-//                        _Pin::LED_RED_::Write(0);
-//                        _Scheduler::Delay(_Scheduler::Ms(50));
-//                        _Pin::LED_RED_::Write(1);
-//                        _Scheduler::Delay(_Scheduler::Ms(50));
-//                    }
-//                }
-//                
-//                #warning TODO: disable any timer interrupt sources that we may have set up, so we don't wake to take a photo
-//                
-//                _MOTION_SIGNAL_DISABLED::Init<_Pin::MOTION_SIGNAL>();
-//                
-//                // Configure button for device turning off
-//                _Button::OffConfig();
-//                
-//                // Turn off
-//                __Sleep(_SleepMode::Deep);
                 break;
             }
         }
@@ -1095,10 +1073,8 @@ struct _TaskButton {
         led.set(_LEDPriority::Power, std::nullopt);
     }
     
-    // _OffAssertion: controls user-visible on/off behavior
-    // By default, captures are paused so that the device is off until
-    // the user turns it on by holding the power button.
-    static inline _EventsPaused::Assertion _OffAssertion;
+    // _On: controls user-visible on/off behavior
+    static inline _Powered::Assertion _On;
     
     // Task stack
     static constexpr auto& Stack = _TaskButtonStack;
@@ -1130,10 +1106,10 @@ static void _Sleep() {
     // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
     // Otherwise, enter LPM1 sleep, because something is running.
     
-//    const uint16_t mode = (_PowerAssertion::Acquired() ? LPM1_bits : LPM3_bits);
+//    const uint16_t mode = (_PowerAssertion::Asserted() ? LPM1_bits : LPM3_bits);
     
 //    // If nothing asserts that we remained powered, enter LPM3.5
-//    if (!_PowerAssertion::Acquired()) {
+//    if (!_PowerAssertion::Asserted()) {
 //        PMMUnlock pmm; // Unlock PMM registers
 //        PMMCTL0_L |= PMMREGOFF_L;
 //    }
