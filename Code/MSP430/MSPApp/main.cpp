@@ -821,8 +821,8 @@ struct _TaskI2C {
             _LEDRed_.set(_LEDPriority::I2C, std::nullopt);
             _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
             
-            // Exit host mode, in case we were in it
-            _State.hostMode = false;
+            // Reset state
+            _State = {};
         }
     }
     
