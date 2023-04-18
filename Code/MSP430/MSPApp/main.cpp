@@ -116,8 +116,6 @@ struct _LEDPriority {
 };
 
 // _ImgSensor: image sensor object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
 using _ImgSensor = Img::Sensor<
     MSP::Domain_::Img,      // T_Domain,
     _Scheduler,             // T_Scheduler
@@ -125,8 +123,6 @@ using _ImgSensor = Img::Sensor<
 >;
 
 // _SDCard: SD card object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
 using _SDCard = SD::Card<
     MSP::Domain_::SD,   // T_Domain,
     _Scheduler,         // T_Scheduler
@@ -1017,10 +1013,6 @@ struct _TaskButton {
         // Start tasks
         _Scheduler::Start<_TaskI2C, _TaskMotion>();
         
-        if (Startup::ColdStart()) {
-            
-        }
-        
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
         // restore our _On assertion based on it.
@@ -1075,9 +1067,10 @@ struct _TaskButton {
     // _On: controls user-visible on/off behavior
     static inline _Powered::Assertion _On;
     
-    // _OnSaved: remembers our power state across aborts and LPM3.5.
-    // Note that _OnSaved is uninitialized because we only set its value on a cold start.
-    // This is needed because we don't want the device to turn off if it aborts.
+    // _OnSaved: remembers our power state across crashes and LPM3.5.
+    // This is needed because we don't want the device to return to the
+    // powered-off state after a crash.
+    // Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
     [[gnu::section(".ram_backup._TaskButton")]]
     static inline bool _OnSaved = false;
     
