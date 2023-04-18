@@ -3,8 +3,7 @@
 
 template <
 auto T_Domain,
-auto T_AcquireFn = nullptr,
-auto T_ReleaseFn = nullptr
+auto T_SetterFn = nullptr
 >
 class T_AssertionCounter {
 public:
@@ -36,9 +35,9 @@ public:
 private:
     static void _Assert() {
         _Counter++;
-        if constexpr (!std::is_null_pointer_v<decltype(T_AcquireFn)>) {
+        if constexpr (!std::is_null_pointer_v<decltype(T_SetterFn)>) {
             if (_Counter == 1) {
-                T_AcquireFn();
+                T_SetterFn(true);
             }
         }
     }
@@ -46,9 +45,9 @@ private:
     static void _Deassert() {
         Assert(_Counter);
         _Counter--;
-        if constexpr (!std::is_null_pointer_v<decltype(T_ReleaseFn)>) {
+        if constexpr (!std::is_null_pointer_v<decltype(T_SetterFn)>) {
             if (_Counter == 0) {
-                T_ReleaseFn();
+                T_SetterFn(false);
             }
         }
     }

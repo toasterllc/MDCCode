@@ -60,11 +60,11 @@ struct _Pin {
     using _UNUSED0                  = PortB::Pin<0x2>;
 };
 
-class _TaskMain;
+class _TaskButton;
+class _TaskEventHandler;
 class _TaskSD;
 class _TaskImg;
 class _TaskI2C;
-class _TaskButton;
 class _TaskMotion;
 
 static void _Sleep();
@@ -83,8 +83,9 @@ using _Scheduler = Toastbox::Scheduler<
     _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
     nullptr,                                    // T_StackInterrupt: unused
     
-    _TaskButton,                                // T_Tasks: list of tasks
-    _TaskMain,
+    // T_Tasks: list of tasks
+    _TaskButton,
+    _TaskEventHandler,
     _TaskSD,
     _TaskImg,
     _TaskI2C,
@@ -147,16 +148,21 @@ static MSP::State _State = {
 // Power assertion
 using _Powered = T_AssertionCounter<MSP::Domain_::AssertionCounter>;
 
-// Capture pause/resume
-static void _CapturePause();
-static void _CaptureResume();
-using _CapturePaused = T_AssertionCounter<MSP::Domain_::AssertionCounter, _CapturePause, _CaptureResume>;
+// Events pause/resume
+static void __EventsPaused(bool x);
+using _EventsPaused = T_AssertionCounter<MSP::Domain_::AssertionCounter, __EventsPaused>;
 
 // Motion enable/disable
-static void _MotionEnable();
-static void _MotionDisable();
-using _MotionEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _MotionEnable, _MotionDisable>;
+using _MotionEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _Motion::Enabled>;
 using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
+
+// VDDB enable/disable
+static void __VDDBEnabled(bool x);
+using _VDDBEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, __VDDBEnabled>;
+
+// VDDIMGSD enable/disable
+static void __VDDIMGSDEnabled(bool x);
+using _VDDIMGSDEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, __VDDIMGSDEnabled>;
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<MSP::Domain_::Triggers, _State, _MotionEnabledAssertion>;
@@ -236,16 +242,13 @@ static void _CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) 
 
 // MARK: - Power
 
-static void _VDDBSet(bool en) {
+static void __VDDBEnabled(bool en) {
     _Pin::VDD_B_EN::Write(en);
     // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
     _Scheduler::Sleep(_Scheduler::Ms(2));
 }
 
-static void _VDDIMGSDSet(bool en) {
-    // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-    if (_Pin::VDD_B_2V8_IMG_SD_EN::Read() == en) return;
-    
+static void __VDDIMGSDEnabled(bool en) {
     if (en) {
         _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
         _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
@@ -590,16 +593,14 @@ struct _TaskImg {
     static inline uint8_t Stack[256];
 };
 
-// MARK: - _TaskMain
+// MARK: - _TaskEventHandler
 
-struct _TaskMain {
+struct _TaskEventHandler {
     static void Start() {
-        _Scheduler::Start<_TaskMain>();
+        _Scheduler::Start<_TaskEventHandler>();
     }
     
     static void Reset() {
-        // Reset our state
-        _State = {};
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Init();
@@ -607,10 +608,10 @@ struct _TaskMain {
         // Stop tasks
         _Scheduler::Stop<_TaskSD>();
         _Scheduler::Stop<_TaskImg>();
-        _Scheduler::Stop<_TaskMain>();
-        // Turn off power
-        _VDDIMGSDSet(false);
-        _VDDBSet(false);
+        _Scheduler::Stop<_TaskEventHandler>();
+        // Reset our state
+        // We do this last so that our power assertions are reset last
+        _State = {};
     }
     
     static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
@@ -665,7 +666,7 @@ struct _TaskMain {
         _LEDRed_.set(_LEDPriority::Capture, !red);
         
         // Turn on VDD_B power (turns on ICE40)
-        _VDDBSet(true);
+        _State.vddb = true;
         
         // Wait for ICE40 to start
         // We specify (within the bitstream itself, via icepack) that ICE40 should load
@@ -679,7 +680,7 @@ struct _TaskMain {
         _TaskSD::Wait();
         
         // Turn on IMG/SD power
-        _VDDIMGSDSet(true);
+        _State.vddImgSd = true;
         
         // Init image sensor / SD card
         _TaskImg::SensorInit();
@@ -705,49 +706,11 @@ struct _TaskMain {
             _TaskSD::Wait();
         }
         
-//            for (;;) {
-//                // Capture an image
-//                {
-//                    // Wait for _TaskSD to be initialized and done with writing, which is necessary
-//                    // for 2 reasons:
-//                    //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
-//                    //      access it,
-//                    //   2. we can't initiate a new capture until writing to the SD card (from a
-//                    //      previous capture) is complete (because the SDRAM is single-port, so
-//                    //      we can only read or write at one time)
-//                    _TaskSD::WaitForInitAndWrite();
-//                    
-//                    // Capture image to RAM
-//                    _TaskImg::Capture(imgRingBuf.buf.id);
-//                    const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
-//                    
-//                    // Copy image from RAM -> SD card
-//                    _TaskSD::Write(srcRAMBlock);
-//                    _TaskSD::Wait();
-//                }
-//                
-//                break;
-//                
-////                // Wait up to 1s for further motion
-////                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-////                if (!motion) break;
-////                
-////                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-////                // _Motion, there'd be a race window where we could first observe
-////                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-////                // the true value by resetting it to false.
-////                _Motion = false;
-//            }
-//        
-//        if (trigger & _TriggerSources::Manual) {
-//            _LEDRed_.set(_LEDPriority::Capture, 1);
-//        }
-        
         _LEDGreen_.set(_LEDPriority::Capture, std::nullopt);
         _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
         
-        _VDDIMGSDSet(false);
-        _VDDBSet(false);
+        _State.vddImgSd = false;
+        _State.vddb = false;
         
         ev.countRem--;
         if (ev.countRem) {
@@ -765,42 +728,6 @@ struct _TaskMain {
     }
     
     static void Run() {
-//        for (bool x=false;; x=!x) {
-//            _Pin::LED_RED_::Write(x);
-//            _BatterySampler::Sample();
-//            _Scheduler::Sleep(_Scheduler::Ms(1000));
-//        }
-        
-//        // Handle cold starts
-//        if (!_FirstRunDone) {
-//            _FirstRunDone = true;
-//            // Since this is a cold start, delay 3s before beginning.
-//            // This delay is meant for the case where we restarted due to an abort, and
-//            // serves 2 purposes:
-//            //   1. it rate-limits aborts, in case there's a persistent issue
-//            //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-//            _LEDRed_.set(_LEDRed_::Priority::Low, 0);
-//            _Scheduler::Sleep(_Scheduler::Ms(3000));
-//            _LEDRed_.set(_LEDRed_::Priority::Low, 1);
-//        }
-//        
-//        _Scheduler::Sleep(_Scheduler::Ms(10000));
-        
-//        _Pin::VDD_B_EN::Write(1);
-//        _Scheduler::Sleep(_Scheduler::Ms(250));
-//        
-//        for (;;) {
-//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//            _Scheduler::Sleep(_Scheduler::Ms(250));
-//            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            _Scheduler::Sleep(_Scheduler::Ms(250));
-//        }
-        
-//        for (;;) {
-//            _Scheduler::Sleep(_Scheduler::Ms(1000));
-//        }
-        
         // Reset our state
         Reset();
         
@@ -814,26 +741,12 @@ struct _TaskMain {
         // (_EventPop() will exit from fast-forward mode)
         _State.fastForward = true;
         for (;;) {
-//            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-//            {
-//                _WaitingForMotion = true;
-//                _Scheduler::Wait([&] { return (bool)_Motion; });
-//                _Motion = false;
-//                _WaitingForMotion = false;
-//            }
-            
             // Wait for an event
             static _Triggers::Event* ev = nullptr;
             _Scheduler::Wait([] { return (bool)(ev = _EventPop()); });
             
             // Stay powered while we handle the event
             _State.power = true;
-            
-//            TimeTrigger,        // idx: _TimeTrigger[]
-//            MotionEnable,       // idx: _MotionTrigger[]
-//            MotionDisable,      // idx: _MotionTrigger[]
-//            MotionUnsuppress,   // idx: _MotionTrigger[]
-//            CaptureImage,       // idx: _Capture[]
             
             using T = _Triggers::Event::Type;
             switch (ev->type) {
@@ -844,54 +757,38 @@ struct _TaskMain {
             case T::CaptureImage:     _CaptureImage((_Triggers::CaptureImageEvent&)*ev);         break;
             }
             
-//            // Light the red LED if this is a manual trigger
-//            if (trigger & _TriggerSources::Manual) {
-//                _LEDRed_.set(_LEDPriority::Capture, 0);
-//            }
-            
             // Release power assertion
             _State.power = false;
-            
-//            // Release control of the LED
-//            _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
         }
     }
-    
-//    static bool DeepSleepOK() {
-//        // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
-//        // This logic works because if _WaitingForMotion==true, then we've disabled both _TaskSD
-//        // and _TaskImg, so if the tasks are idle, then everything's idle so we can enter deep
-//        // sleep. (The case that we need to be careful of is going to sleep when either _TaskSD
-//        // or _TaskImg is idle but still powered on, which the _WaitingForMotion check takes
-//        // care of.)
-//        return _WaitingForMotion                &&
-//               !_Scheduler::Running<_TaskSD>()  &&
-//               !_Scheduler::Running<_TaskImg>() ;
-//    }
     
     static inline struct {
         // fastForward=true while initializing, where we execute events in 'fast-forward' mode,
         // solely to arrive at the correct state for the current time.
         // fastForward=false once we're done initializing and executing events normally.
         bool fastForward;
-        // power: our active power assertion. This needs to be an ivar because TaskMain
-        // can be reset at any time via our Reset() function, so if the power assertion
-        // lived on the stack,
+        // power / vddb / vddImgSd: our power assertions
+        // These need to be an ivar because TaskMain can be reset at any time via
+        // our Reset() function, so if the power assertion lived on the stack and
+        // TaskMain is reset, its destructor would never be called and our state
+        // would be corrupted.
         _Powered::Assertion power;
+        _VDDBEnabled::Assertion vddb;
+        _VDDIMGSDEnabled::Assertion vddImgSd;
     } _State = {};
     
     // Task stack
-    [[gnu::section(".stack._TaskMain")]]
+    [[gnu::section(".stack._TaskEventHandler")]]
     alignas(void*)
     static inline uint8_t Stack[256];
 };
 
-static void _CapturePause() {
-    _TaskMain::Reset();
-}
-
-static void _CaptureResume() {
-    _TaskMain::Start();
+static void __EventsPaused(bool x) {
+    if (x) {
+        _TaskEventHandler::Reset();
+    } else {
+        _TaskEventHandler::Start();
+    }
 }
 
 // MARK: - _TaskI2C
@@ -926,7 +823,7 @@ struct _TaskI2C {
             _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
             
             // Exit host mode, in case we were in it
-            _HostMode = false;
+            _State.hostMode = false;
         }
     }
     
@@ -967,22 +864,16 @@ struct _TaskI2C {
         case Cmd::Op::TimeSet:
             // Only allow setting the time while we're in host mode
             // and therefore TaskMain isn't running
-            if (!_HostMode) return MSP::Resp{ .ok = false };
+            if (!_State.hostMode) return MSP::Resp{ .ok = false };
             _RTC::Init(cmd.arg.TimeSet.time);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
-            if (cmd.arg.HostModeSet.en != _HostMode) {
-                if (cmd.arg.HostModeSet.en) {
-                    _HostMode = true;
-                } else {
-                    _HostMode = false;
-                }
-            }
+            _State.hostMode = cmd.arg.HostModeSet.en;
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::VDDIMGSDSet:
-            _VDDIMGSDSet(cmd.arg.VDDIMGSDSet.en);
+            _State.vddImgSd = cmd.arg.VDDIMGSDSet.en;
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::BatteryChargeLevelGet: {
@@ -998,10 +889,13 @@ struct _TaskI2C {
     }
     
     static bool HostModeEnabled() {
-        return _HostMode;
+        return _State.hostMode;
     }
     
-    static inline _CapturePaused::Assertion _HostMode;
+    static inline struct {
+        _EventsPaused::Assertion hostMode;
+        _VDDIMGSDEnabled::Assertion vddImgSd;
+    } _State;
     
     // Task stack
     [[gnu::section(".stack._TaskI2C")]]
@@ -1039,14 +933,6 @@ struct _TaskMotion {
     alignas(void*)
     static inline uint8_t Stack[128];
 };
-
-static void _MotionEnable() {
-    _Motion::Enabled(true);
-}
-
-static void _MotionDisable() {
-    _Motion::Enabled(false);
-}
 
 // MARK: - _TaskButton
 
@@ -1216,7 +1102,7 @@ struct _TaskButton {
     // _OffAssertion: controls user-visible on/off behavior
     // By default, captures are paused so that the device is off until
     // the user turns it on by holding the power button.
-    static inline _CapturePaused::Assertion _OffAssertion;
+    static inline _EventsPaused::Assertion _OffAssertion;
     
     // Task stack
     static constexpr auto& Stack = _TaskButtonStack;
