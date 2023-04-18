@@ -8,12 +8,10 @@
 //       template parameters.
 //       We created _T_Base for this reason, and can remove it and replace all uses with T_Base when we switch.
 template<
-auto T_Domain,
 auto& T_Base,
 typename T_MotionEnabled
 >
 struct T_Triggers {
-    static constexpr auto AssertDomain = T_Domain;
     struct Trigger;
     
     struct Event {

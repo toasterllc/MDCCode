@@ -4,7 +4,6 @@
 #include "Assert.h"
 
 template <
-auto T_Domain,
 typename T_Scheduler,
 typename T_SCLPin,
 typename T_SDAPin,
@@ -17,8 +16,6 @@ private:
     using _InactiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
     
 public:
-    static constexpr auto AssertDomain = T_Domain;
-    
     struct Pin {
         using SCL = typename T_SCLPin::template Opts<GPIO::Option::Sel01>;
         using SDA = typename T_SDAPin::template Opts<GPIO::Option::Sel01>;

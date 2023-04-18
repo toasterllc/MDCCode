@@ -9,7 +9,6 @@
 namespace SD {
 
 template <
-auto T_Domain,
 typename T_Scheduler,
 typename T_ICE,
 uint8_t T_ClkDelaySlow,
@@ -17,8 +16,6 @@ uint8_t T_ClkDelayFast
 >
 class Card {
 public:
-    static constexpr auto AssertDomain = T_Domain;
-    
     static void Reset() {
         // Reset SDController
         T_ICE::Transfer(_ConfigReset);
