@@ -6,7 +6,6 @@
 #include "Assert.h"
 
 template <
-auto T_Domain,
 typename T_Scheduler,
 typename T_PowerPin,
 typename T_SignalPin
@@ -22,8 +21,6 @@ private:
     using _SignalEnabled = typename T_SignalPin::template Opts<GPIO::Option::Input, GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
     
 public:
-    static constexpr auto AssertDomain = T_Domain;
-    
     struct Pin {
         using Power = _PowerDisabled;
         using Signal = _SignalDisabled;

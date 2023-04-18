@@ -5,15 +5,12 @@
 #include "Assert.h"
 
 template <
-auto T_Domain,
 typename T_Scheduler,
 typename T_BatChrgLvlPin,
 typename T_BatChrgLvlEn_Pin
 >
 class BatterySamplerType {
 public:
-    static constexpr auto AssertDomain = T_Domain;
-    
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
         #warning TODO: Keep BatChrgLvlEn_ asserted because it makes BAT_CHRG_STAT work for some reason.

@@ -10,14 +10,11 @@
 #include "Assert.h"
 
 template <
-auto T_Domain,
 typename T_Scheduler
 >
 class ICE {
 public:
     // MARK: - Types
-    static constexpr auto AssertDomain = T_Domain;
-    
     struct MsgType {
         static constexpr uint8_t StartBit   = 0x80;
         static constexpr uint8_t Resp       = 0x40;

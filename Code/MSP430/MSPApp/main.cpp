@@ -3,7 +3,6 @@
 #include <cstdbool>
 #include <cstddef>
 #include <atomic>
-#define SchedulerMSP430
 #include "Toastbox/Scheduler.h"
 #include "SDCard.h"
 #include "ICE.h"
@@ -30,7 +29,6 @@
 #include "Assert.h"
 using namespace GPIO;
 
-static constexpr auto AssertDomain = MSP::Domain_::Main;
 static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _XT1FreqHz        = 32768;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
@@ -68,6 +66,8 @@ class _TaskI2C;
 class _TaskMotion;
 
 static void _Sleep();
+
+[[noreturn]]
 static void _SchedulerStackOverflow();
 
 #warning TODO: disable stack guard for production
@@ -95,12 +95,12 @@ using _Scheduler = Toastbox::Scheduler<
 using _Clock = ClockType<_MCLKFreqHz>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
-using _ICE = ICE<MSP::Domain_::ICE, _Scheduler>;
+using _ICE = ICE<_Scheduler>;
 
-using _I2C = I2CType<MSP::Domain_::I2C, _Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
-using _Motion = T_Motion<MSP::Domain_::Motion, _Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
+using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
+using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
 
-using _BatterySampler = BatterySamplerType<MSP::Domain_::BatterySampler, _Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
+using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
 
 constexpr uint16_t _ButtonHoldDurationMs = 1500;
 using _Button = ButtonType<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
@@ -117,14 +117,12 @@ struct _LEDPriority {
 
 // _ImgSensor: image sensor object
 using _ImgSensor = Img::Sensor<
-    MSP::Domain_::Img,      // T_Domain,
     _Scheduler,             // T_Scheduler
     _ICE                    // T_ICE
 >;
 
 // _SDCard: SD card object
 using _SDCard = SD::Card<
-    MSP::Domain_::SD,   // T_Domain,
     _Scheduler,         // T_Scheduler
     _ICE,               // T_ICE
     1,                  // T_ClkDelaySlow (odd values invert the clock)
@@ -150,26 +148,26 @@ static void _VDDBEnabledUpdate();
 static void _VDDIMGSDEnabledUpdate();
 
 // _HostMode: events pause/resume (for host mode)
-using _HostMode = T_AssertionCounter<MSP::Domain_::AssertionCounter, _HostModeUpdate>;
+using _HostMode = T_AssertionCounter<_HostModeUpdate>;
 
 // _Powered: power state assertion (the user-facing power state)
-using _Powered = T_AssertionCounter<MSP::Domain_::AssertionCounter, _PoweredUpdate>;
+using _Powered = T_AssertionCounter<_PoweredUpdate>;
 
 // _Caffeine: prevents sleep
-using _Caffeine = T_AssertionCounter<MSP::Domain_::AssertionCounter, _CaffeineUpdate>;
+using _Caffeine = T_AssertionCounter<_CaffeineUpdate>;
 
 // Motion enable/disable
-using _MotionEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _MotionEnabledUpdate>;
+using _MotionEnabled = T_AssertionCounter<_MotionEnabledUpdate>;
 using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
 
 // VDDB enable/disable
-using _VDDBEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _VDDBEnabledUpdate>;
+using _VDDBEnabled = T_AssertionCounter<_VDDBEnabledUpdate>;
 
 // VDDIMGSD enable/disable
-using _VDDIMGSDEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _VDDIMGSDEnabledUpdate>;
+using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledUpdate>;
 
 // _Triggers: stores our current event state
-using _Triggers = T_Triggers<MSP::Domain_::Triggers, _State, _MotionEnabledAssertion>;
+using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
 static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Us Day         = (Time::Us)     24*60*60*1000000;
@@ -1031,6 +1029,8 @@ struct _TaskButton {
                 // Ignore button presses if we're off
                 if (!_On) break;
                 
+                Assert(false);
+                
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
                     _CaptureStart(*it, _RTC::TimeRead());
                 }
@@ -1179,16 +1179,16 @@ static void _ISR_ADC() {
 
 [[noreturn]]
 static void _SchedulerStackOverflow() {
-    Abort(MSP::Domain_::SchedulerStackOverflow, 0);
+    Assert(false);
 }
 
-static void _AbortRecord(const Time::Instant& timestamp, MSP::Domain domain, uint16_t line) {
+static void _AbortRecord(const Time::Instant& timestamp, uintptr_t addr) {
     using namespace MSP;
     FRAMWriteEn writeEn; // Enable FRAM writing
     
     AbortHistory* hist = nullptr;
     for (AbortHistory& h : _State.aborts) {
-        if (!h.count || (h.type.domain==domain && h.type.line==line)) {
+        if (!h.count || h.addr==addr) {
             hist = &h;
             break;
         }
@@ -1199,12 +1199,7 @@ static void _AbortRecord(const Time::Instant& timestamp, MSP::Domain domain, uin
     
     // Prep the element if this is the first instance
     if (!hist->count) {
-        hist->type = {
-            .line = line,
-            .domain = domain,
-        };
-        
-        // Figure out if we want to bring this back again
+        hist->addr = addr;
         hist->earliest = timestamp;
     }
     
@@ -1221,15 +1216,17 @@ static void _BOR() {
 }
 
 // Abort(): called various Assert's throughout our program
-extern "C" [[noreturn]]
-void Abort(MSP::Domain domain, uint16_t line) {
+extern "C"
+[[noreturn, gnu::used]]
+void Abort(uintptr_t addr) {
     const Time::Instant timestamp = _RTC::TimeRead();
     // Record the abort
-    _AbortRecord(timestamp, domain, line);
+    _AbortRecord(timestamp, addr);
     _BOR();
 }
 
-extern "C" [[noreturn]]
+extern "C"
+[[noreturn]]
 void abort() {
     Assert(false);
 }

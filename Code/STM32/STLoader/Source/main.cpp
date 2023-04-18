@@ -1,6 +1,5 @@
 #include <cstring>
 #include <algorithm>
-#define SchedulerARM32
 #include "Toastbox/Scheduler.h"
 #include "Toastbox/Math.h"
 #include "Assert.h"
@@ -141,7 +140,7 @@ static void _JumpToAppIfNeeded() {
 // MARK: - Abort
 extern "C"
 [[noreturn]]
-void Abort(uint8_t domain, uint16_t line) {
+void Abort(uintptr_t addr) {
     _System::Abort();
 }
 

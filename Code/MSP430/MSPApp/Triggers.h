@@ -8,12 +8,10 @@
 //       template parameters.
 //       We created _T_Base for this reason, and can remove it and replace all uses with T_Base when we switch.
 template<
-auto T_Domain,
 auto& T_Base,
 typename T_MotionEnabled
 >
 struct T_Triggers {
-    static constexpr auto AssertDomain = T_Domain;
     struct Trigger;
     
     struct Event {
@@ -169,7 +167,7 @@ struct T_Triggers {
     using _Base = std::remove_reference_t<decltype(_T_Base)>;
     
     template<typename T_Dst, typename T_Src, size_t T_Count>
-    static constexpr T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
+    static T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
         Assert(&elm>=src && &elm<(src+T_Count));
         const size_t idx = &elm-src;
         return dst[idx];

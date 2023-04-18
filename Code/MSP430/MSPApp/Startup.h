@@ -36,10 +36,10 @@ void _Startup() {
     // Load stack pointer
     if constexpr (sizeof(void*) == 2) {
         // Small memory model
-        asm("mov #_StartupStack, sp");
+        asm volatile("mov #_StartupStack, sp" : : : );
     } else {
         // Large memory model
-        asm("mov.a #_StartupStack, sp");
+        asm volatile("mov.a #_StartupStack, sp" : : : );
     }
     
     // Copy .data section from flash to RAM
@@ -70,7 +70,9 @@ void _Startup() {
 extern "C"
 void _init() {}
 
+// u16 because reset vectors must be 16-bit, even in large memory model mode where pointers
+// are 20-bit (stored as u32)
 [[gnu::section(".resetvec"), gnu::used]]
-void* _ResetVector[] = {
-    (void*)&_Startup,
+uint16_t _ResetVector[] = {
+    (uint16_t)(uintptr_t)&_Startup,
 };

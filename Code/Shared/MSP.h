@@ -55,49 +55,9 @@ struct [[gnu::packed]] ImgRingBuf {
     }
 };
 
-using Domain = uint8_t;
-struct Domain_ { enum : Domain {
-    Invalid,
-    SchedulerStackOverflow,
-    Main,
-    ICE,
-    SD,
-    Img,
-    I2C,
-    Motion,
-    Triggers,
-    BatterySampler,
-    AssertionCounter,
-}; };
-
-constexpr const char* StringForDomain(Domain x) {
-    switch (x) {
-    case Domain_::Invalid:                return "Invalid";
-    case Domain_::SchedulerStackOverflow: return "SchedulerStackOverflow";
-    case Domain_::Main:                   return "Main";
-    case Domain_::ICE:                    return "ICE";
-    case Domain_::SD:                     return "SD";
-    case Domain_::Img:                    return "Img";
-    case Domain_::I2C:                    return "I2C";
-    case Domain_::Motion:                 return "Motion";
-    case Domain_::Triggers:               return "Triggers";
-    case Domain_::BatterySampler:         return "BatterySampler";
-    case Domain_::AssertionCounter:       return "AssertionCounter";
-    }
-    abort();
-}
-
-// AbortType: a (domain,line) tuple that uniquely identifies a type of abort
-struct [[gnu::packed]] AbortType {
-    uint16_t line = 0;
-    Domain domain = Domain_::Invalid;
-    uint8_t _pad  = 0;
-};
-static_assert(!(sizeof(AbortType) % 2)); // Check alignment
-
-// AbortHistory: records history of an abort type, where an abort type is a (domain,line) tuple
+// AbortHistory: records history of an abort at a particular address
 struct [[gnu::packed]] AbortHistory {
-    AbortType type         = {};
+    uint16_t addr          = 0;
     Time::Instant earliest = {};
     Time::Instant latest   = {};
     uint16_t count         = 0;
@@ -281,11 +241,11 @@ struct [[gnu::packed]] State {
     AbortHistory aborts[5] = {};
 //    StaticPrint(sizeof(aborts));
     static_assert(!(sizeof(aborts) % 2)); // Check alignment
-    static_assert(sizeof(aborts) == 110); // Debug
+    static_assert(sizeof(aborts) == 100); // Debug
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 1042); // Debug
+static_assert(sizeof(State) == 1032); // Debug
 
 constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,
