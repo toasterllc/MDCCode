@@ -1179,7 +1179,7 @@ static void _ISR_ADC() {
 
 [[noreturn]]
 static void _SchedulerStackOverflow() {
-    Abort(MSP::Domain_::SchedulerStackOverflow, 0);
+    Assert(false);
 }
 
 static void _AbortRecord(const Time::Instant& timestamp, MSP::Domain domain, uint16_t line) {
