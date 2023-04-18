@@ -1006,23 +1006,19 @@ struct _TaskButton {
         _LEDGreen_.set(_LEDPriority::Default, 1);
         _LEDRed_.set(_LEDPriority::Default, 1);
         
-    //    // Blink green LED to signal that we're turning off
-    //    for (;;) {
-    //        for (int i=0; i<5; i++) {
-    //            _Pin::LED_GREEN_::Write(0);
-    //            for (volatile int i=0; i<0xFFFF; i++);
-    //            _Pin::LED_GREEN_::Write(1);
-    //            for (volatile int i=0; i<0xFFFF; i++);
-    //        }
-    //    }
-        
         // Start Scheduler
-    //    _Scheduler::Start<_TaskButton>();
         _Scheduler::Start<_TaskI2C, _TaskMotion>();
         
-        // Pause captures upon power on. This is so that the device is off until
-        // the user turns it on by holding the power button.
-        _OffAssertion = true;
+        if (Startup::ColdStart()) {
+            
+        }
+        
+        // Restore our saved power state
+        // _PowerState stores our power state across crashes/LPM3.5, so we need to
+        // update _OffAssertion based on it.
+        if (!_PowerState) {
+            _OffAssertion = true;
+        }
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -1094,6 +1090,12 @@ struct _TaskButton {
         }
         led.set(_LEDPriority::Power, std::nullopt);
     }
+    
+    // _PowerState: power state that remembers its state across aborts and LPM3.5.
+    // Note that _PowerState is uninitialized because we only set its value on a cold start.
+    // This is needed because we don't want the device to turn off if it aborts.
+    [[gnu::section(".ram_backup._TaskButton")]]
+    static inline bool _PowerState = false;
     
     // _OffAssertion: controls user-visible on/off behavior
     // By default, captures are paused so that the device is off until

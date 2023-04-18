@@ -6,6 +6,10 @@ extern "C" void __libc_init_array();
 
 class Startup {
 public:
+    // Initial power on:    true
+    // Wake from LPM4.5:    true
+    // Wake from LPM3.5:    false
+    // Startup after abort: false
     static bool ColdStart() {
         // This is a cold start if we're not waking from LPM3.5
         static bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
