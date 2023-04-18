@@ -13,14 +13,14 @@ public:
     //   Wake from LPM3.5:    false
     //   Startup after abort: false
     //
-    //   * Ideally this would return true because LPM4.5 is essentially 'off'
-    //     (it only retains IO pin states). But when waking there doesn't
-    //     appear to be a way to differentitate between waking from LPM3.5
-    //     vs LPM4.5, so there doesn't seem to be a way to return true in
-    //     the LPM4.5 case. We don't use LPM4.5 though so it's not an issue.
+    //   * Ideally this case would return true because LPM4.5 is essentially 'off'
+    //     (it only retains IO pin states). But when waking there doesn't appear
+    //     to be a way to differentitate between waking from LPM3.5 vs LPM4.5,
+    //     so there doesn't seem to be a way to return true in the LPM4.5 case.
+    //     We don't use LPM4.5 though so it's not an issue.
     static bool ColdStart() {
-        static bool coldStart = (SYSRSTIV == 0);
-        return coldStart;
+        static uint16_t IV = SYSRSTIV;
+        return (IV==SYSRSTIV_NONE || IV==SYSRSTIV_BOR);
     }
 };
 
