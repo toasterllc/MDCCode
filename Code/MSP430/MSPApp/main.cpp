@@ -487,8 +487,7 @@ struct _TaskSD {
     } _State;
     
     // Task stack
-    [[gnu::section(".stack._TaskSD")]]
-    alignas(void*)
+    SchedulerStack(".stack._TaskSD")
     static inline uint8_t Stack[256];
 };
 
@@ -589,8 +588,7 @@ struct _TaskImg {
     } _State;
     
     // Task stack
-    [[gnu::section(".stack._TaskImg")]]
-    alignas(void*)
+    SchedulerStack(".stack._TaskImg")
     static inline uint8_t Stack[256];
 };
 
@@ -777,8 +775,7 @@ struct _TaskEvent {
     } _State;
     
     // Task stack
-    [[gnu::section(".stack._TaskEvent")]]
-    alignas(void*)
+    SchedulerStack(".stack._TaskEvent")
     static inline uint8_t Stack[256];
 };
 
@@ -894,8 +891,7 @@ struct _TaskI2C {
     } _State;
     
     // Task stack
-    [[gnu::section(".stack._TaskI2C")]]
-    alignas(void*)
+    SchedulerStack(".stack._TaskI2C")
     static inline uint8_t Stack[256];
 };
 
@@ -925,8 +921,7 @@ struct _TaskMotion {
     }
     
     // Task stack
-    [[gnu::section(".stack._TaskMotion")]]
-    alignas(void*)
+    SchedulerStack(".stack._TaskMotion")
     static inline uint8_t Stack[128];
 };
 
@@ -938,8 +933,7 @@ static void _MotionEnabledUpdate() {
 
 #define _TaskButtonStackSize 128
 
-[[gnu::section(".stack._TaskButton")]]
-alignas(void*)
+SchedulerStack(".stack._TaskButton")
 uint8_t _TaskButtonStack[_TaskButtonStackSize];
 
 asm(".global _StartupStack");
