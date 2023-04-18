@@ -939,15 +939,6 @@ uint8_t _TaskButtonStack[_TaskButtonStackSize];
 asm(".global _StartupStack");
 asm(".equ _StartupStack, _TaskButtonStack+" Stringify(_TaskButtonStackSize));
 
-// _OnSaved: remembers our power state across crashes and LPM3.5.
-// This is needed because we don't want the device to return to the
-// powered-off state after a crash.
-// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
-// For some reason when this is a static member of _TaskButton, it's
-// not placed in the .ram_backup section.
-[[gnu::section(".ram_backup._TaskButton")]]
-static inline bool _OnSaved = false;
-
 struct _TaskButton {
     static void _Init() {
         // Stop watchdog timer
@@ -1069,6 +1060,15 @@ struct _TaskButton {
     
     // _On: controls user-visible on/off behavior
     static inline _Powered::Assertion _On;
+    
+    // _OnSaved: remembers our power state across crashes and LPM3.5.
+    // This is needed because we don't want the device to return to the
+    // powered-off state after a crash.
+    // Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
+    // gnu::used is apparently necessary for the gnu::section attribute to
+    // work when link-time optimization is enabled.
+    [[gnu::section(".ram_backup._TaskButton"), gnu::used]]
+    static inline bool _OnSaved = false;
     
     // Task stack
     static constexpr auto& Stack = _TaskButtonStack;
