@@ -144,7 +144,7 @@ static MSP::State _State = {
 static void _TaskEventRunningUpdate();
 static void _HostModeUpdate() { _TaskEventRunningUpdate(); }
 static void _PoweredUpdate() { _TaskEventRunningUpdate(); }
-static void _CaffeinatedUpdate() {}
+static void _CaffeineUpdate() {}
 static void _MotionEnabledUpdate();
 static void _VDDBEnabledUpdate();
 static void _VDDIMGSDEnabledUpdate();
@@ -155,8 +155,8 @@ using _HostMode = T_AssertionCounter<MSP::Domain_::AssertionCounter, _HostModeUp
 // _Powered: power state assertion (the user-facing power state)
 using _Powered = T_AssertionCounter<MSP::Domain_::AssertionCounter, _PoweredUpdate>;
 
-// _Caffeinated: prevents sleep
-using _Caffeinated = T_AssertionCounter<MSP::Domain_::AssertionCounter, _CaffeinatedUpdate>;
+// _Caffeine: prevents sleep
+using _Caffeine = T_AssertionCounter<MSP::Domain_::AssertionCounter, _CaffeineUpdate>;
 
 // Motion enable/disable
 using _MotionEnabled = T_AssertionCounter<MSP::Domain_::AssertionCounter, _MotionEnabledUpdate>;
@@ -744,7 +744,7 @@ struct _TaskEvent {
             _Scheduler::Wait([] { return (bool)(ev = _EventPop()); });
             
             // Don't go to sleep until we handle the event
-            _State.caffeinated = true;
+            _State.caffeine = true;
             
             using T = _Triggers::Event::Type;
             switch (ev->type) {
@@ -756,7 +756,7 @@ struct _TaskEvent {
             }
             
             // Allow sleep
-            _State.caffeinated = false;
+            _State.caffeine = false;
         }
     }
     
@@ -771,7 +771,7 @@ struct _TaskEvent {
         // our Reset() function, so if the power assertion lived on the stack and
         // TaskMain is reset, its destructor would never be called and our state
         // would be corrupted.
-        _Caffeinated::Assertion caffeinated;
+        _Caffeine::Assertion caffeine;
         _VDDBEnabled::Assertion vddb;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _State;
@@ -799,7 +799,7 @@ struct _TaskI2C {
             _I2C::WaitUntilActive();
             
             // Maintain power while I2C is active
-            _Caffeinated::Assertion caffeinated(true);
+            _Caffeine::Assertion caffeine(true);
             
             for (;;) {
                 // Wait for a command
@@ -1039,7 +1039,7 @@ struct _TaskButton {
             if (_HostMode::Asserted()) continue;
             
             // Keep the lights on until we're done handling the event
-            _Caffeinated::Assertion caffeinated(true);
+            _Caffeine::Assertion caffeine(true);
             
             switch (ev) {
             case _Button::Event::Press: {
