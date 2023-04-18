@@ -36,10 +36,10 @@ void _Startup() {
     // Load stack pointer
     if constexpr (sizeof(void*) == 2) {
         // Small memory model
-        asm("mov #_StartupStack, sp");
+        asm volatile("mov #_StartupStack, sp" : : : );
     } else {
         // Large memory model
-        asm("mov.a #_StartupStack, sp");
+        asm volatile("mov.a #_StartupStack, sp" : : : );
     }
     
     // Copy .data section from flash to RAM

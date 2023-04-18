@@ -1028,6 +1028,8 @@ struct _TaskButton {
                 // Ignore button presses if we're off
                 if (!_On) break;
                 
+                Assert(false);
+                
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
                     _CaptureStart(*it, _RTC::TimeRead());
                 }
@@ -1213,7 +1215,8 @@ static void _BOR() {
 }
 
 // Abort(): called various Assert's throughout our program
-[[noreturn]]
+extern "C"
+[[noreturn, gnu::used]]
 void Abort(uintptr_t addr) {
     const Time::Instant timestamp = _RTC::TimeRead();
     // Record the abort
@@ -1221,7 +1224,8 @@ void Abort(uintptr_t addr) {
     _BOR();
 }
 
-extern "C" [[noreturn]]
+extern "C"
+[[noreturn]]
 void abort() {
     Assert(false);
 }

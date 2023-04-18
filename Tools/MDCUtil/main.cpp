@@ -497,8 +497,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         if (!abort.count) break;
         printf(     "  #%ju\n",                                 (uintmax_t)i);
         printf(     "    type\n");
-        printf(     "      domain:              %s\n",          MSP::StringForAbortDomain(abort.type.domain));
-        printf(     "      line:                %ju\n",         (uintmax_t)abort.type.line);
+        printf(     "      addr:                0x%04jx\n",     (uintmax_t)abort.addr);
         printf(     "    earliest:              %s\n",          _StringForTimeInstant(abort.earliest, true).c_str());
         printf(     "    latest:                %s\n",          _StringForTimeInstant(abort.latest, true).c_str());
         printf(     "    count:                 %ju\n",         (uintmax_t)abort.count);

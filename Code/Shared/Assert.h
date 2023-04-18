@@ -1,28 +1,26 @@
 #pragma once
 #include <cstdint>
 
-// Abort(): provided by client to log the abort and trigger crash
-[[noreturn]]
-void Abort(uintptr_t addr);
-
 #define Assert(x)    if (!(x)) ::_Abort()
 #define AssertArg(x) if (!(x)) ::_Abort()
 
-[[gnu::always_inline]]
-inline uintptr_t _AssertAddress() {
+// Abort(): provided by client to log the abort and trigger crash
+extern "C"
+[[noreturn, gnu::used]]
+void Abort(uintptr_t addr);
+
+[[noreturn]]
+[[gnu::always_inline]] // PC read directly from surrounding context
+inline void _Abort() {
     if constexpr (sizeof(void*) == 2) {
         // Small memory model
-        asm volatile("mov @sp, r12" : : : );    // r12 = *sp
-        asm volatile("ret" : : : );             // return r12
+        asm volatile("mov pc, r12" : : : );     // r12 = $PC
+        asm volatile("jmp Abort" : : : );       // call Abort()
     } else {
+        #warning TEST
         // Large memory model
-        asm volatile("mov.a @sp, r12" : : : );  // r12 = *sp
-        asm volatile("ret.a" : : : );           // return r12
+        asm volatile("mov.a pc, r12" : : : );   // r12 = $PC
+        asm volatile("jmp.a Abort" : : : );     // call Abort()
     }
-    return 0;
-}
-
-[[noreturn, gnu::noinline]]
-inline void _Abort() {
-    Abort(_AssertAddress());
+    __builtin_unreachable();
 }
