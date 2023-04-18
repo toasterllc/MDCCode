@@ -61,7 +61,7 @@ struct _Pin {
 };
 
 class _TaskButton;
-class _TaskEventHandler;
+class _TaskEvent;
 class _TaskSD;
 class _TaskImg;
 class _TaskI2C;
@@ -85,7 +85,7 @@ using _Scheduler = Toastbox::Scheduler<
     
     // T_Tasks: list of tasks
     _TaskButton,
-    _TaskEventHandler,
+    _TaskEvent,
     _TaskSD,
     _TaskImg,
     _TaskI2C,
@@ -593,11 +593,11 @@ struct _TaskImg {
     static inline uint8_t Stack[256];
 };
 
-// MARK: - _TaskEventHandler
+// MARK: - _TaskEvent
 
-struct _TaskEventHandler {
+struct _TaskEvent {
     static void Start() {
-        _Scheduler::Start<_TaskEventHandler>();
+        _Scheduler::Start<_TaskEvent>();
     }
     
     static void Reset() {
@@ -608,7 +608,7 @@ struct _TaskEventHandler {
         // Stop tasks
         _Scheduler::Stop<_TaskSD>();
         _Scheduler::Stop<_TaskImg>();
-        _Scheduler::Stop<_TaskEventHandler>();
+        _Scheduler::Stop<_TaskEvent>();
         // Reset our state
         // We do this last so that our power assertions are reset last
         _State = {};
@@ -778,16 +778,16 @@ struct _TaskEventHandler {
     } _State = {};
     
     // Task stack
-    [[gnu::section(".stack._TaskEventHandler")]]
+    [[gnu::section(".stack._TaskEvent")]]
     alignas(void*)
     static inline uint8_t Stack[256];
 };
 
 static void __EventsPaused(bool x) {
     if (x) {
-        _TaskEventHandler::Reset();
+        _TaskEvent::Reset();
     } else {
-        _TaskEventHandler::Start();
+        _TaskEvent::Start();
     }
 }
 
