@@ -55,6 +55,7 @@ void _Startup() {
     main();
 }
 
+// _init(): required by __libc_init_array
 extern "C"
 void _init() {}
 
