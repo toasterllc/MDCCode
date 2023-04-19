@@ -20,7 +20,7 @@ inline void _Abort() {
         #warning TEST
         // Large memory model
         asm volatile("mov.a pc, r12" : : : );   // r12 = $PC
-        asm volatile("jmp.a Abort" : : : );     // call Abort()
+        asm volatile("jmp Abort" : : : );       // call Abort()
     }
     __builtin_unreachable();
 }
