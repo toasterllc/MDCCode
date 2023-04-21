@@ -2,7 +2,7 @@
 #include <msp430.h>
 
 template <uint32_t T_SMCLKFreqHz, uint32_t T_TickPeriodUs>
-class WDTType {
+class T_SysTick {
 public:
     static void Init() {
         // Config watchdog timer:

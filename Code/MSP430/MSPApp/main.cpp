@@ -13,7 +13,7 @@
 #include "Clock.h"
 #include "RTC.h"
 #include "SPI.h"
-#include "WDT.h"
+#include "SysTick.h"
 #include "RegLocker.h"
 #include "MSP.h"
 #include "GetBits.h"
@@ -93,7 +93,7 @@ using _Scheduler = Toastbox::Scheduler<
 >;
 
 using _Clock = ClockType<_MCLKFreqHz>;
-using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
+using _SysTick = T_SysTick<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 using _ICE = ICE<_Scheduler>;
 
@@ -1105,6 +1105,14 @@ static void _Sleep() {
 //        PMMUnlock pmm; // Unlock PMM registers
 //        PMMCTL0_L |= PMMREGOFF_L;
 //    }
+    
+    if (_Scheduler::WakeDeadline()) {
+        // We have tasks that are sleeping towards a deadline, so enable SysTick
+        #warning TODO: enable SysTick
+    } else {
+        // There's no deadline to wakeup No tasks are sleeping towards a deadline, so disable SysTick and set an alarm to wake up for the next event
+        #warning TODO: disable SysTick
+    }
     
     // Remember our current interrupt state, which IntState will restore upon return
     Toastbox::IntState ints;

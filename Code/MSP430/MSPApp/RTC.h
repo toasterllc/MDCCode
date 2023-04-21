@@ -102,10 +102,9 @@ public:
         case RTCIV_RTCIF:
             // Update our time
             _RTCTime += InterruptIntervalUs;
-            break;
-        
+            return;
         default:
-            break;
+            Assert(false);
         }
     }
     
