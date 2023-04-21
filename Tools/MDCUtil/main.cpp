@@ -394,6 +394,54 @@ static std::string _StringForTimeInstant(Time::Instant t, bool relative=false) {
     return ss.str();
 }
 
+static std::filesystem::path _MSPAppPath() {
+    using namespace std::filesystem;
+    path home = getenv("HOME");
+    return home / "repos/MDCCode/Code/MSP430/MSPApp/Release/MSPApp.out";
+}
+
+static std::string _Run(const char* cmd) {
+    std::string r;
+    FILE* p = popen(cmd, "r");
+    if (!p) throw std::runtime_error("popen failed");
+    
+    char tmp[128];
+    while (fgets(tmp, sizeof(tmp), p)) r += tmp;
+    
+    const int ir = pclose(p);
+    if (ir) throw Toastbox::RuntimeError("command failed (%s) with exit status: %d", cmd ,WEXITSTATUS(ir));
+    
+    return r;
+}
+
+
+
+//static std::string _Run(const char* cmd) {
+//    std::string r;
+//    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+//    if (!pipe) throw std::runtime_error("popen failed");
+//    char tmp[128];
+//    while (fgets(tmp, sizeof(tmp), pipe.get())) r += tmp;
+//    return r;
+//}
+
+
+static std::string __MSPLineForAddr(uint16_t addr) {
+    const std::filesystem::path mspAppPath = _MSPAppPath();
+    char cmd[256];
+    const int ir = snprintf(cmd, sizeof(cmd), "dwarfdump %s --lookup 0x%jx 2>&1 | tail -1", mspAppPath.c_str(), (uintmax_t)addr);
+    if (ir<0 || ir>=sizeof(cmd)) throw std::runtime_error("snprintf failed");
+    return _Run(cmd);
+}
+
+static std::string _MSPLineForAddr(uint16_t addr) {
+    try {
+        return __MSPLineForAddr(addr);
+    } catch (const std::exception& e) {
+        return std::string("address lookup failed (") + e.what() + ")";
+    }
+}
+
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     // Read the device state
     MSP::State state = device.mspStateRead();
@@ -495,12 +543,12 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     size_t i = 0;
     for (const auto& abort : state.aborts) {
         if (!abort.count) break;
-        printf(     "  #%ju\n",                                 (uintmax_t)i);
+        printf(     "  #%ju\n",                                     (uintmax_t)i);
         printf(     "    type\n");
-        printf(     "      addr:                0x%04jx\n",     (uintmax_t)abort.addr);
-        printf(     "    earliest:              %s\n",          _StringForTimeInstant(abort.earliest, true).c_str());
-        printf(     "    latest:                %s\n",          _StringForTimeInstant(abort.latest, true).c_str());
-        printf(     "    count:                 %ju\n",         (uintmax_t)abort.count);
+        printf(     "      addr:                0x%04jx [ %s ]\n",  (uintmax_t)abort.addr, _MSPLineForAddr(abort.addr).c_str());
+        printf(     "    earliest:              %s\n",              _StringForTimeInstant(abort.earliest, true).c_str());
+        printf(     "    latest:                %s\n",              _StringForTimeInstant(abort.latest, true).c_str());
+        printf(     "    count:                 %ju\n",             (uintmax_t)abort.count);
         i++;
     }
     printf(         "\n");
