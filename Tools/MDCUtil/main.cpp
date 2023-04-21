@@ -414,18 +414,6 @@ static std::string _Run(const char* cmd) {
     return r;
 }
 
-
-
-//static std::string _Run(const char* cmd) {
-//    std::string r;
-//    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
-//    if (!pipe) throw std::runtime_error("popen failed");
-//    char tmp[128];
-//    while (fgets(tmp, sizeof(tmp), pipe.get())) r += tmp;
-//    return r;
-//}
-
-
 static std::string __MSPLineForAddr(uint16_t addr) {
     const std::filesystem::path mspAppPath = _MSPAppPath();
     char cmd[256];
