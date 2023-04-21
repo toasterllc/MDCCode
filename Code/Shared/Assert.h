@@ -17,7 +17,6 @@ inline void _Abort() {
         asm volatile("mov pc, r12" : : : );     // r12 = $PC
         asm volatile("jmp Abort" : : : );       // call Abort()
     } else {
-        #warning TEST
         // Large memory model
         asm volatile("mov.a pc, r12" : : : );   // r12 = $PC
         asm volatile("jmp Abort" : : : );       // call Abort()
