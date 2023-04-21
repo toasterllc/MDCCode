@@ -94,19 +94,10 @@ using _USB = _System::USB;
 using _MSPJTAG = _System::MSPJTAG;
 using _QSPI = QSPIType<_Scheduler>;
 
-using _ICE = ::ICE<
-    0,          // T_Domain
-    _Scheduler  // T_Scheduler
->;
-
-using _ImgSensor = Img::Sensor<
-    0,          // T_Domain
-    _Scheduler, // T_Scheduler
-    _ICE        // T_ICE
->;
+using _ICE = ::ICE<_Scheduler>;
+using _ImgSensor = Img::Sensor<_Scheduler, _ICE>;
 
 using _SDCard = SD::Card<
-    0,          // T_Domain
     _Scheduler, // T_Scheduler
     _ICE,       // T_ICE
     1,          // T_ClkDelaySlow (odd values invert the clock)
@@ -1526,7 +1517,7 @@ extern "C" [[gnu::section(".isr")]] void ISR_EXTI15_10() {
 // MARK: - Abort
 extern "C"
 [[noreturn]]
-void Abort(uint8_t domain, uint16_t line) {
+void Abort(uintptr_t addr) {
     _System::Abort();
 }
 

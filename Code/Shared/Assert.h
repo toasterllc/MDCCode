@@ -23,8 +23,8 @@
     // ARM32
     #define _Abort()                                                    \
         do {                                                            \
-            asm volatile("mov r0, pc" : : : );  /* r0 = $PC */          \
-            asm volatile("jmp Abort" : : : );   /* call Abort() */      \
+            asm volatile("mov r0, pc" : : : );      /* r0 = $PC */      \
+            asm volatile("b Abort" : : : );         /* call Abort() */  \
             __builtin_unreachable();                                    \
         } while (0)
 
