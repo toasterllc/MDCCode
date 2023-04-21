@@ -410,7 +410,7 @@ static std::string _Run(const char* cmd) {
     while (fgets(tmp, sizeof(tmp), p)) r += tmp;
     
     const int ir = pclose(p);
-    if (ir) throw Toastbox::RuntimeError("command failed (%s) with exit status: %d", cmd ,WEXITSTATUS(ir));
+    if (!WIFEXITED(ir) || WEXITSTATUS(ir)) throw Toastbox::RuntimeError("command failed: %s", cmd);
     
     return r;
 }
@@ -418,17 +418,18 @@ static std::string _Run(const char* cmd) {
 static std::string __MSPLineForAddr(uint16_t addr) {
     const std::filesystem::path mspAppPath = _MSPAppPath();
     char cmd[256];
-    const int ir = snprintf(cmd, sizeof(cmd), "dwarfdump %s --lookup 0x%jx 2>&1 | tail -1", mspAppPath.c_str(), (uintmax_t)addr);
+    const int ir = snprintf(cmd, sizeof(cmd), "dwarfdump %s --lookup 0x%jx 2>&1", mspAppPath.c_str(), (uintmax_t)addr);
     if (ir<0 || ir>=sizeof(cmd)) throw std::runtime_error("snprintf failed");
-    const std::string s = Toastbox::String::Trim(_Run(cmd));
-    return s;
+    auto lines = Toastbox::String::Split(Toastbox::String::Trim(_Run(cmd)), "\n");
+    if (lines.empty()) throw std::runtime_error("dwarfdump returned no output");
+    return lines.back();
 }
 
 static std::string _MSPLineForAddr(uint16_t addr) {
     try {
         return __MSPLineForAddr(addr);
     } catch (const std::exception& e) {
-        return std::string("address lookup failed (") + e.what() + ")";
+        return std::string("address lookup failed: ") + e.what();
     }
 }
 
