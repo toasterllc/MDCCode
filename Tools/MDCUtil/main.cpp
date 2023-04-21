@@ -8,6 +8,7 @@
 #include "Toastbox/RuntimeError.h"
 #include "Toastbox/NumForStr.h"
 #include "Toastbox/DurationString.h"
+#include "Toastbox/String.h"
 #include "ChecksumFletcher32.h"
 #include "Img.h"
 #include "SD.h"
@@ -419,7 +420,8 @@ static std::string __MSPLineForAddr(uint16_t addr) {
     char cmd[256];
     const int ir = snprintf(cmd, sizeof(cmd), "dwarfdump %s --lookup 0x%jx 2>&1 | tail -1", mspAppPath.c_str(), (uintmax_t)addr);
     if (ir<0 || ir>=sizeof(cmd)) throw std::runtime_error("snprintf failed");
-    return _Run(cmd);
+    const std::string s = Toastbox::String::Trim(_Run(cmd));
+    return s;
 }
 
 static std::string _MSPLineForAddr(uint16_t addr) {
