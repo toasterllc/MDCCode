@@ -1029,8 +1029,6 @@ struct _TaskButton {
                 // Ignore button presses if we're off
                 if (!_On) break;
                 
-                Assert(false);
-                
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
                     _CaptureStart(*it, _RTC::TimeRead());
                 }
