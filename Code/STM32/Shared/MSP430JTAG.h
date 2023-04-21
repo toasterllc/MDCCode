@@ -178,7 +178,13 @@ private:
 //    static constexpr uint16_t _DeviceID             = 0x8311;             // MSP430FR2422
     static constexpr uint16_t _DeviceID             = 0x8240;               // MSP430FR2433
     static constexpr uint32_t _SafePC               = 0x00000004;
+    
     static constexpr uint32_t _SYSRSTIVAddr         = 0x0000015E;
+    
+    static constexpr uint32_t _PMMCTL0Addr          = 0x00000120;
+    static constexpr uint16_t _PMMCTL0TriggerBOR    = 0xA504;
+    static constexpr uint16_t _PMMCTL0TriggerPOR    = 0xA508;
+    
     static constexpr uint32_t _SYSCFG0Addr          = 0x00000160;
     
     static constexpr uint16_t _JMBMailboxIn0Ready   = 0x0001;
@@ -258,7 +264,7 @@ private:
     [[gnu::noinline]]
     static bool _SBWIO(bool tms, bool tclk, bool tdi) {
         // We have strict timing requirements, so disable interrupts.
-        // Specifically, the low cycle of TCK can't be longer than 7us,
+        // Specifically, the low cycle of TEST can't be longer than 7us,
         // otherwise SBW will be disabled.
         Toastbox::IntState ints(false);
         
@@ -284,7 +290,7 @@ private:
             _DelayUs(0);
             
             _Test::Write(1);
-            // Stop driving SBWTDIO, in preparation for the slave to start driving it
+            // Stop driving RST_, in preparation for the slave to start driving it
             _RstIn_::template Init<_Rst_>();
             _DelayUs(0);
         }
@@ -294,12 +300,12 @@ private:
         {
             _Test::Write(0);
             _DelayUs(0);
-            // Read the TDO value, driven by the slave, while SBWTCK=0
+            // Read the TDO value, driven by the slave, while TEST=0
             tdo = _Rst_::Read();
             _Test::Write(1);
             _DelayUs(0);
             
-            // Start driving SBWTDIO again
+            // Start driving RST_ again
             _Rst_::template Init<_RstIn_>();
         }
         
@@ -708,7 +714,7 @@ private:
     
     static void _JTAGStart(bool rst_) {
         // We have strict timing requirements, so disable interrupts.
-        // Specifically, the low cycle of TCK can't be longer than 7us,
+        // Specifically, the low cycle of TEST can't be longer than 7us,
         // otherwise SBW will be disabled.
         Toastbox::IntState ints(false);
         
@@ -735,7 +741,7 @@ private:
         
         // Choose 2-wire/Spy-bi-wire mode
         {
-            // TDIO=1 while applying a single clock to TCK
+            // RST_=1 while applying a single clock to TEST
             _Rst_::Write(1);
             _DelayUs(0);
             
@@ -747,22 +753,21 @@ private:
     }
     
     static void _JTAGEnd() {
-        // Read the SYSRSTIV register to clear it, to emulate a real power-up
-        _Read16(_SYSRSTIVAddr);
-        
-        // Perform a BOR (brownout reset)
-        // TI's code claims that this resets the device and causes us to lose JTAG control,
-        // but empirically we still need to execute the 'Reset CPU' and '_IR_CNTRL_SIG_RELEASE' stages below.
-        // 
-        // Note that a BOR still doesn't reset some modules (like RTC and PMM), but it's as close as
-        // we can get to a full reset without power cycling the device.
-        _IRShift(_IR_TEST_REG);
-        _DRShift<16>(0x0200);
-        
         // Reset CPU
         _IRShift(_IR_CNTRL_SIG_16BIT);
         _DRShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
         _DRShift<16>(0x0401); // Deassert POR
+        
+        // Read the SYSRSTIV until it's clear
+        // It appears that SYSRSTIV can accumulate multiple values while we held the device
+        // under JTAG control, due to multiple XXXIFG flags being set.
+        for (int i=0; i<20; i++) {
+            const uint16_t iv = _Read16(_SYSRSTIVAddr);
+            if (!iv) break;
+        }
+        
+        // Trigger a software BOR
+        _Write16(_PMMCTL0Addr, _PMMCTL0TriggerBOR);
         
         // Release JTAG control
         _IRShift(_IR_CNTRL_SIG_RELEASE);

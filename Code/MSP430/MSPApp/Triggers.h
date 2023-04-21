@@ -33,6 +33,7 @@ struct T_Triggers {
         
         Event(Type type) : type(type) {}
         
+        #warning TODO: we could save the memory of `inserted` by using `next` instead. the last Event should point to the first event, and we bail out of the loop when the current event==_First
         Time::Instant time = 0;
         Event* next = nullptr;
         Type type = Type::TimeTrigger;
@@ -127,6 +128,8 @@ struct T_Triggers {
     }
     
     static void EventInsert(Event& ev, const Time::Instant& t) {
+        // Only pop the event if we know it's in the list, to avoid having to search
+        // for it (since we're using a singly-linked list to save memory).
         if (ev.inserted) _EventPop(ev);
         
         ev.time = t;
@@ -143,11 +146,20 @@ struct T_Triggers {
         ev.inserted = true;
     }
     
-    static Event* EventPop(const Time::Instant& t) {
-        if (!_Front) return nullptr;
-        // If the front event occurs after the current time, no events are ready yet.
-        if (_Front->time >= t) return nullptr;
-        return &_EventPop(*_Front);
+//    static Event* EventPop(const Time::Instant& t) {
+//        if (!_Front) return nullptr;
+//        // If the front event occurs after the current time, no events are ready yet.
+//        if (_Front->time >= t) return nullptr;
+//        return &_EventPop(*_Front);
+//    }
+    
+    static void EventPop() {
+        Assert(_Front);
+        _EventPop(*_Front);
+    }
+    
+    static Event* EventFront() {
+        return _Front;
     }
     
     static auto EventBegin() { return std::begin(_Event); }

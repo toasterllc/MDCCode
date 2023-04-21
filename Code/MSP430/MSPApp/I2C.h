@@ -1,16 +1,15 @@
 #pragma once
 #include <msp430.h>
-#include <atomic>
 #include "Assert.h"
 
-template <
+template<
 typename T_Scheduler,
 typename T_SCLPin,
 typename T_SDAPin,
 typename T_ActivePin,
 uint8_t T_Addr
 >
-class I2CType {
+class T_I2C {
 private:
     using _ActiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
     using _InactiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
@@ -39,7 +38,7 @@ public:
         _InactiveInterrupt::IESConfig();
     }
     
-    template <typename T>
+    template<typename T>
     static bool Recv(T& msg) {
         _Events ev = _WaitForEvents(_EventStart | _EventInactive);
         if (ev & _EventInactive) return false;
@@ -65,7 +64,7 @@ public:
         return true;
     }
     
-    template <typename T>
+    template<typename T>
     static bool Send(const T& msg) {
         _Events ev = _WaitForEvents(_EventStart | _EventInactive);
         if (ev & _EventInactive) return false;

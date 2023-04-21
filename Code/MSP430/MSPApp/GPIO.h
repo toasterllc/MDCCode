@@ -29,17 +29,17 @@ enum class Option : uint8_t {
 
 enum class PortIndex { A, B };
 
-template <PortIndex T_PortIdx>
+template<PortIndex T_PortIdx>
 class Port {
 public:
 #define OnlyPortA                                                   \
-    template <                                                      \
+    template<                                                      \
     PortIndex _T_PortIdx = PortIdx,                                 \
     typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0  \
     >
 
 #define OnlyPort1                       \
-    template <                          \
+    template<                           \
     PortIndex _T_PortIdx = PortIdx,     \
     uint8_t _T_PinIdx = PinIdx,         \
     typename std::enable_if_t<          \
@@ -49,7 +49,7 @@ public:
     , int> = 0>
 
 #define OnlyPort2                       \
-    template <                          \
+    template<                           \
     PortIndex _T_PortIdx = PortIdx,     \
     uint8_t _T_PinIdx = PinIdx,         \
     typename std::enable_if_t<          \
@@ -58,14 +58,14 @@ public:
         _T_PinIdx<16                    \
     , int> = 0>
 
-    template <uint8_t T_PinIdx, Option... T_Opts>
+    template<uint8_t T_PinIdx, Option... T_Opts>
     class Pin {
     public:
         static constexpr PortIndex PortIdx  = T_PortIdx;
         static constexpr uint8_t PinIdx     = T_PinIdx;
         static constexpr uint16_t Bit       = UINT16_C(1)<<PinIdx;
         
-        template <Option... T_NewOpts>
+        template<Option... T_NewOpts>
         using Opts = Port::Pin<PinIdx, T_NewOpts...>;
         
         static constexpr bool Out()     { return _Getter(Option::Output1)       || _Getter(Option::Resistor1);      }
@@ -92,7 +92,7 @@ public:
         }
         
         // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
-        template <typename T_Prev>
+        template<typename T_Prev>
         static constexpr void Init() {
             if constexpr (Out() != T_Prev::Out())
             State::Out(Out());
@@ -248,12 +248,12 @@ public:
             }
             
         private:
-            template <typename T>
+            template<typename T>
             static constexpr bool _Getter(T& reg) {
                 return reg & Bit;
             }
             
-            template <typename T>
+            template<typename T>
             static constexpr void _Setter(T& reg, bool x) {
                 if (x)  reg |= Bit;
                 else    reg &= ~Bit;
@@ -284,12 +284,12 @@ struct _Regs {
     uint16_t IES  = 0x0000;
 };
 
-template <PortIndex T_PortIdx>
+template<PortIndex T_PortIdx>
 static constexpr _Regs _GetRegs(_Regs regs) {
     return regs;
 }
 
-template <PortIndex T_PortIdx, typename T_Pin, typename... T_Pins>
+template<PortIndex T_PortIdx, typename T_Pin, typename... T_Pins>
 static constexpr _Regs _GetRegs(_Regs regs) {
     // Only consider pins for the specified port index (T_PortIdx)
     if constexpr (T_Pin::PortIdx == T_PortIdx) {
@@ -316,7 +316,9 @@ static constexpr _Regs _GetRegs(_Regs regs) {
     else return regs;
 }
 
-template <typename... T_Pins>
+// Init(): init all pins on a device
+// Interrupts must be disabled
+template<typename... T_Pins>
 static void Init() {
     // Follow the initialization procedure from the MSP430FR24xx user guide
     // From "8.3.1 Configuration After Reset":
@@ -327,9 +329,6 @@ static void Init() {
     //
     // This order is required because the MSP430FR24xx user guide says:
     //   "Note that the PxIFG flag cannot be cleared until the LOCKLPM5 bit has been cleared."
-    
-    // Disable interrupts
-    Toastbox::IntState ints(false);
     
     // Config pins
     

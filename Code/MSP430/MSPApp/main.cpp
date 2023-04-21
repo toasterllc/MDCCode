@@ -3,6 +3,7 @@
 #include <cstdbool>
 #include <cstddef>
 #include <atomic>
+#include <ratio>
 #include "Toastbox/Scheduler.h"
 #include "SDCard.h"
 #include "ICE.h"
@@ -13,7 +14,8 @@
 #include "Clock.h"
 #include "RTC.h"
 #include "SPI.h"
-#include "WDT.h"
+#include "Watchdog.h"
+#include "SysTick.h"
 #include "RegLocker.h"
 #include "MSP.h"
 #include "GetBits.h"
@@ -27,11 +29,13 @@
 #include "Motion.h"
 #include "SuppressibleAssertion.h"
 #include "Assert.h"
+#include "Timer.h"
 using namespace GPIO;
 
-static constexpr uint64_t _MCLKFreqHz       = 16000000;
-static constexpr uint32_t _XT1FreqHz        = 32768;
-static constexpr uint32_t _SysTickPeriodUs  = 512;
+static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz
+static constexpr uint32_t _ACLKFreqHz       = _XT1FreqHz;   // 32.768 kHz
+static constexpr uint32_t _MCLKFreqHz       = 16000000;     // 16 MHz
+static constexpr uint32_t _SysTickFreqHz    = 2048;         // 2.048 kHz
 
 struct _Pin {
     // Port A
@@ -58,7 +62,7 @@ struct _Pin {
     using _UNUSED0                  = PortB::Pin<0x2>;
 };
 
-class _TaskButton;
+class _TaskMain;
 class _TaskEvent;
 class _TaskSD;
 class _TaskImg;
@@ -68,13 +72,15 @@ class _TaskMotion;
 static void _Sleep();
 
 [[noreturn]]
-static void _SchedulerStackOverflow();
+static void _SchedulerStackOverflow() {
+    Assert(false);
+}
 
 #warning TODO: disable stack guard for production
 static constexpr size_t _StackGuardCount = 16;
 
 using _Scheduler = Toastbox::Scheduler<
-    _SysTickPeriodUs,                           // T_UsPerTick: microseconds per tick
+    std::ratio<1, _SysTickFreqHz>,              // T_TickPeriod: time period between ticks
     
     _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                 //          invoked when no tasks have work to do
@@ -84,7 +90,7 @@ using _Scheduler = Toastbox::Scheduler<
     nullptr,                                    // T_StackInterrupt: unused
     
     // T_Tasks: list of tasks
-    _TaskButton,
+    _TaskMain,
     _TaskEvent,
     _TaskSD,
     _TaskImg,
@@ -92,18 +98,18 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskMotion
 >;
 
-using _Clock = ClockType<_MCLKFreqHz>;
-using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
-using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
-using _ICE = ICE<_Scheduler>;
+using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
+using _SysTick = T_SysTick<_Scheduler, _ACLKFreqHz>;
+using _SPI = T_SPI<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
+using _ICE = T_ICE<_Scheduler>;
 
-using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
+using _I2C = T_I2C<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
 using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
 
-using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
+using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
 
 constexpr uint16_t _ButtonHoldDurationMs = 1500;
-using _Button = ButtonType<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
+using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
 
 static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -130,7 +136,8 @@ using _SDCard = SD::Card<
 >;
 
 // _RTC: real time clock
-using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
+using _RTC = T_RTC<_Scheduler, _XT1FreqHz>;
+using _Watchdog = T_Watchdog<_ACLKFreqHz, (Time::Ticks64)_RTC::InterruptIntervalTicks*2>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in FRAM because it needs to persist indefinitely.
@@ -146,6 +153,7 @@ static void _CaffeineUpdate() {}
 static void _MotionEnabledUpdate();
 static void _VDDBEnabledUpdate();
 static void _VDDIMGSDEnabledUpdate();
+static void _SysTickEnabledUpdate();
 
 // _HostMode: events pause/resume (for host mode)
 using _HostMode = T_AssertionCounter<_HostModeUpdate>;
@@ -166,13 +174,21 @@ using _VDDBEnabled = T_AssertionCounter<_VDDBEnabledUpdate>;
 // VDDIMGSD enable/disable
 using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledUpdate>;
 
+// VDDIMGSD enable/disable
+using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledUpdate>;
+
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
-static Time::Us _RepeatAdvance(MSP::Repeat& x) {
-    static constexpr Time::Us Day         = (Time::Us)     24*60*60*1000000;
-    static constexpr Time::Us Year        = (Time::Us) 365*24*60*60*1000000;
-    static constexpr Time::Us YearPlusDay = (Time::Us) 366*24*60*60*1000000;
+// _EventTimer: timer that triggers us to wake when the next event is ready to be handled
+using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
+
+static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
+    static_assert(Time::TicksFreq::den == 1); // Check assumption that TicksFreq is an integer
+    
+    static constexpr Time::Ticks32 Day         = (Time::Ticks32)     24*60*60*Time::TicksFreq::num;
+    static constexpr Time::Ticks32 Year        = (Time::Ticks32) 365*24*60*60*Time::TicksFreq::num;
+    static constexpr Time::Ticks32 YearPlusDay = (Time::Ticks32) 366*24*60*60*Time::TicksFreq::num;
     switch (x.type) {
     case MSP::Repeat::Type::Never:
         return 0;
@@ -209,28 +225,60 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     Assert(false);
 }
 
-//static void _EventInsert(_Triggers::Event& ev, const Time::Instant& t) {
-//    _Triggers::EventInsert(ev, t);
-//}
+// MARK: - Abort
 
-static void _EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-    const Time::Us delta = _RepeatAdvance(repeat);
-    // delta=0 means Repeat=never, in which case we don't reschedule the event
-    if (delta) {
-        _Triggers::EventInsert(ev, ev.time+delta);
+static void _ResetRecord(MSP::Reset::Type type, uint16_t ctx) {
+    using namespace MSP;
+    FRAMWriteEn writeEn; // Enable FRAM writing
+    
+    Reset* hist = nullptr;
+    for (Reset& h : _State.resets) {
+        if (!h.count || (h.type==type && h.ctx.u16==ctx)) {
+            hist = &h;
+            break;
+        }
+    }
+    
+    // If we don't have a place to record the abort, bail
+    if (!hist) return;
+    
+    // If this is the first occurrence of this kind of reset, fill out its fields.
+    if (hist->count == 0) {
+        hist->type = type;
+        hist->ctx.u16 = ctx;
+    }
+    
+    // Increment the count, but don't allow it to overflow
+    if (hist->count < std::numeric_limits<decltype(hist->count)>::max()) {
+        hist->count++;
     }
 }
 
-static void _EventInsert(_Triggers::Event& ev, Time::Instant time, uint32_t deltaMs) {
-    _Triggers::EventInsert(ev, time + ((Time::Us)deltaMs)*1000);
+[[noreturn]]
+static void _BOR() {
+    PMMCTL0 = PMMPW | PMMSWBOR;
+    // Wait for reset
+    for (;;);
 }
 
-static void _CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) {
-    // Reset capture count
-    ev.countRem = ev.capture->count;
-    if (ev.countRem) {
-        _Triggers::EventInsert(ev, time);
-    }
+// Abort(): called by Assert() with the address that aborted
+extern "C"
+[[noreturn, gnu::used]]
+void Abort(uintptr_t addr) {
+    // Record the abort
+    _ResetRecord(MSP::Reset::Type::Abort, addr);
+    _BOR();
+}
+
+extern "C"
+[[noreturn]]
+void abort() {
+    Assert(false);
+}
+
+extern "C"
+int atexit(void (*)(void)) {
+    return 0;
 }
 
 
@@ -247,17 +295,17 @@ static void _CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) 
 static void _VDDBEnabledUpdate() {
     _Pin::VDD_B_EN::Write(_VDDBEnabled::Asserted());
     // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
-    _Scheduler::Sleep(_Scheduler::Ms(2));
+    _Scheduler::Sleep(_Scheduler::Ms<2>);
 }
 
 static void _VDDIMGSDEnabledUpdate() {
     if (_VDDIMGSDEnabled::Asserted()) {
         _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+        _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
         _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
         
         // Rails take ~1ms to turn on, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms(2));
+        _Scheduler::Sleep(_Scheduler::Ms<2>);
     
     } else {
         // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
@@ -265,8 +313,12 @@ static void _VDDIMGSDEnabledUpdate() {
         _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
         
         // Rails take ~1.5ms to turn off, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms(2));
+        _Scheduler::Sleep(_Scheduler::Ms<2>);
     }
+}
+
+static void _SysTickEnabledUpdate() {
+    _SysTick::Enabled(_SysTickEnabled::Asserted());
 }
 
 // MARK: - ICE40
@@ -280,7 +332,7 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 static void _ICEInit() {
     bool ok = false;
     for (int i=0; i<100 && !ok; i++) {
-        _Scheduler::Sleep(_Scheduler::Ms(1));
+        _Scheduler::Sleep(_Scheduler::Ms<1>);
         // Reset ICE comms (by asserting SPI CLK for some length of time)
         _SPI::ICEReset();
         // Init ICE comms
@@ -557,7 +609,7 @@ struct _TaskImg {
             
             header.coarseIntTime = _State.autoExp.integrationTime();
             header.id = id;
-            header.timestamp = _RTC::TimeRead();
+            header.timestamp = _RTC::Now();
             
             // Capture an image to RAM
             #warning TODO: optimize the header logic so that we don't set the magic/version/imageWidth/imageHeight every time, since it only needs to be set once per ice40 power-on
@@ -615,10 +667,10 @@ struct _TaskEvent {
         _Triggers::TimeTrigger& trigger = ev.trigger();
         // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
         if (!_State.fastForward) {
-            _CaptureStart(trigger, ev.time);
+            CaptureStart(trigger, ev.time);
         }
         // Reschedule TimeTriggerEvent for its next trigger time
-        _EventInsert(ev, ev.repeat);
+        EventInsert(ev, ev.repeat);
     }
     
     static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
@@ -630,13 +682,13 @@ struct _TaskEvent {
         // Schedule the MotionDisable event, if applicable
         // This needs to happen before we reschedule `motionEnableEvent` because we need its .time to
         // properly schedule the MotionDisableEvent!
-        const uint32_t durationMs = trigger.base().durationMs;
-        if (durationMs) {
-            _EventInsert((_Triggers::MotionDisableEvent&)trigger, ev.time, durationMs);
+        const uint32_t durationTicks = trigger.base().durationTicks;
+        if (durationTicks) {
+            EventInsert((_Triggers::MotionDisableEvent&)trigger, ev.time, durationTicks);
         }
         
         // Reschedule MotionEnableEvent for its next trigger time
-        _EventInsert(ev, ev.repeat);
+        EventInsert(ev, ev.repeat);
     }
     
     static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
@@ -669,7 +721,7 @@ struct _TaskEvent {
         // We specify (within the bitstream itself, via icepack) that ICE40 should load
         // the bitstream at high-frequency (40 MHz).
         // According to the datasheet, this takes 70ms.
-        _Scheduler::Sleep(_Scheduler::Ms(30));
+        _Scheduler::Sleep(_Scheduler::Ms<30>);
         _ICEInit();
         
         // Reset SD nets before we turn on SD power
@@ -708,17 +760,63 @@ struct _TaskEvent {
         
         ev.countRem--;
         if (ev.countRem) {
-            _EventInsert(ev, ev.time, ev.capture->delayMs);
+            EventInsert(ev, ev.time, ev.capture->delayTicks);
         }
     }
     
-    static _Triggers::Event* _EventPop() {
-        _Triggers::Event* ev = _Triggers::EventPop(_RTC::TimeRead());
-        // Exit fast-forward mode when we no longer have any events in the past
-        if (!ev) {
-            _State.fastForward = false;
+    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
+        _Triggers::EventInsert(ev, time);
+        // If this event is now the front of the list, reschedule _EventTimer
+        if (_Triggers::EventFront() == &ev) {
+            _EventTimerSchedule();
         }
-        return ev;
+    }
+
+    static void EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
+        const Time::Ticks32 delta = _RepeatAdvance(repeat);
+        // delta=0 means Repeat=never, in which case we don't reschedule the event
+        if (delta) {
+            EventInsert(ev, ev.time+delta);
+        }
+    }
+
+    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::Ticks32 deltaTicks) {
+        EventInsert(ev, time + deltaTicks);
+    }
+
+    static void CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
+        // Reset capture count
+        ev.countRem = ev.capture->count;
+        if (ev.countRem) {
+            EventInsert(ev, time);
+        }
+    }
+    
+    static void _EventTimerSchedule() {
+        _Triggers::Event* ev = _Triggers::EventFront();
+        if (ev) {
+            _EventTimer::Schedule(ev->time);
+        } else {
+            _EventTimer::Reset();
+        }
+    }
+    
+    // _EventPop(): pops an event from the front of the list if it's ready to be handled
+    // Interrupts must be disabled
+    static _Triggers::Event& _EventPop() {
+        _Triggers::Event* ev = _Triggers::EventFront();
+        Assert(ev); // We must have an event at this point, or else we have a logic error
+        _Triggers::EventPop();
+        // Schedule _EventTimer for the next event
+        _EventTimerSchedule();
+        return *ev;
+    }
+    
+    static bool _EventTimerFired() {
+        const bool fired = _EventTimer::Fired();
+        // Exit fast-forward mode the first time we have an event that's in the future
+        if (!fired) _State.fastForward = false;
+        return fired;
     }
     
     static void Run() {
@@ -729,26 +827,32 @@ struct _TaskEvent {
         _SPI::Init();
         
         // Init Triggers
-        _Triggers::Init(_RTC::TimeRead());
+        _Triggers::Init(_RTC::Now());
+        
+        // Schedule _EventTimer for the first event
+        _EventTimerSchedule();
         
         // Enter fast-forward mode while we pop every event that occurs in the past
-        // (_EventPop() will exit from fast-forward mode)
+        // (_EventTimerFired() will exit from fast-forward mode)
+        #warning TODO: don't enter fast-forward mode if the first event is a relative time, otherwise we'll arbitrarily skip the first event in FF mode since it's in the past
+        #warning TODO: OR: don't enter FF mode if our time is a relative time
         _State.fastForward = true;
         for (;;) {
-            // Wait for an event
-            static _Triggers::Event* ev = nullptr;
-            _Scheduler::Wait([] { return (bool)(ev = _EventPop()); });
+            // Wait for _EventTimer to fire
+            _Scheduler::Wait([] { return _EventTimerFired(); });
+            _Triggers::Event& ev = _EventPop();
             
             // Don't go to sleep until we handle the event
             _State.caffeine = true;
             
+            // Handle the event
             using T = _Triggers::Event::Type;
-            switch (ev->type) {
-            case T::TimeTrigger:      _TimeTrigger((_Triggers::TimeTriggerEvent&)*ev);           break;
-            case T::MotionEnable:     _MotionEnable((_Triggers::MotionEnableEvent&)*ev);         break;
-            case T::MotionDisable:    _MotionDisable((_Triggers::MotionDisableEvent&)*ev);       break;
-            case T::MotionUnsuppress: _MotionUnsuppress((_Triggers::MotionUnsuppressEvent&)*ev); break;
-            case T::CaptureImage:     _CaptureImage((_Triggers::CaptureImageEvent&)*ev);         break;
+            switch (ev.type) {
+            case T::TimeTrigger:      _TimeTrigger((_Triggers::TimeTriggerEvent&)ev);           break;
+            case T::MotionEnable:     _MotionEnable((_Triggers::MotionEnableEvent&)ev);         break;
+            case T::MotionDisable:    _MotionDisable((_Triggers::MotionDisableEvent&)ev);       break;
+            case T::MotionUnsuppress: _MotionUnsuppress((_Triggers::MotionUnsuppressEvent&)ev); break;
+            case T::CaptureImage:     _CaptureImage((_Triggers::CaptureImageEvent&)ev);         break;
             }
             
             // Allow sleep
@@ -763,9 +867,9 @@ struct _TaskEvent {
         // fastForward=false once we're done initializing and executing events normally.
         bool fastForward = false;
         // power / vddb / vddImgSd: our power assertions
-        // These need to be an ivar because TaskMain can be reset at any time via
+        // These need to be ivars because _TaskEvent can be reset at any time via
         // our Reset() function, so if the power assertion lived on the stack and
-        // TaskMain is reset, its destructor would never be called and our state
+        // _TaskEvent is reset, its destructor would never be called and our state
         // would be corrupted.
         _Caffeine::Assertion caffeine;
         _VDDBEnabled::Assertion vddb;
@@ -855,12 +959,12 @@ struct _TaskI2C {
         case Cmd::Op::TimeGet:
             return MSP::Resp{
                 .ok = true,
-                .arg = { .TimeGet = { .time = _RTC::TimeRead() } },
+                .arg = { .TimeGet = { .time = _RTC::Now() } },
             };
         
         case Cmd::Op::TimeSet:
             // Only allow setting the time while we're in host mode
-            // and therefore TaskMain isn't running
+            // and therefore _TaskEvent isn't running
             if (!_State.hostMode) return MSP::Resp{ .ok = false };
             _RTC::Init(cmd.arg.TimeSet.time);
             return MSP::Resp{ .ok = true };
@@ -904,14 +1008,14 @@ struct _TaskMotion {
                 _Triggers::MotionTrigger& trigger = *it;
                 // If this trigger is enabled...
                 if (trigger.enabled.get()) {
-                    const Time::Instant time = _RTC::TimeRead();
+                    const Time::Instant time = _RTC::Now();
                     // Start capture
-                    _CaptureStart(trigger, time);
+                    _TaskEvent::CaptureStart(trigger, time);
                     // Suppress motion for the specified duration, if suppression is enabled
-                    const uint32_t suppressMs = trigger.base().suppressMs;
-                    if (suppressMs) {
+                    const uint32_t suppressTicks = trigger.base().suppressTicks;
+                    if (suppressTicks) {
                         trigger.enabled.suppress(true);
-                        _EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressMs);
+                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
                     }
                 }
             }
@@ -927,20 +1031,23 @@ static void _MotionEnabledUpdate() {
     _Motion::Enabled(_MotionEnabled::Asserted());
 }
 
-// MARK: - _TaskButton
+// MARK: - _TaskMain
 
-#define _TaskButtonStackSize 128
+#define _TaskMainStackSize 128
 
-SchedulerStack(".stack._TaskButton")
-uint8_t _TaskButtonStack[_TaskButtonStackSize];
+SchedulerStack(".stack._TaskMain")
+uint8_t _TaskMainStack[_TaskMainStackSize];
 
 asm(".global _StartupStack");
-asm(".equ _StartupStack, _TaskButtonStack+" Stringify(_TaskButtonStackSize));
+asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
 
-struct _TaskButton {
+struct _TaskMain {
     static void _Init() {
-        // Stop watchdog timer
-        WDTCTL = WDTPW | WDTHOLD;
+        // Disable interrupts while we init our subsystems
+        Toastbox::IntState ints(false);
+        
+        // Init watchdog first
+        _Watchdog::Init();
         
         // Init GPIOs
         GPIO::Init<
@@ -949,9 +1056,9 @@ struct _TaskButton {
             _Pin::VDD_B_1V8_IMG_SD_EN,
             _Pin::VDD_B_2V8_IMG_SD_EN,
             
-            // Clock (config chosen by _RTC)
-            _RTC::Pin::XOUT,
-            _RTC::Pin::XIN,
+            // Clock (config chosen by _Clock)
+            _Clock::Pin::XIN,
+            _Clock::Pin::XOUT,
             
             // SPI (config chosen by _SPI)
             _SPI::Pin::Clk,
@@ -979,8 +1086,35 @@ struct _TaskButton {
             _Pin::LED_RED_
         >();
         
+//        _Pin::LED_RED_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+//        }
+        
         // Init clock
         _Clock::Init();
+        
+//        _Pin::LED_RED_::Write(1);
+//        _Pin::LED_GREEN_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+//        }
+        
+        
+//        _Pin::LED_RED_::Write(1);
+//        _Pin::LED_GREEN_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//            _Pin::LED_RED_::Write(1);
+//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//        }
         
         // Init RTC
         // We need RTC to be unconditionally enabled for 2 reasons:
@@ -988,9 +1122,6 @@ struct _TaskButton {
         //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
         //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
         _RTC::Init();
-        
-        // Init SysTick
-        _SysTick::Init();
         
         // Init BatterySampler
         _BatterySampler::Init();
@@ -1016,6 +1147,51 @@ struct _TaskButton {
     static void Run() {
         _Init();
         
+//        for (;;) {
+//            _Pin::LED_RED_::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//            _Pin::LED_RED_::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
+//        
+//        for (bool on_=false;; on_=!on_) {
+//            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
+//            _LEDGreen_.set(_LEDPriority::Power, on_);
+////            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
+//            _Scheduler::Wait([] { return _EventTimer::Fired(); });
+//        }
+        
+//        for (;;) {
+//            _Pin::LED_RED_::Write(1);
+//            _Pin::LED_GREEN_::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//            
+//            if (_Clock::_ClockFaults()) {
+//                _Pin::LED_RED_::Write(0);
+//            } else {
+//                _Pin::LED_GREEN_::Write(0);
+//            }
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
+        
+//        for (;;) {
+////            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
+//            _Pin::LED_RED_::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//            
+//            _Pin::LED_RED_::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
+        
+//        for (;;) {
+////            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
+//            _Pin::LED_RED_::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//            
+//            _Pin::LED_RED_::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
+        
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
             // Ignore all interaction in host mode
@@ -1030,7 +1206,7 @@ struct _TaskButton {
                 if (!_On) break;
                 
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _CaptureStart(*it, _RTC::TimeRead());
+                    _TaskEvent::CaptureStart(*it, _RTC::Now());
                 }
                 break;
             }
@@ -1045,13 +1221,36 @@ struct _TaskButton {
         }
     }
     
+    static void Sleep() {
+        // Put ourself to sleep until an interrupt occurs. This function may or may not return:
+        // 
+        // - This function returns if an interrupt was already pending and the ISR
+        //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
+        // 
+        // - This function doesn't return if an interrupt wasn't pending and
+        //   therefore we enter LPM3.5. The next time we wake will be due to a
+        //   reset and execution will start from main().
+        
+        // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
+        // We do this to prevent ourself from waking up unnecessarily, saving power.
+        _SysTick = _Scheduler::TickRequired();
+        
+        // Remember our current interrupt state, which IntState will restore upon return
+        Toastbox::IntState ints;
+        // Atomically enable interrupts and go to sleep
+        __bis_SR_register(GIE | LPM3_bits);
+        
+        // Unconditionally enable SysTick while we're awake
+        _SysTick = true;
+    }
+    
     static void _LEDFlash(OutputPriority& led) {
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
             led.set(_LEDPriority::Power, 0);
-            _Scheduler::Delay(_Scheduler::Ms(50));
+            _Scheduler::Delay(_Scheduler::Ms<50>);
             led.set(_LEDPriority::Power, 1);
-            _Scheduler::Delay(_Scheduler::Ms(50));
+            _Scheduler::Delay(_Scheduler::Ms<50>);
         }
         led.set(_LEDPriority::Power, std::nullopt);
     }
@@ -1065,11 +1264,15 @@ struct _TaskButton {
     // Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
     // gnu::used is apparently necessary for the gnu::section attribute to
     // work when link-time optimization is enabled.
-    [[gnu::section(".ram_backup._TaskButton"), gnu::used]]
+    [[gnu::section(".ram_backup._TaskMain"), gnu::used]]
     static inline bool _OnSaved = false;
     
+    // _SysTickEnabled: controls whether the SysTick timer is enabled
+    // We disable SysTick when going to sleep if no tasks are waiting for a certain amount of time to pass
+    static inline _SysTickEnabled::Assertion _SysTick;
+    
     // Task stack
-    static constexpr auto& Stack = _TaskButtonStack;
+    static constexpr auto& Stack = _TaskMainStack;
 };
 
 // MARK: - IntState
@@ -1086,41 +1289,50 @@ inline void Toastbox::IntState::Set(bool en) {
 // MARK: - Sleep
 
 static void _Sleep() {
-    // Put ourself to sleep until an interrupt occurs. This function may or may not return:
-    // 
-    // - This function returns if an interrupt was already pending and the ISR
-    //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
-    // 
-    // - This function doesn't return if an interrupt wasn't pending and
-    //   therefore we enter LPM3.5. The next time we wake will be due to a
-    //   reset and execution will start from main().
-    
-    // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
-    // Otherwise, enter LPM1 sleep, because something is running.
-    
-//    const uint16_t mode = (_PowerAssertion::Asserted() ? LPM1_bits : LPM3_bits);
-    
-//    // If nothing asserts that we remained powered, enter LPM3.5
-//    if (!_PowerAssertion::Asserted()) {
-//        PMMUnlock pmm; // Unlock PMM registers
-//        PMMCTL0_L |= PMMREGOFF_L;
-//    }
-    
-    // Remember our current interrupt state, which IntState will restore upon return
-    Toastbox::IntState ints;
-    // Atomically enable interrupts and go to sleep
-    __bis_SR_register(GIE | LPM3_bits);
+    _TaskMain::Sleep();
 }
 
 // MARK: - Interrupts
 
-[[gnu::interrupt(RTC_VECTOR)]]
-static void _ISR_RTC() {
-    _RTC::ISR();
+[[gnu::interrupt]]
+void _ISR_RTC() {
+    // Pet the watchdog first
+    _Watchdog::Init();
+    
+    // Let _RTC know that we got an RTC interrupt
+    _RTC::ISR(RTCIV);
+    
+    // Let _EventTimer know we got an RTC interrupt
+    if (_EventTimer::ISRRTCInterested()) {
+        const bool wake = _EventTimer::ISRRTC();
+        // Wake if the timer fired
+        if (wake) {
+            __bic_SR_register_on_exit(LPM3_bits);
+        }
+    }
 }
 
-[[gnu::interrupt(PORT2_VECTOR)]]
-static void _ISR_Port2() {
+[[gnu::interrupt]]
+void _ISR_TIMER0_A1() {
+    const bool wake = _EventTimer::ISRTimer(TA0IV);
+    // Wake if the timer fired
+    if (wake) {
+        __bic_SR_register_on_exit(LPM3_bits);
+    }
+}
+
+[[gnu::interrupt]]
+void _ISR_TIMER1_A1() {
+//    _Pin::LED_GREEN_::Write(!_Pin::LED_GREEN_::Read());
+    const bool wake = _SysTick::ISR(TA1IV);
+    if (wake) {
+        // Wake ourself
+        __bic_SR_register_on_exit(LPM3_bits);
+    }
+}
+
+[[gnu::interrupt]]
+void _ISR_PORT2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     const uint16_t iv = P2IV;
     switch (__even_in_range(iv, 0x10)) {
@@ -1148,8 +1360,8 @@ static void _ISR_Port2() {
     }
 }
 
-[[gnu::interrupt(USCI_B0_VECTOR)]]
-static void _ISR_USCI_B0() {
+[[gnu::interrupt]]
+void _ISR_USCI_B0() {
     // Accessing `UCB0IV` automatically clears the highest-priority interrupt
     const uint16_t iv = UCB0IV;
     _I2C::ISR_I2C(iv);
@@ -1157,81 +1369,34 @@ static void _ISR_USCI_B0() {
     __bic_SR_register_on_exit(LPM0_bits);
 }
 
-[[gnu::interrupt(WDT_VECTOR)]]
-static void _ISR_SysTick() {
-    const bool wake = _Scheduler::Tick();
-    if (wake) {
-        // Wake ourself
-        __bic_SR_register_on_exit(LPM3_bits);
-    }
-}
-
-[[gnu::interrupt(ADC_VECTOR)]]
-static void _ISR_ADC() {
+[[gnu::interrupt]]
+void _ISR_ADC() {
     _BatterySampler::ISR(ADCIV);
     // Wake ourself
     __bic_SR_register_on_exit(LPM3_bits);
 }
 
-// MARK: - Abort
-
 [[noreturn]]
-static void _SchedulerStackOverflow() {
-    Assert(false);
-}
-
-static void _AbortRecord(const Time::Instant& timestamp, uintptr_t addr) {
-    using namespace MSP;
-    FRAMWriteEn writeEn; // Enable FRAM writing
-    
-    AbortHistory* hist = nullptr;
-    for (AbortHistory& h : _State.aborts) {
-        if (!h.count || h.addr==addr) {
-            hist = &h;
-            break;
-        }
+[[gnu::naked]] // No function preamble because we always abort, so we don't need to preserve any registers
+[[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
+[[gnu::interrupt]]
+void _ISR_UNMI() {
+    switch (__even_in_range(SYSUNIV, SYSUNIV_OFIFG)) {
+    case SYSUNIV_NMIIFG:    Assert(false);
+    case SYSUNIV_OFIFG:     Assert(false);
+    default:                Assert(false);
     }
-    
-    // If we don't have a place to record the abort, bail
-    if (!hist) return;
-    
-    // Prep the element if this is the first instance
-    if (!hist->count) {
-        hist->addr = addr;
-        hist->earliest = timestamp;
+}
+
+[[noreturn]]
+[[gnu::naked]] // No function preamble because we always abort, so we don't need to preserve any registers
+[[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
+[[gnu::interrupt]]
+void _ISR_SYSNMI() {
+    switch (__even_in_range(SYSSNIV, SYSSNIV_CBDIFG)) {
+    case SYSSNIV_VMAIFG:    Assert(false);
+    default:                Assert(false);
     }
-    
-    hist->latest = timestamp;
-    hist->count++;
-}
-
-[[noreturn]]
-static void _BOR() {
-    PMMUnlock pmm; // Unlock PMM registers
-    PMMCTL0_L |= PMMSWBOR_L;
-    // Wait for reset
-    for (;;);
-}
-
-// Abort(): called various Assert's throughout our program
-extern "C"
-[[noreturn, gnu::used]]
-void Abort(uintptr_t addr) {
-    const Time::Instant timestamp = _RTC::TimeRead();
-    // Record the abort
-    _AbortRecord(timestamp, addr);
-    _BOR();
-}
-
-extern "C"
-[[noreturn]]
-void abort() {
-    Assert(false);
-}
-
-extern "C"
-int atexit(void (*)(void)) {
-    return 0;
 }
 
 // MARK: - Main
@@ -1246,6 +1411,29 @@ int atexit(void (*)(void)) {
 //}
 
 int main() {
-    // Invokes the first task's Run() function (_TaskButton::Run)
+    // If our previous reset wasn't because we explicitly reset ourself (a 'software BOR'),
+    // reset ourself now.
+    //
+    // This ensures that any unexpected reset (such as a watchdog timer timeout) triggers
+    // a full BOR, and not a PUC or a POR. We want a full BOR because it resets all our
+    // peripherals, unlike a PUC/POR, which don't reset all peripherals (like timers).
+    // This will cause us to reset ourself twice upon initial startup, but that's OK.
+    //
+    // We want to do this here before interrupts are first enabled, and not within
+    // _TaskMain, to ensure that we don't have pending resets after a reset (since some
+    // IFG flags persist across PUC/POR). We especially don't want our peripherals to
+    // receive ISRs before they're initialized.
+    //
+    // We also want to do this here to prevent a potential crash loop: if an interrupt
+    // handler crashed before it clears its IFG flag, and that IFG flag persists across
+    // PUC/POR, if we enabled interrupts before checking if this reset was a BOR, then
+    // the interrupt would immediately fire again and a crash loop would ensue. (We may
+    // have encountered this issue when we had missing entries in our vector table.)
+    if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
+        _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
+        _BOR();
+    }
+    
+    // Invokes the first task's Run() function (_TaskMain::Run)
     _Scheduler::Run();
 }

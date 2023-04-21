@@ -1,6 +1,7 @@
 #pragma once
 #include <cstring>
 #include <tuple>
+#include <ratio>
 #include "GPIO.h"
 #include "STM.h"
 #include "USB.h"
@@ -59,7 +60,7 @@ typename... T_Tasks
 class System<T_Mode, T_USBDMAEn, T_CmdHandle, T_Reset, std::tuple<T_Pins...>, std::tuple<T_Tasks...>> {
 public:
     static constexpr uint8_t CPUFreqMHz = 128;
-    static constexpr uint32_t SysTickPeriodUs = 1000;
+    using SysTickPeriod = std::ratio<1,1000>;
     
 private:
     #warning TODO: remove stack guards for production
@@ -105,7 +106,7 @@ public:
     using LED3 = GPIO::PortB::Pin<13, GPIO::Option::Output0>;
     
     using Scheduler = Toastbox::Scheduler<
-        SysTickPeriodUs,                            // T_UsPerTick: microseconds per tick
+        SysTickPeriod,                              // T_TicksPeriod: period between ticks, in seconds
         
         _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                     //          invoked when no tasks have work to do
@@ -125,7 +126,7 @@ public:
     using MSPJTAG = MSP430JTAG<_MSP_TEST, _MSP_RST_, CPUFreqMHz>;
     using MSPLock = BoolLock<Scheduler, _TaskMSPComms::Lock>;
     
-    using USB = USBType<
+    using USB = T_USB<
         Scheduler,  // T_Scheduler
         T_USBDMAEn, // T_DMAEn
         USBConfig   // T_Config
@@ -176,7 +177,7 @@ public:
     
 private:
     static constexpr uint32_t _I2CTimeoutMs = 5000;
-    using _I2C = I2CType<Scheduler, _I2C_SCL, _I2C_SDA, MSP::I2CAddr, _I2CTimeoutMs>;
+    using _I2C = T_I2C<Scheduler, _I2C_SCL, _I2C_SDA, MSP::I2CAddr, _I2CTimeoutMs>;
     
     struct _TaskCmdRecv {
         static void Run() {
@@ -256,7 +257,7 @@ private:
                     // Deadline passed; update battery status
                     _BatteryStatusUpdate();
                     // Update our deadline for the next battery status update
-                    batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::Ms(BatteryStatusUpdateIntervalMs);
+                    batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::template Ms<BatteryStatusUpdateIntervalMs>;
                     continue;
                 }
                 
@@ -288,52 +289,19 @@ private:
             return _BatteryStatus;
         }
         
-//        // Lock(): returns a bool that can be used to ensure only one entity is trying to talk
-//        // to the MSP430 at a time.
-//        // Currently this is used by the MSP Spy-bi-wire (SBW) facilities to prevent I2C comms
-//        // while SBW IO is taking place.
-//        static bool& Lock() {
-//            return _Lock;
-//        }
-        
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
             // Acquire mutex while we talk to MSP via I2C, to prevent MSPJTAG from
             // being used until we're done
             MSPLock lock(MSPLock::Lock);
             
-            constexpr int AttemptCount = 5;
-            constexpr int ErrorDelayMs = 10;
-            
             MSP::Resp resp;
-            for (int i=0; i<AttemptCount; i++) {
-                const auto status = _I2C::Send(cmd, resp);
-                switch (status) {
-                case _I2C::Status::OK:
-                    return resp;
-                case _I2C::Status::NAK:
-                    // Allow a single NAK before we reset MSP, in case we initiated comms
-                    // before MSP was fully booted.
-                    if (i) _MSPReset();
-                    break;
-                case _I2C::Status::Error:
-                    // Comms failure; try resetting MSP
-                    _MSPReset();
-                    break;
-                }
-                
-                Scheduler::Sleep(Scheduler::Ms(ErrorDelayMs));
+            const auto status = _I2C::Send(cmd, resp);
+            switch (status) {
+            case _I2C::Status::OK:      return resp;
+            case _I2C::Status::NAK:     return std::nullopt;
+            case _I2C::Status::Error:   return std::nullopt;
             }
-            
-            return std::nullopt;
-        }
-        
-        static void _MSPReset() {
-            #warning TODO: remove this assert in the future. we're just using it for debugging so that we know if this occurs
-//            Assert(false);
-            _MSP_RST_::Write(0);
-            Scheduler::Sleep(Scheduler::Ms(1));
-            _MSP_RST_::Write(1);
-            Scheduler::Sleep(Scheduler::Ms(1));
+            Assert(false);
         }
         
         static void _BatteryStatusUpdate() {
@@ -383,7 +351,7 @@ private:
             }
             
             // Wait 10ms while we count _BAT_CHRG_STAT transitions
-            Scheduler::Sleep(Scheduler::Ms(10));
+            Scheduler::Sleep(Scheduler::template Ms<10>);
             
             // Stop counting _BAT_CHRG_STAT transitions
             {
@@ -399,11 +367,11 @@ private:
             if (oscillating) return STM::BatteryStatus::ChargeStatus::Shutdown;
             
             _BAT_CHRG_STAT_PULLDOWN::Init();
-            Scheduler::Sleep(Scheduler::Ms(1));
+            Scheduler::Sleep(Scheduler::template Ms<1>);
             const bool a = _BAT_CHRG_STAT::Read();
             
             _BAT_CHRG_STAT::Init<_BAT_CHRG_STAT_PULLDOWN>();
-            Scheduler::Sleep(Scheduler::Ms(1));
+            Scheduler::Sleep(Scheduler::template Ms<1>);
             const bool b = _BAT_CHRG_STAT::Read();
             
             if (a != b) {

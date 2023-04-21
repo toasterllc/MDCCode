@@ -1,11 +1,10 @@
 #pragma once
 #include <msp430.h>
-#include <atomic>
 #include "Toastbox/Scheduler.h"
 #include "GPIO.h"
 #include "Assert.h"
 
-template <
+template<
 typename T_Scheduler,
 typename T_PowerPin,
 typename T_SignalPin
@@ -65,7 +64,7 @@ public:
             _PowerEnabled::template Init<_PowerDisabled>();
             _SignalPowering::template Init<_SignalDisabled>();
             // Wait _PowerOnTimeMs for the sensor to turn on and stabilize
-            T_Scheduler::Sleep(T_Scheduler::Ms(_PowerOnTimeMs));
+            T_Scheduler::Sleep(_Ms<_PowerOnTimeMs>);
             
             // Configure interrupt pin
             // We first switch to the '_SignalDisabled' configuration to switch back to a pulldown resistor,
@@ -92,6 +91,10 @@ public:
 private:
     // _PowerOnTimeMs: time that it takes for the motion sensor to power on and stabilize
     static constexpr uint32_t _PowerOnTimeMs = 30000;
+    
+    template<auto T>
+    static constexpr auto _Ms = T_Scheduler::template Ms<T>;
+    
     static inline bool _Enabled = false;
     static inline volatile bool _EnabledRequest = false;
     static inline volatile bool _Signal = false;

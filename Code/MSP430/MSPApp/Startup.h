@@ -6,6 +6,11 @@ extern "C" void __libc_init_array();
 
 class Startup {
 public:
+    static uint16_t ResetReason() {
+        static uint16_t X = SYSRSTIV;
+        return X;
+    }
+    
     // ColdStart() truth table:
     //
     //   Initial power on:    true
@@ -19,14 +24,13 @@ public:
     //     so there doesn't seem to be a way to return true in the LPM4.5 case.
     //     We don't use LPM4.5 though so it's not an issue.
     static bool ColdStart() {
-        static uint16_t IV = SYSRSTIV;
-        return (IV==SYSRSTIV_NONE || IV==SYSRSTIV_BOR);
+        return (ResetReason()==SYSRSTIV_NONE || ResetReason()==SYSRSTIV_BOR);
     }
 };
 
-extern "C"
-[[noreturn, gnu::naked]]
-void _Startup() {
+[[noreturn]]
+[[gnu::naked]] // No function preamble needed
+void _ISR_RESET() {
     extern uint8_t _sdata_flash[];
     extern uint8_t _sdata_ram[];
     extern uint8_t _edata_ram[];
@@ -42,20 +46,25 @@ void _Startup() {
         asm volatile("mov.a #_StartupStack, sp" : : : );
     }
     
+    // Disable watchdog since we don't know how long our startup code takes
+    WDTCTL = WDTPW | WDTHOLD;
+    
+    // Crash if we try to access an invalid address
+    SFRIE1 |= VMAIE;
+    
     // Copy .data section from flash to RAM
     memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
     
     // Zero .bss section
     memset(_sbss, 0, _ebss-_sbss);
     
-    // Only copy the data from FRAM -> BAKMEM if this is a cold start.
+    // Zero the .ram_backup_bss section if this is a cold start.
     // Otherwise, BAKMEM content should remain untouched, because it's
     // supposed to persist during sleep.
     if (Startup::ColdStart()) {
-        extern uint8_t _ram_backup_src[];
-        extern uint8_t _ram_backup_dststart[];
-        extern uint8_t _ram_backup_dstend[];
-        memcpy(_ram_backup_dststart, _ram_backup_src, _ram_backup_dstend-_ram_backup_dststart);
+        extern uint8_t _ram_backup_bss_start[];
+        extern uint8_t _ram_backup_bss_end[];
+        memset(_ram_backup_bss_start, 0, _ram_backup_bss_end-_ram_backup_bss_start);
     }
     
     // Call static constructors
@@ -69,10 +78,3 @@ void _Startup() {
 // _init(): required by __libc_init_array
 extern "C"
 void _init() {}
-
-// u16 because reset vectors must be 16-bit, even in large memory model mode where pointers
-// are 20-bit (stored as u32)
-[[gnu::section(".resetvec"), gnu::used]]
-uint16_t _ResetVector[] = {
-    (uint16_t)(uintptr_t)&_Startup,
-};

@@ -1,8 +1,11 @@
 #pragma once
 #include <msp430.h>
+#include <ratio>
 #include "Toastbox/Scheduler.h"
+#include "Toastbox/Util.h"
 #include "MSP.h"
 #include "Time.h"
+#include "Assert.h"
 
 // _RTCTime: the current time (either absolute or relative, depending on the
 // value supplied to Init()).
@@ -23,51 +26,70 @@
 [[gnu::section(".ram_backup_noinit.rtc")]]
 static volatile Time::Instant _RTCTime;
 
-template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>
-class RTCType {
-public:
-    static constexpr uint32_t InterruptIntervalSec = 2048;
-    static constexpr uint32_t InterruptIntervalUs = InterruptIntervalSec*1000000;
-    static constexpr uint32_t Predivider = 1024;
-    static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
-    static_assert((T_XT1FreqHz % Predivider) == 0); // Confirm that T_XT1FreqHz is evenly divisible by Predivider
-    static constexpr uint32_t UsPerTick = 1000000/FreqHz;
-    static_assert((1000000 % FreqHz) == 0); // Confirm that UsPerTick calculation is exact
-    static constexpr uint16_t InterruptCount = (InterruptIntervalSec*FreqHz)-1;
-    static_assert(InterruptCount == ((InterruptIntervalSec*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
+template<typename T_Scheduler, uint32_t T_XT1FreqHz>
+class T_RTC {
+private:
+//    // _TicksForTocks(): templated to work with uint16_t (at runtime) and uint32_t (at compile time)
+//    template<typename T_Tocks, typename T_Ticks=uint16_t>
+//    static constexpr T_Ticks _TicksForTocks(T_Tocks tocks) {
+//        if constexpr (std::is_same_v<T_Tocks, uint16_t>) {
+//            // uint16_t argument: verify that the max value for the argument can't overflow due to the multiplication
+//            static_assert(std::in_range<T_Tocks>(std::numeric_limits<T_Tocks>::max() * TicksPerTock::num));
+//            return ((tocks * (T_Tocks)TicksPerTock::num) / (T_Tocks)TicksPerTock::den);
+//        
+//        } else {
+//            // uint32_t argument: the argument value must be known at compile-time, and our calculation
+//            // must not overflow T_Ticks.
+//            constexpr auto ticks = ((tocks * TicksPerTock::num) / TicksPerTock::den);
+//            static_assert(std::in_range<T_Ticks>(ticks));
+//            return ticks;
+//        }
+//    }
     
-    struct Pin {
-        using XOUT  = typename T_XOUTPin::template Opts<GPIO::Option::Sel10>;
-        using XIN   = typename T_XINPin::template Opts<GPIO::Option::Sel10>;
-    };
-    
-    static bool Enabled() {
-        return RTCCTL != 0;
+    // _TicksForTocks(): uint16_t version (runtime)
+    static constexpr Time::Ticks16 _TicksForTocks(uint16_t tocks) {
+        // uint16_t argument: verify that the max value for the argument can't overflow due to the multiplication
+        static_assert(std::in_range<uint16_t>(std::numeric_limits<uint16_t>::max() * TicksPerTock::num));
+        return ((tocks * (uint16_t)TicksPerTock::num) / (uint16_t)TicksPerTock::den);
     }
     
+    // _TicksForTocks(): uint32_t version (compile-time)
+    template<auto T_Tocks>
+    static constexpr Time::Ticks16 _TicksForTocks() {
+        constexpr auto ticks = ((T_Tocks * TicksPerTock::num) / TicksPerTock::den);
+        static_assert(std::in_range<uint16_t>(ticks));
+        return ticks;
+    }
+    
+public:
+    static constexpr uint32_t InterruptIntervalTocks = 0x10000; // 0xFFFF+1
+    static constexpr Time::Ticks16 InterruptIntervalTicks = _TicksForTocks<InterruptIntervalTocks>();
+    static_assert(InterruptIntervalTicks == 32768); // Debug
+    static constexpr uint16_t TocksMax = InterruptIntervalTocks-1;
+    static_assert(TocksMax == 0xFFFF); // Debug
+    static constexpr uint16_t Predivider = 1024;
+    
+    using TocksFreq = std::ratio<T_XT1FreqHz, Predivider>;
+    static_assert(TocksFreq::num == 32); // Debug
+    static_assert(TocksFreq::den == 1); // Verify TocksFreq is an integer
+    using TocksPeriod = std::ratio_divide<std::ratio<1>, TocksFreq>;
+    
+    using TicksPerTock = std::ratio_divide<TocksPeriod, Time::TicksPeriod>;
+    static_assert(TicksPerTock::num == 1); // Debug
+    static_assert(TicksPerTock::den == 2); // Debug
+    
+    using UsPerTock = std::ratio_divide<TocksPeriod, std::micro>;
+    static_assert(UsPerTock::num == 31250); // Debug
+    static_assert(UsPerTock::den == 1); // Verify UsPerTock is an integer
+    
+    // Init(): initialize the RTC subsystem
+    // Interrupts must be disabled
     static void Init(Time::Instant time=0) {
-        // Prevent interrupts from firing while we update our time / reset the RTC
-        Toastbox::IntState ints(false);
-        
-        // Decrease the XT1 drive strength to save a little current
-        // We're not using this for now because supporting it with LPM3.5 is gross.
-        // That's because on a cold start, CSCTL6.XT1DRIVE needs to be set after we
-        // clear LOCKLPM5 (to reduce the drive strength after XT1 is running),
-        // but on a warm start, CSCTL6.XT1DRIVE needs to be set before we clear
-        // LOCKLPM5 (to return the register to its previous state before unlocking).
-//        CSCTL6 = (CSCTL6 & ~XT1DRIVE) | XT1DRIVE_0;
-        
-        // Clear XT1 fault flags
-        do {
-            CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag
-            SFRIFG1 &= ~OFIFG;
-        } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
-        
         // Start RTC if it's not yet running, or restart it if we were given a new time
         if (!Enabled() || time) {
             _RTCTime = time;
             
-            RTCMOD = InterruptCount;
+            RTCMOD = TocksMax;
             RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
             // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
             // before enabling the RTC counter interrupt."
@@ -75,45 +97,107 @@ public:
             
             // Enable RTC interrupts
             RTCCTL |= RTCIE;
+            
+            // Wait until RTC is initialized. This is necessary because before the RTC peripheral is initialized,
+            // it's possible to read an old value of RTCCNT, which would temporarily reflect the wrong time.
+            // Empirically the RTC peripheral is reset and initialized synchronously from its clock (XT1CLK
+            // divided by Predivider), so we wait 1.5 cycles of that clock to ensure RTC is finished resetting.
+            T_Scheduler::Delay(_Us<(3*UsPerTock::num)/2>);
         }
     }
     
-    // TimeRead(): returns the current time, which is either absolute (wall time) or
-    // relative (to the device start time), depending on the value supplied to Init().
+    // Enabled(): whether RTC was previously configured
+    // This state persists across most resets (PUC, POR, software-triggered BORs)
+    static bool Enabled() {
+        return RTCCTL != 0;
+    }
+    
+    // Tocks(): returns the current tocks offset from _RTCTime, as tracked by the hardware
+    // register RTCCNT.
     //
-    // TimeRead() reads _RTCTime in an safe, overflow-aware manner.
+    // Guarantee0: Tocks() will never return 0.
     //
-    // Interrupts must be *enabled* (not disabled!) when calling to properly handle overflow!
-    static Time::Instant TimeRead() {
-        // This 2x _TimeRead() loop is necessary to handle the race related to RTCCNT overflowing:
-        // When we read _RTCTime and RTCCNT, we don't know if _RTCTime has been updated for the most
-        // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
-        // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
+    // Guarantee1: if interrupts are disabled before being called, the Tocks() return value
+    // can be safely added to _RTCTime to determine the current time.
+    // 
+    // Guarantee2: if interrupts are disabled before being called, the Tocks() return value
+    // can be safely subtracted from TocksMax+1 to determine the number of tocks until the
+    // next overflow occurs / ISR() is called.
+    //
+    // There are 2 special cases that the Tocks() implementation needs handle:
+    //
+    //   1. RTCCNT=0
+    //      If RTCCNT=0, the RTC overflow interrupt has either occurred or hasn't occurred
+    //      (empircally [see Tools/MSP430FR2433-RTCTest] it's possible to observe RTCCNT=0
+    //      _before_ the RTCIFG interrupt flag is set / before the ISR occurs). So when
+    //      RTCCNT=0, we don't know whether ISR() has been called due to the overflow yet,
+    //      and therefore we can't provide either Guarantee1 nor Guarantee2. So to handle
+    //      this RTCCNT=0 situation we simply wait 1 RTC clock cycle (with interrupts enabled,
+    //      which T_Scheduler::Delay() guarantees) to allow RTCCNT to escape 0, therefore
+    //      allowing us to provide each Guarantee.
+    //
+    //   2. RTCIFG=1
+    //      It could be the case that RTCIFG=1 upon entry to Tocks() from a previous overflow,
+    //      which needs to be explicitly handled to provide Guarantee1 and Guarantee2. We
+    //      handle RTCIFG=1 in the same way as the RTCCNT=0: wait 1 RTC clock cycle with
+    //      interrupts enabled.
+    //
+    //      The rationale for why RTCIFG=1 must be explicitly handled to provide the Guarantees
+    //      is explained by the following situation: interrupts are disabled, RTCCNT counts
+    //      from 0xFFFF -> 0x0 -> 0x1, and then Tocks() is called. In this situation RTCCNT!=0
+    //      (because RTCCNT=1) and RTCIFG=1 due to the overflow, and therefore whatever value
+    //      RTCCNT contains doesn't reflect the value that should be added to _RTCTime to
+    //      get the current time (Guarantee1), because _RTCTime needs to be updated by ISR().
+    //      Nor does RTCCNT reflect the number of tocks until the next time ISR() is called
+    //      (Guarantee2), because ISR() will be called as soon as interrupts are enabled,
+    //      because RTCIFG=1.
+    //
+    static uint16_t Tocks() {
         for (;;) {
-            const Time::Instant t1 = _TimeRead();
-            const Time::Instant t2 = _TimeRead();
-            if (t2 >= t1) return t2;
+            const uint16_t tocks = RTCCNT;
+            if (tocks==0 || _OverflowPending()) {
+                T_Scheduler::Delay(_Us<UsPerTock::num>);
+                continue;
+            }
+            return tocks;
         }
     }
     
-    static void ISR() {
-        // Accessing `RTCIV` automatically clears the highest-priority interrupt
-        switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
+    static Time::Instant Now() {
+        // Disable interrupts so that reading _RTCTime and adding RTCCNT to it is atomic
+        // (with respect to overflow causing _RTCTime to be updated)
+        Toastbox::IntState ints(false);
+        // Make sure to read Tocks() before _RTCTime, to ensure that _RTCTime reflects the
+        // value read by Tocks(), since Tocks() enables interrupts in some cases, allowing
+        // _RTCTime to be updated.
+        const uint16_t tocks = Tocks();
+        return _RTCTime + _TicksForTocks(tocks);
+    }
+    
+    // TicksUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
+    // interrupt doesn't occur before the caller finishes using the returned value.
+    static Time::Ticks16 TicksUntilOverflow() {
+        // Note that the below calculation `(TocksMax-Tocks())+1` will never overflow a uint16_t,
+        // because Tocks() never returns 0.
+        return _TicksForTocks((TocksMax-Tocks())+1);
+    }
+    
+    static void ISR(uint16_t iv) {
+        switch (__even_in_range(iv, RTCIV_RTCIF)) {
         case RTCIV_RTCIF:
             // Update our time
-            _RTCTime += InterruptIntervalUs;
-            break;
-        
+            _RTCTime += InterruptIntervalTicks;
+            return;
         default:
-            break;
+            Assert(false);
         }
     }
     
 private:
-    template <class...>
-    static constexpr std::false_type _AlwaysFalse = {};
+    template<auto T>
+    static constexpr auto _Us = T_Scheduler::template Us<T>;
     
-    template <uint16_t T_Predivider>
+    template<uint16_t T_Predivider>
     static constexpr uint16_t _RTCPSForPredivider() {
              if constexpr (T_Predivider == 1)       return RTCPS__1;
         else if constexpr (T_Predivider == 10)      return RTCPS__10;
@@ -123,14 +207,10 @@ private:
         else if constexpr (T_Predivider == 64)      return RTCPS__64;
         else if constexpr (T_Predivider == 256)     return RTCPS__256;
         else if constexpr (T_Predivider == 1024)    return RTCPS__1024;
-        else static_assert(_AlwaysFalse<T_Predivider>);
+        else static_assert(Toastbox::AlwaysFalse<T_Predivider>);
     }
     
-    static Time::Instant _TimeRead() {
-        // Disable interrupts so we can read _Time and RTCCNT atomically.
-        // This is especially necessary because reading _Time isn't atomic
-        // since it's 64 bits.
-        Toastbox::IntState ints(false);
-        return _RTCTime + RTCCNT*UsPerTick;
+    static bool _OverflowPending() {
+        return RTCCTL & RTCIF;
     }
 };

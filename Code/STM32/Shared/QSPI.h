@@ -6,7 +6,7 @@
 template <
 typename T_Scheduler
 >
-class QSPIType {
+class T_QSPI {
 public:
     enum class Mode {
         Single,

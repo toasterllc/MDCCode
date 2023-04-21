@@ -92,9 +92,9 @@ using _System = System<
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
 using _MSPJTAG = _System::MSPJTAG;
-using _QSPI = QSPIType<_Scheduler>;
+using _QSPI = T_QSPI<_Scheduler>;
 
-using _ICE = ::ICE<_Scheduler>;
+using _ICE = T_ICE<_Scheduler>;
 using _ImgSensor = Img::Sensor<_Scheduler, _ICE>;
 
 using _SDCard = SD::Card<
@@ -316,7 +316,7 @@ static void _ICEAppInit() {
     
     bool ok = false;
     for (int i=0; i<100 && !ok; i++) {
-        _Scheduler::Sleep(_Scheduler::Ms(1));
+        _Scheduler::Sleep(_Scheduler::Ms<1>);
         // Init ICE comms
         ok = _ICE::Init();
     }
@@ -556,11 +556,11 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     
     // Assert reset
     _ICE_CRST_::Write(0);
-    _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms (ideally, 200 ns)
+    _Scheduler::Sleep(_Scheduler::Ms<1>); // Sleep 1 ms (ideally, 200 ns)
     
     // Release reset
     _ICE_CRST_::Write(1);
-    _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+    _Scheduler::Sleep(_Scheduler::Ms<2>); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
     
     // Configure QSPI for writing the ICE40 configuration
     _QSPIConfigSet(&_QSPIConfigs::ICEWrite);
@@ -591,7 +591,7 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     {
         bool ok = false;
         for (int i=0; i<10 && !ok; i++) {
-            if (i) _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms
+            if (i) _Scheduler::Sleep(_Scheduler::Ms<1>); // Sleep 1 ms
             ok = _ICE_CDONE::Read();
         }
         
@@ -734,7 +734,7 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
     // Reset flash
     _ICEFlashOut(0x66);
     _ICEFlashOut(0x99);
-    _Scheduler::Sleep(_Scheduler::Us(32)); // "the device will take approximately tRST=30us to reset"
+    _Scheduler::Sleep(_Scheduler::Us<32>); // "the device will take approximately tRST=30us to reset"
     
     // Reset state
     _Bufs.reset();
@@ -811,7 +811,7 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     // Reset flash
     _ICEFlashOut(0x66);
     _ICEFlashOut(0x99);
-    _Scheduler::Sleep(_Scheduler::Us(32)); // "the device will take approximately tRST=30us to reset"
+    _Scheduler::Sleep(_Scheduler::Us<32>); // "the device will take approximately tRST=30us to reset"
     
     // Write enable
     _ICEFlashOut(0x06);

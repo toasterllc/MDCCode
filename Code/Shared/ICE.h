@@ -9,10 +9,10 @@
 #include "GetBits.h"
 #include "Assert.h"
 
-template <
+template<
 typename T_Scheduler
 >
-class ICE {
+class T_ICE {
 public:
     // MARK: - Types
     struct MsgType {
@@ -24,7 +24,7 @@ public:
         uint8_t type = 0;
         uint8_t payload[7] = {};
         
-        template <typename... T_Payload>
+        template<typename... T_Payload>
         constexpr Msg(uint8_t t, T_Payload... p) :
         type(t),
         payload{static_cast<uint8_t>(p)...} {
@@ -47,7 +47,7 @@ public:
     };
     
     struct ReadyMsg : public Msg {
-        template <size_t T_N>
+        template<size_t T_N>
         constexpr ReadyMsg(const char (&str)[T_N]) : Msg(MsgType::StartBit | MsgType::Resp | 0x00) {
             static_assert(T_N == sizeof(Msg::payload));
             memcpy(Msg::payload, str, sizeof(Msg::payload));
@@ -315,7 +315,7 @@ public:
     
     static void ImgReset() {
         Transfer(ImgResetMsg(0));
-        _Sleep(_Ms(1));
+        _Sleep(_Ms<1>);
         Transfer(ImgResetMsg(1));
     }
     
@@ -340,7 +340,7 @@ public:
             const auto status = ImgCaptureStatus();
             // Try again if the image hasn't been captured yet
             if (!status.done()) {
-                _Sleep(_Ms(1));
+                _Sleep(_Ms<1>);
                 continue;
             }
             const uint32_t imgPixelCount = status.pixelCount();
@@ -367,7 +367,7 @@ public:
         for (uint32_t i=0; i<MaxAttempts; i++) {
             const ImgI2CStatusResp status = ImgI2CStatus();
             if (status.done()) return status;
-            _Sleep(_Ms(1));
+            _Sleep(_Ms<1>);
         }
         // Timeout getting response from ICE40
         // This should never happen, since it indicates a Verilog error or a hardware failure.
@@ -399,6 +399,7 @@ public:
     }
     
 private:
-    static constexpr auto _Ms = T_Scheduler::Ms;
+    template<auto T>
+    static constexpr auto _Ms = T_Scheduler::template Ms<T>;
     static constexpr auto _Sleep = T_Scheduler::Sleep;
 };

@@ -1,10 +1,18 @@
 #pragma once
 #include <msp430.h>
 #include "GPIO.h"
+#include "Toastbox/Util.h"
 
-template <uint32_t T_MCLKFreqHz>
-class ClockType {
+template<typename T_Scheduler, uint32_t T_MCLKFreqHz, typename T_XINPin, typename T_XOUTPin>
+class T_Clock {
 public:
+    struct Pin {
+        using XIN  = typename T_XINPin::template Opts<GPIO::Option::Sel01>;
+        using XOUT = typename T_XOUTPin::template Opts<GPIO::Option::Sel01>;
+    };
+    
+    // Init(): initialize various clocks
+    // Interrupts must be disabled
     static void Init() {
         const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
         
@@ -37,7 +45,7 @@ public:
                 CSCTL1 |= DCORSEL_0;
             } else {
                 // Unsupported frequency
-                static_assert(_AlwaysFalse<T_MCLKFreqHz>);
+                static_assert(Toastbox::AlwaysFalse<T_MCLKFreqHz>);
             }
             
             // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLKFreqHz
@@ -61,19 +69,61 @@ public:
         // This technique is prescribed by "MSP430FR2xx/FR4xx DCO+FLL Applications Guide", and shown
         // by the "MSP430FR2x5x_FLL_FastLock_24MHz-16MHz.c" example code.
         if constexpr (T_MCLKFreqHz == 16000000) {
-            CSCTL4 |= SELMS__REFOCLK;
+            CSCTL4 = SELMS__REFOCLK | SELA__REFOCLK;
             __delay_cycles(10);
         }
         
         // Wait until FLL locks
         while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
-        // MCLK / SMCLK source = DCOCLKDIV
-        //         ACLK source = REFOCLK
-        CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+        // MCLK=DCOCLK, ACLK=XT1
+        CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
+        
+        // Set MCLK/SMCLK dividers
+        //
+        // If we ever change DIVS to something other than DIVS__1, we may be subject to errata
+        // PMM32 ("Device may enter lockup state or execute unintentional code during transition
+        // from AM to LPM3/4"), due to Condition2.4 ("SMCLK is configured with a different
+        // frequency than MCLK").
+        //
+        // We're not setting CSCTL5 because its default value is what we want.
+        //
+        // CSCTL5 = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1 | DIVM__1;
+        
+        // Wait up to 2 seconds for XT1 to start
+        // The MSP430FR2433 datasheet claims 1s is typical
+        for (uint16_t i=0; i<20 && _ClockFaults(); i++) {
+            _ClockFaultsClear();
+            T_Scheduler::Delay(_Ms<100>);
+        }
+        Assert(!_ClockFaults());
+        
+        // Now that we've cleared the oscillator faults, enable the oscillator fault interrupt
+        // so we know if something goes awry in the future. This will call our ISR and we'll
+        // record the failure and trigger a BOR.
+        SFRIE1 |= OFIE;
+        
+        // Decrease the XT1 drive strength to save a little current
+        CSCTL6 =
+            XT1DRIVE_0      |   // drive strength = lowest (to save current)
+            (XTS&0)         |   // mode = low frequency
+            (XT1BYPASS&0)   |   // bypass = disabled (ie XT1 source is an oscillator, not a clock signal)
+            (XT1AGCOFF&0)   |   // automatic gain = on
+            XT1AUTOOFF      ;   // auto off = enabled (default value)
     }
-
+    
 private:
     static constexpr uint32_t REFOCLKFreqHz = 32768;
-    template <class...> static constexpr std::false_type _AlwaysFalse = {};
+    
+    template<auto T>
+    static constexpr auto _Ms = T_Scheduler::template Ms<T>;
+    
+    static void _ClockFaultsClear() {
+        CSCTL7 &= ~(XT1OFFG | DCOFFG);
+        SFRIFG1 &= ~OFIFG;
+    }
+    
+    static bool _ClockFaults() {
+        return SFRIFG1 & OFIFG;
+    }
 };

@@ -8,7 +8,7 @@
 
 namespace SD {
 
-template <
+template<
 typename T_Scheduler,
 typename T_ICE,
 uint8_t T_ClkDelaySlow,
@@ -19,7 +19,7 @@ public:
     static void Reset() {
         // Reset SDController
         T_ICE::Transfer(_ConfigReset);
-        _Sleep(_Us(25)); // Wait 10 400kHz cycles
+        _Sleep(_Us<25>); // Wait 10 400kHz cycles
     }
     
     static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
@@ -27,7 +27,7 @@ public:
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ConfigSlowOpenDrain);
-        _Sleep(_Us(25)); // Wait 10 400kHz cycles
+        _Sleep(_Us<25>); // Wait 10 400kHz cycles
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -36,7 +36,7 @@ public:
         // ====================
         {
             // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
-            _Sleep(_Ms(1));
+            _Sleep(_Ms<1>);
             // Send CMD0
             _SendCmd(_CMD0, 0, _RespType::None);
             // There's no response to CMD0
@@ -99,11 +99,11 @@ public:
             T_ICE::Transfer(_ConfigReset);
             
             // Wait >5ms while clock is stopped (per SD spec)
-            _Sleep(_Ms(6));
+            _Sleep(_Ms<6>);
             
             // Re-enable clock
             T_ICE::Transfer(_ConfigSlowPushPull);
-            _Sleep(_Us(25)); // Wait 10 400kHz cycles
+            _Sleep(_Us<25>); // Wait 10 400kHz cycles
             
             // Wait for SD card to indicate that it's ready (DAT0=1)
             #warning TODO: implement timeout in case something's broken
@@ -197,14 +197,14 @@ public:
         
         // SDClock=Fast
         T_ICE::Transfer(_ConfigFastPushPull);
-        _Sleep(_Us(1));
+        _Sleep(_Us<1>);
         
         return rca;
     }
     
 //    static void Disable() {
 //        T_ICE::Transfer(_ConfigReset);
-//        _Sleep(_Us(1));
+//        _Sleep(_Us<1>);
 //    }
     
 //    bool enabled() const { return _enabled; }
@@ -311,8 +311,12 @@ private:
     static constexpr auto _ConfigFastPushPull = _SDConfigMsg(
         _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Fast, T_ClkDelayFast, _SDConfigMsg::PinMode::PushPull);
     
-    static constexpr auto _Us = T_Scheduler::Us;
-    static constexpr auto _Ms = T_Scheduler::Ms;
+    template<auto T>
+    static constexpr auto _Us = T_Scheduler::template Us<T>;
+    
+    template<auto T>
+    static constexpr auto _Ms = T_Scheduler::template Ms<T>;
+    
     static constexpr auto _Sleep = T_Scheduler::Sleep;
     
     static constexpr uint8_t _CMD0  = 0;
@@ -352,7 +356,7 @@ private:
                 // Try again if we expect DatIn but it hasn't been received yet
                 (datInType==_DatInType::Len512x1 && !s.datInDone())
             ) {
-                _Sleep(_Ms(1));
+                _Sleep(_Ms<1>);
                 continue;
             }
             
@@ -380,7 +384,7 @@ private:
         _SendCmd(_CMD12, 0);
     }
     
-    template <size_t T_Len>
+    template<size_t T_Len>
     static void _SDRespGet(void* dst) {
         using Resp = typename T_ICE::Resp;
         static_assert((T_Len % sizeof(Resp)) == 0);
@@ -392,7 +396,7 @@ private:
         }
     }
     
-//    template <size_t T_Len>
+//    template<size_t T_Len>
 //    static void _SDRespGet(void* dst) {
 //        using Resp = typename T_ICE::Resp;
 //        static_assert((T_Len % sizeof(Resp)) == 0);
@@ -404,7 +408,7 @@ private:
 //        }
 //    }
     
-//    template <typename T>
+//    template<typename T>
 //    static T _SDResp128Get() {
 //        // Get the 128-bit response
 //        T dst;

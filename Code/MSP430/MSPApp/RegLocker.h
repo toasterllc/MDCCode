@@ -1,7 +1,7 @@
 #pragma once
 #include <msp430.h>
 
-template <
+template<
 auto& T_Reg,
 uint16_t T_Unlock,
 uint16_t T_Lock

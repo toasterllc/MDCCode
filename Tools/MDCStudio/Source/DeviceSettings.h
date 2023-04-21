@@ -6,11 +6,12 @@
 #include "Calendar.h"
 #include "Code/Shared/Time.h"
 #include "Code/Shared/Clock.h"
+#include "Toastbox/Cast.h"
 
 namespace MDCStudio {
 namespace DeviceSettings {
 
-using Ms = std::chrono::duration<uint32_t, std::milli>;
+using Ticks = Time::Clock::duration;
 using Days = std::chrono::duration<uint32_t, std::ratio<86400>>;
 using DayInterval = Days;
 
@@ -49,7 +50,7 @@ struct [[gnu::packed]] Duration {
     Unit unit;
 };
 
-inline Ms MsForDuration(const Duration& x) {
+inline Ticks TicksForDuration(const Duration& x) {
     #warning TODO: how does this handle overflow? how do we want to handle overflow -- throw?
     switch (x.unit) {
     case Duration::Unit::Seconds: return std::chrono::seconds((long)x.value);
@@ -247,17 +248,37 @@ inline void Deserialize(Triggers& x, const T& data) {
 
 
 
-template<typename T_Dst, typename T_Src>
-T_Dst _Cast(const T_Src& x) {
-    // Only support unsigned for now
-    static_assert(!std::numeric_limits<T_Src>::is_signed);
-    static_assert(!std::numeric_limits<T_Dst>::is_signed);
-    const T_Dst DstMaxValue = std::numeric_limits<T_Dst>::max();
-    if (x > DstMaxValue) {
-        throw Toastbox::RuntimeError("value too large (value: %ju, max: %ju)", (uintmax_t)x, (uintmax_t)DstMaxValue);
-    }
-    return x;
-}
+//template<typename T_Dst, typename T_Src>
+//T_Dst _Cast(const T_Src& x) {
+//    // Only support unsigned for now
+//    static_assert(!std::numeric_limits<T_Src>::is_signed);
+//    static_assert(!std::numeric_limits<T_Dst>::is_signed);
+//    const T_Dst DstMaxValue = std::numeric_limits<T_Dst>::max();
+//    if (x > DstMaxValue) {
+//        throw Toastbox::RuntimeError("value too large (value: %ju, max: %ju)", (uintmax_t)x, (uintmax_t)DstMaxValue);
+//    }
+//    return x;
+//}
+
+
+
+
+//template<typename T_Dst, typename T_Src>
+//T_Dst _Cast(const T_Src& x) {
+//    // intmax_t -> uint32
+//    constexpr T_Src SrcMinValue = std::numeric_limits<T_Src>::min();    // -big val
+//    constexpr T_Src SrcMaxValue = std::numeric_limits<T_Src>::max();    // big val
+//    constexpr T_Dst DstMinValue = std::numeric_limits<T_Dst>::min();    // 0
+//    constexpr T_Dst DstMaxValue = std::numeric_limits<T_Dst>::max();    // smaller big val
+//    
+//    if constexpr (SrcMinValue < DstMinValue)
+//    
+//    if (x > DstMaxValue) {
+//        throw Toastbox::RuntimeError("value too large (value: %ju, max: %ju)", (uintmax_t)x, (uintmax_t)DstMaxValue);
+//    }
+//    return x;
+//}
+
 
 inline MSP::LEDs _Convert(const LEDs& x) {
     MSP::LEDs r = MSP::LEDs_::None;
@@ -268,7 +289,7 @@ inline MSP::LEDs _Convert(const LEDs& x) {
 
 inline MSP::Capture _Convert(const Capture& x) {
     return MSP::Capture{
-        .delayMs = MsForDuration(x.interval).count(),
+        .delayTicks = Toastbox::Cast<decltype(MSP::Capture::delayTicks)>(TicksForDuration(x.interval).count()),
         .count = x.count,
         .leds = _Convert(x.leds),
     };
@@ -452,7 +473,7 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
             .type = type,
             .repeat = {
                 .type = MSP::Repeat::Type::Daily,
-                .Daily = { _Cast<decltype(MSP::Repeat::Daily.interval)>(repeat->DayInterval.count()) },
+                .Daily = { Toastbox::Cast<decltype(MSP::Repeat::Daily.interval)>(repeat->DayInterval.count()) },
             },
             .idx = idx,
         }};
@@ -483,7 +504,7 @@ bool _MotionAlwaysEnabled(const T& x) {
 }
 
 template<typename T>
-Ms _MotionEnableDurationMs(const T& x) {
+Ticks _MotionEnableDurationTicks(const T& x) {
     // Enabled all day, every day
     if (_MotionAlwaysEnabled(x)) return {};
     
@@ -497,12 +518,12 @@ Ms _MotionEnableDurationMs(const T& x) {
 }
 
 template<typename T>
-Ms _MotionSuppressMs(const T& x) {
+Ticks _MotionSuppressTicks(const T& x) {
     if (!x.constraints.suppressDuration.enable) {
         // Suppression feature disabled
         return {};
     }
-    return MsForDuration(x.constraints.suppressDuration.duration);
+    return TicksForDuration(x.constraints.suppressDuration.duration);
 }
 
 template<typename T>
@@ -573,14 +594,14 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             // Create trigger
             {
                 const uint16_t count = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0);
-                const Ms durationMs = _MotionEnableDurationMs(x);
-                const Ms suppressMs = _MotionSuppressMs(x);
+                const Ticks durationTicks = _MotionEnableDurationTicks(x);
+                const Ticks suppressTicks = _MotionSuppressTicks(x);
                 
                 t.motionTrigger[t.motionTriggerCount] = {
-                    .capture    = _Convert(x.capture),
-                    .count      = count,
-                    .durationMs = durationMs.count(),
-                    .suppressMs = suppressMs.count(),
+                    .capture       = _Convert(x.capture),
+                    .count         = count,
+                    .durationTicks = Toastbox::Cast<decltype(t.motionTrigger->durationTicks)>(durationTicks.count()),
+                    .suppressTicks = Toastbox::Cast<decltype(t.motionTrigger->suppressTicks)>(suppressTicks.count()),
                 };
                 t.motionTriggerCount++;
             }
