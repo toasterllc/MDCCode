@@ -3,7 +3,6 @@
 #include <cstdbool>
 #include <cstddef>
 #include <atomic>
-#define SchedulerMSP430
 #include "Toastbox/Scheduler.h"
 #include "SDCard.h"
 #include "ICE.h"

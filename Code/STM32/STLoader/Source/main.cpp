@@ -1,6 +1,5 @@
 #include <cstring>
 #include <algorithm>
-#define SchedulerARM32
 #include "Toastbox/Scheduler.h"
 #include "Toastbox/Math.h"
 #include "Assert.h"

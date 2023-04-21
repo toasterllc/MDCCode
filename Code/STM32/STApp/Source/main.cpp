@@ -1,5 +1,4 @@
 #include <cstdint>
-#define SchedulerARM32
 #include "Toastbox/Scheduler.h"
 #include "Toastbox/Queue.h"
 #include "Toastbox/Math.h"
