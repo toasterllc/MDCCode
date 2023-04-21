@@ -70,7 +70,8 @@ void _Startup() {
 extern "C"
 void _init() {}
 
-// Reset vectors must be 16-bit, even in large memory model mode
+// u16 because reset vectors must be 16-bit, even in large memory model mode where pointers
+// are 20-bit (stored as u32)
 [[gnu::section(".resetvec"), gnu::used]]
 uint16_t _ResetVector[] = {
     (uint16_t)(uintptr_t)&_Startup,
