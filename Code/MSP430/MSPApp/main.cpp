@@ -67,6 +67,8 @@ class _TaskI2C;
 class _TaskMotion;
 
 static void _Sleep();
+
+[[noreturn]]
 static void _SchedulerStackOverflow();
 
 #warning TODO: disable stack guard for production
