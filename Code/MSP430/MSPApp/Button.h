@@ -1,6 +1,5 @@
 #pragma once
 #include <msp430.h>
-#include <atomic>
 #include "GPIO.h"
 
 template <

@@ -85,6 +85,8 @@ public:
     //
     // Interrupts must be *enabled* (not disabled!) when calling to properly handle overflow!
     static Time::Instant TimeRead() {
+        // Verify that ints are enabled
+        Assert(Toastbox::IntState::Get());
         // This 2x _TimeRead() loop is necessary to handle the race related to RTCCNT overflowing:
         // When we read _RTCTime and RTCCNT, we don't know if _RTCTime has been updated for the most
         // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,

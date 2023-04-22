@@ -29,8 +29,8 @@
 #include "Assert.h"
 using namespace GPIO;
 
-static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _XT1FreqHz        = 32768;
+static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
 
 struct _Pin {
@@ -92,7 +92,7 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskMotion
 >;
 
-using _Clock = ClockType<_MCLKFreqHz>;
+using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz>;
 using _SysTick = T_SysTick<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 using _ICE = ICE<_Scheduler>;

@@ -2,7 +2,7 @@
 #include <msp430.h>
 #include "GPIO.h"
 
-template <uint32_t T_MCLKFreqHz>
+template <uint32_t T_XT1FreqHz, uint32_t T_MCLKFreqHz, uint32_t T_ACLKFreqHz>
 class ClockType {
 public:
     static void Init() {
@@ -68,9 +68,28 @@ public:
         // Wait until FLL locks
         while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
+        // Set ACLK frequency
+        CSCTL1 &= ~(DCORSEL_7);
+        if constexpr (T_ACLKFreqHz == 16000000) {
+            
+        } else if constexpr (T_ACLKFreqHz == 12000000) {
+            
+        } else if constexpr (T_ACLKFreqHz == 8000000) {
+            
+        } else if constexpr (T_ACLKFreqHz == 4000000) {
+            
+        } else if constexpr (T_ACLKFreqHz == 2000000) {
+            
+        } else if constexpr (T_ACLKFreqHz == 1000000) {
+            
+        } else {
+            // Unsupported frequency
+            static_assert(_AlwaysFalse<T_ACLKFreqHz>);
+        }
+        
         // MCLK / SMCLK source = DCOCLKDIV
-        //         ACLK source = REFOCLK
-        CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+        //         ACLK source = XT1CLK
+        CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
     }
 
 private:

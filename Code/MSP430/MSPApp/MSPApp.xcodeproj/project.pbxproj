@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		5562769F29F353E500998BE2 /* Alarm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Alarm.h; sourceTree = "<group>"; };
 		556E45EF26B12023006681FA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		556E45F126B1204A006681FA /* Lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Lib; path = ../../Lib; sourceTree = "<group>"; };
 		556E45F226B12050006681FA /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
@@ -43,6 +44,7 @@
 				55B9EC94293AA2A300318243 /* msp430fr2433.txt */,
 				55889121273B3D360004458F /* GPIO.h */,
 				5588914D273C79540004458F /* Clock.h */,
+				5562769F29F353E500998BE2 /* Alarm.h */,
 				55BCD85C276AAF7C002B4CC7 /* SysTick.h */,
 				5588914C273C6BCD0004458F /* RTC.h */,
 				5588914E273C7DEB0004458F /* SPI.h */,

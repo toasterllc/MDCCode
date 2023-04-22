@@ -1,6 +1,5 @@
 #pragma once
 #include <msp430.h>
-#include <atomic>
 #include "Toastbox/Scheduler.h"
 #include "GPIO.h"
 #include "Assert.h"
