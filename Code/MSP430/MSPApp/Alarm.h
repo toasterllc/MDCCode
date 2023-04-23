@@ -1,5 +1,7 @@
 #pragma once
 #include <msp430.h>
+#include <ratio>
+#include <limits>
 #include "Time.h"
 
 template <typename T_RTC, uint32_t T_ACLKFreqHz>
@@ -7,28 +9,18 @@ class T_Alarm {
 public:
     static void Set(const Time::Instant& alarm) {
         static constexpr uint32_t TimerACLKDivider = 64;
-        static constexpr uint32_t TimerFreqHz = T_ACLKFreqHz / TimerACLKDivider;
-        static_assert((T_ACLKFreqHz % TimerACLKDivider) == 0); // Ensure that TimerFreqHz division is exact
         
-        // TimerPeriodUs: the period between timer counter increments.
-        // TimerPeriodUs isn't exact! We'd need to represent TimerPeriodUs in nanoseconds
-        // for it to be exact, which would require a 64-bit division in our calculation
-        // of `remainderUs`, which we want to avoid.
-        // This non-exact representation costs us up to 10ms of timer error:
-        //
-        //  TimerCountsApprox = (TimerMaxIntervalUs / floor(1000000/TimerFreqHz))
-        //                    = 65540.1945724526
-        //   TimerCountsExact = (TimerMaxIntervalUs /      (1000000/TimerFreqHz))
-        //                    = 65536
-        //             ErrSec = ceil(TimerCountsApprox - TimerCountsExact) * (1/TimerFreqHz)
-        //                    = ceil(65540.195 - 65536) * (1/512)
-        //                    = 0.0098
-        static constexpr uint32_t TimerPeriodUs = 1000000 / TimerFreqHz;
+        using TimerFreqHzRatio = std::ratio<T_ACLKFreqHz, TimerACLKDivider>;
+        static_assert(TimerFreqHzRatio::den == 1); // Verify TimerFreqHzRatio division is exact
+        static constexpr TimerFreqHz = TimerFreqHzRatio::num;
         
         static constexpr uint16_t TimerMaxCCR0 = 0xFFFF;
-        static constexpr uint32_t TimerMaxIntervalSec = ((uint32_t)TimerMaxCCR0+1) / TimerFreqHz;
-        static_assert((((uint32_t)TimerMaxCCR0+1) % TimerFreqHz) == 0); // Ensure that TimerMaxIntervalSec division is exact
-        static constexpr uint32_t TimerMaxIntervalUs = TimerMaxIntervalSec*1000000;
+        using TimerMaxIntervalSecRatio = std::ratio<(uint32_t)TimerMaxCCR0+1, TimerFreqHz>;
+        static_assert(TimerMaxIntervalSecRatio::den == 1); // Verify TimerMaxIntervalSecRatio division is exact
+        static constexpr uint32_t TimerMaxIntervalSec = TimerMaxIntervalSecRatio::num;
+        static constexpr uint32_t TimerMaxIntervalUs  = TimerMaxIntervalSec*1000000;
+        
+        using TimerPeriodUsRatio = std::ratio<1000000, TimerFreqHz>;
         
         const Time::Instant now = T_RTC::TimeRead();
         
@@ -43,12 +35,30 @@ public:
         
         const Time::Us deltaUs = alarm-now;
         if (deltaUs >= T_RTC::InterruptIntervalUs) {
-            _ISRRTCCount = deltaUs / T_RTC::InterruptIntervalUs;
+            _RTCCount = deltaUs / T_RTC::InterruptIntervalUs;
+            _TimerIntervalCount = 0;
+            _TimerRemainderCount = 0;
         
         } else {
             const uint16_t intervalCount = deltaUs / TimerMaxIntervalUs;
-            const uint16_t remainderUs = deltaUs % TimerMaxIntervalUs;
-            const uint16_t remainderCount = remainderUs / TimerPeriodUs;
+            // Ensure that `intervalCount` can't overflow
+            constexpr auto IntervalCountMax = ((uintmax_t)T_RTC::InterruptIntervalUs-1 / (uintmax_t)TimerMaxIntervalUs);
+            static_assert(IntervalCountMax <= std::numeric_limits<decltype(intervalCount)>::max());
+            
+            const uint32_t remainderUs = deltaUs % TimerMaxIntervalUs;
+            // Ensure that `remainderUs` can't overflow
+            constexpr auto RemainderUsMax = TimerMaxIntervalUs-1;
+            static_assert(RemainderUsMax <= std::numeric_limits<decltype(remainderUs)>::max());
+            
+            const uint16_t remainderCount = (remainderUs * (uint16_t)TimerPeriodUsRatio::den) / TimerPeriodUsRatio::num;
+            // Ensure that `remainderCount` can't overflow
+            constexpr auto RemainderCountMax = (RemainderUsMax * TimerPeriodUsRatio::den) / TimerPeriodUsRatio::num;
+            static_assert(RemainderCountMax <= std::numeric_limits<decltype(remainderCount)>::max());
+            
+            _RTCCount = 0;
+            _TimerIntervalCount = intervalCount;
+            _TimerRemainderCount = remainderCount;
+            
             
             _ISRTimerCount = deltaUs / XXX;
             
@@ -109,7 +119,8 @@ public:
     }
     
 private:
-    static inline volatile uint16_t _ISRRTCCount = 0;
-    static inline volatile uint16_t _ISRTimerCount = 0;
+    static inline volatile uint16_t _RTCCount = 0;
+    static inline volatile uint16_t _TimerIntervalCount = 0;
+    static inline volatile uint16_t _TimerRemainderCount = 0;
     static inline volatile bool _Triggered = false;
 };
