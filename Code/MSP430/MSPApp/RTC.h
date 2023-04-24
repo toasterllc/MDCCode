@@ -180,6 +180,64 @@ public:
         return _RTCTime + ticks*UsPerTick;
     }
     
+    
+    // TicksRead(): returns the current ticks offset from _RTCTime, as tracked by the
+    // hardware register RTCCNT.
+    //
+    // Guarantee1: if interrupts are disabled before being called, the value that TicksRead()
+    // returns can be safely added to _RTCTime to determine the current time.
+    // 
+    // Guarantee2: if interrupts are disabled before being called, the value that TicksRead()
+    // returns can be safely subtracted from TicksMax+1 to determine the number of ticks until
+    // the next overflow occurs / ISR() is called.
+    //
+    // There are 2 cases that require special handling:
+    //   1. RTCCNT=0
+    //      If RTCCNT=0, the RTC overflow interrupt has either occurred or hasn't occurred
+    //      (and empircally [see Tools/MSP430FR2433-RTCTest] it's possible to observe
+    //      RTCCNT=0 _before_ the RTCIFG interrupt flag is set / before the ISR occurs).
+    //      So when RTCCNT=0, we don't know whether ISR() has been called due to the overflow
+    //      yet, and therefore we can't provide either Guarantee1 nor Guarantee2. So to handle
+    //      this RTCCNT=0 situation we simply wait 1 RTC clock cycle (with interrupts enabled,
+    //      which T_Scheduler::Delay() guarantees) to allow RTCCNT to escape 0, and therefore
+    //      allowing us to provide Guarantee1 and Guarantee2.
+    //
+    //   2. RTCIFG=1
+    //      It could be the case that RTCIFG=1 upon entry to TicksRead() from a previous
+    //      overflow, and needs to be explicitly handled to provide Guarantee1 and Guarantee2.
+    //      We handle RTCIFG=1 in the same way as the RTCCNT=0: wait 1 RTC clock cycle with
+    //      interrupts enabled.
+    //
+    //      The rationale for why RTCIFG=1 must be explicitly handled to provide the Guarantees
+    //      is as follows: consider a situation where interrupts are disabled and RTCCNT counts
+    //      from 0xFFFF -> 0x0 -> 0x1 without interrupts being enabled. In this case RTCCNT!=0
+    //      (because RTCCNT=1) and RTCIFG=1 due to the overflow, and therefore whatever value
+    //      RTCCNT contains doesn't reflect the value that should be added to _RTCTime to
+    //      get the current time (Guarantee1), because _RTCTime needs to be updated by ISR().
+    //      Nor does RTCCNT reflect the number of ticks until the next time ISR() is called
+    //      (Guarantee2), because ISR() will be called as soon as interrupts are enabled,
+    //      because RTCIFG=1.
+    // 
+    // If RTCCNT=0, the RTC overflow interrupt has either occurred or
+    // hasn't occurred, and empircally (see Tools/MSP430FR2433-RTCTest) it's possible
+    // to observe RTCCNT=0 _before_ the RTCIFG interrupt flag is set / before the
+    // ISR occurs. Therefore while RTCCNT=0, we don't know whether _RTCTime has been
+    // updated to reflect the overflow yet, and therefore TicksRead() doesn't know what
+    // value to return. So to handle this RTCCNT=0 situation we simply wait 1.5 RTC
+    // clock cycles, so that RTCCNT!=0 and we can be sure that _RTCTime has been
+    // updated for the overflow.
+    // 
+    // If 0 is read for RTCCNT or the RTCIFG flag is set, RTCCNT is in the process of
+    // overflowing and requires special handling.
+    // 
+    // In this situation, the RTC overflow interrupt has either occurred or
+    // hasn't occurred, and empircally (see Tools/MSP430FR2433-RTCTest) it's possible
+    // to observe RTCCNT=0 _before_ the RTCIFG interrupt flag is set / before the
+    // ISR occurs. Therefore while RTCCNT=0, we don't know whether _RTCTime has been
+    // updated to reflect the overflow yet, and therefore TicksRead() doesn't know what
+    // value to return. So to handle this RTCCNT=0 situation we simply wait 1.5 RTC
+    // clock cycles, so that RTCCNT!=0 and we can be sure that _RTCTime has been
+    // updated for the overflow.
     static uint16_t TicksRead() {
         for (;;) {
             const uint16_t ticks = RTCCNT;
