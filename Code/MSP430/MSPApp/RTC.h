@@ -101,29 +101,157 @@ public:
     // value to return. So to handle this RTCCNT=0 situation we simply wait 1.5 RTC
     // clock cycles, so that RTCCNT!=0 and we can be sure that _RTCTime has been
     // updated for the overflow.
-    static Time::Instant TimeRead() {
-        Toastbox::IntState ints(true);
-        for (;;) {
-            Toastbox::IntState ints(false);
-            const uint16_t rtccnt = RTCCNT;
-            if (!rtccnt) {
-                T_Scheduler::Delay((3*UsPerTick)/2);
-                continue;
-            }
-            return _RTCTime + rtccnt*UsPerTick;
-        }
-    }
-    
-//    static uint16_t Ticks() {
+//    static Time::Instant TimeRead() {
 //        Toastbox::IntState ints(true);
 //        for (;;) {
 //            Toastbox::IntState ints(false);
+//            const uint16_t ticks = RTCCNT;
+//            if (ticks) return _RTCTime + ticks*UsPerTick;
+//            // Wait for RTCCNT to escape 0
+//            T_Scheduler::Delay((3*UsPerTick)/2);
+//        }
+//    }
+    
+    
+    
+    
+//    static Time::Instant TimeRead() {
+//        Toastbox::IntState ints(true);
+//        return _TimeRead();
+//    }
+    
+//    static Time::Instant TimeRead() {
+//        Toastbox::IntState ints(false);
+//        {
+//            Toastbox::IntState ints(true);
+//        }
+//        const uint16_t ticks = _TicksRead();
+//        return _RTCTime + ticks*UsPerTick;
+//    }
+////    
+////    static uint16_t TicksRead() {
+////        Toastbox::IntState ints(false);
+////        for (;;) {
+////            Toastbox::IntState ints(true);
+////            const uint16_t ticks = RTCCNT;
+////            if (ticks) return ticks;
+////            // Wait for RTCCNT to escape 0
+////            T_Scheduler::Delay((3*UsPerTick)/2);
+////        }
+////    }
+//    
+//    static uint16_t _TicksRead() {
+//        for (;;) {
+//            const uint16_t ticks = RTCCNT;
+//            if (ticks) return ticks;
+//            // Wait for RTCCNT to escape 0
+//            T_Scheduler::Delay((3*UsPerTick)/2);
+//        }
+//    }
+    
+//    static uint16_t TicksRead() {
+//        Toastbox::IntState ints(false);
+//        for (;;) {
+//            Toastbox::IntState ints(true);
+//            const uint16_t ticks = RTCCNT;
+//            if (ticks) return ticks;
+//            // Wait for RTCCNT to escape 0
+//            T_Scheduler::Delay((3*UsPerTick)/2);
+//        }
+//    }
+    
+    static Time::Instant TimeRead() {
+        Toastbox::IntState ints(false);
+        // Make sure to read ticks before _RTCTime, to ensure that _RTCTime reflects the
+        // value read by _TicksRead().
+        const uint16_t ticks = _TicksRead();
+        return _RTCTime + ticks*UsPerTick;
+    }
+    
+    static uint16_t TicksRead() {
+        Toastbox::IntState ints(false);
+        return _TicksRead();
+    }
+    
+    static bool _OverflowPending() {
+        return RTCCTL & RTCIFG;
+    }
+    
+    static uint16_t _TicksRead() {
+        for (;;) {
+            const uint16_t ticks = RTCCNT;
+            if (!ticks || _OverflowPending()) {
+                T_Scheduler::Delay(UsPerTick);
+                continue;
+            }
+            return ticks;
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+//    static Time::Instant TimeRead() {
+//        Toastbox::IntState ints(true);
+//        
+//        Toastbox::IntState ints(false);
+//        const uint16_t ticks = TicksRead();
+//        return _RTCTime + ticks*UsPerTick;
+//    }
+//    
+//    // TicksRead(): returns the current value of RTCCNT
+//    static uint16_t TicksRead() {
+//        for (;;) {
+//            const uint16_t rtccnt = RTCCNT;
+//            if (rtccnt) return rtccnt;
+//            T_Scheduler::Delay((3*UsPerTick)/2);
+//        }
+//    }
+    
+    
+    
+    
+    
+    
+    
+    
+//    
+//    static Time::Instant TimeRead() {
+//        Toastbox::IntState ints(true);
+//        {
+//            Toastbox::IntState ints(false);
+//            return _RTCTime + TicksRead()*UsPerTick;
+//        }
+//    }
+//    
+//    static uint16_t TicksRead() {
+//        for (;;) {
 //            const uint16_t rtccnt = RTCCNT;
 //            if (!rtccnt) {
 //                T_Scheduler::Delay((3*UsPerTick)/2);
 //                continue;
 //            }
-//            return _RTCTime + rtccnt*UsPerTick;
+//            return rtccnt;
+//        }
+//    }
+    
+    
+    
+    
+//    static uint16_t TicksRead() {
+//        for (;;) {
+//            const uint16_t rtccnt = RTCCNT;
+//            if (!rtccnt) {
+//                T_Scheduler::Delay((3*UsPerTick)/2);
+//                continue;
+//            }
+//            return rtccnt;
 //        }
 //    }
     
