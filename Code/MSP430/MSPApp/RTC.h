@@ -1,5 +1,6 @@
 #pragma once
 #include <msp430.h>
+#include <ratio>
 #include "Toastbox/Scheduler.h"
 #include "MSP.h"
 #include "Time.h"
@@ -30,12 +31,20 @@ public:
     static constexpr uint32_t InterruptIntervalSec = 2048;
     static constexpr uint32_t InterruptIntervalUs = InterruptIntervalSec*1000000;
     static constexpr uint32_t Predivider = 1024;
-    static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
-    static_assert((T_XT1FreqHz % Predivider) == 0); // Confirm that T_XT1FreqHz is evenly divisible by Predivider
-    static constexpr uint32_t UsPerTick = 1000000/FreqHz;
-    static_assert((1000000 % FreqHz) == 0); // Confirm that UsPerTick calculation is exact
+    
+    using FreqHzRatio = std::ratio<T_XT1FreqHz, Predivider>;
+    static_assert(FreqHzRatio::den == 1); // Verify FreqHzRatio division is exact
+    static constexpr uint32_t FreqHz = FreqHzRatio::num;
+    
+    using UsPerTickRatio = std::ratio<1000000, FreqHz>;
+    static_assert(UsPerTickRatio::den == 1); // Verify UsPerTickRatio division is exact
+    static constexpr uint32_t UsPerTick = UsPerTickRatio::num;
+    
+    static constexpr uint16_t TicksMax = 0xFFFF;
+    
     static constexpr uint16_t InterruptCount = (InterruptIntervalSec*FreqHz)-1;
     static_assert(InterruptCount == ((InterruptIntervalSec*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
+    
     
     struct Pin {
         using XOUT  = typename T_XOUTPin::template Opts<GPIO::Option::Sel10>;
