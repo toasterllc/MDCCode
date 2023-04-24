@@ -35,10 +35,12 @@ public:
     using FreqHzRatio = std::ratio<T_XT1FreqHz, Predivider>;
     static_assert(FreqHzRatio::den == 1); // Verify FreqHzRatio division is exact
     static constexpr uint32_t FreqHz = FreqHzRatio::num;
+    static_assert(FreqHz == 32); // Debug
     
     using UsPerTickRatio = std::ratio<1000000, FreqHz>;
     static_assert(UsPerTickRatio::den == 1); // Verify UsPerTickRatio division is exact
     static constexpr uint32_t UsPerTick = UsPerTickRatio::num;
+    static_assert(UsPerTick == 31250); // Debug
     
     static constexpr uint16_t TicksMax = 0xFFFF;
     
@@ -94,18 +96,7 @@ public:
         }
     }
     
-    static Time::Instant TimeRead() {
-        // Disable interrupts so that reading _RTCTime and adding RTCCNT to it is atomic
-        // (with respect to overflow causing _RTCTime to be updated)
-        Toastbox::IntState ints(false);
-        // Make sure to read ticks before _RTCTime, to ensure that _RTCTime reflects the
-        // value read by _TicksRead(), since _TicksRead() enables interrupts in some cases,
-        // allowing _RTCTime to be updated.
-        const uint16_t ticks = _TicksRead();
-        return _RTCTime + ticks*UsPerTick;
-    }
-    
-    // TicksRead(): returns the current ticks offset from _RTCTime, as tracked by the
+// TicksRead(): returns the current ticks offset from _RTCTime, as tracked by the
     // hardware register RTCCNT.
     //
     // Guarantee1: if interrupts are disabled before being called, the value that TicksRead()
@@ -142,7 +133,7 @@ public:
     //      (Guarantee2), because ISR() will be called as soon as interrupts are enabled,
     //      because RTCIFG=1.
     //
-    static uint16_t TicksRead() {
+    static uint16_t Ticks() {
         for (;;) {
             const uint16_t ticks = RTCCNT;
             if (ticks==0 || _OverflowPending()) {
@@ -151,6 +142,24 @@ public:
             }
             return ticks;
         }
+    }
+    
+    static Time::Instant Now() {
+        // Disable interrupts so that reading _RTCTime and adding RTCCNT to it is atomic
+        // (with respect to overflow causing _RTCTime to be updated)
+        Toastbox::IntState ints(false);
+        // Make sure to read ticks before _RTCTime, to ensure that _RTCTime reflects the
+        // value read by TicksRead(), since TicksRead() enables interrupts in some cases,
+        // allowing _RTCTime to be updated.
+        const uint16_t ticks = TicksRead();
+        return _RTCTime + ticks*UsPerTick;
+    }
+    
+    // TimeUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
+    // interrupt doesn't occur before the caller finishes using the returned value.
+    static Time::Us TimeUntilOverflow() {
+        const uint16_t ticks = TicksRead();
+        return ((uint32_t)(TicksMax-ticks)+1) * UsPerTick;
     }
     
     static void ISR() {

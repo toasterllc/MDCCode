@@ -41,10 +41,11 @@ private:
         
         using TimerPeriodUsRatio = std::ratio<1000000, TimerFreqHz>;
         
-        const Time::Instant now = T_RTC::TimeRead();
-        
         // Disable interrupts while we modify our state
         Toastbox::IntState ints(false);
+        
+        #warning TODO: ISRTimer() / ISRRTC() could be called within TimeRead()!
+        const Time::Instant now = T_RTC::TimeRead();
         
         // Reset our state
         _ISRState = {};
@@ -55,13 +56,18 @@ private:
             return;
         }
         
-        // Handle sleep periods longer than T_RTC::InterruptIntervalUs.
-        // We don't want to start our timer for such cases to minimize our number of wakes.
-        // Instead we rely on RTC wakes until we get close enough to the alarm time to start the timer.
-        const Time::Us deltaUs = _AlarmTime-now;
+        const Time::Us rtcTimeUntilOverflow = T_RTC::TimeUntilOverflow();
+        Time::Us deltaUs = _AlarmTime-now;
+        
+        if (deltaUs >= rtcTimeUntilOverflow) {
+            _ISRState.rtcCount = 1;
+            deltaUs -= rtcTimeUntilOverflow;
+        }
+        
         if (deltaUs >= T_RTC::InterruptIntervalUs) {
-            _ISRState.rtcCount = deltaUs / T_RTC::InterruptIntervalUs;
-            return;
+            const uint16_t count = deltaUs / T_RTC::InterruptIntervalUs;
+            _ISRState.rtcCount += count;
+            deltaUs -= count*T_RTC::InterruptIntervalUs;
         }
         
         // Ensure that `deltaUs` can be cast to a u32, which we want to do so we don't perform a u64 division
