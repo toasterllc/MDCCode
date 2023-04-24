@@ -982,15 +982,15 @@ struct _TaskButton {
         // Init clock
         _Clock::Init();
         
+        // Init SysTick
+        _SysTick::Init();
+        
         // Init RTC
         // We need RTC to be unconditionally enabled for 2 reasons:
         //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
         //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
         //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
         _RTC::Init();
-        
-        // Init SysTick
-        _SysTick::Init();
         
         // Init BatterySampler
         _BatterySampler::Init();

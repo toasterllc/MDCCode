@@ -3,6 +3,7 @@
 #include "Toastbox/Scheduler.h"
 #include "MSP.h"
 #include "Time.h"
+#include "Assert.h"
 
 // _RTCTime: the current time (either absolute or relative, depending on the
 // value supplied to Init()).
@@ -23,7 +24,7 @@
 [[gnu::section(".ram_backup_noinit.rtc")]]
 static volatile Time::Instant _RTCTime;
 
-template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>
+template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin, typename T_Scheduler>
 class RTCType {
 public:
     static constexpr uint32_t InterruptIntervalSec = 2048;
@@ -75,28 +76,130 @@ public:
             
             // Enable RTC interrupts
             RTCCTL |= RTCIE;
+            
+            // Wait until RTC is initialized. This is necessary because before the RTC peripheral is initialized,
+            // it's possible to read an old value of RTCCNT, which would temporarily reflect the wrong time.
+            // Empirically the RTC peripheral is reset and initialized synchronously from its clock (XT1CLK
+            // divided by Predivider), so we wait 1.5 cycles of that clock to ensure RTC is finished resetting.
+            T_Scheduler::Delay(T_Scheduler::Us((3*UsPerTick)/2));
         }
     }
     
     // TimeRead(): returns the current time, which is either absolute (wall time) or
     // relative (to the device start time), depending on the value supplied to Init().
     //
-    // TimeRead() reads _RTCTime in an safe, overflow-aware manner.
+    // TimeRead() explicitly _enables_ interrupts to ensure that _RTCTime has been
+    // properly updated to reflect overflow, before reading its value.
     //
-    // Interrupts must be *enabled* (not disabled!) when calling to properly handle overflow!
+    // TimeRead() reads RTCCNT to determine the current offset from _RTCTime. If 0 is
+    // read for RTCCNT, RTCCNT is in the process of overflowing and requires special
+    // handling. In this situation, the RTC overflow interrupt has either occurred or
+    // hasn't occurred, and empircally (see Tools/MSP430FR2433-RTCTest) it's possible
+    // to observe RTCCNT=0 _before_ the RTCIFG interrupt flag is set / before the
+    // ISR occurs. Therefore while RTCCNT=0, we don't know whether _RTCTime has been
+    // updated to reflect the overflow yet, and therefore TimeRead() doesn't know what
+    // value to return. So to handle this RTCCNT=0 situation we simply wait 1.5 RTC
+    // clock cycles, so that RTCCNT!=0 and we can be sure that _RTCTime has been
+    // updated for the overflow.
     static Time::Instant TimeRead() {
-        // Verify that ints are enabled
-        Assert(Toastbox::IntState::Get());
-        // This 2x _TimeRead() loop is necessary to handle the race related to RTCCNT overflowing:
-        // When we read _RTCTime and RTCCNT, we don't know if _RTCTime has been updated for the most
-        // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
-        // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
+        Toastbox::IntState ints(true);
         for (;;) {
-            const Time::Instant t1 = _TimeRead();
-            const Time::Instant t2 = _TimeRead();
-            if (t2 >= t1) return t2;
+            Toastbox::IntState ints(false);
+            const uint16_t rtccnt = RTCCNT;
+            if (!rtccnt) {
+                T_Scheduler::Delay((3*UsPerTick)/2);
+                continue;
+            }
+            return _RTCTime + rtccnt*UsPerTick;
         }
     }
+    
+//    static uint16_t Ticks() {
+//        Toastbox::IntState ints(true);
+//        for (;;) {
+//            Toastbox::IntState ints(false);
+//            const uint16_t rtccnt = RTCCNT;
+//            if (!rtccnt) {
+//                T_Scheduler::Delay((3*UsPerTick)/2);
+//                continue;
+//            }
+//            return _RTCTime + rtccnt*UsPerTick;
+//        }
+//    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+//    static uint16_t _RTCCNTRead() {
+//        uint16_t x = RTCCNT;
+//        if (x) return x;
+//        T_Scheduler::Delay((3*UsPerTick)/2);
+//        x = RTCCNT;
+//        Assert(x);
+//        return x;
+//    }
+//    
+//    static Time::Instant TimeRead() {
+//        // Verify that ints are enabled
+//        Assert(Toastbox::IntState::Get());
+//        
+//        for (;;) {
+//            Toastbox::IntState ints(false);
+//            const uint16_t rtccnt = RTCCNT;
+//            if (!rtccnt) {
+//                T_Scheduler::Delay((3*UsPerTick)/2);
+//                continue;
+//            }
+//            return _RTCTime + rtccnt*UsPerTick;
+//        }
+//    }
+//    
+//    static Time::Instant TimeRead() {
+//        // Verify that ints are enabled
+//        Assert(Toastbox::IntState::Get());
+//        
+//        for (;;) {
+//            // Disable interrupts so we can read _Time and RTCCNT atomically.
+//            // This is especially necessary because reading _Time isn't atomic
+//            // since it's 64 bits.
+//            Toastbox::IntState ints(false);
+//            return _RTCTime + RTCCNT*UsPerTick;
+//        }
+//        
+//        
+//    }
+    
+//    // TimeRead(): returns the current time, which is either absolute (wall time) or
+//    // relative (to the device start time), depending on the value supplied to Init().
+//    //
+//    // TimeRead() reads _RTCTime in an safe, overflow-aware manner.
+//    //
+//    // Interrupts must be *enabled* (not disabled!) when calling to properly handle overflow!
+//    static Time::Instant TimeRead() {
+//        // Verify that ints are enabled
+//        Assert(Toastbox::IntState::Get());
+//        // This 2x _TimeRead() loop is necessary to handle the race related to RTCCNT overflowing:
+//        // When we read _RTCTime and RTCCNT, we don't know if _RTCTime has been updated for the most
+//        // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
+//        // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
+//        for (;;) {
+//            const Time::Instant t1 = _TimeRead();
+//            const Time::Instant t2 = _TimeRead();
+//            if (t2 >= t1) return t2;
+//        }
+//    }
     
     static void ISR() {
         // Accessing `RTCIV` automatically clears the highest-priority interrupt
@@ -127,11 +230,11 @@ private:
         else static_assert(_AlwaysFalse<T_Predivider>);
     }
     
-    static Time::Instant _TimeRead() {
-        // Disable interrupts so we can read _Time and RTCCNT atomically.
-        // This is especially necessary because reading _Time isn't atomic
-        // since it's 64 bits.
-        Toastbox::IntState ints(false);
-        return _RTCTime + RTCCNT*UsPerTick;
-    }
+//    static Time::Instant _TimeRead() {
+//        // Disable interrupts so we can read _Time and RTCCNT atomically.
+//        // This is especially necessary because reading _Time isn't atomic
+//        // since it's 64 bits.
+//        Toastbox::IntState ints(false);
+//        return _RTCTime + RTCCNT*UsPerTick;
+//    }
 };
