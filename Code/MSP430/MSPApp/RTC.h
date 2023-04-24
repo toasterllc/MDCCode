@@ -161,23 +161,17 @@ public:
 //    }
     
     static Time::Instant TimeRead() {
+        // Disable interrupts so that reading _RTCTime and adding RTCCNT to it is atomic
+        // (with respect to overflow causing _RTCTime to be updated)
         Toastbox::IntState ints(false);
         // Make sure to read ticks before _RTCTime, to ensure that _RTCTime reflects the
-        // value read by _TicksRead().
+        // value read by _TicksRead(), since _TicksRead() enables interrupts in some cases,
+        // allowing _RTCTime to be updated.
         const uint16_t ticks = _TicksRead();
         return _RTCTime + ticks*UsPerTick;
     }
     
     static uint16_t TicksRead() {
-        Toastbox::IntState ints(false);
-        return _TicksRead();
-    }
-    
-    static bool _OverflowPending() {
-        return RTCCTL & RTCIFG;
-    }
-    
-    static uint16_t _TicksRead() {
         for (;;) {
             const uint16_t ticks = RTCCNT;
             if (!ticks || _OverflowPending()) {
@@ -186,6 +180,10 @@ public:
             }
             return ticks;
         }
+    }
+    
+    static bool _OverflowPending() {
+        return RTCCTL & RTCIFG;
     }
     
     
