@@ -96,13 +96,13 @@ public:
         }
     }
     
-// TicksRead(): returns the current ticks offset from _RTCTime, as tracked by the
+    // Ticks(): returns the current ticks offset from _RTCTime, as tracked by the
     // hardware register RTCCNT.
     //
-    // Guarantee1: if interrupts are disabled before being called, the value that TicksRead()
+    // Guarantee1: if interrupts are disabled before being called, the value that Ticks()
     // returns can be safely added to _RTCTime to determine the current time.
     // 
-    // Guarantee2: if interrupts are disabled before being called, the value that TicksRead()
+    // Guarantee2: if interrupts are disabled before being called, the value that Ticks()
     // returns can be safely subtracted from TicksMax+1 to determine the number of ticks until
     // the next overflow occurs / ISR() is called.
     //
@@ -118,7 +118,7 @@ public:
     //      allowing us to provide Guarantee1 and Guarantee2.
     //
     //   2. RTCIFG=1
-    //      It could be the case that RTCIFG=1 upon entry to TicksRead() from a previous
+    //      It could be the case that RTCIFG=1 upon entry to Ticks() from a previous
     //      overflow, and needs to be explicitly handled to provide Guarantee1 and Guarantee2.
     //      We handle RTCIFG=1 in the same way as the RTCCNT=0: wait 1 RTC clock cycle with
     //      interrupts enabled.
@@ -149,23 +149,23 @@ public:
         // (with respect to overflow causing _RTCTime to be updated)
         Toastbox::IntState ints(false);
         // Make sure to read ticks before _RTCTime, to ensure that _RTCTime reflects the
-        // value read by TicksRead(), since TicksRead() enables interrupts in some cases,
+        // value read by Ticks(), since Ticks() enables interrupts in some cases,
         // allowing _RTCTime to be updated.
-        const uint16_t ticks = TicksRead();
+        const uint16_t ticks = Ticks();
         return _RTCTime + ticks*UsPerTick;
     }
     
     // TimeUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
     // interrupt doesn't occur before the caller finishes using the returned value.
     static Time::Us TimeUntilOverflow() {
-        const uint16_t ticks = TicksRead();
+        const uint16_t ticks = Ticks();
         return ((uint32_t)(TicksMax-ticks)+1) * UsPerTick;
     }
     
     static void ISR() {
         // Accessing `RTCIV` automatically clears the highest-priority interrupt
         switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
-        case RTCIV_RTCIF:
+        case RTCIV__RTCIFG:
             // Update our time
             _RTCTime += InterruptIntervalUs;
             return;

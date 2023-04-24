@@ -8,25 +8,6 @@ template <typename T_RTC, uint32_t T_ACLKFreqHz>
 class T_Alarm {
 public:
     static void Set(const Time::Instant& alarm) {
-        
-    }
-    
-    static bool Get() {
-        return _Triggered;
-    }
-    
-    static void ISRTimer() {
-        Assert(!_Triggered);
-        _Triggered = true;
-    }
-    
-    static void ISRRTC() {
-        Assert(!_Triggered);
-        _Triggered = true;
-    }
-    
-private:
-    static void _Update() {
         static constexpr uint32_t TimerACLKDivider = 64;
         
         using TimerFreqHzRatio = std::ratio<T_ACLKFreqHz, TimerACLKDivider>;
@@ -51,13 +32,13 @@ private:
         _ISRState = {};
         
         // Handle the alarm time having passed
-        if (_AlarmTime < now) {
+        if (alarm < now) {
             _ISRState.triggered = true;
             return;
         }
         
         const Time::Us rtcTimeUntilOverflow = T_RTC::TimeUntilOverflow();
-        Time::Us deltaUs = _AlarmTime-now;
+        Time::Us deltaUs = alarm-now;
         
         if (deltaUs >= rtcTimeUntilOverflow) {
             _ISRState.rtcCount = 1;
@@ -91,27 +72,41 @@ private:
         _ISRState.timerIntervalCount = intervalCount;
         _ISRState.timerRemainderCount = remainderCount;
         
-        
-        
-        
-        
-        
-//        // Stop timer
-//        TA0CTL = (TA0CTL & ~MC_3) | MC__STOP;
-//        
-//        // Configure timer
-//        TA0CTL =
-//            TASSEL_1    |   // source = ACLK
-//            MC__UP      |   // mode = up (count from 0 to TA0CCR0 repeatedly)
-//            TACLR       |   // reset timer internal state (counter, clock divider state, count direction)
-//            TAIE        ;   // enable interrupt
-//        
-//        TA0CCR0 = ;
-        
-        
+        _TimerUpdate();
     }
     
-    Time::Instant _AlarmTime = 0;
+    static bool Get() {
+        return _Triggered;
+    }
+    
+    static void ISRRTC() {
+        // Short-circuit if we're not waiting for RTC interrupts
+        if (!_ISRState.rtcCount) return;
+        _ISRState.rtcCount--;
+        if (_ISRState.rtcCount == 0) {
+            _TimerUpdate();
+        }
+    }
+    
+    static void ISRTimer() {
+        Assert(!_Triggered);
+        _Triggered = true;
+    }
+    
+private:
+    static void _TimerUpdate() {
+        // Stop timer
+        TA0CTL = (TA0CTL & ~MC_3) | MC__STOP;
+        
+        TA0CCR0 = ;
+        
+        // Configure timer
+        TA0CTL =
+            TASSEL_1    |   // source = ACLK
+            MC__UP      |   // mode = up (count from 0 to TA0CCR0 repeatedly)
+            TACLR       |   // reset timer internal state (counter, clock divider state, count direction)
+            TAIE        ;   // enable interrupt
+    }
     
     static inline volatile struct {
         uint16_t rtcCount = 0;

@@ -127,10 +127,8 @@ public:
     
     static void ISR(uint16_t iv) {
         switch (__even_in_range(iv, ADCIV_ADCIFG)) {
-        case ADCIV_ADCOVIFG:    Assert(false); break;
-        case ADCIV_ADCTOVIFG:   Assert(false); break;
-        case ADCIV_ADCIFG:      _SampleHandle(ADCMEM0); break;
-        default:                Assert(false); break;
+        case ADCIV_ADCIFG:  _SampleHandle(ADCMEM0); break;
+        default:            Assert(false); break;
         }
     }
     
