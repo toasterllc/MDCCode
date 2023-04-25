@@ -15,8 +15,8 @@ public:
     static constexpr TimerFreqHz = TimerFreqHzRatio::num;
     static_assert(TimerFreqHz == 512); // Debug
     
-    static constexpr uint16_t TimerMaxCCR0 = 0xFFFF;
-    using TimerMaxIntervalSecRatio = std::ratio<(uint32_t)TimerMaxCCR0+1, TimerFreqHz>;
+    static constexpr uint32_t TimerMaxTicks = 0x10000;
+    using TimerMaxIntervalSecRatio = std::ratio<TimerMaxTicks, TimerFreqHz>;
     static_assert(TimerMaxIntervalSecRatio::den == 1); // Verify TimerMaxIntervalSecRatio division is exact
     static constexpr uint32_t TimerMaxIntervalSec = TimerMaxIntervalSecRatio::num;
     static_assert(TimerMaxIntervalSec == 128); // Debug
@@ -100,51 +100,57 @@ public:
         _StateUpdate();
     }
     
-    static void ISRTimer() {
-//        switch (_ISRState.state) {
-//        case _State::TimerInterval:
-//            Assert(_ISRState.timer.intervalCount);
-//            _ISRState.timer.intervalCount--;
-//            break;
-//        
-//        case _State::TimerRemainder:
-//            Assert(_ISRState.timer.remainderTicks);
-//            _ISRState.timer.remainderTicks--;
-//            break;
-//        
-//        default:
-//            Assert(false);
-//        }
-        
-        Assert(_ISRState.state==_State::TimerInterval || _ISRState.state==_State::TimerRemainder);
+    static void ISRTA0() {
+        Assert(_ISRState.state == _State::TimerInterval);
+        _StateUpdate();
+    }
+    
+    static void ISRTA0CCR0() {
+        Assert(_ISRState.state==_State::TimerRemainder);
         _StateUpdate();
     }
     
 private:
-    static void _TimerSet(uint16_t count) {
-        const uint16_t mode = (count ? MC__CONTINUOUS : MC__STOP);
-        
-        // Stop timer
+//    static constexpr uint16_t _CCRForTicks(uint32_t ticks) {
+//        static_assert(ticks > 0);
+//        static_assert(ticks-1 <= std::numeric_limits<uint16_t>::max());
+//        return ticks-1;
+//    }
+    
+    static void _TimerStop() {
         TA0CTL = (TA0CTL & ~(MC0|MC1)) | MC__STOP;
-        
+    }
+    
+    static void _TimerSet(uint32_t ticks) {
+        // Stop timer
+        _TimerStop();
         // Additional clock divider = /8
         TA0EX0 = TAIDEX_7;
+        // Reset TA0CCTL0
+        TA0CCTL0 = 0;
         
-        if (count) {
-            TA0CTL =
-                TASSEL__ACLK    |   // clock source = ACLK
-                ID__8           |   // clock divider = /8
-                MC__CONTINUOUS  |   // mode = continuous
-                TACLR           |   // reset timer state
-                TAIE            ;   // enable interrupt
+        if (ticks == 0x10000) {
+            // Use TA0 interrupt, since we want 65536 ticks (which TA0CCR0
+            // isn't capable of supplying)
+            TA0CTL |= TAIE;
+        
+        } else {
+            // Use TA0CCR0 interrupt
+            // Set value to count to
+            TA0CCR0 = ticks;
+            // CCIE
+            TA0CCTL0 |= CCIE;
         }
+        
+        // Start timer
+        TA0CTL |= MC__CONTINUOUS;
     }
     
     // _Reset(): resets the timer and our state (_ISRState)
     // Interrupts must be disabled
     static void _Reset() {
         _ISRState = {};
-        _TimerSet(0);
+        _TimerStop();
     }
     
     static void _StateUpdate(bool next=false) {
@@ -163,7 +169,6 @@ private:
             if (_ISRState.rtc.count) {
                 if (next) {
                     // Handle entering this state
-                    // Set timer
                 } else {
                     _ISRState.rtc.count--;
                 }
@@ -177,7 +182,7 @@ private:
                 if (next) {
                     // Handle entering this state
                     // Set timer
-                    _TimerSet(TimerMaxCCR0);
+                    _TimerSet(TimerMaxTicks);
                 } else {
                     _ISRState.timer.intervalCount--;
                 }
@@ -191,7 +196,7 @@ private:
                 if (next) {
                     // Handle entering this state
                     // Set timer
-                    _TimerSet();
+                    _TimerSet(_ISRState.timer.remainderTicks);
                 } else {
                     _ISRState.timer.remainderTicks = 0;
                 }
@@ -201,6 +206,8 @@ private:
             break;
         
         case _State::Triggered:
+            // Clean up
+            _TimerStop();
             break;
         }
     }
