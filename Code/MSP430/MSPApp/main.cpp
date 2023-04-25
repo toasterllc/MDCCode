@@ -27,6 +27,7 @@
 #include "Motion.h"
 #include "SuppressibleAssertion.h"
 #include "Assert.h"
+#include "Timer.h"
 using namespace GPIO;
 
 static constexpr uint32_t _XT1FreqHz        = 32768;
@@ -207,30 +208,6 @@ static Time::Us _RepeatAdvance(MSP::Repeat& x) {
         }
     }
     Assert(false);
-}
-
-//static void _EventInsert(_Triggers::Event& ev, const Time::Instant& t) {
-//    _Triggers::EventInsert(ev, t);
-//}
-
-static void _EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-    const Time::Us delta = _RepeatAdvance(repeat);
-    // delta=0 means Repeat=never, in which case we don't reschedule the event
-    if (delta) {
-        _Triggers::EventInsert(ev, ev.time+delta);
-    }
-}
-
-static void _EventInsert(_Triggers::Event& ev, Time::Instant time, uint32_t deltaMs) {
-    _Triggers::EventInsert(ev, time + ((Time::Us)deltaMs)*1000);
-}
-
-static void _CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) {
-    // Reset capture count
-    ev.countRem = ev.capture->count;
-    if (ev.countRem) {
-        _Triggers::EventInsert(ev, time);
-    }
 }
 
 
@@ -615,10 +592,10 @@ struct _TaskEvent {
         _Triggers::TimeTrigger& trigger = ev.trigger();
         // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
         if (!_State.fastForward) {
-            _CaptureStart(trigger, ev.time);
+            CaptureStart(trigger, ev.time);
         }
         // Reschedule TimeTriggerEvent for its next trigger time
-        _EventInsert(ev, ev.repeat);
+        EventInsert(ev, ev.repeat);
     }
     
     static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
@@ -632,11 +609,11 @@ struct _TaskEvent {
         // properly schedule the MotionDisableEvent!
         const uint32_t durationMs = trigger.base().durationMs;
         if (durationMs) {
-            _EventInsert((_Triggers::MotionDisableEvent&)trigger, ev.time, durationMs);
+            EventInsert((_Triggers::MotionDisableEvent&)trigger, ev.time, durationMs);
         }
         
         // Reschedule MotionEnableEvent for its next trigger time
-        _EventInsert(ev, ev.repeat);
+        EventInsert(ev, ev.repeat);
     }
     
     static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
@@ -708,16 +685,143 @@ struct _TaskEvent {
         
         ev.countRem--;
         if (ev.countRem) {
-            _EventInsert(ev, ev.time, ev.capture->delayMs);
+            EventInsert(ev, ev.time, ev.capture->delayMs);
         }
     }
     
-    static _Triggers::Event* _EventPop() {
-        _Triggers::Event* ev = _Triggers::EventPop(_RTC::TimeRead());
-        // Exit fast-forward mode when we no longer have any events in the past
-        if (!ev) {
-            _State.fastForward = false;
+    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
+        _Triggers::EventInsert(ev, time);
+        // If this event is now the front of the list, reschedule _EventTimer
+        if (_Triggers::EventFront() == &ev) {
+            _EventTimerSchedule();
         }
+    }
+
+    static void EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
+        const Time::Us delta = _RepeatAdvance(repeat);
+        // delta=0 means Repeat=never, in which case we don't reschedule the event
+        if (delta) {
+            EventInsert(ev, ev.time+delta);
+        }
+    }
+
+    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, uint32_t deltaMs) {
+        EventInsert(ev, time + ((Time::Us)deltaMs)*1000);
+    }
+
+    static void CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
+        // Reset capture count
+        ev.countRem = ev.capture->count;
+        if (ev.countRem) {
+            EventInsert(ev, time);
+        }
+    }
+    
+    static void _EventTimerSchedule() {
+        _Triggers::Event* ev = _Triggers::EventFront();
+        if (ev) {
+            _EventTimer::Schedule(ev->time);
+        } else {
+            _EventTimer::Reset();
+        }
+    }
+    
+//    static void _EventTimerSchedule(const Time::Instant& time) {
+//        if (time) {
+//            _EventTimer::Schedule(time);
+//        } else {
+//            _EventTimer::Reset();
+//        }
+//    }
+    
+    // _EventPop(): pops an event from the front of the list if it's ready to be handled
+    // Interrupts must be disabled
+    static _Triggers::Event& _EventPop() {
+        _Triggers::Event* ev = _Triggers::EventFront();
+        Assert(ev); // We must have an event at this point, or else we have a logic error
+        _Triggers::EventPop();
+        // Schedule _EventTimer for the next event
+        _EventTimerSchedule();
+        return *ev;
+        
+//        // If the event occurs after the current time, don't pop it yet
+//        if (ev && ev->time>=_RTC::TimeRead()) ev = nullptr;
+//        // If we're returning an event, pop it from the list
+//        if (ev) _Triggers::EventPop();
+//        // Exit fast-forward mode when we no longer have any events in the past
+//        if (!ev) _State.fastForward = false;
+//        
+//        // If we're not fast-forwarding, and we either (1) popped an event, or (2) _WakeTimer
+//        // isn't running, then schedule _WakeTimer. (2) is necessary for the initial case
+//        // when we just exited fast-forward mode, in which case we won't return an event,
+//        // but we do need to set the _WakeTimer (for the first time).
+//        if (!_State.fastForward && (ev || !_WakeTimer::Running())) {
+//            _Triggers::Event*const next = _Triggers::EventFront();
+//            _WakeTimer::Schedule(next ? next->time : 0);
+//            
+////            if (next) _WakeTimer::Schedule(next->time);
+////            else      _WakeTimer::Reset();
+//        }
+        
+//        // If there's no front event, or the front event occurs after the current time, no events are ready yet.
+//        if (!ev || ev->time>=_RTC::TimeRead()) {
+//            // Exit fast-forward mode when we no longer have any events in the past
+//            _State.fastForward = false;
+//            ev = nullptr;
+//        }
+//        
+//        if (ev) _Triggers::EventPop();
+//        
+//        _Triggers::Event* ev = _Triggers::EventPop(_RTC::TimeRead());
+//        // Exit fast-forward mode when we no longer have any events in the past
+//        if (!ev) {
+//            _State.fastForward = false;
+//        }
+        
+        return ev;
+    }
+    
+    static bool _EventTimerFired() {
+        const bool fired = _EventTimer::Fired();
+        // Exit fast-forward mode the first time we have an event that's in the future
+        if (!fired) _State.fastForward = false;
+        return fired;
+        
+//        _Triggers::Event* ev = _Triggers::EventFront();
+//        // If the event occurs after the current time, don't pop it yet
+//        if (ev && ev->time>=_RTC::TimeRead()) ev = nullptr;
+//        // If we're returning an event, pop it from the list
+//        if (ev) _Triggers::EventPop();
+//        // Exit fast-forward mode when we no longer have any events in the past
+//        if (!ev) _State.fastForward = false;
+//        
+//        // If we're not fast-forwarding, and we either (1) popped an event, or (2) _WakeTimer
+//        // isn't running, then schedule _WakeTimer. (2) is necessary for the initial case
+//        // when we just exited fast-forward mode, in which case we won't return an event,
+//        // but we do need to set the _WakeTimer (for the first time).
+//        if (!_State.fastForward && (ev || !_WakeTimer::Running())) {
+//            _Triggers::Event*const next = _Triggers::EventFront();
+//            _WakeTimer::Schedule(next ? next->time : 0);
+//            
+////            if (next) _WakeTimer::Schedule(next->time);
+////            else      _WakeTimer::Reset();
+//        }
+        
+//        // If there's no front event, or the front event occurs after the current time, no events are ready yet.
+//        if (!ev || ev->time>=_RTC::TimeRead()) {
+//            // Exit fast-forward mode when we no longer have any events in the past
+//            _State.fastForward = false;
+//            ev = nullptr;
+//        }
+//        
+//        if (ev) _Triggers::EventPop();
+//        
+//        _Triggers::Event* ev = _Triggers::EventPop(_RTC::TimeRead());
+//        // Exit fast-forward mode when we no longer have any events in the past
+//        if (!ev) {
+//            _State.fastForward = false;
+//        }
+        
         return ev;
     }
     
@@ -731,13 +835,16 @@ struct _TaskEvent {
         // Init Triggers
         _Triggers::Init(_RTC::TimeRead());
         
+        // Schedule _EventTimer for the first event
+        _EventTimerSchedule();
+        
         // Enter fast-forward mode while we pop every event that occurs in the past
-        // (_EventPop() will exit from fast-forward mode)
+        // (_EventTimerFired() will exit from fast-forward mode)
         _State.fastForward = true;
         for (;;) {
-            // Wait for an event
-            static _Triggers::Event* ev = nullptr;
-            _Scheduler::Wait([] { return (bool)(ev = _EventPop()); });
+            // Wait for _EventTimer to fire
+            _Scheduler::Wait([] { return _EventTimerFired(); });
+            _Triggers::Event& ev = _EventPop();
             
             // Don't go to sleep until we handle the event
             _State.caffeine = true;
@@ -763,9 +870,9 @@ struct _TaskEvent {
         // fastForward=false once we're done initializing and executing events normally.
         bool fastForward = false;
         // power / vddb / vddImgSd: our power assertions
-        // These need to be an ivar because TaskMain can be reset at any time via
+        // These need to be ivars because _TaskEvent can be reset at any time via
         // our Reset() function, so if the power assertion lived on the stack and
-        // TaskMain is reset, its destructor would never be called and our state
+        // _TaskEvent is reset, its destructor would never be called and our state
         // would be corrupted.
         _Caffeine::Assertion caffeine;
         _VDDBEnabled::Assertion vddb;
@@ -906,12 +1013,12 @@ struct _TaskMotion {
                 if (trigger.enabled.get()) {
                     const Time::Instant time = _RTC::TimeRead();
                     // Start capture
-                    _CaptureStart(trigger, time);
+                    _TaskEvent::CaptureStart(trigger, time);
                     // Suppress motion for the specified duration, if suppression is enabled
                     const uint32_t suppressMs = trigger.base().suppressMs;
                     if (suppressMs) {
                         trigger.enabled.suppress(true);
-                        _EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressMs);
+                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressMs);
                     }
                 }
             }
@@ -1030,7 +1137,7 @@ struct _TaskButton {
                 if (!_On) break;
                 
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _CaptureStart(*it, _RTC::TimeRead());
+                    _TaskEvent::CaptureStart(*it, _RTC::TimeRead());
                 }
                 break;
             }

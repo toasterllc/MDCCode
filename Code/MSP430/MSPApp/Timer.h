@@ -34,7 +34,7 @@ public:
     static_assert(TimerPeriodUsRatio::num == 15625); // Debug
     static_assert(TimerPeriodUsRatio::den == 8); // Debug
     
-    static void Set(const Time::Instant& time) {
+    static void Schedule(const Time::Instant& time) {
         // Get our current time
         const Time::Instant now = T_RTC::TimeRead();
         
@@ -44,10 +44,12 @@ public:
         // Reset our state
         _Reset();
         
-        if (time >= now) {
+        _State.time = time;
+        
+        if (_State.time >= now) {
             const Time::Us rtcTimeUntilOverflow = T_RTC::TimeUntilOverflow();
             uint16_t rtcCount = 0;
-            Time::Us deltaUs = time-now;
+            Time::Us deltaUs = _State.time-now;
             
             if (deltaUs >= rtcTimeUntilOverflow) {
                 rtcCount = 1;
@@ -80,7 +82,7 @@ public:
             constexpr auto RemainderTicksMax = (RemainderUsMax * TimerPeriodUsRatio::den) / TimerPeriodUsRatio::num;
             static_assert(RemainderTicksMax <= std::numeric_limits<decltype(remainderTicks)>::max());
             
-            _ISRState = {
+            _State.isr = {
                 .rtc = {
                     .count = rtcCount,
                 },
@@ -94,23 +96,23 @@ public:
         _StateUpdate();
     }
     
+    static bool Active() {
+        Toastbox::IntState ints(false);
+        return _State.isr.state != _State_::Idle;
+    }
+    
     static bool Fired() {
-        return _ISRState.state == _State_::Fired;
-//        if (_ISRState.state == _State_::Fired) {
-//            _StateUpdate();
-//            return true;
-//        }
-//        return false;
+        Toastbox::IntState ints(false);
+        return _State.isr.state == _State_::Fired;
     }
     
     static void Reset() {
-        // Disable interrupts while we modify our state
         Toastbox::IntState ints(false);
         _Reset();
     }
     
     static bool ISRRTCInterested() {
-        return _ISRState.state == _State_::RTCCountdown;
+        return _State.isr.state == _State_::RTCCountdown;
     }
     
     static void ISRRTC() {
@@ -119,7 +121,7 @@ public:
     }
     
     static bool ISRTA0() {
-        Assert(_ISRState.state==_State_::TimerInterval || _ISRState.state==_State_::TimerRemainder);
+        Assert(_State.isr.state==_State_::TimerInterval || _State.isr.state==_State_::TimerRemainder);
         _StateUpdate();
     }
     
@@ -152,107 +154,43 @@ private:
             TAIE            ;   // enable interrupt
     }
     
-    // _Reset(): resets the timer and our state (_ISRState)
+    // _Reset(): resets the timer and our state (_State.isr)
     // Interrupts must be disabled
     static void _Reset() {
-        _ISRState = {};
+        _State = {};
         _TimerStop();
     }
     
-    
-//    static void _StateUpdate(bool next=false) {
-//        // Advance to the next state
-//        if (next) {
-//            if (_ISRState.state != _State_::Fired) _ISRState.state++;
-//            else _ISRState.state = 0;
-//        }
-//        
-//        // Handle the current state
-//        switch (_ISRState.state) {
-//        case _State_::Idle:
-//            break;
-//        
-//        case _State_::RTCCountdown:
-//            if (_ISRState.rtc.count) {
-//                if (next) {
-//                    // Handle entering this state
-//                } else {
-//                    _ISRState.rtc.count--;
-//                }
-//            }
-//            
-//            if (!_ISRState.rtc.count) _StateUpdate(true);
-//            break;
-//        
-//        case _State_::TimerInterval:
-//            if (_ISRState.timer.intervalCount) {
-//                if (next) {
-//                    // Handle entering this state
-//                    // Set timer
-//                    _TimerSet(_CCRForTicks(TimerMaxTicks));
-//                } else {
-//                    _ISRState.timer.intervalCount--;
-//                }
-//            }
-//            
-//            if (!_ISRState.timer.intervalCount) _StateUpdate(true);
-//            break;
-//        
-//        case _State_::TimerRemainder:
-//            if (_ISRState.timer.remainderTicks) {
-//                if (next) {
-//                    // Handle entering this state
-//                    // Set timer
-//                    _TimerSet(_CCRForTicks(_ISRState.timer.remainderTicks));
-//                } else {
-//                    _ISRState.timer.remainderTicks = 0;
-//                }
-//            }
-//            
-//            if (!_ISRState.timer.remainderTicks) _StateUpdate(true);
-//            break;
-//        
-//        case _State_::Fired:
-//            // Clean up
-//            _TimerStop();
-//            break;
-//        }
-//    }
-    
-    
-    
-    
-    
     static void _StateUpdate() {
         for (;;) {
-            switch (_ISRState.state) {
+            switch (_State.isr.state) {
             case _State_::Idle:
                 goto _State_::NextState;
             
             case _State_::RTCPrepare:
-                if (!_ISRState.rtc.count) goto _State_::NextState;
+                if (!_State.isr.rtc.count) goto _State_::NextState;
                 goto _State_::NextStateReturn;
             
             case _State_::RTC:
-                if (_ISRState.rtc.count) _ISRState.rtc.count--;
-                if (_ISRState.rtc.count) return;
+                if (_State.isr.rtc.count) _State.isr.rtc.count--;
+                if (_State.isr.rtc.count) return;
                 goto _State_::NextState;
             
             case _State_::TimerIntervalPrepare:
-                if (!_ISRState.timer.intervalCount) goto _State_::NextState;
+                if (!_State.isr.timer.intervalCount) goto _State_::NextState;
                 _TimerSet(_CCRForTicks(TimerMaxTicks)); // Set timer
                 goto _State_::NextStateReturn;
             
             case _State_::TimerInterval:
-                if (_ISRState.timer.intervalCount) _ISRState.timer.intervalCount--;
-                if (_ISRState.timer.intervalCount) return;
+                if (_State.isr.timer.intervalCount) _State.isr.timer.intervalCount--;
+                if (_State.isr.timer.intervalCount) return;
                 // Cleanup
                 _TimerStop();
                 goto _State_::NextState;
             
             case _State_::TimerRemainderPrepare:
-                if (!_ISRState.timer.remainderTicks) goto _State_::NextState;
-                _TimerSet(_CCRForTicks(_ISRState.timer.remainderTicks)); // Set timer
+                if (!_State.isr.timer.remainderTicks) goto _State_::NextState;
+                _TimerSet(_CCRForTicks(_State.isr.timer.remainderTicks)); // Set timer
                 goto _State_::NextStateReturn;
             
             case _State_::TimerRemainder:
@@ -264,11 +202,11 @@ private:
                 return;
             
             case _State_::NextState:
-                _ISRState.state++;
+                _State.isr.state++;
                 continue;
             
             case _State_::NextStateReturn:
-                _ISRState.state++;
+                _State.isr.state++;
                 return;
             }
         }
@@ -284,21 +222,25 @@ private:
         TimerRemainderPrepare,
         TimerRemainder,
         Fired,
-        
+        // Meta-states
         NextState,
         NextStateReturn,
     }; };
     
-    static inline volatile struct {
-        struct {
-            uint16_t count = 0;
-        } rtc;
+    static inline struct {
+        Time::Instant time = 0;
         
-        struct {
-            uint16_t intervalCount = 0;
-            uint16_t remainderTicks = 0;
-        } timer;
-        
-        _State state = _State_::Idle;
-    } _ISRState;
+        volatile struct {
+            struct {
+                uint16_t count = 0;
+            } rtc;
+            
+            struct {
+                uint16_t intervalCount = 0;
+                uint16_t remainderTicks = 0;
+            } timer;
+            
+            _State state = _State_::Idle;
+        } isr;
+    } _State;
 };
