@@ -2633,4 +2633,3 @@ sfr_b(WDTCTL_H);                              /* Watchdog Timer Control */
 #endif /* extern "C" */
 
 #endif /* #ifndef __MSP430FR2433 */
-

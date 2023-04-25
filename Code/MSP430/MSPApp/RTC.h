@@ -164,8 +164,8 @@ public:
     }
     
     static void ISR(uint16_t iv) {
-        switch (__even_in_range(iv, RTCIV__RTCIFG)) {
-        case RTCIV__RTCIFG:
+        switch (__even_in_range(iv, RTCIV_RTCIF)) {
+        case RTCIV_RTCIF:
             // Update our time
             _RTCTime += InterruptIntervalUs;
             return;
@@ -192,6 +192,6 @@ private:
     }
     
     static bool _OverflowPending() {
-        return RTCCTL & RTCIFG;
+        return RTCCTL & RTCIF;
     }
 };

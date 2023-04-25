@@ -2,7 +2,7 @@
 #include <msp430.h>
 #include "GPIO.h"
 
-template <uint32_t T_XT1FreqHz, uint32_t T_MCLKFreqHz, uint32_t T_ACLKFreqHz>
+template <uint32_t T_XT1FreqHz, uint32_t T_MCLKFreqHz>
 class ClockType {
 public:
     static void Init() {

@@ -132,7 +132,7 @@ using _SDCard = SD::Card<
 >;
 
 // _RTC: real time clock
-using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
+using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN, _Scheduler>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in FRAM because it needs to persist indefinitely.
@@ -538,7 +538,7 @@ struct _TaskImg {
             
             header.coarseIntTime = _State.autoExp.integrationTime();
             header.id = id;
-            header.timestamp = _RTC::TimeRead();
+            header.timestamp = _RTC::Now();
             
             // Capture an image to RAM
             #warning TODO: optimize the header logic so that we don't set the magic/version/imageWidth/imageHeight every time, since it only needs to be set once per ice40 power-on
@@ -749,7 +749,7 @@ struct _TaskEvent {
         return *ev;
         
 //        // If the event occurs after the current time, don't pop it yet
-//        if (ev && ev->time>=_RTC::TimeRead()) ev = nullptr;
+//        if (ev && ev->time>=_RTC::Now()) ev = nullptr;
 //        // If we're returning an event, pop it from the list
 //        if (ev) _Triggers::EventPop();
 //        // Exit fast-forward mode when we no longer have any events in the past
@@ -768,7 +768,7 @@ struct _TaskEvent {
 //        }
         
 //        // If there's no front event, or the front event occurs after the current time, no events are ready yet.
-//        if (!ev || ev->time>=_RTC::TimeRead()) {
+//        if (!ev || ev->time>=_RTC::Now()) {
 //            // Exit fast-forward mode when we no longer have any events in the past
 //            _State.fastForward = false;
 //            ev = nullptr;
@@ -776,13 +776,13 @@ struct _TaskEvent {
 //        
 //        if (ev) _Triggers::EventPop();
 //        
-//        _Triggers::Event* ev = _Triggers::EventPop(_RTC::TimeRead());
+//        _Triggers::Event* ev = _Triggers::EventPop(_RTC::Now());
 //        // Exit fast-forward mode when we no longer have any events in the past
 //        if (!ev) {
 //            _State.fastForward = false;
 //        }
-        
-        return ev;
+//        
+//        return ev;
     }
     
     static bool _EventTimerFired() {
@@ -793,7 +793,7 @@ struct _TaskEvent {
         
 //        _Triggers::Event* ev = _Triggers::EventFront();
 //        // If the event occurs after the current time, don't pop it yet
-//        if (ev && ev->time>=_RTC::TimeRead()) ev = nullptr;
+//        if (ev && ev->time>=_RTC::Now()) ev = nullptr;
 //        // If we're returning an event, pop it from the list
 //        if (ev) _Triggers::EventPop();
 //        // Exit fast-forward mode when we no longer have any events in the past
@@ -812,7 +812,7 @@ struct _TaskEvent {
 //        }
         
 //        // If there's no front event, or the front event occurs after the current time, no events are ready yet.
-//        if (!ev || ev->time>=_RTC::TimeRead()) {
+//        if (!ev || ev->time>=_RTC::Now()) {
 //            // Exit fast-forward mode when we no longer have any events in the past
 //            _State.fastForward = false;
 //            ev = nullptr;
@@ -820,13 +820,13 @@ struct _TaskEvent {
 //        
 //        if (ev) _Triggers::EventPop();
 //        
-//        _Triggers::Event* ev = _Triggers::EventPop(_RTC::TimeRead());
+//        _Triggers::Event* ev = _Triggers::EventPop(_RTC::Now());
 //        // Exit fast-forward mode when we no longer have any events in the past
 //        if (!ev) {
 //            _State.fastForward = false;
 //        }
-        
-        return ev;
+//        
+//        return ev;
     }
     
     static void Run() {
@@ -837,7 +837,7 @@ struct _TaskEvent {
         _SPI::Init();
         
         // Init Triggers
-        _Triggers::Init(_RTC::TimeRead());
+        _Triggers::Init(_RTC::Now());
         
         // Schedule _EventTimer for the first event
         _EventTimerSchedule();
@@ -856,12 +856,12 @@ struct _TaskEvent {
             _State.caffeine = true;
             
             using T = _Triggers::Event::Type;
-            switch (ev->type) {
-            case T::TimeTrigger:      _TimeTrigger((_Triggers::TimeTriggerEvent&)*ev);           break;
-            case T::MotionEnable:     _MotionEnable((_Triggers::MotionEnableEvent&)*ev);         break;
-            case T::MotionDisable:    _MotionDisable((_Triggers::MotionDisableEvent&)*ev);       break;
-            case T::MotionUnsuppress: _MotionUnsuppress((_Triggers::MotionUnsuppressEvent&)*ev); break;
-            case T::CaptureImage:     _CaptureImage((_Triggers::CaptureImageEvent&)*ev);         break;
+            switch (ev.type) {
+            case T::TimeTrigger:      _TimeTrigger((_Triggers::TimeTriggerEvent&)ev);           break;
+            case T::MotionEnable:     _MotionEnable((_Triggers::MotionEnableEvent&)ev);         break;
+            case T::MotionDisable:    _MotionDisable((_Triggers::MotionDisableEvent&)ev);       break;
+            case T::MotionUnsuppress: _MotionUnsuppress((_Triggers::MotionUnsuppressEvent&)ev); break;
+            case T::CaptureImage:     _CaptureImage((_Triggers::CaptureImageEvent&)ev);         break;
             }
             
             // Allow sleep
@@ -968,7 +968,7 @@ struct _TaskI2C {
         case Cmd::Op::TimeGet:
             return MSP::Resp{
                 .ok = true,
-                .arg = { .TimeGet = { .time = _RTC::TimeRead() } },
+                .arg = { .TimeGet = { .time = _RTC::Now() } },
             };
         
         case Cmd::Op::TimeSet:
@@ -1017,7 +1017,7 @@ struct _TaskMotion {
                 _Triggers::MotionTrigger& trigger = *it;
                 // If this trigger is enabled...
                 if (trigger.enabled.get()) {
-                    const Time::Instant time = _RTC::TimeRead();
+                    const Time::Instant time = _RTC::Now();
                     // Start capture
                     _TaskEvent::CaptureStart(trigger, time);
                     // Suppress motion for the specified duration, if suppression is enabled
@@ -1143,7 +1143,7 @@ struct _TaskButton {
                 if (!_On) break;
                 
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _TaskEvent::CaptureStart(*it, _RTC::TimeRead());
+                    _TaskEvent::CaptureStart(*it, _RTC::Now());
                 }
                 break;
             }
@@ -1354,7 +1354,7 @@ static void _BOR() {
 extern "C"
 [[noreturn, gnu::used]]
 void Abort(uintptr_t addr) {
-    const Time::Instant timestamp = _RTC::TimeRead();
+    const Time::Instant timestamp = _RTC::Now();
     // Record the abort
     _AbortRecord(timestamp, addr);
     _BOR();

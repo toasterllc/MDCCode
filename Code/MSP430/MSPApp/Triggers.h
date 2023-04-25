@@ -155,7 +155,7 @@ struct T_Triggers {
     
     static void EventPop() {
         Assert(_Front);
-        return &_EventPop(*_Front);
+        _EventPop(*_Front);
     }
     
     static Event* EventFront() {
