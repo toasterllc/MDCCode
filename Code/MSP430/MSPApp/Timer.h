@@ -146,70 +146,83 @@ private:
         _TimerStop();
     }
     
-    static void _StateUpdate(bool next=false) {
-        // Advance to the next state
-        if (next) {
-            if (_ISRState.state != _State_::Fired) _ISRState.state++;
-            else _ISRState.state = 0;
-        }
-        
-        // Handle the current state
-        switch (_ISRState.state) {
-        case _State::Idle:
-            break;
-        
-        case _State::RTCCountdown:
-            if (_ISRState.rtc.count) {
-                if (next) {
-                    // Handle entering this state
-                } else {
-                    _ISRState.rtc.count--;
-                }
-            }
+    static void _StateUpdate() {
+        for (;;) {
+            switch (_ISRState.state) {
+            case _State::Idle:
+                _ISRState.state++;
+                continue;
             
-            if (!_ISRState.rtc.count) _StateUpdate(true);
-            break;
-        
-        case _State::TimerInterval:
-            if (_ISRState.timer.intervalCount) {
-                if (next) {
-                    // Handle entering this state
+            case _State::RTCPrepare:
+                if (!_ISRState.rtc.count) {
+                    _ISRState.state = _State::TimerInterval;
+                    continue;
+                } else {
+                    _ISRState.state++;
+                    return;
+                }
+            
+            case _State::RTC:
+                _ISRState.rtc.count--;
+                if (_ISRState.rtc.count) {
+                    return;
+                } else {
+                    _ISRState.state++;
+                    continue;
+                }
+            
+            case _State::TimerIntervalPrepare:
+                if (!_ISRState.timer.intervalCount) {
+                    _ISRState.state = _State::TimerRemainder;
+                    continue;
+                } else {
                     // Set timer
                     _TimerSet(_CCRForTicks(TimerMaxTicks));
-                } else {
-                    _ISRState.timer.intervalCount--;
+                    _ISRState.state++;
+                    return;
                 }
-            }
             
-            if (!_ISRState.timer.intervalCount) _StateUpdate(true);
-            break;
-        
-        case _State::TimerRemainder:
-            if (_ISRState.timer.remainderTicks) {
-                if (next) {
-                    // Handle entering this state
+            case _State::TimerInterval:
+                _ISRState.timer.intervalCount--;
+                if (_ISRState.timer.intervalCount) {
+                    return;
+                } else {
+                    _ISRState.state++;
+                    continue;
+                }
+            
+            case _State::TimerRemainderPrepare:
+                if (!_ISRState.timer.remainderTicks) {
+                    _ISRState.state = _State::Fired;
+                    continue;
+                } else {
                     // Set timer
                     _TimerSet(_CCRForTicks(_ISRState.timer.remainderTicks));
-                } else {
-                    _ISRState.timer.remainderTicks = 0;
+                    _ISRState.state++;
+                    return;
                 }
-            }
             
-            if (!_ISRState.timer.remainderTicks) _StateUpdate(true);
-            break;
-        
-        case _State::Fired:
-            // Clean up
-            _TimerStop();
-            break;
+            case _State::TimerInterval:
+                // Clean up
+                _TimerStop();
+                _ISRState.state++;
+                continue;
+            
+            case _State::Fired:
+                _ISRState.state = _State::Idle;
+                return;
+            }
         }
     }
     
     using _State = uint8_t;
     struct _State_ { enum : _State {
         Idle,
-        RTCCountdown,
+        RTCPrepare,
+        RTC,
+        TimerIntervalPrepare,
         TimerInterval,
+        TimerRemainderPrepare,
         TimerRemainder,
         Fired,
     }; };
