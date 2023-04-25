@@ -85,13 +85,15 @@ public:
             };
         }
         
-        _StateUpdate(true);
+        _StateUpdate();
     }
     
     static bool Fired() {
-        if (_ISRState.state != _State::Fired) return false;
-        _StateUpdate(true);
-        return true;
+        if (_ISRState.state == _State::Fired) {
+            _StateUpdate();
+            return true;
+        }
+        return false;
     }
     
     static bool ISRRTCInterested() {
@@ -101,12 +103,14 @@ public:
     static bool ISRRTC() {
         Assert(ISRRTCInterested());
         _StateUpdate();
+        // Wake if the timer fired
         return _ISRState.state==_State::Fired;
     }
     
     static bool ISRTA0() {
         Assert(_ISRState.state==_State::TimerInterval || _ISRState.state==_State::TimerRemainder);
         _StateUpdate();
+        // Wake if the timer fired
         return _ISRState.state==_State::Fired;
     }
     
@@ -145,6 +149,70 @@ private:
         _ISRState = {};
         _TimerStop();
     }
+    
+    
+//    static void _StateUpdate(bool next=false) {
+//        // Advance to the next state
+//        if (next) {
+//            if (_ISRState.state != _State_::Fired) _ISRState.state++;
+//            else _ISRState.state = 0;
+//        }
+//        
+//        // Handle the current state
+//        switch (_ISRState.state) {
+//        case _State::Idle:
+//            break;
+//        
+//        case _State::RTCCountdown:
+//            if (_ISRState.rtc.count) {
+//                if (next) {
+//                    // Handle entering this state
+//                } else {
+//                    _ISRState.rtc.count--;
+//                }
+//            }
+//            
+//            if (!_ISRState.rtc.count) _StateUpdate(true);
+//            break;
+//        
+//        case _State::TimerInterval:
+//            if (_ISRState.timer.intervalCount) {
+//                if (next) {
+//                    // Handle entering this state
+//                    // Set timer
+//                    _TimerSet(_CCRForTicks(TimerMaxTicks));
+//                } else {
+//                    _ISRState.timer.intervalCount--;
+//                }
+//            }
+//            
+//            if (!_ISRState.timer.intervalCount) _StateUpdate(true);
+//            break;
+//        
+//        case _State::TimerRemainder:
+//            if (_ISRState.timer.remainderTicks) {
+//                if (next) {
+//                    // Handle entering this state
+//                    // Set timer
+//                    _TimerSet(_CCRForTicks(_ISRState.timer.remainderTicks));
+//                } else {
+//                    _ISRState.timer.remainderTicks = 0;
+//                }
+//            }
+//            
+//            if (!_ISRState.timer.remainderTicks) _StateUpdate(true);
+//            break;
+//        
+//        case _State::Fired:
+//            // Clean up
+//            _TimerStop();
+//            break;
+//        }
+//    }
+    
+    
+    
+    
     
     static void _StateUpdate() {
         for (;;) {
