@@ -221,35 +221,35 @@ private:
                 goto _State_::NextState;
             
             case _State_::RTCPrepare:
-                if (!_ISRState.rtc.count) goto _State_::NextState2;
+                if (!_ISRState.rtc.count) goto _State_::NextState;
                 goto _State_::NextStateReturn;
             
             case _State_::RTC:
-                _ISRState.rtc.count--;
+                if (_ISRState.rtc.count) _ISRState.rtc.count--;
                 if (_ISRState.rtc.count) return;
                 goto _State_::NextState;
             
             case _State_::TimerIntervalPrepare:
-                if (!_ISRState.timer.intervalCount) goto _State_::NextState2;
+                if (!_ISRState.timer.intervalCount) goto _State_::NextState;
                 _TimerSet(_CCRForTicks(TimerMaxTicks)); // Set timer
                 goto _State_::NextStateReturn;
             
             case _State_::TimerInterval:
-                _ISRState.timer.intervalCount--;
+                if (_ISRState.timer.intervalCount) _ISRState.timer.intervalCount--;
                 if (_ISRState.timer.intervalCount) return;
                 // Cleanup
                 _TimerStop();
                 goto _State_::NextState;
             
             case _State_::TimerRemainderPrepare:
-                if (!_ISRState.timer.remainderTicks) goto _State_::NextState2;
+                if (!_ISRState.timer.remainderTicks) goto _State_::NextState;
                 _TimerSet(_CCRForTicks(_ISRState.timer.remainderTicks)); // Set timer
                 goto _State_::NextStateReturn;
             
             case _State_::TimerRemainder:
                 // Clean up
                 _TimerStop();
-                goto _State_::NextState;
+                goto _State_::NextStateReturn;
             
             case _State_::Fired:
                 _ISRState.state = _State_::Idle;
@@ -257,10 +257,6 @@ private:
             
             case _State_::NextState:
                 _ISRState.state++;
-                continue;
-            
-            case _State_::NextState2:
-                _ISRState.state += 2;
                 continue;
             
             case _State_::NextStateReturn:
@@ -282,7 +278,6 @@ private:
         Fired,
         
         NextState,
-        NextState2,
         NextStateReturn,
     }; };
     
