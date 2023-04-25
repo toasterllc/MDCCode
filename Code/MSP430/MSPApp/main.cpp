@@ -844,6 +844,8 @@ struct _TaskEvent {
         
         // Enter fast-forward mode while we pop every event that occurs in the past
         // (_EventTimerFired() will exit from fast-forward mode)
+        #warning TODO: don't enter fast-forward mode if the first event is a relative time, otherwise we'll arbitrarily skip the first event in FF mode
+        #warning TODO: OR: don't enter FF mode if our time is a relative time
         _State.fastForward = true;
         for (;;) {
             // Wait for _EventTimer to fire
