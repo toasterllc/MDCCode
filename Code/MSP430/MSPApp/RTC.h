@@ -163,9 +163,8 @@ public:
         return ((uint32_t)(TicksMax-ticks)+1) * UsPerTick;
     }
     
-    static void ISR() {
-        // Accessing `RTCIV` automatically clears the highest-priority interrupt
-        switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
+    static void ISR(uint16_t iv) {
+        switch (__even_in_range(iv, RTCIV__RTCIFG)) {
         case RTCIV__RTCIFG:
             // Update our time
             _RTCTime += InterruptIntervalUs;

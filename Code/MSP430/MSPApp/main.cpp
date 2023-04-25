@@ -170,6 +170,9 @@ using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledUpdate>;
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
+// _EventTimer:
+using _EventTimer = T_Timer<_RTC, _XT1FreqHz>;
+
 static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Us Day         = (Time::Us)     24*60*60*1000000;
     static constexpr Time::Us Year        = (Time::Us) 365*24*60*60*1000000;
@@ -1231,7 +1234,23 @@ static void _Sleep() {
 
 [[gnu::interrupt(RTC_VECTOR)]]
 static void _ISR_RTC() {
-    _RTC::ISR();
+    _RTC::ISR(RTCIV);
+    if (_EventTimer::ISRRTCInterested()) {
+        _EventTimer::ISRRTC();
+        // Wake if the timer fired
+        if (_EventTimer::Fired()) {
+            __bic_SR_register_on_exit(LPM3_bits);
+        }
+    }
+}
+
+[[gnu::interrupt(TIMER0_A1_VECTOR)]]
+static void _ISR_Timer0() {
+    _EventTimer::ISRTimer0(TA0IV);
+    // Wake if the timer fired
+    if (_EventTimer::Fired()) {
+        __bic_SR_register_on_exit(LPM3_bits);
+    }
 }
 
 [[gnu::interrupt(PORT2_VECTOR)]]
