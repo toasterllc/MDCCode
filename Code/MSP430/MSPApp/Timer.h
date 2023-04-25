@@ -5,8 +5,9 @@
 #include "Time.h"
 #include "Assert.h"
 
+// T_Timer: a timer that can be set for times in the near future to distant future (up to ~4 years)
 template <typename T_RTC, uint32_t T_ACLKFreqHz>
-class T_Alarm {
+class T_Timer {
 public:
     static constexpr uint32_t TimerACLKDivider = 64;
     
@@ -27,7 +28,7 @@ public:
     static_assert(TimerPeriodUsRatio::num == 15625); // Debug
     static_assert(TimerPeriodUsRatio::den == 8); // Debug
     
-    static void Set(const Time::Instant& alarm) {
+    static void Set(const Time::Instant& time) {
         // Get our current time
         const Time::Instant now = T_RTC::TimeRead();
         
@@ -37,10 +38,10 @@ public:
         // Reset our state
         _Reset();
         
-        if (alarm >= now) {
+        if (time >= now) {
             const Time::Us rtcTimeUntilOverflow = T_RTC::TimeUntilOverflow();
             uint16_t rtcCount = 0;
-            Time::Us deltaUs = alarm-now;
+            Time::Us deltaUs = time-now;
             
             if (deltaUs >= rtcTimeUntilOverflow) {
                 rtcCount = 1;
@@ -48,6 +49,8 @@ public:
             }
             
             if (deltaUs >= T_RTC::InterruptIntervalUs) {
+                // Ensure that our `count` division won't overflow
+                Assert(deltaUs <= (Time::Us)0xFFFF*T_RTC::InterruptIntervalUs);
                 const uint16_t count = deltaUs / T_RTC::InterruptIntervalUs;
                 rtcCount += count;
                 deltaUs -= count*T_RTC::InterruptIntervalUs;
@@ -85,8 +88,8 @@ public:
         _StateUpdate(true);
     }
     
-    static bool Triggered() {
-        if (_ISRState.state != _State::Triggered) return false;
+    static bool Fired() {
+        if (_ISRState.state != _State::Fired) return false;
         _StateUpdate(true);
         return true;
     }
@@ -98,13 +101,13 @@ public:
     static bool ISRRTC() {
         Assert(ISRRTCInterested());
         _StateUpdate();
-        return _ISRState.state==_State::Triggered;
+        return _ISRState.state==_State::Fired;
     }
     
     static bool ISRTA0() {
         Assert(_ISRState.state==_State::TimerInterval || _ISRState.state==_State::TimerRemainder);
         _StateUpdate();
-        return _ISRState.state==_State::Triggered;
+        return _ISRState.state==_State::Fired;
     }
     
 //    static void ISRTA0CCR0() {
@@ -151,7 +154,7 @@ private:
     static void _StateUpdate(bool next=false) {
         // Advance to the next state
         if (next) {
-            if (_ISRState.state != _State_::Triggered) _ISRState.state++;
+            if (_ISRState.state != _State_::Fired) _ISRState.state++;
             else _ISRState.state = 0;
         }
         
@@ -200,7 +203,7 @@ private:
             if (!_ISRState.timer.remainderTicks) _StateUpdate(true);
             break;
         
-        case _State::Triggered:
+        case _State::Fired:
             // Clean up
             _TimerStop();
             break;
@@ -213,7 +216,7 @@ private:
         RTCCountdown,
         TimerInterval,
         TimerRemainder,
-        Triggered,
+        Fired,
     }; };
     
     static inline volatile struct {
@@ -228,10 +231,4 @@ private:
         
         _State state = _State::Idle;
     } _ISRState;
-    
-//    static inline volatile Time::Instant _AlarmTime = 0;
-//    static inline volatile uint16_t _RTCCount = 0;
-//    static inline volatile uint16_t _TimerIntervalCount = 0;
-//    static inline volatile uint16_t _TimerRemainderCount = 0;
-//    static inline volatile bool _Triggered = false;
 };
