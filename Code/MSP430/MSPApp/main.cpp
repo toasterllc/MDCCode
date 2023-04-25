@@ -31,6 +31,7 @@
 using namespace GPIO;
 
 static constexpr uint32_t _XT1FreqHz        = 32768;
+static constexpr uint32_t _ACLKFreqHz       = _XT1FreqHz;
 static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
 
@@ -171,7 +172,7 @@ using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledUpdate>;
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
 // _EventTimer:
-using _EventTimer = T_Timer<_RTC, _XT1FreqHz>;
+using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
 
 static Time::Us _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Us Day         = (Time::Us)     24*60*60*1000000;
