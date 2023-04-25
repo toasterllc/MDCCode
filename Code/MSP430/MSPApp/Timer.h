@@ -5,7 +5,7 @@
 #include "Time.h"
 #include "Assert.h"
 
-// T_Timer: a timer that can be set for times in the near future to distant future (up to ~4 years)
+// T_Timer: a timer that can be set for times in the near future to distant future (up to ~4 years -- 0xFFFF*T_RTC::InterruptIntervalUs)
 template <typename T_RTC, uint32_t T_ACLKFreqHz>
 class T_Timer {
 public:
@@ -109,11 +109,6 @@ public:
         _StateUpdate();
         return _ISRState.state==_State::Fired;
     }
-    
-//    static void ISRTA0CCR0() {
-//        Assert(_ISRState.state==_State::TimerRemainder);
-//        _StateUpdate();
-//    }
     
 private:
     static constexpr uint16_t _CCRForTicks(uint32_t ticks) {
