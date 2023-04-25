@@ -175,6 +175,66 @@ private:
 //        else _ISRState.state = 0;
 //    }
     
+//    static void _StateNext(bool delta=1) {
+//        // Add `delta` to the current state
+//        if (delta) {
+//            if (_ISRState.state != _State_::Triggered) _ISRState.state++;
+//            else _ISRState.state = 0;
+//        }
+//        
+//        // Handle the new state
+//        switch (_ISRState.state) {
+//        case _State::Idle:
+//            break;
+//        
+//        case _State::RTCCountdown:
+//            if (_ISRState.rtc.count) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.rtc.count--;
+//                    _StateNext();
+//                }
+//            } else {
+//                _StateNext();
+//            }
+//            break;
+//        
+//        case _State::TimerInterval:
+//            if (_ISRState.timer.intervalCount) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.timer.intervalCount--;
+//                    _StateNext();
+//                }
+//            } else {
+//                _StateNext();
+//            }
+//            break;
+//        
+//        case _State::TimerRemainder:
+//            if (_ISRState.timer.remainderCount) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.timer.remainderCount--;
+//                    _StateNext();
+//                }
+//            } else {
+//                _StateNext();
+//            }
+//            break;
+//        
+//        case _State::Triggered:
+//            break;
+//        }
+//    }
+    
+    
     static void _StateNext(bool delta=1) {
         // Add `delta` to the current state
         if (delta) {
@@ -194,7 +254,7 @@ private:
                     // Set timer
                 } else {
                     _ISRState.rtc.count--;
-                    _StateNext();
+                    _StateNext(0);
                 }
             } else {
                 _StateNext();
@@ -208,7 +268,7 @@ private:
                     // Set timer
                 } else {
                     _ISRState.timer.intervalCount--;
-                    _StateNext();
+                    _StateNext(0);
                 }
             } else {
                 _StateNext();
@@ -222,7 +282,7 @@ private:
                     // Set timer
                 } else {
                     _ISRState.timer.remainderCount--;
-                    _StateNext();
+                    _StateNext(0);
                 }
             } else {
                 _StateNext();
@@ -232,51 +292,13 @@ private:
         case _State::Triggered:
             break;
         }
-        
-        
-        
-        
-        
-        
-        
-//        switch (_ISRState.state) {
-//        case _State::Idle:
-//            if (_ISRState.rtc.count) {
-//                _ISRState.state = _State::RTCCountdown;
-//            } else if (_ISRState.timer.intervalCount) {
-//                _ISRState.state = _ISRState.timer.intervalCount;
-//            } else if (_ISRState.timer.remainderCount) {
-//                
-//            }
-//        case _State::RTCCountdown:
-//        case _State::TimerInterval:
-//        case _State::TimerRemainder:
-//        case _State::Triggered:
-//        }
-//        
-//        
-//        #warning TODO: determine if we need a delay after reconfiguring the timer
-//        
-//        if (_Done()) {
-//            _TimerReset();
-//            _ISRState.triggered = true;
-//        
-//        } else if () {
-//            
-//        }
-//        
-//        // Stop timer
-//        TA0CTL = (TA0CTL & ~MC_3) | MC__STOP;
-//        
-//        TA0CCR0 = ;
-//        
-//        // Configure timer
-//        TA0CTL =
-//            TASSEL_1        |   // source = ACLK
-//            MC__CONTINUOUS  |   // mode = continuous (count from 0 to 0xFFFF repeatedly)
-//            TACLR           |   // reset timer internal state (counter, clock divider state, count direction)
-//            TAIE            ;   // enable interrupt
     }
+    
+    
+    
+    
+    
+    
     
     
     
