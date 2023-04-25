@@ -28,11 +28,11 @@ public:
     static_assert(TimerPeriodUsRatio::den == 8); // Debug
     
     static void Set(const Time::Instant& alarm) {
+        // Get our current time
+        const Time::Instant now = T_RTC::TimeRead();
+        
         // Disable interrupts while we modify our state
         Toastbox::IntState ints(false);
-        
-        #warning TODO: ISRTimer() / ISRRTC() could be called within TimeRead()!
-        const Time::Instant now = T_RTC::TimeRead();
         
         // Reset our state
         _Reset();
@@ -87,7 +87,7 @@ public:
     
     static bool Triggered() {
         if (_ISRState.state != _State::Triggered) return false;
-        _StateUpdate();
+        _StateUpdate(true);
         return true;
     }
     
@@ -95,55 +95,50 @@ public:
         return _ISRState.state == _State::RTCCountdown;
     }
     
-    static void ISRRTC() {
+    static bool ISRRTC() {
         Assert(ISRRTCInterested());
         _StateUpdate();
+        return _ISRState.state==_State::Triggered;
     }
     
-    static void ISRTA0() {
-        Assert(_ISRState.state == _State::TimerInterval);
+    static bool ISRTA0() {
+        Assert(_ISRState.state==_State::TimerInterval || _ISRState.state==_State::TimerRemainder);
         _StateUpdate();
+        return _ISRState.state==_State::Triggered;
     }
     
-    static void ISRTA0CCR0() {
-        Assert(_ISRState.state==_State::TimerRemainder);
-        _StateUpdate();
-    }
-    
-private:
-//    static constexpr uint16_t _CCRForTicks(uint32_t ticks) {
-//        static_assert(ticks > 0);
-//        static_assert(ticks-1 <= std::numeric_limits<uint16_t>::max());
-//        return ticks-1;
+//    static void ISRTA0CCR0() {
+//        Assert(_ISRState.state==_State::TimerRemainder);
+//        _StateUpdate();
 //    }
     
-    static void _TimerStop() {
-        TA0CTL = (TA0CTL & ~(MC0|MC1)) | MC__STOP;
+private:
+    static constexpr uint16_t _CCRForTicks(uint32_t ticks) {
+        static_assert(ticks > 0);
+        static_assert(ticks-1 <= std::numeric_limits<uint16_t>::max());
+        return ticks-1;
     }
     
-    static void _TimerSet(uint32_t ticks) {
+    static void _TimerStop() {
+        TA0CTL &= ~(MC1|MC0|TAIE);
+    }
+    
+    static void _TimerSet(uint16_t ccr) {
         // Stop timer
         _TimerStop();
         // Additional clock divider = /8
         TA0EX0 = TAIDEX_7;
-        // Reset TA0CCTL0
-        TA0CCTL0 = 0;
-        
-        if (ticks == 0x10000) {
-            // Use TA0 interrupt, since we want 65536 ticks (which TA0CCR0
-            // isn't capable of supplying)
-            TA0CTL |= TAIE;
-        
-        } else {
-            // Use TA0CCR0 interrupt
-            // Set value to count to
-            TA0CCR0 = ticks;
-            // CCIE
-            TA0CCTL0 |= CCIE;
-        }
-        
+//        // Reset TA0CCTL0
+//        TA0CCTL0 = 0;
+        // Set value to count to
+        TA0CCR0 = ccr;
         // Start timer
-        TA0CTL |= MC__CONTINUOUS;
+        TA0CTL =
+            TASSEL__ACLK    |   // clock source = ACLK
+            ID__8           |   // clock divider = /8
+            MC__UP          |   // mode = up
+            TACLR           |   // reset timer state
+            TAIE            ;   // enable interrupt
     }
     
     // _Reset(): resets the timer and our state (_ISRState)
@@ -182,7 +177,7 @@ private:
                 if (next) {
                     // Handle entering this state
                     // Set timer
-                    _TimerSet(TimerMaxTicks);
+                    _TimerSet(_CCRForTicks(TimerMaxTicks));
                 } else {
                     _ISRState.timer.intervalCount--;
                 }
@@ -196,7 +191,7 @@ private:
                 if (next) {
                     // Handle entering this state
                     // Set timer
-                    _TimerSet(_ISRState.timer.remainderTicks);
+                    _TimerSet(_CCRForTicks(_ISRState.timer.remainderTicks));
                 } else {
                     _ISRState.timer.remainderTicks = 0;
                 }
@@ -220,7 +215,6 @@ private:
         TimerRemainder,
         Triggered,
     }; };
-    
     
     static inline volatile struct {
         struct {
