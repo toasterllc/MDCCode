@@ -77,14 +77,14 @@ public:
             };
         }
         
-        _StateNext();
+        _StateUpdate(true);
     }
     
-//    static bool Triggered() {
-//        if (_ISRState.state != _State::Triggered) return false;
-//        _NextState();
-//        return true;
-//    }
+    static bool Triggered() {
+        if (_ISRState.state != _State::Triggered) return false;
+        _StateUpdate();
+        return true;
+    }
     
     static bool ISRRTCInterested() {
         return _ISRState.state == _State::RTCCountdown;
@@ -92,7 +92,7 @@ public:
     
     static void ISRRTC() {
         Assert(ISRRTCInterested());
-        _StateNext(0);
+        _StateUpdate();
     }
     
     static void ISRTimer() {
@@ -112,7 +112,7 @@ public:
 //        }
         
         Assert(_ISRState.state==_State::TimerInterval || _ISRState.state==_State::TimerRemainder);
-        _StateNext(0);
+        _StateUpdate();
     }
     
 //    static void ISRTimerRemainder() {
@@ -125,10 +125,10 @@ private:
 //    static bool _TimerRunning() {
 //        return (TA0CTL & (MC1 | MC0)) != MC__STOP;
 //    }
-    
-    static bool _Done() {
-        return !_ISRState.rtc.count && !_ISRState.timer.intervalCount && !_ISRState.timer.remainderCount;
-    }
+//    
+//    static bool _Done() {
+//        return !_ISRState.rtc.count && !_ISRState.timer.intervalCount && !_ISRState.timer.remainderCount;
+//    }
     
     static void _TimerReset() {
         TA0CTL =
@@ -169,11 +169,211 @@ private:
         _TimerReset();
     }
     
-//    static void _StateIncrement() {
-//        // Transition to the new state
-//        if (_ISRState.state != _State_::Triggered) _ISRState.state++;
-//        else _ISRState.state = 0;
+//    static void _StateHandle() {
+//        // Handle the new state
+//        switch (_ISRState.state) {
+//        case _State::Idle:
+//            break;
+//        
+//        case _State::RTCCountdown:
+//            if (_ISRState.rtc.count) {
+//                _ISRState.rtc.count--;
+//            }
+//            
+//            if (!_ISRState.rtc.count) {
+//                _StateNext();
+//            }
+//            break;
+//        
+//        case _State::TimerInterval:
+//            if (_ISRState.timer.intervalCount) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.timer.intervalCount--;
+//                    _StateNext(0);
+//                }
+//            } else {
+//                _StateNext();
+//            }
+//            break;
+//        
+//        case _State::TimerRemainder:
+//            if (_ISRState.timer.remainderCount) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.timer.remainderCount--;
+//                    _StateNext(0);
+//                }
+//            } else {
+//                _StateNext();
+//            }
+//            break;
+//        
+//        case _State::Triggered:
+//            break;
+//        }
 //    }
+    
+    
+    
+    
+    
+    
+    static void _StateUpdate(bool next=false) {
+        // Advance to the next state
+        if (next) {
+            if (_ISRState.state != _State_::Triggered) _ISRState.state++;
+            else _ISRState.state = 0;
+        }
+        
+        // Handle the current state
+        switch (_ISRState.state) {
+        case _State::Idle:
+            break;
+        
+        case _State::RTCCountdown:
+            if (_ISRState.rtc.count) {
+                if (next) {
+                    // Handle entering this state
+                    // Set timer
+                } else {
+                    _ISRState.rtc.count--;
+                }
+            }
+            
+            if (!_ISRState.rtc.count) _StateUpdate(true);
+            break;
+        
+        case _State::TimerInterval:
+            if (_ISRState.timer.intervalCount) {
+                if (next) {
+                    // Handle entering this state
+                    // Set timer
+                } else {
+                    _ISRState.timer.intervalCount--;
+                }
+            }
+            
+            if (!_ISRState.timer.intervalCount) _StateUpdate(true);
+            break;
+        
+        case _State::TimerRemainder:
+            if (_ISRState.timer.remainderCount) {
+                if (next) {
+                    // Handle entering this state
+                    // Set timer
+                } else {
+                    _ISRState.timer.remainderCount--;
+                }
+            }
+            
+            if (!_ISRState.timer.remainderCount) _StateUpdate(true);
+            break;
+        
+        case _State::Triggered:
+            break;
+        }
+    }
+
+    
+    
+    
+    
+    
+    
+//    static void _StateAction() {
+//        // Handle the new state
+//        switch (_ISRState.state) {
+//        case _State::Idle:
+//            break;
+//        
+//        case _State::RTCCountdown:
+//            if (_ISRState.rtc.count) {
+//                _ISRState.rtc.count--;
+//            }
+//            break;
+//        
+//        case _State::TimerInterval:
+//            if (_ISRState.timer.intervalCount) {
+//                _ISRState.timer.intervalCount--;
+//            }
+//            break;
+//        
+//        case _State::TimerRemainder:
+//            if (_ISRState.timer.remainderCount) {
+//                _ISRState.timer.remainderCount--;
+//            }
+//            break;
+//        
+//        case _State::Triggered:
+//            break;
+//        }
+//    }
+//    
+//    static void _StateNext(bool delta=1) {
+//        // Add `delta` to the current state
+//        if (delta) {
+//            if (_ISRState.state != _State_::Triggered) _ISRState.state++;
+//            else _ISRState.state = 0;
+//        }
+//        
+//        
+//        // Handle the new state
+//        switch (_ISRState.state) {
+//        case _State::Idle:
+//            break;
+//        
+//        case _State::RTCCountdown:
+//            if (_ISRState.rtc.count) {
+//                _ISRState.rtc.count--;
+//            }
+//            break;
+//        
+//        case _State::TimerInterval:
+//            if (_ISRState.timer.intervalCount) {
+//                _ISRState.timer.intervalCount--;
+//            }
+//            break;
+//        
+//        case _State::TimerRemainder:
+//            if (_ISRState.timer.remainderCount) {
+//                _ISRState.timer.remainderCount--;
+//            }
+//            break;
+//        
+//        case _State::Triggered:
+//            break;
+//        }
+//        
+//        // Handle the new state
+//        switch (_ISRState.state) {
+//        case _State::Idle:
+//            break;
+//        case _State::RTCCountdown:
+//            if (!_ISRState.rtc.count) _StateNext();
+//            break;
+//        case _State::TimerInterval:
+//            if (!_ISRState.timer.intervalCount) _StateNext();
+//            break;
+//        case _State::TimerRemainder:
+//            if (!_ISRState.timer.remainderCount) _StateNext();
+//            break;
+//        case _State::Triggered:
+//            break;
+//        }
+//    }
+    
+    
+    
+    
+    
+    
+    
+    
     
 //    static void _StateNext(bool delta=1) {
 //        // Add `delta` to the current state
@@ -194,7 +394,64 @@ private:
 //                    // Set timer
 //                } else {
 //                    _ISRState.rtc.count--;
-//                    _StateNext();
+//                }
+//            }
+//            
+//            if (!_ISRState.rtc.count) _StateNext();
+//            break;
+//        
+//        case _State::TimerInterval:
+//            if (_ISRState.timer.intervalCount) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.timer.intervalCount--;
+//                }
+//            }
+//            
+//            if (!_ISRState.timer.intervalCount) _StateNext();
+//            break;
+//        
+//        case _State::TimerRemainder:
+//            if (_ISRState.timer.remainderCount) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.timer.remainderCount--;
+//                }
+//            }
+//            
+//            if (!_ISRState.timer.remainderCount) _StateNext();
+//            break;
+//        
+//        case _State::Triggered:
+//            break;
+//        }
+//    }
+    
+    
+//    static void _StateNext(bool delta) {
+//        // Add `delta` to the current state
+//        if (delta) {
+//            if (_ISRState.state != _State_::Triggered) _ISRState.state++;
+//            else _ISRState.state = 0;
+//        }
+//        
+//        // Handle the new state
+//        switch (_ISRState.state) {
+//        case _State::Idle:
+//            break;
+//        
+//        case _State::RTCCountdown:
+//            if (_ISRState.rtc.count) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.rtc.count--;
+//                    _StateNext(0);
 //                }
 //            } else {
 //                _StateNext();
@@ -208,7 +465,7 @@ private:
 //                    // Set timer
 //                } else {
 //                    _ISRState.timer.intervalCount--;
-//                    _StateNext();
+//                    _StateNext(0);
 //                }
 //            } else {
 //                _StateNext();
@@ -222,7 +479,7 @@ private:
 //                    // Set timer
 //                } else {
 //                    _ISRState.timer.remainderCount--;
-//                    _StateNext();
+//                    _StateNext(0);
 //                }
 //            } else {
 //                _StateNext();
@@ -235,64 +492,76 @@ private:
 //    }
     
     
-    static void _StateNext(bool delta=1) {
-        // Add `delta` to the current state
-        if (delta) {
-            if (_ISRState.state != _State_::Triggered) _ISRState.state++;
-            else _ISRState.state = 0;
-        }
-        
-        // Handle the new state
-        switch (_ISRState.state) {
-        case _State::Idle:
-            break;
-        
-        case _State::RTCCountdown:
-            if (_ISRState.rtc.count) {
-                if (delta) {
-                    // Handle entering this state
-                    // Set timer
-                } else {
-                    _ISRState.rtc.count--;
-                    _StateNext(0);
-                }
-            } else {
-                _StateNext();
-            }
-            break;
-        
-        case _State::TimerInterval:
-            if (_ISRState.timer.intervalCount) {
-                if (delta) {
-                    // Handle entering this state
-                    // Set timer
-                } else {
-                    _ISRState.timer.intervalCount--;
-                    _StateNext(0);
-                }
-            } else {
-                _StateNext();
-            }
-            break;
-        
-        case _State::TimerRemainder:
-            if (_ISRState.timer.remainderCount) {
-                if (delta) {
-                    // Handle entering this state
-                    // Set timer
-                } else {
-                    _ISRState.timer.remainderCount--;
-                    _StateNext(0);
-                }
-            } else {
-                _StateNext();
-            }
-            break;
-        
-        case _State::Triggered:
-            break;
-        }
-    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+//    static void _StateNext(bool delta=1) {
+//        // Add `delta` to the current state
+//        if (delta) {
+//            if (_ISRState.state != _State_::Triggered) _ISRState.state++;
+//            else _ISRState.state = 0;
+//        }
+//        
+//        // Handle the new state
+//        switch (_ISRState.state) {
+//        case _State::Idle:
+//            break;
+//        
+//        case _State::RTCCountdown:
+//            if (_ISRState.rtc.count) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.rtc.count--;
+//                    _StateNext(0);
+//                }
+//            } else {
+//                _StateNext();
+//            }
+//            break;
+//        
+//        case _State::TimerInterval:
+//            if (_ISRState.timer.intervalCount) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.timer.intervalCount--;
+//                    _StateNext(0);
+//                }
+//            } else {
+//                _StateNext();
+//            }
+//            break;
+//        
+//        case _State::TimerRemainder:
+//            if (_ISRState.timer.remainderCount) {
+//                if (delta) {
+//                    // Handle entering this state
+//                    // Set timer
+//                } else {
+//                    _ISRState.timer.remainderCount--;
+//                    _StateNext(0);
+//                }
+//            } else {
+//                _StateNext();
+//            }
+//            break;
+//        
+//        case _State::Triggered:
+//            break;
+//        }
+//    }
     
     
     
