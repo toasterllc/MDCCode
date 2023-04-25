@@ -5,7 +5,13 @@
 #include "Time.h"
 #include "Assert.h"
 
-// T_Timer: a timer that can be set for times in the near future to distant future (up to ~4 years -- 0xFFFF*T_RTC::InterruptIntervalUs)
+// T_Timer: a one-shot timer that can be scheduled for times in the near future
+// to distant future (up to ~4 years -- 0xFFFF*T_RTC::InterruptIntervalUs).
+//
+// T_Timer is implemented to be as lower-power as possible by reusing RTC
+// wakeups for tracking time over long periods, and then using Timer_A
+// for the remainder time after the final RTC wakeup before the scheduled
+// time.
 template <typename T_RTC, uint32_t T_ACLKFreqHz>
 class T_Timer {
 public:
@@ -89,29 +95,32 @@ public:
     }
     
     static bool Fired() {
-        if (_ISRState.state == _State_::Fired) {
-            _StateUpdate();
-            return true;
-        }
-        return false;
+        return _ISRState.state == _State_::Fired;
+//        if (_ISRState.state == _State_::Fired) {
+//            _StateUpdate();
+//            return true;
+//        }
+//        return false;
+    }
+    
+    static void Reset() {
+        // Disable interrupts while we modify our state
+        Toastbox::IntState ints(false);
+        _Reset();
     }
     
     static bool ISRRTCInterested() {
         return _ISRState.state == _State_::RTCCountdown;
     }
     
-    static bool ISRRTC() {
+    static void ISRRTC() {
         Assert(ISRRTCInterested());
         _StateUpdate();
-        // Wake if the timer fired
-        return _ISRState.state==_State_::Fired;
     }
     
     static bool ISRTA0() {
         Assert(_ISRState.state==_State_::TimerInterval || _ISRState.state==_State_::TimerRemainder);
         _StateUpdate();
-        // Wake if the timer fired
-        return _ISRState.state==_State_::Fired;
     }
     
 private:
@@ -252,7 +261,6 @@ private:
                 goto _State_::NextStateReturn;
             
             case _State_::Fired:
-                _ISRState.state = _State_::Idle;
                 return;
             
             case _State_::NextState:
