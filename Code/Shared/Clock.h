@@ -14,8 +14,8 @@ struct Clock {
     template <typename T>
     using _TimePoint = std::chrono::time_point<Clock, T>;
     
-    using rep = Time::Us;
-    using period = std::micro;
+    using rep = Time::Ticks;
+    using period = std::ratio<1, TicksFreqHz>;
     using duration = std::chrono::duration<rep, period>;
     using time_point = _TimePoint<duration>;
     
@@ -23,8 +23,8 @@ struct Clock {
     
     static time_point now() {
         using namespace std::chrono;
-        const microseconds us(date::utc_clock::now()-Epoch);
-        return time_point(us);
+        const duration ticks(duration_cast<duration>(date::utc_clock::now()-Epoch));
+        return time_point(ticks);
     }
     
     template<class Duration>
@@ -65,8 +65,8 @@ struct Clock {
         using namespace std::chrono;
         // `t` must be an absolute time
         assert(Time::Absolute(t));
-        const microseconds us(t & ~Time::AbsoluteBit);
-        return time_point(us);
+        const duration ticks(t & ~Time::AbsoluteBit);
+        return time_point(ticks);
     }
     
     static duration DurationFromTimeInstant(Time::Instant t) {
