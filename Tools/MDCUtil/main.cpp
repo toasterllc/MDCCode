@@ -395,6 +395,10 @@ static std::string _StringForTimeInstant(Time::Instant t, bool relative=false) {
     return ss.str();
 }
 
+static float _SecondsForTicks(uint32_t ticks) {
+    return (float)ticks / Time::TicksFreqHz;
+}
+
 static std::filesystem::path _MSPAppPath() {
     using namespace std::filesystem;
     path home = getenv("HOME");
@@ -494,7 +498,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     for (auto it=std::begin(triggers.timeTrigger); it!=std::begin(triggers.timeTrigger)+triggers.timeTriggerCount; it++) {
         printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.timeTrigger));
         printf(     "        capture\n");
-        printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
+        printf(     "          delayTicks:          %ju (%.1f)\n",(uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
         printf(     "          leds:                %s\n",        _StringForLEDs(it->capture.leds));
     }
@@ -503,19 +507,19 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     for (auto it=std::begin(triggers.motionTrigger); it!=std::begin(triggers.motionTrigger)+triggers.motionTriggerCount; it++) {
         printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.motionTrigger));
         printf(     "        capture\n");
-        printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
+        printf(     "          delayTicks:          %ju (%.1f)\n",(uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
         printf(     "          leds:                %s\n",        _StringForLEDs(it->capture.leds));
         printf(     "        count:                 %ju\n",       (uintmax_t)it->count);
-        printf(     "        durationMs:            %ju\n",       (uintmax_t)it->durationMs);
-        printf(     "        suppressMs:            %ju\n",       (uintmax_t)it->suppressMs);
+        printf(     "        durationTicks:         %ju (%.1f)\n",(uintmax_t)it->durationTicks, _SecondsForTicks(it->durationTicks));
+        printf(     "        suppressTicks:         %ju (%.1f)\n",(uintmax_t)it->suppressTicks, _SecondsForTicks(it->suppressTicks));
     }
     
     printf(         "    buttonTrigger\n");
     for (auto it=std::begin(triggers.buttonTrigger); it!=std::begin(triggers.buttonTrigger)+triggers.buttonTriggerCount; it++) {
         printf(     "      #%ju\n",                               (uintmax_t)(&*it-triggers.buttonTrigger));
         printf(     "        capture\n");
-        printf(     "          delayMs:             %ju\n",       (uintmax_t)it->capture.delayMs);
+        printf(     "          delayTicks:          %ju (%.1f)\n",(uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         printf(     "          count:               %ju\n",       (uintmax_t)it->capture.count);
         printf(     "          leds:                %s\n",        _StringForLEDs(it->capture.leds));
     }
