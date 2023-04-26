@@ -75,6 +75,7 @@ public:
     static constexpr uint32_t Predivider = 1024;
     
     using TocksFreqHzRatio = std::ratio<_VLOFreqHz, Predivider>;
+    static_assert(TocksFreqHzRatio::num == 10);
     static_assert(TocksFreqHzRatio::den == 1); // Verify TocksFreqHzRatio division is exact
     static constexpr uint16_t TocksFreqHz = TocksFreqHzRatio::num;
     static_assert(TocksFreqHz == 10); // Debug
@@ -90,10 +91,9 @@ public:
 //    static constexpr Time::Ticks _TicksForTocks(uint32_t tocks) {
 //        return 0;
 //    }
-    
     static constexpr uint32_t InterruptIntervalTocks = 0x10000;
-    static constexpr uint32_t InterruptIntervalSec = (InterruptIntervalTocks*TocksFreqHzRatio::num)/TocksFreqHzRatio::den;
-    static_assert(InterruptIntervalSec == 655360); // Debug
+    static constexpr uint32_t InterruptIntervalSec = (InterruptIntervalTocks*TocksFreqHzRatio::den)/TocksFreqHzRatio::num;
+    static_assert(InterruptIntervalSec == 6553); // Debug
     static constexpr Time::Ticks InterruptIntervalTicks = _RTCTicksForTocks<TicksPerTockRatio>(InterruptIntervalTocks);
     static_assert(InterruptIntervalTicks == 104857); // Debug
     
@@ -126,12 +126,6 @@ public:
         // but on a warm start, CSCTL6.XT1DRIVE needs to be set before we clear
         // LOCKLPM5 (to return the register to its previous state before unlocking).
 //        CSCTL6 = (CSCTL6 & ~XT1DRIVE) | XT1DRIVE_0;
-        
-        // Clear fault flags
-        do {
-            CSCTL7 &= ~(DCOFFG); // Clear XT1 and DCO fault flag
-            SFRIFG1 &= ~OFIFG;
-        } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
         
         // Start RTC if it's not yet running, or restart it if we were given a new time
         if (!Enabled() || time) {
@@ -342,7 +336,7 @@ struct _TaskMain {
         //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
         //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
         //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-//        _RTC::Init();
+        _RTC::Init();
     }
     
     static void Run() {
