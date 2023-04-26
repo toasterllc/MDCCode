@@ -1,10 +1,24 @@
 #include <msp430.h>
+#include <ratio>
 #include "Toastbox/Scheduler.h"
+#include "Toastbox/Util.h"
+#include "SysTick.h"
+#include "Time.h"
+#include "Assert.h"
+#include "GPIO.h"
+using namespace GPIO;
 
-class _TaskButton;
+class _TaskMain;
 
-static constexpr uint64_t _MCLKFreqHz = 16000000;
+static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
+static constexpr uint32_t _XT1FreqHz        = 32768;
+
+struct _Pin {
+    // Port A
+    using LED1 = PortA::Pin<0x0, Option::Output0>;
+    using LED2 = PortA::Pin<0x1, Option::Output0>;
+};
 
 static void _Sleep();
 
@@ -27,8 +41,207 @@ using _Scheduler = Toastbox::Scheduler<
     nullptr,                                    // T_StackInterrupt: unused
     
     // T_Tasks: list of tasks
-    _TaskButton
+    _TaskMain
 >;
+
+// _RTCTime: the current time (either absolute or relative, depending on the
+// value supplied to Init()).
+//
+// _RTCTime is volatile because it's updated from the interrupt context.
+//
+// _RTCTime is stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// it's maintained during sleep.
+//
+// _RTCTime needs to live in the _noinit variant of BAKMEM so that RTC
+// memory is never automatically initialized, because we don't want it
+// to be reset when we abort.
+//
+// _RTCTime is declared outside of RTCType because apparently with GCC, the
+// gnu::section() attribute doesn't work for static member variables within
+// templated classes.
+
+[[gnu::section(".ram_backup_noinit.rtc")]]
+static volatile Time::Instant _RTCTime;
+
+class RTC {
+public:
+    static constexpr uint32_t T_VLOFreqHz = 10240;
+    
+    static constexpr uint32_t InterruptIntervalSec = 2048;
+    static constexpr Time::Ticks InterruptIntervalTicks = InterruptIntervalSec * Time::TicksFreqHz;
+    static_assert(InterruptIntervalTicks == 32768); // Debug
+    static constexpr uint32_t Predivider = 1024;
+    
+    using TocksFreqHzRatio = std::ratio<T_VLOFreqHz, Predivider>;
+    static_assert(TocksFreqHzRatio::den == 1); // Verify TocksFreqHzRatio division is exact
+    static constexpr uint16_t TocksFreqHz = TocksFreqHzRatio::num;
+    static_assert(TocksFreqHz == 10); // Debug
+    
+    using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TocksFreqHz>;
+    static_assert(TicksPerTockRatio::num == 8); // Debug
+    static_assert(TicksPerTockRatio::den == 5); // Debug
+    
+    using UsPerTockRatio = std::ratio<1000000, TocksFreqHz>;
+    static_assert(UsPerTockRatio::den == 1); // Verify UsPerTockRatio division is exact
+    static constexpr uint32_t UsPerTock = UsPerTockRatio::num;
+    static_assert(UsPerTock == 100000); // Debug
+    
+    static constexpr uint16_t TocksMax = 0xFFFF;
+    
+    static constexpr uint16_t InterruptCount = (InterruptIntervalSec*TocksFreqHz)-1;
+    static_assert(InterruptCount == 20479); // Debug
+    
+    static bool Enabled() {
+        return RTCCTL != 0;
+    }
+    
+    static void Init(Time::Instant time=0) {
+        // Prevent interrupts from firing while we update our time / reset the RTC
+        Toastbox::IntState ints(false);
+        
+        // Decrease the XT1 drive strength to save a little current
+        // We're not using this for now because supporting it with LPM3.5 is gross.
+        // That's because on a cold start, CSCTL6.XT1DRIVE needs to be set after we
+        // clear LOCKLPM5 (to reduce the drive strength after XT1 is running),
+        // but on a warm start, CSCTL6.XT1DRIVE needs to be set before we clear
+        // LOCKLPM5 (to return the register to its previous state before unlocking).
+//        CSCTL6 = (CSCTL6 & ~XT1DRIVE) | XT1DRIVE_0;
+        
+        // Clear fault flags
+        do {
+            CSCTL7 &= ~(DCOFFG); // Clear XT1 and DCO fault flag
+            SFRIFG1 &= ~OFIFG;
+        } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
+        
+        // Start RTC if it's not yet running, or restart it if we were given a new time
+        if (!Enabled() || time) {
+            _RTCTime = time;
+            
+            RTCMOD = InterruptCount;
+            RTCCTL = RTCSS__VLOCLK | _RTCPSForPredivider<Predivider>() | RTCSR;
+            // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
+            // before enabling the RTC counter interrupt."
+            RTCIV;
+            
+            // Enable RTC interrupts
+            RTCCTL |= RTCIE;
+            
+            // Wait until RTC is initialized. This is necessary because before the RTC peripheral is initialized,
+            // it's possible to read an old value of RTCCNT, which would temporarily reflect the wrong time.
+            // Empirically the RTC peripheral is reset and initialized synchronously from its clock (XT1CLK
+            // divided by Predivider), so we wait 1.5 cycles of that clock to ensure RTC is finished resetting.
+            _Scheduler::Delay(_Scheduler::Us((3*UsPerTock)/2));
+        }
+    }
+    
+    // Tocks(): returns the current tocks offset from _RTCTime, as tracked by the hardware
+    // register RTCCNT.
+    //
+    // Guarantee0: Tocks() will never return 0.
+    //
+    // Guarantee1: if interrupts are disabled before being called, the Tocks() return value
+    // can be safely added to _RTCTime to determine the current time.
+    // 
+    // Guarantee2: if interrupts are disabled before being called, the Tocks() return value
+    // can be safely subtracted from TocksMax+1 to determine the number of tocks until the
+    // next overflow occurs / ISR() is called.
+    //
+    // There are 2 special cases that the Tocks() implementation needs handle:
+    //
+    //   1. RTCCNT=0
+    //      If RTCCNT=0, the RTC overflow interrupt has either occurred or hasn't occurred
+    //      (empircally [see Tools/MSP430FR2433-RTCTest] it's possible to observe RTCCNT=0
+    //      _before_ the RTCIFG interrupt flag is set / before the ISR occurs). So when
+    //      RTCCNT=0, we don't know whether ISR() has been called due to the overflow yet,
+    //      and therefore we can't provide either Guarantee1 nor Guarantee2. So to handle
+    //      this RTCCNT=0 situation we simply wait 1 RTC clock cycle (with interrupts enabled,
+    //      which _Scheduler::Delay() guarantees) to allow RTCCNT to escape 0, therefore
+    //      allowing us to provide each Guarantee.
+    //
+    //   2. RTCIFG=1
+    //      It could be the case that RTCIFG=1 upon entry to Tocks() from a previous overflow,
+    //      which needs to be explicitly handled to provide Guarantee1 and Guarantee2. We
+    //      handle RTCIFG=1 in the same way as the RTCCNT=0: wait 1 RTC clock cycle with
+    //      interrupts enabled.
+    //
+    //      The rationale for why RTCIFG=1 must be explicitly handled to provide the Guarantees
+    //      is explained by the following situation: interrupts are disabled, RTCCNT counts
+    //      from 0xFFFF -> 0x0 -> 0x1, and then Tocks() is called. In this situation RTCCNT!=0
+    //      (because RTCCNT=1) and RTCIFG=1 due to the overflow, and therefore whatever value
+    //      RTCCNT contains doesn't reflect the value that should be added to _RTCTime to
+    //      get the current time (Guarantee1), because _RTCTime needs to be updated by ISR().
+    //      Nor does RTCCNT reflect the number of tocks until the next time ISR() is called
+    //      (Guarantee2), because ISR() will be called as soon as interrupts are enabled,
+    //      because RTCIFG=1.
+    //
+    static uint16_t Tocks() {
+        for (;;) {
+            const uint16_t tocks = RTCCNT;
+            if (tocks==0 || _OverflowPending()) {
+                _Scheduler::Delay(_Scheduler::Us(UsPerTock));
+                continue;
+            }
+            return tocks;
+        }
+    }
+    
+    static Time::Instant Now() {
+        // Disable interrupts so that reading _RTCTime and adding RTCCNT to it is atomic
+        // (with respect to overflow causing _RTCTime to be updated)
+        Toastbox::IntState ints(false);
+        // Make sure to read Tocks() before _RTCTime, to ensure that _RTCTime reflects the
+        // value read by Tocks(), since Tocks() enables interrupts in some cases, allowing
+        // _RTCTime to be updated.
+        const uint16_t tocks = Tocks();
+        return _RTCTime + _TicksForTocks(tocks);
+    }
+    
+    // TimeUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
+    // interrupt doesn't occur before the caller finishes using the returned value.
+    static Time::Ticks TimeUntilOverflow() {
+        // Note that the below calculation `(TocksMax-Tocks())+1` will never overflow a uint16_t,
+        // because Tocks() never returns 0.
+        return _TicksForTocks((TocksMax-Tocks())+1);
+    }
+    
+    static void ISR(uint16_t iv) {
+        switch (__even_in_range(iv, RTCIV_RTCIF)) {
+        case RTCIV_RTCIF:
+            // Update our time
+            _RTCTime += InterruptIntervalTicks;
+            return;
+        default:
+            Assert(false);
+        }
+    }
+    
+private:
+    template <class...>
+    static constexpr std::false_type _AlwaysFalse = {};
+    
+    template <uint16_t T_Predivider>
+    static constexpr uint16_t _RTCPSForPredivider() {
+             if constexpr (T_Predivider == 1)       return RTCPS__1;
+        else if constexpr (T_Predivider == 10)      return RTCPS__10;
+        else if constexpr (T_Predivider == 100)     return RTCPS__100;
+        else if constexpr (T_Predivider == 1000)    return RTCPS__1000;
+        else if constexpr (T_Predivider == 16)      return RTCPS__16;
+        else if constexpr (T_Predivider == 64)      return RTCPS__64;
+        else if constexpr (T_Predivider == 256)     return RTCPS__256;
+        else if constexpr (T_Predivider == 1024)    return RTCPS__1024;
+        else static_assert(_AlwaysFalse<T_Predivider>);
+    }
+    
+    static constexpr Time::Ticks _TicksForTocks(uint16_t tocks) {
+        return (((Time::Ticks)tocks*TicksPerTockRatio::num)/TicksPerTockRatio::den);
+    }
+    
+    static bool _OverflowPending() {
+        return RTCCTL & RTCIF;
+    }
+};
+
+using _SysTick = T_SysTick<_MCLKFreqHz, _SysTickPeriodUs>;
 
 static void _MCLK16MHz() {
     const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
@@ -74,22 +287,26 @@ static void _MCLK16MHz() {
     while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
 }
 
-using _SysTick = T_SysTick<_MCLKFreqHz, _SysTickPeriodUs>;
+// MARK: - _TaskMain
 
-// MARK: - _TaskButton
+#define _TaskMainStackSize 128
 
-#define _TaskButtonStackSize 128
-
-SchedulerStack(".stack._TaskButton")
-uint8_t _TaskButtonStack[_TaskButtonStackSize];
+SchedulerStack(".stack._TaskMain")
+uint8_t _TaskMainStack[_TaskMainStackSize];
 
 asm(".global _StartupStack");
-asm(".equ _StartupStack, _TaskButtonStack+" Stringify(_TaskButtonStackSize));
+asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
 
-struct _TaskButton {
+struct _TaskMain {
     static void _Init() {
         // Stop watchdog timer
         WDTCTL = WDTPW | WDTHOLD;
+        
+        // Init GPIOs
+        GPIO::Init<
+            _Pin::LED1,
+            _Pin::LED2
+        >();
         
         // Init clock
         _MCLK16MHz();
@@ -103,44 +320,12 @@ struct _TaskButton {
         //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
         //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
         _RTC::Init();
-        
-        // Restore our saved power state
-        // _OnSaved stores our power state across crashes/LPM3.5, so we need to
-        // restore our _On assertion based on it.
-        if (_OnSaved) {
-            _On = true;
-        }
     }
     
     static void Run() {
         _Init();
         
         for (;;) {
-            const _Button::Event ev = _Button::WaitForEvent();
-            // Ignore all interaction in host mode
-            if (_HostMode::Asserted()) continue;
-            
-            // Keep the lights on until we're done handling the event
-            _Caffeine::Assertion caffeine(true);
-            
-            switch (ev) {
-            case _Button::Event::Press: {
-                // Ignore button presses if we're off
-                if (!_On) break;
-                
-                for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _TaskEvent::CaptureStart(*it, _RTC::Now());
-                }
-                break;
-            }
-            
-            case _Button::Event::Hold:
-                _On = !_On;
-                _OnSaved = _On;
-                _LEDFlash(_On ? _LEDGreen_ : _LEDRed_);
-                _Button::WaitForDeassert();
-                break;
-            }
         }
     }
     
@@ -155,20 +340,8 @@ struct _TaskButton {
         led.set(_LEDPriority::Power, std::nullopt);
     }
     
-    // _On: controls user-visible on/off behavior
-    static inline _Powered::Assertion _On;
-    
-    // _OnSaved: remembers our power state across crashes and LPM3.5.
-    // This is needed because we don't want the device to return to the
-    // powered-off state after a crash.
-    // Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
-    // gnu::used is apparently necessary for the gnu::section attribute to
-    // work when link-time optimization is enabled.
-    [[gnu::section(".ram_backup._TaskButton"), gnu::used]]
-    static inline bool _OnSaved = false;
-    
     // Task stack
-    static constexpr auto& Stack = _TaskButtonStack;
+    static constexpr auto& Stack = _TaskMainStack;
 };
 
 // MARK: - Main
@@ -182,7 +355,27 @@ struct _TaskButton {
 //    }
 //}
 
+// MARK: - IntState
+
+inline bool Toastbox::IntState::Get() {
+    return __get_SR_register() & GIE;
+}
+
+inline void Toastbox::IntState::Set(bool en) {
+    if (en) __bis_SR_register(GIE);
+    else    __bic_SR_register(GIE);
+}
+
+// MARK: - Sleep
+
+static void _Sleep() {
+    // Remember our current interrupt state, which IntState will restore upon return
+    Toastbox::IntState ints;
+    // Atomically enable interrupts and go to sleep
+    __bis_SR_register(GIE | LPM3_bits);
+}
+
 int main() {
-    // Invokes the first task's Run() function (_TaskButton::Run)
+    // Invokes the first task's Run() function (_TaskMain::Run)
     _Scheduler::Run();
 }
