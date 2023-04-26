@@ -92,11 +92,6 @@ public:
         _StateUpdate();
     }
     
-//    static bool Active() {
-//        Toastbox::IntState ints(false);
-//        return _ISRState.state != _State::Idle;
-//    }
-    
     static bool Fired() {
         Toastbox::IntState ints(false);
         return _ISRState.state == _State::Fired;
