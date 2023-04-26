@@ -3,7 +3,7 @@
 namespace Time {
 
 // TicksFreqHz: the number of ticks that occur per second
-using TicksFreqHz = 16;
+static constexpr uint16_t TicksFreqHz = 16;
 
 // Ticks: a duration in ticks
 // Using a signed value here so we can represent negative durations.

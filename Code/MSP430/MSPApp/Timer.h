@@ -18,22 +18,20 @@ class T_Timer {
 public:
     static constexpr uint32_t TimerACLKDivider = 64;
     
-    using Tocks = uint16_t;
-    
     using TocksFreqHzRatio = std::ratio<T_ACLKFreqHz, TimerACLKDivider>;
     static_assert(TocksFreqHzRatio::den == 1); // Verify TocksFreqHzRatio division is exact
-    static constexpr uint32_t TocksFreqHz = TocksFreqHzRatio::num;
+    static constexpr uint16_t TocksFreqHz = TocksFreqHzRatio::num;
     static_assert(TocksFreqHz == 512); // Debug
     
-    static constexpr uint16_t TimerIntervalCCR = 0xFFFF;
-    using TimerIntervalSecRatio = std::ratio<TimerTocksMax, TocksFreqHz>;
+    static constexpr uint32_t TimerIntervalTocks = 0x10000;
+    using TimerIntervalSecRatio = std::ratio<TimerIntervalTocks, TocksFreqHz>;
     static_assert(TimerIntervalSecRatio::den == 1); // Verify TimerIntervalSecRatio division is exact
     static constexpr uint32_t TimerIntervalSec = TimerIntervalSecRatio::num;
     static_assert(TimerIntervalSec == 128); // Debug
     static constexpr Time::Ticks TimerIntervalTicks  = TimerIntervalSec * Time::TicksFreqHz;
     static_assert(TimerIntervalTicks == 2048); // Debug
     
-    using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TockFreqHz>;
+    using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TocksFreqHz>;
     static_assert(TicksPerTockRatio::num == 1); // Debug
     static_assert(TicksPerTockRatio::den == 32); // Debug
     
@@ -66,7 +64,7 @@ public:
             }
             
             // Ensure that `deltaTicks` can be cast to a u32, which we want to do so we don't perform a u64 division
-            constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalUs-1;
+            constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
             static_assert(DeltaTicksMax <= std::numeric_limits<uint32_t>::max());
             const uint16_t intervalCount = (uint32_t)deltaTicks / TimerIntervalTicks;
             // Ensure that `intervalCount` can't overflow
@@ -78,7 +76,7 @@ public:
             constexpr auto RemainderTicksMax = TimerIntervalTicks-1;
             static_assert(RemainderTicksMax <= std::numeric_limits<decltype(remainderTicks)>::max());
             
-            const Tocks remainderTocks = _TocksForTicks<RemainderTicksMax>(remainderTicks);
+            const uint16_t remainderTocks = _TocksForTicks<RemainderTicksMax>(remainderTicks);
             
             _ISRState = {
                 .rtc = {
@@ -130,14 +128,15 @@ public:
     }
     
 private:
-    static constexpr uint16_t _CCRForTocks(Tocks tocks) {
+    template<typename T>
+    static constexpr uint16_t _CCRForTocks(T tocks) {
         return tocks-1;
     }
     
     template<Time::Ticks T_MaxVal>
-    static constexpr Tocks _TocksForTicks(Time::Ticks ticks) {
+    static constexpr uint16_t _TocksForTicks(Time::Ticks ticks) {
         // Verify that our calculation can't overflow assuming a maximum `ticks` value of `T_MaxVal`
-        static_assert(((std::numeric_limits<Tocks>::max() * TicksPerTockRatio::num) / TicksPerTockRatio::den) <= T_MaxVal);
+        static_assert(((std::numeric_limits<uint16_t>::max() * TicksPerTockRatio::num) / TicksPerTockRatio::den) <= T_MaxVal);
         return ((ticks*TicksPerTockRatio::den)/TicksPerTockRatio::num);
     }
     
@@ -187,7 +186,7 @@ private:
             
             case _State::TimerIntervalPrepare:
                 if (!_ISRState.timer.intervalCount) goto NextState;
-                _TimerSet(TimerIntervalCCR); // Set timer
+                _TimerSet(_CCRForTocks(TimerIntervalTocks)); // Set timer
                 goto NextStateReturn;
             
             case _State::TimerInterval:
@@ -239,7 +238,7 @@ private:
         
         struct {
             uint16_t intervalCount = 0;
-            Tocks remainderTocks = 0;
+            uint16_t remainderTocks = 0;
         } timer;
         
         _State state = _State::Idle;

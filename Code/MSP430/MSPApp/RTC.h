@@ -35,21 +35,21 @@ public:
     
     using TocksFreqHzRatio = std::ratio<T_XT1FreqHz, Predivider>;
     static_assert(TocksFreqHzRatio::den == 1); // Verify TocksFreqHzRatio division is exact
-    static constexpr uint32_t TocksFreqHz = TocksFreqHzRatio::num;
+    static constexpr uint16_t TocksFreqHz = TocksFreqHzRatio::num;
     static_assert(TocksFreqHz == 32); // Debug
     
-    using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TockFreqHz>;
+    using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TocksFreqHz>;
     static_assert(TicksPerTockRatio::num == 1); // Debug
     static_assert(TicksPerTockRatio::den == 2); // Debug
     
-    using UsPerTockRatio = std::ratio<1000000, FreqHz>;
+    using UsPerTockRatio = std::ratio<1000000, TocksFreqHz>;
     static_assert(UsPerTockRatio::den == 1); // Verify UsPerTockRatio division is exact
     static constexpr uint32_t UsPerTock = UsPerTockRatio::num;
     static_assert(UsPerTock == 31250); // Debug
     
     static constexpr uint16_t TocksMax = 0xFFFF;
     
-    static constexpr uint16_t InterruptCount = (InterruptIntervalSec*FreqHz)-1;
+    static constexpr uint16_t InterruptCount = (InterruptIntervalSec*TocksFreqHz)-1;
     static_assert(InterruptCount == 0xFFFF); // Debug
     
     struct Pin {
@@ -151,20 +151,13 @@ public:
         }
     }
     
-    static constexpr Time::Ticks _TicksForTocks(uint16_t tocks) {
-        // We don't cast `tocks` to a wider type because currently the ticks/tock ratio is <= 1,
-        // so the result will always be smaller. Check that assumption:
-        static_assert(TicksPerTockRatio::num <= TicksPerTockRatio::den);
-        return ((tocks*TicksPerTockRatio::num)/TicksPerTockRatio::den);
-    }
-    
     static Time::Instant Now() {
         // Disable interrupts so that reading _RTCTime and adding RTCCNT to it is atomic
         // (with respect to overflow causing _RTCTime to be updated)
         Toastbox::IntState ints(false);
-        // Make sure to read tocks before _RTCTime, to ensure that _RTCTime reflects the
-        // value read by Tocks(), since Tocks() enables interrupts in some cases,
-        // allowing _RTCTime to be updated.
+        // Make sure to read Tocks() before _RTCTime, to ensure that _RTCTime reflects the
+        // value read by Tocks(), since Tocks() enables interrupts in some cases, allowing
+        // _RTCTime to be updated.
         const uint16_t tocks = Tocks();
         return _RTCTime + _TicksForTocks(tocks);
     }
@@ -203,6 +196,13 @@ private:
         else if constexpr (T_Predivider == 256)     return RTCPS__256;
         else if constexpr (T_Predivider == 1024)    return RTCPS__1024;
         else static_assert(_AlwaysFalse<T_Predivider>);
+    }
+    
+    static constexpr Time::Ticks _TicksForTocks(uint16_t tocks) {
+        // We don't cast `tocks` to a wider type because currently the ticks/tock ratio is <= 1,
+        // so the result will always be smaller. Check that assumption:
+        static_assert(TicksPerTockRatio::num <= TicksPerTockRatio::den);
+        return ((tocks*TicksPerTockRatio::num)/TicksPerTockRatio::den);
     }
     
     static bool _OverflowPending() {

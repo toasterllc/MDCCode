@@ -730,14 +730,6 @@ struct _TaskEvent {
         }
     }
     
-//    static void _EventTimerSchedule(const Time::Instant& time) {
-//        if (time) {
-//            _EventTimer::Schedule(time);
-//        } else {
-//            _EventTimer::Reset();
-//        }
-//    }
-    
     // _EventPop(): pops an event from the front of the list if it's ready to be handled
     // Interrupts must be disabled
     static _Triggers::Event& _EventPop() {
@@ -747,42 +739,6 @@ struct _TaskEvent {
         // Schedule _EventTimer for the next event
         _EventTimerSchedule();
         return *ev;
-        
-//        // If the event occurs after the current time, don't pop it yet
-//        if (ev && ev->time>=_RTC::Now()) ev = nullptr;
-//        // If we're returning an event, pop it from the list
-//        if (ev) _Triggers::EventPop();
-//        // Exit fast-forward mode when we no longer have any events in the past
-//        if (!ev) _State.fastForward = false;
-//        
-//        // If we're not fast-forwarding, and we either (1) popped an event, or (2) _WakeTimer
-//        // isn't running, then schedule _WakeTimer. (2) is necessary for the initial case
-//        // when we just exited fast-forward mode, in which case we won't return an event,
-//        // but we do need to set the _WakeTimer (for the first time).
-//        if (!_State.fastForward && (ev || !_WakeTimer::Running())) {
-//            _Triggers::Event*const next = _Triggers::EventFront();
-//            _WakeTimer::Schedule(next ? next->time : 0);
-//            
-////            if (next) _WakeTimer::Schedule(next->time);
-////            else      _WakeTimer::Reset();
-//        }
-        
-//        // If there's no front event, or the front event occurs after the current time, no events are ready yet.
-//        if (!ev || ev->time>=_RTC::Now()) {
-//            // Exit fast-forward mode when we no longer have any events in the past
-//            _State.fastForward = false;
-//            ev = nullptr;
-//        }
-//        
-//        if (ev) _Triggers::EventPop();
-//        
-//        _Triggers::Event* ev = _Triggers::EventPop(_RTC::Now());
-//        // Exit fast-forward mode when we no longer have any events in the past
-//        if (!ev) {
-//            _State.fastForward = false;
-//        }
-//        
-//        return ev;
     }
     
     static bool _EventTimerFired() {
@@ -790,43 +746,6 @@ struct _TaskEvent {
         // Exit fast-forward mode the first time we have an event that's in the future
         if (!fired) _State.fastForward = false;
         return fired;
-        
-//        _Triggers::Event* ev = _Triggers::EventFront();
-//        // If the event occurs after the current time, don't pop it yet
-//        if (ev && ev->time>=_RTC::Now()) ev = nullptr;
-//        // If we're returning an event, pop it from the list
-//        if (ev) _Triggers::EventPop();
-//        // Exit fast-forward mode when we no longer have any events in the past
-//        if (!ev) _State.fastForward = false;
-//        
-//        // If we're not fast-forwarding, and we either (1) popped an event, or (2) _WakeTimer
-//        // isn't running, then schedule _WakeTimer. (2) is necessary for the initial case
-//        // when we just exited fast-forward mode, in which case we won't return an event,
-//        // but we do need to set the _WakeTimer (for the first time).
-//        if (!_State.fastForward && (ev || !_WakeTimer::Running())) {
-//            _Triggers::Event*const next = _Triggers::EventFront();
-//            _WakeTimer::Schedule(next ? next->time : 0);
-//            
-////            if (next) _WakeTimer::Schedule(next->time);
-////            else      _WakeTimer::Reset();
-//        }
-        
-//        // If there's no front event, or the front event occurs after the current time, no events are ready yet.
-//        if (!ev || ev->time>=_RTC::Now()) {
-//            // Exit fast-forward mode when we no longer have any events in the past
-//            _State.fastForward = false;
-//            ev = nullptr;
-//        }
-//        
-//        if (ev) _Triggers::EventPop();
-//        
-//        _Triggers::Event* ev = _Triggers::EventPop(_RTC::Now());
-//        // Exit fast-forward mode when we no longer have any events in the past
-//        if (!ev) {
-//            _State.fastForward = false;
-//        }
-//        
-//        return ev;
     }
     
     static void Run() {
