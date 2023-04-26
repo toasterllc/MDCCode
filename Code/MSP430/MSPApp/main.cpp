@@ -171,7 +171,7 @@ using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledUpdate>;
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
-// _EventTimer:
+// _EventTimer: timer that triggers us to wake when the next event is ready to be handled
 using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
 
 static Time::Ticks _RepeatAdvance(MSP::Repeat& x) {
