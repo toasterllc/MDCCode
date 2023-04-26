@@ -38,8 +38,8 @@
 									<listOptionValue builtIn="false" value="${CCS_BASE_ROOT}/msp430/include_gcc"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}"/>
 									<listOptionValue builtIn="false" value="${CG_TOOL_INCLUDE_PATH}"/>
-									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Shared"/>
-									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Lib"/>
+									<listOptionValue builtIn="false" value="../../Code/MSP430/MSPApp"/>
+									<listOptionValue builtIn="false" value="../../Code/Lib"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.MHWMULT.116147580" name="Hardware multiply (-mhwmult)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.MHWMULT" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.MHWMULT.F5SERIES" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_C.54785804" name="C Language standard (-std)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_C" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_C.C11" valueType="enumerated"/>
@@ -47,7 +47,7 @@
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FEXCEPTIONS.217169092" name="Enable exception handling" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FEXCEPTIONS" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FEXCEPTIONS.OFF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FRTTI.1897216693" name="Generate run-time type descriptor information [C++ source only]" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FRTTI" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FRTTI.OFF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.NO_THREADSAFE_STATICS.196393943" name="Omit code for thread-safe initialization of local statics (-fno-threadsafe-statics) [C++ source only]" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.NO_THREADSAFE_STATICS" value="true" valueType="boolean"/>
-								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.release.95661182" name="Optimization Level" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.release" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.OPT_FOR_SPACE" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.release.95661182" name="Optimization Level" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.release" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.0" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FUNCTION_SECTIONS.672908268" name="Place each function into its own section (-ffunction-sections)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FUNCTION_SECTIONS" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DATA_SECTIONS.3560189" name="Place data items into their own section (-fdata-sections)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DATA_SECTIONS" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DEBUG.1313492371" name="Generate debug information (-g)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DEBUG" value="true" valueType="boolean"/>

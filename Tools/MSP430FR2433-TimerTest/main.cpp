@@ -91,11 +91,21 @@ public:
 //    static constexpr Time::Ticks _TicksForTocks(uint32_t tocks) {
 //        return 0;
 //    }
-    static constexpr uint32_t InterruptIntervalTocks = 0x10000;
+    
+    
+    static constexpr uint32_t InterruptIntervalTocks = 0x100;
     static constexpr uint32_t InterruptIntervalSec = (InterruptIntervalTocks*TocksFreqHzRatio::den)/TocksFreqHzRatio::num;
-    static_assert(InterruptIntervalSec == 6553); // Debug
+    static_assert(InterruptIntervalSec == 25); // Debug
     static constexpr Time::Ticks InterruptIntervalTicks = _RTCTicksForTocks<TicksPerTockRatio>(InterruptIntervalTocks);
-    static_assert(InterruptIntervalTicks == 104857); // Debug
+    static_assert(InterruptIntervalTicks == 409); // Debug
+    
+    
+    
+//    static constexpr uint32_t InterruptIntervalTocks = 0x10000;
+//    static constexpr uint32_t InterruptIntervalSec = (InterruptIntervalTocks*TocksFreqHzRatio::den)/TocksFreqHzRatio::num;
+//    static_assert(InterruptIntervalSec == 6553); // Debug
+//    static constexpr Time::Ticks InterruptIntervalTicks = _RTCTicksForTocks<TicksPerTockRatio>(InterruptIntervalTocks);
+//    static_assert(InterruptIntervalTicks == 104857); // Debug
     
     using MsPerTockRatio = std::ratio<1000, TocksFreqHz>;
     static_assert(MsPerTockRatio::den == 1); // Verify MsPerTockRatio division is exact
@@ -306,7 +316,7 @@ static void _MCLK16MHz() {
 
 // MARK: - _TaskMain
 
-#define _TaskMainStackSize 128
+#define _TaskMainStackSize 512
 
 SchedulerStack(".stack._TaskMain")
 uint8_t _TaskMainStack[_TaskMainStackSize];
@@ -343,10 +353,16 @@ struct _TaskMain {
         _Init();
         
         for (;;) {
-            _Pin::LEDRed::Write(1);
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
-            _Pin::LEDRed::Write(0);
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
+            const auto nextTime = _RTC::Now() - 10*Time::TicksFreqHz;
+            _EventTimer::Schedule(nextTime);
+            _Scheduler::Wait([] { return _EventTimer::Fired(); });
+            _Pin::LEDRed::Write(!_Pin::LEDRed::Read());
+            
+            
+            
+//            _Scheduler::Sleep(_Scheduler::Ms(1000));
+//            _Pin::LEDRed::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms(1000));
         }
     }
     
