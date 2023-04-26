@@ -98,7 +98,7 @@ struct LEDs_ { enum : LEDs {
 
 // Capture: describes the capture action when a trigger occurs
 struct [[gnu::packed]] Capture {
-    uint32_t delayMs = 0;
+    uint32_t delayTicks = 0;
     uint16_t count = 0;
     LEDs leds = LEDs_::None;
     uint8_t _pad = 0;
@@ -127,10 +127,10 @@ struct [[gnu::packed]] Triggers {
         Capture capture;
         // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
         uint16_t count = 0;
-        // durationMs: duration for which motion should be enabled (0 == forever)
-        uint32_t durationMs = 0;
-        // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
-        uint32_t suppressMs = 0;
+        // durationTicks: duration for which motion should be enabled (0 == forever)
+        uint32_t durationTicks = 0;
+        // suppressTicks: duration to suppress motion, after motion occurs (0 == no suppression)
+        uint32_t suppressTicks = 0;
     };
     static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
     
@@ -169,10 +169,10 @@ struct [[gnu::packed]] Triggers {
 //        Capture capture;
 //        // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
 //        uint16_t count = 0;
-//        // durationMs: duration for which motion should be enabled (0 == forever)
-//        uint32_t durationMs = 0;
-//        // suppressMs: duration to suppress motion, after motion occurs (0 == no suppression)
-//        uint32_t suppressMs = 0;
+//        // durationTicks: duration for which motion should be enabled (0 == forever)
+//        uint32_t durationTicks = 0;
+//        // suppressTicks: duration to suppress motion, after motion occurs (0 == no suppression)
+//        uint32_t suppressTicks = 0;
 //    };
 //    static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
 //    

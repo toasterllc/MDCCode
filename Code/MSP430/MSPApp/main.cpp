@@ -174,10 +174,10 @@ using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 // _EventTimer:
 using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
 
-static Time::Us _RepeatAdvance(MSP::Repeat& x) {
-    static constexpr Time::Us Day         = (Time::Us)     24*60*60*1000000;
-    static constexpr Time::Us Year        = (Time::Us) 365*24*60*60*1000000;
-    static constexpr Time::Us YearPlusDay = (Time::Us) 366*24*60*60*1000000;
+static Time::Ticks _RepeatAdvance(MSP::Repeat& x) {
+    static constexpr Time::Ticks Day         = (Time::Ticks)     24*60*60*Time::TicksFreqHz;
+    static constexpr Time::Ticks Year        = (Time::Ticks) 365*24*60*60*Time::TicksFreqHz;
+    static constexpr Time::Ticks YearPlusDay = (Time::Ticks) 366*24*60*60*Time::TicksFreqHz;
     switch (x.type) {
     case MSP::Repeat::Type::Never:
         return 0;
@@ -611,9 +611,9 @@ struct _TaskEvent {
         // Schedule the MotionDisable event, if applicable
         // This needs to happen before we reschedule `motionEnableEvent` because we need its .time to
         // properly schedule the MotionDisableEvent!
-        const uint32_t durationMs = trigger.base().durationMs;
-        if (durationMs) {
-            EventInsert((_Triggers::MotionDisableEvent&)trigger, ev.time, durationMs);
+        const uint32_t durationTicks = trigger.base().durationTicks;
+        if (durationTicks) {
+            EventInsert((_Triggers::MotionDisableEvent&)trigger, ev.time, durationTicks);
         }
         
         // Reschedule MotionEnableEvent for its next trigger time
@@ -689,7 +689,7 @@ struct _TaskEvent {
         
         ev.countRem--;
         if (ev.countRem) {
-            EventInsert(ev, ev.time, ev.capture->delayMs);
+            EventInsert(ev, ev.time, ev.capture->delayTicks);
         }
     }
     
@@ -702,15 +702,15 @@ struct _TaskEvent {
     }
 
     static void EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-        const Time::Us delta = _RepeatAdvance(repeat);
+        const Time::Ticks delta = _RepeatAdvance(repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
             EventInsert(ev, ev.time+delta);
         }
     }
 
-    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, uint32_t deltaMs) {
-        EventInsert(ev, time + ((Time::Us)deltaMs)*1000);
+    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, uint32_t deltaTicks) {
+        EventInsert(ev, time + deltaTicks);
     }
 
     static void CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
@@ -1021,10 +1021,10 @@ struct _TaskMotion {
                     // Start capture
                     _TaskEvent::CaptureStart(trigger, time);
                     // Suppress motion for the specified duration, if suppression is enabled
-                    const uint32_t suppressMs = trigger.base().suppressMs;
-                    if (suppressMs) {
+                    const uint32_t suppressTicks = trigger.base().suppressTicks;
+                    if (suppressTicks) {
                         trigger.enabled.suppress(true);
-                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressMs);
+                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
                     }
                 }
             }
