@@ -18,8 +18,8 @@ static constexpr uint32_t _ACLKFreqHz       = 32768;
 
 struct _Pin {
     // Port A
-    using LED1 = PortA::Pin<0x0, Option::Output0>;
-    using LED2 = PortA::Pin<0x1, Option::Output0>;
+    using LEDRed   = PortA::Pin<0x0, Option::Output0>;
+    using LEDGreen = PortA::Pin<0x1, Option::Output0>;
 };
 
 static void _Sleep();
@@ -327,8 +327,8 @@ struct _TaskMain {
         
         // Init GPIOs
         GPIO::Init<
-            _Pin::LED1,
-            _Pin::LED2
+            _Pin::LEDRed,
+            _Pin::LEDGreen
         >();
         
         // Init clock
@@ -342,16 +342,16 @@ struct _TaskMain {
         //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
         //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
         //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-        _RTC::Init();
+//        _RTC::Init();
     }
     
     static void Run() {
         _Init();
         
         for (;;) {
-            _Pin::LED1::Write(1);
+            _Pin::LEDRed::Write(1);
             _Scheduler::Sleep(_Scheduler::Ms(1000));
-            _Pin::LED1::Write(0);
+            _Pin::LEDRed::Write(0);
             _Scheduler::Sleep(_Scheduler::Ms(1000));
         }
     }
