@@ -63,7 +63,7 @@ using _Scheduler = Toastbox::Scheduler<
 [[gnu::section(".ram_backup_noinit.rtc")]]
 static volatile Time::Instant _RTCTime;
 
-class RTC {
+class _RTC {
 public:
     static constexpr uint32_t T_VLOFreqHz = 10240;
     
@@ -81,10 +81,10 @@ public:
     static_assert(TicksPerTockRatio::num == 8); // Debug
     static_assert(TicksPerTockRatio::den == 5); // Debug
     
-    using UsPerTockRatio = std::ratio<1000000, TocksFreqHz>;
-    static_assert(UsPerTockRatio::den == 1); // Verify UsPerTockRatio division is exact
-    static constexpr uint32_t UsPerTock = UsPerTockRatio::num;
-    static_assert(UsPerTock == 100000); // Debug
+    using MsPerTockRatio = std::ratio<1000, TocksFreqHz>;
+    static_assert(MsPerTockRatio::den == 1); // Verify MsPerTockRatio division is exact
+    static constexpr uint32_t MsPerTock = MsPerTockRatio::num;
+    static_assert(MsPerTock == 100); // Debug
     
     static constexpr uint16_t TocksMax = 0xFFFF;
     
@@ -130,7 +130,7 @@ public:
             // it's possible to read an old value of RTCCNT, which would temporarily reflect the wrong time.
             // Empirically the RTC peripheral is reset and initialized synchronously from its clock (XT1CLK
             // divided by Predivider), so we wait 1.5 cycles of that clock to ensure RTC is finished resetting.
-            _Scheduler::Delay(_Scheduler::Us((3*UsPerTock)/2));
+            _Scheduler::Delay(_Scheduler::Ms((3*MsPerTock)/2));
         }
     }
     
@@ -178,7 +178,7 @@ public:
         for (;;) {
             const uint16_t tocks = RTCCNT;
             if (tocks==0 || _OverflowPending()) {
-                _Scheduler::Delay(_Scheduler::Us(UsPerTock));
+                _Scheduler::Delay(_Scheduler::Ms(MsPerTock));
                 continue;
             }
             return tocks;
@@ -327,17 +327,6 @@ struct _TaskMain {
         
         for (;;) {
         }
-    }
-    
-    static void _LEDFlash(OutputPriority& led) {
-        // Flash red LED to signal that we're turning off
-        for (int i=0; i<5; i++) {
-            led.set(_LEDPriority::Power, 0);
-            _Scheduler::Delay(_Scheduler::Ms(50));
-            led.set(_LEDPriority::Power, 1);
-            _Scheduler::Delay(_Scheduler::Ms(50));
-        }
-        led.set(_LEDPriority::Power, std::nullopt);
     }
     
     // Task stack
