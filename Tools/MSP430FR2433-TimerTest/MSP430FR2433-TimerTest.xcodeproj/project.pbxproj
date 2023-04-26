@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		556276C729F8C6CC00998BE2 /* SysTick.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SysTick.h; sourceTree = "<group>"; };
-		556276C829F8C6CC00998BE2 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
-		556276C929F8C6CC00998BE2 /* Time.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Time.h; sourceTree = "<group>"; };
 		556276CB29F8C6CC00998BE2 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		556276CC29F8C6CC00998BE2 /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
 		556276CD29F8C6CC00998BE2 /* ReadWrite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReadWrite.h; sourceTree = "<group>"; };
@@ -43,9 +40,6 @@
 		556276EA29F8C6CC00998BE2 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
 		556276EB29F8C6CC00998BE2 /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
 		556276EC29F8C6CC00998BE2 /* Atomic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atomic.h; sourceTree = "<group>"; };
-		556276ED29F8C6CC00998BE2 /* GPIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GPIO.h; sourceTree = "<group>"; };
-		556276EE29F8C6CC00998BE2 /* Startup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Startup.h; sourceTree = "<group>"; };
-		556276EF29F8C9C300998BE2 /* Timer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Timer.h; sourceTree = "<group>"; };
 		556E45EF26B12023006681FA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -102,12 +96,6 @@
 			isa = PBXGroup;
 			children = (
 				556276CA29F8C6CC00998BE2 /* Toastbox */,
-				556276C829F8C6CC00998BE2 /* Assert.h */,
-				556276ED29F8C6CC00998BE2 /* GPIO.h */,
-				556276EE29F8C6CC00998BE2 /* Startup.h */,
-				556276C729F8C6CC00998BE2 /* SysTick.h */,
-				556276C929F8C6CC00998BE2 /* Time.h */,
-				556276EF29F8C9C300998BE2 /* Timer.h */,
 				556E45EF26B12023006681FA /* main.cpp */,
 			);
 			sourceTree = "<group>";
