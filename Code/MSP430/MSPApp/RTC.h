@@ -27,10 +27,22 @@ static volatile Time::Instant _RTCTime;
 
 template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin, typename T_Scheduler>
 class RTCType {
+private:
+    // _TicksForTocks(): templated to work with uint16_t (at runtime) and uint32_t (at compile time)
+    template<typename T>
+    static constexpr Time::Ticks _TicksForTocks(T tocks) {
+        // We don't cast `tocks` to a wider type because currently the ticks/tock ratio is <= 1,
+        // so the result will always be smaller. Check that assumption:
+        static_assert(TicksPerTockRatio::num <= TicksPerTockRatio::den);
+        return ((tocks*TicksPerTockRatio::num)/TicksPerTockRatio::den);
+    }
+    
 public:
-    static constexpr uint32_t InterruptIntervalSec = 2048;
-    static constexpr Time::Ticks InterruptIntervalTicks = InterruptIntervalSec * Time::TicksFreqHz;
+    static constexpr uint32_t InterruptIntervalTocks = 0x10000; // 0xFFFF+1
+    static constexpr Time::Ticks InterruptIntervalTicks = _TicksForTocks(InterruptIntervalTocks);
     static_assert(InterruptIntervalTicks == 32768); // Debug
+    static constexpr uint16_t TocksMax = InterruptIntervalTocks-1;
+    static_assert(TocksMax == 0xFFFF); // Debug
     static constexpr uint32_t Predivider = 1024;
     
     using TocksFreqHzRatio = std::ratio<T_XT1FreqHz, Predivider>;
@@ -46,11 +58,6 @@ public:
     static_assert(UsPerTockRatio::den == 1); // Verify UsPerTockRatio division is exact
     static constexpr uint32_t UsPerTock = UsPerTockRatio::num;
     static_assert(UsPerTock == 31250); // Debug
-    
-    static constexpr uint16_t TocksMax = 0xFFFF;
-    
-    static constexpr uint16_t InterruptCount = (InterruptIntervalSec*TocksFreqHz)-1;
-    static_assert(InterruptCount == 0xFFFF); // Debug
     
     struct Pin {
         using XOUT  = typename T_XOUTPin::template Opts<GPIO::Option::Sel10>;
@@ -83,7 +90,7 @@ public:
         if (!Enabled() || time) {
             _RTCTime = time;
             
-            RTCMOD = InterruptCount;
+            RTCMOD = TocksMax;
             RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
             // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
             // before enabling the RTC counter interrupt."
@@ -196,13 +203,6 @@ private:
         else if constexpr (T_Predivider == 256)     return RTCPS__256;
         else if constexpr (T_Predivider == 1024)    return RTCPS__1024;
         else static_assert(_AlwaysFalse<T_Predivider>);
-    }
-    
-    static constexpr Time::Ticks _TicksForTocks(uint16_t tocks) {
-        // We don't cast `tocks` to a wider type because currently the ticks/tock ratio is <= 1,
-        // so the result will always be smaller. Check that assumption:
-        static_assert(TicksPerTockRatio::num <= TicksPerTockRatio::den);
-        return ((tocks*TicksPerTockRatio::num)/TicksPerTockRatio::den);
     }
     
     static bool _OverflowPending() {

@@ -46,21 +46,6 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskMain
 >;
 
-// _RTCTime: the current time (either absolute or relative, depending on the
-// value supplied to Init()).
-//
-// _RTCTime is volatile because it's updated from the interrupt context.
-//
-// _RTCTime is stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep.
-//
-// _RTCTime needs to live in the _noinit variant of BAKMEM so that RTC
-// memory is never automatically initialized, because we don't want it
-// to be reset when we abort.
-//
-// _RTCTime is declared outside of RTCType because apparently with GCC, the
-// gnu::section() attribute doesn't work for static member variables within
-// templated classes.
 
 [[gnu::section(".ram_backup_noinit.rtc")]]
 static volatile Time::Instant _RTCTime;
@@ -112,7 +97,7 @@ public:
     static constexpr uint32_t MsPerTock = MsPerTockRatio::num;
     static_assert(MsPerTock == 100); // Debug
     
-    static constexpr uint16_t TocksMax = 0xFFFF;
+//    static constexpr uint16_t TocksMax = 0xFFFF;
     
     static constexpr uint16_t _RTCMODForTocks(uint32_t tocks) {
         return tocks-1;
@@ -225,7 +210,7 @@ public:
     static Time::Ticks TimeUntilOverflow() {
         // Note that the below calculation `(TocksMax-Tocks())+1` will never overflow a uint16_t,
         // because Tocks() never returns 0.
-        return _TicksForTocks((TocksMax-Tocks())+1);
+        return _TicksForTocks(InterruptIntervalTocks-Tocks());
     }
     
     static void ISR(uint16_t iv) {
@@ -353,12 +338,10 @@ struct _TaskMain {
         _Init();
         
         for (;;) {
-            const auto nextTime = _RTC::Now() - 10*Time::TicksFreqHz;
-            _EventTimer::Schedule(nextTime);
+//            const auto nextTime = _RTC::Now() + 192*Time::TicksFreqHz;
+            _EventTimer::Schedule(_RTC::Now() + 50*Time::TicksFreqHz);
             _Scheduler::Wait([] { return _EventTimer::Fired(); });
             _Pin::LEDRed::Write(!_Pin::LEDRed::Read());
-            
-            
             
 //            _Scheduler::Sleep(_Scheduler::Ms(1000));
 //            _Pin::LEDRed::Write(0);

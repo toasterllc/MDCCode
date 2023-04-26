@@ -13,6 +13,32 @@
 // wakeups for tracking time over long periods, and then using Timer_A
 // for the remaining time after the final RTC wakeup before the scheduled
 // time.
+enum class _State : uint8_t {
+    Idle,
+    RTCPrepare,
+    RTC,
+    TimerIntervalPrepare,
+    TimerInterval,
+    TimerRemainderPrepare,
+    TimerRemainder,
+    Fired,
+};
+
+struct __ISRState {
+    struct {
+        uint16_t count = 0;
+    } rtc;
+    
+    struct {
+        uint16_t intervalCount = 0;
+        uint16_t remainderTocks = 0;
+    } timer;
+    
+    _State state = _State::Idle;
+};
+
+static __ISRState _ISRState;
+
 template<typename T_RTC, uint32_t T_ACLKFreqHz>
 class T_Timer {
 public:
@@ -56,9 +82,10 @@ public:
             }
             
             if (deltaTicks >= T_RTC::InterruptIntervalTicks) {
-                // Ensure that our `count` division won't overflow
-                Assert(deltaTicks <= (Time::Ticks)0xFFFF*T_RTC::InterruptIntervalTicks);
                 const uint16_t count = deltaTicks / T_RTC::InterruptIntervalTicks;
+                constexpr uint16_t CountMax = std::numeric_limits<decltype(count)>::max();
+                // Verify that our `count` division can't overflow
+                Assert(deltaTicks <= (Time::Ticks)CountMax * T_RTC::InterruptIntervalTicks); 
                 rtcCount += count;
                 deltaTicks -= count*T_RTC::InterruptIntervalTicks;
             }
@@ -87,6 +114,16 @@ public:
                     .remainderTocks = remainderTocks,
                 },
             };
+            
+//            _ISRState = {
+//                .rtc = {
+//                    .count = 1,
+//                },
+//                .timer = {
+//                    .intervalCount = 1,
+//                    .remainderTocks = _TocksForTicks<RemainderTicksMax>(7*Time::TicksFreqHz),
+//                },
+//            };
         }
         
         _StateUpdate();
@@ -123,6 +160,7 @@ public:
     }
     
 private:
+    // _CCRForTocks(): templated to work with uint16_t (at runtime) and uint32_t (at compile time)
     template<typename T>
     static constexpr uint16_t _CCRForTocks(T tocks) {
         return tocks-1;
@@ -215,27 +253,5 @@ private:
         }
     }
     
-    enum class _State : uint8_t {
-        Idle,
-        RTCPrepare,
-        RTC,
-        TimerIntervalPrepare,
-        TimerInterval,
-        TimerRemainderPrepare,
-        TimerRemainder,
-        Fired,
-    };
-    
-    static inline struct {
-        struct {
-            uint16_t count = 0;
-        } rtc;
-        
-        struct {
-            uint16_t intervalCount = 0;
-            uint16_t remainderTocks = 0;
-        } timer;
-        
-        _State state = _State::Idle;
-    } _ISRState;
+//    static inline __ISRState _ISRState;
 };
