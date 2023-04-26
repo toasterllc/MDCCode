@@ -6,13 +6,15 @@
 #include "Time.h"
 #include "Assert.h"
 #include "GPIO.h"
+#include "Timer.h"
 using namespace GPIO;
 
 class _TaskMain;
 
 static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
-static constexpr uint32_t _XT1FreqHz        = 32768;
+static constexpr uint32_t _VLOFreqHz        = 10240;
+static constexpr uint32_t _ACLKFreqHz       = 32768;
 
 struct _Pin {
     // Port A
@@ -63,16 +65,16 @@ using _Scheduler = Toastbox::Scheduler<
 [[gnu::section(".ram_backup_noinit.rtc")]]
 static volatile Time::Instant _RTCTime;
 
+template<typename T>
+static constexpr Time::Ticks _RTCTicksForTocks(uint32_t tocks) {
+    return (((Time::Ticks)tocks*T::num)/T::den);
+}
+
 class _RTC {
 public:
-    static constexpr uint32_t T_VLOFreqHz = 10240;
-    
-    static constexpr uint32_t InterruptIntervalSec = 2048;
-    static constexpr Time::Ticks InterruptIntervalTicks = InterruptIntervalSec * Time::TicksFreqHz;
-    static_assert(InterruptIntervalTicks == 32768); // Debug
     static constexpr uint32_t Predivider = 1024;
     
-    using TocksFreqHzRatio = std::ratio<T_VLOFreqHz, Predivider>;
+    using TocksFreqHzRatio = std::ratio<_VLOFreqHz, Predivider>;
     static_assert(TocksFreqHzRatio::den == 1); // Verify TocksFreqHzRatio division is exact
     static constexpr uint16_t TocksFreqHz = TocksFreqHzRatio::num;
     static_assert(TocksFreqHz == 10); // Debug
@@ -81,6 +83,20 @@ public:
     static_assert(TicksPerTockRatio::num == 8); // Debug
     static_assert(TicksPerTockRatio::den == 5); // Debug
     
+    static constexpr Time::Ticks _TicksForTocks(uint32_t tocks) {
+        return _RTCTicksForTocks<TicksPerTockRatio>(tocks);
+    }
+    
+//    static constexpr Time::Ticks _TicksForTocks(uint32_t tocks) {
+//        return 0;
+//    }
+    
+    static constexpr uint32_t InterruptIntervalTocks = 0x10000;
+    static constexpr uint32_t InterruptIntervalSec = (InterruptIntervalTocks*TocksFreqHzRatio::num)/TocksFreqHzRatio::den;
+    static_assert(InterruptIntervalSec == 655360); // Debug
+    static constexpr Time::Ticks InterruptIntervalTicks = _RTCTicksForTocks<TicksPerTockRatio>(InterruptIntervalTocks);
+    static_assert(InterruptIntervalTicks == 104857); // Debug
+    
     using MsPerTockRatio = std::ratio<1000, TocksFreqHz>;
     static_assert(MsPerTockRatio::den == 1); // Verify MsPerTockRatio division is exact
     static constexpr uint32_t MsPerTock = MsPerTockRatio::num;
@@ -88,8 +104,12 @@ public:
     
     static constexpr uint16_t TocksMax = 0xFFFF;
     
-    static constexpr uint16_t InterruptCount = (InterruptIntervalSec*TocksFreqHz)-1;
-    static_assert(InterruptCount == 20479); // Debug
+    static constexpr uint16_t _RTCMODForTocks(uint32_t tocks) {
+        return tocks-1;
+    }
+    
+//    static constexpr uint16_t InterruptCount = (InterruptIntervalSec*TocksFreqHz)-1;
+//    static_assert(InterruptCount == 20479); // Debug
     
     static bool Enabled() {
         return RTCCTL != 0;
@@ -117,7 +137,7 @@ public:
         if (!Enabled() || time) {
             _RTCTime = time;
             
-            RTCMOD = InterruptCount;
+            RTCMOD = _RTCMODForTocks(InterruptIntervalTocks);
             RTCCTL = RTCSS__VLOCLK | _RTCPSForPredivider<Predivider>() | RTCSR;
             // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
             // before enabling the RTC counter interrupt."
@@ -232,16 +252,15 @@ private:
         else static_assert(_AlwaysFalse<T_Predivider>);
     }
     
-    static constexpr Time::Ticks _TicksForTocks(uint16_t tocks) {
-        return (((Time::Ticks)tocks*TicksPerTockRatio::num)/TicksPerTockRatio::den);
-    }
-    
     static bool _OverflowPending() {
         return RTCCTL & RTCIF;
     }
 };
 
 using _SysTick = T_SysTick<_MCLKFreqHz, _SysTickPeriodUs>;
+
+// _EventTimer: timer that triggers us to wake when the next event is ready to be handled
+using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
 
 static void _MCLK16MHz() {
     const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
@@ -285,6 +304,10 @@ static void _MCLK16MHz() {
     
     // Wait until FLL locks
     while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
+    
+    // MCLK / SMCLK source = DCOCLKDIV
+    //         ACLK source = REFOCLK
+    CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
 }
 
 // MARK: - _TaskMain
@@ -326,6 +349,10 @@ struct _TaskMain {
         _Init();
         
         for (;;) {
+            _Pin::LED1::Write(1);
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+            _Pin::LED1::Write(0);
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
         }
     }
     
@@ -362,6 +389,45 @@ static void _Sleep() {
     Toastbox::IntState ints;
     // Atomically enable interrupts and go to sleep
     __bis_SR_register(GIE | LPM3_bits);
+}
+
+// MARK: - Interrupts
+
+[[gnu::interrupt(RTC_VECTOR)]]
+static void _ISR_RTC() {
+    _RTC::ISR(RTCIV);
+    if (_EventTimer::ISRRTCInterested()) {
+        _EventTimer::ISRRTC();
+        // Wake if the timer fired
+        if (_EventTimer::Fired()) {
+            __bic_SR_register_on_exit(LPM3_bits);
+        }
+    }
+}
+
+[[gnu::interrupt(TIMER0_A1_VECTOR)]]
+static void _ISR_Timer0() {
+    _EventTimer::ISRTimer0(TA0IV);
+    // Wake if the timer fired
+    if (_EventTimer::Fired()) {
+        __bic_SR_register_on_exit(LPM3_bits);
+    }
+}
+
+[[gnu::interrupt(WDT_VECTOR)]]
+static void _ISR_SysTick() {
+    const bool wake = _Scheduler::Tick();
+    if (wake) {
+        // Wake ourself
+        __bic_SR_register_on_exit(LPM3_bits);
+    }
+}
+
+// Abort(): called various Assert's throughout our program
+extern "C"
+[[noreturn, gnu::used]]
+void Abort(uintptr_t addr) {
+    for (;;);
 }
 
 int main() {
