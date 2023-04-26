@@ -11,7 +11,7 @@ namespace Time {
 static constexpr std::chrono::time_point<date::utc_clock> Epoch(std::chrono::seconds(1640995227));
 
 struct Clock {
-    template <typename T>
+    template<typename T>
     using _TimePoint = std::chrono::time_point<Clock, T>;
     
     using rep = Time::Ticks;
@@ -27,38 +27,49 @@ struct Clock {
         return time_point(ticks);
     }
     
-    template<class Duration>
-    static _TimePoint<std::common_type_t<Duration, std::chrono::seconds>>
-    from_utc(const date::utc_time<Duration>& x) noexcept {
-        using namespace std::chrono;
-        auto d = duration_cast<std::common_type_t<Duration, seconds>>(x - Time::Epoch);
-        return _TimePoint<std::common_type_t<Duration, seconds>>(d);
+    template<
+    typename T_DurationSrc,
+    typename T_DurationDst = std::chrono::microseconds
+    >
+    static _TimePoint<T_DurationDst>
+    from_utc(const date::utc_time<T_DurationSrc>& x) noexcept {
+        const T_DurationDst d = x - Time::Epoch;
+        return _TimePoint<T_DurationDst>(d);
     }
     
-    template<class Duration>
-    static date::utc_time<std::common_type_t<Duration, std::chrono::seconds>>
-    to_utc(const _TimePoint<Duration>& x) noexcept {
-        return Time::Epoch + x.time_since_epoch();
+    template<
+    typename T_DurationSrc,
+    typename T_DurationDst = std::chrono::microseconds
+    >
+    static date::utc_time<T_DurationDst>
+    to_utc(const _TimePoint<T_DurationSrc>& x) noexcept {
+        const T_DurationDst d = x.time_since_epoch();
+        return Time::Epoch + d;
+//        const auto y = Time::Epoch + d;
+//        return date::utc_time<T_DurationDst>(0);
+//        return date::utc_time<T_DurationDst>(Time::Epoch + d);
     }
     
-    template<class Duration>
-    static _TimePoint<std::common_type_t<Duration, std::chrono::seconds>>
-    from_sys(const date::sys_time<Duration>& x) noexcept {
+    template<class T_Duration>
+    static _TimePoint<std::chrono::microseconds>
+    from_sys(const date::sys_time<T_Duration>& x) noexcept {
         return from_utc(date::utc_clock::from_sys(x));
     }
     
-    template<class Duration>
-    static date::sys_time<std::common_type_t<Duration, std::chrono::seconds>>
-    to_sys(const _TimePoint<Duration>& x) noexcept {
+    template<class T_Duration>
+    static date::sys_time<std::chrono::microseconds>
+    to_sys(const _TimePoint<T_Duration>& x) noexcept {
         return date::utc_clock::to_sys(to_utc(x));
     }
     
-    static Time::Instant TimeInstantFromTimePoint(time_point x) {
+    template<typename T_DurationSrc>
+    static Time::Instant TimeInstantFromTimePoint(const _TimePoint<T_DurationSrc>& x) {
         // We can only represent values after our epoch
         // (It's possible for time_points to to be before our epoch because rep == Time::Us,
         // and Time::Us is a signed value which could be negative.)
         assert(x.time_since_epoch().count() >= 0);
-        return AbsoluteBit | (Time::Instant)x.time_since_epoch().count();
+        const duration ticks(std::chrono::duration_cast<duration>(x.time_since_epoch()));
+        return AbsoluteBit | (Time::Instant)ticks.count();
     }
     
     static time_point TimePointFromTimeInstant(Time::Instant t) {
