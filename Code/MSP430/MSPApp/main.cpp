@@ -95,7 +95,7 @@ using _Scheduler = Toastbox::Scheduler<
 >;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _XT1FreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
-using _SysTick = T_SysTick<_MCLKFreqHz, _SysTickPeriodUs>;
+using _SysTick = T_SysTick<_ACLKFreqHz, _SysTickPeriodUs>;
 using _SPI = T_SPI<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 using _ICE = T_ICE<_Scheduler>;
 
