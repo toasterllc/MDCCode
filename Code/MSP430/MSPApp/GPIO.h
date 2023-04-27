@@ -316,6 +316,8 @@ static constexpr _Regs _GetRegs(_Regs regs) {
     else return regs;
 }
 
+// Init(): init all pins on a device
+// Interrupts must be disabled
 template <typename... T_Pins>
 static void Init() {
     // Follow the initialization procedure from the MSP430FR24xx user guide
@@ -327,9 +329,6 @@ static void Init() {
     //
     // This order is required because the MSP430FR24xx user guide says:
     //   "Note that the PxIFG flag cannot be cleared until the LOCKLPM5 bit has been cleared."
-    
-    // Disable interrupts
-    Toastbox::IntState ints(false);
     
     // Config pins
     

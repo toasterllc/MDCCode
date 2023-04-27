@@ -4,6 +4,8 @@
 template <uint32_t T_SMCLKFreqHz, uint32_t T_TickPeriodUs>
 class T_SysTick {
 public:
+    // Init(): init WDT timer to act as our SysTick timer
+    // Interrupts must be disabled
     static void Init() {
         // Config watchdog timer:
         //   WDTPW:             password
@@ -11,8 +13,27 @@ public:
         //   WDTTMSEL:          interval timer mode
         //   WDTCNTCL:          clear counter
         //   WDTIS:             interval
-        WDTCTL = WDTPW | WDTSSEL__SMCLK | WDTTMSEL | WDTCNTCL | _WDTIS();
+        WDTCTL = WDTPW | WDTHOLD | WDTSSEL__SMCLK | WDTTMSEL | _WDTIS();
         SFRIE1 |= WDTIE; // Enable WDT interrupt
+    }
+    
+    static void Enabled(bool x) {
+        Toastbox::IntState ints(false);
+        // Short-circuit if our state hasn't changed
+        if (x == Enabled()) return;
+        
+        if (x) {
+            WDTCTL |= WDTCNTCL; // Clear count
+            SFRIFG1 &= ~WDTIFG; // Clear pending interrupt
+            WDTCTL &= ~WDTHOLD; // Enable timer
+        
+        } else {
+            WDTCTL |= WDTHOLD;
+        }
+    }
+    
+    static bool Enabled() {
+        return !(WDTCTL & WDTHOLD);
     }
     
 private:
@@ -44,4 +65,6 @@ private:
             static_assert(_AlwaysFalse<T_SMCLKFreqHz>);
         }
     }
+    
+    static inline bool _Enabled = false;
 };

@@ -10,10 +10,10 @@ public:
         using XOUT = typename T_XOUTPin::template Opts<GPIO::Option::Sel01>;
     };
     
+    // Init(): initialize various clocks
+    // Interrupts must be disabled
     static void Init() {
         const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
-        
-        Toastbox::IntState ints(false);
         
         // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.

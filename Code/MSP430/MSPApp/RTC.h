@@ -59,16 +59,11 @@ public:
     static constexpr uint32_t UsPerTock = UsPerTockRatio::num;
     static_assert(UsPerTock == 31250); // Debug
     
-    static bool Enabled() {
-        return RTCCTL != 0;
-    }
-    
+    // Init(): initialize the RTC subsystem
+    // Interrupts must be disabled
     static void Init(Time::Instant time=0) {
         // Start RTC if it's not yet running, or restart it if we were given a new time
         if (!Enabled() || time) {
-            // Prevent interrupts from firing while we update our time / reset the RTC
-            Toastbox::IntState ints(false);
-            
             _RTCTime = time;
             
             RTCMOD = TocksMax;
@@ -86,6 +81,12 @@ public:
             // divided by Predivider), so we wait 1.5 cycles of that clock to ensure RTC is finished resetting.
             T_Scheduler::Delay(T_Scheduler::Us((3*UsPerTock)/2));
         }
+    }
+    
+    // Enabled(): whether RTC was previously configured
+    // This state persists across most resets (PUC, POR, software-triggered BORs)
+    static bool Enabled() {
+        return RTCCTL != 0;
     }
     
     // Tocks(): returns the current tocks offset from _RTCTime, as tracked by the hardware

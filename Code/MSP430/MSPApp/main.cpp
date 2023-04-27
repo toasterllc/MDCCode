@@ -60,7 +60,7 @@ struct _Pin {
     using _UNUSED0                  = PortB::Pin<0x2>;
 };
 
-class _TaskButton;
+class _TaskMain;
 class _TaskEvent;
 class _TaskSD;
 class _TaskImg;
@@ -86,7 +86,7 @@ using _Scheduler = Toastbox::Scheduler<
     nullptr,                                    // T_StackInterrupt: unused
     
     // T_Tasks: list of tasks
-    _TaskButton,
+    _TaskMain,
     _TaskEvent,
     _TaskSD,
     _TaskImg,
@@ -148,6 +148,7 @@ static void _CaffeineUpdate() {}
 static void _MotionEnabledUpdate();
 static void _VDDBEnabledUpdate();
 static void _VDDIMGSDEnabledUpdate();
+static void _SysTickEnabledUpdate();
 
 // _HostMode: events pause/resume (for host mode)
 using _HostMode = T_AssertionCounter<_HostModeUpdate>;
@@ -167,6 +168,9 @@ using _VDDBEnabled = T_AssertionCounter<_VDDBEnabledUpdate>;
 
 // VDDIMGSD enable/disable
 using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledUpdate>;
+
+// VDDIMGSD enable/disable
+using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledUpdate>;
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
@@ -248,6 +252,10 @@ static void _VDDIMGSDEnabledUpdate() {
         // Rails take ~1.5ms to turn off, so wait 2ms to be sure
         _Scheduler::Sleep(_Scheduler::Ms(2));
     }
+}
+
+static void _SysTickEnabledUpdate() {
+    _SysTick::Enabled(_SysTickEnabled::Asserted());
 }
 
 // MARK: - ICE40
@@ -893,7 +901,7 @@ struct _TaskI2C {
         
         case Cmd::Op::TimeSet:
             // Only allow setting the time while we're in host mode
-            // and therefore TaskMain isn't running
+            // and therefore _TaskEvent isn't running
             if (!_State.hostMode) return MSP::Resp{ .ok = false };
             _RTC::Init(cmd.arg.TimeSet.time);
             return MSP::Resp{ .ok = true };
@@ -960,18 +968,21 @@ static void _MotionEnabledUpdate() {
     _Motion::Enabled(_MotionEnabled::Asserted());
 }
 
-// MARK: - _TaskButton
+// MARK: - _TaskMain
 
-#define _TaskButtonStackSize 128
+#define _TaskMainStackSize 128
 
-SchedulerStack(".stack._TaskButton")
-uint8_t _TaskButtonStack[_TaskButtonStackSize];
+SchedulerStack(".stack._TaskMain")
+uint8_t _TaskMainStack[_TaskMainStackSize];
 
 asm(".global _StartupStack");
-asm(".equ _StartupStack, _TaskButtonStack+" Stringify(_TaskButtonStackSize));
+asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
 
-struct _TaskButton {
+struct _TaskMain {
     static void _Init() {
+        // Disable interrupts while we init our subsystems
+        Toastbox::IntState ints(false);
+        
         // Stop watchdog timer
         WDTCTL = WDTPW | WDTHOLD;
         
@@ -1094,6 +1105,29 @@ struct _TaskButton {
         }
     }
     
+    static void Sleep() {
+        // Put ourself to sleep until an interrupt occurs. This function may or may not return:
+        // 
+        // - This function returns if an interrupt was already pending and the ISR
+        //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
+        // 
+        // - This function doesn't return if an interrupt wasn't pending and
+        //   therefore we enter LPM3.5. The next time we wake will be due to a
+        //   reset and execution will start from main().
+        
+        // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
+        // We do this to prevent ourself from waking up unnecessarily, saving power.
+        _SysTick = (bool)_Scheduler::WakeDeadline();
+        
+        // Remember our current interrupt state, which IntState will restore upon return
+        Toastbox::IntState ints;
+        // Atomically enable interrupts and go to sleep
+        __bis_SR_register(GIE | LPM3_bits);
+        
+        // Re-enable SysTick upon wake
+        _SysTick = true;
+    }
+    
     static void _LEDFlash(OutputPriority& led) {
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
@@ -1114,11 +1148,15 @@ struct _TaskButton {
     // Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
     // gnu::used is apparently necessary for the gnu::section attribute to
     // work when link-time optimization is enabled.
-    [[gnu::section(".ram_backup._TaskButton"), gnu::used]]
+    [[gnu::section(".ram_backup._TaskMain"), gnu::used]]
     static inline bool _OnSaved = false;
     
+    // _SysTickEnabled: controls whether the SysTick timer is enabled
+    // We disable SysTick when going to sleep if no tasks are waiting for a certain amount of time to pass
+    static inline _SysTickEnabled::Assertion _SysTick;
+    
     // Task stack
-    static constexpr auto& Stack = _TaskButtonStack;
+    static constexpr auto& Stack = _TaskMainStack;
 };
 
 // MARK: - IntState
@@ -1135,38 +1173,7 @@ inline void Toastbox::IntState::Set(bool en) {
 // MARK: - Sleep
 
 static void _Sleep() {
-    // Put ourself to sleep until an interrupt occurs. This function may or may not return:
-    // 
-    // - This function returns if an interrupt was already pending and the ISR
-    //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
-    // 
-    // - This function doesn't return if an interrupt wasn't pending and
-    //   therefore we enter LPM3.5. The next time we wake will be due to a
-    //   reset and execution will start from main().
-    
-    // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
-    // Otherwise, enter LPM1 sleep, because something is running.
-    
-//    const uint16_t mode = (_PowerAssertion::Asserted() ? LPM1_bits : LPM3_bits);
-    
-//    // If nothing asserts that we remained powered, enter LPM3.5
-//    if (!_PowerAssertion::Asserted()) {
-//        PMMUnlock pmm; // Unlock PMM registers
-//        PMMCTL0_L |= PMMREGOFF_L;
-//    }
-    
-    if (_Scheduler::WakeDeadline()) {
-        // We have tasks that are sleeping towards a deadline, so enable SysTick
-        #warning TODO: enable SysTick
-    } else {
-        // There's no deadline to wakeup No tasks are sleeping towards a deadline, so disable SysTick and set an alarm to wake up for the next event
-        #warning TODO: disable SysTick
-    }
-    
-    // Remember our current interrupt state, which IntState will restore upon return
-    Toastbox::IntState ints;
-    // Atomically enable interrupts and go to sleep
-    __bis_SR_register(GIE | LPM3_bits);
+    _TaskMain::Sleep();
 }
 
 // MARK: - Interrupts
@@ -1339,6 +1346,6 @@ int atexit(void (*)(void)) {
 //}
 
 int main() {
-    // Invokes the first task's Run() function (_TaskButton::Run)
+    // Invokes the first task's Run() function (_TaskMain::Run)
     _Scheduler::Run();
 }
