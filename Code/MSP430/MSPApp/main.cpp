@@ -1058,6 +1058,13 @@ struct _TaskButton {
     static void Run() {
         _Init();
         
+        for (bool on_=false;; on_=!on_) {
+//            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreqHz);
+            _LEDGreen_.set(_LEDPriority::Power, on_);
+            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreqHz);
+            _Scheduler::Wait([] { return _EventTimer::Fired(); });
+        }
+        
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
             // Ignore all interaction in host mode
