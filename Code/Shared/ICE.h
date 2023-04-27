@@ -12,7 +12,7 @@
 template <
 typename T_Scheduler
 >
-class ICE {
+class T_ICE {
 public:
     // MARK: - Types
     struct MsgType {

@@ -9,7 +9,7 @@ typename T_Scheduler,
 typename T_BatChrgLvlPin,
 typename T_BatChrgLvlEn_Pin
 >
-class BatterySamplerType {
+class T_BatterySampler {
 public:
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;

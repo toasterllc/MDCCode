@@ -125,7 +125,7 @@ public:
     using MSPJTAG = MSP430JTAG<_MSP_TEST, _MSP_RST_, CPUFreqMHz>;
     using MSPLock = BoolLock<Scheduler, _TaskMSPComms::Lock>;
     
-    using USB = USBType<
+    using USB = T_USB<
         Scheduler,  // T_Scheduler
         T_USBDMAEn, // T_DMAEn
         USBConfig   // T_Config
@@ -176,7 +176,7 @@ public:
     
 private:
     static constexpr uint32_t _I2CTimeoutMs = 5000;
-    using _I2C = I2CType<Scheduler, _I2C_SCL, _I2C_SDA, MSP::I2CAddr, _I2CTimeoutMs>;
+    using _I2C = T_I2C<Scheduler, _I2C_SCL, _I2C_SDA, MSP::I2CAddr, _I2CTimeoutMs>;
     
     struct _TaskCmdRecv {
         static void Run() {

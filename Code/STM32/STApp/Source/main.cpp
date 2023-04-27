@@ -92,9 +92,9 @@ using _System = System<
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
 using _MSPJTAG = _System::MSPJTAG;
-using _QSPI = QSPIType<_Scheduler>;
+using _QSPI = T_QSPI<_Scheduler>;
 
-using _ICE = ::ICE<_Scheduler>;
+using _ICE = T_ICE<_Scheduler>;
 using _ImgSensor = Img::Sensor<_Scheduler, _ICE>;
 
 using _SDCard = SD::Card<

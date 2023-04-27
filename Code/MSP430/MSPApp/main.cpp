@@ -94,18 +94,18 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskMotion
 >;
 
-using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz>;
+using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _XT1FreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
 using _SysTick = T_SysTick<_MCLKFreqHz, _SysTickPeriodUs>;
-using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
-using _ICE = ICE<_Scheduler>;
+using _SPI = T_SPI<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
+using _ICE = T_ICE<_Scheduler>;
 
-using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
+using _I2C = T_I2C<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
 using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
 
-using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
+using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
 
 constexpr uint16_t _ButtonHoldDurationMs = 1500;
-using _Button = ButtonType<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
+using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
 
 static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -132,7 +132,7 @@ using _SDCard = SD::Card<
 >;
 
 // _RTC: real time clock
-using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN, _Scheduler>;
+using _RTC = RTCType<_XT1FreqHz, _Scheduler>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in FRAM because it needs to persist indefinitely.
@@ -982,9 +982,9 @@ struct _TaskButton {
             _Pin::VDD_B_1V8_IMG_SD_EN,
             _Pin::VDD_B_2V8_IMG_SD_EN,
             
-            // Clock (config chosen by _RTC)
-            _RTC::Pin::XOUT,
-            _RTC::Pin::XIN,
+            // Clock (config chosen by _Clock)
+            _Clock::Pin::XIN,
+            _Clock::Pin::XOUT,
             
             // SPI (config chosen by _SPI)
             _SPI::Pin::Clk,
@@ -1012,11 +1012,20 @@ struct _TaskButton {
             _Pin::LED_RED_
         >();
         
+        // Init SysTick
+        _SysTick::Init();
+        
         // Init clock
         _Clock::Init();
         
-        // Init SysTick
-        _SysTick::Init();
+        _Pin::LED_RED_::Write(1);
+        _Pin::LED_GREEN_::Write(1);
+        for (;;) {
+            _Pin::LED_RED_::Write(0);
+            __delay_cycles(1000000);
+            _Pin::LED_RED_::Write(1);
+            __delay_cycles(1000000);
+        }
         
         // Init RTC
         // We need RTC to be unconditionally enabled for 2 reasons:
@@ -1230,6 +1239,26 @@ static void _ISR_ADC() {
     __bic_SR_register_on_exit(LPM3_bits);
 }
 
+[[gnu::interrupt(UNMI_VECTOR)]]
+static void _ISR_UNMI() {
+    const uint16_t iv = SYSUNIV;
+    
+    switch (__even_in_range(iv, SYSUNIV_OFIFG)) {
+    
+    case SYSUNIV_NMIIFG:
+        Assert(false);
+        break;
+    
+    case SYSUNIV_OFIFG:
+        Assert(false);
+        break;
+    
+    default:
+        Assert(false);
+        break;
+    }
+}
+
 // MARK: - Abort
 
 [[noreturn]]
@@ -1270,7 +1299,7 @@ static void _BOR() {
     for (;;);
 }
 
-// Abort(): called various Assert's throughout our program
+// Abort(): called by Assert() with the address that aborted
 extern "C"
 [[noreturn, gnu::used]]
 void Abort(uintptr_t addr) {

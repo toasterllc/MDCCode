@@ -11,7 +11,7 @@ typename T_SDAPin,
 uint8_t T_Addr,
 uint32_t T_TimeoutMs
 >
-class I2CType {
+class T_I2C {
 public:
     struct Pin {
         using SCL = typename T_SCLPin::template Opts<GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;

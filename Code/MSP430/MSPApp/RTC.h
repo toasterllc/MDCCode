@@ -25,7 +25,7 @@
 [[gnu::section(".ram_backup_noinit.rtc")]]
 static volatile Time::Instant _RTCTime;
 
-template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin, typename T_Scheduler>
+template <uint32_t T_XT1FreqHz, typename T_Scheduler>
 class RTCType {
 private:
     // _TicksForTocks(): templated to work with uint16_t (at runtime) and uint32_t (at compile time)
@@ -59,35 +59,16 @@ public:
     static constexpr uint32_t UsPerTock = UsPerTockRatio::num;
     static_assert(UsPerTock == 31250); // Debug
     
-    struct Pin {
-        using XOUT  = typename T_XOUTPin::template Opts<GPIO::Option::Sel10>;
-        using XIN   = typename T_XINPin::template Opts<GPIO::Option::Sel10>;
-    };
-    
     static bool Enabled() {
         return RTCCTL != 0;
     }
     
     static void Init(Time::Instant time=0) {
-        // Prevent interrupts from firing while we update our time / reset the RTC
-        Toastbox::IntState ints(false);
-        
-        // Decrease the XT1 drive strength to save a little current
-        // We're not using this for now because supporting it with LPM3.5 is gross.
-        // That's because on a cold start, CSCTL6.XT1DRIVE needs to be set after we
-        // clear LOCKLPM5 (to reduce the drive strength after XT1 is running),
-        // but on a warm start, CSCTL6.XT1DRIVE needs to be set before we clear
-        // LOCKLPM5 (to return the register to its previous state before unlocking).
-//        CSCTL6 = (CSCTL6 & ~XT1DRIVE) | XT1DRIVE_0;
-        
-        // Clear XT1 fault flags
-        do {
-            CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag
-            SFRIFG1 &= ~OFIFG;
-        } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
-        
         // Start RTC if it's not yet running, or restart it if we were given a new time
         if (!Enabled() || time) {
+            // Prevent interrupts from firing while we update our time / reset the RTC
+            Toastbox::IntState ints(false);
+            
             _RTCTime = time;
             
             RTCMOD = TocksMax;

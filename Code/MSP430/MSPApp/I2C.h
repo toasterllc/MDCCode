@@ -9,7 +9,7 @@ typename T_SDAPin,
 typename T_ActivePin,
 uint8_t T_Addr
 >
-class I2CType {
+class T_I2C {
 private:
     using _ActiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
     using _InactiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;

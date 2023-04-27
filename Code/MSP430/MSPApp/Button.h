@@ -7,7 +7,7 @@ typename T_Scheduler,
 typename T_Pin,
 uint16_t T_HoldDurationMs
 >
-class ButtonType {
+class T_Button {
 private:
     using _AssertedInterrupt = typename T_Pin::template Opts<GPIO::Option::Input, GPIO::Option::Interrupt10, GPIO::Option::Resistor1>;
     using _DeassertedInterrupt = typename T_Pin::template Opts<GPIO::Option::Input, GPIO::Option::Interrupt01, GPIO::Option::Resistor1>;

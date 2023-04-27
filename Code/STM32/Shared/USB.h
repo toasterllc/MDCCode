@@ -14,7 +14,7 @@ typename T_Scheduler,   // T_Scheduler: scheduler
 bool T_DMAEn,           // T_DMAEn: whether DMA is enabled
 typename T_Config       // T_ConfigDesc: contains endpoints and configuration descriptor
 >
-class USBType {
+class T_USB {
 public:
     struct Cmd {
         const uint8_t* data;

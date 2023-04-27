@@ -2,7 +2,7 @@
 #include <msp430.h>
 
 template <uint32_t T_MCLKFreqHz, typename T_ClkPin, typename T_DataOutPin, typename T_DataInPin>
-class SPIType {
+class T_SPI {
 private:
     using _ClkManual = typename T_ClkPin::template Opts<GPIO::Option::Output1>;
     using _ClkPeriph = typename T_ClkPin::template Opts<GPIO::Option::Sel01>;
