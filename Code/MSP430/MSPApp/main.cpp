@@ -1018,14 +1018,14 @@ struct _TaskButton {
         // Init clock
         _Clock::Init();
         
-        _Pin::LED_RED_::Write(1);
-        _Pin::LED_GREEN_::Write(1);
-        for (;;) {
-            _Pin::LED_RED_::Write(0);
-            __delay_cycles(1000000);
-            _Pin::LED_RED_::Write(1);
-            __delay_cycles(1000000);
-        }
+//        _Pin::LED_RED_::Write(1);
+//        _Pin::LED_GREEN_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+//        }
         
         // Init RTC
         // We need RTC to be unconditionally enabled for 2 reasons:

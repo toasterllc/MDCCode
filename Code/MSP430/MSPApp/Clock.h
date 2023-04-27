@@ -97,7 +97,7 @@ public:
         // record the failure and trigger a BOR.
         SFRIFG1 |= OFIE;
     }
-
+    
 private:
     static constexpr uint32_t REFOCLKFreqHz = 32768;
     template <class...> static constexpr std::false_type _AlwaysFalse = {};
