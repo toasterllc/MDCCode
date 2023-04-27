@@ -81,6 +81,17 @@ public:
         //         ACLK source = XT1CLK
         CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
         
+        // Set MCLK/SMCLK dividers
+        //
+        // If we ever change DIVS to something other than DIVS__1, we may be subject to errata
+        // PMM32 ("Device may enter lockup state or execute unintentional code during transition
+        // from AM to LPM3/4"), due to Condition2.4 ("SMCLK is configured with a different
+        // frequency than MCLK").
+        //
+        // We're not setting CSCTL5 because its default value is what we want.
+        //
+        // CSCTL5 = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1 | DIVM__1;
+        
         // Decrease the XT1 drive strength to save a little current
         CSCTL6 = XT1DRIVE_0;
         
