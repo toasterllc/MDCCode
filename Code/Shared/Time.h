@@ -1,9 +1,10 @@
 #pragma once
+#include <ratio>
 
 namespace Time {
 
-// TicksFreqHz: the number of ticks that occur per second
-static constexpr uint16_t TicksFreqHz = 16;
+// TicksPeriod: the period of a single tick, in seconds
+using TicksPeriod = std::ratio<1,16>;
 
 // Ticks: a duration in ticks
 // Using a signed value here so we can represent negative durations.

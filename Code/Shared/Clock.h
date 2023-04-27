@@ -15,7 +15,7 @@ struct Clock {
     using _TimePoint = std::chrono::time_point<Clock, T>;
     
     using rep = Time::Ticks;
-    using period = std::ratio<1, TicksFreqHz>;
+    using period = Time::TicksPeriod;
     using duration = std::chrono::duration<rep, period>;
     using time_point = _TimePoint<duration>;
     

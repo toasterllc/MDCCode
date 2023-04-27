@@ -8,6 +8,7 @@
 
 /* Begin PBXFileReference section */
 		5562769F29F353E500998BE2 /* Timer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Timer.h; sourceTree = "<group>"; };
+		5562771729FB15EC00998BE2 /* SysTick.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SysTick.h; sourceTree = "<group>"; };
 		556E45EF26B12023006681FA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		556E45F126B1204A006681FA /* Lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Lib; path = ../../Lib; sourceTree = "<group>"; };
 		556E45F226B12050006681FA /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
@@ -23,7 +24,7 @@
 		55B9EC94293AA2A300318243 /* msp430fr2433.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.txt; sourceTree = "<group>"; };
 		55B9EC95293AA2A300318243 /* msp430fr2433.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.ld; sourceTree = "<group>"; };
 		55B9EC96293AE38500318243 /* I2C.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = I2C.h; sourceTree = "<group>"; };
-		55BCD85C276AAF7C002B4CC7 /* SysTick.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SysTick.h; sourceTree = "<group>"; };
+		55BCD85C276AAF7C002B4CC7 /* Watchdog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Watchdog.h; sourceTree = "<group>"; };
 		55C4567E295580AB00A20363 /* OutputPriority.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OutputPriority.h; sourceTree = "<group>"; };
 		55C4567F29559E7D00A20363 /* BatterySampler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BatterySampler.h; sourceTree = "<group>"; };
 		55FD016B275F25BA005505B5 /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
@@ -45,7 +46,8 @@
 				55889121273B3D360004458F /* GPIO.h */,
 				5588914D273C79540004458F /* Clock.h */,
 				5562769F29F353E500998BE2 /* Timer.h */,
-				55BCD85C276AAF7C002B4CC7 /* SysTick.h */,
+				5562771729FB15EC00998BE2 /* SysTick.h */,
+				55BCD85C276AAF7C002B4CC7 /* Watchdog.h */,
 				5588914C273C6BCD0004458F /* RTC.h */,
 				5588914E273C7DEB0004458F /* SPI.h */,
 				55B9EC96293AE38500318243 /* I2C.h */,

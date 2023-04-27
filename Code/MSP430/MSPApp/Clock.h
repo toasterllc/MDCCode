@@ -75,7 +75,7 @@ public:
         // Wait until FLL locks
         while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
-        // Switch ACLK over to XT1
+        // Set ACLK to XT1
         // This will turn on XT1 for the first time
         // MCLK / SMCLK source = DCOCLKDIV
         //         ACLK source = XT1CLK
