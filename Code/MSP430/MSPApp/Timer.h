@@ -50,10 +50,10 @@ public:
         if (time >= now) {
             const uint16_t rtcTicksUntilOverflow = T_RTC::TicksUntilOverflow();
             uint16_t rtcCount = 0;
-            const Time::Ticks deltaTicksWide = time-now;
-            uint32_t deltaTicks = deltaTicksWide;
-            // Ensure that the runtime value of `deltaTicksWide` fits in `deltaTicks`
-            Assert(std::in_range<decltype(deltaTicks)>(deltaTicksWide));
+            const Time::Ticks64 deltaTicks64 = time-now;
+            Time::Ticks32 deltaTicks = deltaTicks64;
+            // Ensure that the runtime value of `deltaTicks64` fits in `deltaTicks`
+            Assert(std::in_range<decltype(deltaTicks)>(deltaTicks64));
 //            Assert(deltaTicksWide <= std::numeric_limits<decltype(deltaTicks)>::max()); 
             
             if (deltaTicks >= rtcTicksUntilOverflow) {
@@ -66,8 +66,8 @@ public:
                 static_assert(std::is_same_v<T_RTC::InterruptIntervalTicks, uint16_t>);
                 const uint16_t count = deltaTicks / T_RTC::InterruptIntervalTicks;
                 constexpr uint16_t CountMax = std::numeric_limits<decltype(count)>::max();
-                // Verify that our `count` division can't overflow
-                Assert(deltaTicks <= (Time::Ticks)CountMax * T_RTC::InterruptIntervalTicks); 
+                // Verify that our `count` division (above) can't overflow
+                Assert(deltaTicks <= (Time::Ticks64)CountMax * T_RTC::InterruptIntervalTicks); 
                 rtcCount += count;
                 deltaTicks -= count*T_RTC::InterruptIntervalTicks;
             }

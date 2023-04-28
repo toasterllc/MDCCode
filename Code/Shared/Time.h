@@ -1,5 +1,4 @@
 #pragma once
-#include <ratio>
 
 namespace Time {
 
@@ -7,11 +6,9 @@ namespace Time {
 using TicksFreq   = std::ratio<16>;
 using TicksPeriod = std::ratio_divide<std::ratio<1>,TicksFreq>;
 
-// Ticks: a duration in ticks
-// Using a signed value here so we can represent negative durations.
-// (Clock.h needs negative durations for computing the difference between two timepoints,
-// so we define `Ticks` as signed so Clock.h can use this type.)
-using Ticks = int64_t;
+using Ticks64 = uint64_t;
+using Ticks32 = uint32_t;
+using Ticks16 = uint16_t;
 
 // Instant: represents a particular moment in time
 // Encoded as the linear count of ticks since our epoch,

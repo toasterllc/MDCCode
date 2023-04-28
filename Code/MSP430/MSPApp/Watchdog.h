@@ -5,10 +5,10 @@
 // T_Watchdog: watchdog timer to reset the device if the watchdog isn't pet periodically.
 // The timeout period is defined by T_TimeoutTicks; if the watchdog isn't pet during that
 // time, a PUC is triggered, and T_Watchdog then triggers a full BOR upon the next Init().
-template<typename T_ACLKFreq, Time::Ticks T_TimeoutTicks>
+template<uint32_t T_ACLKFreqHz, Time::Ticks64 T_TimeoutTicks>
 class T_Watchdog {
 public:
-    using ACLKPeriod = std::ratio_divide<std::ratio<1>, T_ACLKFreq>;
+    using ACLKPeriod = std::ratio<1, T_ACLKFreqHz>;
     
     using TimeoutPeriod = std::ratio<T_TimeoutTicks*Time::TicksPeriod::num, Time::TicksPeriod::den>;
     static_assert(TimeoutPeriod::num == 4096); // Debug
@@ -90,7 +90,7 @@ private:
         } else if constexpr (divider == 2*G) {
             return WDTIS__2G;
         } else {
-            static_assert(_AlwaysFalse<T_ACLKFreq>);
+            static_assert(_AlwaysFalse<T_ACLKFreqHz>);
         }
     }
 };

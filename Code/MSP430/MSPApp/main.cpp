@@ -78,7 +78,7 @@ static void _SchedulerStackOverflow();
 static constexpr size_t _StackGuardCount = 16;
 
 using _Scheduler = Toastbox::Scheduler<
-    _SysTickPeriodUs,                           // T_UsPerTick: microseconds per tick
+    std::ratio<1, _SysTickFreqHz>,              // T_TickPeriod: time period between ticks
     
     _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                 //          invoked when no tasks have work to do
@@ -135,7 +135,7 @@ using _SDCard = SD::Card<
 
 // _RTC: real time clock
 using _RTC = T_RTC<_Scheduler, _XT1FreqHz>;
-using _Watchdog = T_Watchdog<_ACLKFreqHz, _RTC::InterruptIntervalTicks*2>;
+using _Watchdog = T_Watchdog<_ACLKFreqHz, (Time::Ticks64)_RTC::InterruptIntervalTicks*2>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in FRAM because it needs to persist indefinitely.
@@ -181,10 +181,12 @@ using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
 using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
 
-static Time::Ticks _RepeatAdvance(MSP::Repeat& x) {
-    static constexpr Time::Ticks Day         = (Time::Ticks)     24*60*60*Time::TicksFreq;
-    static constexpr Time::Ticks Year        = (Time::Ticks) 365*24*60*60*Time::TicksFreq;
-    static constexpr Time::Ticks YearPlusDay = (Time::Ticks) 366*24*60*60*Time::TicksFreq;
+static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
+    static_assert(Time::TicksFreq::den == 1); // Check assumption that TicksFreq is an integer
+    
+    static constexpr Time::Ticks32 Day         = (Time::Ticks32)     24*60*60*Time::TicksFreq::num;
+    static constexpr Time::Ticks32 Year        = (Time::Ticks32) 365*24*60*60*Time::TicksFreq::num;
+    static constexpr Time::Ticks32 YearPlusDay = (Time::Ticks32) 366*24*60*60*Time::TicksFreq::num;
     switch (x.type) {
     case MSP::Repeat::Type::Never:
         return 0;
@@ -713,14 +715,14 @@ struct _TaskEvent {
     }
 
     static void EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-        const Time::Ticks delta = _RepeatAdvance(repeat);
+        const Time::Ticks32 delta = _RepeatAdvance(repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
             EventInsert(ev, ev.time+delta);
         }
     }
 
-    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, uint32_t deltaTicks) {
+    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::Ticks32 deltaTicks) {
         EventInsert(ev, time + deltaTicks);
     }
 
