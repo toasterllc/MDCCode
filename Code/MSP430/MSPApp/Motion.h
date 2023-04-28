@@ -4,7 +4,7 @@
 #include "GPIO.h"
 #include "Assert.h"
 
-template <
+template<
 typename T_Scheduler,
 typename T_PowerPin,
 typename T_SignalPin

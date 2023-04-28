@@ -2,7 +2,7 @@
 #include <msp430.h>
 #include "GPIO.h"
 
-template <typename T_Scheduler, uint32_t T_MCLKFreqHz, typename T_XINPin, typename T_XOUTPin>
+template<typename T_Scheduler, uint32_t T_MCLKFreqHz, typename T_XINPin, typename T_XOUTPin>
 class T_Clock {
 public:
     struct Pin {
@@ -111,7 +111,7 @@ public:
     
 private:
     static constexpr uint32_t REFOCLKFreqHz = 32768;
-    template <class...> static constexpr std::false_type _AlwaysFalse = {};
+    template<class...> static constexpr std::false_type _AlwaysFalse = {};
     
     template<auto T>
     static constexpr auto _Ms = T_Scheduler::template Ms<T>;

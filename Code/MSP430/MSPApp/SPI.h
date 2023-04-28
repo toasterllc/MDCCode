@@ -1,7 +1,7 @@
 #pragma once
 #include <msp430.h>
 
-template <uint32_t T_MCLKFreqHz, typename T_ClkPin, typename T_DataOutPin, typename T_DataInPin>
+template<uint32_t T_MCLKFreqHz, typename T_ClkPin, typename T_DataOutPin, typename T_DataInPin>
 class T_SPI {
 private:
     using _ClkManual = typename T_ClkPin::template Opts<GPIO::Option::Output1>;
@@ -60,7 +60,7 @@ public:
         UCA0CTLW0 &= ~UCSWRST;
     }
     
-    template <typename T_DataOut, typename T_DataIn>
+    template<typename T_DataOut, typename T_DataIn>
     static void WriteRead(const T_DataOut& dataOut, T_DataIn* dataIn=nullptr) {
         // PA.4 = UCA0SIMO
         _DataOutEnabled::template Init<_DataOutDisabled>();

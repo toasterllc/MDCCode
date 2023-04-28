@@ -2,7 +2,7 @@
 #include <msp430.h>
 #include "GPIO.h"
 
-template <
+template<
 typename T_Scheduler,
 typename T_Pin,
 uint16_t T_HoldDurationMs

@@ -62,7 +62,7 @@ public:
     }
     
 private:
-    template <class...> static constexpr std::false_type _AlwaysFalse = {};
+    template<class...> static constexpr std::false_type _AlwaysFalse = {};
     
     static constexpr uint16_t _WDTIS() {
         constexpr uint32_t K = 1024;

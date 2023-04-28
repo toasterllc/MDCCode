@@ -194,7 +194,7 @@ public:
     }
     
 private:
-    template <class...>
+    template<class...>
     static constexpr std::false_type _AlwaysFalse = {};
     
     template<auto T>

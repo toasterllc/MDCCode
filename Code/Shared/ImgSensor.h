@@ -4,7 +4,7 @@
 
 namespace Img {
 
-template <
+template<
 typename T_Scheduler,
 typename T_ICE
 >

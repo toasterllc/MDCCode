@@ -9,7 +9,7 @@
 #include "GetBits.h"
 #include "Assert.h"
 
-template <
+template<
 typename T_Scheduler
 >
 class T_ICE {
@@ -24,7 +24,7 @@ public:
         uint8_t type = 0;
         uint8_t payload[7] = {};
         
-        template <typename... T_Payload>
+        template<typename... T_Payload>
         constexpr Msg(uint8_t t, T_Payload... p) :
         type(t),
         payload{static_cast<uint8_t>(p)...} {
@@ -47,7 +47,7 @@ public:
     };
     
     struct ReadyMsg : public Msg {
-        template <size_t T_N>
+        template<size_t T_N>
         constexpr ReadyMsg(const char (&str)[T_N]) : Msg(MsgType::StartBit | MsgType::Resp | 0x00) {
             static_assert(T_N == sizeof(Msg::payload));
             memcpy(Msg::payload, str, sizeof(Msg::payload));

@@ -2,7 +2,7 @@
 #include <msp430.h>
 #include "Assert.h"
 
-template <
+template<
 typename T_Scheduler,
 typename T_SCLPin,
 typename T_SDAPin,
@@ -38,7 +38,7 @@ public:
         _InactiveInterrupt::IESConfig();
     }
     
-    template <typename T>
+    template<typename T>
     static bool Recv(T& msg) {
         _Events ev = _WaitForEvents(_EventStart | _EventInactive);
         if (ev & _EventInactive) return false;
@@ -64,7 +64,7 @@ public:
         return true;
     }
     
-    template <typename T>
+    template<typename T>
     static bool Send(const T& msg) {
         _Events ev = _WaitForEvents(_EventStart | _EventInactive);
         if (ev & _EventInactive) return false;

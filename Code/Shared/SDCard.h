@@ -8,7 +8,7 @@
 
 namespace SD {
 
-template <
+template<
 typename T_Scheduler,
 typename T_ICE,
 uint8_t T_ClkDelaySlow,
@@ -384,7 +384,7 @@ private:
         _SendCmd(_CMD12, 0);
     }
     
-    template <size_t T_Len>
+    template<size_t T_Len>
     static void _SDRespGet(void* dst) {
         using Resp = typename T_ICE::Resp;
         static_assert((T_Len % sizeof(Resp)) == 0);
@@ -396,7 +396,7 @@ private:
         }
     }
     
-//    template <size_t T_Len>
+//    template<size_t T_Len>
 //    static void _SDRespGet(void* dst) {
 //        using Resp = typename T_ICE::Resp;
 //        static_assert((T_Len % sizeof(Resp)) == 0);
@@ -408,7 +408,7 @@ private:
 //        }
 //    }
     
-//    template <typename T>
+//    template<typename T>
 //    static T _SDResp128Get() {
 //        // Get the 128-bit response
 //        T dst;

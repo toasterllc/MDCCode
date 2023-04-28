@@ -4,7 +4,7 @@
 #include "RegLocker.h"
 #include "Assert.h"
 
-template <
+template<
 typename T_Scheduler,
 typename T_BatChrgLvlPin,
 typename T_BatChrgLvlEn_Pin

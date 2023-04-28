@@ -1,7 +1,7 @@
 #pragma once
 #include "Assert.h"
 
-template <
+template<
 auto T_UpdateFn = nullptr
 >
 class T_AssertionCounter {
