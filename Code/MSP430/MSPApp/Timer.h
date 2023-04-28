@@ -18,14 +18,14 @@ class T_Timer {
 public:
     static constexpr uint32_t TimerACLKFreqDivider = 64;
     
+    using Tocks16 = uint16_t;
+    using Tocks32 = uint32_t;
+    
     using TocksFreq = std::ratio<T_ACLKFreqHz, TimerACLKFreqDivider>;
     static_assert(TocksFreq::num == 512); // Debug
     static_assert(TocksFreq::den == 1); // Verify TocksFreq is an integer
-    using TocksPeriod = std::ratio_divide<std::ratio<1>,TocksFreq>;
-    static_assert(TocksPeriod::num == 1); // Debug
-    static_assert(TocksPeriod::den == 512); // Debug
     
-    static constexpr uint32_t TimerIntervalTocks = 0x10000; // Use max interval possible (0xFFFF+1)
+    static constexpr Tocks32 TimerIntervalTocks = 0x10000; // Use max interval possible (0xFFFF+1)
     using TimerIntervalSec = std::ratio_divide<std::ratio<TimerIntervalTocks>, TocksFreq>;
     static_assert(TimerIntervalSec::num == 128); // Debug
     static_assert(TimerIntervalSec::den == 1); // Verify TimerIntervalSec is an integer
@@ -36,8 +36,6 @@ public:
     using TicksPerTock = std::ratio_divide<Time::TicksFreq, TocksFreq>;
     static_assert(TicksPerTock::num == 1); // Debug
     static_assert(TicksPerTock::den == 32); // Debug
-    
-    using Tocks16 = uint16_t;
     
     static void Schedule(const Time::Instant& time) {
         // Get our current time
