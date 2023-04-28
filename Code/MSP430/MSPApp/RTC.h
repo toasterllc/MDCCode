@@ -194,9 +194,6 @@ public:
     }
     
 private:
-    template<class...>
-    static constexpr std::false_type _AlwaysFalse = {};
-    
     template<auto T>
     static constexpr auto _Us = T_Scheduler::template Us<T>;
     
@@ -210,7 +207,7 @@ private:
         else if constexpr (T_Predivider == 64)      return RTCPS__64;
         else if constexpr (T_Predivider == 256)     return RTCPS__256;
         else if constexpr (T_Predivider == 1024)    return RTCPS__1024;
-        else static_assert(_AlwaysFalse<T_Predivider>);
+        else static_assert(Toastbox::AlwaysFalse<T_Predivider>);
     }
     
     static bool _OverflowPending() {

@@ -1,6 +1,7 @@
 #pragma once
 #include <msp430.h>
 #include "Startup.h"
+#include "Toastbox/Util.h"
 
 // T_Watchdog: watchdog timer to reset the device if the watchdog isn't pet periodically.
 // The timeout period is defined by T_TimeoutTicks; if the watchdog isn't pet during that
@@ -61,8 +62,6 @@ public:
     }
     
 private:
-    template<class...> static constexpr std::false_type _AlwaysFalse = {};
-    
     static constexpr uint16_t _WDTIS() {
         constexpr uint32_t K = 1024;
         constexpr uint32_t M = 1024*K;
@@ -72,24 +71,14 @@ private:
         static_assert(ACLKFreqDivider::den == 1);
         constexpr uint32_t divider = ACLKFreqDivider::num;
         
-        if constexpr (divider == 64) {
-            return WDTIS__64;
-        } else if constexpr (divider == 512) {
-            return WDTIS__512;
-        } else if constexpr (divider == 8192) {
-            return WDTIS__8192;
-        } else if constexpr (divider == 32*K) {
-            return WDTIS__32K;
-        } else if constexpr (divider == 512*K) {
-            return WDTIS__512K;
-        } else if constexpr (divider == 8192*K) {
-            return WDTIS__8192K;
-        } else if constexpr (divider == 128*M) {
-            return WDTIS__128M;
-        } else if constexpr (divider == 2*G) {
-            return WDTIS__2G;
-        } else {
-            static_assert(_AlwaysFalse<T_ACLKFreqHz>);
-        }
+             if constexpr (divider == 64)       return WDTIS__64;
+        else if constexpr (divider == 512)      return WDTIS__512;
+        else if constexpr (divider == 8192)     return WDTIS__8192;
+        else if constexpr (divider == 32*K)     return WDTIS__32K;
+        else if constexpr (divider == 512*K)    return WDTIS__512K;
+        else if constexpr (divider == 8192*K)   return WDTIS__8192K;
+        else if constexpr (divider == 128*M)    return WDTIS__128M;
+        else if constexpr (divider == 2*G)      return WDTIS__2G;
+        else                                    static_assert(Toastbox::AlwaysFalse<T_ACLKFreqHz>);
     }
 };

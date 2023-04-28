@@ -16,6 +16,10 @@
 template<typename T_RTC, uint32_t T_ACLKFreqHz>
 class T_Timer {
 public:
+    // TimerACLKFreqDivider: the freq divider that we apply to our timer
+    // We choose the maximum value of 64 to stretch the timer to the
+    // longest duration possible in order minimize our number of wakes,
+    // to save power.
     static constexpr uint32_t TimerACLKFreqDivider = 64;
     
     using Tocks16 = uint16_t;

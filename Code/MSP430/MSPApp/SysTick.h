@@ -1,21 +1,11 @@
 #pragma once
 #include <msp430.h>
+#include <ratio>
 
-template<uint32_t T_ACLKFreqHz, uint32_t T_TickPeriodUs>
+template<typename T_Scheduler, uint32_t T_ACLKFreqHz>
 class T_SysTick {
 public:
-    // Init(): init WDT timer to act as our SysTick timer
-    // Interrupts must be disabled
     static void Init() {
-        // Config watchdog timer
-        WDTCTL =
-            WDTPW         | // password
-            WDTHOLD       | // start in disabled state
-            WDTSSEL__ACLK | // source clock = ACLK
-            WDTTMSEL      | // interval timer mode
-            _WDTIS()      ; // interval
-        
-        SFRIE1 |= WDTIE; // Enable WDT interrupt
     }
     
     static void Enabled(bool x) {
@@ -24,48 +14,118 @@ public:
         if (x == Enabled()) return;
         
         if (x) {
-            WDTCTL |= WDTCNTCL; // Clear count
-            SFRIFG1 &= ~WDTIFG; // Clear pending interrupt
-            WDTCTL &= ~WDTHOLD; // Enable timer
+            // Stop timer
+            _TimerStop();
+            // Additional clock divider = /8
+            TA0EX0 = TAIDEX_7;
+    //        // Reset TA0CCTL0
+    //        TA0CCTL0 = 0;
+            // Set value to count to
+            TA0CCR0 = ccr;
+            // Start timer
+            TA0CTL =
+                TASSEL__ACLK    |   // clock source = ACLK
+                ID__8           |   // clock divider = /8
+                MC__UP          |   // mode = up
+                TACLR           |   // reset timer state
+                TAIE            ;   // enable interrupt
         
         } else {
-            WDTCTL |= WDTHOLD;
+            
         }
     }
     
     static bool Enabled() {
-        return !(WDTCTL & WDTHOLD);
+        
+    }
+    
+    static bool ISR(uint16_t iv) {
+        #warning TODO: check iv
+        return T_Scheduler::Tick();
+    }
+    
+    
+    
+    
+    
+    
+    static void _TimerStop() {
+        TA0CTL &= ~(MC1|MC0|TAIE);
+    }
+    
+    static void _TimerSet(uint16_t ccr) {
+        // Stop timer
+        _TimerStop();
+        // Additional clock divider = /8
+        TA0EX0 = _ID().second;
+//        // Reset TA0CCTL0
+//        TA0CCTL0 = 0;
+        // Set value to count to
+        TA0CCR0 = _CCRForCount<_Count::num>();
+        // Start timer
+        TA0CTL =
+            TASSEL__ACLK    |   // clock source = ACLK
+            _ID().first     |   // clock divider
+            MC__UP          |   // mode = up
+            TACLR           |   // reset timer state
+            TAIE            ;   // enable interrupt
+    }
+    
+    // _Reset(): resets the timer and our state (_ISRState)
+    // Interrupts must be disabled
+    static void _Reset() {
+        _ISRState = {};
+        _TimerStop();
     }
     
 private:
-    template<class...> static constexpr std::false_type _AlwaysFalse = {};
+    using _Period = T_Scheduler::TicksPeriod;
+    using _ACLKPeriod = std::ratio<1,T_ACLKFreqHz>;
+    using _Count = std::ratio_divide<_Period,_ACLKPeriod>;
+    static_assert(_Freq::den == 1); // Check that _Count is an integer
     
-    static constexpr uint16_t _WDTIS() {
-        constexpr uint64_t K = 1024;
-        constexpr uint64_t M = 1024*K;
-        constexpr uint64_t G = 1024*M;
-        constexpr uint64_t divisor = ((uint64_t)T_TickPeriodUs * (uint64_t)T_ACLKFreqHz) / UINT64_C(1000000);
-        
-        if constexpr (divisor == 64) {
-            return WDTIS__64;
-        } else if constexpr (divisor == 512) {
-            return WDTIS__512;
-        } else if constexpr (divisor == 8192) {
-            return WDTIS__8192;
-        } else if constexpr (divisor == 32*K) {
-            return WDTIS__32K;
-        } else if constexpr (divisor == 512*K) {
-            return WDTIS__512K;
-        } else if constexpr (divisor == 8192*K) {
-            return WDTIS__8192K;
-        } else if constexpr (divisor == 128*M) {
-            return WDTIS__128M;
-        } else if constexpr (divisor == 2*G) {
-            return WDTIS__2G;
-        } else {
-            static_assert(_AlwaysFalse<T_ACLKFreqHz>);
-        }
+    template<auto T_Count>
+    static constexpr uint16_t _CCRForCount() {
+        constexpr auto ccr = T_Count-1;
+        static_assert(std::in_range<uint16_t>(ccr));
+        return ccr;
     }
     
-    static inline bool _Enabled = false;
+    using _Freq = std::ratio_divide<std::ratio<1>, T_Scheduler::TicksPeriod>;
+    static_assert(_Freq::den == 1); // Check that our frequency is an integer
+    
+    // _FreqDivider = (freq have) / (freq want), therefore (freq want) = (freq have) / _FreqDivider
+    using _FreqDivider = std::ratio_divide<std::ratio<T_ACLKFreqHz>, _Freq>;
+    static_assert(_FreqDivider::den == 1); // Check that our frequency divider is an integer
+    
+    static constexpr std::pair<uint16_t,uint16_t> _ID() {
+             if constexpr (_FreqDivider::num == 1)  return std::make_pair(ID__1, TAIDEX_0);
+        else if constexpr (_FreqDivider::num == 2)  return std::make_pair(ID__1, TAIDEX_1);
+        else if constexpr (_FreqDivider::num == 3)  return std::make_pair(ID__1, TAIDEX_2);
+        else if constexpr (_FreqDivider::num == 4)  return std::make_pair(ID__1, TAIDEX_3);
+        else if constexpr (_FreqDivider::num == 5)  return std::make_pair(ID__1, TAIDEX_4);
+        else if constexpr (_FreqDivider::num == 6)  return std::make_pair(ID__1, TAIDEX_5);
+        else if constexpr (_FreqDivider::num == 7)  return std::make_pair(ID__1, TAIDEX_6);
+        else if constexpr (_FreqDivider::num == 8)  return std::make_pair(ID__1, TAIDEX_7);
+        
+        else if constexpr (_FreqDivider::num == 10) return std::make_pair(ID__2, TAIDEX_4);
+        else if constexpr (_FreqDivider::num == 12) return std::make_pair(ID__2, TAIDEX_5);
+        else if constexpr (_FreqDivider::num == 14) return std::make_pair(ID__2, TAIDEX_6);
+        else if constexpr (_FreqDivider::num == 16) return std::make_pair(ID__2, TAIDEX_7);
+        
+        else if constexpr (_FreqDivider::num == 20) return std::make_pair(ID__4, TAIDEX_4);
+        else if constexpr (_FreqDivider::num == 24) return std::make_pair(ID__4, TAIDEX_5);
+        else if constexpr (_FreqDivider::num == 28) return std::make_pair(ID__4, TAIDEX_6);
+        else if constexpr (_FreqDivider::num == 32) return std::make_pair(ID__4, TAIDEX_7);
+        
+        else if constexpr (_FreqDivider::num == 40) return std::make_pair(ID__8, TAIDEX_4);
+        else if constexpr (_FreqDivider::num == 48) return std::make_pair(ID__8, TAIDEX_5);
+        else if constexpr (_FreqDivider::num == 56) return std::make_pair(ID__8, TAIDEX_6);
+        else if constexpr (_FreqDivider::num == 64) return std::make_pair(ID__8, TAIDEX_7);
+        else                                        static_assert(Toastbox::AlwaysFalse<_FreqDivider>);
+        
+        
+        
+        
+    }
 };

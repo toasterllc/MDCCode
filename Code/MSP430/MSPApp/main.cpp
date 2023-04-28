@@ -97,7 +97,7 @@ using _Scheduler = Toastbox::Scheduler<
 >;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
-using _SysTick = T_SysTick<_ACLKFreqHz, _SysTickPeriodUs>;
+using _SysTick = T_SysTick<_Scheduler, _ACLKFreqHz>;
 using _SPI = T_SPI<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 using _ICE = T_ICE<_Scheduler>;
 
@@ -1250,9 +1250,9 @@ static void _ISR_USCI_B0() {
     __bic_SR_register_on_exit(LPM0_bits);
 }
 
-[[gnu::interrupt(WDT_VECTOR)]]
+[[gnu::interrupt(???)]]
 static void _ISR_SysTick() {
-    const bool wake = _Scheduler::Tick();
+    const bool wake = _SysTick::ISR(iv);
     if (wake) {
         // Wake ourself
         __bic_SR_register_on_exit(LPM3_bits);

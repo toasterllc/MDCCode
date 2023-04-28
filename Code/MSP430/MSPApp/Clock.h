@@ -1,6 +1,7 @@
 #pragma once
 #include <msp430.h>
 #include "GPIO.h"
+#include "Toastbox/Util.h"
 
 template<typename T_Scheduler, uint32_t T_MCLKFreqHz, typename T_XINPin, typename T_XOUTPin>
 class T_Clock {
@@ -44,7 +45,7 @@ public:
                 CSCTL1 |= DCORSEL_0;
             } else {
                 // Unsupported frequency
-                static_assert(_AlwaysFalse<T_MCLKFreqHz>);
+                static_assert(Toastbox::AlwaysFalse<T_MCLKFreqHz>);
             }
             
             // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLKFreqHz
@@ -111,7 +112,6 @@ public:
     
 private:
     static constexpr uint32_t REFOCLKFreqHz = 32768;
-    template<class...> static constexpr std::false_type _AlwaysFalse = {};
     
     template<auto T>
     static constexpr auto _Ms = T_Scheduler::template Ms<T>;
