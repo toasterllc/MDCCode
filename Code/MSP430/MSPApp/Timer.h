@@ -25,17 +25,14 @@ public:
     static_assert(TocksFreq::num == 512); // Debug
     static_assert(TocksFreq::den == 1); // Verify TocksFreq is an integer
     
-    static constexpr Tocks32 TimerIntervalTocks = 0x10000; // Use max interval possible (0xFFFF+1)
-    using TimerIntervalSec = std::ratio_divide<std::ratio<TimerIntervalTocks>, TocksFreq>;
-    static_assert(TimerIntervalSec::num == 128); // Debug
-    static_assert(TimerIntervalSec::den == 1); // Verify TimerIntervalSec is an integer
-    using TimerIntervalTicks = std::ratio_multiply<TimerIntervalSec, Time::TicksFreq>;
-    static_assert(TimerIntervalTicks::num == 2048); // Debug
-    static_assert(TimerIntervalTicks::den == 1); // Verify that TimerIntervalTicks is an integer
-    
     using TicksPerTock = std::ratio_divide<Time::TicksFreq, TocksFreq>;
     static_assert(TicksPerTock::num == 1); // Debug
     static_assert(TicksPerTock::den == 32); // Debug
+    
+    static constexpr Tocks32 TimerIntervalTocks = 0x10000; // Use max interval possible (0xFFFF+1)
+    using TimerIntervalTicks = std::ratio_multiply<std::ratio<TimerIntervalTocks>, TicksPerTock>;
+    static_assert(TimerIntervalTicks::num == 2048); // Debug
+    static_assert(TimerIntervalTicks::den == 1); // Verify that TimerIntervalTicks is an integer
     
     static void Schedule(const Time::Instant& time) {
         // Get our current time
