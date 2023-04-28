@@ -2,7 +2,6 @@
 #include <msp430.h>
 #include <ratio>
 #include <limits>
-#include "chrono.h" // Local version of <chrono> header
 #include "Time.h"
 #include "Assert.h"
 #include "Toastbox/Util.h"
@@ -27,7 +26,7 @@ public:
     static_assert(TocksPeriod::den == 512); // Debug
     
     static constexpr uint32_t TimerIntervalTocks = 0x10000; // Use max interval possible (0xFFFF+1)
-    using TimerIntervalSec = std::ratio_divide<std::ratio<TimerIntervalTocks>, TocksFreq>
+    using TimerIntervalSec = std::ratio_divide<std::ratio<TimerIntervalTocks>, TocksFreq>;
     static_assert(TimerIntervalSec::num == 128); // Debug
     static_assert(TimerIntervalSec::den == 1); // Verify TimerIntervalSec is an integer
     using TimerIntervalTicks = std::ratio_multiply<TimerIntervalSec, Time::TicksFreq>;
@@ -49,16 +48,22 @@ public:
         _Reset();
         
         if (time >= now) {
-            const Time::Ticks rtcTimeUntilOverflow = T_RTC::TimeUntilOverflow();
+            const uint16_t rtcTicksUntilOverflow = T_RTC::TicksUntilOverflow();
             uint16_t rtcCount = 0;
-            Time::Ticks deltaTicks = time-now;
+            const Time::Ticks deltaTicksWide = time-now;
+            uint32_t deltaTicks = deltaTicksWide;
+            // Ensure that the runtime value of `deltaTicksWide` fits in `deltaTicks`
+            Assert(std::in_range<decltype(deltaTicks)>(deltaTicksWide));
+//            Assert(deltaTicksWide <= std::numeric_limits<decltype(deltaTicks)>::max()); 
             
-            if (deltaTicks >= rtcTimeUntilOverflow) {
+            if (deltaTicks >= rtcTicksUntilOverflow) {
                 rtcCount = 1;
-                deltaTicks -= rtcTimeUntilOverflow;
+                deltaTicks -= rtcTicksUntilOverflow;
             }
             
             if (deltaTicks >= T_RTC::InterruptIntervalTicks) {
+                // Ensure that the type of T_RTC::InterruptIntervalTicks is a uint16_t, as we expect
+                static_assert(std::is_same_v<T_RTC::InterruptIntervalTicks, uint16_t>);
                 const uint16_t count = deltaTicks / T_RTC::InterruptIntervalTicks;
                 constexpr uint16_t CountMax = std::numeric_limits<decltype(count)>::max();
                 // Verify that our `count` division can't overflow
@@ -67,24 +72,19 @@ public:
                 deltaTicks -= count*T_RTC::InterruptIntervalTicks;
             }
             
-            // Ensure that `deltaTicks` can be cast to a u32, which we want to do so we don't perform a u64 division
+            // DeltaTicksMax: the max value of `deltaTicks` at this point
             constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
-            static_assert(DeltaTicksMax <= std::numeric_limits<uint32_t>::max());
-            const uint16_t intervalCount = (uint32_t)deltaTicks / (uint16_t)TimerIntervalTicks::num;
-            // Ensure that `intervalCount` can't overflow
-            static_assert(std::in_range<decltype(intervalCount)>(DeltaTicksMax / TimerIntervalTicks::num));
-            
-            
-            static_assert(IntervalCountMax <= std::numeric_limits<decltype(intervalCount)>::max());
-            
-            const uint16_t remainderTicks = deltaTicks % (uint16_t)TimerIntervalTicks::num;
-            // Ensure that casting TimerIntervalTicks::num to a uint16_t is safe
-            static_assert(std::in_range<decltype(remainderTicks)>(TimerIntervalTicks::num));
-            // Ensure that `remainderTicks` can't overflow
-            constexpr auto RemainderTicksMax = TimerIntervalTicks-1;
-            static_assert(RemainderTicksMax <= std::numeric_limits<decltype(remainderTicks)>::max());
-            
-            const uint16_t remainderTocks = _TocksForTicks<RemainderTicksMax>(remainderTicks);
+            // Ensure that casting deltaTicks to uint16_t is safe
+            static_assert(std::in_range<uint16_t>(DeltaTicksMax));
+            // Ensure that casting TimerIntervalTicks::num to uint16_t is safe
+            static_assert(std::in_range<uint16_t>(TimerIntervalTicks::num));
+            const uint16_t intervalCount = (uint16_t)deltaTicks / (uint16_t)TimerIntervalTicks::num;
+            const uint16_t remainderTicks = (uint16_t)deltaTicks % (uint16_t)TimerIntervalTicks::num;
+            // RemainderTicksMax: max value of remainderTicks at this point
+            constexpr auto RemainderTicksMax = TimerIntervalTicks::num-1;
+            // Ensure that our ticks -> tocks calculation can't overflow due to the multiplication
+            static_assert(std::in_range<uint16_t>(RemainderTicksMax * TicksPerTock::den));
+            const uint16_t remainderTocks = (remainderTicks * (uint16_t)TicksPerTock::den) / (uint16_t)TicksPerTock::num;
             
             _ISRState = {
                 .rtc = {
@@ -147,12 +147,12 @@ private:
         return tocks-1;
     }
     
-    template<Time::Ticks T_MaxVal>
-    static constexpr uint16_t _TocksForTicks(Time::Ticks ticks) {
-        // Verify that our calculation can't overflow assuming a maximum `ticks` value of `T_MaxVal`
-        static_assert(((std::numeric_limits<uint16_t>::max() * TicksPerTockRatio::num) / TicksPerTockRatio::den) <= T_MaxVal);
-        return ((ticks*TicksPerTockRatio::den)/TicksPerTockRatio::num);
-    }
+//    template<auto T_MaxVal, Time::Ticks T_MaxVal>
+//    static constexpr uint16_t _TocksForTicks(T_Ticks ticks) {
+//        // Verify that our calculation can't overflow assuming a maximum `ticks` value of `T_MaxVal`
+//        static_assert(((std::numeric_limits<uint16_t>::max() * TicksPerTockRatio::num) / TicksPerTockRatio::den) <= T_MaxVal);
+//        return ((ticks*TicksPerTockRatio::den)/TicksPerTockRatio::num);
+//    }
     
     static void _TimerStop() {
         TA0CTL &= ~(MC1|MC0|TAIE);

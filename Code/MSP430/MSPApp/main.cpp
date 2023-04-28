@@ -96,9 +96,9 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskMotion
 >;
 
-using _Clock = T_Clock<_Scheduler, _MCLKFreq, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
-using _SysTick = T_SysTick<_ACLKFreq, _SysTickPeriodUs>;
-using _SPI = T_SPI<_MCLKFreq, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
+using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
+using _SysTick = T_SysTick<_ACLKFreqHz, _SysTickPeriodUs>;
+using _SPI = T_SPI<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 using _ICE = T_ICE<_Scheduler>;
 
 using _I2C = T_I2C<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
@@ -134,8 +134,8 @@ using _SDCard = SD::Card<
 >;
 
 // _RTC: real time clock
-using _RTC = RTCType<_Scheduler, _XT1Freq>;
-using _Watchdog = T_Watchdog<_ACLKFreq, _RTC::InterruptIntervalTicks*2>;
+using _RTC = T_RTC<_Scheduler, _XT1FreqHz>;
+using _Watchdog = T_Watchdog<_ACLKFreqHz, _RTC::InterruptIntervalTicks*2>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in FRAM because it needs to persist indefinitely.
@@ -179,7 +179,7 @@ using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledUpdate>;
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
 // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
-using _EventTimer = T_Timer<_RTC, _ACLKFreq>;
+using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
 
 static Time::Ticks _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks Day         = (Time::Ticks)     24*60*60*Time::TicksFreq;
