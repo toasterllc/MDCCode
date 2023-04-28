@@ -13,7 +13,6 @@ public:
     using TimeoutPeriod = std::ratio<T_TimeoutTicks*Time::TicksPeriod::num, Time::TicksPeriod::den>;
     static_assert(TimeoutPeriod::num == 4096); // Debug
     static_assert(TimeoutPeriod::den == 1); // Debug
-    using TimeoutFreq = std::ratio_divide<std::ratio<1>, TimeoutPeriod>;
     
     // ACLKPeriodMultiplier = (period want) / (period have)
     using ACLKPeriodMultiplier = std::ratio_divide<TimeoutPeriod, ACLKPeriod>;
