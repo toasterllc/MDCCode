@@ -2,12 +2,9 @@
 #include <msp430.h>
 #include "GPIO.h"
 
-template <typename T_Scheduler, typename T_MCLKFreq, typename T_XINPin, typename T_XOUTPin>
+template <typename T_Scheduler, uint32_t T_MCLKFreqHz, typename T_XINPin, typename T_XOUTPin>
 class T_Clock {
 public:
-    static_assert(T_MCLKFreq::den == 1);
-    static constexpr uint32_t MCLKFreqHz = T_MCLKFreq::num;
-    
     struct Pin {
         using XIN  = typename T_XINPin::template Opts<GPIO::Option::Sel01>;
         using XOUT = typename T_XOUTPin::template Opts<GPIO::Option::Sel01>;
@@ -20,7 +17,7 @@ public:
         
         // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.
-        if constexpr (MCLKFreqHz > 8000000) {
+        if constexpr (T_MCLKFreqHz > 8000000) {
             FRCTL0 = FRCTLPW | NWAITS_1;
         }
         
@@ -33,30 +30,30 @@ public:
             // Clear DCO frequency select bits first
             CSCTL1 &= ~(DCORSEL_7);
             
-            if constexpr (MCLKFreqHz == 16000000) {
+            if constexpr (T_MCLKFreqHz == 16000000) {
                 CSCTL1 |= DCORSEL_5;
-            } else if constexpr (MCLKFreqHz == 12000000) {
+            } else if constexpr (T_MCLKFreqHz == 12000000) {
                 CSCTL1 |= DCORSEL_4;
-            } else if constexpr (MCLKFreqHz == 8000000) {
+            } else if constexpr (T_MCLKFreqHz == 8000000) {
                 CSCTL1 |= DCORSEL_3;
-            } else if constexpr (MCLKFreqHz == 4000000) {
+            } else if constexpr (T_MCLKFreqHz == 4000000) {
                 CSCTL1 |= DCORSEL_2;
-            } else if constexpr (MCLKFreqHz == 2000000) {
+            } else if constexpr (T_MCLKFreqHz == 2000000) {
                 CSCTL1 |= DCORSEL_1;
-            } else if constexpr (MCLKFreqHz == 1000000) {
+            } else if constexpr (T_MCLKFreqHz == 1000000) {
                 CSCTL1 |= DCORSEL_0;
             } else {
                 // Unsupported frequency
-                static_assert(_AlwaysFalse<MCLKFreqHz>);
+                static_assert(_AlwaysFalse<T_MCLKFreqHz>);
             }
             
-            // Set DCOCLKDIV based on MCLKFreqHz and REFOCLKFreqHz
-            CSCTL2 = FLLD_0 | ((MCLKFreqHz/REFOCLKFreqHz)-1);
+            // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLKFreqHz
+            CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/REFOCLKFreqHz)-1);
             
             // Special case: use the factory-calibrated values for CSCTL0 if one is available for the target frequency
             // This significantly speeds up the FLL lock time; without this technique, it takes ~200ms to get an FLL
             // lock (datasheet specifies 280ms as typical). Using the factory-calibrated value, an FLL lock takes 800us.
-            if constexpr (MCLKFreqHz == 16000000) {
+            if constexpr (T_MCLKFreqHz == 16000000) {
                 CSCTL0 = *CSCTL0Cal16MHz;
             }
             
@@ -70,7 +67,7 @@ public:
         // by REFOCLK, and waiting 10 cycles.
         // This technique is prescribed by "MSP430FR2xx/FR4xx DCO+FLL Applications Guide", and shown
         // by the "MSP430FR2x5x_FLL_FastLock_24MHz-16MHz.c" example code.
-        if constexpr (MCLKFreqHz == 16000000) {
+        if constexpr (T_MCLKFreqHz == 16000000) {
             CSCTL4 = SELMS__REFOCLK | SELA__REFOCLK;
             __delay_cycles(10);
         }

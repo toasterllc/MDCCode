@@ -32,10 +32,10 @@
 #include "Timer.h"
 using namespace GPIO;
 
-using _XT1Freq        = std::ratio<32768,1>;    // 32.768 kHz
-using _ACLKFreq       = _XT1Period;             // 32.768 kHz
-using _MCLKFreq       = std::ratio<16000000,1>; // 16 MHz
-using _SysTickFreq    = std::ratio<2048,1>;     // 2.048 kHz
+static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz
+static constexpr uint32_t _ACLKFreqHz       = _XT1FreqHz;   // 32.768 kHz
+static constexpr uint32_t _MCLKFreqHz       = 16000000;     // 16 MHz
+static constexpr uint32_t _SysTickFreqHz    = 2048;         // 2.048 kHz
 
 struct _Pin {
     // Port A

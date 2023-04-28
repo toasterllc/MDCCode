@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		5562771829FB4F5500998BE2 /* chrono.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = chrono.h; sourceTree = "<group>"; };
 		556E45EF26B12023006681FA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -14,6 +15,7 @@
 		556E45E326B1200D006681FA = {
 			isa = PBXGroup;
 			children = (
+				5562771829FB4F5500998BE2 /* chrono.h */,
 				556E45EF26B12023006681FA /* main.cpp */,
 			);
 			sourceTree = "<group>";
