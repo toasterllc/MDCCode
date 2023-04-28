@@ -47,7 +47,7 @@ public:
     using TocksFreq = std::ratio_divide<T_ACLKFreq, std::ratio<TimerACLKFreqDivider>>;
     static_assert(TocksFreq::num == 512); // Debug
     static_assert(TocksFreq::den == 1); // Verify TocksFreq is an integer
-    using TocksPeriod = std::ratio_divide<std::ratio<1>,TocksFreq>;
+//    using TocksPeriod = std::ratio_divide<std::ratio<1>,TocksFreq>;
     
     static constexpr uint32_t TimerIntervalTocks = 0x10000;
     using TimerIntervalSec = std::ratio_divide<std::ratio<TimerIntervalTocks>, TocksFreq>
@@ -57,7 +57,7 @@ public:
     static_assert(TimerIntervalTicks::num == 2048); // Debug
     static_assert(TimerIntervalTicks::den == 1); // Verify that TimerIntervalTicks is an integer
     
-    using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TocksFreqHz>;
+    using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TocksFreq>;
     static_assert(TicksPerTockRatio::num == 1); // Debug
     static_assert(TicksPerTockRatio::den == 32); // Debug
     
