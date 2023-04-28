@@ -396,7 +396,9 @@ static std::string _StringForTimeInstant(Time::Instant t, bool relative=false) {
 }
 
 static float _SecondsForTicks(uint32_t ticks) {
-    return (float)ticks / Time::TicksFreqHz;
+    // Check our assumption that Time::TicksFreq is an integer
+    static_assert(Time::TicksFreq::den == 1);
+    return (float)ticks / Time::TicksFreq::num;
 }
 
 static std::filesystem::path _MSPAppPath() {
