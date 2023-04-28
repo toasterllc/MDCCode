@@ -6,7 +6,7 @@ extern "C" void __libc_init_array();
 
 class Startup {
 public:
-    static uint16_t SYSRSTIV() {
+    static uint16_t ResetReason() {
         static uint16_t X = SYSRSTIV;
         return X;
     }
@@ -24,7 +24,7 @@ public:
     //     so there doesn't seem to be a way to return true in the LPM4.5 case.
     //     We don't use LPM4.5 though so it's not an issue.
     static bool ColdStart() {
-        return (SYSRSTIV()==SYSRSTIV_NONE || SYSRSTIV()==SYSRSTIV_BOR);
+        return (ResetReason()==SYSRSTIV_NONE || ResetReason()==SYSRSTIV_BOR);
     }
 };
 

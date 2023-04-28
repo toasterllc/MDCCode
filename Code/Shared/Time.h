@@ -3,8 +3,9 @@
 
 namespace Time {
 
-// TicksPeriod: the period of a single tick, in seconds
-using TicksPeriod = std::ratio<1,16>;
+// TicksFreq / TicksPeriod: frequency / period of device's ticks timebase
+using TicksFreq   = std::ratio<16,1>;
+using TicksPeriod = std::ratio_divide<std::ratio<1>,TicksFreq>;
 
 // Ticks: a duration in ticks
 // Using a signed value here so we can represent negative durations.

@@ -3,6 +3,7 @@
 #include <cstdbool>
 #include <cstddef>
 #include <atomic>
+#include <ratio>
 #include "Toastbox/Scheduler.h"
 #include "SDCard.h"
 #include "ICE.h"
@@ -13,6 +14,7 @@
 #include "Clock.h"
 #include "RTC.h"
 #include "SPI.h"
+#include "Watchdog.h"
 #include "SysTick.h"
 #include "RegLocker.h"
 #include "MSP.h"
@@ -30,10 +32,10 @@
 #include "Timer.h"
 using namespace GPIO;
 
-static constexpr uint32_t _XT1FreqHz        = 32768;
-static constexpr uint32_t _ACLKFreqHz       = _XT1FreqHz;
-static constexpr uint64_t _MCLKFreqHz       = 16000000;
-static constexpr uint32_t _SysTickPeriodUs  = 512;
+using _XT1Freq        = std::ratio<32768,1>;    // 32.768 kHz
+using _ACLKFreq       = _XT1Period;             // 32.768 kHz
+using _MCLKFreq       = std::ratio<16000000,1>; // 16 MHz
+using _SysTickFreq    = std::ratio<2048,1>;     // 2.048 kHz
 
 struct _Pin {
     // Port A
@@ -94,9 +96,9 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskMotion
 >;
 
-using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _XT1FreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
-using _SysTick = T_SysTick<_ACLKFreqHz, _SysTickPeriodUs>;
-using _SPI = T_SPI<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
+using _Clock = T_Clock<_Scheduler, _MCLKFreq, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
+using _SysTick = T_SysTick<_ACLKFreq, _SysTickPeriodUs>;
+using _SPI = T_SPI<_MCLKFreq, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 using _ICE = T_ICE<_Scheduler>;
 
 using _I2C = T_I2C<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
@@ -132,7 +134,8 @@ using _SDCard = SD::Card<
 >;
 
 // _RTC: real time clock
-using _RTC = RTCType<_XT1FreqHz, _Scheduler>;
+using _RTC = RTCType<_Scheduler, _XT1Freq>;
+using _Watchdog = T_Watchdog<_ACLKFreq, _RTC::InterruptIntervalTicks*2>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in FRAM because it needs to persist indefinitely.
@@ -176,12 +179,12 @@ using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledUpdate>;
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
 // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
-using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
+using _EventTimer = T_Timer<_RTC, _ACLKFreq>;
 
 static Time::Ticks _RepeatAdvance(MSP::Repeat& x) {
-    static constexpr Time::Ticks Day         = (Time::Ticks)     24*60*60*Time::TicksFreqHz;
-    static constexpr Time::Ticks Year        = (Time::Ticks) 365*24*60*60*Time::TicksFreqHz;
-    static constexpr Time::Ticks YearPlusDay = (Time::Ticks) 366*24*60*60*Time::TicksFreqHz;
+    static constexpr Time::Ticks Day         = (Time::Ticks)     24*60*60*Time::TicksFreq;
+    static constexpr Time::Ticks Year        = (Time::Ticks) 365*24*60*60*Time::TicksFreq;
+    static constexpr Time::Ticks YearPlusDay = (Time::Ticks) 366*24*60*60*Time::TicksFreq;
     switch (x.type) {
     case MSP::Repeat::Type::Never:
         return 0;
@@ -983,8 +986,10 @@ struct _TaskMain {
         // Disable interrupts while we init our subsystems
         Toastbox::IntState ints(false);
         
-        // Stop watchdog timer
-        WDTCTL = WDTPW | WDTHOLD;
+        // Init watchdog first
+        // This will trigger a BOR if our most recent reset reason was due to a WDT timeout (which
+        // only triggers a PUC, and we want a full BOR).
+        Watchdog::Init();
         
         // Init GPIOs
         GPIO::Init<
@@ -1070,9 +1075,9 @@ struct _TaskMain {
         _Init();
         
         for (bool on_=false;; on_=!on_) {
-//            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreqHz);
+//            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq);
             _LEDGreen_.set(_LEDPriority::Power, on_);
-            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreqHz);
+            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq);
             _Scheduler::Wait([] { return _EventTimer::Fired(); });
         }
         
@@ -1180,7 +1185,13 @@ static void _Sleep() {
 
 [[gnu::interrupt(RTC_VECTOR)]]
 static void _ISR_RTC() {
+    // Pet the watchdog first
+    _Watchdog::Pet();
+    
+    // Let _RTC know that we got an RTC interrupt
     _RTC::ISR(RTCIV);
+    
+    // Let _EventTimer know we got an RTC interrupt
     if (_EventTimer::ISRRTCInterested()) {
         _EventTimer::ISRRTC();
         // Wake if the timer fired

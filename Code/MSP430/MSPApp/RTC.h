@@ -25,16 +25,16 @@
 [[gnu::section(".ram_backup_noinit.rtc")]]
 static volatile Time::Instant _RTCTime;
 
-template <uint32_t T_XT1FreqHz, typename T_Scheduler>
-class RTCType {
+template<typename T_Scheduler, typename T_XT1Freq>
+class T_RTC {
 private:
     // _TicksForTocks(): templated to work with uint16_t (at runtime) and uint32_t (at compile time)
     template<typename T>
     static constexpr Time::Ticks _TicksForTocks(T tocks) {
         // We don't cast `tocks` to a wider type because currently the ticks/tock ratio is <= 1,
         // so the result will always be smaller. Check that assumption:
-        static_assert(TicksPerTockRatio::num <= TicksPerTockRatio::den);
-        return ((tocks*TicksPerTockRatio::num)/TicksPerTockRatio::den);
+        static_assert(TicksPerTock::num <= TicksPerTock::den);
+        return ((tocks*TicksPerTock::num)/TicksPerTock::den);
     }
     
 public:
@@ -43,21 +43,20 @@ public:
     static_assert(InterruptIntervalTicks == 32768); // Debug
     static constexpr uint16_t TocksMax = InterruptIntervalTocks-1;
     static_assert(TocksMax == 0xFFFF); // Debug
-    static constexpr uint32_t Predivider = 1024;
+    using Predivider = std::ratio<1024,1>;
     
-    using TocksFreqHzRatio = std::ratio<T_XT1FreqHz, Predivider>;
-    static_assert(TocksFreqHzRatio::den == 1); // Verify TocksFreqHzRatio division is exact
-    static constexpr uint16_t TocksFreqHz = TocksFreqHzRatio::num;
-    static_assert(TocksFreqHz == 32); // Debug
+    using TocksFreq = std::ratio_divide<T_XT1Freq, Predivider>;
+    static_assert(TocksFreq::num == 32); // Debug
+    static_assert(TocksFreq::den == 1); // Verify TocksFreq is an integer
+    using TocksPeriod = std::ratio_divide<std::ratio<1>, TocksFreq>;
     
-    using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TocksFreqHz>;
-    static_assert(TicksPerTockRatio::num == 1); // Debug
-    static_assert(TicksPerTockRatio::den == 2); // Debug
+    using TicksPerTock = std::ratio_divide<Time::TicksPeriod, TocksPeriod>;
+    static_assert(TicksPerTock::num == 1); // Debug
+    static_assert(TicksPerTock::den == 2); // Debug
     
-    using UsPerTockRatio = std::ratio<1000000, TocksFreqHz>;
-    static_assert(UsPerTockRatio::den == 1); // Verify UsPerTockRatio division is exact
-    static constexpr uint32_t UsPerTock = UsPerTockRatio::num;
-    static_assert(UsPerTock == 31250); // Debug
+    using UsPerTock = std::ratio_divide<TocksPeriod, std::micro>;
+    static_assert(UsPerTock::num == 31250); // Debug
+    static_assert(UsPerTock::den == 1); // Verify UsPerTock is an integer
     
     // Init(): initialize the RTC subsystem
     // Interrupts must be disabled
@@ -79,7 +78,7 @@ public:
             // it's possible to read an old value of RTCCNT, which would temporarily reflect the wrong time.
             // Empirically the RTC peripheral is reset and initialized synchronously from its clock (XT1CLK
             // divided by Predivider), so we wait 1.5 cycles of that clock to ensure RTC is finished resetting.
-            T_Scheduler::Delay(T_Scheduler::Us((3*UsPerTock)/2));
+            T_Scheduler::Delay(T_Scheduler::Us((3*UsPerTock::num)/2));
         }
     }
     
@@ -133,7 +132,7 @@ public:
         for (;;) {
             const uint16_t tocks = RTCCNT;
             if (tocks==0 || _OverflowPending()) {
-                T_Scheduler::Delay(T_Scheduler::Us(UsPerTock));
+                T_Scheduler::Delay(T_Scheduler::Us(UsPerTock::num));
                 continue;
             }
             return tocks;
@@ -174,16 +173,17 @@ private:
     template <class...>
     static constexpr std::false_type _AlwaysFalse = {};
     
-    template <uint16_t T_Predivider>
+    template<typename T_Predivider>
     static constexpr uint16_t _RTCPSForPredivider() {
-             if constexpr (T_Predivider == 1)       return RTCPS__1;
-        else if constexpr (T_Predivider == 10)      return RTCPS__10;
-        else if constexpr (T_Predivider == 100)     return RTCPS__100;
-        else if constexpr (T_Predivider == 1000)    return RTCPS__1000;
-        else if constexpr (T_Predivider == 16)      return RTCPS__16;
-        else if constexpr (T_Predivider == 64)      return RTCPS__64;
-        else if constexpr (T_Predivider == 256)     return RTCPS__256;
-        else if constexpr (T_Predivider == 1024)    return RTCPS__1024;
+        static_assert(T_Predivider::den == 1);
+             if constexpr (T_Predivider::num == 1)       return RTCPS__1;
+        else if constexpr (T_Predivider::num == 10)      return RTCPS__10;
+        else if constexpr (T_Predivider::num == 100)     return RTCPS__100;
+        else if constexpr (T_Predivider::num == 1000)    return RTCPS__1000;
+        else if constexpr (T_Predivider::num == 16)      return RTCPS__16;
+        else if constexpr (T_Predivider::num == 64)      return RTCPS__64;
+        else if constexpr (T_Predivider::num == 256)     return RTCPS__256;
+        else if constexpr (T_Predivider::num == 1024)    return RTCPS__1024;
         else static_assert(_AlwaysFalse<T_Predivider>);
     }
     

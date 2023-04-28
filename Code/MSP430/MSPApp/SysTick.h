@@ -1,7 +1,7 @@
 #pragma once
 #include <msp430.h>
 
-template <uint32_t T_ACLKFreqHz, uint32_t T_TickPeriodUs>
+template<uint32_t T_ACLKFreqHz, uint32_t T_TickPeriodUs>
 class T_SysTick {
 public:
     // Init(): init WDT timer to act as our SysTick timer

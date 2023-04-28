@@ -39,23 +39,23 @@ struct __ISRState {
 
 static __ISRState _ISRState;
 
-template<typename T_RTC, uint32_t T_ACLKFreqHz>
+template<typename T_RTC, typename T_ACLKFreq>
 class T_Timer {
 public:
-    static constexpr uint32_t TimerACLKDivider = 64;
+    static constexpr uint32_t TimerACLKFreqDivider = 64;
     
-    using TocksFreqHzRatio = std::ratio<T_ACLKFreqHz, TimerACLKDivider>;
-    static_assert(TocksFreqHzRatio::den == 1); // Verify TocksFreqHzRatio division is exact
-    static constexpr uint16_t TocksFreqHz = TocksFreqHzRatio::num;
-    static_assert(TocksFreqHz == 512); // Debug
+    using TocksFreq = std::ratio_divide<T_ACLKFreq, std::ratio<TimerACLKFreqDivider>>;
+    static_assert(TocksFreq::num == 512); // Debug
+    static_assert(TocksFreq::den == 1); // Verify TocksFreq is an integer
+    using TocksPeriod = std::ratio_divide<std::ratio<1>,TocksFreq>;
     
     static constexpr uint32_t TimerIntervalTocks = 0x10000;
-    using TimerIntervalSecRatio = std::ratio<TimerIntervalTocks, TocksFreqHz>;
-    static_assert(TimerIntervalSecRatio::den == 1); // Verify TimerIntervalSecRatio division is exact
-    static constexpr uint32_t TimerIntervalSec = TimerIntervalSecRatio::num;
-    static_assert(TimerIntervalSec == 128); // Debug
-    static constexpr Time::Ticks TimerIntervalTicks  = TimerIntervalSec * Time::TicksFreqHz;
-    static_assert(TimerIntervalTicks == 2048); // Debug
+    using TimerIntervalSec = std::ratio_divide<std::ratio<TimerIntervalTocks>, TocksFreq>
+    static_assert(TimerIntervalSec::num == 128); // Debug
+    static_assert(TimerIntervalSec::den == 1); // Verify TimerIntervalSec is an integer
+    using TimerIntervalTicks = std::ratio_multiply<TimerIntervalSec, Time::TicksFreq>;
+    static_assert(TimerIntervalTicks::num == 2048); // Debug
+    static_assert(TimerIntervalTicks::den == 1); // Verify that TimerIntervalTicks is an integer
     
     using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TocksFreqHz>;
     static_assert(TicksPerTockRatio::num == 1); // Debug
@@ -93,12 +93,12 @@ public:
             // Ensure that `deltaTicks` can be cast to a u32, which we want to do so we don't perform a u64 division
             constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
             static_assert(DeltaTicksMax <= std::numeric_limits<uint32_t>::max());
-            const uint16_t intervalCount = (uint32_t)deltaTicks / TimerIntervalTicks;
+            const uint16_t intervalCount = (uint32_t)deltaTicks / (uint16_t)TimerIntervalTicks::num;
             // Ensure that `intervalCount` can't overflow
-            constexpr auto IntervalCountMax = ((uintmax_t)DeltaTicksMax / (uintmax_t)TimerIntervalTicks);
+            constexpr auto IntervalCountMax = ((uintmax_t)DeltaTicksMax / TimerIntervalTicks);
             static_assert(IntervalCountMax <= std::numeric_limits<decltype(intervalCount)>::max());
             
-            const uint16_t remainderTicks = deltaTicks % TimerIntervalTicks;
+            const uint16_t remainderTicks = deltaTicks % (uint16_t)TimerIntervalTicks;
             // Ensure that `remainderTicks` can't overflow
             constexpr auto RemainderTicksMax = TimerIntervalTicks-1;
             static_assert(RemainderTicksMax <= std::numeric_limits<decltype(remainderTicks)>::max());

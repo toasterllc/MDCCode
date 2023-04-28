@@ -2,28 +2,31 @@
 #include <msp430.h>
 #include "Startup.h"
 
-// T_Watchdog: watchdog timer to reset the device if it the watchdog isn't pet periodically.
-// The watchdog period is defined by 2 * T_RTC::InterruptIntervalTicks; if the watchdog
-// isn't pet during that time, a PUC is triggered, and T_Watchdog then triggers a full BOR
-// upon the next Init().
-template<typename T_RTC, typename T_ACLKPeriod>
+// T_Watchdog: watchdog timer to reset the device if the watchdog isn't pet periodically.
+// The timeout period is defined by T_TimeoutTicks; if the watchdog isn't pet during that
+// time, a PUC is triggered, and T_Watchdog then triggers a full BOR upon the next Init().
+template<typename T_ACLKFreq, Time::Ticks T_TimeoutTicks>
 class T_Watchdog {
 public:
-    static constexpr Time::Ticks TimeoutTicks = T_RTC::InterruptIntervalTicks*2;
-    using TimeoutPeriod = std::ratio<TimeoutTicks*Time::TicksPeriod::num, Time::TicksPeriod::den>;
+    using ACLKPeriod = std::ratio_divide<std::ratio<1>, T_ACLKFreq>;
+    
+    using TimeoutPeriod = std::ratio<T_TimeoutTicks*Time::TicksPeriod::num, Time::TicksPeriod::den>;
     static_assert(TimeoutPeriod::num == 4096); // Debug
     static_assert(TimeoutPeriod::den == 1); // Debug
+    using TimeoutFreq = std::ratio_divide<std::ratio<1>, TimeoutPeriod>;
     
-    // ACLKDivider = (period want) / (period have)
-    using ACLKDivider = std::ratio_divide<TimeoutPeriod, T_ACLKPeriod>;
-    static_assert(ACLKDivider::num == (uint32_t)134217728); // Debug
-    static_assert(ACLKDivider::den == 1); // Debug
+    // ACLKPeriodMultiplier = (period want) / (period have)
+    using ACLKPeriodMultiplier = std::ratio_divide<TimeoutPeriod, ACLKPeriod>;
+    static_assert(ACLKPeriodMultiplier::num == (uint32_t)134217728); // Debug
+    static_assert(ACLKPeriodMultiplier::den == 1); // Debug
+    
+    using ACLKFreqDivider = ACLKPeriodMultiplier;
     
     // Init(): init WDT timer
     // Interrupts must be disabled
     static void Init() {
-        // Trigger a full BOR if we were reset due to a WDT timeout (which only triggers a PUC, and we want a BOR)
-        if (Startup::SYSRSTIV() == SYSRSTIV_WDTTO) {
+        // Trigger a full BOR if we were reset due to a WDT timeout (which only triggers a PUC, and we want a full BOR)
+        if (Startup::ResetReason() == SYSRSTIV_WDTTO) {
             Assert(false);
         }
         
@@ -66,9 +69,9 @@ private:
         constexpr uint32_t M = 1024*K;
         constexpr uint32_t G = 1024*M;
         
-        // Only integers are allowed for WDTIS and therefore ACLKDivider
-        static_assert(ACLKDivider::den == 1);
-        constexpr uint32_t divider = ACLKDivider::num;
+        // Only integers are allowed for WDTIS and therefore ACLKFreqDivider
+        static_assert(ACLKFreqDivider::den == 1);
+        constexpr uint32_t divider = ACLKFreqDivider::num;
         
         if constexpr (divider == 64) {
             return WDTIS__64;
@@ -87,7 +90,7 @@ private:
         } else if constexpr (divider == 2*G) {
             return WDTIS__2G;
         } else {
-            static_assert(_AlwaysFalse<T_ACLKFreqHz>);
+            static_assert(_AlwaysFalse<T_ACLKFreq>);
         }
     }
 };
