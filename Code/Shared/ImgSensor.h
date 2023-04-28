@@ -26,7 +26,7 @@ public:
         #warning TODO: See commit 94bfa7b.
         #warning TODO: Therefore maybe we can switch back to 11ms? What about 10ms?
         {
-            _Sleep(_Ms(15));
+            _Sleep(_Ms<15>);
         }
         
         // Configure internal register initialization
@@ -42,7 +42,7 @@ public:
         // Wait 150k EXTCLK (16MHz) periods
         // (150e3*(1/16e6)) == 9.375ms
         {
-            _Sleep(_Ms(10));
+            _Sleep(_Ms<10>);
         }
         
         // Sanity-check pix comms by reading a known register
@@ -232,7 +232,9 @@ public:
     }
     
 private:
-    static constexpr auto _Ms = T_Scheduler::Ms;
+    template<auto T>
+    static constexpr auto _Ms = T_Scheduler::template Ms<T>;
+    
     static constexpr auto _Sleep = T_Scheduler::Sleep;
     
     struct _ResetRegister {

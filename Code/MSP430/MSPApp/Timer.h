@@ -37,6 +37,8 @@ public:
     static_assert(TicksPerTock::num == 1); // Debug
     static_assert(TicksPerTock::den == 32); // Debug
     
+    using Tocks16 = uint16_t;
+    
     static void Schedule(const Time::Instant& time) {
         // Get our current time
         const Time::Instant now = T_RTC::Now();
@@ -48,22 +50,22 @@ public:
         _Reset();
         
         if (time >= now) {
-            const uint16_t rtcTicksUntilOverflow = T_RTC::TicksUntilOverflow();
-            uint16_t rtcCount = 0;
+            const Time::Ticks16 rtcTicksUntilOverflow = T_RTC::TicksUntilOverflow();
             const Time::Ticks64 deltaTicks64 = time-now;
             Time::Ticks32 deltaTicks = deltaTicks64;
             // Ensure that the runtime value of `deltaTicks64` fits in `deltaTicks`
             Assert(std::in_range<decltype(deltaTicks)>(deltaTicks64));
 //            Assert(deltaTicksWide <= std::numeric_limits<decltype(deltaTicks)>::max()); 
             
+            uint16_t rtcCount = 0;
             if (deltaTicks >= rtcTicksUntilOverflow) {
                 rtcCount = 1;
                 deltaTicks -= rtcTicksUntilOverflow;
             }
             
             if (deltaTicks >= T_RTC::InterruptIntervalTicks) {
-                // Ensure that the type of T_RTC::InterruptIntervalTicks is a uint16_t, as we expect
-                static_assert(std::is_same_v<T_RTC::InterruptIntervalTicks, uint16_t>);
+                // Ensure that the type of T_RTC::InterruptIntervalTicks is a Time::Ticks16, as we expect
+                static_assert(std::is_same_v<decltype(T_RTC::InterruptIntervalTicks), const Time::Ticks16>);
                 const uint16_t count = deltaTicks / T_RTC::InterruptIntervalTicks;
                 constexpr uint16_t CountMax = std::numeric_limits<decltype(count)>::max();
                 // Verify that our `count` division (above) can't overflow
@@ -74,17 +76,20 @@ public:
             
             // DeltaTicksMax: the max value of `deltaTicks` at this point
             constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
-            // Ensure that casting deltaTicks to uint16_t is safe
-            static_assert(std::in_range<uint16_t>(DeltaTicksMax));
-            // Ensure that casting TimerIntervalTicks::num to uint16_t is safe
-            static_assert(std::in_range<uint16_t>(TimerIntervalTicks::num));
-            const uint16_t intervalCount = (uint16_t)deltaTicks / (uint16_t)TimerIntervalTicks::num;
-            const uint16_t remainderTicks = (uint16_t)deltaTicks % (uint16_t)TimerIntervalTicks::num;
+            // Ensure that casting deltaTicks to Time::Ticks16 is safe
+            static_assert(std::in_range<Time::Ticks16>(DeltaTicksMax));
+            // Ensure that casting TimerIntervalTicks::num to Time::Ticks16 is safe
+            static_assert(std::in_range<Time::Ticks16>(TimerIntervalTicks::num));
+            const uint16_t intervalCount = (Time::Ticks16)deltaTicks / (Time::Ticks16)TimerIntervalTicks::num;
+            const Time::Ticks16 remainderTicks = (Time::Ticks16)deltaTicks % (Time::Ticks16)TimerIntervalTicks::num;
             // RemainderTicksMax: max value of remainderTicks at this point
             constexpr auto RemainderTicksMax = TimerIntervalTicks::num-1;
+            // Ensure that casting TicksPerTock::num/den to Time::Ticks16 is safe
+            static_assert(std::in_range<Time::Ticks16>(TicksPerTock::num));
+            static_assert(std::in_range<Time::Ticks16>(TicksPerTock::den));
             // Ensure that our ticks -> tocks calculation can't overflow due to the multiplication
-            static_assert(std::in_range<uint16_t>(RemainderTicksMax * TicksPerTock::den));
-            const uint16_t remainderTocks = (remainderTicks * (uint16_t)TicksPerTock::den) / (uint16_t)TicksPerTock::num;
+            static_assert(std::in_range<Time::Ticks16>(RemainderTicksMax * TicksPerTock::den));
+            const Tocks16 remainderTocks = (remainderTicks * (Time::Ticks16)TicksPerTock::den) / (Time::Ticks16)TicksPerTock::num;
             
             _ISRState = {
                 .rtc = {
@@ -252,7 +257,7 @@ private:
         
         struct {
             uint16_t intervalCount = 0;
-            uint16_t remainderTocks = 0;
+            Tocks16 remainderTocks = 0;
         } timer;
         
         _State state = _State::Idle;

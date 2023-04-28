@@ -237,17 +237,17 @@ static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
 static void _VDDBEnabledUpdate() {
     _Pin::VDD_B_EN::Write(_VDDBEnabled::Asserted());
     // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
-    _Scheduler::Sleep(_Scheduler::Ms(2));
+    _Scheduler::Sleep(_Scheduler::Ms<2>);
 }
 
 static void _VDDIMGSDEnabledUpdate() {
     if (_VDDIMGSDEnabled::Asserted()) {
         _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+        _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
         _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
         
         // Rails take ~1ms to turn on, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms(2));
+        _Scheduler::Sleep(_Scheduler::Ms<2>);
     
     } else {
         // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
@@ -255,7 +255,7 @@ static void _VDDIMGSDEnabledUpdate() {
         _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
         
         // Rails take ~1.5ms to turn off, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms(2));
+        _Scheduler::Sleep(_Scheduler::Ms<2>);
     }
 }
 
@@ -274,7 +274,7 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 static void _ICEInit() {
     bool ok = false;
     for (int i=0; i<100 && !ok; i++) {
-        _Scheduler::Sleep(_Scheduler::Ms(1));
+        _Scheduler::Sleep(_Scheduler::Ms<1>);
         // Reset ICE comms (by asserting SPI CLK for some length of time)
         _SPI::ICEReset();
         // Init ICE comms
@@ -663,7 +663,7 @@ struct _TaskEvent {
         // We specify (within the bitstream itself, via icepack) that ICE40 should load
         // the bitstream at high-frequency (40 MHz).
         // According to the datasheet, this takes 70ms.
-        _Scheduler::Sleep(_Scheduler::Ms(30));
+        _Scheduler::Sleep(_Scheduler::Ms<30>);
         _ICEInit();
         
         // Reset SD nets before we turn on SD power
@@ -991,7 +991,7 @@ struct _TaskMain {
         // Init watchdog first
         // This will trigger a BOR if our most recent reset reason was due to a WDT timeout (which
         // only triggers a PUC, and we want a full BOR).
-        Watchdog::Init();
+        _Watchdog::Init();
         
         // Init GPIOs
         GPIO::Init<
@@ -1079,7 +1079,7 @@ struct _TaskMain {
         for (bool on_=false;; on_=!on_) {
 //            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq);
             _LEDGreen_.set(_LEDPriority::Power, on_);
-            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq);
+            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
             _Scheduler::Wait([] { return _EventTimer::Fired(); });
         }
         
@@ -1139,9 +1139,9 @@ struct _TaskMain {
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
             led.set(_LEDPriority::Power, 0);
-            _Scheduler::Delay(_Scheduler::Ms(50));
+            _Scheduler::Delay(_Scheduler::Ms<50>);
             led.set(_LEDPriority::Power, 1);
-            _Scheduler::Delay(_Scheduler::Ms(50));
+            _Scheduler::Delay(_Scheduler::Ms<50>);
         }
         led.set(_LEDPriority::Power, std::nullopt);
     }

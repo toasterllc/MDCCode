@@ -99,7 +99,7 @@ public:
         // The MSP430FR2433 datasheet claims 1s is typical
         for (uint16_t i=0; i<20 && _ClockFaults(); i++) {
             _ClockFaultsClear();
-            T_Scheduler::Delay(T_Scheduler::Ms(100));
+            T_Scheduler::Delay(_Ms<100>);
         }
         Assert(!_ClockFaults());
         
@@ -112,6 +112,9 @@ public:
 private:
     static constexpr uint32_t REFOCLKFreqHz = 32768;
     template <class...> static constexpr std::false_type _AlwaysFalse = {};
+    
+    template<auto T>
+    static constexpr auto _Ms = T_Scheduler::template Ms<T>;
     
     static void _ClockFaultsClear() {
         CSCTL7 &= ~(XT1OFFG | DCOFFG);

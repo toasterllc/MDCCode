@@ -75,7 +75,7 @@ public:
             // Wait 30us for the internal reference to settle
             // Datasheet: "The on-chip reference from the PMM module must be enabled by
             // software. Its settling time is ≤30 µs."
-            T_Scheduler::Sleep(T_Scheduler::Us(30));
+            T_Scheduler::Sleep(_Us<30>);
             
             sample1V5 = _ChannelSample(_Channel::IntRef1V5);
             
@@ -96,7 +96,7 @@ public:
 //            
 //            // Wait 5 time constants for BAT_CHRG_LVL to settle:
 //            //   5 time constants = 5*R*C (where R=1k, C=100n) = 500us
-//            T_Scheduler::Sleep(T_Scheduler::Us(500));
+//            T_Scheduler::Sleep(_Us<500>);
             
             sampleBat = _ChannelSample(_Channel::BatChrgLvl);
             
@@ -289,6 +289,9 @@ private:
     // Collect as many 10-bit samples as will fit in a uint16_t without overflowing
     static constexpr uint16_t _SampleCount = 0xFFFF / 0x03FF;
     static_assert(_SampleCount == 64);
+    
+    template<auto T>
+    static constexpr auto _Us = T_Scheduler::template Us<T>;
     
     static const inline uint16_t& _ADCGain = *((const uint16_t*)0x1A16);
     static const inline int16_t& _ADCOffset = *((const int16_t*)0x1A18);

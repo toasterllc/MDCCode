@@ -39,14 +39,14 @@ public:
             _Signal = false;
             T_Scheduler::Wait([] { return _Signal; });
             // Debounce delay
-            T_Scheduler::Sleep(T_Scheduler::Ms(_DebounceDelayMs));
+            T_Scheduler::Sleep(_Ms<_DebounceDelayMs>);
         }
         
         // Wait for 0->1 transition, or for the hold-timeout to elapse
         {
             _DeassertedInterrupt::IESConfig();
             _Signal = false;
-            const bool ok = T_Scheduler::Wait(T_Scheduler::Ms(T_HoldDurationMs), [] { return _Signal; });
+            const bool ok = T_Scheduler::Wait(_Ms<T_HoldDurationMs>, [] { return _Signal; });
             // If we timed-out, then the button's being held
             if (!ok) return Event::Hold;
             // Otherwise, we didn't timeout, so the button was simply pressed
@@ -60,7 +60,7 @@ public:
         _Signal = false;
         T_Scheduler::Wait([] { return _Signal; });
         // Debounce delay
-        T_Scheduler::Sleep(T_Scheduler::Ms(_DebounceDelayMs));
+        T_Scheduler::Sleep(_Ms<_DebounceDelayMs>);
     }
     
     static void ISR() {
@@ -69,6 +69,9 @@ public:
     
 private:
     static constexpr uint16_t _DebounceDelayMs = 2;
+    
+    template<auto T>
+    static constexpr auto _Ms = T_Scheduler::template Ms<T>;
     
     static inline volatile bool _Signal = false;
 };

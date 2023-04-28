@@ -102,7 +102,7 @@ public:
             // it's possible to read an old value of RTCCNT, which would temporarily reflect the wrong time.
             // Empirically the RTC peripheral is reset and initialized synchronously from its clock (XT1CLK
             // divided by Predivider), so we wait 1.5 cycles of that clock to ensure RTC is finished resetting.
-            T_Scheduler::Delay(T_Scheduler::Us((3*UsPerTock::num)/2));
+            T_Scheduler::Delay(_Us<(3*UsPerTock::num)/2>);
         }
     }
     
@@ -156,7 +156,7 @@ public:
         for (;;) {
             const uint16_t tocks = RTCCNT;
             if (tocks==0 || _OverflowPending()) {
-                T_Scheduler::Delay(T_Scheduler::Us(UsPerTock::num));
+                T_Scheduler::Delay(_Us<UsPerTock::num>);
                 continue;
             }
             return tocks;
@@ -196,6 +196,9 @@ public:
 private:
     template <class...>
     static constexpr std::false_type _AlwaysFalse = {};
+    
+    template<auto T>
+    static constexpr auto _Us = T_Scheduler::template Us<T>;
     
     template<uint16_t T_Predivider>
     static constexpr uint16_t _RTCPSForPredivider() {
