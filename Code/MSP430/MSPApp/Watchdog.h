@@ -1,19 +1,27 @@
 #pragma once
 #include <msp430.h>
 #include "Startup.h"
+#include "Clock.h"
 
 // T_Watchdog: watchdog timer to reset the device if the watchdog isn't pet periodically.
 // The timeout period is defined by T_TimeoutTicks; if the watchdog isn't pet during that
 // time, a PUC is triggered, and T_Watchdog then triggers a full BOR upon the next Init().
-template<typename T_ACLKFreq, Time::Ticks T_TimeoutTicks>
+template<typename T_ACLKFreq, Clock::Ticks T_TimeoutTicks>
 class T_Watchdog {
 public:
     using ACLKPeriod = std::ratio_divide<std::ratio<1>, T_ACLKFreq>;
     
-    using TimeoutPeriod = std::ratio<T_TimeoutTicks*Time::TicksPeriod::num, Time::TicksPeriod::den>;
-    static_assert(TimeoutPeriod::num == 4096); // Debug
-    static_assert(TimeoutPeriod::den == 1); // Debug
-    using TimeoutFreq = std::ratio_divide<std::ratio<1>, TimeoutPeriod>;
+    static constexpr std::chrono::seconds TimeoutPeriod = std::chrono::duration_cast<std::chrono::seconds>(T_TimeoutTicks);
+    static_assert(Clock::Ticks(TimeoutPeriod) == T_TimeoutTicks); // Verify that conversion to seconds is exact
+    
+    static constexpr std::chrono::seconds ACLKPeriod = 
+    
+    TimeoutPeriod * ACLKPeriod
+    
+//    using TimeoutPeriod = std::ratio<T_TimeoutTicks*Time::TicksPeriod::num, Time::TicksPeriod::den>;
+//    static_assert(TimeoutPeriod::num == 4096); // Debug
+//    static_assert(TimeoutPeriod::den == 1); // Debug
+//    using TimeoutFreq = std::ratio_divide<std::ratio<1>, TimeoutPeriod>;
     
     // ACLKPeriodMultiplier = (period want) / (period have)
     using ACLKPeriodMultiplier = std::ratio_divide<TimeoutPeriod, ACLKPeriod>;
