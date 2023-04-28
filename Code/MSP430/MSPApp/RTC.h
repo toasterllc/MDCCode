@@ -39,7 +39,7 @@ private:
     
 public:
     static constexpr uint32_t InterruptIntervalTocks = 0x10000; // 0xFFFF+1
-    static constexpr Time::Ticks InterruptIntervalTicks = _TicksForTocks(InterruptIntervalTocks);
+    static constexpr uin16_t InterruptIntervalTicks = _TicksForTocks(InterruptIntervalTocks);
     static_assert(InterruptIntervalTicks == 32768); // Debug
     static constexpr uint16_t TocksMax = InterruptIntervalTocks-1;
     static_assert(TocksMax == 0xFFFF); // Debug

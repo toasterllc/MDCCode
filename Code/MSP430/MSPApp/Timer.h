@@ -25,29 +25,18 @@ public:
     using TocksPeriod = std::ratio_divide<std::ratio<1>,TocksFreq>;
     static_assert(TocksPeriod::num == 1); // Debug
     static_assert(TocksPeriod::den == 512); // Debug
-    using TocksWide = std::chrono::duration<intmax_t, TocksPeriod>;
-    using TicksWide = std::chrono::duration<intmax_t, Time::TicksPeriod>;
-    using Tocks = std::chrono::duration<uint16_t, TocksPeriod>;
-    using Ticks = std::chrono::duration<uint16_t, Time::TicksPeriod>;
     
-    static constexpr TocksWide TimerIntervalTocks(0x10000); // Use max interval possible (0xFFFF+1)
-    static constexpr TicksWide TimerIntervalTicks(std::chrono::duration_cast<Ticks>(TimerIntervalTocks));
-    static_assert(TocksWide(TimerIntervalTicks) == TimerIntervalTocks); // Verify that conversion is exact
-    static_assert(TimerIntervalTicks.count() == 2048); // Debug
+    static constexpr uint32_t TimerIntervalTocks = 0x10000; // Use max interval possible (0xFFFF+1)
+    using TimerIntervalSec = std::ratio_divide<std::ratio<TimerIntervalTocks>, TocksFreq>
+    static_assert(TimerIntervalSec::num == 128); // Debug
+    static_assert(TimerIntervalSec::den == 1); // Verify TimerIntervalSec is an integer
+    using TimerIntervalTicks = std::ratio_multiply<TimerIntervalSec, Time::TicksFreq>;
+    static_assert(TimerIntervalTicks::num == 2048); // Debug
+    static_assert(TimerIntervalTicks::den == 1); // Verify that TimerIntervalTicks is an integer
     
-//    using TimerIntervalSec = std::ratio_divide<std::ratio<TimerIntervalTocks>, TocksFreq>
-//    static_assert(TimerIntervalSec::num == 128); // Debug
-//    static_assert(TimerIntervalSec::den == 1); // Verify TimerIntervalSec is an integer
-//    using TimerIntervalTicks = std::ratio_multiply<TimerIntervalSec, Time::TicksFreq>;
-//    static_assert(TimerIntervalTicks::num == 2048); // Debug
-//    static_assert(TimerIntervalTicks::den == 1); // Verify that TimerIntervalTicks is an integer
-//    
-//    static constexpr Ticks TimerIntervalTicks(std::chrono::duration_cast<Ticks>());
-//    static_assert();
-//    
-//    using TicksPerTockRatio = std::ratio<Time::TicksFreqHz, TocksFreq>;
-//    static_assert(TicksPerTockRatio::num == 1); // Debug
-//    static_assert(TicksPerTockRatio::den == 32); // Debug
+    using TicksPerTock = std::ratio_divide<Time::TicksFreq, TocksFreq>;
+    static_assert(TicksPerTock::num == 1); // Debug
+    static_assert(TicksPerTock::den == 32); // Debug
     
     static void Schedule(const Time::Instant& time) {
         // Get our current time
@@ -81,12 +70,16 @@ public:
             // Ensure that `deltaTicks` can be cast to a u32, which we want to do so we don't perform a u64 division
             constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
             static_assert(DeltaTicksMax <= std::numeric_limits<uint32_t>::max());
-            const uint16_t intervalCount = (uint32_t)deltaTicks / (uint16_t)TimerIntervalTicks.count();
+            const uint16_t intervalCount = (uint32_t)deltaTicks / (uint16_t)TimerIntervalTicks::num;
             // Ensure that `intervalCount` can't overflow
-            constexpr auto IntervalCountMax = ((uintmax_t)DeltaTicksMax / TimerIntervalTicks.count());
+            static_assert(std::in_range<decltype(intervalCount)>(DeltaTicksMax / TimerIntervalTicks::num));
+            
+            
             static_assert(IntervalCountMax <= std::numeric_limits<decltype(intervalCount)>::max());
             
-            const Ticks remainderTicks = deltaTicks % (uint16_t)TimerIntervalTicks.count();
+            const uint16_t remainderTicks = deltaTicks % (uint16_t)TimerIntervalTicks::num;
+            // Ensure that casting TimerIntervalTicks::num to a uint16_t is safe
+            static_assert(std::in_range<decltype(remainderTicks)>(TimerIntervalTicks::num));
             // Ensure that `remainderTicks` can't overflow
             constexpr auto RemainderTicksMax = TimerIntervalTicks-1;
             static_assert(RemainderTicksMax <= std::numeric_limits<decltype(remainderTicks)>::max());
@@ -154,11 +147,11 @@ private:
         return tocks-1;
     }
     
-    template<Ticks T_MaxVal>
-    static constexpr Tocks _TocksForTicks(Ticks ticks) {
-        // Confirm that all values from [0,T_MaxVal] can be safely converted to Tocks
-        static_assert(std::chrono::duration_cast<Ticks>(Tocks(T_MaxVal)) == ticks);
-        return ticks;
+    template<Time::Ticks T_MaxVal>
+    static constexpr uint16_t _TocksForTicks(Time::Ticks ticks) {
+        // Verify that our calculation can't overflow assuming a maximum `ticks` value of `T_MaxVal`
+        static_assert(((std::numeric_limits<uint16_t>::max() * TicksPerTockRatio::num) / TicksPerTockRatio::den) <= T_MaxVal);
+        return ((ticks*TicksPerTockRatio::den)/TicksPerTockRatio::num);
     }
     
     static void _TimerStop() {
