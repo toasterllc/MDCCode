@@ -1073,12 +1073,12 @@ struct _TaskMain {
     static void Run() {
         _Init();
         
-        for (bool on_=false;; on_=!on_) {
-//            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq);
-            _LEDGreen_.set(_LEDPriority::Power, on_);
-            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
-            _Scheduler::Wait([] { return _EventTimer::Fired(); });
-        }
+//        for (bool on_=false;; on_=!on_) {
+////            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq);
+//            _LEDGreen_.set(_LEDPriority::Power, on_);
+//            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
+//            _Scheduler::Wait([] { return _EventTimer::Fired(); });
+//        }
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -1192,9 +1192,9 @@ static void _ISR_RTC() {
     
     // Let _EventTimer know we got an RTC interrupt
     if (_EventTimer::ISRRTCInterested()) {
-        _EventTimer::ISRRTC();
+        const bool wake = _EventTimer::ISRRTC();
         // Wake if the timer fired
-        if (_EventTimer::Fired()) {
+        if (wake) {
             __bic_SR_register_on_exit(LPM3_bits);
         }
     }
@@ -1202,16 +1202,16 @@ static void _ISR_RTC() {
 
 [[gnu::interrupt(TIMER0_A1_VECTOR)]]
 static void _ISR_Timer0() {
-    _EventTimer::ISRTimer0(TA0IV);
+    const bool wake = _EventTimer::ISRTimer(TA0IV);
     // Wake if the timer fired
-    if (_EventTimer::Fired()) {
+    if (wake) {
         __bic_SR_register_on_exit(LPM3_bits);
     }
 }
 
 [[gnu::interrupt(TIMER1_A1_VECTOR)]]
-static void _ISR_SysTick() {
-    const bool wake = _SysTick::ISR(iv);
+static void _ISR_Timer1() {
+    const bool wake = _SysTick::ISR(TA1IV);
     if (wake) {
         // Wake ourself
         __bic_SR_register_on_exit(LPM3_bits);

@@ -116,31 +116,32 @@ public:
         _StateUpdate();
     }
     
-    static bool Fired() {
-        Toastbox::IntState ints(false);
-        return _ISRState.state == _State::Fired;
-    }
-    
     static void Reset() {
         Toastbox::IntState ints(false);
         _Reset();
+    }
+    
+    static bool Fired() {
+        Toastbox::IntState ints(false);
+        return _Fired();
     }
     
     static bool ISRRTCInterested() {
         return _ISRState.state == _State::RTC;
     }
     
-    static void ISRRTC() {
+    static bool ISRRTC() {
         Assert(ISRRTCInterested());
         _StateUpdate();
+        return _Fired();
     }
     
-    static void ISRTimer0(uint16_t iv) {
+    static bool ISRTimer(uint16_t iv) {
         switch (__even_in_range(iv, TA0IV_TAIFG)) {
         case TA0IV_TAIFG:
             Assert(_ISRState.state==_State::TimerInterval || _ISRState.state==_State::TimerRemainder);
             _StateUpdate();
-            return;
+            return _Fired();
         default:
             Assert(false);
         }
@@ -187,6 +188,10 @@ private:
     static void _Reset() {
         _ISRState = {};
         _TimerStop();
+    }
+    
+    static bool _Fired() {
+        return _ISRState.state == _State::Fired;
     }
     
     static void _StateUpdate() {
