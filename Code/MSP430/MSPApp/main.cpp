@@ -1030,9 +1030,6 @@ struct _TaskMain {
             _Pin::LED_RED_
         >();
         
-        // Init SysTick
-        _SysTick::Init();
-        
         // Init clock
         _Clock::Init();
         
@@ -1212,6 +1209,15 @@ static void _ISR_Timer0() {
     }
 }
 
+[[gnu::interrupt(TIMER1_A1_VECTOR)]]
+static void _ISR_SysTick() {
+    const bool wake = _SysTick::ISR(iv);
+    if (wake) {
+        // Wake ourself
+        __bic_SR_register_on_exit(LPM3_bits);
+    }
+}
+
 [[gnu::interrupt(PORT2_VECTOR)]]
 static void _ISR_Port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
@@ -1248,15 +1254,6 @@ static void _ISR_USCI_B0() {
     _I2C::ISR_I2C(iv);
     // Wake ourself
     __bic_SR_register_on_exit(LPM0_bits);
-}
-
-[[gnu::interrupt(???)]]
-static void _ISR_SysTick() {
-    const bool wake = _SysTick::ISR(iv);
-    if (wake) {
-        // Wake ourself
-        __bic_SR_register_on_exit(LPM3_bits);
-    }
 }
 
 [[gnu::interrupt(ADC_VECTOR)]]
@@ -1315,7 +1312,10 @@ static void _AbortRecord(const Time::Instant& timestamp, uintptr_t addr) {
     }
     
     hist->latest = timestamp;
-    hist->count++;
+    // Don't allow the count to overflow to 0
+    if (hist->count < std::numeric_limits<decltype(hist->count)>::max()) {
+        hist->count++;
+    }
 }
 
 [[noreturn]]
