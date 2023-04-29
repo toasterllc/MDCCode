@@ -6,6 +6,8 @@
 #include "Assert.h"
 #include "Toastbox/Util.h"
 
+#warning TODO: turn this into a synchronous state machine like model like T_Button. should have done that in the first place. but how does the code space compare with this implementation?
+
 // T_Timer: a one-shot timer that can be scheduled for times in the near future
 // to distant future (up to ~4 years -- 0xFFFF*T_RTC::InterruptIntervalUs).
 //
