@@ -55,14 +55,40 @@ struct [[gnu::packed]] ImgRingBuf {
     }
 };
 
-// AbortHistory: records history of an abort at a particular address
-struct [[gnu::packed]] AbortHistory {
-    uint16_t addr          = 0;
-    Time::Instant earliest = {};
-    Time::Instant latest   = {};
-    uint16_t count         = 0;
+// Reset: records history of a type of reset (either abort or an unexpected reset)
+struct [[gnu::packed]] Reset {
+    enum class Type : uint8_t {
+        Reset,
+        Abort,
+    };
+    
+    Type type = Type::Reset;
+    uint8_t count = 0;
+    
+    union [[gnu::packed]] {
+        struct [[gnu::packed]] {
+            uint16_t reason = 0;
+        } Reset;
+        
+        struct [[gnu::packed]] {
+            uint16_t addr   = 0;
+        } Abort;
+        
+        uint16_t u16 = 0;
+    } ctx;
+    
+    // We got rid of the time-tracking aspect of Reset for a few reasons:
+    //   - it takes up a lot of space
+    //   - we abort sometimes from the interrupt context, and we can't safely get the time there,
+    //     because RTC::Tocks() calls Scheduler::Delay(), which isn't meant to be called from the
+    //     interrupt context
+    //   - we abort sometimes before RTC is configured, and we can't safely call RTC::Now() before
+    //     it's configured, because it'll hang in Tocks() because RTCCNT never escapes 0
+//    Time::Instant earliest = {};
+//    Time::Instant latest   = {};
 };
-static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
+static_assert(!(sizeof(Reset) % 2)); // Check alignment
+static_assert(sizeof(Reset) == 4); // Debug
 
 struct [[gnu::packed]] Repeat {
     enum class Type : uint8_t {
@@ -237,15 +263,15 @@ struct [[gnu::packed]] State {
     static_assert(!(sizeof(settings) % 2)); // Check alignment
     static_assert(sizeof(settings) == 868); // Debug
     
-    // aborts: records aborts that have occurred
-    AbortHistory aborts[5] = {};
+    // resets: records resets that have occurred
+    Reset resets[10] = {};
 //    StaticPrint(sizeof(aborts));
-    static_assert(!(sizeof(aborts) % 2)); // Check alignment
-    static_assert(sizeof(aborts) == 100); // Debug
+    static_assert(!(sizeof(resets) % 2)); // Check alignment
+    static_assert(sizeof(resets) == 40); // Debug
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 1032); // Debug
+static_assert(sizeof(State) == 972); // Debug
 
 constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,

@@ -72,7 +72,9 @@ class _TaskMotion;
 static void _Sleep();
 
 [[noreturn]]
-static void _SchedulerStackOverflow();
+static void _SchedulerStackOverflow() {
+    Assert(false);
+}
 
 #warning TODO: disable stack guard for production
 static constexpr size_t _StackGuardCount = 16;
@@ -221,6 +223,59 @@ static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
         }
     }
     Assert(false);
+}
+
+// MARK: - Abort
+
+static void _ResetRecord(MSP::Reset::Type type, uint16_t ctx) {
+    using namespace MSP;
+    FRAMWriteEn writeEn; // Enable FRAM writing
+    
+    Reset* hist = nullptr;
+    for (Reset& h : _State.resets) {
+        if (!h.count || (h.type==type && h.ctx.u16==ctx)) {
+            hist = &h;
+            break;
+        }
+    }
+    
+    // If we don't have a place to record the abort, bail
+    if (!hist) return;
+    
+    hist->ctx.u16 = ctx;
+    
+    // Increment the count, but don't allow it to overflow
+    if (hist->count < std::numeric_limits<decltype(hist->count)>::max()) {
+        hist->count++;
+    }
+}
+
+[[noreturn]]
+static void _BOR() {
+    PMMUnlock pmm; // Unlock PMM registers
+    PMMCTL0_L |= PMMSWBOR_L;
+    // Wait for reset
+    for (;;);
+}
+
+// Abort(): called by Assert() with the address that aborted
+extern "C"
+[[noreturn, gnu::used]]
+void Abort(uintptr_t addr) {
+    // Record the abort
+    _ResetRecord(MSP::Reset::Type::Abort, addr);
+    _BOR();
+}
+
+extern "C"
+[[noreturn]]
+void abort() {
+    Assert(false);
+}
+
+extern "C"
+int atexit(void (*)(void)) {
+    return 0;
 }
 
 
@@ -989,9 +1044,18 @@ struct _TaskMain {
         Toastbox::IntState ints(false);
         
         // Init watchdog first
-        // This will trigger a BOR if our most recent reset reason was due to a WDT timeout (which
-        // only triggers a PUC, and we want a full BOR).
         _Watchdog::Init();
+        
+        // If our previous reset wasn't because we explicitly reset ourself (a 'software BOR'), reset
+        // ourself now.
+        // This ensures that any unexpected reset (such as a watchdog timer timeout) triggers a full BOR,
+        // and not a PUC or a POR. We want a full BOR because it resets all our peripherals, unlike a
+        // PUC/POR, which don't reset all peripherals (like timers).
+        // This will cause us to reset ourself twice upon initial startup, but that's OK.
+        if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
+            _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
+            _BOR();
+        }
         
         // Init GPIOs
         GPIO::Init<
@@ -1269,10 +1333,12 @@ static void _ISR_UNMI() {
     
     switch (__even_in_range(iv, SYSUNIV_OFIFG)) {
     
+    // This should never happen because we don't configure the reset pin to trigger an NMI
     case SYSUNIV_NMIIFG:
         Assert(false);
         break;
     
+    // Oscillator fault
     case SYSUNIV_OFIFG:
         Assert(false);
         break;
@@ -1281,70 +1347,6 @@ static void _ISR_UNMI() {
         Assert(false);
         break;
     }
-}
-
-// MARK: - Abort
-
-[[noreturn]]
-static void _SchedulerStackOverflow() {
-    Assert(false);
-}
-
-static void _AbortRecord(const Time::Instant& timestamp, uintptr_t addr) {
-    using namespace MSP;
-    FRAMWriteEn writeEn; // Enable FRAM writing
-    
-    AbortHistory* hist = nullptr;
-    for (AbortHistory& h : _State.aborts) {
-        if (!h.count || h.addr==addr) {
-            hist = &h;
-            break;
-        }
-    }
-    
-    // If we don't have a place to record the abort, bail
-    if (!hist) return;
-    
-    // Prep the element if this is the first instance
-    if (!hist->count) {
-        hist->addr = addr;
-        hist->earliest = timestamp;
-    }
-    
-    hist->latest = timestamp;
-    // Don't allow the count to overflow to 0
-    if (hist->count < std::numeric_limits<decltype(hist->count)>::max()) {
-        hist->count++;
-    }
-}
-
-[[noreturn]]
-static void _BOR() {
-    PMMUnlock pmm; // Unlock PMM registers
-    PMMCTL0_L |= PMMSWBOR_L;
-    // Wait for reset
-    for (;;);
-}
-
-// Abort(): called by Assert() with the address that aborted
-extern "C"
-[[noreturn, gnu::used]]
-void Abort(uintptr_t addr) {
-    const Time::Instant timestamp = _RTC::Now();
-    // Record the abort
-    _AbortRecord(timestamp, addr);
-    _BOR();
-}
-
-extern "C"
-[[noreturn]]
-void abort() {
-    Assert(false);
-}
-
-extern "C"
-int atexit(void (*)(void)) {
-    return 0;
 }
 
 // MARK: - Main

@@ -25,11 +25,6 @@ public:
     // Init(): init WDT timer
     // Interrupts must be disabled
     static void Init() {
-        // Trigger a full BOR if we were reset due to a WDT timeout (which only triggers a PUC, and we want a full BOR)
-        if (Startup::ResetReason() == SYSRSTIV_WDTTO) {
-            Assert(false);
-        }
-        
         // Config watchdog timer
         WDTCTL =
             WDTPW         | // password
