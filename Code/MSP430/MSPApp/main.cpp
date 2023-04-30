@@ -256,8 +256,7 @@ static void _ResetRecord(MSP::Reset::Type type, uint16_t ctx) {
 
 [[noreturn]]
 static void _BOR() {
-    PMMUnlock pmm; // Unlock PMM registers
-    PMMCTL0_L |= PMMSWBOR_L;
+    PMMCTL0 = PMMPW | PMMSWBOR;
     // Wait for reset
     for (;;);
 }
