@@ -1111,6 +1111,16 @@ struct _TaskMain {
 //            __delay_cycles(1000000);
 //        }
         
+        
+//        _Pin::LED_RED_::Write(1);
+//        _Pin::LED_GREEN_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//            _Pin::LED_RED_::Write(1);
+//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//        }
+        
         // Init RTC
         // We need RTC to be unconditionally enabled for 2 reasons:
         //   - We want to track relative time (ie system uptime) even if we don't know the wall time.

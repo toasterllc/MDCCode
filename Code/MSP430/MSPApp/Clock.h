@@ -76,6 +76,9 @@ public:
         // Wait until FLL locks
         while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
+        // MCLK=DCOCLK, ACLK=XT1
+        CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
+        
         // Set MCLK/SMCLK dividers
         //
         // If we ever change DIVS to something other than DIVS__1, we may be subject to errata
@@ -87,30 +90,11 @@ public:
         //
         // CSCTL5 = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1 | DIVM__1;
         
-        // Turn on XT1 (by disabling XT1 auto-off, so we can get XT1 running without any
-        // peripherals requesting it).
-        // We don't need auto-off anyway because RTC needs XT1 to always be running to keep
-        // track of time.
-        CSCTL6 =
-            XT1DRIVE_3      |   // drive strength = highest
-            (XTS&0)         |   // mode = low frequency
-            (XT1BYPASS&0)   |   // bypass = disabled (ie XT1 source is an oscillator, not a clock signal)
-            (XT1AGCOFF&0)   |   // automatic gain = on
-            (XT1AUTOOFF&0)  ;   // auto off = disabled (ie keep XT1 on)
-        
-//        // Wait up to 2 seconds for XT1 to start
-//        // The MSP430FR2433 datasheet claims 1s is typical
-//        for (uint16_t i=0; i<20 && _ClockFaults(); i++) {
-//            _ClockFaultsClear();
-//            T_Scheduler::Delay(_Ms<100>);
-//        }
-//        Assert(!_ClockFaults());
-        
         // Wait up to 2 seconds for XT1 to start
         // The MSP430FR2433 datasheet claims 1s is typical
-        while (_ClockFaults()) {
+        for (uint16_t i=0; i<20 && _ClockFaults(); i++) {
             _ClockFaultsClear();
-//            T_Scheduler::Delay(_Ms<100>);
+            T_Scheduler::Delay(_Ms<100>);
         }
         Assert(!_ClockFaults());
         
@@ -120,12 +104,12 @@ public:
         SFRIFG1 |= OFIE;
         
         // Decrease the XT1 drive strength to save a little current
-        CSCTL6 = (CSCTL6 & ~(XT1DRIVE0|XT1DRIVE1)) | XT1DRIVE_0;
-        
-        // Switch MCLK and ACLK to their final sources
-        // MCLK / SMCLK source = DCOCLKDIV
-        //         ACLK source = XT1CLK
-        CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
+        CSCTL6 =
+            XT1DRIVE_0      |   // drive strength = lowest (to save current)
+            (XTS&0)         |   // mode = low frequency
+            (XT1BYPASS&0)   |   // bypass = disabled (ie XT1 source is an oscillator, not a clock signal)
+            (XT1AGCOFF&0)   |   // automatic gain = on
+            XT1AUTOOFF      ;   // auto off = enabled (default value)
     }
     
 private:
