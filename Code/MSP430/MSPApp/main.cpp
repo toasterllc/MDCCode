@@ -1058,10 +1058,12 @@ struct _TaskMain {
         // and not a PUC or a POR. We want a full BOR because it resets all our peripherals, unlike a
         // PUC/POR, which don't reset all peripherals (like timers).
         // This will cause us to reset ourself twice upon initial startup, but that's OK.
-        if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
-            _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
-            _BOR();
-        }
+//        if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
+//            _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
+//            _BOR();
+//        }
+        
+        _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
         
         // Init GPIOs
         GPIO::Init<
@@ -1163,9 +1165,17 @@ struct _TaskMain {
 //            _Scheduler::Wait([] { return _EventTimer::Fired(); });
 //        }
         
-//        for (bool on_=false;; on_=!on_) {
-//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
-//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(1);
+//            _Pin::LED_GREEN_::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//            
+//            if (_Clock::_ClockFaults()) {
+//                _Pin::LED_RED_::Write(0);
+//            } else {
+//                _Pin::LED_GREEN_::Write(0);
+//            }
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
         for (;;) {
