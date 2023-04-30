@@ -1356,25 +1356,20 @@ static void _ISR_ADC() {
     __bic_SR_register_on_exit(LPM3_bits);
 }
 
+// These functions are implemented this way so that their Assert(false) calls
+// aren't merged into one in the _ISR_UNMI() handler. If that happens, the
+// program counter would be the same for all interrupt sources, so when the
+// abort is recorded, we won't know what caused it.
+[[noreturn, gnu::noinline]] static void _SYSUNIV_NMIIFG() { Assert(false); }
+[[noreturn, gnu::noinline]] static void _SYSUNIV_OFIFG()  { Assert(false); }
+
 [[gnu::interrupt(UNMI_VECTOR)]]
 static void _ISR_UNMI() {
     const uint16_t iv = SYSUNIV;
-    
     switch (__even_in_range(iv, SYSUNIV_OFIFG)) {
-    
-    // This should never happen because we don't configure the reset pin to trigger an NMI
-    case SYSUNIV_NMIIFG:
-        Assert(false);
-        break;
-    
-    // Oscillator fault
-    case SYSUNIV_OFIFG:
-        Assert(false);
-        break;
-    
-    default:
-        Assert(false);
-        break;
+    case SYSUNIV_NMIIFG:    return _SYSUNIV_NMIIFG();
+    case SYSUNIV_OFIFG:     return _SYSUNIV_OFIFG(); // Oscillator fault
+    default:                Assert(false); break;
     }
 }
 
