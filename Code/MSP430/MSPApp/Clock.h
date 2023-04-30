@@ -101,7 +101,7 @@ public:
         // Now that we've cleared the oscillator faults, enable the oscillator fault interrupt
         // so we know if something goes awry in the future. This will call our ISR and we'll
         // record the failure and trigger a BOR.
-        SFRIFG1 |= OFIE;
+        SFRIE1 |= OFIE;
         
         // Decrease the XT1 drive strength to save a little current
         CSCTL6 =
