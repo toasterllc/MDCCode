@@ -1356,20 +1356,15 @@ static void _ISR_ADC() {
     __bic_SR_register_on_exit(LPM3_bits);
 }
 
-// These functions are implemented this way so that their Assert(false) calls
-// aren't merged into one in the _ISR_UNMI() handler. If that happens, the
-// program counter would be the same for all interrupt sources, so when the
-// abort is recorded, we won't know what caused it.
-[[noreturn, gnu::noinline]] static void _SYSUNIV_NMIIFG() { Assert(false); }
-[[noreturn, gnu::noinline]] static void _SYSUNIV_OFIFG()  { Assert(false); }
-
+[[noreturn]]
+[[gnu::naked]] // No function preamble because we always abort, so we don't need to preserve any registers
+[[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
 [[gnu::interrupt(UNMI_VECTOR)]]
 static void _ISR_UNMI() {
-    const uint16_t iv = SYSUNIV;
-    switch (__even_in_range(iv, SYSUNIV_OFIFG)) {
-    case SYSUNIV_NMIIFG:    return _SYSUNIV_NMIIFG();
-    case SYSUNIV_OFIFG:     return _SYSUNIV_OFIFG(); // Oscillator fault
-    default:                Assert(false); break;
+    switch (__even_in_range(SYSUNIV, SYSUNIV_OFIFG)) {
+    case SYSUNIV_NMIIFG:    Assert(false);
+    case SYSUNIV_OFIFG:     Assert(false);
+    default:                Assert(false);
     }
 }
 
