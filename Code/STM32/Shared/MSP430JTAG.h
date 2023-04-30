@@ -85,7 +85,6 @@ public:
     
     static void Disconnect() {
         if (!_Connected) return; // Short-circuit
-//        _BOR();
         _JTAGEnd();
         _Connected = false;
     }
@@ -753,40 +752,7 @@ private:
         }
     }
     
-//    static void _BOR() {
-//        // Read the SYSRSTIV until it's clear
-//        // It can accumulate multiple values while we held the device under JTAG
-//        // control (due to multiple flags being set)
-//        for (int i=0; i<20; i++) {
-//            const uint16_t iv = _Read16(_SYSRSTIVAddr);
-//            if (!iv) break;
-//        }
-//        
-//        // Trigger a software BOR
-//        _Write16(_PMMCTL0Addr, _PMMCTL0TriggerPOR);
-//    }
-    
     static void _JTAGEnd() {
-//        // Read the SYSRSTIV register to clear it, to emulate a real power-up
-//        _Read16(_SYSRSTIVAddr);
-//        _Read16(_SYSRSTIVAddr);
-//        _Read16(_SYSRSTIVAddr);
-//        _Read16(_SYSRSTIVAddr);
-//        _Read16(_SYSRSTIVAddr);
-        
-//        for () {
-//            _Read16(_SYSRSTIVAddr);
-//        }
-        
-//        // Perform a BOR (brownout reset)
-//        // TI's code claims that this resets the device and causes us to lose JTAG control,
-//        // but empirically we still need to execute the 'Reset CPU' and '_IR_CNTRL_SIG_RELEASE' stages below.
-//        // 
-//        // Note that a BOR still doesn't reset some modules (like RTC and PMM), but it's as close as
-//        // we can get to a full reset without power cycling the device.
-//        _IRShift(_IR_TEST_REG);
-//        _DRShift<16>(0x0200);
-        
         // Reset CPU
         _IRShift(_IR_CNTRL_SIG_16BIT);
         _DRShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
