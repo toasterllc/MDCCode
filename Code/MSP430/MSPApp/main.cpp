@@ -1046,10 +1046,8 @@ struct _TaskMain {
         // Disable interrupts while we init our subsystems
         Toastbox::IntState ints(false);
         
-        WDTCTL = WDTPW | WDTHOLD;
-        
         // Init watchdog first
-//        _Watchdog::Init();
+        _Watchdog::Init();
         
         // If our previous reset wasn't because we explicitly reset ourself (a 'software BOR'), reset
         // ourself now.
@@ -1057,12 +1055,10 @@ struct _TaskMain {
         // and not a PUC or a POR. We want a full BOR because it resets all our peripherals, unlike a
         // PUC/POR, which don't reset all peripherals (like timers).
         // This will cause us to reset ourself twice upon initial startup, but that's OK.
-//        if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
-//            _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
-//            _BOR();
-//        }
-        
-        _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
+        if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
+            _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
+            _BOR();
+        }
         
         // Init GPIOs
         GPIO::Init<
