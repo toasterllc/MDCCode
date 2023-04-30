@@ -573,7 +573,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     for (const auto& reset : state.resets) {
         if (!reset.count) break;
         printf(     "  #%ju\n",                                         (uintmax_t)i);
-        printf(     "    type:                  0x%04jx (%s)\n",        (uintmax_t)reset.type, _StringForResetType(reset.type));
+        printf(     "    type:                  0x%02jx (%s)\n",        (uintmax_t)reset.type, _StringForResetType(reset.type));
         
         switch (reset.type) {
         case MSP::Reset::Type::Reset:

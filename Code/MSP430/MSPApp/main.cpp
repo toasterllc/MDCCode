@@ -242,7 +242,11 @@ static void _ResetRecord(MSP::Reset::Type type, uint16_t ctx) {
     // If we don't have a place to record the abort, bail
     if (!hist) return;
     
-    hist->ctx.u16 = ctx;
+    // If this is the first occurrence of this kind of reset, fill out its fields.
+    if (hist->count == 0) {
+        hist->type = type;
+        hist->ctx.u16 = ctx;
+    }
     
     // Increment the count, but don't allow it to overflow
     if (hist->count < std::numeric_limits<decltype(hist->count)>::max()) {
@@ -1157,6 +1161,11 @@ struct _TaskMain {
 //            _LEDGreen_.set(_LEDPriority::Power, on_);
 ////            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
 //            _Scheduler::Wait([] { return _EventTimer::Fired(); });
+//        }
+        
+//        for (bool on_=false;; on_=!on_) {
+//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
+//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
 //        }
         
         for (;;) {
