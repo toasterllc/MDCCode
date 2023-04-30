@@ -1043,8 +1043,10 @@ struct _TaskMain {
         // Disable interrupts while we init our subsystems
         Toastbox::IntState ints(false);
         
+        WDTCTL = WDTPW | WDTHOLD;
+        
         // Init watchdog first
-        _Watchdog::Init();
+//        _Watchdog::Init();
         
         // If our previous reset wasn't because we explicitly reset ourself (a 'software BOR'), reset
         // ourself now.
@@ -1094,6 +1096,9 @@ struct _TaskMain {
             _Pin::LED_RED_
         >();
         
+//        _Pin::LED_RED_::Write(1);
+//        _Pin::LED_GREEN_::Write(1);
+        
         // Init clock
         _Clock::Init();
         
@@ -1138,9 +1143,9 @@ struct _TaskMain {
         _Init();
         
 //        for (bool on_=false;; on_=!on_) {
-////            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq);
+//            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
 //            _LEDGreen_.set(_LEDPriority::Power, on_);
-//            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
+////            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
 //            _Scheduler::Wait([] { return _EventTimer::Fired(); });
 //        }
         
@@ -1185,14 +1190,14 @@ struct _TaskMain {
         
         // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
         // We do this to prevent ourself from waking up unnecessarily, saving power.
-        _SysTick = (bool)_Scheduler::WakeDeadline();
+        _SysTick = _Scheduler::TickRequired();
         
         // Remember our current interrupt state, which IntState will restore upon return
         Toastbox::IntState ints;
         // Atomically enable interrupts and go to sleep
         __bis_SR_register(GIE | LPM3_bits);
         
-        // Re-enable SysTick upon wake
+        // Unconditionally enable SysTick while we're awake
         _SysTick = true;
     }
     
