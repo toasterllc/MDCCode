@@ -297,12 +297,9 @@ private:
             MSP::Resp resp;
             const auto status = _I2C::Send(cmd, resp);
             switch (status) {
-            case _I2C::Status::OK:
-                return resp;
-            case _I2C::Status::NAK:
-                return std::nullopt;
-            case _I2C::Status::Error:
-                return std::nullopt;
+            case _I2C::Status::OK:      return resp;
+            case _I2C::Status::NAK:     return std::nullopt;
+            case _I2C::Status::Error:   return std::nullopt;
             }
             Assert(false);
         }

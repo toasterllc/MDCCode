@@ -1173,6 +1173,26 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
+//        for (;;) {
+////            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
+//            _Pin::LED_RED_::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//            
+//            _Pin::LED_RED_::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
+        
+//        for (;;) {
+////            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
+//            _Pin::LED_RED_::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//            
+//            _Pin::LED_RED_::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
+        
+        
+        
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
             // Ignore all interaction in host mode
@@ -1304,6 +1324,7 @@ static void _ISR_Timer0() {
 
 [[gnu::interrupt(TIMER1_A1_VECTOR)]]
 static void _ISR_Timer1() {
+//    _Pin::LED_GREEN_::Write(!_Pin::LED_GREEN_::Read());
     const bool wake = _SysTick::ISR(TA1IV);
     if (wake) {
         // Wake ourself
