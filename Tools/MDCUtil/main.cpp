@@ -680,6 +680,11 @@ static void MSPSBWErase(const Args& args, MDCUSBDevice& device) {
     std::cout << "MSPSBWErase\n";
     device.mspSBWLock();
     device.mspSBWErase();
+    
+//    usleep(100000);
+//    device.mspSBWConnect();
+//    device.mspSBWDisconnect();
+    
     device.mspSBWUnlock();
     std::cout << "-> OK\n\n";
 }
