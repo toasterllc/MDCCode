@@ -759,8 +759,8 @@ private:
         _DRShift<16>(0x0401); // Deassert POR
         
         // Read the SYSRSTIV until it's clear
-        // It can accumulate multiple values while we held the device under JTAG
-        // control (due to multiple flags being set)
+        // It appears that SYSRSTIV can accumulate multiple values while we held the device
+        // under JTAG control, due to multiple XXXIFG flags being set.
         for (int i=0; i<20; i++) {
             const uint16_t iv = _Read16(_SYSRSTIVAddr);
             if (!iv) break;
