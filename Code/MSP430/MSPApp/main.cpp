@@ -1407,29 +1407,6 @@ int main() {
     // PUC/PORs, if we enabled interrupts before checking if this reset was a BOR, then
     // the interrupt would immediately fire again and a crash loop would ensue. (We may
     // have encountered this issue when we had missing entries in our vector table.)
-    
-    set that we weren't expecting and our interrupt handling for that
-    
-    
-    where if we're
-    // not properly handling a particular interrupt (in the past we had missinga bug in our interrupt handling
-    
-    
-    
-    to prevent a potential lockup scenario: if we crashed if there's an interrupt
-    // flag that's set and our handling for that interrupt doesn't properly clear
-    // the respective XXXIFG flag, we'll enter a crash cycle  keep crashing as isn't properly clearing the XXXIFG flag that's causing the interrupt we crashed due to an interrupt that we're not handling properly
-    // (for example we didn't read the appropriate XXXIV register to clear the interrupt), as soon as because it's possible that an
-    // interrupt is pending that persisted across the POR or PUC, so as soon as we enabled
-    // interupts, it'll fire. And if we crashed 
-    
-    // We want to do this here before interrupts are first enabled, and not within
-    // _TaskMain, to prevent a potential lockup scenario: if we crashed if there's an interrupt
-    // flag that's set and our handling for that interrupt doesn't properly clear
-    // the respective XXXIFG flag, we'll enter a crash cycle  keep crashing as isn't properly clearing the XXXIFG flag that's causing the interrupt we crashed due to an interrupt that we're not handling properly
-    // (for example we didn't read the appropriate XXXIV register to clear the interrupt), as soon as because it's possible that an
-    // interrupt is pending that persisted across the POR or PUC, so as soon as we enabled
-    // interupts, it'll fire. And if we crashed 
     if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
         _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
         _BOR();

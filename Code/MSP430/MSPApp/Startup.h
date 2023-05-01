@@ -37,6 +37,9 @@ void _Startup() {
     extern uint8_t _sbss[];
     extern uint8_t _ebss[];
     
+    // Disable watchdog since we don't know how long our startup code takes
+    WDTCTL = WDTPW | WDTHOLD;
+    
     // Load stack pointer
     if constexpr (sizeof(void*) == 2) {
         // Small memory model
