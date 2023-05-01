@@ -1284,8 +1284,8 @@ static void _Sleep() {
 
 // MARK: - Interrupts
 
-[[gnu::interrupt(RTC_VECTOR)]]
-static void _ISR_RTC() {
+[[gnu::interrupt]]
+void _ISR_RTC() {
     // Pet the watchdog first
     _Watchdog::Pet();
     
@@ -1302,8 +1302,8 @@ static void _ISR_RTC() {
     }
 }
 
-[[gnu::interrupt(TIMER0_A1_VECTOR)]]
-static void _ISR_Timer0() {
+[[gnu::interrupt]]
+void _ISR_TIMER0_A1() {
     const bool wake = _EventTimer::ISRTimer(TA0IV);
     // Wake if the timer fired
     if (wake) {
@@ -1311,8 +1311,8 @@ static void _ISR_Timer0() {
     }
 }
 
-[[gnu::interrupt(TIMER1_A1_VECTOR)]]
-static void _ISR_Timer1() {
+[[gnu::interrupt]]
+void _ISR_TIMER1_A1() {
 //    _Pin::LED_GREEN_::Write(!_Pin::LED_GREEN_::Read());
     const bool wake = _SysTick::ISR(TA1IV);
     if (wake) {
@@ -1321,8 +1321,8 @@ static void _ISR_Timer1() {
     }
 }
 
-[[gnu::interrupt(PORT2_VECTOR)]]
-static void _ISR_Port2() {
+[[gnu::interrupt]]
+void _ISR_PORT2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     const uint16_t iv = P2IV;
     switch (__even_in_range(iv, 0x10)) {
@@ -1350,8 +1350,8 @@ static void _ISR_Port2() {
     }
 }
 
-[[gnu::interrupt(USCI_B0_VECTOR)]]
-static void _ISR_USCI_B0() {
+[[gnu::interrupt]]
+void _ISR_USCI_B0() {
     // Accessing `UCB0IV` automatically clears the highest-priority interrupt
     const uint16_t iv = UCB0IV;
     _I2C::ISR_I2C(iv);
@@ -1359,8 +1359,8 @@ static void _ISR_USCI_B0() {
     __bic_SR_register_on_exit(LPM0_bits);
 }
 
-[[gnu::interrupt(ADC_VECTOR)]]
-static void _ISR_ADC() {
+[[gnu::interrupt]]
+void _ISR_ADC() {
     _BatterySampler::ISR(ADCIV);
     // Wake ourself
     __bic_SR_register_on_exit(LPM3_bits);
@@ -1369,8 +1369,8 @@ static void _ISR_ADC() {
 [[noreturn]]
 [[gnu::naked]] // No function preamble because we always abort, so we don't need to preserve any registers
 [[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
-[[gnu::interrupt(UNMI_VECTOR)]]
-static void _ISR_UNMI() {
+[[gnu::interrupt]]
+void _ISR_UNMI() {
     switch (__even_in_range(SYSUNIV, SYSUNIV_OFIFG)) {
     case SYSUNIV_NMIIFG:    Assert(false);
     case SYSUNIV_OFIFG:     Assert(false);

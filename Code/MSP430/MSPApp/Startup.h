@@ -28,9 +28,9 @@ public:
     }
 };
 
-extern "C"
-[[noreturn, gnu::naked]]
-void _Startup() {
+[[noreturn]]
+[[gnu::naked]] // No function preamble because we always abort, so we don't need to preserve any registers
+void _ISR_RESET() {
     extern uint8_t _sdata_flash[];
     extern uint8_t _sdata_ram[];
     extern uint8_t _edata_ram[];
@@ -75,10 +75,3 @@ void _Startup() {
 // _init(): required by __libc_init_array
 extern "C"
 void _init() {}
-
-// u16 because reset vectors must be 16-bit, even in large memory model mode where pointers
-// are 20-bit (stored as u32)
-[[gnu::section(".resetvec"), gnu::used]]
-uint16_t _ResetVector[] = {
-    (uint16_t)(uintptr_t)&_Startup,
-};
