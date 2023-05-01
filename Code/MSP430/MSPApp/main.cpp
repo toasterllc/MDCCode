@@ -1049,17 +1049,6 @@ struct _TaskMain {
         // Init watchdog first
         _Watchdog::Init();
         
-        // If our previous reset wasn't because we explicitly reset ourself (a 'software BOR'), reset
-        // ourself now.
-        // This ensures that any unexpected reset (such as a watchdog timer timeout) triggers a full BOR,
-        // and not a PUC or a POR. We want a full BOR because it resets all our peripherals, unlike a
-        // PUC/POR, which don't reset all peripherals (like timers).
-        // This will cause us to reset ourself twice upon initial startup, but that's OK.
-        if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
-            _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
-            _BOR();
-        }
-        
         // Init GPIOs
         GPIO::Init<
             // Power control
@@ -1401,6 +1390,51 @@ static void _ISR_UNMI() {
 //}
 
 int main() {
+    // If our previous reset wasn't because we explicitly reset ourself (a 'software BOR'),
+    // reset ourself now.
+    //
+    // This ensures that any unexpected reset (such as a watchdog timer timeout) triggers
+    // a full BOR, and not a PUC or a POR. We want a full BOR because it resets all our
+    // peripherals, unlike a PUC/POR, which don't reset all peripherals (like timers).
+    // This will cause us to reset ourself twice upon initial startup, but that's OK.
+    //
+    // We want to do this here before interrupts are first enabled, and not within
+    // _TaskMain, to ensure that interrupts don't fire before we configure our
+    // peripherals.
+    //
+    // We also want to do this here to prevent a potential crash loop: if an interrupt
+    // handler crashed before it clears its IFG flag, and that IFG flag persists across
+    // PUC/PORs, if we enabled interrupts before checking if this reset was a BOR, then
+    // the interrupt would immediately fire again and a crash loop would ensue. (We may
+    // have encountered this issue when we had missing entries in our vector table.)
+    
+    set that we weren't expecting and our interrupt handling for that
+    
+    
+    where if we're
+    // not properly handling a particular interrupt (in the past we had missinga bug in our interrupt handling
+    
+    
+    
+    to prevent a potential lockup scenario: if we crashed if there's an interrupt
+    // flag that's set and our handling for that interrupt doesn't properly clear
+    // the respective XXXIFG flag, we'll enter a crash cycle  keep crashing as isn't properly clearing the XXXIFG flag that's causing the interrupt we crashed due to an interrupt that we're not handling properly
+    // (for example we didn't read the appropriate XXXIV register to clear the interrupt), as soon as because it's possible that an
+    // interrupt is pending that persisted across the POR or PUC, so as soon as we enabled
+    // interupts, it'll fire. And if we crashed 
+    
+    // We want to do this here before interrupts are first enabled, and not within
+    // _TaskMain, to prevent a potential lockup scenario: if we crashed if there's an interrupt
+    // flag that's set and our handling for that interrupt doesn't properly clear
+    // the respective XXXIFG flag, we'll enter a crash cycle  keep crashing as isn't properly clearing the XXXIFG flag that's causing the interrupt we crashed due to an interrupt that we're not handling properly
+    // (for example we didn't read the appropriate XXXIV register to clear the interrupt), as soon as because it's possible that an
+    // interrupt is pending that persisted across the POR or PUC, so as soon as we enabled
+    // interupts, it'll fire. And if we crashed 
+    if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
+        _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
+        _BOR();
+    }
+    
     // Invokes the first task's Run() function (_TaskMain::Run)
     _Scheduler::Run();
 }
