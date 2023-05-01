@@ -22,15 +22,9 @@ public:
     
     using ACLKFreqDivider = ACLKPeriodMultiplier;
     
-    // Init(): init WDT timer
-    // Interrupts must be disabled
+    // Init(): init WDT timer / pet the timer
     static void Init() {
-        // Config watchdog timer
-        WDTCTL =
-            WDTPW         | // password
-            WDTSSEL__ACLK | // source clock = ACLK
-            WDTCNTCL      | // clear count
-            _WDTIS()      ; // interval
+        WDTCTL = _WDTCTL;
     }
     
 //    static void Enabled(bool x) {
@@ -51,10 +45,10 @@ public:
 //    static bool Enabled() {
 //        return !(WDTCTL & WDTHOLD);
 //    }
-    
-    static void Pet() {
-        WDTCTL |= WDTPW | WDTCNTCL;
-    }
+//    
+//    static void Pet() {
+//        WDTCTL |= WDTPW | WDTCNTCL;
+//    }
     
 private:
     static constexpr uint16_t _WDTIS() {
@@ -76,4 +70,10 @@ private:
         else if constexpr (divider == 2*G)      return WDTIS__2G;
         else                                    static_assert(Toastbox::AlwaysFalse<T_ACLKFreqHz>);
     }
+    
+    static constexpr uint16_t _WDTCTL =
+        WDTPW         | // password
+        WDTSSEL__ACLK | // source clock = ACLK
+        WDTCNTCL      | // clear count
+        _WDTIS()      ; // interval
 };

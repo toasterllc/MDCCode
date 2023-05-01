@@ -29,7 +29,7 @@ public:
 };
 
 [[noreturn]]
-[[gnu::naked]] // No function preamble because we always abort, so we don't need to preserve any registers
+[[gnu::naked]] // No function preamble needed
 void _ISR_RESET() {
     extern uint8_t _sdata_flash[];
     extern uint8_t _sdata_ram[];

@@ -1147,6 +1147,13 @@ struct _TaskMain {
     static void Run() {
         _Init();
         
+        for (;;) {
+            _Pin::LED_RED_::Write(1);
+            _Scheduler::Sleep(_Scheduler::Ms<100>);
+            _Pin::LED_RED_::Write(0);
+            _Scheduler::Sleep(_Scheduler::Ms<100>);
+        }
+        
 //        for (bool on_=false;; on_=!on_) {
 //            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
 //            _LEDGreen_.set(_LEDPriority::Power, on_);
@@ -1290,7 +1297,7 @@ static void _Sleep() {
 [[gnu::interrupt]]
 void _ISR_RTC() {
     // Pet the watchdog first
-    _Watchdog::Pet();
+    _Watchdog::Init();
     
     // Let _RTC know that we got an RTC interrupt
     _RTC::ISR(RTCIV);
