@@ -37,9 +37,6 @@ void _ISR_RESET() {
     extern uint8_t _sbss[];
     extern uint8_t _ebss[];
     
-    // Disable watchdog since we don't know how long our startup code takes
-    WDTCTL = WDTPW | WDTHOLD;
-    
     // Load stack pointer
     if constexpr (sizeof(void*) == 2) {
         // Small memory model
@@ -48,6 +45,9 @@ void _ISR_RESET() {
         // Large memory model
         asm volatile("mov.a #_StartupStack, sp" : : : );
     }
+    
+    // Disable watchdog since we don't know how long our startup code takes
+    WDTCTL = WDTPW | WDTHOLD;
     
     // Copy .data section from flash to RAM
     memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);

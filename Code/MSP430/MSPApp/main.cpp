@@ -1086,8 +1086,13 @@ struct _TaskMain {
             _Pin::LED_RED_
         >();
         
-//        _Pin::LED_RED_::Write(1);
-//        _Pin::LED_GREEN_::Write(1);
+        _Pin::LED_RED_::Write(1);
+        for (;;) {
+            _Pin::LED_RED_::Write(0);
+            __delay_cycles(1000000);
+            _Pin::LED_RED_::Write(1);
+            __delay_cycles(1000000);
+        }
         
         // Init clock
         _Clock::Init();
@@ -1179,8 +1184,6 @@ struct _TaskMain {
 //            _Pin::LED_RED_::Write(1);
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
-        
-        
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
