@@ -1399,12 +1399,13 @@ int main() {
     // This will cause us to reset ourself twice upon initial startup, but that's OK.
     //
     // We want to do this here before interrupts are first enabled, and not within
-    // _TaskMain, to ensure that interrupts don't fire before we configure our
-    // peripherals.
+    // _TaskMain, to ensure that we don't have pending resets after a reset (since some
+    // IFG flags persist across PUC/POR). We especially don't want our peripherals to
+    // receive ISRs before they're initialized.
     //
     // We also want to do this here to prevent a potential crash loop: if an interrupt
     // handler crashed before it clears its IFG flag, and that IFG flag persists across
-    // PUC/PORs, if we enabled interrupts before checking if this reset was a BOR, then
+    // PUC/POR, if we enabled interrupts before checking if this reset was a BOR, then
     // the interrupt would immediately fire again and a crash loop would ensue. (We may
     // have encountered this issue when we had missing entries in our vector table.)
     if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
