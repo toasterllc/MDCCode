@@ -1147,13 +1147,13 @@ struct _TaskMain {
     static void Run() {
         _Init();
         
-        for (;;) {
-            _Pin::LED_RED_::Write(1);
-            _Scheduler::Sleep(_Scheduler::Ms<100>);
-            _Pin::LED_RED_::Write(0);
-            _Scheduler::Sleep(_Scheduler::Ms<100>);
-        }
-        
+//        for (;;) {
+//            _Pin::LED_RED_::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//            _Pin::LED_RED_::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
+//        
 //        for (bool on_=false;; on_=!on_) {
 //            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
 //            _LEDGreen_.set(_LEDPriority::Power, on_);
