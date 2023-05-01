@@ -18,7 +18,7 @@ SECTIONS {
     } >BAKMEM
     
     /* Backup RAM (RAM maintained during LPM3.5), uninitialized */
-    .ram_backup_noinit : {
+    .ram_backup_noinit (NOLOAD) : {
         *(.ram_backup_noinit.*)
     } >BAKMEM
 }
