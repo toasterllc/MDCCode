@@ -49,6 +49,9 @@ void _ISR_RESET() {
     // Disable watchdog since we don't know how long our startup code takes
     WDTCTL = WDTPW | WDTHOLD;
     
+    // Crash if we try to access an invalid address
+    SFRIE1 |= VMAIE;
+    
     // Copy .data section from flash to RAM
     memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
     

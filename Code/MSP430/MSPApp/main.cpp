@@ -1086,13 +1086,13 @@ struct _TaskMain {
             _Pin::LED_RED_
         >();
         
-        _Pin::LED_RED_::Write(1);
-        for (;;) {
-            _Pin::LED_RED_::Write(0);
-            __delay_cycles(1000000);
-            _Pin::LED_RED_::Write(1);
-            __delay_cycles(1000000);
-        }
+//        _Pin::LED_RED_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+//        }
         
         // Init clock
         _Clock::Init();
@@ -1377,6 +1377,17 @@ void _ISR_UNMI() {
     switch (__even_in_range(SYSUNIV, SYSUNIV_OFIFG)) {
     case SYSUNIV_NMIIFG:    Assert(false);
     case SYSUNIV_OFIFG:     Assert(false);
+    default:                Assert(false);
+    }
+}
+
+[[noreturn]]
+[[gnu::naked]] // No function preamble because we always abort, so we don't need to preserve any registers
+[[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
+[[gnu::interrupt]]
+void _ISR_SYSNMI() {
+    switch (__even_in_range(SYSSNIV, SYSSNIV_CBDIFG)) {
+    case SYSSNIV_VMAIFG:    Assert(false);
     default:                Assert(false);
     }
 }
