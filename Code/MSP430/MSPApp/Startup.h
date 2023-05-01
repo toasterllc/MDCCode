@@ -52,14 +52,13 @@ void _Startup() {
     // Zero .bss section
     memset(_sbss, 0, _ebss-_sbss);
     
-    // Only copy the data from FRAM -> BAKMEM if this is a cold start.
+    // Zero the .ram_backup_bss section if this is a cold start.
     // Otherwise, BAKMEM content should remain untouched, because it's
     // supposed to persist during sleep.
     if (Startup::ColdStart()) {
-        extern uint8_t _ram_backup_src[];
-        extern uint8_t _ram_backup_dststart[];
-        extern uint8_t _ram_backup_dstend[];
-        memcpy(_ram_backup_dststart, _ram_backup_src, _ram_backup_dstend-_ram_backup_dststart);
+        extern uint8_t _ram_backup_bss_start[];
+        extern uint8_t _ram_backup_bss_end[];
+        memset(_ram_backup_bss_start, 0, _ram_backup_bss_end-_ram_backup_bss_start);
     }
     
     // Call static constructors

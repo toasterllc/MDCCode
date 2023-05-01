@@ -11,18 +11,14 @@ SECTIONS {
     } >INFOMEM
     
     /* Backup RAM (RAM maintained during LPM3.5) */
-    .ram_backup : {
-        . = ALIGN(2);
-        _ram_backup_src = LOADADDR(.ram_backup);
-        _ram_backup_dststart = .;
-        *(.ram_backup.*)
-        . = ALIGN(2);
-        _ram_backup_dstend = .;
-    } >BAKMEM AT> FRAM
+    .ram_backup_bss : {
+        _ram_backup_bss_start = .;
+        *(.ram_backup_bss.*)
+        _ram_backup_bss_end = .;
+    } >BAKMEM
     
     /* Backup RAM (RAM maintained during LPM3.5), uninitialized */
     .ram_backup_noinit : {
-        . = ALIGN(2);
         *(.ram_backup_noinit.*)
-    } >BAKMEM AT> FRAM
+    } >BAKMEM
 }
