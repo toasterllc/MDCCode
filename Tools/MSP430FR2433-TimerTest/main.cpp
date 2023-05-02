@@ -109,6 +109,22 @@ void _ISR_PORT1() {
     }
 }
 
+[[gnu::interrupt]]
+void _ISR_TIMER0_A1() {
+    switch (TA0IV) {
+    case TA0IV_TAIFG:
+        static uint16_t counter = 0;
+        counter++;
+        if (counter == 5000) {
+            counter = 0;
+            _Pin::LED1::Write(!_Pin::LED1::Read());
+        }
+        break;
+    default:
+        Assert(false);
+    }
+}
+
 inline bool Toastbox::IntState::Get() {
     return __get_SR_register() & GIE;
 }
@@ -129,7 +145,15 @@ int main() {
         _Pin::MCLK
     >();
     
-    uint16_t counter = 0;
+    TA0EX0 = 0;
+    TA0CCR0 = 2;
+    TA0CTL =
+        TASSEL__ACLK    |   // clock source = ACLK
+        ID__1           |   // clock divider = /8
+        MC__UPDOWN      |   // mode = up
+        TACLR           |   // reset timer state
+        TAIE            ;   // enable interrupt
+    
     __bis_SR_register(GIE | LPM3_bits);
     // Catch ourself if we ever exit sleep
     Toastbox::IntState::Set(false);
