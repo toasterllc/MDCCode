@@ -5,12 +5,9 @@
 using namespace GPIO;
 
 struct _Pin {
-//    using LED2      = PortA::Pin<0x1, Option::Output0>;
     using LED1      = PortA::Pin<0x0, Option::Output0>;
     using INT       = PortA::Pin<0x1, Option::Interrupt10>; // P1.1
-    using ACLKOUT   = PortA::Pin<0xA, Option::Output1, Option::Sel10>; // P2.2
-    using BUTTON2   = PortA::Pin<0xF, Option::Resistor1, Option::Interrupt10>;
-//    using BUTTON2   = PortA::Pin<0xF, Option::Resistor1, Option::Interrupt10>;
+    using MCLK      = PortA::Pin<0x3, Option::Output0, Option::Sel10>; // P1.3 (MCLK)
 };
 
 // Abort(): called by Assert() with the address that aborted
@@ -96,20 +93,13 @@ static void ClockInit16MHz() {
     CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
 }
 
-//[[gnu::interrupt]]
-//void _ISR_PORT2() {
-//    // Accessing `P2IV` automatically clears the highest-priority interrupt
-//    const uint16_t iv = P2IV;
-//    _Pin::LED1::Write(_Pin::LED1::Read());
-//}
-
 [[gnu::interrupt]]
 void _ISR_PORT1() {
     static uint16_t counter = 0;
     switch (P1IV) {
     case _Pin::INT::IVPort1():
         counter++;
-        if (counter == 5000) {
+        if (counter == 20000) {
             counter = 0;
             _Pin::LED1::Write(!_Pin::LED1::Read());
         }
@@ -118,18 +108,6 @@ void _ISR_PORT1() {
         Assert(false);
     }
 }
-
-
-//[[gnu::interrupt]]
-//void _ISR_PORT2() {
-//    switch (P2IV) {
-//    case _Pin::BUTTON2::IVPort2():
-//        __bic_SR_register_on_exit(LPM3_bits);
-//        break;
-//    default:
-//        Assert(false);
-//    }
-//}
 
 inline bool Toastbox::IntState::Get() {
     return __get_SR_register() & GIE;
@@ -145,33 +123,15 @@ int main() {
     
     ClockInit16MHz();
     
-    // Init GPIOs
     GPIO::Init<
-        // LEDs
         _Pin::LED1,
         _Pin::INT,
-        _Pin::ACLKOUT,
-        _Pin::BUTTON2
+        _Pin::MCLK
     >();
     
     uint16_t counter = 0;
     __bis_SR_register(GIE | LPM3_bits);
+    // Catch ourself if we ever exit sleep
+    Toastbox::IntState::Set(false);
     for (;;);
-    
-//    for (;;) {
-//        __bis_SR_register(GIE | LPM3_bits);
-//        
-////        counter++;
-////        if (counter == 5000) {
-////            counter = 0;
-////            _Pin::LED1::Write(!_Pin::LED1::Read());
-////        }
-//    }
-    
-//    for (;;) {
-//        _Pin::LED1::Write(1);
-//        __delay_cycles(1000000);
-//        _Pin::LED1::Write(0);
-//        __delay_cycles(1000000);
-//    }
 }
