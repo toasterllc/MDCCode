@@ -1,11 +1,13 @@
 #include <msp430.h>
 #include "GPIO.h"
+#include "Assert.h"
 #include "Toastbox/Util.h"
 using namespace GPIO;
 
 struct _Pin {
-    using LED1 = PortA::Pin<0x0, Option::Output1>;
-    using LED2 = PortA::Pin<0x1, Option::Output1>;
+    using LED1      = PortA::Pin<0x0, Option::Output0>;
+    using LED2      = PortA::Pin<0x1, Option::Output0>;
+    using BUTTON2   = PortA::Pin<0xF, Option::Resistor1, Option::Interrupt10>;
 };
 
 // Abort(): called by Assert() with the address that aborted
@@ -91,6 +93,34 @@ static void ClockInit16MHz() {
     CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
 }
 
+//[[gnu::interrupt]]
+//void _ISR_PORT2() {
+//    // Accessing `P2IV` automatically clears the highest-priority interrupt
+//    const uint16_t iv = P2IV;
+//    _Pin::LED1::Write(_Pin::LED1::Read());
+//}
+
+[[gnu::interrupt]]
+void _ISR_PORT2() {
+    const uint16_t iv = P2IV;
+    switch (__even_in_range(iv, _Pin::IVPort2())) {
+    case _Pin::BUTTON2::IVPort2():
+        __bic_SR_register_on_exit(LPM3_bits);
+        break;
+    default:
+        Assert(false);
+    }
+}
+
+inline bool Toastbox::IntState::Get() {
+    return __get_SR_register() & GIE;
+}
+
+inline void Toastbox::IntState::Set(bool en) {
+    if (en) __bis_SR_register(GIE);
+    else    __bic_SR_register(GIE);
+}
+
 int main() {
     ClockInit16MHz();
     
@@ -98,13 +128,25 @@ int main() {
     GPIO::Init<
         // LEDs
         _Pin::LED1,
-        _Pin::LED2
+        _Pin::LED2,
+        _Pin::BUTTON2
     >();
     
+    uint16_t counter = 0;
     for (;;) {
-        _Pin::LED1::Write(1);
-        __delay_cycles(1000000);
-        _Pin::LED1::Write(0);
-        __delay_cycles(1000000);
+        __bis_SR_register(GIE | LPM3_bits);
+        
+        counter++;
+        if (counter == 8) {
+            counter = 0;
+            _Pin::LED1::Write(!_Pin::LED1::Read());
+        }
     }
+    
+//    for (;;) {
+//        _Pin::LED1::Write(1);
+//        __delay_cycles(1000000);
+//        _Pin::LED1::Write(0);
+//        __delay_cycles(1000000);
+//    }
 }
