@@ -265,6 +265,8 @@ static void _BOR() {
 extern "C"
 [[noreturn, gnu::used]]
 void Abort(uintptr_t addr) {
+    // Disable interrupts
+    Toastbox::IntState::Set(false);
     // Record the abort
     _ResetRecord(MSP::Reset::Type::Abort, addr);
     _BOR();
@@ -1086,35 +1088,36 @@ struct _TaskMain {
             _Pin::LED_RED_
         >();
         
-//        _Pin::LED_RED_::Write(1);
-//        for (;;) {
-//            _Pin::LED_RED_::Write(0);
-//            __delay_cycles(1000000);
-//            _Pin::LED_RED_::Write(1);
-//            __delay_cycles(1000000);
-//        }
-        
         // Init clock
         _Clock::Init();
         
 //        _Pin::LED_RED_::Write(1);
-//        _Pin::LED_GREEN_::Write(1);
 //        for (;;) {
-//            _Pin::LED_RED_::Write(0);
-//            __delay_cycles(1000000);
 //            _Pin::LED_RED_::Write(1);
 //            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
 //        }
-        
         
 //        _Pin::LED_RED_::Write(1);
 //        _Pin::LED_GREEN_::Write(1);
 //        for (;;) {
 //            _Pin::LED_RED_::Write(0);
-//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//            __delay_cycles(1000000);
 //            _Pin::LED_RED_::Write(1);
-//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//            __delay_cycles(1000000);
 //        }
+        
+        _Pin::LED_RED_::Write(1);
+        _Pin::LED_GREEN_::Write(1);
+        for (;;) {
+            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+            _Scheduler::Delay(_Scheduler::Ms<100>);
+            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+            _Scheduler::Delay(_Scheduler::Ms<100>);
+        }
         
         // Init RTC
         // We need RTC to be unconditionally enabled for 2 reasons:
@@ -1222,23 +1225,16 @@ struct _TaskMain {
     }
     
     static void Sleep() {
-        // Put ourself to sleep until an interrupt occurs. This function may or may not return:
-        // 
-        // - This function returns if an interrupt was already pending and the ISR
-        //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
-        // 
-        // - This function doesn't return if an interrupt wasn't pending and
-        //   therefore we enter LPM3.5. The next time we wake will be due to a
-        //   reset and execution will start from main().
+        // Put ourself to sleep until an interrupt occurs
         
         // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
         // We do this to prevent ourself from waking up unnecessarily, saving power.
         _SysTick = _Scheduler::TickRequired();
         
-        // Remember our current interrupt state, which IntState will restore upon return
-        Toastbox::IntState ints;
-        // Atomically enable interrupts and go to sleep
-        __bis_SR_register(GIE | LPM3_bits);
+        // We consider the sleep 'extended' if SysTick isn't needed during the sleep
+//        const bool extendedSleep = true;
+        const bool extendedSleep = !_SysTick;
+        _Clock::Sleep(extendedSleep);
         
         // Unconditionally enable SysTick while we're awake
         _SysTick = true;
@@ -1306,29 +1302,23 @@ void _ISR_RTC() {
     if (_EventTimer::ISRRTCInterested()) {
         const bool wake = _EventTimer::ISRRTC();
         // Wake if the timer fired
-        if (wake) {
-            __bic_SR_register_on_exit(LPM3_bits);
-        }
+        if (wake) _Clock::Wake();
     }
 }
 
 [[gnu::interrupt]]
 void _ISR_TIMER0_A1() {
     const bool wake = _EventTimer::ISRTimer(TA0IV);
-    // Wake if the timer fired
-    if (wake) {
-        __bic_SR_register_on_exit(LPM3_bits);
-    }
+    // Wake if directed
+    if (wake) _Clock::Wake();
 }
 
 [[gnu::interrupt]]
 void _ISR_TIMER1_A1() {
 //    _Pin::LED_GREEN_::Write(!_Pin::LED_GREEN_::Read());
     const bool wake = _SysTick::ISR(TA1IV);
-    if (wake) {
-        // Wake ourself
-        __bic_SR_register_on_exit(LPM3_bits);
-    }
+    // Wake if directed
+    if (wake) _Clock::Wake();
 }
 
 [[gnu::interrupt]]
@@ -1340,19 +1330,22 @@ void _ISR_PORT2() {
     // Motion
     case _Pin::MOTION_SIGNAL::IVPort2():
         _Motion::ISR();
-        __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
+        // Wake ourself
+        _Clock::Wake();
         break;
     
     // I2C (ie VDD_B_3V3_STM)
     case _I2C::Pin::Active::IVPort2():
         _I2C::ISR_Active(iv);
-        __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
+        // Wake ourself
+        _Clock::Wake();
         break;
     
     // Button
     case _Button::Pin::IVPort2():
         _Button::ISR();
-        __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
+        // Wake ourself
+        _Clock::Wake();
         break;
     
     default:
@@ -1366,14 +1359,14 @@ void _ISR_USCI_B0() {
     const uint16_t iv = UCB0IV;
     _I2C::ISR_I2C(iv);
     // Wake ourself
-    __bic_SR_register_on_exit(LPM0_bits);
+    _Clock::Wake();
 }
 
 [[gnu::interrupt]]
 void _ISR_ADC() {
     _BatterySampler::ISR(ADCIV);
     // Wake ourself
-    __bic_SR_register_on_exit(LPM3_bits);
+    _Clock::Wake();
 }
 
 [[noreturn]]
