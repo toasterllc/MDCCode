@@ -5,9 +5,12 @@
 using namespace GPIO;
 
 struct _Pin {
+//    using LED2      = PortA::Pin<0x1, Option::Output0>;
     using LED1      = PortA::Pin<0x0, Option::Output0>;
-    using LED2      = PortA::Pin<0x1, Option::Output0>;
+    using INT       = PortA::Pin<0x1, Option::Interrupt10>; // P1.1
+    using ACLKOUT   = PortA::Pin<0xA, Option::Output1, Option::Sel10>; // P2.2
     using BUTTON2   = PortA::Pin<0xF, Option::Resistor1, Option::Interrupt10>;
+//    using BUTTON2   = PortA::Pin<0xF, Option::Resistor1, Option::Interrupt10>;
 };
 
 // Abort(): called by Assert() with the address that aborted
@@ -101,16 +104,32 @@ static void ClockInit16MHz() {
 //}
 
 [[gnu::interrupt]]
-void _ISR_PORT2() {
-    const uint16_t iv = P2IV;
-    switch (__even_in_range(iv, _Pin::IVPort2())) {
-    case _Pin::BUTTON2::IVPort2():
-        __bic_SR_register_on_exit(LPM3_bits);
+void _ISR_PORT1() {
+    static uint16_t counter = 0;
+    switch (P1IV) {
+    case _Pin::INT::IVPort1():
+        counter++;
+        if (counter == 5000) {
+            counter = 0;
+            _Pin::LED1::Write(!_Pin::LED1::Read());
+        }
         break;
     default:
         Assert(false);
     }
 }
+
+
+//[[gnu::interrupt]]
+//void _ISR_PORT2() {
+//    switch (P2IV) {
+//    case _Pin::BUTTON2::IVPort2():
+//        __bic_SR_register_on_exit(LPM3_bits);
+//        break;
+//    default:
+//        Assert(false);
+//    }
+//}
 
 inline bool Toastbox::IntState::Get() {
     return __get_SR_register() & GIE;
@@ -122,26 +141,32 @@ inline void Toastbox::IntState::Set(bool en) {
 }
 
 int main() {
+    WDTCTL = WDTPW | WDTHOLD;
+    
     ClockInit16MHz();
     
     // Init GPIOs
     GPIO::Init<
         // LEDs
         _Pin::LED1,
-        _Pin::LED2,
+        _Pin::INT,
+        _Pin::ACLKOUT,
         _Pin::BUTTON2
     >();
     
     uint16_t counter = 0;
-    for (;;) {
-        __bis_SR_register(GIE | LPM3_bits);
-        
-        counter++;
-        if (counter == 8) {
-            counter = 0;
-            _Pin::LED1::Write(!_Pin::LED1::Read());
-        }
-    }
+    __bis_SR_register(GIE | LPM3_bits);
+    for (;;);
+    
+//    for (;;) {
+//        __bis_SR_register(GIE | LPM3_bits);
+//        
+////        counter++;
+////        if (counter == 5000) {
+////            counter = 0;
+////            _Pin::LED1::Write(!_Pin::LED1::Read());
+////        }
+//    }
     
 //    for (;;) {
 //        _Pin::LED1::Write(1);
