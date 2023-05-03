@@ -14,7 +14,7 @@ public:
     // Init(): initialize various clocks
     // Interrupts must be disabled
     static void Init() {
-        const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
+//        const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
         
         // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.
@@ -24,57 +24,18 @@ public:
         
         // Disable FLL
         __bis_SR_register(SCG0);
-            // Set REFO as FLL reference source
-            CSCTL3 |= SELREF__REFOCLK;
+            // FLLREFCLK=REFOCLK, FLLREFDIV=/1
+            CSCTL3 = SELREF__REFOCLK | FLLREFDIV_0;
             // Clear DCO and MOD registers
             CSCTL0 = 0;
-            // Clear DCO frequency select bits first
-            CSCTL1 &= ~(DCORSEL_7);
-            
-            if constexpr (T_MCLKFreqHz == 16000000) {
-                CSCTL1 |= DCORSEL_5;
-            } else if constexpr (T_MCLKFreqHz == 12000000) {
-                CSCTL1 |= DCORSEL_4;
-            } else if constexpr (T_MCLKFreqHz == 8000000) {
-                CSCTL1 |= DCORSEL_3;
-            } else if constexpr (T_MCLKFreqHz == 4000000) {
-                CSCTL1 |= DCORSEL_2;
-            } else if constexpr (T_MCLKFreqHz == 2000000) {
-                CSCTL1 |= DCORSEL_1;
-            } else if constexpr (T_MCLKFreqHz == 1000000) {
-                CSCTL1 |= DCORSEL_0;
-            } else {
-                // Unsupported frequency
-                static_assert(Toastbox::AlwaysFalse<T_MCLKFreqHz>);
-            }
-            
-            // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLKFreqHz
-            CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/REFOCLKFreqHz)-1);
-            
-            // Special case: use the factory-calibrated values for CSCTL0 if one is available for the target frequency
-            // This significantly speeds up the FLL lock time; without this technique, it takes ~200ms to get an FLL
-            // lock (datasheet specifies 280ms as typical). Using the factory-calibrated value, an FLL lock takes 800us.
-            if constexpr (T_MCLKFreqHz == 16000000) {
-                CSCTL0 = *CSCTL0Cal16MHz;
-            }
-            
+            // Set CSCTL1
+            CSCTL1 = _CSCTL1();
+            // Set DCOCLKDIV based on T_MCLKFreqHz and _REFOCLKFreqHz
+            CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/_REFOCLKFreqHz)-1);
             // Wait 3 cycles to take effect
             __delay_cycles(3);
         // Enable FLL
         __bic_SR_register(SCG0);
-        
-        // Special case: if we're using one of the factory-calibrated values for CSCTL0 (see above),
-        // we need to delay 10 REFOCLK cycles. We do this by temporarily switching MCLK to be sourced
-        // by REFOCLK, and waiting 10 cycles.
-        // This technique is prescribed by "MSP430FR2xx/FR4xx DCO+FLL Applications Guide", and shown
-        // by the "MSP430FR2x5x_FLL_FastLock_24MHz-16MHz.c" example code.
-        if constexpr (T_MCLKFreqHz == 16000000) {
-            CSCTL4 = SELMS__REFOCLK | SELA__REFOCLK;
-            __delay_cycles(10);
-        }
-        
-        // Wait until FLL locks
-        while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
         // MCLK=DCOCLK, ACLK=XT1
         CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
@@ -112,11 +73,63 @@ public:
             XT1AUTOOFF      ;   // auto off = enabled (default value)
     }
     
+    static void Sleep() {
+        // Disable FLL
+        __bis_SR_register(SCG0);
+        // Config for 2MHz
+        CSCTL1 = DCORSEL_1 | _CSCTL1Default;
+        // Wait 3 cycles to take effect
+        __delay_cycles(3);
+        // Go to sleep
+        __bis_SR_register(GIE | LPM3_bits);
+        // Handle wake
+        #warning TODO: remove this check once we know FLL isn't active upon wake
+        Assert(__get_SR_register() & SCG0);
+        // Clear DCO and MOD registers
+        CSCTL0 = 0;
+        // Restore CSCTL1
+        CSCTL1 = _CSCTL1();
+        // Enable FLL
+        __bis_SR_register(SCG0);
+    }
+    
+    [[gnu::always_inline]]
+    static constexpr uint16_t Wake() {
+        // Wake from sleep, but don't start FLL yet
+        __bic_SR_register_on_exit(LPM3_bits & ~SCG0);
+    }
+    
 private:
-    static constexpr uint32_t REFOCLKFreqHz = 32768;
+    static constexpr uint32_t _REFOCLKFreqHz = 32768;
+    static constexpr uint16_t _CSCTL1Default = DCOFTRIM_3 | DISMOD;
     
     template<auto T>
     static constexpr auto _Ms = T_Scheduler::template Ms<T>;
+    
+    static constexpr uint16_t _CSCTL1() {
+               if constexpr (T_MCLKFreqHz == 16000000) {
+            return DCORSEL_5 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 12000000) {
+            return DCORSEL_4 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 8000000) {
+            return DCORSEL_3 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 4000000) {
+            return DCORSEL_2 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 2000000) {
+            return DCORSEL_1 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 1000000) {
+            return DCORSEL_0 | _CSCTL1Default;
+        } else {
+            // Unsupported frequency
+            static_assert(Toastbox::AlwaysFalse<T_MCLKFreqHz>);
+        }
+    }
+    
+//    static constexpr uint16_t _CSCTL5(bool fast=false) {
+//        static constexpr Default = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1;
+//        if (fast) return Default | DIVM__1;
+//        else      return Default | DIVM__2;
+//    }
     
     static void _ClockFaultsClear() {
         CSCTL7 &= ~(XT1OFFG | DCOFFG);

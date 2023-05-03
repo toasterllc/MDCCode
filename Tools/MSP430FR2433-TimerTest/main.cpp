@@ -6,6 +6,7 @@ using namespace GPIO;
 
 struct _Pin {
     using LED1      = PortA::Pin<0x0, Option::Output0>;
+    using BUTTON    = PortA::Pin<0xF, Option::Resistor1, Option::Input>;
     using INT       = PortA::Pin<0x1, Option::Interrupt10>; // P1.1
     using MCLK      = PortA::Pin<0x3, Option::Output0, Option::Sel10>; // P1.3 (MCLK)
 };
@@ -141,9 +142,12 @@ int main() {
     
     GPIO::Init<
         _Pin::LED1,
+        _Pin::BUTTON,
         _Pin::INT,
         _Pin::MCLK
     >();
+    
+    while (_Pin::BUTTON::Read());
     
     TA0EX0 = 0;
     TA0CCR0 = 2;
