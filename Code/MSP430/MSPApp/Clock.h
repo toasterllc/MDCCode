@@ -25,7 +25,7 @@ public:
     // Init(): initialize various clocks
     // Interrupts must be disabled
     static void Init() {
-        static const uint16_t*const CSCTL0Cal16MHz = (uint16_t*)0x1A22;
+        const uint16_t*const CSCTL0Cal16MHz = (uint16_t*)0x1A22;
         
         // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.
@@ -60,8 +60,7 @@ public:
             CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/_REFOCLKFreqHz)-1);
             
             // MCLK=DCOCLK, ACLK=XT1
-            #warning TODO: change back to SELA__XT1CLK
-            CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+            CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
             
             // "Execute NOP three times to allow time for the settings to be applied."
             __delay_cycles(3);
@@ -73,7 +72,9 @@ public:
         // and we need the FLL to be running to acquire a lock.
         while (!_FLLLocked());
         
-        // Cache _CSCTL0Compensated now that the FLL has locked, so we can get good reading of CSCTL0
+        // Cache _CSCTL0Compensated now that the FLL has locked, so we can get good reading of CSCTL0.
+        // We cache a compensated value (see _CSCTL0Compensate() comments) so we can set CSCTL0 directly
+        // to it, without having to perform math on it on every use.
         _CSCTL0Compensated = _CSCTL0Compensate(CSCTL0);
         
         // Wait up to 2 seconds for XT1 to be ready.
@@ -116,14 +117,13 @@ public:
     //
     // For long sleeps (extended=1): we assume the DCO settings (CSCTL0.DCO
     // and CSCTL0.MOD) will be invalid when we wake, because the temperature
-    // or voltage may have changed significantly while we slept.
-    //
-    // If the FLL is currently locked, we cache the current value of CSCTL0
-    // so that we can use it on subsequent wakes to speed up the FLL lock.
-    //
-    // Note that we compensate the cached CSCTL0 for temperature or voltage
-    // variations during sleep, that could otherwise cause the FLL to
-    // overshoot its target frequency if we used the value directly.
+    // or voltage may have changed significantly while we slept. Therefore
+    // upon wake, we set CSCTL0=_CSCTL0Compensated, which restores CSCTL0.DCO
+    // and CSCTL0.MOD to conservative versions of their original values that
+    // were captured when we first turned on. The effect is that upon waking
+    // from an extended sleep, we should be running at a slightly slower
+    // frequency than the target frequency (eg 15 MHz instead of the target
+    // 16 MHz).
     static void Sleep(bool extended) {
         // Switch to 2MHz
         {
@@ -166,8 +166,6 @@ private:
     static constexpr uint32_t _REFOCLKFreqHz = 32768;
     static constexpr uint16_t _CSCTL1Default = DCOFTRIM_3 | DISMOD;
     static inline uint16_t _CSCTL0Compensated = 0;
-    
-//    static constexpr uint16_t _CSCTL0Max = 0x3FFF;
     
     template<auto T>
     static constexpr auto _Ms = T_Scheduler::template Ms<T>;

@@ -39,18 +39,17 @@ static constexpr uint32_t _SysTickFreqHz    = 2048;         // 2.048 kHz
 
 struct _Pin {
     // Port A
-    using LED_RED_                  = PortA::Pin<0x0, Option::Output0>;
-    using LED_GREEN_                = PortA::Pin<0x1, Option::Output0>;
+    using VDD_B_1V8_IMG_SD_EN       = PortA::Pin<0x0, Option::Output0>;
+    using LED_GREEN_                = PortA::Pin<0x1, Option::Output1>;
     using MSP_STM_I2C_SDA           = PortA::Pin<0x2>;
-    using MSP_STM_I2C_SCL           = PortA::Pin<0x2>;
-    using MCLK                      = PortA::Pin<0x3, Option::Output0, Option::Sel10>; // P1.3 (MCLK)
+    using MSP_STM_I2C_SCL           = PortA::Pin<0x3>;
     using ICE_MSP_SPI_DATA_OUT      = PortA::Pin<0x4>;
     using ICE_MSP_SPI_DATA_IN       = PortA::Pin<0x5>;
     using ICE_MSP_SPI_CLK           = PortA::Pin<0x6>;
     using BAT_CHRG_LVL              = PortA::Pin<0x7, Option::Input>; // No pullup/pulldown because this is an analog input (and the voltage divider provides a physical pulldown)
     using MSP_XOUT                  = PortA::Pin<0x8>;
     using MSP_XIN                   = PortA::Pin<0x9>;
-    using VDD_B_1V8_IMG_SD_EN       = PortA::Pin<0xA, Option::Output0>;
+    using LED_RED_                  = PortA::Pin<0xA, Option::Output1>;
     using VDD_B_2V8_IMG_SD_EN       = PortA::Pin<0xB, Option::Output0>;
     using MOTION_SIGNAL             = PortA::Pin<0xC>;
     using BUTTON_SIGNAL_            = PortA::Pin<0xD>;
@@ -1086,9 +1085,7 @@ struct _TaskMain {
             
             // LEDs
             _Pin::LED_GREEN_,
-            _Pin::LED_RED_,
-            
-            _Pin::MCLK
+            _Pin::LED_RED_
         >();
         
         // Init clock
@@ -1228,14 +1225,7 @@ struct _TaskMain {
     }
     
     static void Sleep() {
-        // Put ourself to sleep until an interrupt occurs. This function may or may not return:
-        // 
-        // - This function returns if an interrupt was already pending and the ISR
-        //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
-        // 
-        // - This function doesn't return if an interrupt wasn't pending and
-        //   therefore we enter LPM3.5. The next time we wake will be due to a
-        //   reset and execution will start from main().
+        // Put ourself to sleep until an interrupt occurs
         
         // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
         // We do this to prevent ourself from waking up unnecessarily, saving power.
