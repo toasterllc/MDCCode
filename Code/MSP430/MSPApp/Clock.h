@@ -73,8 +73,8 @@ public:
         // Special case: if we're using one of the factory-calibrated values for CSCTL0 (see above),
         // we need to delay 10 FLL reference clock cycles. We do this by temporarily switching MCLK
         // to be sourced by REFOCLK (performed above), and waiting 10 cycles.
-        // This technique is prescribed by "MSP430FR2xx/FR4xx DCO+FLL Applications Guide", and shown
-        // by the "MSP430FR2x5x_FLL_FastLock_24MHz-16MHz.c" example code.
+        // This delay is prescribed by "MSP430FR2xx/FR4xx DCO+FLL Applications Guide", and shown by
+        // the "MSP430FR2x5x_FLL_FastLock_24MHz-16MHz.c" example code.
         if constexpr (T_MCLKFreqHz == 16000000) {
             __delay_cycles(10);
         }

@@ -1086,6 +1086,9 @@ struct _TaskMain {
             _Pin::LED_RED_
         >();
         
+        // Init clock
+        _Clock::Init();
+        
 //        _Pin::LED_RED_::Write(1);
 //        for (;;) {
 //            _Pin::LED_RED_::Write(0);
@@ -1093,9 +1096,6 @@ struct _TaskMain {
 //            _Pin::LED_RED_::Write(1);
 //            __delay_cycles(1000000);
 //        }
-        
-        // Init clock
-        _Clock::Init();
         
 //        _Pin::LED_RED_::Write(1);
 //        _Pin::LED_GREEN_::Write(1);
@@ -1183,14 +1183,14 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
-//        for (;;) {
-////            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
-//            _Pin::LED_RED_::Write(0);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//            
-//            _Pin::LED_RED_::Write(1);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//        }
+        for (;;) {
+//            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
+            _Pin::LED_RED_::Write(0);
+            _Scheduler::Sleep(_Scheduler::Ms<100>);
+            
+            _Pin::LED_RED_::Write(1);
+            _Scheduler::Sleep(_Scheduler::Ms<100>);
+        }
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -1235,7 +1235,7 @@ struct _TaskMain {
         // We do this to prevent ourself from waking up unnecessarily, saving power.
         _SysTick = _Scheduler::TickRequired();
         
-        _Clock::Sleep(_SysTick);
+        _Clock::Sleep(!_SysTick);
         
         // Unconditionally enable SysTick while we're awake
         _SysTick = true;
