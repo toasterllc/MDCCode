@@ -123,66 +123,37 @@ public:
     // we wake.
     static void SleepShort() {
         _SleepEnable();
-        __bis_SR_register(GIE | LPM3_bits); // Sleep
+        {
+            Toastbox::IntState ints; // Remember+restore current interrupt state
+            __bis_SR_register(GIE | LPM3_bits); // Sleep
+        }
         _SleepDisable();
     }
     
     // SleepLong(): sleep for a long period, where we assume the DCO settings
-    // (CSCTL0.DCO and CSCTL0.MOD) will be invalid when we wake.
+    // (CSCTL0.DCO and CSCTL0.MOD) will be invalid when we wake, because the
+    // temperature or voltage may have changed significantly while we slept.
     //
     // If the FLL is currently locked, we cache the current value of CSCTL0
     // so that we can use it on subsequent wakes to speed up the FLL lock.
     //
     // Note that we compensate the cached CSCTL0 for temperature or voltage
-    // variations during sleep, that would otherwise cause the FLL to
-    // overshoot its target frequency.
+    // variations during sleep, that could otherwise cause the FLL to
+    // overshoot its target frequency if we used the value directly.
     static void SleepLong() {
         static uint16_t CSCTL0Compensated = 0;
         if (_FLLLocked()) CSCTL0Compensated = _CSCTL0Compensate(CSCTL0);
         
         _SleepEnable();
-        __bis_SR_register(GIE | LPM3_bits); // Sleep
+        {
+            Toastbox::IntState ints; // Remember+restore current interrupt state
+            __bis_SR_register(GIE | LPM3_bits); // Sleep
+        }
         
-        // Restore CSCTL0 to CSCTL0Compensated before switching to fast clock
+        // Restore CSCTL0 to CSCTL0Compensated before switching back to fast clock
         CSCTL0 = CSCTL0Compensated;
         _SleepDisable();
     }
-    
-    
-//    static void Sleep(bool longSleep) {
-//        static uint16_t CSCTL0CachedLocked = 0;
-//        if (_FLLLocked()) CSCTL0CachedLocked = CSCTL0;
-//        
-//        uint16_t CSCTL0Prev = CSCTL0;
-//        
-//        // Disable FLL
-//        __bis_SR_register(SCG0);
-//        // Config DCO for the max frequency in the 2MHz band
-//        CSCTL1 = DCORSEL_1 | _CSCTL1Default;
-//        CSCTL0 = _CSCTL0Max;
-//        // Wait 3 cycles to take effect
-//        __delay_cycles(3);
-//        
-//        // Sleep
-//        __bis_SR_register(GIE | LPM3_bits);
-//        
-//        // Wake
-//        #warning TODO: remove this check once we know FLL isn't active upon wake
-//        Assert(__get_SR_register() & SCG0);
-//        
-//        // Clear CSCTL0.DCO and CSCTL0.MOD before we restore CSCTL1
-//        CSCTL0 = 0;
-//        // Restore CSCTL1
-//        CSCTL1 = _CSCTL1();
-//        // Restore CSCTL0
-//        if (longSleep) {
-//            CSCTL0 = CSCTL0CachedLocked;
-//        } else {
-//            CSCTL0 = CSCTL0Prev;
-//        }
-//        // Enable FLL
-//        __bic_SR_register(SCG0);
-//    }
     
     [[gnu::always_inline]]
     static void Wake() {
@@ -217,9 +188,14 @@ private:
         }
     }
     
+    // _CSCTL0Compensate(): compensate the given `CSCTL0` value for temperature
+    // and voltage variation that could occur during sleep. In our testing, warming
+    // the chip with hot air (~300 C) for a few seconds caused a CSCTL0.DCO to
+    // decrease by 19 counts, so we figured that 64 is a good conservative value.
     static uint16_t _CSCTL0Compensate(uint16_t x) {
+        constexpr uint16_t Sub = 64;
         const uint16_t dco = x & 0x1FF;
-        return dco-64;
+        return (dco>=Sub ? dco-Sub : 0);
     }
     
     static bool _FLLLocked() {

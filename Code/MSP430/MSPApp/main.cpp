@@ -1235,10 +1235,8 @@ struct _TaskMain {
         // We do this to prevent ourself from waking up unnecessarily, saving power.
         _SysTick = _Scheduler::TickRequired();
         
-        // Remember our current interrupt state, which IntState will restore upon return
-        Toastbox::IntState ints;
-        // Atomically enable interrupts and go to sleep
-        __bis_SR_register(GIE | LPM3_bits);
+        if (_SysTick) _Clock::SleepShort();
+        else          _Clock::SleepLong();
         
         // Unconditionally enable SysTick while we're awake
         _SysTick = true;
