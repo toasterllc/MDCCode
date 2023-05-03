@@ -265,6 +265,8 @@ static void _BOR() {
 extern "C"
 [[noreturn, gnu::used]]
 void Abort(uintptr_t addr) {
+    // Disable interrupts
+    Toastbox::IntState::Set(false);
     // Record the abort
     _ResetRecord(MSP::Reset::Type::Abort, addr);
     _BOR();
@@ -1089,13 +1091,13 @@ struct _TaskMain {
         // Init clock
         _Clock::Init();
         
-//        _Pin::LED_RED_::Write(1);
-//        for (;;) {
-//            _Pin::LED_RED_::Write(0);
-//            __delay_cycles(1000000);
-//            _Pin::LED_RED_::Write(1);
-//            __delay_cycles(1000000);
-//        }
+        _Pin::LED_RED_::Write(1);
+        for (;;) {
+            _Pin::LED_RED_::Write(0);
+            __delay_cycles(1000000);
+            _Pin::LED_RED_::Write(1);
+            __delay_cycles(1000000);
+        }
         
 //        _Pin::LED_RED_::Write(1);
 //        _Pin::LED_GREEN_::Write(1);
@@ -1235,7 +1237,7 @@ struct _TaskMain {
         // We do this to prevent ourself from waking up unnecessarily, saving power.
         _SysTick = _Scheduler::TickRequired();
         
-        _Clock::Sleep(!_SysTick);
+        _Clock::Sleep(_SysTick);
         
         // Unconditionally enable SysTick while we're awake
         _SysTick = true;

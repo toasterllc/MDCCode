@@ -231,6 +231,17 @@ int main() {
     
     __delay_cycles(5000000);
     
+    // Disable FLL
+    __bis_SR_register(SCG0);
+    
+    for (;;) {
+        CSCTL0 = 0;
+        __delay_cycles(16000000);
+        CSCTL0 = 1;
+        __delay_cycles(16000000);
+    }
+    
+    
     for (;;) {
         _Pin::LED1::Write(!_Pin::LED1::Read());
         __delay_cycles(1000000);

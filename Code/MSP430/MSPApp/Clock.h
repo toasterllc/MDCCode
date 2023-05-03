@@ -25,7 +25,7 @@ public:
     // Init(): initialize various clocks
     // Interrupts must be disabled
     static void Init() {
-        const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
+        static const uint16_t*const CSCTL0Cal16MHz = (uint16_t*)0x1A22;
         
         // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.
@@ -82,6 +82,9 @@ public:
         // Wait until FLL locks
         while (!_FLLLocked());
         
+        // Cache _CSCTL0Compensated now that the FLL has locked, so we can get good reading of CSCTL0
+        _CSCTL0Compensated = _CSCTL0Compensate(CSCTL0);
+        
         // MCLK=DCOCLK, ACLK=XT1
         CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
         
@@ -134,9 +137,6 @@ public:
     // variations during sleep, that could otherwise cause the FLL to
     // overshoot its target frequency if we used the value directly.
     static void Sleep(bool extended) {
-        static uint16_t CSCTL0Compensated = 0;
-        if (extended && _FLLLocked()) CSCTL0Compensated = _CSCTL0Compensate(CSCTL0);
-        
         // Switch to 2MHz
         {
             // Disable FLL
@@ -156,8 +156,8 @@ public:
             __bis_SR_register(GIE | LPM3_bits); // Sleep
         }
         
-        // Restore CSCTL0 to CSCTL0Compensated before switching back to fast clock
-        if (extended) CSCTL0 = CSCTL0Compensated;
+        // If this was an extended sleep, set CSCTL0 to CSCTL0Compensated before switching back to fast clock
+        if (extended) CSCTL0 = _CSCTL0Compensated;
         
         // Switch back to T_MCLKFreqHz
         {
@@ -175,8 +175,20 @@ public:
     }
     
 private:
+    // _CSCTL0Compensate(): compensate the given `CSCTL0` value for temperature
+    // and voltage variation that could occur during sleep. In our testing, warming
+    // the chip with hot air (~300 C) for a few seconds caused a CSCTL0.DCO to
+    // decrease by 19 counts, so we figured that 64 is a good conservative value.
+    static constexpr uint16_t _CSCTL0Compensate(uint16_t x) {
+        constexpr uint16_t Sub = 64;
+        const uint16_t dco = x & 0x1FF;
+        return (dco>Sub ? dco-Sub : 1);
+    }
+    
     static constexpr uint32_t _REFOCLKFreqHz = 32768;
     static constexpr uint16_t _CSCTL1Default = DCOFTRIM_3 | DISMOD;
+    static inline uint16_t _CSCTL0Compensated = 0;
+    
 //    static constexpr uint16_t _CSCTL0Max = 0x3FFF;
     
     template<auto T>
@@ -199,16 +211,6 @@ private:
             // Unsupported frequency
             static_assert(Toastbox::AlwaysFalse<T_MCLKFreqHz>);
         }
-    }
-    
-    // _CSCTL0Compensate(): compensate the given `CSCTL0` value for temperature
-    // and voltage variation that could occur during sleep. In our testing, warming
-    // the chip with hot air (~300 C) for a few seconds caused a CSCTL0.DCO to
-    // decrease by 19 counts, so we figured that 64 is a good conservative value.
-    static uint16_t _CSCTL0Compensate(uint16_t x) {
-        constexpr uint16_t Sub = 64;
-        const uint16_t dco = x & 0x1FF;
-        return (dco>=Sub ? dco-Sub : 0);
     }
     
     static bool _FLLLocked() {
