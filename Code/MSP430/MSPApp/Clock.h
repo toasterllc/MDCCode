@@ -3,6 +3,17 @@
 #include "GPIO.h"
 #include "Toastbox/Util.h"
 
+// DCO / FLL operation:
+//     f_DCOCLK is directly controlled by: CSCTL0.MOD, CSCTL0.DCO, CSCTL1.DCORSEL
+//     
+//     The FLL target frequency is controlled by: CSCTL2.FLLD / CSCTL2.FLLN / CSCTL3.FLLREFDIV
+//     
+//     When FLL is enabled (SCG0=1), CSCTL0.MOD, CSCTL0.DCO is controlled by FLL,
+//     thereby allowing FLL to control f_DCOCLK.
+//     
+//     When FLL is disabled (SCG0=0), CSCTL0.MOD CSCTL0.DCO is not controlled by FLL,
+//     and is under manual control
+
 template<typename T_Scheduler, uint32_t T_MCLKFreqHz, typename T_XINPin, typename T_XOUTPin>
 class T_Clock {
 public:
@@ -14,7 +25,7 @@ public:
     // Init(): initialize various clocks
     // Interrupts must be disabled
     static void Init() {
-//        const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
+        const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
         
         // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.
@@ -26,16 +37,50 @@ public:
         __bis_SR_register(SCG0);
             // FLLREFCLK=REFOCLK, FLLREFDIV=/1
             CSCTL3 = SELREF__REFOCLK | FLLREFDIV_0;
-            // Clear DCO and MOD registers
+            
+            // Clear CSCTL0.DCO and CSCTL0.MOD so we start out at the lowest tap within CSCTL1.DCORSEL,
+            // when we set CSCTL1.DCORSEL on the next line. This is necessary to prevent overshoot,
+            // since the current value of CSCTL0.DCO/CSCTL0.MOD pertains to the whatever value of
+            // CSCTL1.DCORSEL we currently have set, and not the value we're about to set.
             CSCTL0 = 0;
-            // Set CSCTL1
+            
+            // Set the frequency range, CSCTL1.DCORSEL
             CSCTL1 = _CSCTL1();
-            // Set DCOCLKDIV based on T_MCLKFreqHz and _REFOCLKFreqHz
+            
+            // Configure FLL via CSCTL2.FLLD, CSCTL2.FLLN
             CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/_REFOCLKFreqHz)-1);
-            // Wait 3 cycles to take effect
+            
+            // Special case: use the factory-calibrated values for CSCTL0 if one is available for the
+            // target frequency. This significantly speeds up the FLL lock time; without this technique,
+            // it takes ~200ms to get an FLL lock (datasheet specifies 280ms as typical). Using the
+            // factory-calibrated value, an FLL lock takes 800us.
+            //
+            // We switch MCLK=REFOCLK before setting CSCTL0, so that MCLK isn't sourced from DCOCLKDIV
+            // while FLL is acquiring a lock, because during this time the FLL may overshoot the target
+            // frequency, which could violate the MCLK max frequency. This is only an issue when using
+            // calibrated CSCTL0 values because we use 0 otherwise, which is the minimum value for a
+            // CSCTL1.DCORSEL range so we don't have to worry about overshoot.
+            if constexpr (T_MCLKFreqHz == 16000000) {
+                CSCTL4 = SELMS__REFOCLK | SELA__REFOCLK;
+                CSCTL0 = *CSCTL0Cal16MHz;
+            }
+            
+            // "Execute NOP three times to allow time for the settings to be applied."
             __delay_cycles(3);
         // Enable FLL
         __bic_SR_register(SCG0);
+        
+        // Special case: if we're using one of the factory-calibrated values for CSCTL0 (see above),
+        // we need to delay 10 FLL reference clock cycles. We do this by temporarily switching MCLK
+        // to be sourced by REFOCLK (performed above), and waiting 10 cycles.
+        // This technique is prescribed by "MSP430FR2xx/FR4xx DCO+FLL Applications Guide", and shown
+        // by the "MSP430FR2x5x_FLL_FastLock_24MHz-16MHz.c" example code.
+        if constexpr (T_MCLKFreqHz == 16000000) {
+            __delay_cycles(10);
+        }
+        
+        // Wait until FLL locks
+        while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
         // MCLK=DCOCLK, ACLK=XT1
         CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
