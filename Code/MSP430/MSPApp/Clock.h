@@ -90,7 +90,7 @@ public:
         // Restore CSCTL1
         CSCTL1 = _CSCTL1();
         // Enable FLL
-        __bis_SR_register(SCG0);
+        __bic_SR_register(SCG0);
     }
     
     [[gnu::always_inline]]

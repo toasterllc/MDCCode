@@ -95,6 +95,12 @@ public:
     static void Sleep() {
         // Disable FLL
         __bis_SR_register(SCG0);
+        const uint16_t CSCTL0Cached = CSCTL0;
+//        // Clear DCO and MOD registers
+//        const uint8_t MOD = 0; // 0-31
+////        const uint8_t DCO = 0; // 0-511
+//        const uint16_t DCO = 511; // 0-511
+//        CSCTL0 = (MOD<<9) | DCO;
         // Config for 2MHz
         CSCTL1 = DCORSEL_1 | _CSCTL1Default;
         // Wait 3 cycles to take effect
@@ -104,12 +110,14 @@ public:
         // Handle wake
         #warning TODO: remove this check once we know FLL isn't active upon wake
         Assert(__get_SR_register() & SCG0);
-        // Clear DCO and MOD registers
-        CSCTL0 = 0;
         // Restore CSCTL1
+        uint8_t MOD = 0;
+        uint16_t DCO = CSCTL0Cached & 0x1FF;
+        DCO -= 64;
+        CSCTL0 = (MOD<<9) | DCO;
         CSCTL1 = _CSCTL1();
         // Enable FLL
-        __bis_SR_register(SCG0);
+        __bic_SR_register(SCG0);
     }
     
     [[gnu::always_inline]]
@@ -165,7 +173,7 @@ using _Clock = T_Clock<_MCLKFreqHz>;
 void _ISR_PORT1() {
     switch (P1IV) {
     case _Pin::INT::IVPort1():
-        _Clock::Wake();
+//        _Clock::Wake();
         break;
     default:
         Assert(false);
@@ -176,7 +184,7 @@ void _ISR_PORT1() {
 void _ISR_PORT2() {
     switch (P2IV) {
     case _Pin::BUTTON::IVPort2():
-        _Pin::LED1::Write(!_Pin::LED1::Read());
+        _Clock::Wake();
 //        __bic_SR_register(LPM3_bits);
         break;
     default:
@@ -205,8 +213,8 @@ int main() {
         _Pin::MCLK
     >();
     
-    __bis_SR_register(GIE | LPM3_bits);
-    for (;;);
+//    __bis_SR_register(GIE | LPM3_bits);
+//    for (;;);
     
 //    for (;;) {
 //        if (!_Pin::BUTTON::Read()) {
@@ -221,8 +229,11 @@ int main() {
 //        __bis_SR_register(GIE | LPM3_bits);
 //    }
     
-//    for (;;) {
-//        _Pin::LED1::Write(!_Pin::LED1::Read());
-//        _Clock::Sleep();
-//    }
+    __delay_cycles(5000000);
+    
+    for (;;) {
+        _Pin::LED1::Write(!_Pin::LED1::Read());
+        __delay_cycles(1000000);
+        _Clock::Sleep();
+    }
 }
