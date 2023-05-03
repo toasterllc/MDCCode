@@ -94,7 +94,7 @@ public:
     }
     
     [[gnu::always_inline]]
-    static constexpr uint16_t Wake() {
+    static void Wake() {
         // Wake from sleep, but don't start FLL yet
         __bic_SR_register_on_exit(LPM3_bits & ~SCG0);
     }
