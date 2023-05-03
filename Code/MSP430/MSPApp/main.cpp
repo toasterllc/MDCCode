@@ -1043,6 +1043,17 @@ uint8_t _TaskMainStack[_TaskMainStackSize];
 asm(".global _StartupStack");
 asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
 
+// _OnSaved: remembers our power state across crashes and LPM3.5.
+// This is needed because we don't want the device to return to the
+// powered-off state after a crash.
+//
+// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
+//
+// Apparently it has to be stored outside of _TaskMain for the gnu::section
+// attribute to work.
+[[gnu::section(".ram_backup_bss._TaskMain")]]
+static inline bool _OnSaved = false;
+
 struct _TaskMain {
     static void _Init() {
         // Disable interrupts while we init our subsystems
@@ -1108,16 +1119,16 @@ struct _TaskMain {
 //            __delay_cycles(1000000);
 //        }
         
-        _Pin::LED_RED_::Write(1);
-        _Pin::LED_GREEN_::Write(1);
-        for (;;) {
-            _Pin::LED_RED_::Write(0);
-//            __delay_cycles(1000000);
-            _Scheduler::Delay(_Scheduler::Ms<100>);
-            _Pin::LED_RED_::Write(1);
-//            __delay_cycles(1000000);
-            _Scheduler::Delay(_Scheduler::Ms<100>);
-        }
+//        _Pin::LED_RED_::Write(1);
+//        _Pin::LED_GREEN_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+////            __delay_cycles(1000000);
+//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//            _Pin::LED_RED_::Write(1);
+////            __delay_cycles(1000000);
+//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//        }
         
         // Init RTC
         // We need RTC to be unconditionally enabled for 2 reasons:
@@ -1157,12 +1168,12 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
 //        
-//        for (bool on_=false;; on_=!on_) {
-//            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
-//            _LEDGreen_.set(_LEDPriority::Power, on_);
-////            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
-//            _Scheduler::Wait([] { return _EventTimer::Fired(); });
-//        }
+        for (bool on_=false;; on_=!on_) {
+            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
+            _LEDGreen_.set(_LEDPriority::Power, on_);
+//            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
+            _Scheduler::Wait([] { return _EventTimer::Fired(); });
+        }
         
 //        for (;;) {
 //            _Pin::LED_RED_::Write(1);
@@ -1253,15 +1264,6 @@ struct _TaskMain {
     
     // _On: controls user-visible on/off behavior
     static inline _Powered::Assertion _On;
-    
-    // _OnSaved: remembers our power state across crashes and LPM3.5.
-    // This is needed because we don't want the device to return to the
-    // powered-off state after a crash.
-    // Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
-    // gnu::used is apparently necessary for the gnu::section attribute to
-    // work when link-time optimization is enabled.
-    [[gnu::section(".ram_backup._TaskMain"), gnu::used]]
-    static inline bool _OnSaved = false;
     
     // _SysTickEnabled: controls whether the SysTick timer is enabled
     // We disable SysTick when going to sleep if no tasks are waiting for a certain amount of time to pass
