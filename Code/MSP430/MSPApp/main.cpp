@@ -39,17 +39,18 @@ static constexpr uint32_t _SysTickFreqHz    = 2048;         // 2.048 kHz
 
 struct _Pin {
     // Port A
-    using VDD_B_1V8_IMG_SD_EN       = PortA::Pin<0x0, Option::Output0>;
-    using LED_GREEN_                = PortA::Pin<0x1, Option::Output1>;
+    using LED_RED_                  = PortA::Pin<0x0, Option::Output0>;
+    using LED_GREEN_                = PortA::Pin<0x1, Option::Output0>;
     using MSP_STM_I2C_SDA           = PortA::Pin<0x2>;
-    using MSP_STM_I2C_SCL           = PortA::Pin<0x3>;
+    using MSP_STM_I2C_SCL           = PortA::Pin<0x2>;
+    using MCLK                      = PortA::Pin<0x3, Option::Output0, Option::Sel10>; // P1.3 (MCLK)
     using ICE_MSP_SPI_DATA_OUT      = PortA::Pin<0x4>;
     using ICE_MSP_SPI_DATA_IN       = PortA::Pin<0x5>;
     using ICE_MSP_SPI_CLK           = PortA::Pin<0x6>;
     using BAT_CHRG_LVL              = PortA::Pin<0x7, Option::Input>; // No pullup/pulldown because this is an analog input (and the voltage divider provides a physical pulldown)
     using MSP_XOUT                  = PortA::Pin<0x8>;
     using MSP_XIN                   = PortA::Pin<0x9>;
-    using LED_RED_                  = PortA::Pin<0xA, Option::Output1>;
+    using VDD_B_1V8_IMG_SD_EN       = PortA::Pin<0xA, Option::Output0>;
     using VDD_B_2V8_IMG_SD_EN       = PortA::Pin<0xB, Option::Output0>;
     using MOTION_SIGNAL             = PortA::Pin<0xC>;
     using BUTTON_SIGNAL_            = PortA::Pin<0xD>;
@@ -1085,38 +1086,41 @@ struct _TaskMain {
             
             // LEDs
             _Pin::LED_GREEN_,
-            _Pin::LED_RED_
+            _Pin::LED_RED_,
+            
+            _Pin::MCLK
         >();
         
         // Init clock
         _Clock::Init();
         
+//        _Pin::LED_RED_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+//        }
+        
+//        _Pin::LED_RED_::Write(1);
+//        _Pin::LED_GREEN_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+//        }
+        
         _Pin::LED_RED_::Write(1);
+        _Pin::LED_GREEN_::Write(1);
         for (;;) {
             _Pin::LED_RED_::Write(0);
-            __delay_cycles(1000000);
+//            __delay_cycles(1000000);
+            _Scheduler::Delay(_Scheduler::Ms<100>);
             _Pin::LED_RED_::Write(1);
-            __delay_cycles(1000000);
+//            __delay_cycles(1000000);
+            _Scheduler::Delay(_Scheduler::Ms<100>);
         }
-        
-//        _Pin::LED_RED_::Write(1);
-//        _Pin::LED_GREEN_::Write(1);
-//        for (;;) {
-//            _Pin::LED_RED_::Write(0);
-//            __delay_cycles(1000000);
-//            _Pin::LED_RED_::Write(1);
-//            __delay_cycles(1000000);
-//        }
-        
-        
-//        _Pin::LED_RED_::Write(1);
-//        _Pin::LED_GREEN_::Write(1);
-//        for (;;) {
-//            _Pin::LED_RED_::Write(0);
-//            _Scheduler::Delay(_Scheduler::Ms<100>);
-//            _Pin::LED_RED_::Write(1);
-//            _Scheduler::Delay(_Scheduler::Ms<100>);
-//        }
         
         // Init RTC
         // We need RTC to be unconditionally enabled for 2 reasons:
@@ -1185,14 +1189,14 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
-        for (;;) {
-//            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
-            _Pin::LED_RED_::Write(0);
-            _Scheduler::Sleep(_Scheduler::Ms<100>);
-            
-            _Pin::LED_RED_::Write(1);
-            _Scheduler::Sleep(_Scheduler::Ms<100>);
-        }
+//        for (;;) {
+////            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
+//            _Pin::LED_RED_::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//            
+//            _Pin::LED_RED_::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -1237,7 +1241,10 @@ struct _TaskMain {
         // We do this to prevent ourself from waking up unnecessarily, saving power.
         _SysTick = _Scheduler::TickRequired();
         
-        _Clock::Sleep(_SysTick);
+        // We consider the sleep 'extended' if SysTick isn't needed during the sleep
+//        const bool extendedSleep = true;
+        const bool extendedSleep = !_SysTick;
+        _Clock::Sleep(extendedSleep);
         
         // Unconditionally enable SysTick while we're awake
         _SysTick = true;

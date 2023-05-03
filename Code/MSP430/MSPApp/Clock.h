@@ -42,7 +42,16 @@ public:
             // when we set CSCTL1.DCORSEL on the next line. This is necessary to prevent overshoot,
             // since the current value of CSCTL0.DCO/CSCTL0.MOD pertains to the whatever value of
             // CSCTL1.DCORSEL we currently have set, and not the value we're about to set.
-            CSCTL0 = 0;
+            //
+            // Special case: use the factory-calibrated values for CSCTL0 if one is available for the
+            // target frequency. This significantly speeds up the FLL lock time; without this technique,
+            // it takes ~200ms to get an FLL lock (datasheet specifies 280ms as typical). Using the
+            // factory-calibrated value, an FLL lock takes 800us.
+            if constexpr (T_MCLKFreqHz == 16000000) {
+                CSCTL0 = _CSCTL0Compensate(*CSCTL0Cal16MHz);
+            } else {
+                CSCTL0 = 0;
+            }
             
             // Set the frequency range, CSCTL1.DCORSEL
             CSCTL1 = _CSCTL1();
@@ -50,43 +59,30 @@ public:
             // Configure FLL via CSCTL2.FLLD, CSCTL2.FLLN
             CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/_REFOCLKFreqHz)-1);
             
-            // Special case: use the factory-calibrated values for CSCTL0 if one is available for the
-            // target frequency. This significantly speeds up the FLL lock time; without this technique,
-            // it takes ~200ms to get an FLL lock (datasheet specifies 280ms as typical). Using the
-            // factory-calibrated value, an FLL lock takes 800us.
-            //
-            // We switch MCLK=REFOCLK before setting CSCTL0, so that MCLK isn't sourced from DCOCLKDIV
-            // while FLL is acquiring a lock, because during this time the FLL may overshoot the target
-            // frequency, which could violate the MCLK max frequency. This is only an issue when using
-            // calibrated CSCTL0 values because we use 0 otherwise, which is the minimum value for a
-            // CSCTL1.DCORSEL range so we don't have to worry about overshoot.
-            if constexpr (T_MCLKFreqHz == 16000000) {
-                CSCTL4 = SELMS__REFOCLK | SELA__REFOCLK;
-                CSCTL0 = *CSCTL0Cal16MHz;
-            }
+            // MCLK=DCOCLK, ACLK=XT1
+            #warning TODO: change back to SELA__XT1CLK
+            CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
             
             // "Execute NOP three times to allow time for the settings to be applied."
             __delay_cycles(3);
         // Enable FLL
         __bic_SR_register(SCG0);
         
-        // Special case: if we're using one of the factory-calibrated values for CSCTL0 (see above),
-        // we need to delay 10 FLL reference clock cycles. We do this by temporarily switching MCLK
-        // to be sourced by REFOCLK (performed above), and waiting 10 cycles.
-        // This delay is prescribed by "MSP430FR2xx/FR4xx DCO+FLL Applications Guide", and shown by
-        // the "MSP430FR2x5x_FLL_FastLock_24MHz-16MHz.c" example code.
-        if constexpr (T_MCLKFreqHz == 16000000) {
-            __delay_cycles(10);
-        }
-        
-        // Wait until FLL locks
+        // Wait for FLL to lock
+        // We can't use T_Scheduler::Delay() here because it calls our Sleep(), which stops the FLL,
+        // and we need the FLL to be running to acquire a lock.
         while (!_FLLLocked());
         
         // Cache _CSCTL0Compensated now that the FLL has locked, so we can get good reading of CSCTL0
         _CSCTL0Compensated = _CSCTL0Compensate(CSCTL0);
         
-        // MCLK=DCOCLK, ACLK=XT1
-        CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
+        // Wait up to 2 seconds for XT1 to be ready.
+        // The MSP430FR2433 datasheet claims 1s is typical for XT1 to start.
+        for (uint16_t i=0; i<200 && _ClockFaults(); i++) {
+            _ClockFaultsClear();
+            T_Scheduler::Delay(_Ms<10>);
+        }
+        Assert(!_ClockFaults());
         
         // Set MCLK/SMCLK dividers
         //
@@ -98,14 +94,6 @@ public:
         // We're not setting CSCTL5 because its default value is what we want.
         //
         // CSCTL5 = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1 | DIVM__1;
-        
-        // Wait up to 2 seconds for XT1 to start
-        // The MSP430FR2433 datasheet claims 1s is typical
-        for (uint16_t i=0; i<20 && _ClockFaults(); i++) {
-            _ClockFaultsClear();
-            T_Scheduler::Delay(_Ms<100>);
-        }
-        Assert(!_ClockFaults());
         
         // Now that we've cleared the oscillator faults, enable the oscillator fault interrupt
         // so we know if something goes awry in the future. This will call our ISR and we'll
@@ -213,10 +201,6 @@ private:
         return (dco>Sub ? dco-Sub : 1);
     }
     
-    static bool _FLLLocked() {
-        return !(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
-    }
-    
 //    static void _SleepEnable() {
 //        // Disable FLL
 //        __bis_SR_register(SCG0);
@@ -242,6 +226,10 @@ private:
 //        else      return Default | DIVM__2;
 //    }
     
+    static bool _FLLLocked() {
+        return !(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
+    }
+    
     static void _ClockFaultsClear() {
         CSCTL7 &= ~(XT1OFFG | DCOFFG);
         SFRIFG1 &= ~OFIFG;
@@ -250,4 +238,10 @@ private:
     static bool _ClockFaults() {
         return SFRIFG1 & OFIFG;
     }
+    
+//    static bool _ClockReady() {
+//        const bool faults = SFRIFG1 & OFIFG;
+//        const bool fllLocked = !(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
+//        return !faults && fllLocked;
+//    }
 };
