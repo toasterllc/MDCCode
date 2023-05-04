@@ -38,7 +38,7 @@ public:
     }
     
     static bool ISR(uint16_t iv) {
-        switch (__even_in_range(iv, TA1IV_TAIFG)) {
+        switch (iv) {
         case TA1IV_TAIFG:
             return T_Scheduler::Tick();
         default:

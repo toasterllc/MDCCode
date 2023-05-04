@@ -126,7 +126,7 @@ public:
     }
     
     static void ISR(uint16_t iv) {
-        switch (__even_in_range(iv, ADCIV_ADCIFG)) {
+        switch (iv) {
         case ADCIV_ADCIFG:  _SampleHandle(ADCMEM0); break;
         default:            Assert(false); break;
         }

@@ -183,7 +183,7 @@ public:
     }
     
     static void ISR(uint16_t iv) {
-        switch (__even_in_range(iv, RTCIV_RTCIF)) {
+        switch (iv) {
         case RTCIV_RTCIF:
             // Update our time
             _RTCTime += InterruptIntervalTicks;

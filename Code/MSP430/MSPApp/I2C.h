@@ -84,7 +84,7 @@ public:
     }
     
     static void ISR_I2C(uint16_t iv) {
-        switch (__even_in_range(iv, USCI_I2C_UCTXIFG0)) {
+        switch (iv) {
         case USCI_I2C_UCSTTIFG: _Ev |= _EventStart; break;
         case USCI_I2C_UCSTPIFG: _Ev |= _EventStop;  break;
         case USCI_I2C_UCRXIFG0: _Ev |= _EventRx;    break;

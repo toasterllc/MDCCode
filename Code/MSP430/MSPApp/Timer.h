@@ -91,11 +91,11 @@ public:
             
             _ISRState = {
                 .rtc = {
-                    .count = rtcCount,
+                    .count = 0,
                 },
                 .timer = {
-                    .intervalCount = intervalCount,
-                    .remainderTocks = remainderTocks,
+                    .intervalCount = 2048,
+                    .remainderTocks = 0,
                 },
             };
         }
@@ -124,7 +124,7 @@ public:
     }
     
     static bool ISRTimer(uint16_t iv) {
-        switch (__even_in_range(iv, TA0IV_TAIFG)) {
+        switch (iv) {
         case TA0IV_TAIFG:
             Assert(_ISRState.state==_State::TimerInterval || _ISRState.state==_State::TimerRemainder);
             _StateUpdate();

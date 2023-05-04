@@ -954,8 +954,8 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::LEDSet:
-            _LEDRed_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
-            _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
+//            _LEDRed_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
+//            _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::TimeGet:
@@ -1153,9 +1153,9 @@ struct _TaskMain {
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
         // restore our _On assertion based on it.
-        if (_OnSaved) {
+//        if (_OnSaved) {
             _On = true;
-        }
+//        }
     }
     
     static void Run() {
@@ -1167,13 +1167,26 @@ struct _TaskMain {
 //            _Pin::LED_RED_::Write(0);
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
-//        
+        
+//        _Pin::LED_RED_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+//        }
+        
         for (bool on_=false;; on_=!on_) {
-            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
-            _LEDGreen_.set(_LEDPriority::Power, on_);
-//            _EventTimer::Schedule(_RTC::Now() + 37*60*Time::TicksFreq::num);
+            _Pin::LED_GREEN_::Write(on_);
+            __delay_cycles(1000000);
+            _EventTimer::Schedule(_RTC::Now() + 4*Time::TicksFreq::num);
             _Scheduler::Wait([] { return _EventTimer::Fired(); });
         }
+        
+//        for (bool on_=false;; on_=!on_) {
+//            _Pin::LED_GREEN_::Write(on_);
+//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
+//        }
         
 //        for (;;) {
 //            _Pin::LED_RED_::Write(1);
@@ -1243,8 +1256,9 @@ struct _TaskMain {
         _SysTick = _Scheduler::TickRequired();
         
         // We consider the sleep 'extended' if SysTick isn't needed during the sleep
+        const bool extendedSleep = false;
 //        const bool extendedSleep = true;
-        const bool extendedSleep = !_SysTick;
+//        const bool extendedSleep = !_SysTick;
         _Clock::Sleep(extendedSleep);
         
         // Unconditionally enable SysTick while we're awake
@@ -1312,7 +1326,9 @@ void _ISR_RTC() {
 void _ISR_TIMER0_A1() {
     const bool wake = _EventTimer::ISRTimer(TA0IV);
     // Wake if directed
-    if (wake) _Clock::Wake();
+    if (wake) {
+        __bic_SR_register_on_exit(LPM3_bits & ~SCG0);
+    }
 }
 
 [[gnu::interrupt]]
@@ -1320,14 +1336,16 @@ void _ISR_TIMER1_A1() {
 //    _Pin::LED_GREEN_::Write(!_Pin::LED_GREEN_::Read());
     const bool wake = _SysTick::ISR(TA1IV);
     // Wake if directed
-    if (wake) _Clock::Wake();
+    if (wake) {
+        __bic_SR_register_on_exit(LPM3_bits & ~SCG0);
+    }
 }
 
 [[gnu::interrupt]]
 void _ISR_PORT2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     const uint16_t iv = P2IV;
-    switch (__even_in_range(iv, 0x10)) {
+    switch (iv) {
     
     // Motion
     case _Pin::MOTION_SIGNAL::IVPort2():
@@ -1376,7 +1394,7 @@ void _ISR_ADC() {
 [[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
 [[gnu::interrupt]]
 void _ISR_UNMI() {
-    switch (__even_in_range(SYSUNIV, SYSUNIV_OFIFG)) {
+    switch (SYSUNIV) {
     case SYSUNIV_NMIIFG:    Assert(false);
     case SYSUNIV_OFIFG:     Assert(false);
     default:                Assert(false);
@@ -1388,7 +1406,7 @@ void _ISR_UNMI() {
 [[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
 [[gnu::interrupt]]
 void _ISR_SYSNMI() {
-    switch (__even_in_range(SYSSNIV, SYSSNIV_CBDIFG)) {
+    switch (SYSSNIV) {
     case SYSSNIV_VMAIFG:    Assert(false);
     default:                Assert(false);
     }
