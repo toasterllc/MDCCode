@@ -954,8 +954,8 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::LEDSet:
-//            _LEDRed_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
-//            _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
+            _LEDRed_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
+            _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::TimeGet:
@@ -1153,9 +1153,9 @@ struct _TaskMain {
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
         // restore our _On assertion based on it.
-//        if (_OnSaved) {
+        if (_OnSaved) {
             _On = true;
-//        }
+        }
     }
     
     static void Run() {
@@ -1176,10 +1176,11 @@ struct _TaskMain {
 //            __delay_cycles(1000000);
 //        }
         
+//        _On = false;
         for (bool on_=false;; on_=!on_) {
-            _Pin::LED_GREEN_::Write(on_);
             __delay_cycles(1000000);
-            _EventTimer::Schedule(_RTC::Now() + 4*Time::TicksFreq::num);
+            _Pin::LED_GREEN_::Write(on_);
+            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
             _Scheduler::Wait([] { return _EventTimer::Fired(); });
         }
         
@@ -1256,9 +1257,9 @@ struct _TaskMain {
         _SysTick = _Scheduler::TickRequired();
         
         // We consider the sleep 'extended' if SysTick isn't needed during the sleep
-        const bool extendedSleep = false;
+//        const bool extendedSleep = false;
 //        const bool extendedSleep = true;
-//        const bool extendedSleep = !_SysTick;
+        const bool extendedSleep = !_SysTick;
         _Clock::Sleep(extendedSleep);
         
         // Unconditionally enable SysTick while we're awake
@@ -1325,10 +1326,17 @@ void _ISR_RTC() {
 [[gnu::interrupt]]
 void _ISR_TIMER0_A1() {
     const bool wake = _EventTimer::ISRTimer(TA0IV);
+    
+//    _Pin::LED_RED_::Write(1);
+//    for (;;) {
+//        _Pin::LED_RED_::Write(1);
+//        __delay_cycles(1000000);
+//        _Pin::LED_RED_::Write(0);
+//        __delay_cycles(1000000);
+//    }
+    
     // Wake if directed
-    if (wake) {
-        __bic_SR_register_on_exit(LPM3_bits & ~SCG0);
-    }
+    if (wake) _Clock::Wake();
 }
 
 [[gnu::interrupt]]
@@ -1336,9 +1344,7 @@ void _ISR_TIMER1_A1() {
 //    _Pin::LED_GREEN_::Write(!_Pin::LED_GREEN_::Read());
     const bool wake = _SysTick::ISR(TA1IV);
     // Wake if directed
-    if (wake) {
-        __bic_SR_register_on_exit(LPM3_bits & ~SCG0);
-    }
+    if (wake) _Clock::Wake();
 }
 
 [[gnu::interrupt]]

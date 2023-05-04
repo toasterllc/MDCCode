@@ -91,13 +91,24 @@ public:
             
             _ISRState = {
                 .rtc = {
-                    .count = 0,
+                    .count = rtcCount,
                 },
                 .timer = {
-                    .intervalCount = 2048,
-                    .remainderTocks = 0,
+                    .intervalCount = intervalCount,
+                    .remainderTocks = remainderTocks,
                 },
             };
+            
+            
+//            _ISRState = {
+//                .rtc = {
+//                    .count = 0,
+//                },
+//                .timer = {
+//                    .intervalCount = 0,
+//                    .remainderTocks = 4,
+//                },
+//            };
         }
         
         _StateUpdate();
