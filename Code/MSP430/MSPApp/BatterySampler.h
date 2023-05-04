@@ -128,7 +128,7 @@ public:
     static void ISR(uint16_t iv) {
         switch (iv) {
         case ADCIV_ADCIFG:  _SampleHandle(ADCMEM0); break;
-        default:            Assert(false); break;
+        default:            Assert(false);
         }
     }
     

@@ -14,6 +14,7 @@
 #include "SD.h"
 #include "ImgSD.h"
 #include "MSP.h"
+#include "MSPDebug.h"
 #include "ELF32Binary.h"
 #include "Time.h"
 #include "Clock.h"
@@ -44,6 +45,7 @@ const CmdStr MSPTimeSetCmd          = "MSPTimeSet";
 const CmdStr MSPSBWReadCmd          = "MSPSBWRead";
 const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
 const CmdStr MSPSBWEraseCmd         = "MSPSBWErase";
+const CmdStr MSPSBWLogCmd           = "MSPSBWLog";
 const CmdStr SDReadCmd              = "SDRead";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 
@@ -75,6 +77,7 @@ static void printUsage() {
     cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
     cout << "  " << MSPSBWWriteCmd          << " <file>\n";
     cout << "  " << MSPSBWEraseCmd          << "\n";
+    cout << "  " << MSPSBWLogCmd            << "\n";
     
     cout << "  " << SDReadCmd               << " <addr> <blockcount> <output>\n";
     cout << "  " << ImgCaptureCmd           << " <output.cfa>\n";
@@ -206,6 +209,8 @@ static Args parseArgs(int argc, const char* argv[]) {
         args.MSPSBWWrite.filePath = strs[1];
     
     } else if (args.cmd == lower(MSPSBWEraseCmd)) {
+    
+    } else if (args.cmd == lower(MSPSBWLogCmd)) {
     
     } else if (args.cmd == lower(SDReadCmd)) {
         if (strs.size() < 4) throw std::runtime_error("missing argument: address/length/file");
@@ -624,6 +629,7 @@ static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
 static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
     device.mspSBWLock();
     device.mspSBWConnect();
+    device.mspSBWHalt();
     
     printf("Reading [0x%08jx,0x%08jx):\n",
         (uintmax_t)args.MSPSBWRead.addr,
@@ -639,6 +645,7 @@ static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
     
     printf("\n");
     
+    device.mspSBWReset();
     device.mspSBWDisconnect();
     device.mspSBWUnlock();
 }
@@ -648,6 +655,7 @@ static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
     
     device.mspSBWLock();
     device.mspSBWConnect();
+    device.mspSBWHalt();
     
     // Write the data
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
@@ -672,6 +680,7 @@ static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
         }
     });
     
+    device.mspSBWReset();
     device.mspSBWDisconnect();
     device.mspSBWUnlock();
 }
@@ -682,6 +691,99 @@ static void MSPSBWErase(const Args& args, MDCUSBDevice& device) {
     device.mspSBWErase();
     device.mspSBWUnlock();
     std::cout << "-> OK\n\n";
+}
+
+static size_t _Width(MSP::Debug::LogPacket::Type x) {
+    using X = MSP::Debug::LogPacket::Type;
+    switch (x) {
+    case X::Dec16: return 2;
+    case X::Dec32: return 4;
+    case X::Dec64: return 8;
+    case X::Hex16: return 2;
+    case X::Hex32: return 4;
+    case X::Hex64: return 8;
+    default:       return 0;
+    }
+}
+
+static void _Print(MSP::Debug::LogPacket::Type t, uint64_t x) {
+    using X = MSP::Debug::LogPacket::Type;
+    switch (t) {
+    case X::Dec16:
+    case X::Dec32:
+    case X::Dec64:
+        printf("%ju", (uintmax_t)x);
+        return;
+    case X::Hex16:
+        printf("0x%04jx", (uintmax_t)x);
+        return;
+    case X::Hex32:
+        printf("0x%08jx", (uintmax_t)x);
+        return;
+    case X::Hex64:
+        printf("0x%016jx", (uintmax_t)x);
+        return;
+    default:
+        abort();
+    }
+}
+
+static void MSPSBWLog(const Args& args, MDCUSBDevice& device) {
+    using namespace MSP::Debug;
+    LogPacket log[Toastbox::USB::Endpoint::MaxPacketSizeBulk / sizeof(LogPacket)];
+    
+    std::cout << "MSPSBWLog\n";
+    device.mspSBWLock();
+    device.mspSBWConnect();
+    device.mspSBWLog();
+    std::cout << "-> OK:\n\n";
+    
+    struct {
+        LogPacket::Type type = LogPacket::Type::Chars;
+        size_t off = 0;
+        union {
+            uint8_t u8[8];
+            uint64_t u64 = 0;
+        };
+    } state;
+    
+    for (;;) {
+        const size_t count = device.readout(log, sizeof(log)) / sizeof(LogPacket);
+        for (size_t i=0; i<count; i++) {
+            LogPacket& p = log[i];
+            
+            // Enter int-reading state if we're currently in the chars-reading state,
+            // and we get a DecXXX/HexXXX packet.
+            if (!_Width(state.type) && _Width(p.type)) {
+                state = { .type = p.type };
+            
+            // Continue handling int
+            } else if (_Width(state.type)) {
+                state.u8[state.off+0] = p.u8[0];
+                state.u8[state.off+1] = p.u8[1];
+                state.off += 2;
+                if (state.off == _Width(state.type)) {
+                    // Done with current int, print it
+                    _Print(state.type, state.u64);
+                    // Reset state
+                    state = {};
+                }
+            
+            // Print chars
+            } else {
+                for (uint8_t c : p.u8) {
+                    if (!c) break;
+                    std::cout << (char)c;
+                }
+            }
+        }
+        
+        std::cout << std::flush;
+    }
+    
+    #warning TODO: handle signal to cleanup
+    device.mspSBWDisconnect();
+    device.mspSBWUnlock();
 }
 
 static void SDRead(const Args& args, MDCUSBDevice& device) {
@@ -802,6 +904,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPSBWReadCmd))          MSPSBWRead(args, device);
         else if (args.cmd == lower(MSPSBWWriteCmd))         MSPSBWWrite(args, device);
         else if (args.cmd == lower(MSPSBWEraseCmd))         MSPSBWErase(args, device);
+        else if (args.cmd == lower(MSPSBWLogCmd))           MSPSBWLog(args, device);
         else if (args.cmd == lower(SDReadCmd))              SDRead(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))          ImgCapture(args, device);
     

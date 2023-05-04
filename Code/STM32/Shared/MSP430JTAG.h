@@ -1,6 +1,7 @@
 #pragma once
-#include <string.h>
+#include <cstring>
 #include <type_traits>
+#include <optional>
 #include "GPIO.h"
 #include "Toastbox/Scheduler.h"
 
@@ -22,76 +23,149 @@ public:
         _PinsReset();
     }
     
+    // Connect(): connect to target
+    // Does not stop target
+    // Prerequisites: none
     static Status Connect() {
-        if (_Connected) return Status::OK; // Short-circuit
+        // Perform JTAG entry sequence with RST_=1
+        _JTAGStart(1);
         
-        for (int i=0; i<3; i++) {
-            // Perform JTAG entry sequence with RST_=1
-            _JTAGStart(1);
-            
-            // Reset JTAG state machine (test access port, TAP)
-            _TAPReset();
-            
-            // Validate the JTAG ID
-            if (_JTAGIDGet() != _JTAGID) {
-                continue; // Try again
-            }
-            
-            // Check JTAG fuse blown state
-            if (_JTAGFuseBlown()) {
-                return Status::JTAGDisabled;
-            }
-            
-            // Validate the Core ID
-            if (_CoreID() == 0) {
-                continue; // Try again
-            }
-            
-            // Set device into JTAG mode + read
-            _IRShift(_IR_CNTRL_SIG_16BIT);
-            _DRShift<16>(0x1501);
-            
-            // Wait until CPU is sync'd
-            if (!_CPUSyncWait()) {
-                continue;
-            }
-            
-            // Reset CPU
-            if (!_CPUReset()) {
-                continue; // Try again
-            }
-            
-            // Validate the Device ID
-            {
-                const uint16_t deviceID = _DeviceIDGet();
-                if (deviceID != _DeviceID) {
-                    continue; // Try again
-                }
-            }
-            
-            // Disable MPU (so we can write to FRAM)
-            if (!_MPUDisable()) {
-                continue; // Try again
-            }
-            
-            // Nothing failed!
-            _Connected = true;
-            return Status::OK;
+        // Reset JTAG state machine (test access port, TAP)
+        _TAPReset();
+        
+        // Validate the JTAG ID
+        if (_JTAGIDGet() != _JTAGID) {
+            return Status::Error;
         }
         
-        // Too many failures
-        return Status::Error;
-    }
-    
-    static void Disconnect() {
-        if (!_Connected) return; // Short-circuit
-        _JTAGEnd();
-        _Connected = false;
-    }
-    
-    static Status Erase() {
-        _Connected = false;
+        // Check JTAG fuse blown state
+        if (_JTAGFuseBlown()) {
+            return Status::JTAGDisabled;
+        }
         
+        // Validate the Core ID
+        if (_CoreID() == 0) {
+            return Status::Error;
+        }
+        
+        // Nothing failed!
+        return Status::OK;
+    }
+    
+    // Halt(): stops target and puts it in a predefined state.
+    // Memory can be safely read/written after halting.
+    // Prerequisites: Connect()
+    static Status Halt() {
+        // Set device into JTAG mode + read
+        _IRShift(_IR_CNTRL_SIG_16BIT);
+        _DRShift<16>(0x1501);
+        
+        // Wait until CPU is sync'd
+        if (!_CPUSyncWait()) {
+            return Status::Error;
+        }
+        
+        // Reset CPU
+        if (!_CPUReset()) {
+            return Status::Error;
+        }
+        
+        // Validate the Device ID
+        {
+            const uint16_t deviceID = _DeviceIDGet();
+            if (deviceID != _DeviceID) {
+                return Status::Error;
+            }
+        }
+        
+        // Disable MPU (so we can write to FRAM)
+        if (!_MPUDisable()) {
+            return Status::Error;
+        }
+        
+        // Nothing failed!
+        return Status::OK;
+    }
+    
+//    static Status Connect() {
+//        if (_Connected) return Status::OK; // Short-circuit
+//        
+//        for (int i=0; i<3; i++) {
+//            // Perform JTAG entry sequence with RST_=1
+//            _JTAGStart(1);
+//            
+//            // Reset JTAG state machine (test access port, TAP)
+//            _TAPReset();
+//            
+//            // Validate the JTAG ID
+//            if (_JTAGIDGet() != _JTAGID) {
+//                continue; // Try again
+//            }
+//            
+//            // Check JTAG fuse blown state
+//            if (_JTAGFuseBlown()) {
+//                return Status::JTAGDisabled;
+//            }
+//            
+//            // Validate the Core ID
+//            if (_CoreID() == 0) {
+//                continue; // Try again
+//            }
+//            
+//            
+//        }
+//        
+//        // Too many failures
+//        return Status::Error;
+//    }
+//    
+//    static void Run() {
+//        if (!_Connected) return; // Short-circuit
+//        _TclkSet(0);
+//        _IRShift(_IR_CNTRL_SIG_16BIT);
+//        _DRShift<16>(0x0401); // Deassert POR
+//    }
+    
+//    static void Disconnect() {
+//        if (!_Connected) return; // Short-circuit
+//        _JTAGEnd();
+//        _Connected = false;
+//    }
+    
+    // Reset(): clear SYSRSTIV and trigger BOR
+    // Prerequisites: Connect()
+    static void Reset() {
+//        // Reset CPU
+//        _IRShift(_IR_CNTRL_SIG_16BIT);
+//        _DRShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
+//        _DRShift<16>(0x0401); // Deassert POR
+        
+        // Read the SYSRSTIV until it's clear
+        // It appears that SYSRSTIV can accumulate multiple values while we held the device
+        // under JTAG control, due to multiple XXXIFG flags being set.
+        for (int i=0; i<20; i++) {
+            const uint16_t iv = _Read16(_SYSRSTIVAddr);
+            if (!iv) break;
+        }
+        
+        // Trigger a software BOR
+        _Write16(_PMMCTL0Addr, _PMMCTL0TriggerBOR);
+    }
+    
+    // Disconnect(): disconnect JTAG
+    // Prerequisites: Connect()
+    static void Disconnect() {
+        if (!_Test::Read()) return; // Short-circuit if we're already disconnected
+        
+        // Release JTAG control
+        _IRShift(_IR_CNTRL_SIG_RELEASE);
+        // Return pins to default state
+        _PinsReset();
+    }
+    
+    // Erase(): erase target / unlock JTAG (if previously locked)
+    // Prerequisites: none (Connect() does not need to be called)
+    static Status Erase() {
         // Perform JTAG entry sequence with RST_=0
         _JTAGStart(0);
         // Reset JTAG TAP
@@ -100,7 +174,7 @@ public:
         bool r = _JMBErase();
         if (!r) return Status::Error;
         
-        _JTAGEnd();
+        Disconnect();
         return Status::OK;
     }
     
@@ -144,6 +218,27 @@ public:
     
     static bool DebugSBWIO(bool tms, bool tclk, bool tdi) {
         return _SBWIO(tms, tclk, tdi);
+    }
+    
+//    struct [[gnu::packed]] JMBData {
+//        union [[gnu::packed]] {
+//            uint8_t u8[4];
+//            uint16_t u16[2];
+//        };
+//    };
+    
+    static std::optional<uint16_t> JMBRead() {
+        _IRShift(_IR_JMB_EXCHANGE);
+        
+//        bool ready = false;
+//        for (int i=0; i<3000 && !ready; i++) {
+//            ready = _DRShift<16>(0) & _JMBMailboxOut0Ready;
+//        }
+//        if (!ready) return std::nullopt; // Timeout
+        
+        if (!(_DRShift<16>(0) & _JMBMailboxOut0Ready)) return std::nullopt;
+        _DRShift<16>(_JMBWidth16 | _JMBDirRead);
+        return (uint16_t)_DRShift<16>(0);
     }
     
 private:
@@ -193,6 +288,7 @@ private:
     static constexpr uint16_t _JMBMailboxOut1Ready  = 0x0008;
     static constexpr uint16_t _JMBDirWrite          = 0x0001; // Direction = writing into mailbox
     static constexpr uint16_t _JMBDirRead           = 0x0004; // Direction = reading from mailbox
+    static constexpr uint16_t _JMBWidth16           = 0x0000; // 16-bit operation
     static constexpr uint16_t _JMBWidth32           = 0x0010; // 32-bit operation
     static constexpr uint16_t _JMBMagicNum          = 0xA55A;
     static constexpr uint16_t _JMBEraseCmd          = 0x1A1A;
@@ -212,7 +308,7 @@ private:
     using _Rst_   = typename Pin::Rst_;
     using _RstIn_ = typename Pin::Rst_::template Opts<GPIO::Option::Input>;
     
-    static inline bool _Connected = false;
+//    static inline bool _Connected = false;
     static inline bool _TclkSaved = 1;
     
     static void _PinsReset() {
@@ -702,16 +798,6 @@ private:
         return true;
     }
     
-    static bool _JMBRead(uint32_t* val=nullptr) {
-        _IRShift(_IR_JMB_EXCHANGE);
-        if (!(_DRShift<16>(0) & _JMBMailboxOut1Ready)) return false;
-        _DRShift<16>(_JMBWidth32 | _JMBDirRead);
-        const uint32_t low = _DRShift<16>(0);
-        const uint32_t high = _DRShift<16>(0);
-        if (val) *val = (high<<16)|low;
-        return true;
-    }
-    
     static void _JTAGStart(bool rst_) {
         // We have strict timing requirements, so disable interrupts.
         // Specifically, the low cycle of TEST can't be longer than 7us,
@@ -752,27 +838,27 @@ private:
         }
     }
     
-    static void _JTAGEnd() {
-        // Reset CPU
-        _IRShift(_IR_CNTRL_SIG_16BIT);
-        _DRShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
-        _DRShift<16>(0x0401); // Deassert POR
-        
-        // Read the SYSRSTIV until it's clear
-        // It appears that SYSRSTIV can accumulate multiple values while we held the device
-        // under JTAG control, due to multiple XXXIFG flags being set.
-        for (int i=0; i<20; i++) {
-            const uint16_t iv = _Read16(_SYSRSTIVAddr);
-            if (!iv) break;
-        }
-        
-        // Trigger a software BOR
-        _Write16(_PMMCTL0Addr, _PMMCTL0TriggerBOR);
-        
-        // Release JTAG control
-        _IRShift(_IR_CNTRL_SIG_RELEASE);
-        
-        // Return pins to default state
-        _PinsReset();
-    }
+//    static void _JTAGEnd() {
+//        // Reset CPU
+//        _IRShift(_IR_CNTRL_SIG_16BIT);
+//        _DRShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
+//        _DRShift<16>(0x0401); // Deassert POR
+//        
+//        // Read the SYSRSTIV until it's clear
+//        // It appears that SYSRSTIV can accumulate multiple values while we held the device
+//        // under JTAG control, due to multiple XXXIFG flags being set.
+//        for (int i=0; i<20; i++) {
+//            const uint16_t iv = _Read16(_SYSRSTIVAddr);
+//            if (!iv) break;
+//        }
+//        
+//        // Trigger a software BOR
+//        _Write16(_PMMCTL0Addr, _PMMCTL0TriggerBOR);
+//        
+//        // Release JTAG control
+//        _IRShift(_IR_CNTRL_SIG_RELEASE);
+//        
+//        // Return pins to default state
+//        _PinsReset();
+//    }
 };

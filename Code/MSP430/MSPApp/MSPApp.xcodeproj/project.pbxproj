@@ -10,6 +10,7 @@
 		5562769F29F353E500998BE2 /* Timer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Timer.h; sourceTree = "<group>"; };
 		5562771729FB15EC00998BE2 /* SysTick.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SysTick.h; sourceTree = "<group>"; };
 		5562771D29FF519E00998BE2 /* InterruptVector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InterruptVector.cpp; sourceTree = "<group>"; };
+		5562771F2A034B2E00998BE2 /* Debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
 		556E45EF26B12023006681FA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		556E45F126B1204A006681FA /* Lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Lib; path = ../../Lib; sourceTree = "<group>"; };
 		556E45F226B12050006681FA /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
@@ -50,6 +51,7 @@
 				5562771729FB15EC00998BE2 /* SysTick.h */,
 				55BCD85C276AAF7C002B4CC7 /* Watchdog.h */,
 				5588914C273C6BCD0004458F /* RTC.h */,
+				5562771F2A034B2E00998BE2 /* Debug.h */,
 				5588914E273C7DEB0004458F /* SPI.h */,
 				55B9EC96293AE38500318243 /* I2C.h */,
 				557CF80A297331F500470493 /* Button.h */,

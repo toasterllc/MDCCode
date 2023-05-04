@@ -402,6 +402,20 @@ public:
         _checkStatus("MSPSBWDisconnect command failed");
     }
     
+    void mspSBWHalt() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWHalt };
+        _sendCmd(cmd);
+        _checkStatus("MSPSBWHalt command failed");
+    }
+    
+    void mspSBWReset() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWReset };
+        _sendCmd(cmd);
+        _checkStatus("MSPSBWReset command failed");
+    }
+    
     void mspSBWRead(uintptr_t addr, void* data, size_t len) {
         assert(_mode == STM::Status::Mode::STMApp);
         
@@ -455,6 +469,12 @@ public:
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWErase };
         _sendCmd(cmd);
         _checkStatus("MSPSBWErase command failed");
+    }
+    
+    void mspSBWLog() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWLog };
+        _sendCmd(cmd);
     }
     
     void mspSBWDebug(const STM::MSPSBWDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
@@ -590,16 +610,16 @@ public:
         return buf;
     }
     
-    void readout(void* dst, size_t len) {
+    size_t readout(void* dst, size_t len) {
         assert(_mode == STM::Status::Mode::STMApp);
-        if (!len) return; // Short-circuit if there's no data to read
+        if (!len) return 0; // Short-circuit if there's no data to read
         
         const size_t mps = _dev.maxPacketSize(STM::Endpoint::DataIn);
         if (len % mps) {
             throw Toastbox::RuntimeError("len isn't a multiple of max packet size (len: %ju, max packet size: %ju)", (uintmax_t)len, (uintmax_t)mps);
         }
         
-        _dev.read(STM::Endpoint::DataIn, dst, len);
+        return _dev.read(STM::Endpoint::DataIn, dst, len);
         
 //        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(Img::PaddedLen);
 //        const size_t lenGot = _dev.read(STM::Endpoint::DataIn, buf.get(), Img::PaddedLen);

@@ -47,9 +47,12 @@ enum class Op : uint8_t {
     MSPSBWUnlock,
     MSPSBWConnect,
     MSPSBWDisconnect,
+    MSPSBWHalt,
+    MSPSBWReset,
     MSPSBWRead,
     MSPSBWWrite,
     MSPSBWErase,
+    MSPSBWLog,
     MSPSBWDebug,
     
     SDInit,

@@ -30,6 +30,7 @@
 #include "SuppressibleAssertion.h"
 #include "Assert.h"
 #include "Timer.h"
+#include "Debug.h"
 using namespace GPIO;
 
 static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz
@@ -182,6 +183,8 @@ using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
 // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
 using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
+
+using _Debug = T_Debug<_Scheduler>;
 
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static_assert(Time::TicksFreq::den == 1); // Check assumption that TicksFreq is an integer
@@ -1150,6 +1153,28 @@ struct _TaskMain {
         // Start tasks
         _Scheduler::Start<_TaskI2C, _TaskMotion>();
         
+        _Pin::LED_GREEN_::Write(1);
+        for (int i=0; i<10; i++) {
+            _Pin::LED_GREEN_::Write(1);
+            __delay_cycles(1000000);
+            _Pin::LED_GREEN_::Write(0);
+            __delay_cycles(1000000);
+        }
+        
+        _Scheduler::Sleep(_Scheduler::Ms<3000>);
+        
+        __delay_cycles(16000000);
+        __delay_cycles(16000000);
+//        SYSJMBC = 0;
+//        SYSJMBC |= JMBMODE;
+//        SYSJMBC = JMBMODE;
+        
+        for (bool on_=0;; on_=!on_) {
+            _Debug::Print("hello\nhow are you today?\n");
+            _Debug::Print(_XT1FreqHz);
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+        }
+        
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
         // restore our _On assertion based on it.
@@ -1177,12 +1202,12 @@ struct _TaskMain {
 //        }
         
 //        _On = false;
-        for (bool on_=false;; on_=!on_) {
-            __delay_cycles(1000000);
-            _Pin::LED_GREEN_::Write(on_);
-            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
-            _Scheduler::Wait([] { return _EventTimer::Fired(); });
-        }
+//        for (bool on_=false;; on_=!on_) {
+//            __delay_cycles(1000000);
+//            _Pin::LED_GREEN_::Write(on_);
+//            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
+//            _Scheduler::Wait([] { return _EventTimer::Fired(); });
+//        }
         
 //        for (bool on_=false;; on_=!on_) {
 //            _Pin::LED_GREEN_::Write(on_);
@@ -1407,14 +1432,20 @@ void _ISR_UNMI() {
     }
 }
 
-[[noreturn]]
-[[gnu::naked]] // No function preamble because we always abort, so we don't need to preserve any registers
 [[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
 [[gnu::interrupt]]
 void _ISR_SYSNMI() {
     switch (SYSSNIV) {
-    case SYSSNIV_VMAIFG:    Assert(false);
-    default:                Assert(false);
+    case SYSSNIV_VMAIFG:
+        Assert(false);
+    case SYSSNIV_JMBOUTIFG:
+        if (_Debug::ISR()) {
+            // Wake ourself if directed
+            _Clock::Wake();
+        }
+        break;
+    default:
+        Assert(false);
     }
 }
 

@@ -12,6 +12,7 @@
 #include "ImgSensor.h"
 #include "ImgSD.h"
 #include "USBConfig.h"
+#include "MSPDebug.h"
 using namespace STM;
 
 static void _Reset();
@@ -1111,7 +1112,6 @@ static void _MSPSBWConnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Acquire mutex to block MSP I2C comms until our SBW IO is done (and _MSPSBWDisconnect() is called)
     const auto mspr = _MSPJTAG::Connect();
     
     // Send status
@@ -1123,6 +1123,26 @@ static void _MSPSBWDisconnect(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     _MSPJTAG::Disconnect();
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _MSPSBWHalt(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const auto mspr = _MSPJTAG::Halt();
+    
+    // Send status
+    _System::USBSendStatus(mspr == _MSPJTAG::Status::OK);
+}
+
+static void _MSPSBWReset(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    _MSPJTAG::Reset();
     
     // Send status
     _System::USBSendStatus(true);
@@ -1196,6 +1216,39 @@ static void _MSPSBWErase(const STM::Cmd& cmd) {
     const auto mspr = _MSPJTAG::Erase();
     
     _System::USBSendStatus(mspr == _MSPJTAG::Status::OK);
+}
+
+static void _MSPSBWLog(const STM::Cmd& cmd) {
+    using namespace MSP::Debug;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Start the USB DataIn task
+    _TaskUSBDataIn::Start();
+    
+    for (;;) {
+        _Scheduler::Wait([] { return _Bufs.wok(); });
+        _Buf& buf = _Bufs.wget();
+        buf.len = 0;
+        
+        for (int i=0; i<64; i++) {
+            const auto jmb = _MSPJTAG::JMBRead();
+            if (!jmb) {
+                _Scheduler::Sleep(_Scheduler::Ms<1>);
+                continue;
+            }
+            
+            memcpy(buf.data+buf.len, &*jmb, sizeof(*jmb));
+            buf.len += sizeof(*jmb);
+        }
+        
+        // Enqueue the buffer if it has data
+        if (buf.len) _Bufs.wpush();
+    }
 }
 
 struct _MSPSBWDebugState {
@@ -1467,10 +1520,13 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPSBWUnlock:          _MSPSBWUnlock(cmd);                 break;
     case Op::MSPSBWConnect:         _MSPSBWConnect(cmd);                break;
     case Op::MSPSBWDisconnect:      _MSPSBWDisconnect(cmd);             break;
+    case Op::MSPSBWHalt:            _MSPSBWHalt(cmd);                   break;
+    case Op::MSPSBWReset:           _MSPSBWReset(cmd);                  break;
     case Op::MSPSBWRead:            _MSPSBWRead(cmd);                   break;
     case Op::MSPSBWWrite:           _MSPSBWWrite(cmd);                  break;
     case Op::MSPSBWErase:           _MSPSBWErase(cmd);                  break;
     case Op::MSPSBWDebug:           _MSPSBWDebug(cmd);                  break;
+    case Op::MSPSBWLog:             _MSPSBWLog(cmd);                    break;
     // SD Card
     case Op::SDInit:                _SDInit(cmd);                       break;
     case Op::SDRead:                _SDRead(cmd);                       break;

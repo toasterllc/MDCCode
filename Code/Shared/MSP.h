@@ -341,11 +341,6 @@ struct [[gnu::packed]] Resp {
     } arg;
 };
 
-
-
-
-
-
 //struct [[gnu::packed]] Triggers {
 //    struct [[gnu::packed]] TimeTrigger {
 //        enum class Type : uint8_t {

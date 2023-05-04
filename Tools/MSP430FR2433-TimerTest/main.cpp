@@ -147,31 +147,6 @@ private:
         return (dco>Sub ? dco-Sub : 1);
     }
     
-//    static void _SleepEnable() {
-//        // Disable FLL
-//        __bis_SR_register(SCG0);
-//        // Config DCO for 2MHz band
-//        // This is necessary for Errata CS13:
-//        //   Device may enter lockup state during transition from AM to LPM3/4
-//        //   if DCO frequency is above 2 MHz.
-//        CSCTL1 = DCORSEL_1 | _CSCTL1Default;
-//        // Wait 3 cycles to take effect
-//        __delay_cycles(3);
-//    }
-//    
-//    static void _SleepDisable() {
-//        // Restore the target frequency band (CSCTL1.DCORSEL)
-//        CSCTL1 = _CSCTL1();
-//        // Enable FLL
-//        __bic_SR_register(SCG0);
-//    }
-//    
-//    static constexpr uint16_t _CSCTL5(bool fast=false) {
-//        static constexpr Default = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1;
-//        if (fast) return Default | DIVM__1;
-//        else      return Default | DIVM__2;
-//    }
-    
     static bool _FLLLocked() {
         return !(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
     }
@@ -184,64 +159,12 @@ private:
     static bool _ClockFaults() {
         return SFRIFG1 & OFIFG;
     }
-    
-//    static bool _ClockReady() {
-//        const bool faults = SFRIFG1 & OFIFG;
-//        const bool fllLocked = !(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
-//        return !faults && fllLocked;
-//    }
 };
 
 
 static constexpr uint32_t _MCLKFreqHz = 16000000;     // 16 MHz
 using _Clock = T_Clock<_MCLKFreqHz>;
 
-[[gnu::interrupt]]
-void _ISR_PORT1() {
-    switch (P1IV) {
-    case _Pin::INT::IVPort1():
-//        __bic_SR_register_on_exit(LPM3_bits);
-        __bic_SR_register_on_exit(GIE | LPM3_bits);
-        break;
-    default:
-        Assert(false);
-    }
-}
-
-[[gnu::interrupt]]
-void _ISR_PORT2() {
-    switch (P2IV) {
-    case _Pin::BUTTON::IVPort2():
-//        __bic_SR_register_on_exit(LPM3_bits);
-        __bic_SR_register_on_exit(GIE | LPM3_bits);
-        break;
-    default:
-        Assert(false);
-    }
-}
-
-[[gnu::interrupt]]
-void _ISR_TIMER0_A1() {
-    switch (TA0IV) {
-    case TA0IV_TAIFG:
-        __bic_SR_register_on_exit(GIE | LPM3_bits);
-//        static uint16_t counter = 0;
-//        counter++;
-//        if (counter == 5000) {
-//            counter = 0;
-//            __bic_SR_register_on_exit(GIE | LPM3_bits);
-//            
-////            _Pin::LEDRED::Write(!_Pin::LEDRED::Read());
-//            
-////        __bic_SR_register_on_exit(LPM3_bits);
-//////        __bic_SR_register_on_exit(GIE | LPM3_bits);
-//            
-//        }
-        break;
-    default:
-        Assert(false);
-    }
-}
 
 inline bool Toastbox::IntState::Get() {
     return __get_SR_register() & GIE;
@@ -250,6 +173,41 @@ inline bool Toastbox::IntState::Get() {
 inline void Toastbox::IntState::Set(bool en) {
     if (en) __bis_SR_register(GIE);
     else    __bic_SR_register(GIE);
+}
+
+[[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
+[[gnu::interrupt]]
+void _ISR_SYSNMI() {
+    switch (SYSSNIV) {
+    case SYSSNIV_NONE:
+        Assert(false);
+    case SYSSNIV_SVSLIFG:
+        Assert(false);
+    case SYSSNIV_UBDIFG:
+        Assert(false);
+    case SYSSNIV_ACCTEIFG:
+        Assert(false);
+    case SYSSNIV_RES8:
+        Assert(false);
+    case SYSSNIV_RES10:
+        Assert(false);
+    case SYSSNIV_RES12:
+        Assert(false);
+    case SYSSNIV_RES14:
+        Assert(false);
+    case SYSSNIV_RES16:
+        Assert(false);
+    case SYSSNIV_VMAIFG:
+        Assert(false);
+    case SYSSNIV_JMBINIFG:
+        Assert(false);
+    case SYSSNIV_JMBOUTIFG:
+        break;
+    case SYSSNIV_CBDIFG:
+        Assert(false);
+    default:
+        Assert(false);
+    }
 }
 
 int main() {
@@ -265,53 +223,15 @@ int main() {
         _Pin::MCLK
     >();
     
-//    __bis_SR_register(GIE | LPM3_bits);
-//    for (;;);
+    SFRIE1 |= JMBOUTIE;
     
-//    for (;;) {
-//        if (!_Pin::BUTTON::Read()) {
-//            _Pin::LEDRED::Write(!_Pin::LEDRED::Read());
-//        }
-////        __bis_SR_register(GIE | LPM3_bits);
-//    }
-    
-    
-//    for (;;) {
-//        _Pin::LEDRED::Write(!_Pin::LEDRED::Read());
-//        __bis_SR_register(GIE | LPM3_bits);
-//    }
-    
-//    // Overclock ourself
-//    __bis_SR_register(SCG0); // Disable FLL
-//    const uint16_t dco = CSCTL0 & 0x1FF;
-//    CSCTL0 &= ~0x1FF;
-//    CSCTL0 |= dco+128;
-    
-    TA0EX0 = 0;
-    TA0CCR0 = 1;
-    TA0CTL =
-        TASSEL__ACLK    |   // clock source = ACLK
-        ID__1           |   // clock divider = /8
-        MC__UPDOWN      |   // mode = up
-        TACLR           |   // reset timer state
-        TAIE            ;   // enable interrupt
-    
-    uint16_t counter = 0;
-    for (;;) {
-        __bis_SR_register(GIE | LPM3_bits);
-        counter++;
-        if (counter == 5000) {
-            _Pin::LEDRED::Write(!_Pin::LEDRED::Read());
-            counter = 0;
+    for (bool on_=0;; on_=!on_) {
+        if (SYSJMBC & JMBOUT0FG) {
+            SYSJMBO0 = 0x4B4C;
+            SYSJMBO1 = 0x5455;
         }
+        
+        _Pin::LEDRED::Write(on_);
+        __delay_cycles(1000000);
     }
-    
-    _Pin::LEDGREEN::Write(1);
-    for (;;);
-    
-//    for (;;) {
-//        _Pin::LEDRED::Write(!_Pin::LEDRED::Read());
-//        __delay_cycles(1000000);
-//        _Clock::Sleep();
-//    }
 }
