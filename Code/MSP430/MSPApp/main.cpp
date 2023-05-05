@@ -30,13 +30,8 @@
 #include "SuppressibleAssertion.h"
 #include "Assert.h"
 #include "Timer.h"
-#include "Debug.h"
+#include "Base.h"
 using namespace GPIO;
-
-static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz
-static constexpr uint32_t _ACLKFreqHz       = _XT1FreqHz;   // 32.768 kHz
-static constexpr uint32_t _MCLKFreqHz       = 16000000;     // 16 MHz
-static constexpr uint32_t _SysTickFreqHz    = 2048;         // 2.048 kHz
 
 struct _Pin {
     // Port A
@@ -62,42 +57,6 @@ struct _Pin {
     using VDD_B_EN                  = PortB::Pin<0x1, Option::Output0>;
     using _UNUSED0                  = PortB::Pin<0x2>;
 };
-
-class _TaskMain;
-class _TaskEvent;
-class _TaskSD;
-class _TaskImg;
-class _TaskI2C;
-class _TaskMotion;
-
-static void _Sleep();
-
-[[noreturn]]
-static void _SchedulerStackOverflow() {
-    Assert(false);
-}
-
-#warning TODO: disable stack guard for production
-static constexpr size_t _StackGuardCount = 16;
-
-using _Scheduler = Toastbox::Scheduler<
-    std::ratio<1, _SysTickFreqHz>,              // T_TickPeriod: time period between ticks
-    
-    _Sleep,                                     // T_Sleep: function to put processor to sleep;
-                                                //          invoked when no tasks have work to do
-    
-    _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
-    _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
-    nullptr,                                    // T_StackInterrupt: unused
-    
-    // T_Tasks: list of tasks
-    _TaskMain,
-    _TaskEvent,
-    _TaskSD,
-    _TaskImg,
-    _TaskI2C,
-    _TaskMotion
->;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
 using _SysTick = T_SysTick<_Scheduler, _ACLKFreqHz>;
@@ -184,8 +143,6 @@ using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
 using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
 
-using _Debug = T_Debug<_Scheduler>;
-
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static_assert(Time::TicksFreq::den == 1); // Check assumption that TicksFreq is an integer
     
@@ -194,13 +151,16 @@ static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = (Time::Ticks32) 366*24*60*60*Time::TicksFreq::num;
     switch (x.type) {
     case MSP::Repeat::Type::Never:
+//        _Debug::Print("NEVER");
         return 0;
     
     case MSP::Repeat::Type::Daily:
+//        _Debug::Print("DAILY");
         Assert(x.Daily.interval);
         return Day*x.Daily.interval;
     
     case MSP::Repeat::Type::Weekly: {
+//        _Debug::Print("WEEKLY");
         #warning TODO: verify this works properly
         // Determine the next trigger day, calculating the duration of time until then
         Assert(x.Weekly.days & 1); // Weekly.days must always rest on an active day
@@ -214,6 +174,7 @@ static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     }
     
     case MSP::Repeat::Type::Yearly:
+//        _Debug::Print("YEARLY");
         #warning TODO: verify this works properly
         // Return 1 year (either 365 or 366 days) in microseconds
         // We appropriately handle leap years by referencing `leapPhase`
@@ -770,22 +731,28 @@ struct _TaskEvent {
     }
     
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
+//        _Debug::Print("EventInsert DDD");
         _Triggers::EventInsert(ev, time);
         // If this event is now the front of the list, reschedule _EventTimer
         if (_Triggers::EventFront() == &ev) {
+//            _Debug::Print("EventInsert EEE");
             _EventTimerSchedule();
         }
     }
 
     static void EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
+//        _Debug::Print("EventInsert BBB");
         const Time::Ticks32 delta = _RepeatAdvance(repeat);
+//        _Debug::PrintHex(delta);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
+//            _Debug::Print("EventInsert CCC");
             EventInsert(ev, ev.time+delta);
         }
     }
 
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::Ticks32 deltaTicks) {
+//        _Debug::Print("EventInsert AAA");
         EventInsert(ev, time + deltaTicks);
     }
 
@@ -1186,31 +1153,31 @@ struct _TaskMain {
 //        }
         
         _On = true;
-        for (bool on_=false;; on_=!on_) {
-//            __delay_cycles(1000000);
-//            _Pin::LED_GREEN_::Write(on_);
-//            _Debug::Print("Fired\n");
-//            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq::num);
-//            _Scheduler::Wait([] { return _EventTimer::Fired(); });
-            
-            const auto nextTime = _Triggers::EventFront()->time;
-            const auto currTime = _RTC::Now();
-            
-            _Debug::Print("EventFront:");
-            _Debug::PrintHex((uint16_t)_Triggers::EventFront());
-            
-            _Debug::Print("Next:");
-            _Debug::PrintHex(nextTime);
-            
-            _Debug::Print("Curr:");
-            _Debug::PrintHex(currTime);
-            
-            _Debug::Print("Delta:");
-            _Debug::PrintHex(nextTime - currTime);
-            _Debug::Print("");
-            
-            _Scheduler::Sleep(_Scheduler::Ms<1000>);
-        }
+//        for (bool on_=false;; on_=!on_) {
+////            __delay_cycles(1000000);
+////            _Pin::LED_GREEN_::Write(on_);
+////            _Debug::Print("Fired\n");
+////            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq::num);
+////            _Scheduler::Wait([] { return _EventTimer::Fired(); });
+//            
+//            const auto nextTime = _Triggers::EventFront()->time;
+//            const auto currTime = _RTC::Now();
+//            
+//            _Debug::Print("EventFront:");
+//            _Debug::PrintHex((uint16_t)_Triggers::EventFront());
+//            
+//            _Debug::Print("Next:");
+//            _Debug::PrintHex(nextTime);
+//            
+//            _Debug::Print("Curr:");
+//            _Debug::PrintHex(currTime);
+//            
+//            _Debug::Print("Delta:");
+//            _Debug::PrintHex(nextTime - currTime);
+//            _Debug::Print("");
+//            
+//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
+//        }
         
         
         
@@ -1258,6 +1225,14 @@ struct _TaskMain {
 //            _Pin::LED_RED_::Write(1);
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
+        
+        for (;;) {
+            _Debug::Print("EVENT REPEAT TYPE");
+            _Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
+            
+            _Debug::Print("EVENT BASE REPEAT TYPE");
+            _Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
+        }
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();

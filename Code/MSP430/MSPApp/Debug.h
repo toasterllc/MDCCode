@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstring>
 #include "MSPDebug.h"
+#include "Assert.h"
 
 template<typename T_Scheduler>
 class T_Debug {
