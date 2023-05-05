@@ -28,20 +28,18 @@ public:
     }
     
     static void _Write(Packet::Type type, const void* data, size_t len) {
-        // Wait until `_Packets` has enough space to write `len` packets.
+        // Wait until `_Packets` has enough space to write `count` packets.
         // Use the Scheduler's context mechanism to pass the length to the lambda.
-        const size_t count = ((len+1)/2) + (type==Packet::Type::Chars ? 0 : 1);
+        const size_t count = 1+((len+1)/2);
         T_Scheduler::Ctx(count);
         T_Scheduler::Wait([] { return _WCap >= T_Scheduler::template Ctx<size_t>(); });
         
         // Disable interrupt while we modify our state
         _Ints(false);
         
-        // Push a Type packet if these aren't characters
-        if (type != Packet::Type::Chars) {
-            _Packets[_WIdx] = { .type = type };
-            _Push();
-        }
+        // Push a Type packet
+        _Packets[_WIdx] = { .type = type };
+        _Push();
         
         // Fill _Packets
         // Our logic here always reads an even number of bytes from `data`.

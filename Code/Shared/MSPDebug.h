@@ -4,8 +4,8 @@ namespace MSP::Debug {
 
 struct [[gnu::packed]] LogPacket {
     enum class Type : uint16_t {
-        Chars = 0,
-        Dec16 = 0x8000, // High bit must be used to disambiguate against ASCII characters
+        Chars = 0x8000, // High bit must be used to disambiguate against ASCII characters
+        Dec16,
         Dec32,
         Dec64,
         Hex16,

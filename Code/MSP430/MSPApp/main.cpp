@@ -1153,28 +1153,6 @@ struct _TaskMain {
         // Start tasks
         _Scheduler::Start<_TaskI2C, _TaskMotion>();
         
-        _Pin::LED_GREEN_::Write(1);
-        for (int i=0; i<10; i++) {
-            _Pin::LED_GREEN_::Write(1);
-            __delay_cycles(1000000);
-            _Pin::LED_GREEN_::Write(0);
-            __delay_cycles(1000000);
-        }
-        
-        _Scheduler::Sleep(_Scheduler::Ms<3000>);
-        
-        __delay_cycles(16000000);
-        __delay_cycles(16000000);
-//        SYSJMBC = 0;
-//        SYSJMBC |= JMBMODE;
-//        SYSJMBC = JMBMODE;
-        
-        for (bool on_=0;; on_=!on_) {
-            _Debug::Print("hello\nhow are you today?\n");
-            _Debug::Print(_XT1FreqHz);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-        }
-        
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
         // restore our _On assertion based on it.
@@ -1201,11 +1179,47 @@ struct _TaskMain {
 //            __delay_cycles(1000000);
 //        }
         
-//        _On = false;
-//        for (bool on_=false;; on_=!on_) {
+//        for (bool on_=0;; on_=!on_) {
+//            _Debug::Print("hello\nhow are you today?\n");
+//            _Debug::Print(_XT1FreqHz);
+////            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
+        
+        _On = true;
+        for (bool on_=false;; on_=!on_) {
 //            __delay_cycles(1000000);
 //            _Pin::LED_GREEN_::Write(on_);
-//            _EventTimer::Schedule(_RTC::Now() + 1*Time::TicksFreq::num);
+//            _Debug::Print("Fired\n");
+//            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq::num);
+//            _Scheduler::Wait([] { return _EventTimer::Fired(); });
+            
+            const auto nextTime = _Triggers::EventFront()->time;
+            const auto currTime = _RTC::Now();
+            
+            _Debug::Print("EventFront:");
+            _Debug::PrintHex((uint16_t)_Triggers::EventFront());
+            
+            _Debug::Print("Next:");
+            _Debug::PrintHex(nextTime);
+            
+            _Debug::Print("Curr:");
+            _Debug::PrintHex(currTime);
+            
+            _Debug::Print("Delta:");
+            _Debug::PrintHex(nextTime - currTime);
+            _Debug::Print("");
+            
+            _Scheduler::Sleep(_Scheduler::Ms<1000>);
+        }
+        
+        
+        
+//        _On = true;
+//        for (bool on_=false;; on_=!on_) {
+////            __delay_cycles(1000000);
+////            _Pin::LED_GREEN_::Write(on_);
+//            _Debug::Print("Fired\n");
+//            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq::num);
 //            _Scheduler::Wait([] { return _EventTimer::Fired(); });
 //        }
         

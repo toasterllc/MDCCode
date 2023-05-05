@@ -752,13 +752,27 @@ static void MSPSBWLog(const Args& args, MDCUSBDevice& device) {
         for (size_t i=0; i<count; i++) {
             LogPacket& p = log[i];
             
-            // Enter int-reading state if we're currently in the chars-reading state,
-            // and we get a DecXXX/HexXXX packet.
-            if (!_Width(state.type) && _Width(p.type)) {
-                state = { .type = p.type };
-            
-            // Continue handling int
-            } else if (_Width(state.type)) {
+            // Chars state
+            if (state.type == LogPacket::Type::Chars) {
+                // Chars packet: print newline
+                if (p.type == LogPacket::Type::Chars) {
+                    printf("\n");
+                
+                // DecXXX/HexXXX packet: enter the Int state
+                } else if (_Width(p.type)) {
+                    printf("\n");
+                    state = { .type = p.type };
+                
+                // Chars payload packet: print characters
+                } else {
+                    for (uint8_t c : p.u8) {
+                        if (!c) break;
+                        std::cout << (char)c;
+                    }
+                }
+                
+            // Int state
+            } else {
                 state.u8[state.off+0] = p.u8[0];
                 state.u8[state.off+1] = p.u8[1];
                 state.off += 2;
@@ -767,13 +781,6 @@ static void MSPSBWLog(const Args& args, MDCUSBDevice& device) {
                     _Print(state.type, state.u64);
                     // Reset state
                     state = {};
-                }
-            
-            // Print chars
-            } else {
-                for (uint8_t c : p.u8) {
-                    if (!c) break;
-                    std::cout << (char)c;
                 }
             }
         }
