@@ -5,6 +5,8 @@
 #include "Assert.h"
 #include "MSP.h"
 
+//#define DebugEnable 1
+
 template<typename T_Scheduler>
 class T_Debug {
 public:
@@ -21,14 +23,18 @@ public:
     static void PrintHex(uint64_t x)    { _Write(Packet::Type::Hex64, &x, sizeof(x)); }
     
     static bool ISR() {
+#if DebugEnable
         SYSJMBO0 = _Packets[_RIdx].u16;
         _Pop();
         // Update JMBOUTIFG enabled status
         _Ints(_RLen);
         return true; // Always wake ourself because a Task might be waiting to write into the buffer
+#endif // DebugEnable
+        return false;
     }
     
     static void _Write(Packet::Type type, const void* data, size_t len) {
+#if DebugEnable
         // Wait until we have enough space:
         //   +1 packet for the Type packet
         //   +ceil(len/2) packet for payload
@@ -57,6 +63,7 @@ public:
         
         // Update JMBOUTIFG enabled status
         _Ints(_RLen);
+#endif // DebugEnable
     }
     
     static void _Push() {

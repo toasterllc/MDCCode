@@ -68,5 +68,4 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskMotion
 >;
 
-//#define _DebugEnable 1
-//using _Debug = T_Debug<_Scheduler>;
+using _Debug = T_Debug<_Scheduler>;
