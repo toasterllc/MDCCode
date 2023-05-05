@@ -1202,15 +1202,15 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
-        for (;;) {
-            _Debug::Print("EVENT REPEAT TYPE");
-            _Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
-            
-            _Debug::Print("EVENT BASE REPEAT TYPE");
-            _Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
-            
-            _Scheduler::Sleep(_Scheduler::Ms<1000>);
-        }
+//        for (;;) {
+//            _Debug::Print("EVENT REPEAT TYPE");
+//            _Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
+//            
+//            _Debug::Print("EVENT BASE REPEAT TYPE");
+//            _Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
+//            
+//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
+//        }
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -1405,12 +1405,14 @@ void _ISR_SYSNMI() {
     switch (SYSSNIV) {
     case SYSSNIV_VMAIFG:
         Assert(false);
+#if _DebugEnable
     case SYSSNIV_JMBOUTIFG:
         if (_Debug::ISR()) {
             // Wake ourself if directed
             _Clock::Wake();
         }
         break;
+#endif // _DebugEnable
     default:
         Assert(false);
     }
