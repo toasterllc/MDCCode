@@ -1,7 +1,6 @@
 #pragma once
 #include <atomic>
 #include "stm32f7xx.h"
-#include "Toastbox/Defer.h"
 #include "Toastbox/Scheduler.h"
 
 template <
@@ -18,22 +17,20 @@ public:
         using SDA = typename T_SDAPin::template Opts<GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
     };
     
-    using LED0 = GPIO::PortB::Pin<10, GPIO::Option::Output0>;
-    
     static void Init() {
         // Enable clock for I2C
         __HAL_RCC_I2C1_CLK_ENABLE();
         
+        // Configure interrupts
         constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
         HAL_NVIC_SetPriority(I2C1_EV_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
         HAL_NVIC_SetPriority(I2C1_ER_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
         
-        HAL_StatusTypeDef hs = HAL_I2C_Init(&_Device);
-        Assert(hs == HAL_OK);
+        _Reset();
         
-        hs = HAL_I2CEx_ConfigAnalogFilter(&_Device, I2C_ANALOGFILTER_ENABLE);
+        HAL_StatusTypeDef hs = HAL_I2CEx_ConfigAnalogFilter(&_Device, I2C_ANALOGFILTER_ENABLE);
         Assert(hs == HAL_OK);
         
         hs = HAL_I2CEx_ConfigDigitalFilter(&_Device, 0);
@@ -46,15 +43,9 @@ public:
         Error,  // Slave acknowledged but held clock low past our timeout
     };
     
+    
     template <typename T_Send, typename T_Recv>
-    static Status Send(const T_Send& send, T_Recv& recv) {
-        // Cleanup when we return
-        // This will handle aborting the existing transaction if we timeout.
-        Defer(_Cleanup());
-        
-        // Wait until we're idle
-        T_Scheduler::Wait([] { return _St.load() == _State::Idle; });
-        
+    static Status _Send(const T_Send& send, T_Recv& recv) {
         // Send `send`
         {
             _St = _State::Busy;
@@ -62,7 +53,7 @@ public:
             Assert(hs == HAL_OK);
             const auto ok = T_Scheduler::Wait(T_Scheduler::template Ms<T_TimeoutMs>, [] { return _St.load() != _State::Busy; });
             if (!ok) return Status::Error; // Error: slave is holding clock low
-            if (_St.load() != _State::Done) return Status::NAK;
+            if (_St.load() != _State::Idle) return Status::NAK;
         }
         
         // Receive `recv`
@@ -72,10 +63,19 @@ public:
             Assert(hs == HAL_OK);
             const auto ok = T_Scheduler::Wait(T_Scheduler::template Ms<T_TimeoutMs>, [] { return _St.load() != _State::Busy; });
             if (!ok) return Status::Error; // Error: slave is holding clock low
-            if (_St.load() != _State::Done) return Status::NAK;
+            if (_St.load() != _State::Idle) return Status::NAK;
         }
         
         return Status::OK;
+    }
+    
+    template <typename T_Send, typename T_Recv>
+    static Status Send(const T_Send& send, T_Recv& recv) {
+        const Status st = _Send(send, recv);
+        if (st != Status::OK) {
+            _Reset();
+        }
+        return st;
     }
     
     static void ISR_Event() {
@@ -93,33 +93,41 @@ private:
     enum class _State : uint8_t {
         Idle,
         Busy,
-        Done,
         Error,
-        Aborting,
     };
     
-    static void _Cleanup() {
-        Toastbox::IntState ints(false);
-        switch (_St.load()) {
-        case _State::Busy: {
-            HAL_StatusTypeDef hs = HAL_I2C_Master_Abort_IT(&_Device, _Addr);
-            Assert(hs == HAL_OK);
-            _St = _State::Aborting;
-            break;
-        }
-        case _State::Done:
-        case _State::Error:
-            _St = _State::Idle;
-            break;
-        default:
-            Assert(false);
-            break;
-        }
+    static void _Reset() {
+        HAL_StatusTypeDef hs = HAL_I2C_Init(&_Device);
+        Assert(hs == HAL_OK);
     }
+    
+//    static void _Cleanup() {
+//        Toastbox::IntState ints(false);
+////        LED0::Write(1);
+//        switch (_St.load()) {
+//        case _State::Busy: {
+////            LED1::Write(1);
+//            HAL_StatusTypeDef hs = HAL_I2C_Master_Abort_IT(&_Device, _Addr);
+////            LED2::Write(1);
+//            Assert(hs == HAL_OK);
+////            LED3::Write(1);
+//            LED0::Write(1);
+//            _St = _State::Aborting;
+//            break;
+//        }
+//        case _State::Done:
+//        case _State::Error:
+//            _St = _State::Idle;
+//            break;
+//        default:
+//            Assert(false);
+//            break;
+//        }
+//    }
     
     static void _CallbackTxRx(I2C_HandleTypeDef* me) {
         Assert(_St.load() == _State::Busy);
-        _St = _State::Done;
+        _St = _State::Idle;
     }
     
     static void _CallbackError(I2C_HandleTypeDef* me) {
@@ -128,8 +136,8 @@ private:
     }
     
     static void _CallbackAbort(I2C_HandleTypeDef* me) {
-        Assert(_St.load() == _State::Aborting);
-        _St = _State::Idle;
+        // Should never happen
+        Assert(false);
     }
     
     static inline std::atomic<_State> _St = _State::Idle;

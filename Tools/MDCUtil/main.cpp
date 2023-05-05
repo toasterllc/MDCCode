@@ -263,13 +263,20 @@ static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus
     }
 }
 
+static std::string _StringForChargeLevel(const MSP::BatteryChargeLevel level) {
+    using namespace STM;
+    if (level == MSP::BatteryChargeLevelInvalid) return "invalid";
+    const uint32_t percent = (((uint32_t)level-MSP::BatteryChargeLevelMin)*100) / (MSP::BatteryChargeLevelMax-MSP::BatteryChargeLevelMin);
+    return std::to_string(percent) + "%";
+}
+
 static void BatteryStatusGet(const Args& args, MDCUSBDevice& device) {
     using namespace STM;
     BatteryStatus status = device.batteryStatusGet();
     
     printf("Battery status:\n");
     printf("  Charge status: %s\n", _StringForChargeStatus(status.chargeStatus));
-    printf("  Charge level:  %ju%%\n", (uintmax_t)status.level);
+    printf("  Charge level:  %s\n", _StringForChargeLevel(status.level).c_str());
     printf("\n");
 }
 
@@ -685,13 +692,10 @@ static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
 }
 
 static void MSPSBWErase(const Args& args, MDCUSBDevice& device) {
-    std::cout << "MSPSBWErase 000\n";
+    std::cout << "MSPSBWErase\n";
     device.mspSBWLock();
-    std::cout << "AAA\n";
     device.mspSBWErase();
-    std::cout << "BBB\n";
     device.mspSBWUnlock();
-    std::cout << "CCC\n";
     std::cout << "-> OK\n\n";
 }
 

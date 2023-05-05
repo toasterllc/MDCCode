@@ -1568,6 +1568,7 @@ extern "C" [[gnu::section(".isr")]] void ISR_EXTI15_10() {
 }
 
 // MARK: - Abort
+
 extern "C"
 [[noreturn]]
 void Abort(uintptr_t addr) {

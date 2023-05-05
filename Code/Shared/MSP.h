@@ -9,9 +9,10 @@
 
 namespace MSP {
 
-using BatteryChargeLevel = uint8_t;
-constexpr BatteryChargeLevel BatteryChargeLevelMin = 0;
-constexpr BatteryChargeLevel BatteryChargeLevelMax = 100;
+using BatteryChargeLevel = uint16_t;
+constexpr BatteryChargeLevel BatteryChargeLevelInvalid  = 0x0000;
+constexpr BatteryChargeLevel BatteryChargeLevelMin      = 0x0001;
+constexpr BatteryChargeLevel BatteryChargeLevelMax      = 0xFFFF;
 
 constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
     return base - ((idx+1) * ImgSD::Full::ImageBlockCount);

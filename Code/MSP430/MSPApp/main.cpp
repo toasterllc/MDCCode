@@ -1267,15 +1267,15 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
-        for (;;) {
-            Debug::Print("EVENT REPEAT TYPE");
-            Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
-            
-            Debug::Print("EVENT BASE REPEAT TYPE");
-            Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
-            
-            _Scheduler::Sleep(_Scheduler::Ms<1000>);
-        }
+//        for (;;) {
+//            Debug::Print("EVENT REPEAT TYPE");
+//            Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
+//            
+//            Debug::Print("EVENT BASE REPEAT TYPE");
+//            Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
+//            
+//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
+//        }
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();

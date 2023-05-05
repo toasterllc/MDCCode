@@ -176,7 +176,7 @@ public:
     }
     
 private:
-    static constexpr uint32_t _I2CTimeoutMs = 5000;
+    static constexpr uint32_t _I2CTimeoutMs = 2000;
     using _I2C = T_I2C<Scheduler, _I2C_SCL, _I2C_SDA, MSP::I2CAddr, _I2CTimeoutMs>;
     
     struct _TaskCmdRecv {
@@ -307,6 +307,10 @@ private:
         static void _BatteryStatusUpdate() {
             _BatteryStatus = _BatteryStatusGet();
             
+            // Bail if I2C comms failed when getting the battery charge level, since
+            // I2C comms when setting the LEDs will fail too.
+            if (_BatteryStatus.level == MSP::BatteryChargeLevelInvalid) return;
+            
             // Update LEDs
             const bool red = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway);
             const bool green = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Complete);
@@ -315,14 +319,13 @@ private:
                 .arg = { .LEDSet = { .red = red, .green = green }, },
             };
             
-            LED0::Write(1);
             _Send(cmd);
         }
         
         static STM::BatteryStatus _BatteryStatusGet() {
             STM::BatteryStatus status = {
                 .chargeStatus = _ChargeStatusGet(),
-                .level = 0,
+                .level = MSP::BatteryChargeLevelInvalid,
             };
             
             // Only sample the battery voltage if charging is underway

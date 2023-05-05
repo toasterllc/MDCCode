@@ -198,7 +198,7 @@ private:
     }
     
     // _BatteryChargeLevelForMillivolts(): converts a voltage (in millivolts) into a linear
-    // range between [0,100]
+    // range between BatteryChargeLevelMin and BatteryChargeLevelMax
     static MSP::BatteryChargeLevel _BatteryChargeLevelForMillivolts(uint16_t mv) {
         struct Entry {
             uint16_t mv;
@@ -218,7 +218,7 @@ private:
         // photos per day should deplete the battery X% per day, regardless of
         // how charged the battery is.
         static Entry Table[] = {
-            { 3000,   228 },
+            { 3000,   228 },    // y must be >= BatteryChargeLevelMin
             { 3150,   585 },
             { 3300,  1183 },
             { 3375,  1638 },
@@ -255,7 +255,7 @@ private:
             { 4144, 64234 },
             { 4162, 64860 },
             { 4181, 65219 },
-            { 4200, 65408 },
+            { 4200, 65408 },    // y must be <= BatteryChargeLevelMax
         };
         
         auto it = std::lower_bound(std::begin(Table), std::end(Table), 0,
@@ -278,12 +278,11 @@ private:
         const Entry& left = *std::prev(it);
         const Entry& right = *it;
         
-        // Interpolate between `left` and `right`, where the result is normalized between [0x0, 0xFFFF]
-        const uint16_t levelFFFF =
+        // Interpolate between `left` and `right`, where the result is normalized to u16 (or more
+        // precisely, between the extremes of the y axis of `Table`.)
+        const uint16_t level =
             left.level + (((uint32_t)(mv-left.mv) * (uint32_t)(right.level-left.level)) / (right.mv-left.mv));
-        // Convert `levelFFFF` from the range [0x0, 0xFFFF] -> [0, 100]
-        const uint16_t level100 = ((uint32_t)levelFFFF * MSP::BatteryChargeLevelMax) / UINT16_MAX;
-        return level100;
+        return level;
     }
     
     // Collect as many 10-bit samples as will fit in a uint16_t without overflowing
