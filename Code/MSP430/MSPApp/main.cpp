@@ -1405,12 +1405,14 @@ void _ISR_SYSNMI() {
     switch (SYSSNIV) {
     case SYSSNIV_VMAIFG:
         Assert(false);
+#if DebugEnable
     case SYSSNIV_JMBOUTIFG:
         if (_Debug::ISR()) {
             // Wake ourself if directed
             _Clock::Wake();
         }
         break;
+#endif // DebugEnable
     default:
         Assert(false);
     }
