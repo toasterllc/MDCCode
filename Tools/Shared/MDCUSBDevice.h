@@ -471,9 +471,9 @@ public:
         _checkStatus("MSPSBWErase command failed");
     }
     
-    void mspSBWLog() {
+    void mspSBWDebugLog() {
         assert(_mode == STM::Status::Mode::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::MSPSBWLog };
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWDebugLog };
         _sendCmd(cmd);
     }
     

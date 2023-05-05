@@ -314,6 +314,8 @@ private:
                 .op = MSP::Cmd::Op::LEDSet,
                 .arg = { .LEDSet = { .red = red, .green = green }, },
             };
+            
+            LED0::Write(1);
             _Send(cmd);
         }
         

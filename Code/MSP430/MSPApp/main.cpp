@@ -30,7 +30,7 @@
 #include "SuppressibleAssertion.h"
 #include "Assert.h"
 #include "Timer.h"
-#include "Base.h"
+#include "Debug.h"
 using namespace GPIO;
 
 struct _Pin {
@@ -57,6 +57,47 @@ struct _Pin {
     using VDD_B_EN                  = PortB::Pin<0x1, Option::Output0>;
     using _UNUSED0                  = PortB::Pin<0x2>;
 };
+
+class _TaskMain;
+class _TaskEvent;
+class _TaskSD;
+class _TaskImg;
+class _TaskI2C;
+class _TaskMotion;
+
+static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz
+static constexpr uint32_t _ACLKFreqHz       = _XT1FreqHz;   // 32.768 kHz
+static constexpr uint32_t _MCLKFreqHz       = 16000000;     // 16 MHz
+static constexpr uint32_t _SysTickFreqHz    = 2048;         // 2.048 kHz
+
+static void Sleep();
+
+[[noreturn]]
+static void _SchedulerStackOverflow() {
+    Assert(false);
+}
+
+#warning TODO: disable stack guard for production
+static constexpr size_t _StackGuardCount = 16;
+
+using _Scheduler = Toastbox::Scheduler<
+    std::ratio<1, _SysTickFreqHz>,              // T_TickPeriod: time period between ticks
+    
+    Sleep,                                      // T_Sleep: function to put processor to sleep;
+                                                //          invoked when no tasks have work to do
+    
+    _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
+    _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
+    nullptr,                                    // T_StackInterrupt: unused
+    
+    // T_Tasks: list of tasks
+    _TaskMain,
+    _TaskEvent,
+    _TaskSD,
+    _TaskImg,
+    _TaskI2C,
+    _TaskMotion
+>;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
 using _SysTick = T_SysTick<_Scheduler, _ACLKFreqHz>;
@@ -1227,11 +1268,13 @@ struct _TaskMain {
 //        }
         
         for (;;) {
-            _Debug::Print("EVENT REPEAT TYPE");
-            _Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
+            Debug::Print("EVENT REPEAT TYPE");
+            Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
             
-            _Debug::Print("EVENT BASE REPEAT TYPE");
-            _Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
+            Debug::Print("EVENT BASE REPEAT TYPE");
+            Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
+            
+            _Scheduler::Sleep(_Scheduler::Ms<1000>);
         }
         
         for (;;) {
@@ -1315,7 +1358,7 @@ inline void Toastbox::IntState::Set(bool en) {
 
 // MARK: - Sleep
 
-static void _Sleep() {
+static void Sleep() {
     _TaskMain::Sleep();
 }
 
@@ -1428,7 +1471,7 @@ void _ISR_SYSNMI() {
     case SYSSNIV_VMAIFG:
         Assert(false);
     case SYSSNIV_JMBOUTIFG:
-        if (_Debug::ISR()) {
+        if (Debug::ISR()) {
             // Wake ourself if directed
             _Clock::Wake();
         }

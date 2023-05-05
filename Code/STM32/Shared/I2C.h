@@ -18,6 +18,8 @@ public:
         using SDA = typename T_SDAPin::template Opts<GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
     };
     
+    using LED0 = GPIO::PortB::Pin<10, GPIO::Option::Output0>;
+    
     static void Init() {
         // Enable clock for I2C
         __HAL_RCC_I2C1_CLK_ENABLE();

@@ -364,6 +364,22 @@ struct [[gnu::packed]] Resp {
 //    Button button[2];
 //};
 
-
+struct [[gnu::packed]] DebugLogPacket {
+    enum class Type : uint16_t {
+        Chars = 0x8000, // High bit must be used to disambiguate against ASCII characters
+        Dec16,
+        Dec32,
+        Dec64,
+        Hex16,
+        Hex32,
+        Hex64,
+    };
+    
+    union [[gnu::packed]] {
+        Type type;
+        uint8_t u8[2];
+        uint16_t u16 = 0;
+    };
+};
 
 } // namespace MSP

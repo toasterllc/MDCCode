@@ -14,7 +14,6 @@
 #include "SD.h"
 #include "ImgSD.h"
 #include "MSP.h"
-#include "MSPDebug.h"
 #include "ELF32Binary.h"
 #include "Time.h"
 #include "Clock.h"
@@ -45,7 +44,7 @@ const CmdStr MSPTimeSetCmd          = "MSPTimeSet";
 const CmdStr MSPSBWReadCmd          = "MSPSBWRead";
 const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
 const CmdStr MSPSBWEraseCmd         = "MSPSBWErase";
-const CmdStr MSPSBWLogCmd           = "MSPSBWLog";
+const CmdStr MSPSBWDebugLogCmd      = "MSPSBWDebugLog";
 const CmdStr SDReadCmd              = "SDRead";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 
@@ -77,7 +76,7 @@ static void printUsage() {
     cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
     cout << "  " << MSPSBWWriteCmd          << " <file>\n";
     cout << "  " << MSPSBWEraseCmd          << "\n";
-    cout << "  " << MSPSBWLogCmd            << "\n";
+    cout << "  " << MSPSBWDebugLogCmd       << "\n";
     
     cout << "  " << SDReadCmd               << " <addr> <blockcount> <output>\n";
     cout << "  " << ImgCaptureCmd           << " <output.cfa>\n";
@@ -210,7 +209,7 @@ static Args parseArgs(int argc, const char* argv[]) {
     
     } else if (args.cmd == lower(MSPSBWEraseCmd)) {
     
-    } else if (args.cmd == lower(MSPSBWLogCmd)) {
+    } else if (args.cmd == lower(MSPSBWDebugLogCmd)) {
     
     } else if (args.cmd == lower(SDReadCmd)) {
         if (strs.size() < 4) throw std::runtime_error("missing argument: address/length/file");
@@ -686,15 +685,18 @@ static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
 }
 
 static void MSPSBWErase(const Args& args, MDCUSBDevice& device) {
-    std::cout << "MSPSBWErase\n";
+    std::cout << "MSPSBWErase 000\n";
     device.mspSBWLock();
+    std::cout << "AAA\n";
     device.mspSBWErase();
+    std::cout << "BBB\n";
     device.mspSBWUnlock();
+    std::cout << "CCC\n";
     std::cout << "-> OK\n\n";
 }
 
-static size_t _Width(MSP::Debug::LogPacket::Type x) {
-    using X = MSP::Debug::LogPacket::Type;
+static size_t _Width(MSP::DebugLogPacket::Type x) {
+    using X = MSP::DebugLogPacket::Type;
     switch (x) {
     case X::Dec16: return 2;
     case X::Dec32: return 4;
@@ -706,8 +708,8 @@ static size_t _Width(MSP::Debug::LogPacket::Type x) {
     }
 }
 
-static void _Print(MSP::Debug::LogPacket::Type t, uint64_t x) {
-    using X = MSP::Debug::LogPacket::Type;
+static void _Print(MSP::DebugLogPacket::Type t, uint64_t x) {
+    using X = MSP::DebugLogPacket::Type;
     switch (t) {
     case X::Dec16:
     case X::Dec32:
@@ -728,18 +730,18 @@ static void _Print(MSP::Debug::LogPacket::Type t, uint64_t x) {
     }
 }
 
-static void MSPSBWLog(const Args& args, MDCUSBDevice& device) {
-    using namespace MSP::Debug;
-    LogPacket log[Toastbox::USB::Endpoint::MaxPacketSizeBulk / sizeof(LogPacket)];
+static void MSPSBWDebugLog(const Args& args, MDCUSBDevice& device) {
+    using DebugLogPacket = MSP::DebugLogPacket;
+    DebugLogPacket log[Toastbox::USB::Endpoint::MaxPacketSizeBulk / sizeof(DebugLogPacket)];
     
-    std::cout << "MSPSBWLog\n";
+    std::cout << "MSPSBWDebugLog\n";
     device.mspSBWLock();
     device.mspSBWConnect();
-    device.mspSBWLog();
+    device.mspSBWDebugLog();
     std::cout << "-> OK:\n\n";
     
     struct {
-        LogPacket::Type type = LogPacket::Type::Chars;
+        DebugLogPacket::Type type = DebugLogPacket::Type::Chars;
         size_t off = 0;
         union {
             uint8_t u8[8];
@@ -748,14 +750,14 @@ static void MSPSBWLog(const Args& args, MDCUSBDevice& device) {
     } state;
     
     for (;;) {
-        const size_t count = device.readout(log, sizeof(log)) / sizeof(LogPacket);
+        const size_t count = device.readout(log, sizeof(log)) / sizeof(DebugLogPacket);
         for (size_t i=0; i<count; i++) {
-            LogPacket& p = log[i];
+            DebugLogPacket& p = log[i];
             
             // Chars state
-            if (state.type == LogPacket::Type::Chars) {
+            if (state.type == DebugLogPacket::Type::Chars) {
                 // Chars packet: print newline
-                if (p.type == LogPacket::Type::Chars) {
+                if (p.type == DebugLogPacket::Type::Chars) {
                     printf("\n");
                 
                 // DecXXX/HexXXX packet: enter the Int state
@@ -911,7 +913,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPSBWReadCmd))          MSPSBWRead(args, device);
         else if (args.cmd == lower(MSPSBWWriteCmd))         MSPSBWWrite(args, device);
         else if (args.cmd == lower(MSPSBWEraseCmd))         MSPSBWErase(args, device);
-        else if (args.cmd == lower(MSPSBWLogCmd))           MSPSBWLog(args, device);
+        else if (args.cmd == lower(MSPSBWDebugLogCmd))      MSPSBWDebugLog(args, device);
         else if (args.cmd == lower(SDReadCmd))              SDRead(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))          ImgCapture(args, device);
     

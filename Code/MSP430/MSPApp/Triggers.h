@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include "MSP.h"
 #include "Assert.h"
-#include "Base.h"
+#include "Debug.h"
 
 // TODO: when we move to using >=C++20, we want to give _State.settings.events as T_Base, but we have to give
 //       the whole _State while we're on C++17, because C++17 doesn't allow giving subojects as non-type
@@ -107,12 +107,6 @@ struct T_Triggers {
         for (auto it=MotionTriggerBegin(); it!=MotionTriggerEnd(); it++) {
             it->enabled = {};
         }
-        
-        
-    static inline RepeatEvent   _Event[std::size(_T_Base.event)];
-    static inline TimeTrigger   _TimeTrigger[std::size(_T_Base.timeTrigger)];
-    static inline MotionTrigger _MotionTrigger[std::size(_T_Base.motionTrigger)];
-    static inline ButtonTrigger _ButtonTrigger[std::size(_T_Base.buttonTrigger)];
         
         // Schedule events
         for (auto it=EventBegin(); it!=EventEnd(); it++) {

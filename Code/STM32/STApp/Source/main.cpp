@@ -12,7 +12,6 @@
 #include "ImgSensor.h"
 #include "ImgSD.h"
 #include "USBConfig.h"
-#include "MSPDebug.h"
 using namespace STM;
 
 static void _Reset();
@@ -1218,9 +1217,7 @@ static void _MSPSBWErase(const STM::Cmd& cmd) {
     _System::USBSendStatus(mspr == _MSPJTAG::Status::OK);
 }
 
-static void _MSPSBWLog(const STM::Cmd& cmd) {
-    using namespace MSP::Debug;
-    
+static void _MSPSBWDebugLog(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
@@ -1526,7 +1523,7 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPSBWWrite:           _MSPSBWWrite(cmd);                  break;
     case Op::MSPSBWErase:           _MSPSBWErase(cmd);                  break;
     case Op::MSPSBWDebug:           _MSPSBWDebug(cmd);                  break;
-    case Op::MSPSBWLog:             _MSPSBWLog(cmd);                    break;
+    case Op::MSPSBWDebugLog:        _MSPSBWDebugLog(cmd);               break;
     // SD Card
     case Op::SDInit:                _SDInit(cmd);                       break;
     case Op::SDRead:                _SDRead(cmd);                       break;

@@ -52,7 +52,7 @@ enum class Op : uint8_t {
     MSPSBWRead,
     MSPSBWWrite,
     MSPSBWErase,
-    MSPSBWLog,
+    MSPSBWDebugLog,
     MSPSBWDebug,
     
     SDInit,

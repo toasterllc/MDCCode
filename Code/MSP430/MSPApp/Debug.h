@@ -2,13 +2,15 @@
 #include <msp430.h>
 #include <cstdint>
 #include <cstring>
-#include "MSPDebug.h"
 #include "Assert.h"
+#include "MSP.h"
 
-template<typename T_Scheduler>
-class T_Debug {
+// Sleep(): provided by client
+static void Sleep();
+
+class Debug {
 public:
-    using Packet = MSP::Debug::LogPacket;
+    using Packet = MSP::DebugLogPacket;
     
     static void Print(const char* msg)  { _Write(Packet::Type::Chars, msg, std::strlen(msg)); }
     
@@ -29,13 +31,17 @@ public:
     }
     
     static void _Write(Packet::Type type, const void* data, size_t len) {
-        // Wait until `_Packets` has enough space to write `count` packets.
-        // Use the Scheduler's context mechanism to pass the length to the lambda.
+        // Wait until we have enough space:
+        //   +1 packet for the Type packet
+        //   +ceil(len/2) packet for payload
+        // We invoke Sleep() instead of invoking the Scheduler for 2 reasons:
+        //   - so clients are guaranteed that back-to-back Prints won't be interleaved with Prints from other tasks
+        //   - so we don't have a dependency on Scheduler, making it easier for clients to use Debug.h
+        // The downside of using Sleep() is that we prevent other tasks from running while we wait.
         const size_t count = 1+((len+1)/2);
-        T_Scheduler::Ctx(count);
-        T_Scheduler::Wait([] { return _WCap >= T_Scheduler::template Ctx<size_t>(); });
+        while (_WCap < count) Sleep();
         
-        // Disable interrupt while we modify our state
+        // Disable JMBOUTIFG interrupt
         _Ints(false);
         
         // Push a Type packet
