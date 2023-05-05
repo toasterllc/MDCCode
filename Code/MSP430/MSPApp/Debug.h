@@ -5,10 +5,8 @@
 #include "Assert.h"
 #include "MSP.h"
 
-// Sleep(): provided by client
-static void Sleep();
-
-class Debug {
+template<typename T_Scheduler>
+class T_Debug {
 public:
     using Packet = MSP::DebugLogPacket;
     
@@ -34,12 +32,9 @@ public:
         // Wait until we have enough space:
         //   +1 packet for the Type packet
         //   +ceil(len/2) packet for payload
-        // We invoke Sleep() instead of invoking the Scheduler for 2 reasons:
-        //   - so clients are guaranteed that back-to-back Prints won't be interleaved with Prints from other tasks
-        //   - so we don't have a dependency on Scheduler, making it easier for clients to use Debug.h
-        // The downside of using Sleep() is that we prevent other tasks from running while we wait.
         const size_t count = 1+((len+1)/2);
-        while (_WCap < count) Sleep();
+        T_Scheduler::Ctx(count);
+        T_Scheduler::Wait([] { return _WCap >= T_Scheduler::template Ctx<size_t>(); });
         
         // Disable JMBOUTIFG interrupt
         _Ints(false);

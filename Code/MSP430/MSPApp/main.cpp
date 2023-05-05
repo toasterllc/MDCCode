@@ -31,73 +31,8 @@
 #include "Assert.h"
 #include "Timer.h"
 #include "Debug.h"
+#include "System.h"
 using namespace GPIO;
-
-struct _Pin {
-    // Port A
-    using VDD_B_1V8_IMG_SD_EN       = PortA::Pin<0x0, Option::Output0>;
-    using LED_GREEN_                = PortA::Pin<0x1, Option::Output1>;
-    using MSP_STM_I2C_SDA           = PortA::Pin<0x2>;
-    using MSP_STM_I2C_SCL           = PortA::Pin<0x3>;
-    using ICE_MSP_SPI_DATA_OUT      = PortA::Pin<0x4>;
-    using ICE_MSP_SPI_DATA_IN       = PortA::Pin<0x5>;
-    using ICE_MSP_SPI_CLK           = PortA::Pin<0x6>;
-    using BAT_CHRG_LVL              = PortA::Pin<0x7, Option::Input>; // No pullup/pulldown because this is an analog input (and the voltage divider provides a physical pulldown)
-    using MSP_XOUT                  = PortA::Pin<0x8>;
-    using MSP_XIN                   = PortA::Pin<0x9>;
-    using LED_RED_                  = PortA::Pin<0xA, Option::Output1>;
-    using VDD_B_2V8_IMG_SD_EN       = PortA::Pin<0xB, Option::Output0>;
-    using MOTION_SIGNAL             = PortA::Pin<0xC>;
-    using BUTTON_SIGNAL_            = PortA::Pin<0xD>;
-    using BAT_CHRG_LVL_EN_          = PortA::Pin<0xE, Option::Output1>;
-    using VDD_B_3V3_STM             = PortA::Pin<0xF, Option::Input, Option::Resistor0>;
-    
-    // Port B
-    using MOTION_EN_                = PortB::Pin<0x0>;
-    using VDD_B_EN                  = PortB::Pin<0x1, Option::Output0>;
-    using _UNUSED0                  = PortB::Pin<0x2>;
-};
-
-class _TaskMain;
-class _TaskEvent;
-class _TaskSD;
-class _TaskImg;
-class _TaskI2C;
-class _TaskMotion;
-
-static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz
-static constexpr uint32_t _ACLKFreqHz       = _XT1FreqHz;   // 32.768 kHz
-static constexpr uint32_t _MCLKFreqHz       = 16000000;     // 16 MHz
-static constexpr uint32_t _SysTickFreqHz    = 2048;         // 2.048 kHz
-
-static void Sleep();
-
-[[noreturn]]
-static void _SchedulerStackOverflow() {
-    Assert(false);
-}
-
-#warning TODO: disable stack guard for production
-static constexpr size_t _StackGuardCount = 16;
-
-using _Scheduler = Toastbox::Scheduler<
-    std::ratio<1, _SysTickFreqHz>,              // T_TickPeriod: time period between ticks
-    
-    Sleep,                                      // T_Sleep: function to put processor to sleep;
-                                                //          invoked when no tasks have work to do
-    
-    _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
-    _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
-    nullptr,                                    // T_StackInterrupt: unused
-    
-    // T_Tasks: list of tasks
-    _TaskMain,
-    _TaskEvent,
-    _TaskSD,
-    _TaskImg,
-    _TaskI2C,
-    _TaskMotion
->;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
 using _SysTick = T_SysTick<_Scheduler, _ACLKFreqHz>;
@@ -1267,15 +1202,15 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
-//        for (;;) {
-//            Debug::Print("EVENT REPEAT TYPE");
-//            Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
-//            
-//            Debug::Print("EVENT BASE REPEAT TYPE");
-//            Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
-//            
-//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
-//        }
+        for (;;) {
+            _Debug::Print("EVENT REPEAT TYPE");
+            _Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
+            
+            _Debug::Print("EVENT BASE REPEAT TYPE");
+            _Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
+            
+            _Scheduler::Sleep(_Scheduler::Ms<1000>);
+        }
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -1358,7 +1293,7 @@ inline void Toastbox::IntState::Set(bool en) {
 
 // MARK: - Sleep
 
-static void Sleep() {
+static void _Sleep() {
     _TaskMain::Sleep();
 }
 
@@ -1471,7 +1406,7 @@ void _ISR_SYSNMI() {
     case SYSSNIV_VMAIFG:
         Assert(false);
     case SYSSNIV_JMBOUTIFG:
-        if (Debug::ISR()) {
+        if (_Debug::ISR()) {
             // Wake ourself if directed
             _Clock::Wake();
         }
