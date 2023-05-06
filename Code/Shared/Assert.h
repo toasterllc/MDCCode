@@ -1,41 +1,32 @@
 #pragma once
 #include <cstdint>
 
-#if defined(__MSP430__) && !defined(__LARGE_CODE_MODEL__)
-    // MSP430, small memory model
-    #define _Abort()                                                    \
-        do {                                                            \
-            asm volatile("mov pc, r12" : : : );     /* r12 = $PC */     \
-            asm volatile("jmp Abort" : : : );       /* call Abort() */  \
-            __builtin_unreachable();                                    \
-        } while (0)
-
-#elif defined(__MSP430__) && defined(__LARGE_CODE_MODEL__)
-    // MSP430, large memory model
-    #define _Abort()                                                    \
-        do {                                                            \
-            asm volatile("mov.a pc, r12" : : : );   /* r12 = $PC */     \
-            asm volatile("jmp Abort" : : : );       /* call Abort() */  \
-            __builtin_unreachable();                                    \
-        } while (0)
-
-#elif defined(__arm__)
-    // ARM32
-    #define _Abort()                                                    \
-        do {                                                            \
-            asm volatile("mov r0, pc" : : : );      /* r0 = $PC */      \
-            asm volatile("b Abort" : : : );         /* call Abort() */  \
-            __builtin_unreachable();                                    \
-        } while (0)
-
-#else
-        #error Task: Unsupported architecture
-#endif
-
-#define Assert(x)    if (!(x)) _Abort()
-#define AssertArg(x) if (!(x)) _Abort()
+#define Assert(x)       if (!(x)) _Abort()
+#define AssertArg(x)    if (!(x)) _Abort()
 
 // Abort(): provided by client to log the abort and trigger crash
 extern "C"
 [[noreturn, gnu::used]]
 void Abort(uintptr_t addr);
+
+[[noreturn]]
+[[gnu::always_inline]]
+inline void _Abort() {
+__Abort:
+#if defined(__MSP430__) && !defined(__LARGE_CODE_MODEL__)
+    // MSP430, small memory model
+    asm volatile("mov %0, r12" : : "i" (&&__Abort) : );     /* r12 = $PC */
+    asm volatile("jmp Abort" : : : );                       /* call Abort() */
+#elif defined(__MSP430__) && defined(__LARGE_CODE_MODEL__)
+    // MSP430, large memory model
+    asm volatile("mov.a %0, r12" : : "i" (&&__Abort) : );   /* r12 = $PC */
+    asm volatile("jmp Abort" : : : );                       /* call Abort() */
+#elif defined(__arm__)
+    // ARM32
+    asm volatile("mov r0, %0" : : "i" (&&__Abort) : );      /* r0 = $PC */
+    asm volatile("b Abort" : : : );                         /* call Abort() */
+#else
+    #error Task: Unsupported architecture
+#endif
+    __builtin_unreachable();
+}

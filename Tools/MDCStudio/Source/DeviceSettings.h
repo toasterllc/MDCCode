@@ -550,7 +550,7 @@ inline void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
 }
 
 inline MSP::Triggers Convert(const Triggers& triggers) {
-    MSP::Triggers t;
+    MSP::Triggers t = {};
     for (auto it=std::begin(triggers.triggers); it!=std::begin(triggers.triggers)+triggers.count; it++) {
         switch (it->type) {
         case Trigger::Type::Time: {

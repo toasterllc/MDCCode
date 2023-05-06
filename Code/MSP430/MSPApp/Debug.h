@@ -14,13 +14,23 @@ public:
     
     static void Print(const char* msg)  { _Write(Packet::Type::Chars, msg, std::strlen(msg)); }
     
+    static void Print(uint8_t x)        { Print((uint16_t)x); }
     static void Print(uint16_t x)       { _Write(Packet::Type::Dec16, &x, sizeof(x)); }
     static void Print(uint32_t x)       { _Write(Packet::Type::Dec32, &x, sizeof(x)); }
     static void Print(uint64_t x)       { _Write(Packet::Type::Dec64, &x, sizeof(x)); }
     
+    static void PrintHex(uint8_t x)     { PrintHex((uint16_t)x); }
     static void PrintHex(uint16_t x)    { _Write(Packet::Type::Hex16, &x, sizeof(x)); }
     static void PrintHex(uint32_t x)    { _Write(Packet::Type::Hex32, &x, sizeof(x)); }
     static void PrintHex(uint64_t x)    { _Write(Packet::Type::Hex64, &x, sizeof(x)); }
+    
+    static bool Empty() {
+#if DebugEnable
+        return !_RLen;
+#else
+        return true;
+#endif
+    }
     
     static bool ISR() {
 #if DebugEnable
@@ -89,8 +99,8 @@ public:
     
     static constexpr uint8_t _Cap = 32;
     static inline Packet _Packets[_Cap];
-    static inline uint8_t _WIdx = 0;
-    static inline uint8_t _WCap = _Cap;
-    static inline uint8_t _RIdx = 0;
-    static inline uint8_t _RLen = 0;
+    static inline volatile uint8_t _WIdx = 0;
+    static inline volatile uint8_t _WCap = _Cap;
+    static inline volatile uint8_t _RIdx = 0;
+    static inline volatile uint8_t _RLen = 0;
 };

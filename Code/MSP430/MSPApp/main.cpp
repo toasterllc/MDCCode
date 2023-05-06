@@ -209,6 +209,9 @@ void Abort(uintptr_t addr) {
     Toastbox::IntState::Set(false);
     // Record the abort
     _ResetRecord(MSP::Reset::Type::Abort, addr);
+    // Wait until all prints have been drained, so we don't drop important
+    // info by aborting before it's been read.
+    while (!_Debug::Empty());
     _BOR();
 }
 
@@ -869,7 +872,7 @@ struct _TaskI2C {
             _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
             
             // Reset state
-            _State = {};
+            _HostModeState = {};
         }
     }
     
@@ -913,16 +916,22 @@ struct _TaskI2C {
         case Cmd::Op::TimeSet:
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
-            if (!_State.hostMode) return MSP::Resp{ .ok = false };
+            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
             _RTC::Init(cmd.arg.TimeSet.time);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
-            _State.hostMode = cmd.arg.HostModeSet.en;
+            if (cmd.arg.HostModeSet.en) {
+                _HostModeState.en = true;
+            } else {
+                // Clear entire _HostModeState when exiting host mode
+                _HostModeState = {};
+            }
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::VDDIMGSDSet:
-            _State.vddImgSd = cmd.arg.VDDIMGSDSet.en;
+            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            _HostModeState.vddImgSd = cmd.arg.VDDIMGSDSet.en;
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::BatteryChargeLevelGet: {
@@ -936,9 +945,9 @@ struct _TaskI2C {
     }
     
     static inline struct {
-        _HostMode::Assertion hostMode;
+        _HostMode::Assertion en;
         _VDDIMGSDEnabled::Assertion vddImgSd;
-    } _State;
+    } _HostModeState;
     
     // Task stack
     SchedulerStack(".stack._TaskI2C")
@@ -1128,7 +1137,7 @@ struct _TaskMain {
 ////            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
-        _On = true;
+//        _On = true;
 //        for (bool on_=false;; on_=!on_) {
 ////            __delay_cycles(1000000);
 ////            _Pin::LED_GREEN_::Write(on_);
@@ -1203,12 +1212,7 @@ struct _TaskMain {
 //        }
         
 //        for (;;) {
-//            _Debug::Print("EVENT REPEAT TYPE");
-//            _Debug::Print((uint16_t)_Triggers::_Event[0].repeat.type);
-//            
-//            _Debug::Print("EVENT BASE REPEAT TYPE");
-//            _Debug::Print((uint16_t)_Triggers::_Event[0].base().repeat.type);
-//            
+//            _Debug::Print("accessMode");
 //            _Scheduler::Sleep(_Scheduler::Ms<1000>);
 //        }
         
@@ -1389,7 +1393,6 @@ void _ISR_ADC() {
 
 [[noreturn]]
 [[gnu::naked]] // No function preamble because we always abort, so we don't need to preserve any registers
-[[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
 [[gnu::interrupt]]
 void _ISR_UNMI() {
     switch (SYSUNIV) {
@@ -1399,7 +1402,6 @@ void _ISR_UNMI() {
     }
 }
 
-[[gnu::optimize("O1")]] // Prevent merging of Assert(false) invocations, otherwise we won't know what IFG caused the ISR
 [[gnu::interrupt]]
 void _ISR_SYSNMI() {
     switch (SYSSNIV) {
