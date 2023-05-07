@@ -183,8 +183,10 @@ public:
         return _TicksForTocks((TocksMax-Tocks())+1);
     }
     
-    static const MSP::TimeState& TimeState() {
-        return _RTCTimeState;
+    static MSP::TimeState TimeState() {
+        MSP::TimeState x = _RTCTimeState;
+        x.time = Now();
+        return x;
     }
     
     static void ISR(uint16_t iv) {

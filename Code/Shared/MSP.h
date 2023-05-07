@@ -296,6 +296,8 @@ static_assert(!(sizeof(TimeState) % 2)); // Check alignment
 static_assert(sizeof(TimeState) == 30); // Debug
 
 struct [[gnu::packed]] Cmd {
+    static constexpr uint8_t ArgLen = 32;
+    
     enum class Op : uint8_t {
         None,
         StateRead,
@@ -309,6 +311,8 @@ struct [[gnu::packed]] Cmd {
     };
     
     Op op;
+    uint8_t _pad;
+    
     union {
         struct [[gnu::packed]] {
             uint16_t off;
@@ -316,7 +320,7 @@ struct [[gnu::packed]] Cmd {
         
         struct [[gnu::packed]] {
             uint16_t off;
-            uint8_t data[8];
+            uint8_t data[ArgLen-sizeof(off)];
         } StateWrite;
         
         struct [[gnu::packed]] {
@@ -335,14 +339,21 @@ struct [[gnu::packed]] Cmd {
         struct [[gnu::packed]] {
             uint8_t en;
         } VDDIMGSDSet;
+        
+        uint8_t _[ArgLen]; // Set size of argument
     } arg;
+    static_assert(sizeof(arg) == ArgLen); // Check size
 };
 
 struct [[gnu::packed]] Resp {
+    static constexpr uint8_t ArgLen = 32;
+    
     uint8_t ok;
+    uint8_t _pad;
+    
     union {
         struct [[gnu::packed]] {
-            uint8_t data[8];
+            uint8_t data[ArgLen];
         } StateRead;
         
         struct [[gnu::packed]] {
@@ -352,7 +363,10 @@ struct [[gnu::packed]] Resp {
         struct [[gnu::packed]] {
             BatteryChargeLevel level;
         } BatteryChargeLevelGet;
+        
+        uint8_t _[ArgLen]; // Set size of argument
     } arg;
+    static_assert(sizeof(arg) == ArgLen); // Check size
 };
 
 //struct [[gnu::packed]] Triggers {
