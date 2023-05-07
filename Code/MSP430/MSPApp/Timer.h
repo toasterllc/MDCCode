@@ -124,12 +124,8 @@ public:
         return _Fired();
     }
     
-    static bool ISRRTCInterested() {
-        return _ISRState.state == _State::RTC;
-    }
-    
     static bool ISRRTC() {
-        Assert(ISRRTCInterested());
+        if (_ISRState.state != _State::RTC) return false; // Don't care
         _StateUpdate();
         return _Fired();
     }

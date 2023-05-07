@@ -116,6 +116,8 @@ public:
     // Tocks(): returns the current tocks offset from _RTCTime, as tracked by the hardware
     // register RTCCNT.
     //
+    // Cannot be called from the interrupt context.
+    //
     // Guarantee0: Tocks() will never return 0.
     //
     // Guarantee1: if interrupts are disabled before being called, the Tocks() return value
@@ -164,6 +166,19 @@ public:
         }
     }
     
+    // Base(): returns the 'base' of the current time, to which Tocks() is added to get the current
+    // absolute time.
+    //
+    // Can be called from the interrupt context.
+    //
+    // If called from the RTC ISR, the return value accurately represents the current time because
+    // it just overflowed and therefore RTCCNT==0.
+    static Time::Instant Base() {
+        return _RTCTimeState.time + _RTCTimeState.adjustment.value;
+    }
+    
+    // Now(): returns the current time
+    // Cannot be called from the interrupt context.
     static Time::Instant Now() {
         // Disable interrupts so that reading _RTCTime and adding RTCCNT to it is atomic
         // (with respect to overflow causing _RTCTime to be updated)
@@ -172,7 +187,7 @@ public:
         // value read by Tocks(), since Tocks() enables interrupts in some cases, allowing
         // _RTCTime to be updated.
         const uint16_t tocks = Tocks();
-        return _RTCTimeState.time + _RTCTimeState.adjustment.value + _TicksForTocks(tocks);
+        return Base() + _TicksForTocks(tocks);
     }
     
     // TicksUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
@@ -204,8 +219,7 @@ public:
                     adj.value += adj.delta;
                 }
             }
-            
-            return;
+            break;
         }
         
         default:

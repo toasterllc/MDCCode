@@ -1312,11 +1312,9 @@ void _ISR_RTC() {
     _RTC::ISR(RTCIV);
     
     // Let _EventTimer know we got an RTC interrupt
-    if (_EventTimer::ISRRTCInterested()) {
-        const bool wake = _EventTimer::ISRRTC();
-        // Wake if the timer fired
-        if (wake) _Clock::Wake();
-    }
+    const bool wake = _EventTimer::ISRRTC();
+    // Wake if the timer fired
+    if (wake) _Clock::Wake();
 }
 
 [[gnu::interrupt]]

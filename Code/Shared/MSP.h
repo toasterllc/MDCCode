@@ -282,15 +282,21 @@ constexpr State::Header StateHeader = {
 
 constexpr uint8_t I2CAddr = 0x55;
 
-struct [[gnu::packed]] TimeState {
+struct [[gnu::packed]] TimeBase {
     Time::Instant start;
     Time::Instant time;
-    struct [[gnu::packed]] {
-        int32_t value;          // Current adjustment to `time`
-        Time::Ticks32 counter;  // Counts ticks until `counter >= `interval`
-        Time::Ticks32 interval; // Interval upon which we perform `value += delta`
-        int16_t delta;          // Amount to add to `value` when `counter >= interval`
-    } adjustment;
+};
+
+struct [[gnu::packed]] TimeAdjustment {
+    int32_t value;          // Current adjustment to `time`
+    Time::Ticks32 counter;  // Counts ticks until `counter >= `interval`
+    Time::Ticks32 interval; // Interval upon which we perform `value += delta`
+    int16_t delta;          // Amount to add to `value` when `counter >= interval`
+};
+
+struct [[gnu::packed]] TimeState {
+    TimeBase base;
+    TimeAdjustment adjustment;
 };
 static_assert(!(sizeof(TimeState) % 2)); // Check alignment
 static_assert(sizeof(TimeState) == 30); // Debug
