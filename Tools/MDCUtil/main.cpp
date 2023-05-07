@@ -627,7 +627,7 @@ static void _TimeStatePrint(const MSP::TimeState& state) {
         std::cout   << "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
     }
     
-    std::cout <<    "\n";
+    std::cout << "\n";
 }
 
 static void MSPTimeStateGet(const Args& args, MDCUSBDevice& device) {
