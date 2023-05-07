@@ -42,6 +42,7 @@ enum class Op : uint8_t {
     MSPStateWrite,
     MSPTimeGet,
     MSPTimeSet,
+    MSPTimeAdjust,
     
     MSPSBWLock,
     MSPSBWUnlock,
@@ -65,6 +66,8 @@ enum class Op : uint8_t {
 
 struct [[gnu::packed]] Cmd {
     Op op;
+    uint8_t _pad[3];
+    
     union {
         struct [[gnu::packed]] {
             uint8_t idx;
@@ -104,8 +107,12 @@ struct [[gnu::packed]] Cmd {
         } MSPStateWrite;
         
         struct [[gnu::packed]] {
-            Time::Instant time;
+            MSP::TimeState state;
         } MSPTimeSet;
+        
+        struct [[gnu::packed]] {
+            MSP::TimeAdjustment adjustment;
+        } MSPTimeAdjust;
         
         struct [[gnu::packed]] {
             uint32_t addr;
@@ -142,9 +149,11 @@ struct [[gnu::packed]] Cmd {
             uint16_t fineIntTime;
             uint16_t analogGain;
         } ImgExposureSet;
+        
+        uint8_t _[60]; // Set union size
     } arg;
 };
-static_assert(sizeof(Cmd)<=64, "Cmd: invalid size"); // Verify that Cmd will fit in a single EP0 packet
+static_assert(sizeof(Cmd) == 64); // Verify that Cmd is exactly the size of a EP0 packet
 
 struct [[gnu::packed]] Status {
     static constexpr uint32_t MagicNumber = 0xCAFEBABE;

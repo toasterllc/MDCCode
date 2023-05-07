@@ -117,7 +117,7 @@ using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledUpdate>;
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
 
 // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
-using _EventTimer = T_Timer<_RTC, _ACLKFreqHz>;
+using _EventTimer = T_Timer<_Scheduler, _RTC, _ACLKFreqHz>;
 
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static_assert(Time::TicksFreq::den == 1); // Check assumption that TicksFreq is an integer
@@ -745,11 +745,9 @@ struct _TaskEvent {
     
     static void _EventTimerSchedule() {
         _Triggers::Event* ev = _Triggers::EventFront();
-        if (ev) {
-            _EventTimer::Schedule(ev->time);
-        } else {
-            _EventTimer::Reset();
-        }
+        std::optional<Time::Instant> time;
+        if (ev) time = ev->time;
+        _EventTimer::Schedule(time);
     }
     
     // _EventPop(): pops an event from the front of the list if it's ready to be handled
@@ -761,13 +759,6 @@ struct _TaskEvent {
         // Schedule _EventTimer for the next event
         _EventTimerSchedule();
         return *ev;
-    }
-    
-    static bool _EventTimerFired() {
-        const bool fired = _EventTimer::Fired();
-        // Exit fast-forward mode the first time we have an event that's in the future
-        if (!fired) _State.fastForward = false;
-        return fired;
     }
     
     static void Run() {
@@ -784,13 +775,15 @@ struct _TaskEvent {
         _EventTimerSchedule();
         
         // Enter fast-forward mode while we pop every event that occurs in the past
-        // (_EventTimerFired() will exit from fast-forward mode)
         #warning TODO: don't enter fast-forward mode if the first event is a relative time, otherwise we'll arbitrarily skip the first event in FF mode since it's in the past
         #warning TODO: OR: don't enter FF mode if our time is a relative time
         _State.fastForward = true;
         for (;;) {
             // Wait for _EventTimer to fire
-            _Scheduler::Wait([] { return _EventTimerFired(); });
+            const bool waited = _EventTimer::Wait();
+            // Exit fast-forward mode the first time that the _EventTimer actually waits for a time to arrive
+            if (waited) _State.fastForward = false;
+            
             _Triggers::Event& ev = _EventPop();
             
             // Don't go to sleep until we handle the event
@@ -910,14 +903,21 @@ struct _TaskI2C {
         case Cmd::Op::TimeGet:
             return MSP::Resp{
                 .ok = true,
-                .arg = { .TimeGet = { .time = _RTC::Now() } },
+                .arg = { .TimeGet = { .state = _RTC::TimeState() } },
             };
         
         case Cmd::Op::TimeSet:
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
             if (!_HostModeState.en) return MSP::Resp{ .ok = false };
-            _RTC::Init(cmd.arg.TimeSet.time);
+            _RTC::Init(&cmd.arg.TimeSet.state);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::TimeAdjust:
+            // Only allow setting the time while we're in host mode
+            // and therefore _TaskEvent isn't running
+            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            _RTC::Adjust(cmd.arg.TimeAdjust.adjustment);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
@@ -1312,11 +1312,9 @@ void _ISR_RTC() {
     _RTC::ISR(RTCIV);
     
     // Let _EventTimer know we got an RTC interrupt
-    if (_EventTimer::ISRRTCInterested()) {
-        const bool wake = _EventTimer::ISRRTC();
-        // Wake if the timer fired
-        if (wake) _Clock::Wake();
-    }
+    const bool wake = _EventTimer::ISRRTC();
+    // Wake if the timer fired
+    if (wake) _Clock::Wake();
 }
 
 [[gnu::interrupt]]

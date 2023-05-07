@@ -282,7 +282,25 @@ constexpr State::Header StateHeader = {
 
 constexpr uint8_t I2CAddr = 0x55;
 
+struct [[gnu::packed]] TimeState {
+    Time::Instant start;
+    Time::Instant time;
+};
+static_assert(!(sizeof(TimeState) % 2)); // Check alignment
+static_assert(sizeof(TimeState) == 16); // Debug
+
+struct [[gnu::packed]] TimeAdjustment {
+    int32_t value;          // Current adjustment to `time`
+    Time::Ticks32 counter;  // Counts ticks until `counter >= `interval`
+    Time::Ticks32 interval; // Interval upon which we perform `value += delta`
+    int16_t delta;          // Amount to add to `value` when `counter >= interval`
+};
+static_assert(!(sizeof(TimeAdjustment) % 2)); // Check alignment
+static_assert(sizeof(TimeAdjustment) == 14); // Debug
+
 struct [[gnu::packed]] Cmd {
+    static constexpr uint8_t ArgLen = 16;
+    
     enum class Op : uint8_t {
         None,
         StateRead,
@@ -290,12 +308,15 @@ struct [[gnu::packed]] Cmd {
         LEDSet,
         TimeGet,
         TimeSet,
+        TimeAdjust,
         HostModeSet,
         VDDIMGSDSet,
         BatteryChargeLevelGet,
     };
     
     Op op;
+    uint8_t _pad;
+    
     union {
         struct [[gnu::packed]] {
             uint16_t off;
@@ -303,7 +324,7 @@ struct [[gnu::packed]] Cmd {
         
         struct [[gnu::packed]] {
             uint16_t off;
-            uint8_t data[8];
+            uint8_t data[ArgLen-sizeof(off)];
         } StateWrite;
         
         struct [[gnu::packed]] {
@@ -312,8 +333,12 @@ struct [[gnu::packed]] Cmd {
         } LEDSet;
         
         struct [[gnu::packed]] {
-            Time::Instant time;
+            TimeState state;
         } TimeSet;
+        
+        struct [[gnu::packed]] {
+            TimeAdjustment adjustment;
+        } TimeAdjust;
         
         struct [[gnu::packed]] {
             uint8_t en;
@@ -322,24 +347,34 @@ struct [[gnu::packed]] Cmd {
         struct [[gnu::packed]] {
             uint8_t en;
         } VDDIMGSDSet;
+        
+        uint8_t _[ArgLen]; // Set size of argument
     } arg;
+    static_assert(sizeof(arg) == ArgLen); // Check size
 };
 
 struct [[gnu::packed]] Resp {
+    static constexpr uint8_t ArgLen = 16;
+    
     uint8_t ok;
+    uint8_t _pad;
+    
     union {
         struct [[gnu::packed]] {
-            uint8_t data[8];
+            uint8_t data[ArgLen];
         } StateRead;
         
         struct [[gnu::packed]] {
-            Time::Instant time;
+            TimeState state;
         } TimeGet;
         
         struct [[gnu::packed]] {
             BatteryChargeLevel level;
         } BatteryChargeLevelGet;
+        
+        uint8_t _[ArgLen]; // Set size of argument
     } arg;
+    static_assert(sizeof(arg) == ArgLen); // Check size
 };
 
 //struct [[gnu::packed]] Triggers {

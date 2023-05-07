@@ -1052,8 +1052,8 @@ static void _MSPTimeGet(const STM::Cmd& cmd) {
     
     // Send time
     alignas(void*) // Aligned to send via USB
-    const Time::Instant time = mspResp->arg.TimeGet.time;
-    _USB::Send(Endpoint::DataIn, &time, sizeof(time));
+    const MSP::TimeState state = mspResp->arg.TimeGet.state;
+    _USB::Send(Endpoint::DataIn, &state, sizeof(state));
 }
 
 static void _MSPTimeSet(const STM::Cmd& cmd) {
@@ -1064,7 +1064,28 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
     
     const MSP::Cmd mspCmd = {
         .op = MSP::Cmd::Op::TimeSet,
-        .arg = { .TimeSet = { .time = arg.time } },
+        .arg = { .TimeSet = { .state = arg.state } },
+    };
+    
+    const auto mspResp = _System::MSPSend(mspCmd);
+    if (!mspResp || !mspResp->ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _MSPTimeAdjust(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPTimeAdjust;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const MSP::Cmd mspCmd = {
+        .op = MSP::Cmd::Op::TimeAdjust,
+        .arg = { .TimeAdjust = { .adjustment = arg.adjustment } },
     };
     
     const auto mspResp = _System::MSPSend(mspCmd);
@@ -1512,6 +1533,7 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPStateWrite:         _MSPStateWrite(cmd);                break;
     case Op::MSPTimeGet:            _MSPTimeGet(cmd);                   break;
     case Op::MSPTimeSet:            _MSPTimeSet(cmd);                   break;
+    case Op::MSPTimeAdjust:         _MSPTimeAdjust(cmd);                break;
     // MSP430 SBW
     case Op::MSPSBWLock:            _MSPSBWLock(cmd);                   break;
     case Op::MSPSBWUnlock:          _MSPSBWUnlock(cmd);                 break;

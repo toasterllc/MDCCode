@@ -24,7 +24,11 @@
 // templated classes.
 
 [[gnu::section(".ram_backup_noinit.rtc")]]
-static volatile Time::Instant _RTCTime;
+alignas(void*)
+struct {
+    MSP::TimeState state;
+    MSP::TimeAdjustment adjustment;
+} _RTCState;
 
 template<typename T_Scheduler, uint32_t T_XT1FreqHz>
 class T_RTC {
@@ -84,10 +88,12 @@ public:
     
     // Init(): initialize the RTC subsystem
     // Interrupts must be disabled
-    static void Init(Time::Instant time=0) {
+    static void Init(const MSP::TimeState* state=nullptr) {
         // Start RTC if it's not yet running, or restart it if we were given a new time
-        if (!Enabled() || time) {
-            _RTCTime = time;
+        if (!Enabled() || state) {
+            _RTCState = {
+                .state = (state ? *state : MSP::TimeState{}),
+            };
             
             RTCMOD = TocksMax;
             RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
@@ -114,6 +120,8 @@ public:
     
     // Tocks(): returns the current tocks offset from _RTCTime, as tracked by the hardware
     // register RTCCNT.
+    //
+    // Cannot be called from the interrupt context.
     //
     // Guarantee0: Tocks() will never return 0.
     //
@@ -163,6 +171,20 @@ public:
         }
     }
     
+    // NowBase(): returns the 'base' of the current time, to which Tocks() is added to get the current
+    // absolute time. This function allows clients to safely get the current time from the RTC
+    // interrupt context, since calling Now() is forbidden in the interrupt context.
+    //
+    // Note that when called from the RTC ISR, the return value accurately represents the current time
+    // because it just overflowed and therefore RTCCNT==0.
+    //
+    // Can be called from the interrupt context.
+    static Time::Instant NowBase() {
+        return _RTCState.state.time + _RTCState.adjustment.value;
+    }
+    
+    // Now(): returns the current time
+    // Cannot be called from the interrupt context.
     static Time::Instant Now() {
         // Disable interrupts so that reading _RTCTime and adding RTCCNT to it is atomic
         // (with respect to overflow causing _RTCTime to be updated)
@@ -171,7 +193,7 @@ public:
         // value read by Tocks(), since Tocks() enables interrupts in some cases, allowing
         // _RTCTime to be updated.
         const uint16_t tocks = Tocks();
-        return _RTCTime + _TicksForTocks(tocks);
+        return NowBase() + _TicksForTocks(tocks);
     }
     
     // TicksUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
@@ -182,12 +204,36 @@ public:
         return _TicksForTocks((TocksMax-Tocks())+1);
     }
     
+    static void Adjust(const MSP::TimeAdjustment& adjust) {
+        // Disable interrupts to prevent ISR() from accessing _RTCState.adjustment while we update it
+        Toastbox::IntState ints(false);
+        _RTCState.adjustment = adjust;
+    }
+    
+    static MSP::TimeState TimeState() {
+        MSP::TimeState x = _RTCState.state;
+        x.time = Now();
+        return x;
+    }
+    
     static void ISR(uint16_t iv) {
         switch (iv) {
-        case RTCIV_RTCIF:
+        case RTCIV_RTCIF: {
             // Update our time
-            _RTCTime += InterruptIntervalTicks;
-            return;
+            _RTCState.state.time += InterruptIntervalTicks;
+            
+            // Correct time based on our calibration
+            MSP::TimeAdjustment& adj = _RTCState.adjustment;
+            if (adj.delta) {
+                adj.counter += InterruptIntervalTicks;
+                while (adj.counter >= adj.interval) {
+                    adj.counter -= adj.interval;
+                    adj.value += adj.delta;
+                }
+            }
+            break;
+        }
+        
         default:
             Assert(false);
         }

@@ -13,7 +13,7 @@
 // wakeups for tracking time over long periods, and then using Timer_A
 // for the remaining time after the final RTC wakeup before the scheduled
 // time.
-template<typename T_RTC, uint32_t T_ACLKFreqHz>
+template<typename T_Scheduler, typename T_RTC, uint32_t T_ACLKFreqHz>
 class T_Timer {
 public:
     // TimerACLKFreqDivider: the freq divider that we apply to our timer
@@ -38,108 +38,103 @@ public:
     static_assert(TimerIntervalTicks::num == 2048); // Debug
     static_assert(TimerIntervalTicks::den == 1); // Verify that TimerIntervalTicks is an integer
     
-    static void Schedule(const Time::Instant& time) {
-        // Get our current time
-        const Time::Instant now = T_RTC::Now();
+    // Schedule(): sets the time that the timer should fire
+    static void Schedule(const std::optional<Time::Instant>& time) {
+        Toastbox::IntState ints(false);
         
+        _TimerStop();
+        
+        _State = {
+            .request = {
+                .reset = true,
+                .time = time,
+            },
+        };
+    }
+    
+    // Wait(): waits until the timer fires
+    // Returns whether we actually waited (true), or the timer fired immediately (false)
+    static bool Wait() {
         // Disable interrupts while we modify our state
         Toastbox::IntState ints(false);
         
-        // Reset our state
-        _Reset();
-        
-        if (time >= now) {
-            const Time::Ticks16 rtcTicksUntilOverflow = T_RTC::TicksUntilOverflow();
-            const Time::Ticks64 deltaTicks64 = time-now;
-            Time::Ticks32 deltaTicks = deltaTicks64;
-            // Ensure that the runtime value of `deltaTicks64` fits in `deltaTicks`
-            Assert(std::in_range<decltype(deltaTicks)>(deltaTicks64));
+        for (;;) {
+            // Consume pending reset
+            _State.request.reset = false;
             
-            uint16_t rtcCount = 0;
-            if (deltaTicks >= rtcTicksUntilOverflow) {
-                rtcCount = 1;
-                deltaTicks -= rtcTicksUntilOverflow;
+            // Wait until we're scheduled
+            T_Scheduler::Wait([] { return (bool)_State.request.time; });
+            
+            // Get our remaining ticks until we fire
+            Time::Ticks32 deltaTicks = _TicksRemaining(T_RTC::Now());
+            
+            // Short-circuit if we're not waiting
+            if (!deltaTicks) return false;
+            
+            // Wait for as many full RTC overflow intervals as possible
+            _State.rtc.waiting = _RTCMode(deltaTicks);
+            if (_State.rtc.waiting) {
+                T_Scheduler::Wait([] { return _State.request.reset || !_State.rtc.waiting; });
+                if (_State.request.reset) continue;
+                // Update deltaTicks
+                deltaTicks = _TicksRemaining(T_RTC::Now());
             }
             
-            if (deltaTicks >= T_RTC::InterruptIntervalTicks) {
-                // Ensure that the type of T_RTC::InterruptIntervalTicks is a Time::Ticks16, as we expect
-                static_assert(std::is_same_v<decltype(T_RTC::InterruptIntervalTicks), const Time::Ticks16>);
-                const uint16_t count = deltaTicks / T_RTC::InterruptIntervalTicks;
-                constexpr uint16_t CountMax = std::numeric_limits<decltype(count)>::max();
-                // Verify that our `count` division (above) can't overflow
-                Assert(deltaTicks <= (Time::Ticks64)CountMax * T_RTC::InterruptIntervalTicks); 
-                rtcCount += count;
-                deltaTicks -= count*T_RTC::InterruptIntervalTicks;
+            // Wait for full timer intervals for the remaining time less than the RTC overflow interval
+            {
+                // DeltaTicksMax: the max value of `deltaTicks` at this point
+                constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
+                // Ensure that casting deltaTicks to Time::Ticks16 is safe
+                static_assert(std::in_range<Time::Ticks16>(DeltaTicksMax));
+                // Ensure that casting TimerIntervalTicks::num to Time::Ticks16 is safe
+                static_assert(std::in_range<Time::Ticks16>(TimerIntervalTicks::num));
+                const uint16_t intervalCount = (Time::Ticks16)deltaTicks / (Time::Ticks16)TimerIntervalTicks::num;
+                if (intervalCount) {
+                    _TimerWait(_CCRForTocks(TimerIntervalTocks), intervalCount);
+                    if (_State.request.reset) continue;
+                }
             }
             
-            // DeltaTicksMax: the max value of `deltaTicks` at this point
-            constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
-            // Ensure that casting deltaTicks to Time::Ticks16 is safe
-            static_assert(std::in_range<Time::Ticks16>(DeltaTicksMax));
-            // Ensure that casting TimerIntervalTicks::num to Time::Ticks16 is safe
-            static_assert(std::in_range<Time::Ticks16>(TimerIntervalTicks::num));
-            const uint16_t intervalCount = (Time::Ticks16)deltaTicks / (Time::Ticks16)TimerIntervalTicks::num;
-            const Time::Ticks16 remainderTicks = (Time::Ticks16)deltaTicks % (Time::Ticks16)TimerIntervalTicks::num;
-            // RemainderTicksMax: max value of remainderTicks at this point
-            constexpr auto RemainderTicksMax = TimerIntervalTicks::num-1;
-            // Ensure that casting TicksPerTock::num/den to Time::Ticks16 is safe
-            static_assert(std::in_range<Time::Ticks16>(TicksPerTock::num));
-            static_assert(std::in_range<Time::Ticks16>(TicksPerTock::den));
-            // Ensure that our ticks -> tocks calculation can't overflow due to the multiplication
-            static_assert(std::in_range<Time::Ticks16>(RemainderTicksMax * TicksPerTock::den));
-            const Tocks16 remainderTocks = (remainderTicks * (Time::Ticks16)TicksPerTock::den) / (Time::Ticks16)TicksPerTock::num;
+            // Wait for remaining time less than a full timer interval
+            {
+                const Time::Ticks16 remainderTicks = (Time::Ticks16)deltaTicks % (Time::Ticks16)TimerIntervalTicks::num;
+                // RemainderTicksMax: max value of remainderTicks at this point
+                constexpr auto RemainderTicksMax = TimerIntervalTicks::num-1;
+                // Ensure that casting TicksPerTock::num/den to Time::Ticks16 is safe
+                static_assert(std::in_range<Time::Ticks16>(TicksPerTock::num));
+                static_assert(std::in_range<Time::Ticks16>(TicksPerTock::den));
+                // Ensure that our ticks -> tocks calculation can't overflow due to the multiplication
+                static_assert(std::in_range<Time::Ticks16>(RemainderTicksMax * TicksPerTock::den));
+                const Tocks16 remainderTocks = (remainderTicks * (Time::Ticks16)TicksPerTock::den) / (Time::Ticks16)TicksPerTock::num;
+                if (remainderTocks) {
+                    _TimerWait(_CCRForTocks(remainderTocks), 1);
+                    if (_State.request.reset) continue;
+                }
+            }
             
-            _ISRState = {
-                .rtc = {
-                    .count = rtcCount,
-                },
-                .timer = {
-                    .intervalCount = intervalCount,
-                    .remainderTocks = remainderTocks,
-                },
-            };
-            
-            
-//            _ISRState = {
-//                .rtc = {
-//                    .count = 0,
-//                },
-//                .timer = {
-//                    .intervalCount = 0,
-//                    .remainderTocks = 4,
-//                },
-//            };
+            return true;
         }
-        
-        _StateUpdate();
-    }
-    
-    static void Reset() {
-        Toastbox::IntState ints(false);
-        _Reset();
-    }
-    
-    static bool Fired() {
-        Toastbox::IntState ints(false);
-        return _Fired();
-    }
-    
-    static bool ISRRTCInterested() {
-        return _ISRState.state == _State::RTC;
     }
     
     static bool ISRRTC() {
-        Assert(ISRRTCInterested());
-        _StateUpdate();
-        return _Fired();
+        if (!_State.rtc.waiting) return false;
+        _State.rtc.waiting = _RTCMode(_TicksRemaining(T_RTC::NowBase()));
+        // Wake if we exiting RTC mode
+        return !_State.rtc.waiting;
     }
     
     static bool ISRTimer(uint16_t iv) {
         switch (iv) {
         case TA0IV_TAIFG:
-            Assert(_ISRState.state==_State::TimerInterval || _ISRState.state==_State::TimerRemainder);
-            _StateUpdate();
-            return _Fired();
+            Assert(_State.timer.count);
+            _State.timer.count--;
+            if (!_State.timer.count) {
+                // Stop timer
+                _TimerStop();
+                // Wake ourself
+                return true;
+            }
+            return false;
         default:
             Assert(false);
         }
@@ -172,89 +167,36 @@ private:
             TAIE            ;   // enable interrupt
     }
     
-    // _Reset(): resets the timer and our state (_ISRState)
-    // Interrupts must be disabled
-    static void _Reset() {
-        _ISRState = {};
-        _TimerStop();
+    [[gnu::noinline]]
+    static Time::Ticks32 _TicksRemaining(const Time::Instant& now) {
+        if (now >= *_State.request.time) return 0;
+        return *_State.request.time - now;
     }
     
-    static bool _Fired() {
-        return _ISRState.state == _State::Fired;
+    [[gnu::noinline]]
+    static bool _RTCMode(Time::Ticks32 ticks) {
+        return ticks >= T_RTC::InterruptIntervalTicks;
     }
     
-    static void _StateUpdate() {
-        for (;;) {
-            switch (_ISRState.state) {
-            case _State::Idle:
-                goto NextState;
-            
-            case _State::RTCPrepare:
-                if (!_ISRState.rtc.count) goto NextState;
-                goto NextStateReturn;
-            
-            case _State::RTC:
-                if (_ISRState.rtc.count) _ISRState.rtc.count--;
-                if (_ISRState.rtc.count) return;
-                goto NextState;
-            
-            case _State::TimerIntervalPrepare:
-                if (!_ISRState.timer.intervalCount) goto NextState;
-                _TimerSet(_CCRForTocks(TimerIntervalTocks)); // Set timer
-                goto NextStateReturn;
-            
-            case _State::TimerInterval:
-                if (_ISRState.timer.intervalCount) _ISRState.timer.intervalCount--;
-                if (_ISRState.timer.intervalCount) return;
-                // Cleanup
-                _TimerStop();
-                goto NextState;
-            
-            case _State::TimerRemainderPrepare:
-                if (!_ISRState.timer.remainderTocks) goto NextState;
-                _TimerSet(_CCRForTocks(_ISRState.timer.remainderTocks)); // Set timer
-                goto NextStateReturn;
-            
-            case _State::TimerRemainder:
-                // Clean up
-                _TimerStop();
-                goto NextStateReturn;
-            
-            case _State::Fired:
-                return;
-            }
-            
-            NextState:
-                _ISRState.state = (_State)(std::to_underlying(_ISRState.state)+1);
-                continue;
-            
-            NextStateReturn:
-                _ISRState.state = (_State)(std::to_underlying(_ISRState.state)+1);
-                return;
-        }
+    [[gnu::noinline]]
+    static void _TimerWait(uint16_t ccr, uint16_t count) {
+        _State.timer.count = count;
+        _TimerSet(ccr);
+        T_Scheduler::Wait([] { return _State.request.reset || !_State.timer.count; });
     }
     
-    enum class _State : uint8_t {
-        Idle,
-        RTCPrepare,
-        RTC,
-        TimerIntervalPrepare,
-        TimerInterval,
-        TimerRemainderPrepare,
-        TimerRemainder,
-        Fired,
-    };
-
     static inline struct {
         struct {
-            uint16_t count = 0;
+            bool reset = false;
+            std::optional<Time::Instant> time;
+        } request;
+        
+        struct {
+            bool waiting = false;
         } rtc;
         
         struct {
-            uint16_t intervalCount = 0;
-            Tocks16 remainderTocks = 0;
+            uint16_t count = 0;
         } timer;
-        
-        _State state = _State::Idle;
-    } _ISRState;
+    } _State;
 };
