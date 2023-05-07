@@ -282,14 +282,27 @@ constexpr State::Header StateHeader = {
 
 constexpr uint8_t I2CAddr = 0x55;
 
+struct [[gnu::packed]] TimeState {
+    Time::Instant start;
+    Time::Instant time;
+    struct [[gnu::packed]] {
+        int32_t value;          // Current adjustment to `time`
+        Time::Ticks32 counter;  // Counts ticks until `counter >= `interval`
+        Time::Ticks32 interval; // Interval upon which we perform `value += delta`
+        int16_t delta;          // Amount to add to `value` when `counter >= interval`
+    } adjustment;
+};
+static_assert(!(sizeof(TimeState) % 2)); // Check alignment
+static_assert(sizeof(TimeState) == 30); // Debug
+
 struct [[gnu::packed]] Cmd {
     enum class Op : uint8_t {
         None,
         StateRead,
         StateWrite,
         LEDSet,
-        TimeGet,
-        TimeSet,
+        TimeStateGet,
+        TimeStateSet,
         HostModeSet,
         VDDIMGSDSet,
         BatteryChargeLevelGet,
@@ -312,8 +325,8 @@ struct [[gnu::packed]] Cmd {
         } LEDSet;
         
         struct [[gnu::packed]] {
-            Time::Instant time;
-        } TimeSet;
+            TimeState state;
+        } TimeStateSet;
         
         struct [[gnu::packed]] {
             uint8_t en;
@@ -333,8 +346,8 @@ struct [[gnu::packed]] Resp {
         } StateRead;
         
         struct [[gnu::packed]] {
-            Time::Instant time;
-        } TimeGet;
+            TimeState state;
+        } TimeStateGet;
         
         struct [[gnu::packed]] {
             BatteryChargeLevel level;

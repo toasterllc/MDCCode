@@ -1036,11 +1036,11 @@ static void _MSPStateWrite(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static void _MSPTimeGet(const STM::Cmd& cmd) {
+static void _MSPTimeStateGet(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    const MSP::Cmd mspCmd = { .op = MSP::Cmd::Op::TimeGet };
+    const MSP::Cmd mspCmd = { .op = MSP::Cmd::Op::TimeStateGet };
     const auto mspResp = _System::MSPSend(mspCmd);
     if (!mspResp || !mspResp->ok) {
         _System::USBSendStatus(false);
@@ -1052,19 +1052,19 @@ static void _MSPTimeGet(const STM::Cmd& cmd) {
     
     // Send time
     alignas(void*) // Aligned to send via USB
-    const Time::Instant time = mspResp->arg.TimeGet.time;
-    _USB::Send(Endpoint::DataIn, &time, sizeof(time));
+    const MSP::TimeState state = mspResp->arg.TimeStateGet.state;
+    _USB::Send(Endpoint::DataIn, &state, sizeof(state));
 }
 
-static void _MSPTimeSet(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.MSPTimeSet;
+static void _MSPTimeStateSet(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPTimeStateSet;
     
     // Accept command
     _System::USBAcceptCommand(true);
     
     const MSP::Cmd mspCmd = {
-        .op = MSP::Cmd::Op::TimeSet,
-        .arg = { .TimeSet = { .time = arg.time } },
+        .op = MSP::Cmd::Op::TimeStateSet,
+        .arg = { .TimeStateSet = { .state = arg.state } },
     };
     
     const auto mspResp = _System::MSPSend(mspCmd);
@@ -1510,8 +1510,8 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPHostModeSet:        _MSPHostModeSet(cmd);               break;
     case Op::MSPStateRead:          _MSPStateRead(cmd);                 break;
     case Op::MSPStateWrite:         _MSPStateWrite(cmd);                break;
-    case Op::MSPTimeGet:            _MSPTimeGet(cmd);                   break;
-    case Op::MSPTimeSet:            _MSPTimeSet(cmd);                   break;
+    case Op::MSPTimeStateGet:       _MSPTimeStateGet(cmd);              break;
+    case Op::MSPTimeStateSet:       _MSPTimeStateSet(cmd);              break;
     // MSP430 SBW
     case Op::MSPSBWLock:            _MSPSBWLock(cmd);                   break;
     case Op::MSPSBWUnlock:          _MSPSBWUnlock(cmd);                 break;

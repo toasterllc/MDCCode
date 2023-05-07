@@ -24,7 +24,8 @@
 // templated classes.
 
 [[gnu::section(".ram_backup_noinit.rtc")]]
-static volatile Time::Instant _RTCTime;
+alignas(void*)
+static MSP::TimeState _RTCTimeState;
 
 template<typename T_Scheduler, uint32_t T_XT1FreqHz>
 class T_RTC {
@@ -84,10 +85,10 @@ public:
     
     // Init(): initialize the RTC subsystem
     // Interrupts must be disabled
-    static void Init(Time::Instant time=0) {
+    static void Init(const MSP::TimeState* state=nullptr) {
         // Start RTC if it's not yet running, or restart it if we were given a new time
-        if (!Enabled() || time) {
-            _RTCTime = time;
+        if (!Enabled() || state) {
+            _RTCTimeState = (state ? *state : MSP::TimeState{});
             
             RTCMOD = TocksMax;
             RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
@@ -171,7 +172,7 @@ public:
         // value read by Tocks(), since Tocks() enables interrupts in some cases, allowing
         // _RTCTime to be updated.
         const uint16_t tocks = Tocks();
-        return _RTCTime + _TicksForTocks(tocks);
+        return _RTCTimeState.time + _RTCTimeState.adjustment.value + _TicksForTocks(tocks);
     }
     
     // TicksUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
@@ -182,12 +183,27 @@ public:
         return _TicksForTocks((TocksMax-Tocks())+1);
     }
     
+    static const MSP::TimeState& TimeState() {
+        return _RTCTimeState;
+    }
+    
     static void ISR(uint16_t iv) {
         switch (iv) {
-        case RTCIV_RTCIF:
+        case RTCIV_RTCIF: {
             // Update our time
-            _RTCTime += InterruptIntervalTicks;
+            _RTCTimeState.time += InterruptIntervalTicks;
+            
+            // Correct time based on our calibration
+            auto& adj = _RTCTimeState.adjustment;
+            adj.counter += InterruptIntervalTicks;
+            while (adj.counter >= adj.interval) {
+                adj.counter -= adj.interval;
+                adj.value += adj.delta;
+            }
+            
             return;
+        }
+        
         default:
             Assert(false);
         }

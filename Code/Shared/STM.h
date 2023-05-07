@@ -40,8 +40,8 @@ enum class Op : uint8_t {
     MSPHostModeSet,
     MSPStateRead,
     MSPStateWrite,
-    MSPTimeGet,
-    MSPTimeSet,
+    MSPTimeStateGet,
+    MSPTimeStateSet,
     
     MSPSBWLock,
     MSPSBWUnlock,
@@ -104,8 +104,8 @@ struct [[gnu::packed]] Cmd {
         } MSPStateWrite;
         
         struct [[gnu::packed]] {
-            Time::Instant time;
-        } MSPTimeSet;
+            MSP::TimeState state;
+        } MSPTimeStateSet;
         
         struct [[gnu::packed]] {
             uint32_t addr;
