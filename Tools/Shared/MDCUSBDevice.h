@@ -353,25 +353,25 @@ public:
         _checkStatus("MSPStateWrite command failed");
     }
     
-    Time::Instant mspTimeGet() {
+    MSP::TimeState mspTimeStateGet() {
         assert(_mode == STM::Status::Mode::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::MSPTimeGet };
+        const STM::Cmd cmd = { .op = STM::Op::MSPTimeStateGet };
         _sendCmd(cmd);
         _checkStatus("MSPTimeGet command failed");
         
-        Time::Instant time;
-        _dev.read(STM::Endpoint::DataIn, time);
-        return time;
+        MSP::TimeState state;
+        _dev.read(STM::Endpoint::DataIn, state);
+        return state;
     }
     
-    void mspTimeSet(Time::Instant time) {
+    void mspTimeStateSet(const MSP::TimeState& state) {
         assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
-            .op = STM::Op::MSPTimeSet,
-            .arg = { .MSPTimeSet = { .time = time } },
+            .op = STM::Op::MSPTimeStateSet,
+            .arg = { .MSPTimeStateSet = { .state = state } },
         };
         _sendCmd(cmd);
-        _checkStatus("MSPTimeSet command failed");
+        _checkStatus("MSPTimeStateSet command failed");
     }
     
     void mspSBWLock() {

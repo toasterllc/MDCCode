@@ -195,10 +195,12 @@ public:
             
             // Correct time based on our calibration
             auto& adj = _RTCTimeState.adjustment;
-            adj.counter += InterruptIntervalTicks;
-            while (adj.counter >= adj.interval) {
-                adj.counter -= adj.interval;
-                adj.value += adj.delta;
+            if (adj.delta) {
+                adj.counter += InterruptIntervalTicks;
+                while (adj.counter >= adj.interval) {
+                    adj.counter -= adj.interval;
+                    adj.value += adj.delta;
+                }
             }
             
             return;

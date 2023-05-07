@@ -39,8 +39,9 @@ const CmdStr ICEFlashWriteCmd       = "ICEFlashWrite";
 const CmdStr MSPHostModeSetCmd      = "MSPHostModeSet";
 const CmdStr MSPStateReadCmd        = "MSPStateRead";
 const CmdStr MSPStateWriteCmd       = "MSPStateWrite";
-const CmdStr MSPTimeGetCmd          = "MSPTimeGet";
-const CmdStr MSPTimeSetCmd          = "MSPTimeSet";
+const CmdStr MSPTimeStateGetCmd     = "MSPTimeStateGet";
+const CmdStr MSPTimeStateSetCmd     = "MSPTimeStateSet";
+const CmdStr MSPTimeStateUpdateCmd  = "MSPTimeStateUpdate";
 const CmdStr MSPSBWReadCmd          = "MSPSBWRead";
 const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
 const CmdStr MSPSBWEraseCmd         = "MSPSBWErase";
@@ -70,8 +71,9 @@ static void printUsage() {
     cout << "  " << MSPHostModeSetCmd       << " <0/1>\n";
     cout << "  " << MSPStateReadCmd         << "\n";
     cout << "  " << MSPStateWriteCmd        << "\n";
-    cout << "  " << MSPTimeGetCmd           << "\n";
-    cout << "  " << MSPTimeSetCmd           << " [<time>]\n";
+    cout << "  " << MSPTimeStateGetCmd      << "\n";
+    cout << "  " << MSPTimeStateSetCmd      << "\n";
+    cout << "  " << MSPTimeStateUpdateCmd   << "\n";
     
     cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
     cout << "  " << MSPSBWWriteCmd          << " <file>\n";
@@ -112,10 +114,6 @@ struct Args {
     struct {
         bool en;
     } MSPHostModeSet = {};
-    
-    struct {
-        std::optional<Time::Instant> time;
-    } MSPTimeSet = {};
     
     struct {
         uintptr_t addr = 0;
@@ -191,12 +189,11 @@ static Args parseArgs(int argc, const char* argv[]) {
     
     } else if (args.cmd == lower(MSPStateWriteCmd)) {
     
-    } else if (args.cmd == lower(MSPTimeGetCmd)) {
+    } else if (args.cmd == lower(MSPTimeStateGetCmd)) {
     
-    } else if (args.cmd == lower(MSPTimeSetCmd)) {
-        if (strs.size() >= 2) {
-            args.MSPTimeSet.time = IntForStr<Time::Instant>(strs[1]);
-        }
+    } else if (args.cmd == lower(MSPTimeStateSetCmd)) {
+    
+    } else if (args.cmd == lower(MSPTimeStateUpdateCmd)) {
     
     } else if (args.cmd == lower(MSPSBWReadCmd)) {
         if (strs.size() < 3) throw std::runtime_error("missing argument: address/length");
@@ -604,32 +601,88 @@ static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
     throw Toastbox::RuntimeError("unimplemented");
 }
 
-static void MSPTimeGet(const Args& args, MDCUSBDevice& device) {
+static void MSPTimeStateGet(const Args& args, MDCUSBDevice& device) {
     using namespace std::chrono;
     using namespace date;
     
-    printf("MSPTimeGet:\n");
-    const Time::Instant deviceTimeInstant = device.mspTimeGet();
-    const Time::Clock::time_point actualTime = Time::Clock::now();
-    const Time::Instant actualTimeInstant = Time::Clock::TimeInstantFromTimePoint(actualTime);
     
-    std::cout <<        "     MDC time: " << _StringForTimeInstant(deviceTimeInstant) << "\n";
-    std::cout <<        "  Actual time: " << _StringForTimeInstant(actualTimeInstant) << "\n";
+// struct [[gnu::packed]] TimeState {
+//     Time::Instant start;
+//     Time::Instant time;
+//     struct [[gnu::packed]] {
+//         int32_t value;          // Current adjustment to `time`
+//         Time::Ticks32 counter;  // Counts ticks until `counter >= `interval`
+//         Time::Ticks32 interval; // Interval upon which we perform `value += delta`
+//         int16_t delta;          // Amount to add to `value` when `counter >= interval`
+//     } adjustment;
+// };
     
-    if (Time::Absolute(deviceTimeInstant)) {
-        const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(deviceTimeInstant);
-        const microseconds delta = deviceTime-actualTime;
+    
+    
+    printf("MSPTimeStateGet:\n");
+    
+    const MSP::TimeState state = device.mspTimeStateGet();
+    std::cout << "  start:" << _StringForTimeInstant(state.start) << "\n";
+    std::cout << "  time:" << _StringForTimeInstant(state.time) << "\n";
+    std::cout << "  adjustment:\n";
+    std::cout << "    value:" << std::to_string(state.adjustment.value) << "\n";
+    std::cout << "    counter:" << std::to_string(state.adjustment.counter) << "\n";
+    std::cout << "    interval:" << std::to_string(state.adjustment.interval) << "\n";
+    std::cout << "    delta:" << std::to_string(state.adjustment.delta) << "\n";
+    std::cout << "\n";
+    
+    const Time::Clock::time_point now = Time::Clock::now();
+    const Time::Instant nowTimeInstant = Time::Clock::TimeInstantFromTimePoint(now);
+    
+    std::cout <<        "     MDC adjusted time: " << _StringForTimeInstant(nowTimeInstant) << "\n";
+    std::cout <<        "           Actual time: " << _StringForTimeInstant(nowTimeInstant) << "\n";
+    
+    if (Time::Absolute(nowTimeInstant)) {
+        const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(nowTimeInstant);
+        const microseconds delta = deviceTime-now;
         std::cout <<    "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
     }
     
     std::cout <<    "\n";
 }
 
-static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
-    const Time::Clock::time_point now = Time::Clock::now();
-    const Time::Instant timeInstant = Time::Clock::TimeInstantFromTimePoint(now);
-    std::cout << "MSPTimeSet: " << _StringForTimeInstant(timeInstant) << "\n";
-    device.mspTimeSet(timeInstant);
+static void MSPTimeStateSet(const Args& args, MDCUSBDevice& device) {
+//    struct [[gnu::packed]] TimeState {
+//        Time::Instant start;
+//        Time::Instant time;
+//        struct [[gnu::packed]] {
+//            int32_t value;          // Current adjustment to `time`
+//            Time::Ticks32 counter;  // Counts ticks until `counter >= `interval`
+//            Time::Ticks32 interval; // Interval upon which we perform `value += delta`
+//            int16_t delta;          // Amount to add to `value` when `counter >= interval`
+//        } adjustment;
+//    };
+    
+    const Time::Instant now = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
+    const MSP::TimeState state = {
+        .start = now,
+        .time = now,
+    };
+    
+    std::cout << "MSPTimeStateSet: " << _StringForTimeInstant(now) << "\n";
+    device.mspTimeStateSet(state);
+}
+
+static void MSPTimeStateUpdate(const Args& args, MDCUSBDevice& device) {
+//    struct [[gnu::packed]] TimeState {
+//        Time::Instant start;
+//        Time::Instant time;
+//        struct [[gnu::packed]] {
+//            int32_t value;          // Current adjustment to `time`
+//            Time::Ticks32 counter;  // Counts ticks until `counter >= `interval`
+//            Time::Ticks32 interval; // Interval upon which we perform `value += delta`
+//            int16_t delta;          // Amount to add to `value` when `counter >= interval`
+//        } adjustment;
+//    };
+    
+    printf("MSPTimeStateUpdate:\n");
+    
+    #warning TODO: implement
 }
 
 static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
@@ -912,8 +965,9 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPHostModeSetCmd))      MSPHostModeSet(args, device);
         else if (args.cmd == lower(MSPStateReadCmd))        MSPStateRead(args, device);
         else if (args.cmd == lower(MSPStateWriteCmd))       MSPStateWrite(args, device);
-        else if (args.cmd == lower(MSPTimeGetCmd))          MSPTimeGet(args, device);
-        else if (args.cmd == lower(MSPTimeSetCmd))          MSPTimeSet(args, device);
+        else if (args.cmd == lower(MSPTimeStateGetCmd))     MSPTimeStateGet(args, device);
+        else if (args.cmd == lower(MSPTimeStateSetCmd))     MSPTimeStateSet(args, device);
+        else if (args.cmd == lower(MSPTimeStateUpdateCmd))  MSPTimeStateUpdate(args, device);
         else if (args.cmd == lower(MSPSBWReadCmd))          MSPSBWRead(args, device);
         else if (args.cmd == lower(MSPSBWWriteCmd))         MSPSBWWrite(args, device);
         else if (args.cmd == lower(MSPSBWEraseCmd))         MSPSBWErase(args, device);
