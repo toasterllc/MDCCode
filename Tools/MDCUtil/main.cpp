@@ -619,7 +619,26 @@ static void MSPTimeStateGet(const Args& args, MDCUSBDevice& device) {
     
     
     
-    printf("MSPTimeStateGet:\n");
+//    using namespace std::chrono;
+//    using namespace date;
+//    
+//    printf("MSPTimeGet:\n");
+//    const Time::Instant deviceTimeInstant = device.mspTimeGet();
+//    const Time::Clock::time_point actualTime = Time::Clock::now();
+//    const Time::Instant actualTimeInstant = Time::Clock::TimeInstantFromTimePoint(actualTime);
+//    
+//    std::cout <<        "     MDC time: " << _StringForTimeInstant(deviceTimeInstant) << "\n";
+//    std::cout <<        "  Actual time: " << _StringForTimeInstant(actualTimeInstant) << "\n";
+//    
+//    if (Time::Absolute(deviceTimeInstant)) {
+//        const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(deviceTimeInstant);
+//        const microseconds delta = deviceTime-actualTime;
+//        std::cout <<    "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
+//    }
+//    
+//    std::cout <<    "\n";
+    
+    std::cout << "MSPTimeStateGet:\n";
     
     const MSP::TimeState state = device.mspTimeStateGet();
     std::cout << "  start:" << _StringForTimeInstant(state.start) << "\n";
@@ -631,16 +650,17 @@ static void MSPTimeStateGet(const Args& args, MDCUSBDevice& device) {
     std::cout << "    delta:" << std::to_string(state.adjustment.delta) << "\n";
     std::cout << "\n";
     
-    const Time::Clock::time_point now = Time::Clock::now();
-    const Time::Instant nowTimeInstant = Time::Clock::TimeInstantFromTimePoint(now);
+    const Time::Clock::time_point nowTime = Time::Clock::now();
+    const Time::Instant nowInstant = Time::Clock::TimeInstantFromTimePoint(nowTime);
+    const Time::Instant deviceInstant = state.time + state.adjustment.value;
     
-    std::cout <<        "     MDC adjusted time: " << _StringForTimeInstant(nowTimeInstant) << "\n";
-    std::cout <<        "           Actual time: " << _StringForTimeInstant(nowTimeInstant) << "\n";
+    std::cout       << "   MDC time: " << _StringForTimeInstant(deviceInstant) << "\n";
+    std::cout       << "Actual time: " << _StringForTimeInstant(nowInstant) << "\n";
     
-    if (Time::Absolute(nowTimeInstant)) {
-        const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(nowTimeInstant);
-        const microseconds delta = deviceTime-now;
-        std::cout <<    "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
+    if (Time::Absolute(deviceInstant)) {
+        const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(deviceInstant);
+        const microseconds delta = deviceTime-nowTime;
+        std::cout   <<    "   Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
     }
     
     std::cout <<    "\n";
