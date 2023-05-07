@@ -907,17 +907,24 @@ struct _TaskI2C {
             _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
-        case Cmd::Op::TimeStateGet:
+        case Cmd::Op::TimeGet:
             return MSP::Resp{
                 .ok = true,
-                .arg = { .TimeStateGet = { .state = _RTC::TimeState() } },
+                .arg = { .TimeGet = { .state = _RTC::TimeState() } },
             };
         
-        case Cmd::Op::TimeStateSet:
+        case Cmd::Op::TimeSet:
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
             if (!_HostModeState.en) return MSP::Resp{ .ok = false };
-            _RTC::Init(&cmd.arg.TimeStateSet.state);
+            _RTC::Init(&cmd.arg.TimeSet.state);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::TimeAdjust:
+            // Only allow setting the time while we're in host mode
+            // and therefore _TaskEvent isn't running
+            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            _RTC::Adjust(cmd.arg.TimeAdjust.adjustment);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:

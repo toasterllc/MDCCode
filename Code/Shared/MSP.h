@@ -282,10 +282,12 @@ constexpr State::Header StateHeader = {
 
 constexpr uint8_t I2CAddr = 0x55;
 
-struct [[gnu::packed]] TimeBase {
+struct [[gnu::packed]] TimeState {
     Time::Instant start;
     Time::Instant time;
 };
+static_assert(!(sizeof(TimeState) % 2)); // Check alignment
+static_assert(sizeof(TimeState) == 16); // Debug
 
 struct [[gnu::packed]] TimeAdjustment {
     int32_t value;          // Current adjustment to `time`
@@ -293,24 +295,20 @@ struct [[gnu::packed]] TimeAdjustment {
     Time::Ticks32 interval; // Interval upon which we perform `value += delta`
     int16_t delta;          // Amount to add to `value` when `counter >= interval`
 };
-
-struct [[gnu::packed]] TimeState {
-    TimeBase base;
-    TimeAdjustment adjustment;
-};
-static_assert(!(sizeof(TimeState) % 2)); // Check alignment
-static_assert(sizeof(TimeState) == 30); // Debug
+static_assert(!(sizeof(TimeAdjustment) % 2)); // Check alignment
+static_assert(sizeof(TimeAdjustment) == 14); // Debug
 
 struct [[gnu::packed]] Cmd {
-    static constexpr uint8_t ArgLen = 32;
+    static constexpr uint8_t ArgLen = 16;
     
     enum class Op : uint8_t {
         None,
         StateRead,
         StateWrite,
         LEDSet,
-        TimeStateGet,
-        TimeStateSet,
+        TimeGet,
+        TimeSet,
+        TimeAdjust,
         HostModeSet,
         VDDIMGSDSet,
         BatteryChargeLevelGet,
@@ -336,7 +334,11 @@ struct [[gnu::packed]] Cmd {
         
         struct [[gnu::packed]] {
             TimeState state;
-        } TimeStateSet;
+        } TimeSet;
+        
+        struct [[gnu::packed]] {
+            TimeAdjustment adjustment;
+        } TimeAdjust;
         
         struct [[gnu::packed]] {
             uint8_t en;
@@ -352,7 +354,7 @@ struct [[gnu::packed]] Cmd {
 };
 
 struct [[gnu::packed]] Resp {
-    static constexpr uint8_t ArgLen = 32;
+    static constexpr uint8_t ArgLen = 16;
     
     uint8_t ok;
     uint8_t _pad;
@@ -364,7 +366,7 @@ struct [[gnu::packed]] Resp {
         
         struct [[gnu::packed]] {
             TimeState state;
-        } TimeStateGet;
+        } TimeGet;
         
         struct [[gnu::packed]] {
             BatteryChargeLevel level;

@@ -689,7 +689,7 @@ static MSP::TimeAdjustment _TimeAdjustmentCalculate(const MSP::TimeBase& base) {
     static_assert(Time::TicksFreq::den == 1); // Check assumption
     for (int delta=1; delta<=Time::TicksFreq::num; delta++) {
         using Interval = decltype(best.interval);
-        const uint64_t interval = (elapsed * delta) / delta;
+        const uint64_t interval = (elapsed * delta) / drift;
         const double err = std::abs(((double)delta/interval) - target);
         if (err < bestErr) {
             if (interval > std::numeric_limits<Interval>::max())

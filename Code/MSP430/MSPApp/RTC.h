@@ -25,7 +25,10 @@
 
 [[gnu::section(".ram_backup_noinit.rtc")]]
 alignas(void*)
-static MSP::TimeState _RTCTimeState;
+struct {
+    MSP::TimeState state;
+    MSP::TimeAdjustment adjustment;
+} _RTCState;
 
 template<typename T_Scheduler, uint32_t T_XT1FreqHz>
 class T_RTC {
@@ -88,7 +91,9 @@ public:
     static void Init(const MSP::TimeState* state=nullptr) {
         // Start RTC if it's not yet running, or restart it if we were given a new time
         if (!Enabled() || state) {
-            _RTCTimeState = (state ? *state : MSP::TimeState{});
+            _RTCState = {
+                .state = (state ? *state : MSP::TimeState{}),
+            };
             
             RTCMOD = TocksMax;
             RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
@@ -167,14 +172,15 @@ public:
     }
     
     // Base(): returns the 'base' of the current time, to which Tocks() is added to get the current
-    // absolute time.
+    // absolute time. This function allows clients to safely get the current time from the RTC
+    // interrupt context, since calling Now() is forbidden in the interrupt context.
+    //
+    // Note that when called from the RTC ISR, the return value accurately represents the current
+    // time because it just overflowed and therefore RTCCNT==0.
     //
     // Can be called from the interrupt context.
-    //
-    // If called from the RTC ISR, the return value accurately represents the current time because
-    // it just overflowed and therefore RTCCNT==0.
     static Time::Instant Base() {
-        return _RTCTimeState.time + _RTCTimeState.adjustment.value;
+        return _RTCState.state.time + _RTCState.adjustment.value;
     }
     
     // Now(): returns the current time
@@ -198,8 +204,14 @@ public:
         return _TicksForTocks((TocksMax-Tocks())+1);
     }
     
+    static void Adjust(const MSP::TimeAdjustment& adjust) {
+        // Disable interrupts to prevent ISR() from accessing _RTCState.adjustment while we update it
+        Toastbox::IntState ints(false);
+        _RTCState.adjustment = adjust;
+    }
+    
     static MSP::TimeState TimeState() {
-        MSP::TimeState x = _RTCTimeState;
+        MSP::TimeState x = _RTCState.state;
         x.time = Now();
         return x;
     }
@@ -208,10 +220,10 @@ public:
         switch (iv) {
         case RTCIV_RTCIF: {
             // Update our time
-            _RTCTimeState.time += InterruptIntervalTicks;
+            _RTCState.state.time += InterruptIntervalTicks;
             
             // Correct time based on our calibration
-            auto& adj = _RTCTimeState.adjustment;
+            MSP::TimeAdjustment& adj = _RTCState.adjustment;
             if (adj.delta) {
                 adj.counter += InterruptIntervalTicks;
                 while (adj.counter >= adj.interval) {
