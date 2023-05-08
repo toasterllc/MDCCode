@@ -38,25 +38,44 @@ public:
     static_assert(TimerIntervalTicks::num == 2048); // Debug
     static_assert(TimerIntervalTicks::den == 1); // Verify that TimerIntervalTicks is an integer
     
-    static void WaitUntilFired() {
+    // Schedule(): sets the time that the timer should fire
+    static void Schedule(const std::optional<Time::Instant>& time) {
+        Toastbox::IntState ints(false);
+        
+        _TimerStop();
+        
+        _State = {
+            .request = {
+                .reset = true,
+                .time = time,
+            },
+        };
+    }
+    
+    // Wait(): waits until the timer fires
+    // Returns whether we actually waited (true), or the timer fired immediately (false)
+    static bool Wait() {
         // Disable interrupts while we modify our state
         Toastbox::IntState ints(false);
         
         for (;;) {
             // Consume pending reset
-            _State.reset = false;
+            _State.request.reset = false;
             
             // Wait until we're scheduled
-            T_Scheduler::Wait([] { return (bool)_State.time; });
+            T_Scheduler::Wait([] { return (bool)_State.request.time; });
             
             // Get our remaining ticks until we fire
             Time::Ticks32 deltaTicks = _TicksRemaining(T_RTC::Now());
             
+            // Short-circuit if we're not waiting
+            if (!deltaTicks) return false;
+            
             // Wait for as many full RTC overflow intervals as possible
             _State.rtc.waiting = _RTCMode(deltaTicks);
             if (_State.rtc.waiting) {
-                T_Scheduler::Wait([] { return _State.reset || !_State.rtc.waiting; });
-                if (_State.reset) continue;
+                T_Scheduler::Wait([] { return _State.request.reset || !_State.rtc.waiting; });
+                if (_State.request.reset) continue;
                 // Update deltaTicks
                 deltaTicks = _TicksRemaining(T_RTC::Now());
             }
@@ -72,7 +91,7 @@ public:
                 const uint16_t intervalCount = (Time::Ticks16)deltaTicks / (Time::Ticks16)TimerIntervalTicks::num;
                 if (intervalCount) {
                     _TimerWait(_CCRForTocks(TimerIntervalTocks), intervalCount);
-                    if (_State.reset) continue;
+                    if (_State.request.reset) continue;
                 }
             }
             
@@ -89,43 +108,12 @@ public:
                 const Tocks16 remainderTocks = (remainderTicks * (Time::Ticks16)TicksPerTock::den) / (Time::Ticks16)TicksPerTock::num;
                 if (remainderTocks) {
                     _TimerWait(_CCRForTocks(remainderTocks), 1);
-                    if (_State.reset) continue;
+                    if (_State.request.reset) continue;
                 }
             }
             
-            break;
+            return true;
         }
-    }
-    
-    static void Schedule(const std::optional<Time::Instant>& time) {
-        Toastbox::IntState ints(false);
-        
-        _TimerStop();
-        
-        _State = {
-            .request = {
-                .reset = true,
-                .time = time,
-            },
-        };
-    }
-    
-    [[gnu::noinline]]
-    static Time::Ticks32 _TicksRemaining(const Time::Instant& now) {
-        if (now >= *_State.time) return 0;
-        return *_State.time - now;
-    }
-    
-    [[gnu::noinline]]
-    static bool _RTCMode(Time::Ticks32 ticks) {
-        return ticks >= T_RTC::InterruptIntervalTicks;
-    }
-    
-    [[gnu::noinline]]
-    static void _TimerWait(uint16_t ccr, uint16_t count) {
-        _State.timer.count = count;
-        _TimerSet(ccr);
-        T_Scheduler::Wait([] { return _State.reset || !_State.timer.count; });
     }
     
     static bool ISRRTC() {
@@ -177,6 +165,24 @@ private:
             MC__UP          |   // mode = up
             TACLR           |   // reset timer state
             TAIE            ;   // enable interrupt
+    }
+    
+    [[gnu::noinline]]
+    static Time::Ticks32 _TicksRemaining(const Time::Instant& now) {
+        if (now >= *_State.request.time) return 0;
+        return *_State.request.time - now;
+    }
+    
+    [[gnu::noinline]]
+    static bool _RTCMode(Time::Ticks32 ticks) {
+        return ticks >= T_RTC::InterruptIntervalTicks;
+    }
+    
+    [[gnu::noinline]]
+    static void _TimerWait(uint16_t ccr, uint16_t count) {
+        _State.timer.count = count;
+        _TimerSet(ccr);
+        T_Scheduler::Wait([] { return _State.request.reset || !_State.timer.count; });
     }
     
     static inline struct {
