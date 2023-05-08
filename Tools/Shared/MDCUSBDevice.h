@@ -353,9 +353,9 @@ public:
         _checkStatus("MSPStateWrite command failed");
     }
     
-    MSP::TimeState mspTimeStateGet() {
+    MSP::TimeState mspTimeGet() {
         assert(_mode == STM::Status::Mode::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::MSPTimeStateGet };
+        const STM::Cmd cmd = { .op = STM::Op::MSPTimeGet };
         _sendCmd(cmd);
         _checkStatus("MSPTimeGet command failed");
         
@@ -364,14 +364,24 @@ public:
         return state;
     }
     
-    void mspTimeStateSet(const MSP::TimeState& state) {
+    void mspTimeSet(const MSP::TimeState& state) {
         assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
-            .op = STM::Op::MSPTimeStateSet,
-            .arg = { .MSPTimeStateSet = { .state = state } },
+            .op = STM::Op::MSPTimeSet,
+            .arg = { .MSPTimeSet = { .state = state } },
         };
         _sendCmd(cmd);
-        _checkStatus("MSPTimeStateSet command failed");
+        _checkStatus("MSPTimeSet command failed");
+    }
+    
+    void mspTimeAdjust(const MSP::TimeAdjustment& adj) {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPTimeAdjust,
+            .arg = { .MSPTimeAdjust = { .adjustment = adj } },
+        };
+        _sendCmd(cmd);
+        _checkStatus("MSPTimeSet command failed");
     }
     
     void mspSBWLock() {

@@ -39,9 +39,9 @@ const CmdStr ICEFlashWriteCmd       = "ICEFlashWrite";
 const CmdStr MSPHostModeSetCmd      = "MSPHostModeSet";
 const CmdStr MSPStateReadCmd        = "MSPStateRead";
 const CmdStr MSPStateWriteCmd       = "MSPStateWrite";
-const CmdStr MSPTimeStateGetCmd     = "MSPTimeStateGet";
-const CmdStr MSPTimeStateSetCmd     = "MSPTimeStateSet";
-const CmdStr MSPTimeStateUpdateCmd  = "MSPTimeStateUpdate";
+const CmdStr MSPTimeGetCmd          = "MSPTimeGet";
+const CmdStr MSPTimeSetCmd          = "MSPTimeSet";
+const CmdStr MSPTimeAdjustCmd       = "MSPTimeAdjust";
 const CmdStr MSPSBWReadCmd          = "MSPSBWRead";
 const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
 const CmdStr MSPSBWEraseCmd         = "MSPSBWErase";
@@ -71,9 +71,9 @@ static void printUsage() {
     cout << "  " << MSPHostModeSetCmd       << " <0/1>\n";
     cout << "  " << MSPStateReadCmd         << "\n";
     cout << "  " << MSPStateWriteCmd        << "\n";
-    cout << "  " << MSPTimeStateGetCmd      << "\n";
-    cout << "  " << MSPTimeStateSetCmd      << "\n";
-    cout << "  " << MSPTimeStateUpdateCmd   << "\n";
+    cout << "  " << MSPTimeGetCmd           << "\n";
+    cout << "  " << MSPTimeSetCmd           << "\n";
+    cout << "  " << MSPTimeAdjustCmd        << "\n";
     
     cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
     cout << "  " << MSPSBWWriteCmd          << " <file>\n";
@@ -189,11 +189,11 @@ static Args parseArgs(int argc, const char* argv[]) {
     
     } else if (args.cmd == lower(MSPStateWriteCmd)) {
     
-    } else if (args.cmd == lower(MSPTimeStateGetCmd)) {
+    } else if (args.cmd == lower(MSPTimeGetCmd)) {
     
-    } else if (args.cmd == lower(MSPTimeStateSetCmd)) {
+    } else if (args.cmd == lower(MSPTimeSetCmd)) {
     
-    } else if (args.cmd == lower(MSPTimeStateUpdateCmd)) {
+    } else if (args.cmd == lower(MSPTimeAdjustCmd)) {
     
     } else if (args.cmd == lower(MSPSBWReadCmd)) {
         if (strs.size() < 3) throw std::runtime_error("missing argument: address/length");
@@ -601,22 +601,15 @@ static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
     throw Toastbox::RuntimeError("unimplemented");
 }
 
+
 static void _TimeStatePrint(const MSP::TimeState& state) {
-    std::cout << "  base:\n";
-    std::cout << "    start: " << _StringForTimeInstant(state.base.start) << "\n";
-    std::cout << "    time: " << _StringForTimeInstant(state.base.time) << "\n";
-    std::cout << "\n";
-    std::cout << "  adjustment:\n";
-    std::cout << "    value:" << std::to_string(state.adjustment.value) << "\n";
-    std::cout << "    counter:" << std::to_string(state.adjustment.counter) << "\n";
-    std::cout << "    interval:" << std::to_string(state.adjustment.interval) << "\n";
-    std::cout << "    delta:" << std::to_string(state.adjustment.delta) << "\n";
-    std::cout << "\n";
+    std::cout << "start: " << _StringForTimeInstant(state.start) << "\n";
+    std::cout << "time: " << _StringForTimeInstant(state.time) << "\n";
     std::cout << "\n";
     
     const Time::Clock::time_point nowTime = Time::Clock::now();
     const Time::Instant nowInstant = Time::Clock::TimeInstantFromTimePoint(nowTime);
-    const Time::Instant deviceInstant = state.base.time + state.adjustment.value;
+    const Time::Instant deviceInstant = state.time;
     
     std::cout       << "     MDC time: " << _StringForTimeInstant(deviceInstant) << "\n";
     std::cout       << "  Actual time: " << _StringForTimeInstant(nowInstant) << "\n";
@@ -630,16 +623,46 @@ static void _TimeStatePrint(const MSP::TimeState& state) {
     std::cout << "\n";
 }
 
-static void MSPTimeStateGet(const Args& args, MDCUSBDevice& device) {
+
+//static void _TimeStatePrint(const MSP::TimeState& state) {
+//    std::cout << "  base:\n";
+//    std::cout << "    start: " << _StringForTimeInstant(state.start) << "\n";
+//    std::cout << "    time: " << _StringForTimeInstant(state.base.time) << "\n";
+//    std::cout << "\n";
+//    std::cout << "  adjustment:\n";
+//    std::cout << "    value:" << std::to_string(state.adjustment.value) << "\n";
+//    std::cout << "    counter:" << std::to_string(state.adjustment.counter) << "\n";
+//    std::cout << "    interval:" << std::to_string(state.adjustment.interval) << "\n";
+//    std::cout << "    delta:" << std::to_string(state.adjustment.delta) << "\n";
+//    std::cout << "\n";
+//    std::cout << "\n";
+//    
+//    const Time::Clock::time_point nowTime = Time::Clock::now();
+//    const Time::Instant nowInstant = Time::Clock::TimeInstantFromTimePoint(nowTime);
+//    const Time::Instant deviceInstant = state.base.time + state.adjustment.value;
+//    
+//    std::cout       << "     MDC time: " << _StringForTimeInstant(deviceInstant) << "\n";
+//    std::cout       << "  Actual time: " << _StringForTimeInstant(nowInstant) << "\n";
+//    
+//    if (Time::Absolute(deviceInstant)) {
+//        const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(deviceInstant);
+//        const std::chrono::microseconds delta = deviceTime-nowTime;
+//        std::cout   << "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
+//    }
+//    
+//    std::cout << "\n";
+//}
+
+static void MSPTimeGet(const Args& args, MDCUSBDevice& device) {
     using namespace std::chrono;
     using namespace date;
     
-    std::cout << "MSPTimeStateGet:\n";
-    const MSP::TimeState state = device.mspTimeStateGet();
+    std::cout << "MSPTimeGet:\n";
+    const MSP::TimeState state = device.mspTimeGet();
     _TimeStatePrint(state);
 }
 
-static void MSPTimeStateSet(const Args& args, MDCUSBDevice& device) {
+static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
 //    struct [[gnu::packed]] TimeState {
 //        Time::Instant start;
 //        Time::Instant time;
@@ -653,36 +676,36 @@ static void MSPTimeStateSet(const Args& args, MDCUSBDevice& device) {
     
     const Time::Instant now = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
     const MSP::TimeState state = {
-        .base = {
-            .start = now,
-            .time = now,
-        },
+        .start = now,
+        .time = now,
     };
     
-    std::cout << "MSPTimeStateSet: " << _StringForTimeInstant(now) << "\n";
-    device.mspTimeStateSet(state);
+    std::cout << "MSPTimeSet: " << _StringForTimeInstant(now) << "\n";
+    device.mspTimeSet(state);
 }
 
-// _TimeAdjustmentCalculate: calculates the adjustment to `base` to correct it to the current time.
+// _TimeAdjustmentCalculate: calculates the adjustment to `state` to correct it to the current time.
 //
 // The return value takes the form of a ratio: .delta / .interval, which corresponds to the
-// (negative) drift per elapsed time.
+// time adjustment per elapsed time, which equals the negative drift per elapsed time.
 //
 // .delta is constrained to [1,TicksFreq], thereby capping unadjusted drift to a maximum of 1
 // second. (Ie, the raw unadjusted time is allowed to drift up to one second before it's corrected.)
 // The implementation searches for the .delta/.interval fixed-point ratio that's closest to the
 // target floating-point ratio.
-static MSP::TimeAdjustment _TimeAdjustmentCalculate(const MSP::TimeBase& base) {
+static MSP::TimeAdjustment _TimeAdjustmentCalculate(const MSP::TimeState& state) {
+    assert(Time::Absolute(state.start));
+    assert(Time::Absolute(state.time));
     const Time::Clock::time_point nowTime = Time::Clock::now();
     const Time::Instant nowInstant = Time::Clock::TimeInstantFromTimePoint(nowTime);
-    const uint64_t drift = std::max(nowInstant, base.time) - std::min(nowInstant, base.time);
+    const uint64_t drift = std::max(nowInstant, state.time) - std::min(nowInstant, state.time);
     // Short-circuit if there's zero drift
     if (!drift) return {};
     
-    if (base.start >= nowInstant) throw Toastbox::RuntimeError("MSP::TimeBase.start invalid");
-    const Time::Ticks64 elapsed = nowInstant - base.start;
+    if (state.start >= nowInstant) throw Toastbox::RuntimeError("MSP::TimeState.start invalid");
+    const Time::Ticks64 elapsed = nowInstant - state.start;
     const double target = (double)drift / elapsed;
-    const int deltaSign = (nowInstant>=base.time ? 1 : -1);
+    const int deltaSign = (nowInstant>=state.time ? 1 : -1);
     double bestErr = INFINITY;
     MSP::TimeAdjustment best = {};
     
@@ -705,35 +728,44 @@ static MSP::TimeAdjustment _TimeAdjustmentCalculate(const MSP::TimeBase& base) {
     return best;
 }
 
-static void MSPTimeStateUpdate(const Args& args, MDCUSBDevice& device) {
-    std::cout << "MSPTimeStateUpdate:\n";
+static void MSPTimeAdjust(const Args& args, MDCUSBDevice& device) {
+    std::cout << "MSPTimeAdjust:\n";
     
-    MSP::TimeState state = device.mspTimeStateGet();
-    
-    std::cout << "Before\n";
-    std::cout << "======\n";
-    _TimeStatePrint(state);
-    
-    // If the device currently has a time set, adjust it to reflect the current time
-    if (Time::Absolute(state.base.time)) {
-        state.adjustment = _TimeAdjustmentCalculate(state.base);
-    
-    // Otherwise simply set the device's time
-    } else {
-        const Time::Instant now = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
-        state = MSP::TimeState{
-            .base = {
-                .start = now,
-                .time = now,
-            },
-        };
+    // Print the device's time before we adjust it
+    {
+        std::cout << "Before\n";
+        std::cout << "======\n";
+        _TimeStatePrint(device.mspTimeGet());
     }
     
-    std::cout << "After\n";
-    std::cout << "======\n";
-    _TimeStatePrint(state);
+    // Adjust the device's time
+    {
+        // Clear the device's current adjustment so we can read its unadjusted time
+        device.mspTimeAdjust({});
+        
+        MSP::TimeState state = device.mspTimeGet();
+        
+        // If the device currently has a time set, adjust it to reflect the current time
+        if (Time::Absolute(state.time)) {
+            const MSP::TimeAdjustment adj = _TimeAdjustmentCalculate(state);
+            device.mspTimeAdjust(adj);
+        
+        // Otherwise the device is just tracking relative time, so simply set its absolute time.
+        } else {
+            const Time::Instant now = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
+            device.mspTimeSet({
+                .start = now,
+                .time = now,
+            });
+        }
+    }
     
-    device.mspTimeStateSet(state);
+    // Print the device's time now that we've adjusted it
+    {
+        std::cout << "After\n";
+        std::cout << "=====\n";
+        _TimeStatePrint(device.mspTimeGet());
+    }
 }
 
 static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
@@ -1016,9 +1048,9 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPHostModeSetCmd))      MSPHostModeSet(args, device);
         else if (args.cmd == lower(MSPStateReadCmd))        MSPStateRead(args, device);
         else if (args.cmd == lower(MSPStateWriteCmd))       MSPStateWrite(args, device);
-        else if (args.cmd == lower(MSPTimeStateGetCmd))     MSPTimeStateGet(args, device);
-        else if (args.cmd == lower(MSPTimeStateSetCmd))     MSPTimeStateSet(args, device);
-        else if (args.cmd == lower(MSPTimeStateUpdateCmd))  MSPTimeStateUpdate(args, device);
+        else if (args.cmd == lower(MSPTimeGetCmd))          MSPTimeGet(args, device);
+        else if (args.cmd == lower(MSPTimeSetCmd))          MSPTimeSet(args, device);
+        else if (args.cmd == lower(MSPTimeAdjustCmd))       MSPTimeAdjust(args, device);
         else if (args.cmd == lower(MSPSBWReadCmd))          MSPSBWRead(args, device);
         else if (args.cmd == lower(MSPSBWWriteCmd))         MSPSBWWrite(args, device);
         else if (args.cmd == lower(MSPSBWEraseCmd))         MSPSBWErase(args, device);
