@@ -1,6 +1,7 @@
 #pragma once
 #include <cassert>
 #include <chrono>
+#include <iostream>
 #include "Lockable.h"
 #include "Toastbox/USB.h"
 #include "Toastbox/USBDevice.h"
@@ -10,6 +11,8 @@
 #include "Code/Shared/SD.h"
 #include "Code/Shared/ImgSD.h"
 #include "Code/Shared/ChecksumFletcher32.h"
+#include "Code/Shared/TimeAdjustment.h"
+#include "Code/Shared/TimeString.h"
 
 class MDCUSBDevice {
 public:
@@ -382,6 +385,53 @@ public:
         };
         _sendCmd(cmd);
         _checkStatus("MSPTimeSet command failed");
+    }
+    
+    void mspTimeAdjust(std::ostream* print=&std::cout) {
+        // Print the device's time before we adjust it
+        if (print) {
+            *print << "Before time adjustment\n";
+            *print << "--------------------------------------------------\n";
+            *print << Time::StringForTimeState(mspTimeGet());
+            *print << "\n\n";
+        }
+        
+        // Adjust the device's time
+        {
+            // Clear the device's current adjustment so we can read its unadjusted time
+            mspTimeAdjust(MSP::TimeAdjustment{});
+            
+            // If the device currently has a time set, adjust it to reflect the current time
+            const MSP::TimeState state = mspTimeGet();
+            if (Time::Absolute(state.time)) {
+                const MSP::TimeAdjustment adj = Time::TimeAdjustmentCalculate(state);
+                
+                if (print) {
+                    *print << "Applying time adjustment\n";
+                    *print << "--------------------------------------------------\n";
+                    *print << Time::StringForTimeAdjustment(adj);
+                    *print << "\n\n";
+                }
+                
+                mspTimeAdjust(adj);
+            
+            // Otherwise the device is just tracking relative time, so simply set its absolute time.
+            } else {
+                const Time::Instant now = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
+                mspTimeSet({
+                    .start = now,
+                    .time = now,
+                });
+            }
+        }
+        
+        // Print the device's time now that we've adjusted it
+        if (print) {
+            *print << "After time adjustment\n";
+            *print << "--------------------------------------------------\n";
+            *print << Time::StringForTimeState(mspTimeGet());
+            *print << "\n\n";
+        }
     }
     
     void mspSBWLock() {
