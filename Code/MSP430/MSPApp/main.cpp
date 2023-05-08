@@ -745,11 +745,8 @@ struct _TaskEvent {
     
     static void _EventTimerSchedule() {
         _Triggers::Event* ev = _Triggers::EventFront();
-        if (ev) {
-            _EventTimer::Schedule(ev->time);
-        } else {
-            _EventTimer::Reset();
-        }
+        const std::optional<Time::Instant> time = (ev ? ev->time : std::nullopt);
+        _EventTimer::Schedule(time);
     }
     
     // _EventPop(): pops an event from the front of the list if it's ready to be handled

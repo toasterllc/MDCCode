@@ -171,15 +171,15 @@ public:
         }
     }
     
-    // Base(): returns the 'base' of the current time, to which Tocks() is added to get the current
+    // NowBase(): returns the 'base' of the current time, to which Tocks() is added to get the current
     // absolute time. This function allows clients to safely get the current time from the RTC
     // interrupt context, since calling Now() is forbidden in the interrupt context.
     //
-    // Note that when called from the RTC ISR, the return value accurately represents the current
-    // time because it just overflowed and therefore RTCCNT==0.
+    // Note that when called from the RTC ISR, the return value accurately represents the current time
+    // because it just overflowed and therefore RTCCNT==0.
     //
     // Can be called from the interrupt context.
-    static Time::Instant Base() {
+    static Time::Instant NowBase() {
         return _RTCState.state.time + _RTCState.adjustment.value;
     }
     
@@ -193,7 +193,7 @@ public:
         // value read by Tocks(), since Tocks() enables interrupts in some cases, allowing
         // _RTCTime to be updated.
         const uint16_t tocks = Tocks();
-        return Base() + _TicksForTocks(tocks);
+        return NowBase() + _TicksForTocks(tocks);
     }
     
     // TicksUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
