@@ -604,7 +604,7 @@ static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
 
 static void _TimeStatePrint(const MSP::TimeState& state) {
     std::cout << "start: " << _StringForTimeInstant(state.start) << "\n";
-    std::cout << "time: " << _StringForTimeInstant(state.time) << "\n";
+    std::cout << " time: " << _StringForTimeInstant(state.time) << "\n";
     std::cout << "\n";
     
     const Time::Clock::time_point nowTime = Time::Clock::now();
@@ -619,39 +619,15 @@ static void _TimeStatePrint(const MSP::TimeState& state) {
         const std::chrono::microseconds delta = deviceTime-nowTime;
         std::cout   << "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
     }
-    
-    std::cout << "\n";
 }
 
 
-//static void _TimeStatePrint(const MSP::TimeState& state) {
-//    std::cout << "  base:\n";
-//    std::cout << "    start: " << _StringForTimeInstant(state.start) << "\n";
-//    std::cout << "    time: " << _StringForTimeInstant(state.base.time) << "\n";
-//    std::cout << "\n";
-//    std::cout << "  adjustment:\n";
-//    std::cout << "    value:" << std::to_string(state.adjustment.value) << "\n";
-//    std::cout << "    counter:" << std::to_string(state.adjustment.counter) << "\n";
-//    std::cout << "    interval:" << std::to_string(state.adjustment.interval) << "\n";
-//    std::cout << "    delta:" << std::to_string(state.adjustment.delta) << "\n";
-//    std::cout << "\n";
-//    std::cout << "\n";
-//    
-//    const Time::Clock::time_point nowTime = Time::Clock::now();
-//    const Time::Instant nowInstant = Time::Clock::TimeInstantFromTimePoint(nowTime);
-//    const Time::Instant deviceInstant = state.base.time + state.adjustment.value;
-//    
-//    std::cout       << "     MDC time: " << _StringForTimeInstant(deviceInstant) << "\n";
-//    std::cout       << "  Actual time: " << _StringForTimeInstant(nowInstant) << "\n";
-//    
-//    if (Time::Absolute(deviceInstant)) {
-//        const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(deviceInstant);
-//        const std::chrono::microseconds delta = deviceTime-nowTime;
-//        std::cout   << "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
-//    }
-//    
-//    std::cout << "\n";
-//}
+static void _TimeAdjustmentPrint(const MSP::TimeAdjustment& adj) {
+    std::cout << "   value: " << std::to_string(adj.value) << "\n";
+    std::cout << " counter: " << std::to_string(adj.counter) << "\n";
+    std::cout << "interval: " << std::to_string(adj.interval) << "\n";
+    std::cout << "   delta: " << std::to_string(adj.delta) << "\n";
+}
 
 static void MSPTimeGet(const Args& args, MDCUSBDevice& device) {
     using namespace std::chrono;
@@ -729,13 +705,14 @@ static MSP::TimeAdjustment _TimeAdjustmentCalculate(const MSP::TimeState& state)
 }
 
 static void MSPTimeAdjust(const Args& args, MDCUSBDevice& device) {
-    std::cout << "MSPTimeAdjust:\n";
+    std::cout << "MSPTimeAdjust:\n\n";
     
     // Print the device's time before we adjust it
     {
         std::cout << "Before\n";
-        std::cout << "======\n";
+        std::cout << "--------------------------------------------------\n";
         _TimeStatePrint(device.mspTimeGet());
+        std::cout << "\n\n";
     }
     
     // Adjust the device's time
@@ -748,6 +725,12 @@ static void MSPTimeAdjust(const Args& args, MDCUSBDevice& device) {
         // If the device currently has a time set, adjust it to reflect the current time
         if (Time::Absolute(state.time)) {
             const MSP::TimeAdjustment adj = _TimeAdjustmentCalculate(state);
+            
+            std::cout << "Applying Adjustment\n";
+            std::cout << "--------------------------------------------------\n";
+            _TimeAdjustmentPrint(adj);
+            std::cout << "\n\n";
+            
             device.mspTimeAdjust(adj);
         
         // Otherwise the device is just tracking relative time, so simply set its absolute time.
@@ -763,8 +746,9 @@ static void MSPTimeAdjust(const Args& args, MDCUSBDevice& device) {
     // Print the device's time now that we've adjusted it
     {
         std::cout << "After\n";
-        std::cout << "=====\n";
+        std::cout << "--------------------------------------------------\n";
         _TimeStatePrint(device.mspTimeGet());
+        std::cout << "\n\n";
     }
 }
 
