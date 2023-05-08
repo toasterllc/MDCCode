@@ -38,9 +38,9 @@
 									<listOptionValue builtIn="false" value="${CCS_BASE_ROOT}/msp430/include_gcc"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}"/>
 									<listOptionValue builtIn="false" value="${CG_TOOL_INCLUDE_PATH}"/>
-									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Code/MSP430/MSPApp"/>
-									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Code/Shared"/>
-									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Code/Lib"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../MSPApp"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Shared"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Lib"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.MHWMULT.116147580" name="Hardware multiply (-mhwmult)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.MHWMULT" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.MHWMULT.F5SERIES" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_C.54785804" name="C Language standard (-std)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_C" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_C.C11" valueType="enumerated"/>
