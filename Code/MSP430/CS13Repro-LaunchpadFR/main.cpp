@@ -1,199 +1,250 @@
 #include <msp430.h>
-#include <cstddef>
-#include <cstdint>
-//#include <cstdio>
-#define TaskMSP430
-#include "Toastbox/Task.h"
-#include "Toastbox/IntState.h"
-#include "Util.h"
-#include "Scheduler.h"
+#include "GPIO.h"
+#include "Assert.h"
+#include "Toastbox/Util.h"
+using namespace GPIO;
 
-#define StackMainSize 128
-
-[[gnu::section(".stack.main"), gnu::used]]
-uint8_t StackMain[StackMainSize];
-
-asm(".global __stack");
-asm(".equ __stack, StackMain+" Stringify(StackMainSize));
-
-static bool Flag = false;
-
-class TaskA {
-public:
-    static void Run() {
-        for (;;) {
-//            PAOUT ^= BIT0;
-            
-//            Scheduler::Start<TaskA,MyFun>();
-//            Scheduler::Start<TaskA>(MyFun);
-//            Scheduler::Start<TaskB>(MyFun);
-//            Scheduler::Wait<TaskB>();
-            
-//            puts("TaskA\n");
-//            Scheduler::Sleep(10000); // 5.12s
-            
-            Scheduler::Sleep(Scheduler::Ms(2000));
-            Flag = true;
-//            Flag = !Flag;
-        }
-    }
-    
-    __attribute__((section(".stack.TaskA")))
-    static inline uint8_t Stack[1024];
-    
-    static constexpr Toastbox::TaskOptions Options{
-        .AutoStart = Run,
-    };
+struct _Pin {
+    using LED1      = PortA::Pin<0x0, Option::Output0>;
+    using BUTTON    = PortA::Pin<0xF, Option::Resistor1, Option::Interrupt10>;
+    using INT       = PortA::Pin<0x1, Option::Interrupt10>; // P1.1
+    using MCLK      = PortA::Pin<0x3, Option::Output0, Option::Sel10>; // P1.3 (MCLK)
 };
 
-class TaskB {
+// Abort(): called by Assert() with the address that aborted
+extern "C"
+[[noreturn, gnu::used]]
+void Abort(uintptr_t addr) {
+    for (;;);
+}
+
+// MARK: - _TaskMain
+
+#define _TaskMainStackSize 128
+
+SchedulerStack(".stack._TaskMain")
+uint8_t _TaskMainStack[_TaskMainStackSize];
+
+asm(".global _StartupStack");
+asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
+
+#pragma once
+#include <msp430.h>
+#include "GPIO.h"
+#include "Toastbox/Util.h"
+
+template<uint32_t T_MCLKFreqHz>
+class T_Clock {
 public:
-    static void Run() {
-        for (;;) {
-//            PAOUT ^= BIT1;
-//            puts("TaskB\n");
-//            auto ok = Scheduler::Sleep(Scheduler::Ms(1000));
-            const auto ok = Scheduler::Wait(Scheduler::Ms(100), [] { return Flag; });
-            
-            if (ok) {
-                Flag = false;
-                PAOUT ^= BIT0;
-            } else {
-                PAOUT ^= BIT1;
-            }
-        }
-    }
-    
-    __attribute__((section(".stack.TaskB")))
-    static inline uint8_t Stack[1024];
-    
-    static constexpr Toastbox::TaskOptions Options{
-        .AutoStart = Run,
-    };
-};
-
-// MARK: - IntState
-
-inline bool Toastbox::IntState::InterruptsEnabled() {
-    return __get_SR_register() & GIE;
-}
-
-inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
-    if (en) __bis_SR_register(GIE);
-    else    __bic_SR_register(GIE);
-}
-
-void _Sleep() {
-    __bis_SR_register(GIE | LPM1_bits);
-}
-
-void _Error(uint16_t) {
-    abort();
-}
-
-__attribute__((interrupt(WDT_VECTOR)))
-static void _ISR_WDT() {
-//    PAOUT |= BIT2;
-    const bool woke = Scheduler::Tick();
-    if (woke) {
-        __bic_SR_register_on_exit(GIE | LPM1_bits);
-    }
-//    PAOUT &= ~BIT2;
-}
-
-template <typename... T_Tasks>
-static void _resetTasks() {
-    (Scheduler::Stop<T_Tasks>(), ...);
-}
-
-int main() {
-    // Config watchdog timer:
-    //   WDTPW:             password
-    //   WDTSSEL__SMCLK:    watchdog source = SMCLK
-    //   WDTTMSEL:          interval timer mode
-    //   WDTCNTCL:          clear counter
-    //   WDTIS__8192:       interval = SMCLK / 8192 Hz = 16MHz / 8192 = 1953.125 Hz => period=512 us
-    WDTCTL = WDTPW | WDTSSEL__SMCLK | WDTTMSEL | WDTCNTCL | WDTIS__8192;
-    SFRIE1 |= WDTIE; // Enable WDT interrupt
-    
-    PAOUT   = 0x0000;
-    PADIR   = BIT2 | BIT1 | BIT0;
-    PASEL0  = 0x0000;
-    PASEL1  = 0x0000;
-    PAREN   = 0x0000;
-    PAIE    = 0x0000;
-    PAIES   = 0x0000;
-    
-    // Unlock GPIOs
-    PM5CTL0 &= ~LOCKLPM5;
-    
-    {
+    // Init(): initialize various clocks
+    // Interrupts must be disabled
+    static void Init() {
+//        const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
+        
         // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.
-        FRCTL0 = FRCTLPW | NWAITS_1;
+        if constexpr (T_MCLKFreqHz > 8000000) {
+            FRCTL0 = FRCTLPW | NWAITS_1;
+        }
         
         // Disable FLL
         __bis_SR_register(SCG0);
-            // Set REFOCLK as FLL reference source
-            CSCTL3 |= SELREF__REFOCLK;
+            // FLLREFCLK=REFOCLK, FLLREFDIV=/1
+            CSCTL3 = SELREF__REFOCLK | FLLREFDIV_0;
             // Clear DCO and MOD registers
             CSCTL0 = 0;
-            // Clear DCO frequency select bits first
-            CSCTL1 &= ~(DCORSEL_7);
-            
-            CSCTL1 |= DCORSEL_5;
-            
-            // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLK frequency (32768)
-            CSCTL2 = FLLD_0 | ((16000000/32768)-1);
-            
+            // Set CSCTL1
+            CSCTL1 = _CSCTL1();
+            // Set DCOCLKDIV based on T_MCLKFreqHz and _REFOCLKFreqHz
+            CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/_REFOCLKFreqHz)-1);
             // Wait 3 cycles to take effect
             __delay_cycles(3);
         // Enable FLL
         __bic_SR_register(SCG0);
         
-        // Wait until FLL locks
-        while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
+        _ClockFaultsClear();
         
-        // MCLK / SMCLK source = DCOCLKDIV
-        // ACLK source = REFOCLK
+        // MCLK=DCOCLK, ACLK=REFOCLK
         CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+        
+        // Set MCLK/SMCLK dividers
+        //
+        // If we ever change DIVS to something other than DIVS__1, we may be subject to errata
+        // PMM32 ("Device may enter lockup state or execute unintentional code during transition
+        // from AM to LPM3/4"), due to Condition2.4 ("SMCLK is configured with a different
+        // frequency than MCLK").
+        //
+        // We're not setting CSCTL5 because its default value is what we want.
+        //
+        // CSCTL5 = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1 | DIVM__1;
+        
+        // Now that we've cleared the oscillator faults, enable the oscillator fault interrupt
+        // so we know if something goes awry in the future. This will call our ISR and we'll
+        // record the failure and trigger a BOR.
+//        SFRIE1 |= OFIE;
+        
+        // Decrease the XT1 drive strength to save a little current
+        CSCTL6 =
+            XT1DRIVE_0      |   // drive strength = lowest (to save current)
+            (XTS&0)         |   // mode = low frequency
+            (XT1BYPASS&0)   |   // bypass = disabled (ie XT1 source is an oscillator, not a clock signal)
+            (XT1AGCOFF&0)   |   // automatic gain = on
+            XT1AUTOOFF      ;   // auto off = enabled (default value)
     }
     
-//    using Meow = Scheduler::Options<
-//        Scheduler::Option::AutoStart<_ISR_WDT>
-//    >;
-//    
-//    Meow::AutoStart::Fn;
+    static void Sleep() {
+        // Disable FLL
+        __bis_SR_register(SCG0);
+        const uint16_t CSCTL0Cached = CSCTL0;
+//        // Clear DCO and MOD registers
+//        const uint8_t MOD = 0; // 0-31
+////        const uint8_t DCO = 0; // 0-511
+//        const uint16_t DCO = 511; // 0-511
+//        CSCTL0 = (MOD<<9) | DCO;
+        // Config for 2MHz
+        CSCTL1 = DCORSEL_1 | _CSCTL1Default;
+        // Wait 3 cycles to take effect
+        __delay_cycles(3);
+        // Go to sleep
+        __bis_SR_register(GIE | LPM3_bits);
+        // Handle wake
+        #warning TODO: remove this check once we know FLL isn't active upon wake
+        Assert(__get_SR_register() & SCG0);
+        // Restore CSCTL1
+        uint8_t MOD = 0;
+        uint16_t DCO = CSCTL0Cached & 0x1FF;
+        DCO -= 64;
+        CSCTL0 = (MOD<<9) | DCO;
+        CSCTL1 = _CSCTL1();
+        // Enable FLL
+        __bic_SR_register(SCG0);
+    }
     
-//    {
-//        using Opts = Scheduler::Options<
-//            Scheduler::Option::AutoStart<_ISR_WDT>
-//        >;
-//        VoidFn fn = Opts::AutoStart::Fn;
-//        fn();
+    [[gnu::always_inline]]
+    static void Wake() {
+        // Wake from sleep, but don't start FLL yet
+        __bic_SR_register_on_exit(LPM3_bits & ~SCG0);
+    }
+    
+private:
+    static constexpr uint32_t _REFOCLKFreqHz = 32768;
+    static constexpr uint16_t _CSCTL1Default = DCOFTRIM_3 | DISMOD;
+    
+    static constexpr uint16_t _CSCTL1() {
+               if constexpr (T_MCLKFreqHz == 16000000) {
+            return DCORSEL_5 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 12000000) {
+            return DCORSEL_4 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 8000000) {
+            return DCORSEL_3 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 4000000) {
+            return DCORSEL_2 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 2000000) {
+            return DCORSEL_1 | _CSCTL1Default;
+        } else if constexpr (T_MCLKFreqHz == 1000000) {
+            return DCORSEL_0 | _CSCTL1Default;
+        } else {
+            // Unsupported frequency
+            static_assert(Toastbox::AlwaysFalse<T_MCLKFreqHz>);
+        }
+    }
+    
+//    static constexpr uint16_t _CSCTL5(bool fast=false) {
+//        static constexpr Default = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1;
+//        if (fast) return Default | DIVM__1;
+//        else      return Default | DIVM__2;
 //    }
     
-//    {
-//        using Opts = Options<Option::AutoStart<_ISR_WDT>>;
-//        VoidFn fn = Opts::AutoStart::Fn;
-//        fn();
-//    }
+    static void _ClockFaultsClear() {
+        CSCTL7 &= ~(XT1OFFG | DCOFFG);
+        SFRIFG1 &= ~OFIFG;
+    }
     
-//    #define Subtasks TaskA, TaskB
-//    _resetTasks<Subtasks>();
-    
-//    Scheduler::Stop<Subtasks...>();
-    
-//    (std::is_same_v<T, Forbidden> && ...);
-    
-    
-    
-    
-    Scheduler::Run();
-    return 0;
+    static bool _ClockFaults() {
+        return SFRIFG1 & OFIFG;
+    }
+};
+
+
+static constexpr uint32_t _MCLKFreqHz       = 16000000;     // 16 MHz
+using _Clock = T_Clock<_MCLKFreqHz>;
+
+[[gnu::interrupt]]
+void _ISR_PORT1() {
+    switch (P1IV) {
+    case _Pin::INT::IVPort1():
+//        _Clock::Wake();
+        break;
+    default:
+        Assert(false);
+    }
 }
 
-extern "C" [[noreturn]]
-void abort() {
-    for (;;);
+[[gnu::interrupt]]
+void _ISR_PORT2() {
+    switch (P2IV) {
+    case _Pin::BUTTON::IVPort2():
+        _Clock::Wake();
+//        __bic_SR_register(LPM3_bits);
+        break;
+    default:
+        Assert(false);
+    }
+}
+
+inline bool Toastbox::IntState::Get() {
+    return __get_SR_register() & GIE;
+}
+
+inline void Toastbox::IntState::Set(bool en) {
+    if (en) __bis_SR_register(GIE);
+    else    __bic_SR_register(GIE);
+}
+
+int main() {
+    WDTCTL = WDTPW | WDTHOLD;
+    
+    _Clock::Init();
+    
+    GPIO::Init<
+        _Pin::LED1,
+        _Pin::BUTTON,
+        _Pin::INT,
+        _Pin::MCLK
+    >();
+    
+//    __bis_SR_register(GIE | LPM3_bits);
+//    for (;;);
+    
+//    for (;;) {
+//        if (!_Pin::BUTTON::Read()) {
+//            _Pin::LED1::Write(!_Pin::LED1::Read());
+//        }
+////        __bis_SR_register(GIE | LPM3_bits);
+//    }
+    
+    
+//    for (;;) {
+//        _Pin::LED1::Write(!_Pin::LED1::Read());
+//        __bis_SR_register(GIE | LPM3_bits);
+//    }
+    
+    __delay_cycles(5000000);
+    
+    // Disable FLL
+    __bis_SR_register(SCG0);
+    
+    for (;;) {
+        CSCTL0 = 0;
+        __delay_cycles(16000000);
+        CSCTL0 = 1;
+        __delay_cycles(16000000);
+    }
+    
+    
+    for (;;) {
+        _Pin::LED1::Write(!_Pin::LED1::Read());
+        __delay_cycles(1000000);
+        _Clock::Sleep();
+    }
 }

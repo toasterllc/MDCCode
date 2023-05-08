@@ -4,13 +4,29 @@
 <mapEntry key="org.eclipse.cdt.debug.ui.memory.memorybrowser.MemoryBrowser@#$TI MSP430 USB1/MSP430@#$0" value="16-Bit Hex - TI Style"/>
 </mapAttribute>
 <mapAttribute key="ccs.memoryview.pageexpr">
-<mapEntry key="org.eclipse.cdt.debug.ui.memory.memorybrowser.MemoryBrowser@#$TI MSP430 USB1/MSP430" value="@@0x002498"/>
+<mapEntry key="org.eclipse.cdt.debug.ui.memory.memorybrowser.MemoryBrowser@#$TI MSP430 USB1/MSP430" value="@@0x2280"/>
 </mapAttribute>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_DEBUGGER_PROPERTIES.MSP430FR2422.ccxml.TI MSP430 USB1/MSP430" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot; ?&gt;&#10;&lt;PropertyValues&gt;&#10;&#10;  &lt;property id=&quot;ConnectOnStartup&quot;&gt;&#10;    &lt;curValue&gt;1&lt;/curValue&gt;&#10;  &lt;/property&gt;&#10;&#10;  &lt;property id=&quot;EnableInstalledBreakpoint&quot;&gt;&#10;    &lt;curValue&gt;1&lt;/curValue&gt;&#10;  &lt;/property&gt;&#10;&#10;&lt;/PropertyValues&gt;&#10;"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_DEBUGGER_PROPERTIES.MSP430FR2433.ccxml.TI MSP430 USB1/MSP430" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot; ?&gt;&#10;&lt;PropertyValues&gt;&#10;&#10;  &lt;property id=&quot;ConnectOnStartup&quot;&gt;&#10;    &lt;curValue&gt;1&lt;/curValue&gt;&#10;  &lt;/property&gt;&#10;&#10;  &lt;property id=&quot;EnableInstalledBreakpoint&quot;&gt;&#10;    &lt;curValue&gt;1&lt;/curValue&gt;&#10;  &lt;/property&gt;&#10;&#10;&lt;/PropertyValues&gt;&#10;"/>
+<setAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_HIDE_CONFIG_ELEMENT_TYPES">
+<setEntry value="BOARD"/>
+<setEntry value="BYPASSED_CPU"/>
+<setEntry value="BYPASSED_ROUTER"/>
+<setEntry value="CONNECTION"/>
+<setEntry value="DEVICE"/>
+<setEntry value="NON_DEBUG_CPU"/>
+<setEntry value="NO_DRIVER"/>
+<setEntry value="ROUTER"/>
+<setEntry value="SUBPATH"/>
+<setEntry value="SYSTEM"/>
+</setAttribute>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROGRAM.MSP430FR2422.ccxml.TI MSP430 USB1/MSP430" value="${build_artifact:CS13Repro-LaunchpadFR}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROGRAM.MSP430FR2433.ccxml.TI MSP430 USB1/MSP430" value="${build_artifact:CS13Repro-LaunchpadFR}"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.MSP430FR2422.ccxml.TI MSP430 USB1/MSP430" value="CS13Repro-LaunchpadFR"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.MSP430FR2433.ccxml.TI MSP430 USB1/MSP430" value="CS13Repro-LaunchpadFR"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:CS13Repro-LaunchpadFR}"/>
-<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430FR2433.ccxml.TI MSP430 USB1/MSP430" value="/home/dave/repos/MDC/Code/MSP430/CS13Repro-LaunchpadFR/Release/CS13Repro-LaunchpadFR.out"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430FR2422.ccxml.TI MSP430 USB1/MSP430" value="/home/dave/repos/MDC/Code/MSP430/CS13Repro-LaunchpadFR/Release/CS13Repro-LaunchpadFR.out"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430FR2433.ccxml.TI MSP430 USB1/MSP430" value="/home/dave/repos/MDCCode/Tools/CS13Repro-LaunchpadFR/Release/CS13Repro-LaunchpadFR.out"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/CS13Repro-LaunchpadFR"/>
 </listAttribute>
