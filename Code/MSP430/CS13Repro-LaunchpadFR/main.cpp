@@ -6,7 +6,6 @@ using namespace GPIO;
 
 struct _Pin {
     using LED1      = PortA::Pin<0x0, Option::Output0>;
-    using BUTTON    = PortA::Pin<0xF, Option::Resistor1, Option::Interrupt10>;
     using INT       = PortA::Pin<0x1, Option::Interrupt10>; // P1.1
     using MCLK      = PortA::Pin<0x3, Option::Output0, Option::Sel10>; // P1.3 (MCLK)
 };
@@ -62,26 +61,13 @@ public:
         // Enable FLL
         __bic_SR_register(SCG0);
         
-        _ClockFaultsClear();
+        // Wait for FLL to lock
+        // We can't use T_Scheduler::Delay() here because it calls our Sleep(), which stops the FLL,
+        // and we need the FLL to be running to acquire a lock.
+        while (!_FLLLocked());
         
         // MCLK=DCOCLK, ACLK=REFOCLK
         CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
-        
-        // Set MCLK/SMCLK dividers
-        //
-        // If we ever change DIVS to something other than DIVS__1, we may be subject to errata
-        // PMM32 ("Device may enter lockup state or execute unintentional code during transition
-        // from AM to LPM3/4"), due to Condition2.4 ("SMCLK is configured with a different
-        // frequency than MCLK").
-        //
-        // We're not setting CSCTL5 because its default value is what we want.
-        //
-        // CSCTL5 = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1 | DIVM__1;
-        
-        // Now that we've cleared the oscillator faults, enable the oscillator fault interrupt
-        // so we know if something goes awry in the future. This will call our ISR and we'll
-        // record the failure and trigger a BOR.
-//        SFRIE1 |= OFIE;
         
         // Decrease the XT1 drive strength to save a little current
         CSCTL6 =
@@ -90,40 +76,6 @@ public:
             (XT1BYPASS&0)   |   // bypass = disabled (ie XT1 source is an oscillator, not a clock signal)
             (XT1AGCOFF&0)   |   // automatic gain = on
             XT1AUTOOFF      ;   // auto off = enabled (default value)
-    }
-    
-    static void Sleep() {
-        // Disable FLL
-        __bis_SR_register(SCG0);
-        const uint16_t CSCTL0Cached = CSCTL0;
-//        // Clear DCO and MOD registers
-//        const uint8_t MOD = 0; // 0-31
-////        const uint8_t DCO = 0; // 0-511
-//        const uint16_t DCO = 511; // 0-511
-//        CSCTL0 = (MOD<<9) | DCO;
-        // Config for 2MHz
-        CSCTL1 = DCORSEL_1 | _CSCTL1Default;
-        // Wait 3 cycles to take effect
-        __delay_cycles(3);
-        // Go to sleep
-        __bis_SR_register(GIE | LPM3_bits);
-        // Handle wake
-        #warning TODO: remove this check once we know FLL isn't active upon wake
-        Assert(__get_SR_register() & SCG0);
-        // Restore CSCTL1
-        uint8_t MOD = 0;
-        uint16_t DCO = CSCTL0Cached & 0x1FF;
-        DCO -= 64;
-        CSCTL0 = (MOD<<9) | DCO;
-        CSCTL1 = _CSCTL1();
-        // Enable FLL
-        __bic_SR_register(SCG0);
-    }
-    
-    [[gnu::always_inline]]
-    static void Wake() {
-        // Wake from sleep, but don't start FLL yet
-        __bic_SR_register_on_exit(LPM3_bits & ~SCG0);
     }
     
 private:
@@ -149,19 +101,8 @@ private:
         }
     }
     
-//    static constexpr uint16_t _CSCTL5(bool fast=false) {
-//        static constexpr Default = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1;
-//        if (fast) return Default | DIVM__1;
-//        else      return Default | DIVM__2;
-//    }
-    
-    static void _ClockFaultsClear() {
-        CSCTL7 &= ~(XT1OFFG | DCOFFG);
-        SFRIFG1 &= ~OFIFG;
-    }
-    
-    static bool _ClockFaults() {
-        return SFRIFG1 & OFIFG;
+    static bool _FLLLocked() {
+        return !(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
     }
 };
 
@@ -173,19 +114,7 @@ using _Clock = T_Clock<_MCLKFreqHz>;
 void _ISR_PORT1() {
     switch (P1IV) {
     case _Pin::INT::IVPort1():
-//        _Clock::Wake();
-        break;
-    default:
-        Assert(false);
-    }
-}
-
-[[gnu::interrupt]]
-void _ISR_PORT2() {
-    switch (P2IV) {
-    case _Pin::BUTTON::IVPort2():
-        _Clock::Wake();
-//        __bic_SR_register(LPM3_bits);
+        _Pin::LED1::Write(!_Pin::LED1::Read());
         break;
     default:
         Assert(false);
@@ -208,13 +137,12 @@ int main() {
     
     GPIO::Init<
         _Pin::LED1,
-        _Pin::BUTTON,
         _Pin::INT,
         _Pin::MCLK
     >();
     
-//    __bis_SR_register(GIE | LPM3_bits);
-//    for (;;);
+    __bis_SR_register(GIE | LPM3_bits);
+    for (;;);
     
 //    for (;;) {
 //        if (!_Pin::BUTTON::Read()) {
@@ -222,29 +150,4 @@ int main() {
 //        }
 ////        __bis_SR_register(GIE | LPM3_bits);
 //    }
-    
-    
-//    for (;;) {
-//        _Pin::LED1::Write(!_Pin::LED1::Read());
-//        __bis_SR_register(GIE | LPM3_bits);
-//    }
-    
-    __delay_cycles(5000000);
-    
-    // Disable FLL
-    __bis_SR_register(SCG0);
-    
-    for (;;) {
-        CSCTL0 = 0;
-        __delay_cycles(16000000);
-        CSCTL0 = 1;
-        __delay_cycles(16000000);
-    }
-    
-    
-    for (;;) {
-        _Pin::LED1::Write(!_Pin::LED1::Read());
-        __delay_cycles(1000000);
-        _Clock::Sleep();
-    }
 }
