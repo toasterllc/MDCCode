@@ -110,32 +110,40 @@ public:
             XT1AUTOOFF      ;   // auto off = enabled (default value)
     }
     
-    // Sleep(): sleep either for a short or long period.
-    //
-    // For short sleeps (extended=0): we assume the DCO settings (CSCTL0.DCO
-    // and CSCTL0.MOD) will remain valid for the target frequency when we wake.
-    //
-    // For long sleeps (extended=1): we assume the DCO settings (CSCTL0.DCO
-    // and CSCTL0.MOD) will be invalid when we wake, because the temperature
-    // or voltage may have changed significantly while we slept. Therefore
-    // upon wake, we set CSCTL0=_CSCTL0Compensated, which restores CSCTL0.DCO
-    // and CSCTL0.MOD to conservative versions of their original values that
-    // were captured when we first turned on. The effect is that upon waking
-    // from an extended sleep, we should be running at a slightly slower
-    // frequency than the target frequency (eg 15 MHz instead of the target
-    // 16 MHz).
+    /// Sleep(): sleep either for a short or long period.
+    ///
+    /// For short sleeps (extended=0): we assume the DCO settings (CSCTL0.DCO
+    /// and CSCTL0.MOD) will remain valid for the target frequency when we wake.
+    ///
+    /// For long sleeps (extended=1): we assume the DCO settings (CSCTL0.DCO
+    /// and CSCTL0.MOD) will become invalid while we sleep, because the
+    /// temperature or voltage may change significantly while we sleep.
+    /// Therefore we set CSCTL0=_CSCTL0Compensated before we sleep, which sets
+    /// CSCTL0.DCO and CSCTL0.MOD to conservative versions of their original
+    /// values that were captured when we first turned on. The effect is that
+    /// before an extended sleep, we run at a slightly slower frequency than
+    /// the target frequency (eg 15 MHz instead of the target 16 MHz). Note
+    /// that interrupts are also handled at this slower frequency because the
+    /// FLL remains disabled while handling interrupts.
+    ///
+    /// *** Errata CS13 Note ***
+    /// Errata CS13 states:
+    /// 
+    ///   Device may enter lockup state during transition from AM to LPM3/4 if DCO frequency is
+    ///   above 2 MHz.
+    /// 
+    /// We asked TI for details and they sent us Errata-CS13.pptx (see MDCNotes repo). We were
+    /// able to reproduce the CS13 issue using the described setup, and determined that the
+    /// issue isn't reproducible for VDD > 2.1V, so we haven't implemented the prescribed
+    /// workaround since our VDD will always be >3V.
+    ///
     static void Sleep(bool extended) {
-        // Switch to 2MHz
-        {
+        // If this is an extended sleep, decrease our clock frequency slightly by
+        // using CSCTL0Compensated.
+        if (extended) {
             // Disable FLL
             __bis_SR_register(SCG0);
-            // Config DCO for 2MHz band
-            // This is necessary for Errata CS13:
-            //   Device may enter lockup state during transition from AM to LPM3/4
-            //   if DCO frequency is above 2 MHz.
-            CSCTL1 = DCORSEL_1 | _CSCTL1Default;
-            // Wait 3 cycles to take effect
-            __delay_cycles(3);
+            CSCTL0 = _CSCTL0Compensated;
         }
         
         // Sleep
@@ -143,23 +151,12 @@ public:
             Toastbox::IntState ints; // Remember+restore current interrupt state
             __bis_SR_register(GIE | LPM3_bits); // Sleep
         }
-        
-        // If this was an extended sleep, set CSCTL0 to CSCTL0Compensated before switching back to fast clock
-        if (extended) CSCTL0 = _CSCTL0Compensated;
-        
-        // Switch back to T_MCLKFreqHz
-        {
-            // Restore the target frequency band (CSCTL1.DCORSEL)
-            CSCTL1 = _CSCTL1();
-            // Enable FLL
-            __bic_SR_register(SCG0);
-        }
     }
     
     [[gnu::always_inline]] // Necessary because result needs to be stored in a register
     static void Wake() {
-        // Wake from sleep, but don't start FLL yet
-        __bic_SR_register_on_exit(LPM3_bits & ~SCG0);
+        // Wake from sleep
+        __bic_SR_register_on_exit(LPM3_bits);
     }
     
 private:
@@ -199,31 +196,6 @@ private:
         return (dco>Sub ? dco-Sub : 1);
     }
     
-//    static void _SleepEnable() {
-//        // Disable FLL
-//        __bis_SR_register(SCG0);
-//        // Config DCO for 2MHz band
-//        // This is necessary for Errata CS13:
-//        //   Device may enter lockup state during transition from AM to LPM3/4
-//        //   if DCO frequency is above 2 MHz.
-//        CSCTL1 = DCORSEL_1 | _CSCTL1Default;
-//        // Wait 3 cycles to take effect
-//        __delay_cycles(3);
-//    }
-//    
-//    static void _SleepDisable() {
-//        // Restore the target frequency band (CSCTL1.DCORSEL)
-//        CSCTL1 = _CSCTL1();
-//        // Enable FLL
-//        __bic_SR_register(SCG0);
-//    }
-//    
-//    static constexpr uint16_t _CSCTL5(bool fast=false) {
-//        static constexpr Default = VLOAUTOOFF | (SMCLKOFF&0) | DIVS__1;
-//        if (fast) return Default | DIVM__1;
-//        else      return Default | DIVM__2;
-//    }
-    
     static bool _FLLLocked() {
         return !(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
     }
@@ -236,10 +208,4 @@ private:
     static bool _ClockFaults() {
         return SFRIFG1 & OFIFG;
     }
-    
-//    static bool _ClockReady() {
-//        const bool faults = SFRIFG1 & OFIFG;
-//        const bool fllLocked = !(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
-//        return !faults && fllLocked;
-//    }
 };
