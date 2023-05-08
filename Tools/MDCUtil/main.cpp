@@ -661,7 +661,7 @@ static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
 
 /// _TimeAdjustmentCalculate(): calculates the adjustment to `state` to correct it to
 /// the current time, and also quantifies the drift over the total elapsed time so
-/// that the device can continuously correct the time in the future.
+/// that the device can continuously correct its time in the future.
 ///
 /// The return value consists of four values: .value, .counter, .interval, and .delta:
 ///
@@ -672,7 +672,7 @@ static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
 ///
 ///   .delta / .interval: corresponds to the drift over the device's total elapsed
 ///       time, allowing the device to continuously correct its time. This is a ratio
-///       that equals the time adjustment per elapsed time, which equals the negative
+///       which equals the time adjustment per elapsed time, which equals the negative
 ///       drift per elapsed time.
 ///
 ///       .delta is constrained to [1,TicksFreq], thereby capping unadjusted drift to
