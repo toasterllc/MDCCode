@@ -604,21 +604,19 @@ static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
 
 
 static void _TimeStatePrint(const MSP::TimeState& state) {
-    std::cout << "start: " << _StringForTimeInstant(state.start) << "\n";
-    std::cout << " time: " << _StringForTimeInstant(state.time) << "\n";
-    std::cout << "\n";
-    
+    const Time::Instant deviceStart = state.start;
+    const Time::Instant deviceInstant = state.time;
     const Time::Clock::time_point nowTime = Time::Clock::now();
     const Time::Instant nowInstant = Time::Clock::TimeInstantFromTimePoint(nowTime);
-    const Time::Instant deviceInstant = state.time;
     
-    std::cout       << "     MDC time: " << _StringForTimeInstant(deviceInstant) << "\n";
-    std::cout       << "  Actual time: " << _StringForTimeInstant(nowInstant) << "\n";
+    std::cout       << "  MDC Start: " << _StringForTimeInstant(deviceStart) << "\n";
+    std::cout       << "   MDC Time: " << _StringForTimeInstant(deviceInstant) << "\n";
+    std::cout       << "        Now: " << _StringForTimeInstant(nowInstant) << "\n";
     
     if (Time::Absolute(deviceInstant)) {
         const Time::Clock::time_point deviceTime = Time::Clock::TimePointFromTimeInstant(deviceInstant);
         const std::chrono::microseconds delta = deviceTime-nowTime;
-        std::cout   << "        Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
+        std::cout   << "      Delta: " << std::showpos << (intmax_t)delta.count() << " us \n";
     }
 }
 
