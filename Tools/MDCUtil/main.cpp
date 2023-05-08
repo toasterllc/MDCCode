@@ -686,9 +686,17 @@ static MSP::TimeAdjustment _TimeAdjustmentCalculate(const MSP::TimeState& state)
     const Time::Clock::time_point nowTime = Time::Clock::now();
     const Time::Instant nowInstant = Time::Clock::TimeInstantFromTimePoint(nowTime);
     const uint64_t drift = std::max(nowInstant, state.time) - std::min(nowInstant, state.time);
-    // Short-circuit if there's zero drift
-    if (!drift) return {};
+    // Short-circuit if there's 0-2 ticks of drift, since that could just be noise
+    if (drift <= 2) return {};
     
+    // Require at least `ElapsedHoursMin` of data before we institute an adjustment
+    {
+        constexpr std::chrono::hours ElapsedHoursMin(12);
+        const std::chrono::hours elapsedHours = std::chrono::duration_cast<std::chrono::hours>(nowTime-Time::Clock::TimePointFromTimeInstant(state.start));
+        if (elapsedHours < ElapsedHoursMin) return {};
+    }
+    
+    // Verify that the device started tracking time in the past
     if (state.start >= nowInstant) throw Toastbox::RuntimeError("MSP::TimeState.start invalid");
     const Time::Ticks64 elapsed = nowInstant - state.start;
     const double target = (double)drift / elapsed;
