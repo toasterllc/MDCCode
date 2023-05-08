@@ -68,8 +68,13 @@ public:
         __bic_SR_register(SCG0);
         
         // Wait for FLL to lock
-        // We can't use T_Scheduler::Delay() here because it calls our Sleep(), which stops the FLL,
-        // and we need the FLL to be running to acquire a lock.
+        //
+        // Delay 10 REFOCLK cycles before polling _FLLLocked, to avoid getting a false _FLLLocked() reading
+        // from the previous FLL settings.
+        //
+        // We can't use T_Scheduler::Delay() here because it calls our Sleep(), which stops the FLL, and we
+        // need the FLL to be running to acquire a lock.
+        __delay_cycles(10*(T_MCLKFreqHz/_REFOCLKFreqHz));
         while (!_FLLLocked());
         
         // Cache _CSCTL0Compensated now that the FLL has locked, so we can get good reading of CSCTL0.
