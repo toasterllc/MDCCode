@@ -44,8 +44,8 @@ enum class Op : uint8_t {
     MSPTimeSet,
     MSPTimeAdjust,
     
-    MSPSBWLock,
-    MSPSBWUnlock,
+    MSPLock,
+    MSPUnlock,
     MSPSBWConnect,
     MSPSBWDisconnect,
     MSPSBWHalt,

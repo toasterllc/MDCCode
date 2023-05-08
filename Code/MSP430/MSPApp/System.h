@@ -67,5 +67,3 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskI2C,
     _TaskMotion
 >;
-
-using _Debug = T_Debug<_Scheduler>;

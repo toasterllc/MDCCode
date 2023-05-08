@@ -127,16 +127,13 @@ static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = (Time::Ticks32) 366*24*60*60*Time::TicksFreq::num;
     switch (x.type) {
     case MSP::Repeat::Type::Never:
-//        _Debug::Print("NEVER");
         return 0;
     
     case MSP::Repeat::Type::Daily:
-//        _Debug::Print("DAILY");
         Assert(x.Daily.interval);
         return Day*x.Daily.interval;
     
     case MSP::Repeat::Type::Weekly: {
-//        _Debug::Print("WEEKLY");
         #warning TODO: verify this works properly
         // Determine the next trigger day, calculating the duration of time until then
         Assert(x.Weekly.days & 1); // Weekly.days must always rest on an active day
@@ -150,7 +147,6 @@ static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     }
     
     case MSP::Repeat::Type::Yearly:
-//        _Debug::Print("YEARLY");
         #warning TODO: verify this works properly
         // Return 1 year (either 365 or 366 days) in microseconds
         // We appropriately handle leap years by referencing `leapPhase`
@@ -211,7 +207,7 @@ void Abort(uintptr_t addr) {
     _ResetRecord(MSP::Reset::Type::Abort, addr);
     // Wait until all prints have been drained, so we don't drop important
     // info by aborting before it's been read.
-    while (!_Debug::Empty());
+    while (!Debug::Empty());
     _BOR();
 }
 
@@ -710,28 +706,22 @@ struct _TaskEvent {
     }
     
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
-//        _Debug::Print("EventInsert DDD");
         _Triggers::EventInsert(ev, time);
         // If this event is now the front of the list, reschedule _EventTimer
         if (_Triggers::EventFront() == &ev) {
-//            _Debug::Print("EventInsert EEE");
             _EventTimerSchedule();
         }
     }
 
     static void EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-//        _Debug::Print("EventInsert BBB");
         const Time::Ticks32 delta = _RepeatAdvance(repeat);
-//        _Debug::PrintHex(delta);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
-//            _Debug::Print("EventInsert CCC");
             EventInsert(ev, ev.time+delta);
         }
     }
 
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::Ticks32 deltaTicks) {
-//        _Debug::Print("EventInsert AAA");
         EventInsert(ev, time + deltaTicks);
     }
 
@@ -860,7 +850,7 @@ struct _TaskI2C {
             
             // Cleanup
             
-//            // Relinquish LEDs, which may have been set by _CmdHandle()
+            // Relinquish LEDs, which may have been set by _CmdHandle()
             _LEDRed_.set(_LEDPriority::I2C, std::nullopt);
             _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
             
@@ -1132,8 +1122,6 @@ struct _TaskMain {
 //        }
         
 //        for (bool on_=0;; on_=!on_) {
-//            _Debug::Print("hello\nhow are you today?\n");
-//            _Debug::Print(_XT1FreqHz);
 ////            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
@@ -1141,25 +1129,11 @@ struct _TaskMain {
 //        for (bool on_=false;; on_=!on_) {
 ////            __delay_cycles(1000000);
 ////            _Pin::LED_GREEN_::Write(on_);
-////            _Debug::Print("Fired\n");
 ////            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq::num);
 ////            _Scheduler::Wait([] { return _EventTimer::Fired(); });
 //            
 //            const auto nextTime = _Triggers::EventFront()->time;
 //            const auto currTime = _RTC::Now();
-//            
-//            _Debug::Print("EventFront:");
-//            _Debug::PrintHex((uint16_t)_Triggers::EventFront());
-//            
-//            _Debug::Print("Next:");
-//            _Debug::PrintHex(nextTime);
-//            
-//            _Debug::Print("Curr:");
-//            _Debug::PrintHex(currTime);
-//            
-//            _Debug::Print("Delta:");
-//            _Debug::PrintHex(nextTime - currTime);
-//            _Debug::Print("");
 //            
 //            _Scheduler::Sleep(_Scheduler::Ms<1000>);
 //        }
@@ -1170,7 +1144,6 @@ struct _TaskMain {
 //        for (bool on_=false;; on_=!on_) {
 ////            __delay_cycles(1000000);
 ////            _Pin::LED_GREEN_::Write(on_);
-//            _Debug::Print("Fired\n");
 //            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq::num);
 //            _Scheduler::Wait([] { return _EventTimer::Fired(); });
 //        }
@@ -1209,11 +1182,6 @@ struct _TaskMain {
 //            
 //            _Pin::LED_RED_::Write(1);
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//        }
-        
-//        for (;;) {
-//            _Debug::Print("accessMode");
-//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
 //        }
         
         for (;;) {
@@ -1405,14 +1373,22 @@ void _ISR_SYSNMI() {
     switch (SYSSNIV) {
     case SYSSNIV_VMAIFG:
         Assert(false);
+    
 #if DebugEnable
+    // We can get spurious interrupts when reading the debug log via SBW
+    // This is likely because Debug.h disables/enables JMBOUTIE to disable/enable the JMBOUTIFG interrupt.
+    // Presumably there's a race between the JMBOUTIFG interrupt being scheduled and us actually reading
+    // SYSSNIV, between which JMBOUTIE can be cleared, which causes SYSSNIV==0.
+    case SYSSNIV_NONE:
+        break;
     case SYSSNIV_JMBOUTIFG:
-        if (_Debug::ISR()) {
+        if (Debug::ISR()) {
             // Wake ourself if directed
             _Clock::Wake();
         }
         break;
 #endif // DebugEnable
+    
     default:
         Assert(false);
     }

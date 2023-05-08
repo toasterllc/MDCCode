@@ -4,11 +4,11 @@
 #include <cstring>
 #include "Assert.h"
 #include "MSP.h"
+#include "Toastbox/Scheduler.h"
 
 //#define DebugEnable 1
 
-template<typename T_Scheduler>
-class T_Debug {
+class Debug {
 public:
     using Packet = MSP::DebugLogPacket;
     
@@ -45,12 +45,9 @@ public:
     
     static void _Write(Packet::Type type, const void* data, size_t len) {
 #if DebugEnable
-        // Wait until we have enough space:
-        //   +1 packet for the Type packet
-        //   +ceil(len/2) packet for payload
-        const size_t count = 1+((len+1)/2);
-        T_Scheduler::Ctx(count);
-        T_Scheduler::Wait([] { return _WCap >= T_Scheduler::template Ctx<size_t>(); });
+        // Disable interrupts so that Prints that occur within the interrupt context can't be
+        // interleaved with Prints that occur in the non-interrupt context
+        Toastbox::IntState ints(false);
         
         // Disable JMBOUTIFG interrupt
         _Ints(false);
@@ -77,11 +74,23 @@ public:
     }
     
     static void _Push() {
-        Assert(_WCap);
         _WIdx++;
         if (_WIdx == _Cap) _WIdx = 0;
-        _WCap--;
-        _RLen++;
+        
+        // Check whether we're overwriting data
+        if (_WCap) {
+            // We had free capacity
+            _WCap--;
+            _RLen++;
+        
+        } else {
+            // We didn't have free capacity so we overwrote data.
+            // Therefore we increment the read index, but the read length (which must be equal to our
+            // capacity, since we're full) remains the same.
+            Assert(_RLen == _Cap);
+            _RIdx++;
+            if (_RIdx == _Cap) _RIdx = 0;
+        }
     }
     
     static void _Pop() {
@@ -92,6 +101,8 @@ public:
         _WCap++;
     }
     
+    // _Ints(): disable/enable the JMBOUTIFG interrupt
+    // This is an NMI, so GIE doesn't block it, so we have to explicitly disable it if we want to block it.
     static void _Ints(bool en) {
         if (en) SFRIE1 |=  JMBOUTIE;
         else    SFRIE1 &= ~JMBOUTIE;

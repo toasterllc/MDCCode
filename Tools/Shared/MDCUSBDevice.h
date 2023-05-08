@@ -434,18 +434,18 @@ public:
         }
     }
     
-    void mspSBWLock() {
+    void mspLock() {
         assert(_mode == STM::Status::Mode::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::MSPSBWLock };
+        const STM::Cmd cmd = { .op = STM::Op::MSPLock };
         _sendCmd(cmd);
-        _checkStatus("MSPSBWLock command failed");
+        _checkStatus("MSPLock command failed");
     }
     
-    void mspSBWUnlock() {
+    void mspUnlock() {
         assert(_mode == STM::Status::Mode::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::MSPSBWUnlock };
+        const STM::Cmd cmd = { .op = STM::Op::MSPUnlock };
         _sendCmd(cmd);
-        _checkStatus("MSPSBWUnlock command failed");
+        _checkStatus("MSPUnlock command failed");
     }
     
     void mspSBWConnect() {

@@ -1,6 +1,6 @@
 #pragma once
 #include <msp430.h>
-#include "Assert.h"
+#include "System.h"
 
 template<
 typename T_Scheduler,
@@ -44,22 +44,22 @@ public:
         if (ev & _EventInactive) return false;
         
         uint8_t* b = reinterpret_cast<uint8_t*>(&msg);
-        for (size_t i=0; i<sizeof(msg); i++) {
+        size_t len = 0;
+        for (;;) {
             ev = _WaitForEvents(_EventRx | _EventStop | _EventInactive);
             if (ev & _EventInactive) return false;
-            // Only allow STOP events on the very last byte
-            Assert(!(ev & _EventStop) || (i == (sizeof(msg)-1)));
-            // Confirm that we received another byte
-            Assert(ev & _EventRx);
-            // Store the byte
-            b[i] = UCB0RXBUF_L;
+            if (ev & _EventRx) {
+                // Check if we received too much data
+                if (len >= sizeof(msg)) return false;
+                // Store the byte
+                b[len] = UCB0RXBUF_L;
+                len++;
+            }
+            if (ev & _EventStop) break;
         }
         
-        // If our loop didn't receive a STOP event, wait for it now
-        if (!(ev & _EventStop)) {
-            ev = _WaitForEvents(_EventStop | _EventInactive);
-            if (ev & _EventInactive) return false;
-        }
+        // Verify we got the correct number of bytes
+        if (len != sizeof(msg)) return false;
         
         return true;
     }
@@ -74,7 +74,7 @@ public:
             ev = _WaitForEvents(_EventTx | _EventStop | _EventInactive);
             if (ev & _EventInactive) return false;
             // Ensure that we haven't gotten a STOP before we're done responding
-            Assert(!(ev & _EventStop));
+            if (ev & _EventStop) return false;
             UCB0TXBUF_L = b[i];
         }
         

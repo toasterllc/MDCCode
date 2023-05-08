@@ -1098,31 +1098,31 @@ static void _MSPTimeAdjust(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-// _MSPSBWLock: ensures mutual exclusion between MSP I2C comms (via System::_TaskMSPComms) and MSP Spy-bi-wire IO
-static _System::MSPLock __MSPSBWLock;
+// _MSPLock: ensures mutual exclusion between MSP I2C comms (via System::_TaskMSPComms) and MSP Spy-bi-wire IO
+static _System::MSPLock __MSPLock;
 
 static void _MSPSBWReset() {
     _MSPJTAG::Disconnect();
     // Relinquish the lock if it was held (no-op otherwise)
-    __MSPSBWLock = {};
+    __MSPLock = {};
 }
 
-static void _MSPSBWLock(const STM::Cmd& cmd) {
+static void _MSPLock(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
     // Acquire mutex to block MSP I2C comms until our SBW IO is done (and _MSPSBWDisconnect() is called)
-    __MSPSBWLock.lock();
+    __MSPLock.lock();
     
     // Send status
     _System::USBSendStatus(true);
 }
 
-static void _MSPSBWUnlock(const STM::Cmd& cmd) {
+static void _MSPUnlock(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    __MSPSBWLock.unlock();
+    __MSPLock.unlock();
     
     // Send status
     _System::USBSendStatus(true);
@@ -1535,8 +1535,8 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPTimeSet:            _MSPTimeSet(cmd);                   break;
     case Op::MSPTimeAdjust:         _MSPTimeAdjust(cmd);                break;
     // MSP430 SBW
-    case Op::MSPSBWLock:            _MSPSBWLock(cmd);                   break;
-    case Op::MSPSBWUnlock:          _MSPSBWUnlock(cmd);                 break;
+    case Op::MSPLock:               _MSPLock(cmd);                      break;
+    case Op::MSPUnlock:             _MSPUnlock(cmd);                    break;
     case Op::MSPSBWConnect:         _MSPSBWConnect(cmd);                break;
     case Op::MSPSBWDisconnect:      _MSPSBWDisconnect(cmd);             break;
     case Op::MSPSBWHalt:            _MSPSBWHalt(cmd);                   break;

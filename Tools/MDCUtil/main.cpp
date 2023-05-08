@@ -621,7 +621,7 @@ static void MSPTimeAdjust(const Args& args, MDCUSBDevice& device) {
 }
 
 static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
-    device.mspSBWLock();
+    device.mspLock();
     device.mspSBWConnect();
     device.mspSBWHalt();
     
@@ -641,13 +641,13 @@ static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
     
     device.mspSBWReset();
     device.mspSBWDisconnect();
-    device.mspSBWUnlock();
+    device.mspUnlock();
 }
 
 static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.MSPSBWWrite.filePath.c_str());
     
-    device.mspSBWLock();
+    device.mspLock();
     device.mspSBWConnect();
     device.mspSBWHalt();
     
@@ -676,14 +676,14 @@ static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
     
     device.mspSBWReset();
     device.mspSBWDisconnect();
-    device.mspSBWUnlock();
+    device.mspUnlock();
 }
 
 static void MSPSBWErase(const Args& args, MDCUSBDevice& device) {
     std::cout << "MSPSBWErase\n";
-    device.mspSBWLock();
+    device.mspLock();
     device.mspSBWErase();
-    device.mspSBWUnlock();
+    device.mspUnlock();
     std::cout << "-> OK\n\n";
 }
 
@@ -727,7 +727,7 @@ static void MSPSBWDebugLog(const Args& args, MDCUSBDevice& device) {
     DebugLogPacket log[Toastbox::USB::Endpoint::MaxPacketSizeBulk / sizeof(DebugLogPacket)];
     
     std::cout << "MSPSBWDebugLog\n";
-    device.mspSBWLock();
+//    device.mspLock();
     device.mspSBWConnect();
     device.mspSBWDebugLog();
     std::cout << "-> OK:\n\n";
@@ -780,11 +780,13 @@ static void MSPSBWDebugLog(const Args& args, MDCUSBDevice& device) {
         }
         
         std::cout << std::flush;
+//        break;
     }
     
     #warning TODO: handle signal to cleanup
-    device.mspSBWDisconnect();
-    device.mspSBWUnlock();
+    device.reset();
+//    device.mspSBWDisconnect();
+//    device.mspSBWUnlock();
 }
 
 static void SDRead(const Args& args, MDCUSBDevice& device) {

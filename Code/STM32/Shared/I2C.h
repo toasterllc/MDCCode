@@ -17,6 +17,12 @@ public:
         using SDA = typename T_SDAPin::template Opts<GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
     };
     
+    enum class Status {
+        OK,     // Success
+        NAK,    // Slave didn't respond
+        Error,  // Slave acknowledged but held clock low past our timeout
+    };
+    
     static void Init() {
         // Enable clock for I2C
         __HAL_RCC_I2C1_CLK_ENABLE();
@@ -37,12 +43,14 @@ public:
         Assert(hs == HAL_OK);
     }
     
-    enum class Status {
-        OK,     // Success
-        NAK,    // Slave didn't respond
-        Error,  // Slave acknowledged but held clock low past our timeout
-    };
-    
+    template <typename T_Send, typename T_Recv>
+    static Status Send(const T_Send& send, T_Recv& recv) {
+        const Status st = _Send(send, recv);
+        if (st != Status::OK) {
+            _Reset();
+        }
+        return st;
+    }
     
     template <typename T_Send, typename T_Recv>
     static Status _Send(const T_Send& send, T_Recv& recv) {
@@ -67,15 +75,6 @@ public:
         }
         
         return Status::OK;
-    }
-    
-    template <typename T_Send, typename T_Recv>
-    static Status Send(const T_Send& send, T_Recv& recv) {
-        const Status st = _Send(send, recv);
-        if (st != Status::OK) {
-            _Reset();
-        }
-        return st;
     }
     
     static void ISR_Event() {
