@@ -6,7 +6,6 @@ template<
 typename T_Scheduler,
 typename T_SCLPin,
 typename T_SDAPin,
-typename T_ActivePin,
 uint8_t T_Addr
 >
 class T_I2C {

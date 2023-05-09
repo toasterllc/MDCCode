@@ -45,10 +45,9 @@ using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
 
 using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
 
-constexpr uint16_t _ButtonHoldDurationMs = 1500;
-using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
+using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
 
-using _Charging = T_Charging<VDD_B_3V3_STM>;
+using _Charging = T_Charging<_Pin::VDD_B_3V3_STM>;
 
 static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -1057,7 +1056,6 @@ struct _TaskMain {
             // I2C (config chosen by _I2C)
             _I2C::Pin::SCL,
             _I2C::Pin::SDA,
-            _I2C::Pin::Active,
             
             // Motion (config chosen by _Motion)
             _Motion::Pin::Power,
@@ -1069,6 +1067,9 @@ struct _TaskMain {
             
             // Button (config chosen by _Button)
             _Button::Pin,
+            
+            // Charging
+            _Charging::Pin,
             
             // LEDs
             _Pin::LED_GREEN_,
@@ -1215,24 +1216,37 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
+        static bool charging = false;
         for (;;) {
-            const _Button::Event ev = _Button::WaitForEvent();
+            Toastbox::IntState ints(false);
             
-            switch (ev) {
-            case _Button::Event::Press: {
-                // Ignore button presses if we're off or in host mode
-                if (!_On || _HostMode::Asserted()) break;
-                
-                for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _TaskEvent::CaptureStart(*it, _RTC::Now());
+            // Wait for a button press, or for the charging state to change
+            _Button::Reset();
+            _Scheduler::Wait([] { return _Button::EventPending() || charging!=_Charging::Charging(); });
+            
+            // Handle button presses
+            if (_Button::EventPending()) {
+                switch (_Button::EventRead()) {
+                case _Button::Event::Press: {
+                    // Ignore button presses if we're off or in host mode
+                    if (!_On || _HostMode::Asserted()) break;
+                    
+                    for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
+                        _TaskEvent::CaptureStart(*it, _RTC::Now());
+                    }
+                    break;
                 }
-                break;
-            }
+                
+                case _Button::Event::Hold:
+                    _On = !_On;
+                    break;
+                }
             
-            case _Button::Event::Hold:
-                _On = !_On;
-                _Button::WaitForDeassert();
-                break;
+            // Handle charging state changes
+            } else {
+                charging = _Charging::Charging();
+                // Turn ourself on when we're plugged in
+                if (charging) _On = true;
             }
         }
     }
@@ -1336,9 +1350,7 @@ void _ISR_PORT2() {
     case _Charging::Pin::IVPort2():
         _Charging::ISR(iv);
         // If the I2C master went away, abort whatever I2C was doing
-        if (!_Charging::Charging()) {
-            _I2C::Abort();
-        }
+        if (!_Charging::Charging()) _I2C::Abort();
         // Wake ourself
         _Clock::Wake();
         break;

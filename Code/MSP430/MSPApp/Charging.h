@@ -6,8 +6,8 @@ template<
 typename T_Pin
 >
 struct T_Charging {
-    using _AssertedInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
-    using _DeassertedInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
+    using _AssertedInterrupt = typename T_Pin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
+    using _DeassertedInterrupt = typename T_Pin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
     
     using Pin = _AssertedInterrupt;
     
