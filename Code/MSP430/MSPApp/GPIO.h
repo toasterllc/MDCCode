@@ -330,8 +330,6 @@ static void Init() {
     // This order is required because the MSP430FR24xx user guide says:
     //   "Note that the PxIFG flag cannot be cleared until the LOCKLPM5 bit has been cleared."
     
-    // Config pins
-    
     // Port A
     constexpr _Regs regsA = _GetRegs<PortIndex::A, T_Pins...>(_Regs{});
     PAOUT   = regsA.Out;
@@ -352,11 +350,13 @@ static void Init() {
     // Unlock GPIOs
     PM5CTL0 &= ~LOCKLPM5;
     
-    // Clear PxIFG (but only if this was a cold start)
-    // We don't want to do this when waking from LPMx.5, because PxIFG may contain
-    // the reason for waking, if a GPIO woke us.
+    // Initialize PxIFG to reflect the current state of the pin, if this was a cold start.
+    // This is so we get an initial interrupt if the pin is in the state for which the
+    // interrupt fires.
+    // We don't want to do this when waking from LPMx.5, because PxIFG will contain the
+    // reason for waking if a GPIO woke us.
     if (Startup::ColdStart()) {
-        PAIFG = 0;
+        PAIFG = PAIN ^ PAIES;
     }
     
     // Enable interrupts

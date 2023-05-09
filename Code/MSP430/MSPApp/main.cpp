@@ -31,6 +31,7 @@
 #include "Assert.h"
 #include "Timer.h"
 #include "Debug.h"
+#include "Charging.h"
 #include "System.h"
 using namespace GPIO;
 
@@ -39,13 +40,15 @@ using _SysTick = T_SysTick<_Scheduler, _ACLKFreqHz>;
 using _SPI = T_SPI<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 using _ICE = T_ICE<_Scheduler>;
 
-using _I2C = T_I2C<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
+using _I2C = T_I2C<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, MSP::I2CAddr>;
 using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
 
 using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
 
 constexpr uint16_t _ButtonHoldDurationMs = 1500;
 using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
+
+using _Charging = T_Charging<VDD_B_3V3_STM>;
 
 static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -854,8 +857,10 @@ static void _HostModeUpdate() {
 struct _TaskI2C {
     static void Run() {
         for (;;) {
-            // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
-            _I2C::WaitUntilActive();
+            // Wait until STM is up (ie we're plugged in and charging)
+            _Scheduler::Wait([] { return _Charging::Charging(); });
+            
+            _I2C::Init();
             
             for (;;) {
                 // Wait for a command
@@ -1327,9 +1332,13 @@ void _ISR_PORT2() {
         _Clock::Wake();
         break;
     
-    // I2C (ie VDD_B_3V3_STM)
-    case _I2C::Pin::Active::IVPort2():
-        _I2C::ISR_Active(iv);
+    // Charging (ie VDD_B_3V3_STM)
+    case _Charging::Pin::IVPort2():
+        _Charging::ISR(iv);
+        // If the I2C master went away, abort whatever I2C was doing
+        if (!_Charging::Charging()) {
+            _I2C::Abort();
+        }
         // Wake ourself
         _Clock::Wake();
         break;
