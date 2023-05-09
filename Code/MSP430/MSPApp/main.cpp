@@ -97,7 +97,7 @@ static void _VDDIMGSDEnabledChanged();
 static void _SysTickEnabledChanged();
 
 // _On: power state assertion (the user-facing power state)
-static T_AssertionCounter<_OnChanged,_EventsEnabledUpdate>::Assertion _On;
+static T_Property<bool,_OnChanged,_EventsEnabledUpdate> _On;
 
 // _OnSaved: remembers our power state across crashes and LPM3.5.
 // This is needed because we don't want the device to return to the
@@ -113,10 +113,12 @@ static inline bool _OnSaved = false;
 // _HostMode: events pause/resume (for host mode)
 using _HostMode = T_AssertionCounter<_EventsEnabledUpdate>;
 
-static T_AssertionCounter<_EventsEnabledChanged,_MotionEnabledUpdate>::Assertion _EventsEnabled;
+static T_Property<bool,_EventsEnabledChanged,_MotionEnabledUpdate> _EventsEnabled;
+
+//static T_AssertionCounter<_EventsEnabledChanged,_MotionEnabledUpdate>::Assertion _EventsEnabled;
 
 // Motion enable/disable
-static T_AssertionCounter<_MotionEnabledChanged>::Assertion _MotionEnabled;
+static T_Property<bool,_MotionEnabledChanged> _MotionEnabled;
 
 using _MotionRequested = T_AssertionCounter<_MotionEnabledUpdate>;
 using _MotionRequestedAssertion = T_SuppressibleAssertion<_MotionRequested>;

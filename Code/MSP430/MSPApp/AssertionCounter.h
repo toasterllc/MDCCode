@@ -1,6 +1,44 @@
 #pragma once
 #include "Assert.h"
 
+
+
+
+template<
+typename T,
+auto... T_Changed
+>
+struct T_Property {
+    T_Property() = default;
+    // Copy: illegal
+    T_Property(const T_Property& x) = delete;
+    T_Property& operator=(const T_Property& x) = delete;
+    // Move: allowed
+    T_Property(T_Property&& x) = delete;
+    T_Property& operator=(T_Property&& x) = delete;
+    
+    // Cast
+    operator T() const { return _x; }
+    
+    // Assignment
+    T_Property& operator=(T x) {
+        if (x != _x) {
+            _x = x;
+            ((T_Changed(), ...));
+        }
+        return *this;
+    }
+    
+    T _x = {};
+};
+
+
+
+
+
+
+
+
 template<
 auto... T_Changed
 >
