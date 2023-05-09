@@ -84,20 +84,20 @@ static MSP::State _State = {
     .header = MSP::StateHeader,
 };
 
-static void _HostModeUpdate();
-static void _OnUpdate();
-static void _TaskEventRunningUpdate();
-static void _TaskMotionRunningUpdate();
+static void _HostModeChanged();
+static void _OnChanged();
+static void _TaskEventRunningChanged();
+static void _TaskMotionRunningChanged();
 //static void _MotionEnabledUpdate();
-static void _VDDBEnabledUpdate();
-static void _VDDIMGSDEnabledUpdate();
-static void _SysTickEnabledUpdate();
+static void _VDDBEnabledChanged();
+static void _VDDIMGSDEnabledChanged();
+static void _SysTickEnabledChanged();
 
 // _HostMode: events pause/resume (for host mode)
-using _HostMode = T_AssertionCounter<_HostModeUpdate>;
+using _HostMode = T_AssertionCounter<_HostModeChanged>;
 
 // _On: power state assertion (the user-facing power state)
-using _On = T_AssertionCounter<_OnUpdate>;
+using _On = T_AssertionCounter<_OnChanged>;
 
 // _OnSaved: remembers our power state across crashes and LPM3.5.
 // This is needed because we don't want the device to return to the
@@ -111,17 +111,17 @@ using _On = T_AssertionCounter<_OnUpdate>;
 static inline bool _OnSaved = false;
 
 // Motion enable/disable
-using _MotionEnabled = T_AssertionCounter<_TaskMotionRunningUpdate>;
+using _MotionEnabled = T_AssertionCounter<_TaskMotionRunningChanged>;
 using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
 
 // VDDB enable/disable
-using _VDDBEnabled = T_AssertionCounter<_VDDBEnabledUpdate>;
+using _VDDBEnabled = T_AssertionCounter<_VDDBEnabledChanged>;
 
 // VDDIMGSD enable/disable
-using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledUpdate>;
+using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
 
 // VDDIMGSD enable/disable
-using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledUpdate>;
+using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledChanged>;
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
@@ -234,13 +234,13 @@ int atexit(void (*)(void)) {
 
 // MARK: - Power
 
-static void _VDDBEnabledUpdate() {
+static void _VDDBEnabledChanged() {
     _Pin::VDD_B_EN::Write(_VDDBEnabled::Asserted());
     // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
     _Scheduler::Sleep(_Scheduler::Ms<2>);
 }
 
-static void _VDDIMGSDEnabledUpdate() {
+static void _VDDIMGSDEnabledChanged() {
     if (_VDDIMGSDEnabled::Asserted()) {
         _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
         _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
@@ -270,14 +270,14 @@ static void _LEDFlash(OutputPriority& led) {
     led.set(_LEDPriority::Power, std::nullopt);
 }
 
-static void _OnUpdate() {
+static void _OnChanged() {
     const bool on = _On::Asserted();
     _OnSaved = on;
     _LEDFlash(on ? _LEDGreen_ : _LEDRed_);
-    _TaskEventRunningUpdate();
+    _TaskEventRunningChanged();
 }
 
-static void _SysTickEnabledUpdate() {
+static void _SysTickEnabledChanged() {
     _SysTick::Enabled(_SysTickEnabled::Asserted());
 }
 
@@ -834,17 +834,17 @@ struct _TaskEvent {
     static inline uint8_t Stack[256];
 };
 
-static void _TaskEventRunningUpdate() {
+static void _TaskEventRunningChanged() {
     if (_On::Asserted() && !_HostMode::Asserted()) {
         _TaskEvent::Start();
     } else {
         _TaskEvent::Reset();
     }
-    _TaskMotionRunningUpdate();
+    _TaskMotionRunningChanged();
 }
 
-static void _HostModeUpdate() {
-    _TaskEventRunningUpdate();
+static void _HostModeChanged() {
+    _TaskEventRunningChanged();
 }
 
 // MARK: - _TaskMotion
@@ -892,7 +892,7 @@ struct _TaskMotion {
     static inline uint8_t Stack[128];
 };
 
-static void _TaskMotionRunningUpdate() {
+static void _TaskMotionRunningChanged() {
     if (_Scheduler::Running<_TaskEvent>() && _MotionEnabled::Asserted()) {
         _TaskMotion::Start();
     } else {
