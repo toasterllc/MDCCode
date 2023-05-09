@@ -26,7 +26,7 @@ public:
     static void Reset() {
         // Wait for the button to be deasserted, in case it was already asserted when we entered this function
         {
-            _DeassertedInterrupt::Init<_AssertedInterrupt>();
+            _DeassertedInterrupt::template Init<_AssertedInterrupt>();
             _Signal = false;
             T_Scheduler::Wait([] { return _Signal; });
             // Debounce delay
@@ -34,7 +34,7 @@ public:
         }
         
         // Configure ourself for the asserted transition
-        _AssertedInterrupt::Init<_DeassertedInterrupt>();
+        _AssertedInterrupt::template Init<_DeassertedInterrupt>();
         _Signal = false;
     }
     
@@ -54,7 +54,7 @@ public:
         
         // Wait for 0->1 transition, or for the hold-timeout to elapse
         {
-            _DeassertedInterrupt::Init<_AssertedInterrupt>();
+            _DeassertedInterrupt::template Init<_AssertedInterrupt>();
             _Signal = false;
             const bool ok = T_Scheduler::Wait(_HoldDuration, [] { return _Signal; });
             // If we timed-out, then the button's being held

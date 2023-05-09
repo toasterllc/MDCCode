@@ -99,6 +99,17 @@ using _HostMode = T_AssertionCounter<_HostModeUpdate>;
 // _On: power state assertion (the user-facing power state)
 using _On = T_AssertionCounter<_OnUpdate>;
 
+// _OnSaved: remembers our power state across crashes and LPM3.5.
+// This is needed because we don't want the device to return to the
+// powered-off state after a crash.
+//
+// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
+//
+// Apparently it has to be stored outside of _TaskMain for the gnu::section
+// attribute to work.
+[[gnu::section(".ram_backup_bss._OnSaved")]]
+static inline bool _OnSaved = false;
+
 // Motion enable/disable
 using _MotionEnabled = T_AssertionCounter<_TaskMotionRunningUpdate>;
 using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
@@ -591,57 +602,6 @@ struct _TaskImg {
     static inline uint8_t Stack[256];
 };
 
-// MARK: - _TaskMotion
-
-struct _TaskMotion {
-    static void Start() {
-        _Scheduler::Start<_TaskMotion>();
-    }
-    
-    static void Reset() {
-        _Motion::Reset();
-        _Scheduler::Stop<_TaskMotion>();
-    }
-    
-    static void Run() {
-        Toastbox::IntState ints(false);
-        
-        _Motion::Init();
-        
-        for (;;) {
-            _Motion::WaitForMotion();
-            // When motion occurs, start captures for each enabled motion trigger
-            for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
-                _Triggers::MotionTrigger& trigger = *it;
-                // If this trigger is enabled...
-                if (trigger.enabled.get()) {
-                    const Time::Instant time = _RTC::Now();
-                    // Start capture
-                    _TaskEvent::CaptureStart(trigger, time);
-                    // Suppress motion for the specified duration, if suppression is enabled
-                    const uint32_t suppressTicks = trigger.base().suppressTicks;
-                    if (suppressTicks) {
-                        trigger.enabled.suppress(true);
-                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Task stack
-    SchedulerStack(".stack._TaskMotion")
-    static inline uint8_t Stack[128];
-};
-
-static void _TaskMotionRunningUpdate() {
-    if (_Scheduler::Running<_TaskEvent>() && _MotionEnabled::Asserted()) {
-        _TaskMotion::Start();
-    } else {
-        _TaskMotion::Reset();
-    }
-}
-
 // MARK: - _TaskEvent
 
 struct _TaskEvent {
@@ -880,10 +840,64 @@ static void _TaskEventRunningUpdate() {
     } else {
         _TaskEvent::Reset();
     }
+    _TaskMotionRunningUpdate();
 }
 
 static void _HostModeUpdate() {
     _TaskEventRunningUpdate();
+}
+
+// MARK: - _TaskMotion
+
+struct _TaskMotion {
+    static void Start() {
+        _Scheduler::Start<_TaskMotion>();
+    }
+    
+    static void Reset() {
+        _Motion::Reset();
+        _Scheduler::Stop<_TaskMotion>();
+    }
+    
+    static void Run() {
+        Toastbox::IntState ints(false);
+        
+        _Motion::Init();
+        
+        for (;;) {
+            if (!_Scheduler::Running<_TaskMotion>()) return;
+            
+            _Motion::WaitForMotion();
+            // When motion occurs, start captures for each enabled motion trigger
+            for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+                _Triggers::MotionTrigger& trigger = *it;
+                // If this trigger is enabled...
+                if (trigger.enabled.get()) {
+                    const Time::Instant time = _RTC::Now();
+                    // Start capture
+                    _TaskEvent::CaptureStart(trigger, time);
+                    // Suppress motion for the specified duration, if suppression is enabled
+                    const uint32_t suppressTicks = trigger.base().suppressTicks;
+                    if (suppressTicks) {
+                        trigger.enabled.suppress(true);
+                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Task stack
+    SchedulerStack(".stack._TaskMotion")
+    static inline uint8_t Stack[128];
+};
+
+static void _TaskMotionRunningUpdate() {
+    if (_Scheduler::Running<_TaskEvent>() && _MotionEnabled::Asserted()) {
+        _TaskMotion::Start();
+    } else {
+        _TaskMotion::Reset();
+    }
 }
 
 // MARK: - _TaskI2C
@@ -1030,17 +1044,6 @@ uint8_t _TaskMainStack[_TaskMainStackSize];
 asm(".global _StartupStack");
 asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
 
-// _OnSaved: remembers our power state across crashes and LPM3.5.
-// This is needed because we don't want the device to return to the
-// powered-off state after a crash.
-//
-// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
-//
-// Apparently it has to be stored outside of _TaskMain for the gnu::section
-// attribute to work.
-[[gnu::section(".ram_backup_bss._OnSaved")]]
-static inline bool _OnSaved = false;
-
 struct _TaskMain {
     static void _Init() {
         // Disable interrupts while we init our subsystems
@@ -1086,7 +1089,8 @@ struct _TaskMain {
             // LEDs
             _Pin::LED_GREEN_,
             _Pin::LED_RED_
-        >();
+        
+        >(Startup::ColdStart());
         
         // Init clock
         _Clock::Init();
@@ -1137,7 +1141,7 @@ struct _TaskMain {
         _LEDRed_.set(_LEDPriority::Default, 1);
         
         // Start tasks
-        _Scheduler::Start<_TaskI2C, _TaskMotion>();
+        _Scheduler::Start<_TaskI2C>();
         
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
@@ -1280,6 +1284,9 @@ struct _TaskMain {
         // Unconditionally enable SysTick while we're awake
         _SysTick = true;
     }
+    
+    // _On: controls user-visible on/off behavior
+    static inline ::_On::Assertion _On;
     
     // _SysTickEnabled: controls whether the SysTick timer is enabled
     // We disable SysTick when going to sleep if no tasks are waiting for a certain amount of time to pass

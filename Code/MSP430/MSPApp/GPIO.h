@@ -99,32 +99,33 @@ public:
             State::IFG(Read() != IES());
         }
         
-        // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
+        // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`.
+        // The pin is assumed to have one of the configurations supplied by T_Prev.
         //
         // Interrupts must be disabled (so that the pin interrupt state can be updated atomically)
         template<typename... T_Prev>
         static constexpr void Init() {
-            if constexpr (Out() != T_Prev::Out())
+            if constexpr (((Out() != T_Prev::Out()) || ...))
             State::Out(Out());
             
-            if constexpr (Dir() != T_Prev::Dir())
+            if constexpr (((Dir() != T_Prev::Dir()) || ...))
             State::Dir(Dir());
             
-            if constexpr (Sel0() != T_Prev::Sel0())
+            if constexpr (((Sel0() != T_Prev::Sel0()) || ...))
             State::Sel0(Sel0());
             
-            if constexpr (Sel1() != T_Prev::Sel1())
+            if constexpr (((Sel1() != T_Prev::Sel1()) || ...))
             State::Sel1(Sel1());
             
-            if constexpr (REn() != T_Prev::REn())
+            if constexpr (((REn() != T_Prev::REn()) || ...))
             State::REn(REn());
             
             if constexpr (PortIdx == PortIndex::A)
-            if constexpr (IE() != T_Prev::IE())
+            if constexpr (((IE() != T_Prev::IE()) || ...))
             State::IE(IE());
             
             if constexpr (PortIdx == PortIndex::A)
-            if constexpr (IES() != T_Prev::IES())
+            if constexpr (((IES() != T_Prev::IES()) || ...))
             State::IES(IES());
             
             // If IE was enabled (0->1) or IES changed, ensure that IFG reflects the
@@ -132,7 +133,7 @@ public:
             // transition due to the inherent race between configuring IE/IES and
             // the pin changing state.
             if constexpr (PortIdx == PortIndex::A)
-            if constexpr ((IE() && !T_Prev::IE()) || (IES() != T_Prev::IES()))
+            if constexpr ((IE() && ((!T_Prev::IE() || ...))) || (((IES() != T_Prev::IES()) || ...)))
             State::IFG(Read() != IES());
         }
         
