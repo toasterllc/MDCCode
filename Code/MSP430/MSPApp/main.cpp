@@ -604,17 +604,17 @@ struct _TaskEvent {
         _State = {};
     }
     
-    static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
+    static void _TimeTrigger(bool fastForward, _Triggers::TimeTriggerEvent& ev) {
         _Triggers::TimeTrigger& trigger = ev.trigger();
         // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
-        if (!_State.fastForward) {
+        if (!fastForward) {
             CaptureStart(trigger, ev.time);
         }
         // Reschedule TimeTriggerEvent for its next trigger time
         EventInsert(ev, ev.repeat);
     }
     
-    static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
+    static void _MotionEnable(bool fastForward, _Triggers::MotionEnableEvent& ev) {
         _Triggers::MotionTrigger& trigger = ev.trigger();
         
         // Enable motion
@@ -632,21 +632,21 @@ struct _TaskEvent {
         EventInsert(ev, ev.repeat);
     }
     
-    static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
+    static void _MotionDisable(bool fastForward, _Triggers::MotionDisableEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.enabled.set(false);
     }
     
-    static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
+    static void _MotionUnsuppress(bool fastForward, _Triggers::MotionUnsuppressEvent& ev) {
         // We should never get a MotionUnsuppressEvent event while in fast-forward mode
-        Assert(!_State.fastForward);
+        Assert(!fastForward);
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.enabled.suppress(false);
     }
     
-    static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
+    static void _CaptureImage(bool fastForward, _Triggers::CaptureImageEvent& ev) {
         // We should never get a CaptureImageEvent event while in fast-forward mode
-        Assert(!_State.fastForward);
+        Assert(!fastForward);
         
         constexpr MSP::ImgRingBuf& imgRingBuf = ::_State.sd.imgRingBufs[0];
         
@@ -751,6 +751,18 @@ struct _TaskEvent {
         return *ev;
     }
     
+    static void _EventHandle(bool fastForward, _Triggers::Event& ev) {
+        // Handle the event
+        using T = _Triggers::Event::Type;
+        switch (ev.type) {
+        case T::TimeTrigger:      _TimeTrigger(fastForward,         (_Triggers::TimeTriggerEvent&)ev);      break;
+        case T::MotionEnable:     _MotionEnable(fastForward,        (_Triggers::MotionEnableEvent&)ev);     break;
+        case T::MotionDisable:    _MotionDisable(fastForward,       (_Triggers::MotionDisableEvent&)ev);    break;
+        case T::MotionUnsuppress: _MotionUnsuppress(fastForward,    (_Triggers::MotionUnsuppressEvent&)ev); break;
+        case T::CaptureImage:     _CaptureImage(fastForward,        (_Triggers::CaptureImageEvent&)ev);     break;
+        }
+    }
+    
     static void Run() {
         // Reset our state
         Reset();
@@ -759,58 +771,32 @@ struct _TaskEvent {
         _SPI::Init();
         
         // Init Triggers
-        _Triggers::Init(_RTC::Now());
+        const Time::Instant startTime = _RTC::Now();
+        _Triggers::Init(startTime);
+        
+        // Fast-forward through events
+        if (Time::Absolute(startTime)) {
+            for (;;) {
+                _Triggers::Event* ev = _Triggers::EventFront();
+                if (!ev || (ev->time > startTime)) break;
+                _EventPop();
+                _EventHandle(true, *ev);
+            }
+        }
         
         // Schedule _EventTimer for the first event
         _EventTimerSchedule();
         
-        #warning TODO: try implementing fast-forwarding by manually iterating through the events. smaller code size?
-        // Enter fast-forward mode if we're tracking absolute time and we have at least one event.
-        //
-        // We don't want to enter fast-forward mode if we're tracking relative time, otherwise
-        // we'll arbitrarily skip the first event in FF mode (since we won't have to wait for it,
-        // since Triggers.h automatically subtracts the first event's time from all events, so
-        // the first event will have time 0.)
-        //
-        // We don't want to enter fast-forward mode if we don't have any events, because there's
-        // nothing to fast-forward through. Further, the first event could be a CaptureImage event
-        // triggered by a button press, which wouldn't cause fast-forward mode to be disabled, and
-        // _CaptureImage() would be called with _State.fastForward==true, which is forbidden.
-        if (_RTC::Absolute() && _Triggers::EventFront()) {
-            _State.fastForward = true;
-        }
-        
         for (;;) {
             // Wait for _EventTimer to fire
             const bool waited = _EventTimer::Wait();
-            // Exit fast-forward mode the first time that the _EventTimer actually waits for a time to arrive
-            if (waited) _State.fastForward = false;
             _Triggers::Event& ev = _EventPop();
-            
-            // Don't go to sleep until we handle the event
-            _State.caffeine = true;
-            
-            // Handle the event
-            using T = _Triggers::Event::Type;
-            switch (ev.type) {
-            case T::TimeTrigger:      _TimeTrigger((_Triggers::TimeTriggerEvent&)ev);           break;
-            case T::MotionEnable:     _MotionEnable((_Triggers::MotionEnableEvent&)ev);         break;
-            case T::MotionDisable:    _MotionDisable((_Triggers::MotionDisableEvent&)ev);       break;
-            case T::MotionUnsuppress: _MotionUnsuppress((_Triggers::MotionUnsuppressEvent&)ev); break;
-            case T::CaptureImage:     _CaptureImage((_Triggers::CaptureImageEvent&)ev);         break;
-            }
-            
-            // Allow sleep
-            _State.caffeine = false;
+            _EventHandle(false, ev);
         }
     }
     
     static inline struct __State {
         __State() {} // Compiler bug workaround
-        // fastForward=true while initializing, where we execute events in 'fast-forward' mode,
-        // solely to arrive at the correct state for the current time.
-        // fastForward=false once we're done initializing and executing events normally.
-        bool fastForward = false;
         // power / vddb / vddImgSd: our power assertions
         // These need to be ivars because _TaskEvent can be reset at any time via
         // our Reset() function, so if the power assertion lived on the stack and
