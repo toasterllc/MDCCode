@@ -82,10 +82,9 @@ static MSP::State _State = {
     .header = MSP::StateHeader,
 };
 
+static void _HostModeUpdate();
+static void _PoweredUpdate();
 static void _TaskEventRunningUpdate();
-static void _HostModeUpdate() { _TaskEventRunningUpdate(); }
-static void _PoweredUpdate() { _TaskEventRunningUpdate(); }
-static void _CaffeineUpdate() {}
 static void _MotionEnabledUpdate();
 static void _VDDBEnabledUpdate();
 static void _VDDIMGSDEnabledUpdate();
@@ -96,9 +95,6 @@ using _HostMode = T_AssertionCounter<_HostModeUpdate>;
 
 // _Powered: power state assertion (the user-facing power state)
 using _Powered = T_AssertionCounter<_PoweredUpdate>;
-
-// _Caffeine: prevents sleep
-using _Caffeine = T_AssertionCounter<_CaffeineUpdate>;
 
 // Motion enable/disable
 using _MotionEnabled = T_AssertionCounter<_MotionEnabledUpdate>;
@@ -222,16 +218,21 @@ int atexit(void (*)(void)) {
     return 0;
 }
 
-
-
-
-
-
-
-
-
-
 // MARK: - Power
+
+// _On: controls user-visible on/off behavior
+static inline _Powered::Assertion _On;
+
+// _OnSaved: remembers our power state across crashes and LPM3.5.
+// This is needed because we don't want the device to return to the
+// powered-off state after a crash.
+//
+// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
+//
+// Apparently it has to be stored outside of _TaskMain for the gnu::section
+// attribute to work.
+[[gnu::section(".ram_backup_bss._OnSaved")]]
+static inline bool _OnSaved = false;
 
 static void _VDDBEnabledUpdate() {
     _Pin::VDD_B_EN::Write(_VDDBEnabled::Asserted());
@@ -256,6 +257,27 @@ static void _VDDIMGSDEnabledUpdate() {
         // Rails take ~1.5ms to turn off, so wait 2ms to be sure
         _Scheduler::Sleep(_Scheduler::Ms<2>);
     }
+}
+
+static void _LEDFlash(OutputPriority& led) {
+    // Flash red LED to signal that we're turning off
+    for (int i=0; i<5; i++) {
+        led.set(_LEDPriority::Power, 0);
+        _Scheduler::Delay(_Scheduler::Ms<50>);
+        led.set(_LEDPriority::Power, 1);
+        _Scheduler::Delay(_Scheduler::Ms<50>);
+    }
+    led.set(_LEDPriority::Power, std::nullopt);
+}
+
+static void _PoweredUpdate() {
+    _OnSaved = _Powered::Asserted();
+    if (_Powered::Asserted()) {
+        _LEDFlash(_LEDGreen_);
+    } else {
+        _LEDFlash(_LEDRed_);
+    }
+    _TaskEventRunningUpdate();
 }
 
 static void _SysTickEnabledUpdate() {
@@ -806,7 +828,6 @@ struct _TaskEvent {
         // our Reset() function, so if the power assertion lived on the stack and
         // _TaskEvent is reset, its destructor would never be called and our state
         // would be corrupted.
-        _Caffeine::Assertion caffeine;
         _VDDBEnabled::Assertion vddb;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _State;
@@ -824,6 +845,10 @@ static void _TaskEventRunningUpdate() {
     }
 }
 
+static void _HostModeUpdate() {
+    _TaskEventRunningUpdate();
+}
+
 // MARK: - _TaskI2C
 
 struct _TaskI2C {
@@ -831,9 +856,6 @@ struct _TaskI2C {
         for (;;) {
             // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
             _I2C::WaitUntilActive();
-            
-            // Maintain power while I2C is active
-            _Caffeine::Assertion caffeine(true);
             
             for (;;) {
                 // Wait for a command
@@ -935,6 +957,20 @@ struct _TaskI2C {
         return MSP::Resp{ .ok = false };
     }
     
+//    static void _HostModeSet(bool x) {
+//        // Short-circuit if nothing changed
+//        if (x == _HostModeState.en) return;
+//        if (x) {
+//            _HostModeState.en = true;
+//        } else {
+//            // Clear entire _HostModeState when exiting host mode
+//            _HostModeState = {};
+//            // Turn ourself on when exiting host mode.
+//            // This is a convenience to prevent the user from forgetting to turn the device on after configuring it.
+//            // Note that merely plugging the device in won't 
+//        }
+//    }
+    
     static inline struct {
         _HostMode::Assertion en;
         _VDDIMGSDEnabled::Assertion vddImgSd;
@@ -988,17 +1024,6 @@ uint8_t _TaskMainStack[_TaskMainStackSize];
 
 asm(".global _StartupStack");
 asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
-
-// _OnSaved: remembers our power state across crashes and LPM3.5.
-// This is needed because we don't want the device to return to the
-// powered-off state after a crash.
-//
-// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
-//
-// Apparently it has to be stored outside of _TaskMain for the gnu::section
-// attribute to work.
-[[gnu::section(".ram_backup_bss._TaskMain")]]
-static inline bool _OnSaved = false;
 
 struct _TaskMain {
     static void _Init() {
@@ -1187,16 +1212,11 @@ struct _TaskMain {
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
-            // Ignore all interaction in host mode
-            if (_HostMode::Asserted()) continue;
-            
-            // Keep the lights on until we're done handling the event
-            _Caffeine::Assertion caffeine(true);
             
             switch (ev) {
             case _Button::Event::Press: {
-                // Ignore button presses if we're off
-                if (!_On) break;
+                // Ignore button presses if we're off or in host mode
+                if (!_On || _HostMode::Asserted()) break;
                 
                 for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
                     _TaskEvent::CaptureStart(*it, _RTC::Now());
@@ -1206,8 +1226,6 @@ struct _TaskMain {
             
             case _Button::Event::Hold:
                 _On = !_On;
-                _OnSaved = _On;
-                _LEDFlash(_On ? _LEDGreen_ : _LEDRed_);
                 _Button::WaitForDeassert();
                 break;
             }
@@ -1230,20 +1248,6 @@ struct _TaskMain {
         // Unconditionally enable SysTick while we're awake
         _SysTick = true;
     }
-    
-    static void _LEDFlash(OutputPriority& led) {
-        // Flash red LED to signal that we're turning off
-        for (int i=0; i<5; i++) {
-            led.set(_LEDPriority::Power, 0);
-            _Scheduler::Delay(_Scheduler::Ms<50>);
-            led.set(_LEDPriority::Power, 1);
-            _Scheduler::Delay(_Scheduler::Ms<50>);
-        }
-        led.set(_LEDPriority::Power, std::nullopt);
-    }
-    
-    // _On: controls user-visible on/off behavior
-    static inline _Powered::Assertion _On;
     
     // _SysTickEnabled: controls whether the SysTick timer is enabled
     // We disable SysTick when going to sleep if no tasks are waiting for a certain amount of time to pass
