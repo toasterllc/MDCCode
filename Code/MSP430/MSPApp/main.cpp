@@ -764,16 +764,27 @@ struct _TaskEvent {
         // Schedule _EventTimer for the first event
         _EventTimerSchedule();
         
-        // Enter fast-forward mode while we pop every event that occurs in the past
-        #warning TODO: don't enter fast-forward mode if the first event is a relative time, otherwise we'll arbitrarily skip the first event in FF mode since it's in the past
-        #warning TODO: OR: don't enter FF mode if our time is a relative time
-        _State.fastForward = true;
+        #warning TODO: try implementing fast-forwarding by manually iterating through the events. smaller code size?
+        // Enter fast-forward mode if we're tracking absolute time and we have at least one event.
+        //
+        // We don't want to enter fast-forward mode if we're tracking relative time, otherwise
+        // we'll arbitrarily skip the first event in FF mode (since we won't have to wait for it,
+        // since Triggers.h automatically subtracts the first event's time from all events, so
+        // the first event will have time 0.)
+        //
+        // We don't want to enter fast-forward mode if we don't have any events, because there's
+        // nothing to fast-forward through. Further, the first event could be a CaptureImage event
+        // triggered by a button press, which wouldn't cause fast-forward mode to be disabled, and
+        // _CaptureImage() would be called with _State.fastForward==true, which is forbidden.
+        if (_RTC::Absolute() && _Triggers::EventFront()) {
+            _State.fastForward = true;
+        }
+        
         for (;;) {
             // Wait for _EventTimer to fire
             const bool waited = _EventTimer::Wait();
             // Exit fast-forward mode the first time that the _EventTimer actually waits for a time to arrive
             if (waited) _State.fastForward = false;
-            
             _Triggers::Event& ev = _EventPop();
             
             // Don't go to sleep until we handle the event
