@@ -85,9 +85,10 @@ static MSP::State _State = {
 };
 
 static void _HostModeUpdate();
-static void _PoweredUpdate();
+static void _OnUpdate();
 static void _TaskEventRunningUpdate();
-static void _MotionEnabledUpdate();
+static void _TaskMotionRunningUpdate();
+//static void _MotionEnabledUpdate();
 static void _VDDBEnabledUpdate();
 static void _VDDIMGSDEnabledUpdate();
 static void _SysTickEnabledUpdate();
@@ -95,11 +96,11 @@ static void _SysTickEnabledUpdate();
 // _HostMode: events pause/resume (for host mode)
 using _HostMode = T_AssertionCounter<_HostModeUpdate>;
 
-// _Powered: power state assertion (the user-facing power state)
-using _Powered = T_AssertionCounter<_PoweredUpdate>;
+// _On: power state assertion (the user-facing power state)
+using _On = T_AssertionCounter<_OnUpdate>;
 
 // Motion enable/disable
-using _MotionEnabled = T_AssertionCounter<_MotionEnabledUpdate>;
+using _MotionEnabled = T_AssertionCounter<_TaskMotionRunningUpdate>;
 using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
 
 // VDDB enable/disable
@@ -222,20 +223,6 @@ int atexit(void (*)(void)) {
 
 // MARK: - Power
 
-// _On: controls user-visible on/off behavior
-static inline _Powered::Assertion _On;
-
-// _OnSaved: remembers our power state across crashes and LPM3.5.
-// This is needed because we don't want the device to return to the
-// powered-off state after a crash.
-//
-// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
-//
-// Apparently it has to be stored outside of _TaskMain for the gnu::section
-// attribute to work.
-[[gnu::section(".ram_backup_bss._OnSaved")]]
-static inline bool _OnSaved = false;
-
 static void _VDDBEnabledUpdate() {
     _Pin::VDD_B_EN::Write(_VDDBEnabled::Asserted());
     // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
@@ -272,13 +259,10 @@ static void _LEDFlash(OutputPriority& led) {
     led.set(_LEDPriority::Power, std::nullopt);
 }
 
-static void _PoweredUpdate() {
-    _OnSaved = _Powered::Asserted();
-    if (_Powered::Asserted()) {
-        _LEDFlash(_LEDGreen_);
-    } else {
-        _LEDFlash(_LEDRed_);
-    }
+static void _OnUpdate() {
+    const bool on = _On::Asserted();
+    _OnSaved = on;
+    _LEDFlash(on ? _LEDGreen_ : _LEDRed_);
     _TaskEventRunningUpdate();
 }
 
@@ -607,6 +591,57 @@ struct _TaskImg {
     static inline uint8_t Stack[256];
 };
 
+// MARK: - _TaskMotion
+
+struct _TaskMotion {
+    static void Start() {
+        _Scheduler::Start<_TaskMotion>();
+    }
+    
+    static void Reset() {
+        _Motion::Reset();
+        _Scheduler::Stop<_TaskMotion>();
+    }
+    
+    static void Run() {
+        Toastbox::IntState ints(false);
+        
+        _Motion::Init();
+        
+        for (;;) {
+            _Motion::WaitForMotion();
+            // When motion occurs, start captures for each enabled motion trigger
+            for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+                _Triggers::MotionTrigger& trigger = *it;
+                // If this trigger is enabled...
+                if (trigger.enabled.get()) {
+                    const Time::Instant time = _RTC::Now();
+                    // Start capture
+                    _TaskEvent::CaptureStart(trigger, time);
+                    // Suppress motion for the specified duration, if suppression is enabled
+                    const uint32_t suppressTicks = trigger.base().suppressTicks;
+                    if (suppressTicks) {
+                        trigger.enabled.suppress(true);
+                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Task stack
+    SchedulerStack(".stack._TaskMotion")
+    static inline uint8_t Stack[128];
+};
+
+static void _TaskMotionRunningUpdate() {
+    if (_Scheduler::Running<_TaskEvent>() && _MotionEnabled::Asserted()) {
+        _TaskMotion::Start();
+    } else {
+        _TaskMotion::Reset();
+    }
+}
+
 // MARK: - _TaskEvent
 
 struct _TaskEvent {
@@ -840,7 +875,7 @@ struct _TaskEvent {
 };
 
 static void _TaskEventRunningUpdate() {
-    if (_Powered::Asserted() && !_HostMode::Asserted()) {
+    if (_On::Asserted() && !_HostMode::Asserted()) {
         _TaskEvent::Start();
     } else {
         _TaskEvent::Reset();
@@ -985,40 +1020,6 @@ struct _TaskI2C {
     static inline uint8_t Stack[256];
 };
 
-// MARK: - _TaskMotion
-
-struct _TaskMotion {
-    static void Run() {
-        for (;;) {
-            _Motion::WaitForMotion();
-            // When motion occurs, start captures for each enabled motion trigger
-            for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
-                _Triggers::MotionTrigger& trigger = *it;
-                // If this trigger is enabled...
-                if (trigger.enabled.get()) {
-                    const Time::Instant time = _RTC::Now();
-                    // Start capture
-                    _TaskEvent::CaptureStart(trigger, time);
-                    // Suppress motion for the specified duration, if suppression is enabled
-                    const uint32_t suppressTicks = trigger.base().suppressTicks;
-                    if (suppressTicks) {
-                        trigger.enabled.suppress(true);
-                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Task stack
-    SchedulerStack(".stack._TaskMotion")
-    static inline uint8_t Stack[128];
-};
-
-static void _MotionEnabledUpdate() {
-    _Motion::Enabled(_MotionEnabled::Asserted());
-}
-
 // MARK: - _TaskMain
 
 #define _TaskMainStackSize 128
@@ -1028,6 +1029,17 @@ uint8_t _TaskMainStack[_TaskMainStackSize];
 
 asm(".global _StartupStack");
 asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
+
+// _OnSaved: remembers our power state across crashes and LPM3.5.
+// This is needed because we don't want the device to return to the
+// powered-off state after a crash.
+//
+// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
+//
+// Apparently it has to be stored outside of _TaskMain for the gnu::section
+// attribute to work.
+[[gnu::section(".ram_backup_bss._OnSaved")]]
+static inline bool _OnSaved = false;
 
 struct _TaskMain {
     static void _Init() {
@@ -1218,6 +1230,7 @@ struct _TaskMain {
         
         static bool charging = false;
         for (;;) {
+            // Button needs interrupts to be disabled
             Toastbox::IntState ints(false);
             
             // Wait for a button press, or for the charging state to change

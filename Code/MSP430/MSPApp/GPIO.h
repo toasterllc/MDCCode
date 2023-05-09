@@ -2,8 +2,6 @@
 #include <msp430.h>
 #include <type_traits>
 #include <initializer_list>
-#include "Toastbox/Scheduler.h"
-#include "Startup.h"
 
 namespace GPIO {
 
@@ -77,6 +75,8 @@ public:
         static constexpr bool IES()     { return _Getter(Option::Interrupt10);                                      }
         
         // Init(): configure the pin
+        //
+        // Interrupts must be disabled (so that the pin interrupt state can be updated atomically)
         static constexpr void Init() {
             State::Out(Out());
             State::Dir(Dir());
@@ -89,10 +89,20 @@ public:
             
             if constexpr (PortIdx == PortIndex::A)
             State::IES(IES());
+            
+            // If IE is enabled (0->1), ensure that IFG reflects the state of the
+            // pin. This is necessary because we may have missed a transition due
+            // to the inherent race between configuring IE/IES and the pin
+            // changing state.
+            if constexpr (PortIdx == PortIndex::A)
+            if constexpr (IE())
+            State::IFG(Read() != IES());
         }
         
         // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
-        template<typename T_Prev>
+        //
+        // Interrupts must be disabled (so that the pin interrupt state can be updated atomically)
+        template<typename... T_Prev>
         static constexpr void Init() {
             if constexpr (Out() != T_Prev::Out())
             State::Out(Out());
@@ -116,6 +126,14 @@ public:
             if constexpr (PortIdx == PortIndex::A)
             if constexpr (IES() != T_Prev::IES())
             State::IES(IES());
+            
+            // If IE was enabled (0->1) or IES changed, ensure that IFG reflects the
+            // state of the pin. This is necessary because we may have missed a
+            // transition due to the inherent race between configuring IE/IES and
+            // the pin changing state.
+            if constexpr (PortIdx == PortIndex::A)
+            if constexpr ((IE() && !T_Prev::IE()) || (IES() != T_Prev::IES()))
+            State::IFG(Read() != IES());
         }
         
         // IVPort1(): returns the interrupt vector for Port1 pins
@@ -134,24 +152,6 @@ public:
         OnlyPort2
         static constexpr uint16_t IVPort2() {
             return (PinIdx-8+1)<<1;
-        }
-        
-        // IESConfig(): convenience for changing IES to switch between monitoring 0->1 and 1->0 transitions.
-        // This function ensures that transitions won't be missed (due to the inherent race of configuring
-        // IES and the pin changing state), by explicitly setting IFG to reflect the state of the pin,
-        // after configuring IES.
-        OnlyPortA
-        static constexpr void IESConfig() {
-            // Disable interrupts while we change the IES config
-            Toastbox::IntState ints(false);
-            
-            constexpr bool ies = IES();
-            State::IES(ies);
-            
-            // After configuring IES, ensure that IFG reflects the state of the pin.
-            // This is necessary because we may have missed a transition due to the
-            // inherent race between configuring IES and the pin changing state.
-            State::IFG(Read() != ies);
         }
         
         static bool Read() {
@@ -319,7 +319,7 @@ static constexpr _Regs _GetRegs(_Regs regs) {
 // Init(): init all pins on a device
 // Interrupts must be disabled
 template<typename... T_Pins>
-static void Init() {
+static void Init(bool coldStart) {
     // Follow the initialization procedure from the MSP430FR24xx user guide
     // From "8.3.1 Configuration After Reset":
     //   1. Initialize Ports: PxDIR, PxREN, PxOUT, and PxIES
@@ -351,11 +351,11 @@ static void Init() {
     PM5CTL0 &= ~LOCKLPM5;
     
     // Initialize PxIFG to reflect the current state of the pin, if this was a cold start.
-    // This is so we get an initial interrupt if the pin is in the state for which the
+    // This is so we get an initial interrupt for any pin that's in the state for which its
     // interrupt fires.
     // We don't want to do this when waking from LPMx.5, because PxIFG will contain the
     // reason for waking if a GPIO woke us.
-    if (Startup::ColdStart()) {
+    if (coldStart) {
         PAIFG = PAIN ^ PAIES;
     }
     

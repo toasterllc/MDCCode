@@ -28,10 +28,10 @@ struct _Pin {
 };
 
 class _TaskMain;
+class _TaskI2C;
 class _TaskEvent;
 class _TaskSD;
 class _TaskImg;
-class _TaskI2C;
 class _TaskMotion;
 
 static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz

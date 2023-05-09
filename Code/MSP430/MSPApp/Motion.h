@@ -25,63 +25,45 @@ public:
         using Signal = _SignalDisabled;
     };
     
-    static void Enabled(bool x) {
-        _EnabledRequest = x;
+    // Init(): turn on motion sensor and wait for it to initialize
+    //
+    // Interrupts must be disabled (so that there's no race between us
+    // calling configuring our pins + resetting _Signal, and the ISR firing.)
+    static void Init() {
+        // Turn on motion sensor power
+        // We activate a pullup on the signal line (via _SignalPowering) to minimize
+        // current draw on the signal line during this time. This is because the sensor's
+        // output is indeterminite -- either Z or 1 -- during power-on. Since we don't
+        // care about its value during power on, we don't want our pulldown draining
+        // current in case the sensor is driving a 1.)
+        _PowerEnabled::template Init<_PowerDisabled>();
+        _SignalPowering::template Init<_SignalDisabled>();
+        // Wait _PowerOnTimeMs for the sensor to turn on and stabilize
+        T_Scheduler::Sleep(_PowerOnDelay);
+        
+        // Configure interrupt pin
+        // Switch to the _SignalDisabled configuration before switching to the _SignalEnabled
+        // configuration. This is so we switch back from a pullup resistor (via _SignalPowering)
+        // to a pulldown resistor (via _SignalDisabled), so that the signal line is low before
+        // we enable interrupts, otherwise we'll get a spurious interrupt simply due to the
+        // pullup resistor that we had previously.
+        _SignalDisabled::template Init<_SignalPowering>();
+        // Reset signal
+        _Signal = false;
+        // Enable interrupt
+        _SignalEnabled::template Init<_SignalPowering>();
     }
     
+    static void Reset() {
+        // Turn off motion sensor power
+        _PowerDisabled::template Init<_PowerEnabled>();
+        _SignalDisabled::template Init<_SignalEnabled>();
+    }
+    
+    // WaitForMotion(): wait for motion to occur
     static void WaitForMotion() {
-        Toastbox::IntState ints(false);
-        for (;;) {
-            // Power on / off when requested
-            if (_EnabledChanged()) {
-                _Enable(_EnabledRequest);
-            }
-            
-            // Wait for motion, or for a state-change request
-            T_Scheduler::Wait([] { return _Signal || _EnabledChanged(); });
-            
-            // If motion occurred, clear the signal and return
-            if (_Signal) {
-                _Signal = false;
-                return;
-            }
-        }
-    }
-    
-    static bool _EnabledChanged() {
-        return _Enabled != _EnabledRequest;
-    }
-    
-    static void _Enable(bool en) {
-        Assert(_Enabled != en);
-        if (en) {
-            // Turn on motion sensor power
-            // We activate a pullup on the signal line (via _SignalPowering) to minimize
-            // current draw on the signal line during this time. This is because the sensor's
-            // output is indeterminite -- either Z or 1 -- during power-on. Since we don't
-            // care about its value during power on, we don't want our pulldown draining
-            // current in case the sensor is driving a 1.)
-            _PowerEnabled::template Init<_PowerDisabled>();
-            _SignalPowering::template Init<_SignalDisabled>();
-            // Wait _PowerOnTimeMs for the sensor to turn on and stabilize
-            T_Scheduler::Sleep(_Ms<_PowerOnTimeMs>);
-            
-            // Configure interrupt pin
-            // We first switch to the '_SignalDisabled' configuration to switch back to a pulldown resistor,
-            // and then simply enable interrupts.
-            _SignalDisabled::template Init<_SignalPowering>();
-            // Reset signal
-            _Signal = false;
-            // Enable interrupt
-            _SignalEnabled::IESConfig();
-        
-        } else {
-            // Turn off motion sensor power
-            _PowerDisabled::template Init<_PowerEnabled>();
-            _SignalDisabled::template Init<_SignalEnabled>();
-        }
-        
-        _Enabled = en;
+        T_Scheduler::Wait([] { return _Signal; });
+        _Signal = false;
     }
     
     static void ISR() {
@@ -89,13 +71,7 @@ public:
     }
     
 private:
-    // _PowerOnTimeMs: time that it takes for the motion sensor to power on and stabilize
-    static constexpr uint32_t _PowerOnTimeMs = 30000;
-    
-    template<auto T>
-    static constexpr auto _Ms = T_Scheduler::template Ms<T>;
-    
-    static inline bool _Enabled = false;
-    static inline volatile bool _EnabledRequest = false;
+    // _PowerOnDelay: time that it takes for the motion sensor to power on and stabilize
+    static constexpr auto _PowerOnDelay = T_Scheduler::template Ms<30000>;
     static inline volatile bool _Signal = false;
 };

@@ -22,11 +22,11 @@ public:
     // Reset(): start a new event-monitoring session
     //
     // Interrupts must be disabled (so that there's no race between us
-    // calling IESConfig() / resetting _Signal, and the ISR firing.)
+    // calling Pin::Init() + resetting _Signal, and the ISR firing.)
     static void Reset() {
         // Wait for the button to be deasserted, in case it was already asserted when we entered this function
         {
-            _DeassertedInterrupt::IESConfig();
+            _DeassertedInterrupt::Init<_AssertedInterrupt>();
             _Signal = false;
             T_Scheduler::Wait([] { return _Signal; });
             // Debounce delay
@@ -34,7 +34,7 @@ public:
         }
         
         // Configure ourself for the asserted transition
-        _AssertedInterrupt::IESConfig();
+        _AssertedInterrupt::Init<_DeassertedInterrupt>();
         _Signal = false;
     }
     
@@ -45,7 +45,7 @@ public:
     // EventRead(): determine whether a button press or hold occurred
     //
     // Interrupts must be disabled (so that there's no race between us
-    // calling IESConfig() / resetting _Signal, and the ISR firing.)
+    // calling Pin::Init() + resetting _Signal, and the ISR firing.)
     static Event EventRead() {
         Assert(_Signal);
         
@@ -54,7 +54,7 @@ public:
         
         // Wait for 0->1 transition, or for the hold-timeout to elapse
         {
-            _DeassertedInterrupt::IESConfig();
+            _DeassertedInterrupt::Init<_AssertedInterrupt>();
             _Signal = false;
             const bool ok = T_Scheduler::Wait(_HoldDuration, [] { return _Signal; });
             // If we timed-out, then the button's being held
