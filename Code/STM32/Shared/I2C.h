@@ -15,6 +15,9 @@ public:
     struct Pin {
         using SCL = typename T_SCLPin::template Opts<GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
         using SDA = typename T_SDAPin::template Opts<GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
+        
+        using SCLManual = typename T_SCLPin::template Opts<GPIO::Option::OpenDrain>;
+        using SDAManual = typename T_SDAPin::template Opts<GPIO::Option::OpenDrain>;
     };
     
     enum class Status {
@@ -98,6 +101,38 @@ private:
     static void _Reset() {
         HAL_StatusTypeDef hs = HAL_I2C_Init(&_Device);
         Assert(hs == HAL_OK);
+        
+        // Issue a START+STOP condition to reset our comms with MSP430.
+        //
+        // This is necessary because STM32 can reset at any point, which can leave
+        // MSP430 in an indeterminite I2C comms state. This sequence triggers the
+        // MSP430 comms state machine to bail and return to its initial state.
+        
+        // Take manual control of the GPIOs
+        Pin::SCLManual::template Init<typename Pin::SCL>();
+        Pin::SDAManual::template Init<typename Pin::SDA>();
+        
+        // Issue START condition
+        Pin::SCLManual::Write(1);
+        Pin::SDAManual::Write(1);
+        T_Scheduler::Sleep(T_Scheduler::template Ms<1>);
+        
+        Pin::SDAManual::Write(0);
+        T_Scheduler::Sleep(T_Scheduler::template Ms<1>);
+        
+        Pin::SCLManual::Write(0);
+        T_Scheduler::Sleep(T_Scheduler::template Ms<1>);
+        
+        // Issue STOP condition
+        Pin::SCLManual::Write(1);
+        T_Scheduler::Sleep(T_Scheduler::template Ms<1>);
+        
+        Pin::SDAManual::Write(1);
+        T_Scheduler::Sleep(T_Scheduler::template Ms<1>);
+        
+        // Restore GPIO control to the I2C peripheral
+        Pin::SCL::template Init<typename Pin::SCLManual>();
+        Pin::SDA::template Init<typename Pin::SDAManual>();
     }
     
 //    static void _Cleanup() {
