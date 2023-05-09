@@ -31,7 +31,9 @@
 #include "Assert.h"
 #include "Timer.h"
 #include "Debug.h"
+#include "Charging.h"
 #include "System.h"
+#include "Property.h"
 using namespace GPIO;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
@@ -39,13 +41,14 @@ using _SysTick = T_SysTick<_Scheduler, _ACLKFreqHz>;
 using _SPI = T_SPI<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 using _ICE = T_ICE<_Scheduler>;
 
-using _I2C = T_I2C<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr>;
+using _I2C = T_I2C<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, MSP::I2CAddr>;
 using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
 
 using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
 
-constexpr uint16_t _ButtonHoldDurationMs = 1500;
-using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
+using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
+
+using _Charging = T_Charging<_Pin::VDD_B_3V3_STM>;
 
 static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -82,39 +85,44 @@ static MSP::State _State = {
     .header = MSP::StateHeader,
 };
 
-static void _TaskEventRunningUpdate();
-static void _HostModeUpdate() { _TaskEventRunningUpdate(); }
-static void _PoweredUpdate() { _TaskEventRunningUpdate(); }
-static void _CaffeineUpdate() {}
+static void _OnChanged();
+
+static void _EventsEnabledUpdate();
+static void _EventsEnabledChanged();
+
 static void _MotionEnabledUpdate();
-static void _VDDBEnabledUpdate();
-static void _VDDIMGSDEnabledUpdate();
-static void _SysTickEnabledUpdate();
+static void _MotionEnabledChanged();
 
-// _HostMode: events pause/resume (for host mode)
-using _HostMode = T_AssertionCounter<_HostModeUpdate>;
+static void _VDDIMGSDEnabledChanged();
 
-// _Powered: power state assertion (the user-facing power state)
-using _Powered = T_AssertionCounter<_PoweredUpdate>;
+// _On: power state assertion (the user-facing power state)
+static T_Property<bool,_OnChanged,_EventsEnabledUpdate> _On;
 
-// _Caffeine: prevents sleep
-using _Caffeine = T_AssertionCounter<_CaffeineUpdate>;
+// _OnSaved: remembers our power state across crashes and LPM3.5.
+// This is needed because we don't want the device to return to the
+// powered-off state after a crash.
+//
+// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
+//
+// Apparently it has to be stored outside of _TaskMain for the gnu::section
+// attribute to work.
+[[gnu::section(".ram_backup_bss._OnSaved")]]
+static inline bool _OnSaved = false;
 
-// Motion enable/disable
-using _MotionEnabled = T_AssertionCounter<_MotionEnabledUpdate>;
-using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
+// _EventsEnabled: whether _TaskEvent should be running and handling events
+static T_Property<bool,_EventsEnabledChanged,_MotionEnabledUpdate> _EventsEnabled;
 
-// VDDB enable/disable
-using _VDDBEnabled = T_AssertionCounter<_VDDBEnabledUpdate>;
+// _MotionEnabled: whether _TaskMotion should be running and observing motion
+static T_Property<bool,_MotionEnabledChanged> _MotionEnabled;
+
+using _MotionRequested = T_AssertionCounter<_MotionEnabledUpdate>;
+using _MotionRequestedAssertion = T_SuppressibleAssertion<_MotionRequested>;
 
 // VDDIMGSD enable/disable
-using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledUpdate>;
-
-// VDDIMGSD enable/disable
-using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledUpdate>;
+using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
 
 // _Triggers: stores our current event state
-using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
+using _Triggers = T_Triggers<_State, _MotionRequestedAssertion>;
 
 // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
 using _EventTimer = T_Timer<_Scheduler, _RTC, _ACLKFreqHz>;
@@ -222,24 +230,9 @@ int atexit(void (*)(void)) {
     return 0;
 }
 
-
-
-
-
-
-
-
-
-
 // MARK: - Power
 
-static void _VDDBEnabledUpdate() {
-    _Pin::VDD_B_EN::Write(_VDDBEnabled::Asserted());
-    // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
-    _Scheduler::Sleep(_Scheduler::Ms<2>);
-}
-
-static void _VDDIMGSDEnabledUpdate() {
+static void _VDDIMGSDEnabledChanged() {
     if (_VDDIMGSDEnabled::Asserted()) {
         _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
         _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
@@ -258,8 +251,15 @@ static void _VDDIMGSDEnabledUpdate() {
     }
 }
 
-static void _SysTickEnabledUpdate() {
-    _SysTick::Enabled(_SysTickEnabled::Asserted());
+static void _LEDFlash(OutputPriority& led) {
+    // Flash red LED to signal that we're turning off
+    for (int i=0; i<5; i++) {
+        led.set(_LEDPriority::Power, 0);
+        _Scheduler::Delay(_Scheduler::Ms<50>);
+        led.set(_LEDPriority::Power, 1);
+        _Scheduler::Delay(_Scheduler::Ms<50>);
+    }
+    led.set(_LEDPriority::Power, std::nullopt);
 }
 
 // MARK: - ICE40
@@ -596,9 +596,7 @@ struct _TaskEvent {
         _TaskSD::Reset();
         _TaskImg::Reset();
         // Stop tasks
-        _Scheduler::Stop<_TaskSD>();
-        _Scheduler::Stop<_TaskImg>();
-        _Scheduler::Stop<_TaskEvent>();
+        _Scheduler::Stop<_TaskSD, _TaskImg, _TaskEvent>();
         // Reset our state
         // We do this last so that our power assertions are reset last
         _State = {};
@@ -795,6 +793,12 @@ struct _TaskEvent {
         }
     }
     
+    static void _VDDBEnabledChanged() {
+        _Pin::VDD_B_EN::Write(_State.vddb);
+        // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
+        _Scheduler::Sleep(_Scheduler::Ms<2>);
+    }
+    
     static inline struct __State {
         __State() {} // Compiler bug workaround
         // live=false while initializing, where we execute events in 'fast-forward' mode,
@@ -806,8 +810,7 @@ struct _TaskEvent {
         // our Reset() function, so if the power assertion lived on the stack and
         // _TaskEvent is reset, its destructor would never be called and our state
         // would be corrupted.
-        _Caffeine::Assertion caffeine;
-        _VDDBEnabled::Assertion vddb;
+        T_Property<bool,_VDDBEnabledChanged> vddb;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _State;
     
@@ -816,24 +819,66 @@ struct _TaskEvent {
     static inline uint8_t Stack[256];
 };
 
-static void _TaskEventRunningUpdate() {
-    if (_Powered::Asserted() && !_HostMode::Asserted()) {
-        _TaskEvent::Start();
-    } else {
-        _TaskEvent::Reset();
+// MARK: - _TaskMotion
+
+struct _TaskMotion {
+    static void Start() {
+        _Scheduler::Start<_TaskMotion>();
     }
-}
+    
+    static void Reset() {
+        _Motion::Reset();
+        _Scheduler::Stop<_TaskMotion>();
+    }
+    
+    static void Run() {
+        // Disable interrupts because _Motion requires it
+        Toastbox::IntState ints(false);
+        
+        // Init/power on motion sensor
+        _Motion::Init();
+        
+        for (;;) {
+            _Motion::WaitForMotion();
+            // When motion occurs, start captures for each enabled motion trigger
+            for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+                _Triggers::MotionTrigger& trigger = *it;
+                // If this trigger is enabled...
+                if (trigger.enabled.get()) {
+                    const Time::Instant time = _RTC::Now();
+                    // Start capture
+                    _TaskEvent::CaptureStart(trigger, time);
+                    // Suppress motion for the specified duration, if suppression is enabled
+                    const uint32_t suppressTicks = trigger.base().suppressTicks;
+                    if (suppressTicks) {
+                        trigger.enabled.suppress(true);
+                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
+                    }
+                }
+            }
+            
+            // Explicitly check _MotionEnabled and bail if we're not supposed to be running.
+            // This is necessary even though we stop _TaskMotion in Reset(), because we may have
+            // called Reset() ourself (by way of trigger.enabled.suppress()), and Scheduler::Stop()
+            // explicitly doesn't stop the current task.
+            if (!_MotionEnabled) return;
+        }
+    }
+    
+    // Task stack
+    SchedulerStack(".stack._TaskMotion")
+    static inline uint8_t Stack[128];
+};
 
 // MARK: - _TaskI2C
 
 struct _TaskI2C {
     static void Run() {
         for (;;) {
-            // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
-            _I2C::WaitUntilActive();
+            // Wait until STM is up (ie we're plugged in and charging)
+            _Scheduler::Wait([] { return _Charging::Charging(); });
             
-            // Maintain power while I2C is active
-            _Caffeine::Assertion caffeine(true);
+            _I2C::Init();
             
             for (;;) {
                 // Wait for a command
@@ -935,8 +980,26 @@ struct _TaskI2C {
         return MSP::Resp{ .ok = false };
     }
     
+    static bool HostModeEnabled() {
+        return _HostModeState.en;
+    }
+    
+//    static void _HostModeSet(bool x) {
+//        // Short-circuit if nothing changed
+//        if (x == _HostModeState.en) return;
+//        if (x) {
+//            _HostModeState.en = true;
+//        } else {
+//            // Clear entire _HostModeState when exiting host mode
+//            _HostModeState = {};
+//            // Turn ourself on when exiting host mode.
+//            // This is a convenience to prevent the user from forgetting to turn the device on after configuring it.
+//            // Note that merely plugging the device in won't 
+//        }
+//    }
+    
     static inline struct {
-        _HostMode::Assertion en;
+        T_Property<bool,_EventsEnabledUpdate> en;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _HostModeState;
     
@@ -944,40 +1007,6 @@ struct _TaskI2C {
     SchedulerStack(".stack._TaskI2C")
     static inline uint8_t Stack[256];
 };
-
-// MARK: - _TaskMotion
-
-struct _TaskMotion {
-    static void Run() {
-        for (;;) {
-            _Motion::WaitForMotion();
-            // When motion occurs, start captures for each enabled motion trigger
-            for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
-                _Triggers::MotionTrigger& trigger = *it;
-                // If this trigger is enabled...
-                if (trigger.enabled.get()) {
-                    const Time::Instant time = _RTC::Now();
-                    // Start capture
-                    _TaskEvent::CaptureStart(trigger, time);
-                    // Suppress motion for the specified duration, if suppression is enabled
-                    const uint32_t suppressTicks = trigger.base().suppressTicks;
-                    if (suppressTicks) {
-                        trigger.enabled.suppress(true);
-                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Task stack
-    SchedulerStack(".stack._TaskMotion")
-    static inline uint8_t Stack[128];
-};
-
-static void _MotionEnabledUpdate() {
-    _Motion::Enabled(_MotionEnabled::Asserted());
-}
 
 // MARK: - _TaskMain
 
@@ -988,17 +1017,6 @@ uint8_t _TaskMainStack[_TaskMainStackSize];
 
 asm(".global _StartupStack");
 asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
-
-// _OnSaved: remembers our power state across crashes and LPM3.5.
-// This is needed because we don't want the device to return to the
-// powered-off state after a crash.
-//
-// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
-//
-// Apparently it has to be stored outside of _TaskMain for the gnu::section
-// attribute to work.
-[[gnu::section(".ram_backup_bss._TaskMain")]]
-static inline bool _OnSaved = false;
 
 struct _TaskMain {
     static void _Init() {
@@ -1027,7 +1045,6 @@ struct _TaskMain {
             // I2C (config chosen by _I2C)
             _I2C::Pin::SCL,
             _I2C::Pin::SDA,
-            _I2C::Pin::Active,
             
             // Motion (config chosen by _Motion)
             _Motion::Pin::Power,
@@ -1040,10 +1057,14 @@ struct _TaskMain {
             // Button (config chosen by _Button)
             _Button::Pin,
             
+            // Charging
+            _Charging::Pin,
+            
             // LEDs
             _Pin::LED_GREEN_,
             _Pin::LED_RED_
-        >();
+        
+        >(Startup::ColdStart());
         
         // Init clock
         _Clock::Init();
@@ -1094,7 +1115,7 @@ struct _TaskMain {
         _LEDRed_.set(_LEDPriority::Default, 1);
         
         // Start tasks
-        _Scheduler::Start<_TaskI2C, _TaskMotion>();
+        _Scheduler::Start<_TaskI2C>();
         
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
@@ -1185,31 +1206,38 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms<100>);
 //        }
         
+        static bool charging = false;
         for (;;) {
-            const _Button::Event ev = _Button::WaitForEvent();
-            // Ignore all interaction in host mode
-            if (_HostMode::Asserted()) continue;
+            // Button needs interrupts to be disabled
+            Toastbox::IntState ints(false);
             
-            // Keep the lights on until we're done handling the event
-            _Caffeine::Assertion caffeine(true);
+            // Wait for a button press, or for the charging state to change
+            _Button::Reset();
+            _Scheduler::Wait([] { return _Button::EventPending() || charging!=_Charging::Charging(); });
             
-            switch (ev) {
-            case _Button::Event::Press: {
-                // Ignore button presses if we're off
-                if (!_On) break;
-                
-                for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _TaskEvent::CaptureStart(*it, _RTC::Now());
+            // Handle button presses
+            if (_Button::EventPending()) {
+                switch (_Button::EventRead()) {
+                case _Button::Event::Press: {
+                    // Ignore button presses if we're off or in host mode
+                    if (!_On || _TaskI2C::HostModeEnabled()) break;
+                    
+                    for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
+                        _TaskEvent::CaptureStart(*it, _RTC::Now());
+                    }
+                    break;
                 }
-                break;
-            }
+                
+                case _Button::Event::Hold:
+                    _On = !_On;
+                    break;
+                }
             
-            case _Button::Event::Hold:
-                _On = !_On;
-                _OnSaved = _On;
-                _LEDFlash(_On ? _LEDGreen_ : _LEDRed_);
-                _Button::WaitForDeassert();
-                break;
+            // Handle charging state changes
+            } else {
+                charging = _Charging::Charging();
+                // Turn ourself on when we're plugged in
+                if (charging) _On = true;
             }
         }
     }
@@ -1219,35 +1247,23 @@ struct _TaskMain {
         
         // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
         // We do this to prevent ourself from waking up unnecessarily, saving power.
-        _SysTick = _Scheduler::TickRequired();
+        _SysTickEnabled = _Scheduler::TickRequired();
         
         // We consider the sleep 'extended' if SysTick isn't needed during the sleep
 //        const bool extendedSleep = false;
 //        const bool extendedSleep = true;
-        const bool extendedSleep = !_SysTick;
+        const bool extendedSleep = !_SysTickEnabled;
         _Clock::Sleep(extendedSleep);
         
         // Unconditionally enable SysTick while we're awake
-        _SysTick = true;
+        _SysTickEnabled = true;
     }
     
-    static void _LEDFlash(OutputPriority& led) {
-        // Flash red LED to signal that we're turning off
-        for (int i=0; i<5; i++) {
-            led.set(_LEDPriority::Power, 0);
-            _Scheduler::Delay(_Scheduler::Ms<50>);
-            led.set(_LEDPriority::Power, 1);
-            _Scheduler::Delay(_Scheduler::Ms<50>);
-        }
-        led.set(_LEDPriority::Power, std::nullopt);
+    static void _SysTickEnabledChanged() {
+        _SysTick::Enabled(_SysTickEnabled);
     }
     
-    // _On: controls user-visible on/off behavior
-    static inline _Powered::Assertion _On;
-    
-    // _SysTickEnabled: controls whether the SysTick timer is enabled
-    // We disable SysTick when going to sleep if no tasks are waiting for a certain amount of time to pass
-    static inline _SysTickEnabled::Assertion _SysTick;
+    static inline T_Property<bool,_SysTickEnabledChanged> _SysTickEnabled;
     
     // Task stack
     static constexpr auto& Stack = _TaskMainStack;
@@ -1268,6 +1284,31 @@ inline void Toastbox::IntState::Set(bool en) {
 
 static void _Sleep() {
     _TaskMain::Sleep();
+}
+
+// MARK: - Properties
+
+static void _OnChanged() {
+    _OnSaved = _On;
+    _LEDFlash(_On ? _LEDGreen_ : _LEDRed_);
+}
+
+static void _EventsEnabledUpdate() {
+    _EventsEnabled = _On && !_TaskI2C::HostModeEnabled();
+}
+
+static void _EventsEnabledChanged() {
+    if (_EventsEnabled) _TaskEvent::Start();
+    else                _TaskEvent::Reset();
+}
+
+static void _MotionEnabledUpdate() {
+    _MotionEnabled = _EventsEnabled && _MotionRequested::Asserted();
+}
+
+static void _MotionEnabledChanged() {
+    if (_MotionEnabled) _TaskMotion::Start();
+    else                _TaskMotion::Reset();
 }
 
 // MARK: - Interrupts
@@ -1323,9 +1364,11 @@ void _ISR_PORT2() {
         _Clock::Wake();
         break;
     
-    // I2C (ie VDD_B_3V3_STM)
-    case _I2C::Pin::Active::IVPort2():
-        _I2C::ISR_Active(iv);
+    // Charging (ie VDD_B_3V3_STM)
+    case _Charging::Pin::IVPort2():
+        _Charging::ISR(iv);
+        // If the I2C master went away, abort whatever I2C was doing
+        if (!_Charging::Charging()) _I2C::Abort();
         // Wake ourself
         _Clock::Wake();
         break;

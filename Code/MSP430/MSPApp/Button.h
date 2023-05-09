@@ -4,8 +4,7 @@
 
 template<
 typename T_Scheduler,
-typename T_Pin,
-uint16_t T_HoldDurationMs
+typename T_Pin
 >
 class T_Button {
 private:
@@ -20,33 +19,44 @@ public:
         Hold,
     };
     
-    static void WaitForDeassert() {
-        Toastbox::IntState ints(false);
-        _WaitForDeassert();
-    }
-    
-    static Event WaitForEvent() {
-        // Disable interrupts so that there's no race between us calling
-        // IESConfig() / resetting _Signal, and the ISR firing.
-        Toastbox::IntState ints(false);
-        
+    // Reset(): start a new event-monitoring session
+    //
+    // Interrupts must be disabled (so that there's no race between us
+    // calling Pin::Init() + resetting _Signal, and the ISR firing.)
+    static void Reset() {
         // Wait for the button to be deasserted, in case it was already asserted when we entered this function
-        _WaitForDeassert();
-        
-        // Wait for 1->0 transition
         {
-            _AssertedInterrupt::IESConfig();
+            _DeassertedInterrupt::template Init<_AssertedInterrupt>();
             _Signal = false;
             T_Scheduler::Wait([] { return _Signal; });
             // Debounce delay
-            T_Scheduler::Sleep(_Ms<_DebounceDelayMs>);
+            T_Scheduler::Sleep(_DebounceDelay);
         }
+        
+        // Configure ourself for the asserted transition
+        _AssertedInterrupt::template Init<_DeassertedInterrupt>();
+        _Signal = false;
+    }
+    
+    static bool EventPending() {
+        return _Signal;
+    }
+    
+    // EventRead(): determine whether a button press or hold occurred
+    //
+    // Interrupts must be disabled (so that there's no race between us
+    // calling Pin::Init() + resetting _Signal, and the ISR firing.)
+    static Event EventRead() {
+        Assert(_Signal);
+        
+        // Debounce after asserted transition
+        T_Scheduler::Sleep(_DebounceDelay);
         
         // Wait for 0->1 transition, or for the hold-timeout to elapse
         {
-            _DeassertedInterrupt::IESConfig();
+            _DeassertedInterrupt::template Init<_AssertedInterrupt>();
             _Signal = false;
-            const bool ok = T_Scheduler::Wait(_Ms<T_HoldDurationMs>, [] { return _Signal; });
+            const bool ok = T_Scheduler::Wait(_HoldDuration, [] { return _Signal; });
             // If we timed-out, then the button's being held
             if (!ok) return Event::Hold;
             // Otherwise, we didn't timeout, so the button was simply pressed
@@ -54,24 +64,12 @@ public:
         }
     }
     
-    static void _WaitForDeassert() {
-        // Wait for the button to be deasserted, in case it was already asserted when we entered this function
-        _DeassertedInterrupt::IESConfig();
-        _Signal = false;
-        T_Scheduler::Wait([] { return _Signal; });
-        // Debounce delay
-        T_Scheduler::Sleep(_Ms<_DebounceDelayMs>);
-    }
-    
     static void ISR() {
         _Signal = true;
     }
     
 private:
-    static constexpr uint16_t _DebounceDelayMs = 2;
-    
-    template<auto T>
-    static constexpr auto _Ms = T_Scheduler::template Ms<T>;
-    
+    static constexpr auto _HoldDuration = T_Scheduler::template Ms<1500>;
+    static constexpr auto _DebounceDelay = T_Scheduler::template Ms<2>;
     static inline volatile bool _Signal = false;
 };

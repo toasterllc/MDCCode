@@ -2,7 +2,7 @@
 #include "Assert.h"
 
 template<
-auto T_UpdateFn = nullptr
+auto... T_Changed
 >
 class T_AssertionCounter {
 public:
@@ -32,20 +32,16 @@ public:
 private:
     static void _Assert() {
         _Counter++;
-        if constexpr (!std::is_null_pointer_v<decltype(T_UpdateFn)>) {
-            if (_Counter == 1) {
-                T_UpdateFn();
-            }
+        if (_Counter == 1) {
+            ((T_Changed(), ...));
         }
     }
     
     static void _Deassert() {
         Assert(_Counter);
         _Counter--;
-        if constexpr (!std::is_null_pointer_v<decltype(T_UpdateFn)>) {
-            if (_Counter == 0) {
-                T_UpdateFn();
-            }
+        if (_Counter == 0) {
+            ((T_Changed(), ...));
         }
     }
     

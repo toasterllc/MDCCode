@@ -6,48 +6,72 @@ template<
 typename T_Scheduler,
 typename T_SCLPin,
 typename T_SDAPin,
-typename T_ActivePin,
 uint8_t T_Addr
 >
 class T_I2C {
-private:
-    using _ActiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
-    using _InactiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
-    
 public:
     struct Pin {
         using SCL = typename T_SCLPin::template Opts<GPIO::Option::Sel01>;
         using SDA = typename T_SDAPin::template Opts<GPIO::Option::Sel01>;
-        using Active = _ActiveInterrupt;
     };
     
-    static void WaitUntilActive() {
-        // Keep I2C peripheral in reset until we get the active interrupt
-        _I2CReset();
+    // Init(): configure I2C peripheral and reset all state
+    static void Init() {
+        UCB0CTLW0 =
+            (UCA10&0)       |   // 7bit own addr
+            (UCSLA10&0)     |   // 7bit slave addr
+            (UCMM&0)        |   // single-master
+            (UCMST&0)       |   // slave mode
+            UCMODE_3        |   // i2c mode
+            UCSYNC          |   // (not applicable)
+            UCSSEL_0        |   // (not applicable in slave mode)
+            (UCTXACK&0)     |   // (not applicable during setup)
+            (UCTR&0)        |   // receiver mode
+            (UCTXNACK&0)    |   // (not applicable during setup)
+            (UCTXSTP&0)     |   // (not applicable in slave mode)
+            (UCTXSTT&0)     |   // (not applicable in slave mode)
+            UCSWRST         ;   // reset
         
-        // Observe 0->1 transitions on Pin::Active
-        _ActiveInterrupt::IESConfig();
+        UCB0CTLW1 =
+            (UCETXINT&0)    |   // UCTXIFGx is set after an address match
+            UCCLTO_0        |   // disable clock low time-out counter
+            (UCSTPNACK&0)   |   // (not applicable in slave mode)
+            (UCSWACK&0)     |   // hardware controls address ACK
+            UCASTP_0        |   // no automatic STOP generation
+            UCGLIT_0        ;   // deglitch time = 50 ns
         
-        // Wait until we're active
-        _WaitForEvents(_EventActive);
+        UCB0I2COA0 =
+            (UCGCEN&0)      |   // don't respond to general calls
+            UCOAEN          |   // enable this slave (slave 0)
+            T_Addr          ;   // our slave address
         
-        // Initialize I2C peripheral
-        _I2CInit();
+        // Clear our events (making sure to do this after we reset the I2C peripheral to ensure it stays cleared)
+        _Ev = _EventNone;
         
-        // Observe 1->0 transitions on Pin::Active
-        _InactiveInterrupt::IESConfig();
+        // Enable!
+        UCB0CTLW0 &= ~UCSWRST;
+        
+        // Enable interrupts
+        // User's guide says to enable interrupts after clearing UCSWRST
+        UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0;
+    }
+    
+    // Abort(): causes the current or next Recv()/Send() to bail and return false.
+    // This is intended to be called from the interrupt context when it's known that the master has gone away.
+    static void Abort() {
+        _Ev |= _EventAbort;
     }
     
     template<typename T>
     static bool Recv(T& msg) {
-        _Events ev = _WaitForEvents(_EventStart | _EventInactive);
-        if (ev & _EventInactive) return false;
+        _Events ev = _WaitForEvents(_EventStart | _EventAbort);
+        if (ev & _EventAbort) return false;
         
         uint8_t* b = reinterpret_cast<uint8_t*>(&msg);
         size_t len = 0;
         for (;;) {
-            ev = _WaitForEvents(_EventRx | _EventStop | _EventInactive);
-            if (ev & _EventInactive) return false;
+            ev = _WaitForEvents(_EventRx | _EventStop | _EventAbort);
+            if (ev & _EventAbort) return false;
             if (ev & _EventRx) {
                 // Check if we received too much data
                 if (len >= sizeof(msg)) return false;
@@ -66,20 +90,20 @@ public:
     
     template<typename T>
     static bool Send(const T& msg) {
-        _Events ev = _WaitForEvents(_EventStart | _EventInactive);
-        if (ev & _EventInactive) return false;
+        _Events ev = _WaitForEvents(_EventStart | _EventAbort);
+        if (ev & _EventAbort) return false;
         
         const uint8_t* b = reinterpret_cast<const uint8_t*>(&msg);
         for (size_t i=0; i<sizeof(msg); i++) {
-            ev = _WaitForEvents(_EventTx | _EventStop | _EventInactive);
-            if (ev & _EventInactive) return false;
+            ev = _WaitForEvents(_EventTx | _EventStop | _EventAbort);
+            if (ev & _EventAbort) return false;
             // Ensure that we haven't gotten a STOP before we're done responding
             if (ev & _EventStop) return false;
             UCB0TXBUF_L = b[i];
         }
         
-        ev = _WaitForEvents(_EventStop | _EventInactive);
-        if (ev & _EventInactive) return false;
+        ev = _WaitForEvents(_EventStop | _EventAbort);
+        if (ev & _EventAbort) return false;
         return true;
     }
     
@@ -93,65 +117,14 @@ public:
         }
     }
     
-    static void ISR_Active(uint16_t iv) {
-        const bool active = (Pin::Active::State::IES() == _ActiveInterrupt::IES());
-        _Ev |= (active ? _EventActive : _EventInactive);
-    }
-    
 private:
     using _Events = uint16_t;
     static constexpr _Events _EventNone       = 0;
-    static constexpr _Events _EventActive     = 1<<0;
-    static constexpr _Events _EventInactive   = 1<<1;
-    static constexpr _Events _EventStart      = 1<<2;
-    static constexpr _Events _EventStop       = 1<<3;
-    static constexpr _Events _EventRx         = 1<<4;
-    static constexpr _Events _EventTx         = 1<<5;
-    
-    static void _I2CReset() {
-        // Reset I2C peripheral
-        // This automatically resets our interrupt configuruation (UCB0IFG UCB0IE)
-        UCB0CTLW0 = UCSWRST;
-        // Clear our events (making sure to do this after we reset the I2C peripheral to ensure it stays cleared)
-        _Ev = _EventNone;
-    }
-    
-    static void _I2CInit() {
-        UCB0CTLW0 |=
-            (UCA10&0)       |   // 7bit own addr
-            (UCSLA10&0)     |   // 7bit slave addr
-            (UCMM&0)        |   // single-master
-            (UCMST&0)       |   // slave mode
-            UCMODE_3        |   // i2c mode
-            UCSYNC          |   // (not applicable)
-            UCSSEL_0        |   // (not applicable in slave mode)
-            (UCTXACK&0)     |   // (not applicable during setup)
-            (UCTR&0)        |   // receiver mode
-            (UCTXNACK&0)    |   // (not applicable during setup)
-            (UCTXSTP&0)     |   // (not applicable in slave mode)
-            (UCTXSTT&0)     |   // (not applicable in slave mode)
-            (UCSWRST&0)     ;   // already set UCSWRST bit in _I2CReset()
-        
-        UCB0CTLW1 =
-            (UCETXINT&0)    |   // UCTXIFGx is set after an address match
-            UCCLTO_0        |   // disable clock low time-out counter
-            (UCSTPNACK&0)   |   // (not applicable in slave mode)
-            (UCSWACK&0)     |   // hardware controls address ACK
-            UCASTP_0        |   // no automatic STOP generation
-            UCGLIT_0        ;   // deglitch time = 50 ns
-        
-        UCB0I2COA0 =
-            (UCGCEN&0)      |   // don't respond to general calls
-            UCOAEN          |   // enable this slave (slave 0)
-            T_Addr          ;   // our slave address
-        
-        // Enable!
-        UCB0CTLW0 &= ~UCSWRST;
-        
-        // Enable interrupts
-        // User's guide says to enable interrupts after clearing UCSWRST
-        UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0;
-    }
+    static constexpr _Events _EventAbort      = 1<<0;
+    static constexpr _Events _EventStart      = 1<<1;
+    static constexpr _Events _EventStop       = 1<<2;
+    static constexpr _Events _EventRx         = 1<<3;
+    static constexpr _Events _EventTx         = 1<<4;
     
     static _Events _WaitForEvents(_Events events) {
         Toastbox::IntState ints(false);

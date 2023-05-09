@@ -19,7 +19,7 @@ struct _Pin {
     using MOTION_SIGNAL             = GPIO::PortA::Pin<0xC>;
     using BUTTON_SIGNAL_            = GPIO::PortA::Pin<0xD>;
     using BAT_CHRG_LVL_EN_          = GPIO::PortA::Pin<0xE, GPIO::Option::Output1>;
-    using VDD_B_3V3_STM             = GPIO::PortA::Pin<0xF, GPIO::Option::Input, GPIO::Option::Resistor0>;
+    using VDD_B_3V3_STM             = GPIO::PortA::Pin<0xF>;
     
     // Port B
     using MOTION_EN_                = GPIO::PortB::Pin<0x0>;
@@ -28,10 +28,10 @@ struct _Pin {
 };
 
 class _TaskMain;
+class _TaskI2C;
 class _TaskEvent;
 class _TaskSD;
 class _TaskImg;
-class _TaskI2C;
 class _TaskMotion;
 
 static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz
