@@ -84,20 +84,20 @@ static MSP::State _State = {
     .header = MSP::StateHeader,
 };
 
-static void _HostModeChanged();
 static void _OnChanged();
-static void _TaskEventRunningChanged();
-static void _TaskMotionRunningChanged();
-//static void _MotionEnabledUpdate();
+
+static void _EventsEnabledUpdate();
+static void _EventsEnabledChanged();
+
+static void _MotionEnabledUpdate();
+static void _MotionEnabledChanged();
+
 static void _VDDBEnabledChanged();
 static void _VDDIMGSDEnabledChanged();
 static void _SysTickEnabledChanged();
 
-// _HostMode: events pause/resume (for host mode)
-using _HostMode = T_AssertionCounter<_HostModeChanged>;
-
 // _On: power state assertion (the user-facing power state)
-using _On = T_AssertionCounter<_OnChanged>;
+static T_AssertionCounter<_OnChanged,_EventsEnabledUpdate>::Assertion _On;
 
 // _OnSaved: remembers our power state across crashes and LPM3.5.
 // This is needed because we don't want the device to return to the
@@ -110,9 +110,16 @@ using _On = T_AssertionCounter<_OnChanged>;
 [[gnu::section(".ram_backup_bss._OnSaved")]]
 static inline bool _OnSaved = false;
 
+// _HostMode: events pause/resume (for host mode)
+using _HostMode = T_AssertionCounter<_EventsEnabledUpdate>;
+
+static T_AssertionCounter<_EventsEnabledChanged,_MotionEnabledUpdate>::Assertion _EventsEnabled;
+
 // Motion enable/disable
-using _MotionEnabled = T_AssertionCounter<_TaskMotionRunningChanged>;
-using _MotionEnabledAssertion = T_SuppressibleAssertion<_MotionEnabled>;
+static T_AssertionCounter<_MotionEnabledChanged>::Assertion _MotionEnabled;
+
+using _MotionRequested = T_AssertionCounter<_MotionEnabledUpdate>;
+using _MotionRequestedAssertion = T_SuppressibleAssertion<_MotionRequested>;
 
 // VDDB enable/disable
 using _VDDBEnabled = T_AssertionCounter<_VDDBEnabledChanged>;
@@ -124,7 +131,7 @@ using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
 using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledChanged>;
 
 // _Triggers: stores our current event state
-using _Triggers = T_Triggers<_State, _MotionEnabledAssertion>;
+using _Triggers = T_Triggers<_State, _MotionRequestedAssertion>;
 
 // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
 using _EventTimer = T_Timer<_Scheduler, _RTC, _ACLKFreqHz>;
@@ -271,10 +278,8 @@ static void _LEDFlash(OutputPriority& led) {
 }
 
 static void _OnChanged() {
-    const bool on = _On::Asserted();
-    _OnSaved = on;
-    _LEDFlash(on ? _LEDGreen_ : _LEDRed_);
-    _TaskEventRunningChanged();
+    _OnSaved = _On;
+    _LEDFlash(_On ? _LEDGreen_ : _LEDRed_);
 }
 
 static void _SysTickEnabledChanged() {
@@ -834,17 +839,13 @@ struct _TaskEvent {
     static inline uint8_t Stack[256];
 };
 
-static void _TaskEventRunningChanged() {
-    if (_On::Asserted() && !_HostMode::Asserted()) {
-        _TaskEvent::Start();
-    } else {
-        _TaskEvent::Reset();
-    }
-    _TaskMotionRunningChanged();
+static void _EventsEnabledUpdate() {
+    _EventsEnabled = _On && !_HostMode::Asserted();
 }
 
-static void _HostModeChanged() {
-    _TaskEventRunningChanged();
+static void _EventsEnabledChanged() {
+    if (_EventsEnabled) _TaskEvent::Start();
+    else                _TaskEvent::Reset();
 }
 
 // MARK: - _TaskMotion
@@ -892,12 +893,13 @@ struct _TaskMotion {
     static inline uint8_t Stack[128];
 };
 
-static void _TaskMotionRunningChanged() {
-    if (_Scheduler::Running<_TaskEvent>() && _MotionEnabled::Asserted()) {
-        _TaskMotion::Start();
-    } else {
-        _TaskMotion::Reset();
-    }
+static void _MotionEnabledUpdate() {
+    _MotionEnabled = _EventsEnabled && _MotionRequested::Asserted();
+}
+
+static void _MotionEnabledChanged() {
+    if (_MotionEnabled) _TaskMotion::Start();
+    else                _TaskMotion::Reset();
 }
 
 // MARK: - _TaskI2C
@@ -1284,9 +1286,6 @@ struct _TaskMain {
         // Unconditionally enable SysTick while we're awake
         _SysTick = true;
     }
-    
-    // _On: controls user-visible on/off behavior
-    static inline ::_On::Assertion _On;
     
     // _SysTickEnabled: controls whether the SysTick timer is enabled
     // We disable SysTick when going to sleep if no tasks are waiting for a certain amount of time to pass
