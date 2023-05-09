@@ -171,10 +171,6 @@ public:
         }
     }
     
-    static bool Absolute() {
-        return Time::Absolute(_RTCState.state.time);
-    }
-    
     // NowBase(): returns the 'base' of the current time, to which Tocks() is added to get the current
     // absolute time. This function allows clients to safely get the current time from the RTC
     // interrupt context, since calling Now() is forbidden in the interrupt context.

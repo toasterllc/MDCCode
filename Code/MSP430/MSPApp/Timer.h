@@ -54,7 +54,7 @@ public:
     
     // Wait(): waits until the timer fires
     // Returns whether we actually waited (true), or the timer fired immediately (false)
-    static bool Wait() {
+    static void Wait() {
         // Disable interrupts while we modify our state
         Toastbox::IntState ints(false);
         
@@ -69,7 +69,7 @@ public:
             Time::Ticks32 deltaTicks = _TicksRemaining(T_RTC::Now());
             
             // Short-circuit if we're not waiting
-            if (!deltaTicks) return false;
+            if (!deltaTicks) return;
             
             // Wait for as many full RTC overflow intervals as possible
             _State.rtc.waiting = _RTCMode(deltaTicks);
@@ -111,8 +111,6 @@ public:
                     if (_State.request.reset) continue;
                 }
             }
-            
-            return true;
         }
     }
     

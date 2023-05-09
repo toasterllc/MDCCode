@@ -604,24 +604,22 @@ struct _TaskEvent {
         _State = {};
     }
     
-    static void _TimeTrigger(bool fastForward, _Triggers::TimeTriggerEvent& ev) {
+    static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
         _Triggers::TimeTrigger& trigger = ev.trigger();
         // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
-        if (!fastForward) {
-            CaptureStart(trigger, ev.time);
-        }
+        if (_State.live) CaptureStart(trigger, ev.time);
         // Reschedule TimeTriggerEvent for its next trigger time
         EventInsert(ev, ev.repeat);
     }
     
-    static void _MotionEnable(bool fastForward, _Triggers::MotionEnableEvent& ev) {
+    static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
         _Triggers::MotionTrigger& trigger = ev.trigger();
         
         // Enable motion
         trigger.enabled.set(true);
         
         // Schedule the MotionDisable event, if applicable
-        // This needs to happen before we reschedule `motionEnableEvent` because we need its .time to
+        // This needs to happen before we reschedule `ev` because we need its .time to
         // properly schedule the MotionDisableEvent!
         const uint32_t durationTicks = trigger.base().durationTicks;
         if (durationTicks) {
@@ -632,21 +630,21 @@ struct _TaskEvent {
         EventInsert(ev, ev.repeat);
     }
     
-    static void _MotionDisable(bool fastForward, _Triggers::MotionDisableEvent& ev) {
+    static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.enabled.set(false);
     }
     
-    static void _MotionUnsuppress(bool fastForward, _Triggers::MotionUnsuppressEvent& ev) {
+    static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
         // We should never get a MotionUnsuppressEvent event while in fast-forward mode
-        Assert(!fastForward);
+        Assert(_State.live);
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.enabled.suppress(false);
     }
     
-    static void _CaptureImage(bool fastForward, _Triggers::CaptureImageEvent& ev) {
+    static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
         // We should never get a CaptureImageEvent event while in fast-forward mode
-        Assert(!fastForward);
+        Assert(_State.live);
         
         constexpr MSP::ImgRingBuf& imgRingBuf = ::_State.sd.imgRingBufs[0];
         
@@ -734,6 +732,8 @@ struct _TaskEvent {
     }
     
     static void _EventTimerSchedule() {
+        // Short-circuit if we're fast-forwarding through events
+        if (!_State.live) return;
         _Triggers::Event* ev = _Triggers::EventFront();
         std::optional<Time::Instant> time;
         if (ev) time = ev->time;
@@ -751,15 +751,15 @@ struct _TaskEvent {
         return *ev;
     }
     
-    static void _EventHandle(bool fastForward, _Triggers::Event& ev) {
+    static void _EventHandle(_Triggers::Event& ev) {
         // Handle the event
         using T = _Triggers::Event::Type;
         switch (ev.type) {
-        case T::TimeTrigger:      _TimeTrigger(fastForward,         (_Triggers::TimeTriggerEvent&)ev);      break;
-        case T::MotionEnable:     _MotionEnable(fastForward,        (_Triggers::MotionEnableEvent&)ev);     break;
-        case T::MotionDisable:    _MotionDisable(fastForward,       (_Triggers::MotionDisableEvent&)ev);    break;
-        case T::MotionUnsuppress: _MotionUnsuppress(fastForward,    (_Triggers::MotionUnsuppressEvent&)ev); break;
-        case T::CaptureImage:     _CaptureImage(fastForward,        (_Triggers::CaptureImageEvent&)ev);     break;
+        case T::TimeTrigger:      _TimeTrigger(      (_Triggers::TimeTriggerEvent&)ev      ); break;
+        case T::MotionEnable:     _MotionEnable(     (_Triggers::MotionEnableEvent&)ev     ); break;
+        case T::MotionDisable:    _MotionDisable(    (_Triggers::MotionDisableEvent&)ev    ); break;
+        case T::MotionUnsuppress: _MotionUnsuppress( (_Triggers::MotionUnsuppressEvent&)ev ); break;
+        case T::CaptureImage:     _CaptureImage(     (_Triggers::CaptureImageEvent&)ev     ); break;
         }
     }
     
@@ -779,24 +779,28 @@ struct _TaskEvent {
             for (;;) {
                 _Triggers::Event* ev = _Triggers::EventFront();
                 if (!ev || (ev->time > startTime)) break;
-                _EventPop();
-                _EventHandle(true, *ev);
+                _EventHandle(_EventPop());
             }
         }
+        
+        _State.live = true;
         
         // Schedule _EventTimer for the first event
         _EventTimerSchedule();
         
         for (;;) {
             // Wait for _EventTimer to fire
-            const bool waited = _EventTimer::Wait();
-            _Triggers::Event& ev = _EventPop();
-            _EventHandle(false, ev);
+            _EventTimer::Wait();
+            _EventHandle(_EventPop());
         }
     }
     
     static inline struct __State {
         __State() {} // Compiler bug workaround
+        // live=false while initializing, where we execute events in 'fast-forward' mode,
+        // solely to arrive at the correct state for the current time.
+        // live=true once we're done initializing and executing events normally.
+        bool live = false;
         // power / vddb / vddImgSd: our power assertions
         // These need to be ivars because _TaskEvent can be reset at any time via
         // our Reset() function, so if the power assertion lived on the stack and
