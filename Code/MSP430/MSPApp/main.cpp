@@ -1215,6 +1215,7 @@ struct _TaskMain {
                 }
                 
                 case _Button::Event::Hold:
+                    // Toggle our user-visible power state
                     _On = !_On;
                     break;
                 }
