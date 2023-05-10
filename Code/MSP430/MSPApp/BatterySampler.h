@@ -125,11 +125,12 @@ public:
         return _BatteryLevelForMillivolts(mv);
     }
     
-    static void ISR(uint16_t iv) {
+    static bool ISR(uint16_t iv) {
         switch (iv) {
         case ADCIV_ADCIFG:  _SampleHandle(ADCMEM0); break;
         default:            Assert(false);
         }
+        return _Sample.done;
     }
     
 private:

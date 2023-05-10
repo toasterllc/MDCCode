@@ -34,6 +34,8 @@
 #include "Charging.h"
 #include "System.h"
 #include "Property.h"
+#include "Time.h"
+#include "TimeConstants.h"
 using namespace GPIO;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
@@ -128,18 +130,15 @@ using _Triggers = T_Triggers<_State, _MotionRequestedAssertion>;
 using _EventTimer = T_Timer<_Scheduler, _RTC, _ACLKFreqHz>;
 
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
-    static_assert(Time::TicksFreq::den == 1); // Check assumption that TicksFreq is an integer
+    static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
     
-    static constexpr Time::Ticks32 Day         = (Time::Ticks32)     24*60*60*Time::TicksFreq::num;
-    static constexpr Time::Ticks32 Year        = (Time::Ticks32) 365*24*60*60*Time::TicksFreq::num;
-    static constexpr Time::Ticks32 YearPlusDay = (Time::Ticks32) 366*24*60*60*Time::TicksFreq::num;
     switch (x.type) {
     case MSP::Repeat::Type::Never:
         return 0;
     
     case MSP::Repeat::Type::Daily:
         Assert(x.Daily.interval);
-        return Day*x.Daily.interval;
+        return Time::Day*x.Daily.interval;
     
     case MSP::Repeat::Type::Weekly: {
         #warning TODO: verify this works properly
@@ -151,7 +150,7 @@ static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
             x.Weekly.days >>= 1;
             count++;
         } while (!(x.Weekly.days & 1));
-        return count*Day;
+        return count*Time::Day;
     }
     
     case MSP::Repeat::Type::Yearly:
@@ -160,7 +159,7 @@ static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
         // We appropriately handle leap years by referencing `leapPhase`
         if (x.Yearly.leapPhase) {
             x.Yearly.leapPhase--;
-            return Year;
+            return Time::Year;
         } else {
             x.Yearly.leapPhase = 3;
             return YearPlusDay;
@@ -281,6 +280,69 @@ static void _ICEInit() {
     }
     Assert(ok);
 }
+
+// MARK: - _TaskBattery
+
+struct _TaskBattery {
+    static void Run() {
+        // Disable interrupts so that ISRRTC() can't interrupt us setting our state
+        Toastbox::IntState ints(false);
+        
+        // Init BatterySampler
+        _BatterySampler::Init();
+        
+        for (;;) {
+            // Wait until something triggers us to update
+            _Scheduler::Wait([] { return _Update; });
+            
+            // Update our battery level
+            _BatteryLevel = _BatterySampler::Sample();
+            
+            // Reset our counters
+            _RTCCounter = SampleIntervalRTC;
+            _CaptureCounter = SampleIntervalCapture;
+            _Update = false;
+        }
+    }
+    
+    static MSP::BatteryLevel BatteryLevel() {
+        return _BatteryLevel;
+    }
+    
+    static void Update() {
+        _Update = true;
+    }
+    
+    static void Wait() {
+        _Scheduler::Wait([] { return !_Update; });
+    }
+    
+    static void CaptureNotify() {
+        _CaptureCounter--;
+        _Update |= !_CaptureCounter;
+    }
+    
+    static bool ISRRTC() {
+        _RTCCounter--;
+        _Update |= !_RTCCounter;
+        return _Update;
+    }
+    
+    static constexpr uint16_t SampleIntervalRTCDays = 4;
+    static constexpr uint16_t SampleIntervalRTC     = (SampleIntervalRTCDays * Time::Day) / _RTC::InterruptIntervalTicks;
+    static constexpr uint16_t SampleIntervalCapture = 512;
+    
+    static_assert(SampleIntervalRTC == 168); // Debug
+    
+    static inline uint16_t _RTCCounter = 0;
+    static inline uint16_t _CaptureCounter = 0;
+    static inline MSP::BatteryLevel _BatteryLevel = MSP::BatteryLevelInvalid;
+    static inline bool _Update = false;
+    
+    // Task stack
+    SchedulerStack(".stack._TaskBattery")
+    static inline uint8_t Stack[128];
+};
 
 // MARK: - _TaskSD
 
@@ -546,6 +608,7 @@ struct _TaskImg {
                 .analogGain     = 0,
                 .id             = 0,
                 .timestamp      = 0,
+                .batteryLevel   = _TaskBattery::BatteryLevel(),
             };
             
             header.coarseIntTime = _State.autoExp.integrationTime();
@@ -645,6 +708,12 @@ struct _TaskEvent {
         Assert(_State.live);
         
         constexpr MSP::ImgRingBuf& imgRingBuf = ::_State.sd.imgRingBufs[0];
+        
+        // Notify _TaskBattery that we're performing a capture, and wait for it to sample the battery if it's underway.
+        // We do this here because we want the battery sampling to complete before we turn on VDDB / VDDIMGSD and start
+        // capturing an image, so that we sample the voltage with minimal noise due to activity.
+        _TaskBattery::CaptureNotify();
+        _TaskBattery::Wait();
         
         const bool green = ev.capture->leds & MSP::LEDs_::Green;
         const bool red = ev.capture->leds & MSP::LEDs_::Red;
@@ -971,9 +1040,11 @@ struct _TaskI2C {
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::BatteryLevelGet: {
+            _TaskBattery::Update();
+            _TaskBattery::Wait();
             return MSP::Resp{
                 .ok = true,
-                .arg = { .BatteryLevelGet = { .level = _BatterySampler::Sample() } },
+                .arg = { .BatteryLevelGet = { .level = _TaskBattery::BatteryLevel() } },
             };
         }}
         
@@ -1090,9 +1161,6 @@ struct _TaskMain {
         //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
         _RTC::Init();
         
-        // Init BatterySampler
-        _BatterySampler::Init();
-        
         // Init LEDs by setting their default-priority / 'backstop' values to off.
         // This is necessary so that relinquishing the LEDs from I2C task causes
         // them to turn off. If we didn't have a backstop value, the LEDs would
@@ -1101,7 +1169,11 @@ struct _TaskMain {
         _LEDRed_.set(_LEDPriority::Default, 1);
         
         // Start tasks
-        _Scheduler::Start<_TaskI2C>();
+        _Scheduler::Start<_TaskI2C, _TaskBattery>();
+        
+        // Update our battery status when restarting
+        _TaskBattery::Update();
+        _TaskBattery::Wait();
         
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
@@ -1302,15 +1374,19 @@ static void _MotionEnabledChanged() {
 
 [[gnu::interrupt]]
 void _ISR_RTC() {
+    // Let _EventTimer know we got an RTC interrupt
+    bool wake = false;
+    
     // Pet the watchdog first
     _Watchdog::Init();
     
     // Let _RTC know that we got an RTC interrupt
     _RTC::ISR(RTCIV);
     
-    // Let _EventTimer know we got an RTC interrupt
-    const bool wake = _EventTimer::ISRRTC();
-    // Wake if the timer fired
+    wake |= _EventTimer::ISRRTC();
+    wake |= _TaskBattery::ISRRTC();
+    
+    // Wake if directed
     if (wake) _Clock::Wake();
 }
 
@@ -1383,9 +1459,9 @@ void _ISR_USCI_B0() {
 
 [[gnu::interrupt]]
 void _ISR_ADC() {
-    _BatterySampler::ISR(ADCIV);
-    // Wake ourself
-    _Clock::Wake();
+    const bool wake = _BatterySampler::ISR(ADCIV);
+    // Wake if directed
+    if (wake) _Clock::Wake();
 }
 
 [[noreturn]]

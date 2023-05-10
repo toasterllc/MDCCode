@@ -29,7 +29,7 @@ struct [[gnu::packed]] Header {
     Id id;                  // 0xA7A6A5A4A3A2A1A0
     uint64_t timestamp;     // 0xB7B6B5B4B3B2B1B0
     
-    uint16_t batteryLevel;  // 0x4243
+    uint16_t batteryLevel;  // 0x4342
     
     uint8_t _pad[2];
 };

@@ -63,6 +63,7 @@ using _Scheduler = Toastbox::Scheduler<
     // T_Tasks: list of tasks
     _TaskMain,
     _TaskI2C,
+    _TaskBattery,
     _TaskEvent,
     _TaskSD,
     _TaskImg,
