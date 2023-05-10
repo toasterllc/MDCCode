@@ -284,25 +284,20 @@ static void _ICEInit() {
 // MARK: - _TaskBattery
 
 struct _TaskBattery {
+    static void Init() {
+        _BatterySampler::Init();
+    }
+    
     static void Run() {
         // Disable interrupts so that ISRRTC() can't interrupt us setting our state
         Toastbox::IntState ints(false);
         
-        // Init BatterySampler
-        _BatterySampler::Init();
+        // Update our battery level
+        _BatteryLevel = _BatterySampler::Sample();
         
-        for (;;) {
-            // Wait until something triggers us to update
-            _Scheduler::Wait([] { return _Update; });
-            
-            // Update our battery level
-            _BatteryLevel = _BatterySampler::Sample();
-            
-            // Reset our counters
-            _RTCCounter = SampleIntervalRTC;
-            _CaptureCounter = SampleIntervalCapture;
-            _Update = false;
-        }
+        // Reset our counters
+        _RTCCounter = SampleIntervalRTC;
+        _CaptureCounter = SampleIntervalCapture;
     }
     
     static MSP::BatteryLevel BatteryLevel() {
@@ -310,22 +305,26 @@ struct _TaskBattery {
     }
     
     static void Update() {
-        _Update = true;
+        if (_Scheduler::Running<_TaskBattery>()) return;
+        _Scheduler::Start<_TaskBattery>();
     }
     
     static void Wait() {
-        _Scheduler::Wait([] { return !_Update; });
+        _Scheduler::Wait<_TaskBattery>();
     }
     
     static void CaptureNotify() {
         _CaptureCounter--;
-        _Update |= !_CaptureCounter;
+        if (!_CaptureCounter) Update();
     }
     
     static bool ISRRTC() {
         _RTCCounter--;
-        _Update |= !_RTCCounter;
-        return _Update;
+        if (!_RTCCounter) {
+            Update();
+            return true;
+        }
+        return false;
     }
     
     static constexpr uint16_t SampleIntervalRTCDays = 4;
@@ -337,7 +336,6 @@ struct _TaskBattery {
     static inline uint16_t _RTCCounter = 0;
     static inline uint16_t _CaptureCounter = 0;
     static inline MSP::BatteryLevel _BatteryLevel = MSP::BatteryLevelInvalid;
-    static inline bool _Update = false;
     
     // Task stack
     SchedulerStack(".stack._TaskBattery")
@@ -1168,10 +1166,13 @@ struct _TaskMain {
         _LEDGreen_.set(_LEDPriority::Default, 1);
         _LEDRed_.set(_LEDPriority::Default, 1);
         
-        // Start tasks
-        _Scheduler::Start<_TaskI2C, _TaskBattery>();
+        // Init _TaskBattery
+        _TaskBattery::Init();
         
-        // Update our battery status when restarting
+        // Start tasks
+        _Scheduler::Start<_TaskI2C>();
+        
+        // Perform initial battery sampling
         _TaskBattery::Update();
         _TaskBattery::Wait();
         
