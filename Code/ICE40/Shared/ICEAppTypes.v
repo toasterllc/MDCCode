@@ -137,7 +137,8 @@
     8'h22, 8'h22,                                               \ /* analog gain         */
     8'hA0, 8'hA1, 8'hA2, 8'hA3, 8'hA4, 8'hA5, 8'hA6, 8'hA7,     \ /* id                  */
     8'hB0, 8'hB1, 8'hB2, 8'hB3, 8'hB4, 8'hB5, 8'hB6, 8'hB7,     \ /* timestamp           */
-    8'h00, 8'h00, 8'h00, 8'h00                                  \ /* padding             */
+    8'h42, 8'h43,                                               \ /* battery level       */
+    8'h00, 8'h00                                                \ /* padding             */
 }
 `endif
 
