@@ -252,7 +252,7 @@ struct [[gnu::packed]] BatteryStatus {
     };
     
     ChargeStatus chargeStatus = ChargeStatus::Invalid;
-    MSP::BatteryChargeLevel level = 0;
+    MSP::BatteryLevel level = 0;
 };
 
 } // namespace STM

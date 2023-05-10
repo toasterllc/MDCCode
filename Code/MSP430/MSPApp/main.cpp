@@ -970,10 +970,10 @@ struct _TaskI2C {
             _HostModeState.vddImgSd = cmd.arg.VDDIMGSDSet.en;
             return MSP::Resp{ .ok = true };
         
-        case Cmd::Op::BatteryChargeLevelGet: {
+        case Cmd::Op::BatteryLevelGet: {
             return MSP::Resp{
                 .ok = true,
-                .arg = { .BatteryChargeLevelGet = { .level = _BatterySampler::Sample() } },
+                .arg = { .BatteryLevelGet = { .level = _BatterySampler::Sample() } },
             };
         }}
         
