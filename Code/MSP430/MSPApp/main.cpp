@@ -984,20 +984,6 @@ struct _TaskI2C {
         return _HostModeState.en;
     }
     
-//    static void _HostModeSet(bool x) {
-//        // Short-circuit if nothing changed
-//        if (x == _HostModeState.en) return;
-//        if (x) {
-//            _HostModeState.en = true;
-//        } else {
-//            // Clear entire _HostModeState when exiting host mode
-//            _HostModeState = {};
-//            // Turn ourself on when exiting host mode.
-//            // This is a convenience to prevent the user from forgetting to turn the device on after configuring it.
-//            // Note that merely plugging the device in won't 
-//        }
-//    }
-    
     static inline struct {
         T_Property<bool,_EventsEnabledUpdate> en;
         _VDDIMGSDEnabled::Assertion vddImgSd;
