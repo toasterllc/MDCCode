@@ -81,9 +81,8 @@ private:
     using _OSC_IN   = GPIO::PortH::Pin<0>;
     using _OSC_OUT  = GPIO::PortH::Pin<1>;
     
-    using _BAT_CHRG_STAT          = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor1, GPIO::Option::IntRiseFall>;
-    using _BAT_CHRG_STAT_PULLDOWN = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor0, GPIO::Option::IntRiseFall>;
-    using _BAT_CHRG_STAT_INT      = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor1, GPIO::Option::IntRiseFall, GPIO::Option::IntEn>;
+    using _BAT_CHRG_EN_  = GPIO::PortB::Pin<10, GPIO::Option::OpenDrain, GPIO::Option::Output1>;
+    using _BAT_CHRG_STAT = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor0>;
     
     [[noreturn]]
     static void _SchedulerStackOverflow() {
@@ -97,10 +96,11 @@ private:
     struct _TaskCmdRecv;
     struct _TaskCmdHandle;
     struct _TaskMSPComms;
+    struct _TaskBatteryStatus;
     
 public:
     // LEDs
-    using LED0 = GPIO::PortB::Pin<10, GPIO::Option::Output0>;
+//    using LED0 = GPIO::PortB::Pin<10, GPIO::Option::Output0>;
     using LED1 = GPIO::PortB::Pin<12, GPIO::Option::Output0>;
     using LED2 = GPIO::PortB::Pin<11, GPIO::Option::Output0>;
     using LED3 = GPIO::PortB::Pin<13, GPIO::Option::Output0>;
@@ -119,6 +119,7 @@ public:
         _TaskCmdRecv,                               // T_Tasks: list of tasks
         _TaskCmdHandle,
         _TaskMSPComms,
+        _TaskBatteryStatus,
         T_Tasks...
     >;
     
@@ -153,7 +154,7 @@ public:
         Toastbox::IntState ints(false);
         
         for (bool x=true;; x=!x) {
-            LED0::Write(x);
+//            LED0::Write(x);
             LED1::Write(x);
             LED2::Write(x);
             LED3::Write(x);
@@ -167,12 +168,6 @@ public:
     
     static void ISR_I2CError() {
         _I2C::ISR_Error();
-    }
-    
-    static void ISR_ExtInt_15_10() {
-        if (_BAT_CHRG_STAT::State::IntClear()) {
-            _TaskMSPComms::_BatteryChargeStatusChanged();
-        }
     }
     
 private:
@@ -246,30 +241,21 @@ private:
         static inline bool Lock = false;
         
         static void Run() {
-            using Deadline = typename Scheduler::Deadline;
-            constexpr uint16_t BatteryStatusUpdateIntervalMs = 2000;
-            
-            Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime();
             for (;;) {
                 // Wait until we get a command or for the deadline to pass
-                bool ok = Scheduler::WaitDeadline(batteryStatusUpdateDeadline, [] { return _Cmd.state==_State::Cmd; });
-                if (!ok) {
-                    // Deadline passed; update battery status
-                    _BatteryStatusUpdate();
-                    // Update our deadline for the next battery status update
-                    batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::template Ms<BatteryStatusUpdateIntervalMs>;
-                    continue;
-                }
-                
+                Scheduler::Wait([] { return _Cmd.state==_State::Cmd; });
                 // Send command and return response to the caller
                 _Cmd.resp = _Send(_Cmd.cmd);
                 // Update our state
                 _Cmd.state = _State::Resp;
+                // Give Send() an oppurtunity to consume the response.
+                // We reset our state to Idle, instead to have the task calling Send() do it after it
+                // consumes the response, so that we can recover if the task calling Send() is stopped
+                // and therefore will never consume the response.
+                Scheduler::Yield();
+                // Reset our state
+                _Cmd.state = _State::Idle;
             }
-        }
-        
-        static void Reset() {
-            _Cmd.state = _State::Idle;
         }
         
         static std::optional<MSP::Resp> Send(const MSP::Cmd& cmd) {
@@ -280,13 +266,7 @@ private:
             _Cmd.state = _State::Cmd;
             // Wait until we get a response
             Scheduler::Wait([] { return _Cmd.state==_State::Resp; });
-            // Reset our state
-            _Cmd.state = _State::Idle;
             return _Cmd.resp;
-        }
-        
-        static const STM::BatteryStatus& BatteryStatus() {
-            return _BatteryStatus;
         }
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
@@ -304,99 +284,6 @@ private:
             Assert(false);
         }
         
-        static void _BatteryStatusUpdate() {
-            _BatteryStatus = _BatteryStatusGet();
-            
-            // Bail if I2C comms failed when getting the battery charge level, since
-            // I2C comms when setting the LEDs will fail too.
-            if (_BatteryStatus.level == MSP::BatteryChargeLevelInvalid) return;
-            
-            // Update LEDs
-            const bool red = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway);
-            const bool green = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Complete);
-            const MSP::Cmd cmd = {
-                .op = MSP::Cmd::Op::LEDSet,
-                .arg = { .LEDSet = { .red = red, .green = green }, },
-            };
-            
-            _Send(cmd);
-        }
-        
-        static STM::BatteryStatus _BatteryStatusGet() {
-            STM::BatteryStatus status = {
-                .chargeStatus = _ChargeStatusGet(),
-                .level = MSP::BatteryChargeLevelInvalid,
-            };
-            
-            // Only sample the battery voltage if charging is underway
-            // The reason for this is that asserting BAT_CHRG_LVL_EN causes a current draw which
-            // fools the battery charger IC's (MCP73831T) battery-detection circuit into thinking
-            // a battery is present even if one isn't. So we only want to sample the battery
-            // voltage if we know a battery is being charged (and therefore a battery is present),
-            // to ensure that we can detect the 'Shutdown' battery state.
-            #warning TODO: uncomment `status.chargeStatus` check below
-//            if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
-                const auto resp = _Send({ .op = MSP::Cmd::Op::BatteryChargeLevelGet });
-                if (resp && resp->ok) {
-                    status.level = resp->arg.BatteryChargeLevelGet.level;
-                }
-//            }
-            
-            return status;
-        }
-        
-        static bool _ChargeStatusOscillating() {
-            constexpr uint32_t OscillationThreshold = 2; // Number of transitions to consider the signal to be oscillating
-            
-            // Start counting _BAT_CHRG_STAT transitions
-            {
-                Toastbox::IntState ints(false);
-                _BAT_CHRG_STAT_INT::Init();
-                _BatteryChargeStatusTransitionCount = 0;
-            }
-            
-            // Wait 10ms while we count _BAT_CHRG_STAT transitions
-            Scheduler::Sleep(Scheduler::template Ms<10>);
-            
-            // Stop counting _BAT_CHRG_STAT transitions
-            {
-                Toastbox::IntState ints(false);
-                _BAT_CHRG_STAT::Init<_BAT_CHRG_STAT_INT>();
-            }
-            
-            return _BatteryChargeStatusTransitionCount > OscillationThreshold;
-        }
-        
-        static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
-            const bool oscillating = _ChargeStatusOscillating();
-            if (oscillating) return STM::BatteryStatus::ChargeStatus::Shutdown;
-            
-            _BAT_CHRG_STAT_PULLDOWN::Init();
-            Scheduler::Sleep(Scheduler::template Ms<1>);
-            const bool a = _BAT_CHRG_STAT::Read();
-            
-            _BAT_CHRG_STAT::Init<_BAT_CHRG_STAT_PULLDOWN>();
-            Scheduler::Sleep(Scheduler::template Ms<1>);
-            const bool b = _BAT_CHRG_STAT::Read();
-            
-            if (a != b) {
-                // _BAT_CHRG_STAT == high-z
-                return STM::BatteryStatus::ChargeStatus::Shutdown;
-            } else {
-                if (!a) {
-                    // _BAT_CHRG_STAT == low
-                    return STM::BatteryStatus::ChargeStatus::Underway;
-                } else {
-                    // _BAT_CHRG_STAT == high
-                    return STM::BatteryStatus::ChargeStatus::Complete;
-                }
-            }
-        }
-        
-        static void _BatteryChargeStatusChanged() {
-            _BatteryChargeStatusTransitionCount++;
-        }
-        
         enum class _State {
             Idle,
             Cmd,
@@ -409,19 +296,79 @@ private:
             std::optional<MSP::Resp> resp;
         } _Cmd;
         
-        static inline STM::BatteryStatus _BatteryStatus = {};
-        
-        static inline std::atomic<uint32_t> _BatteryChargeStatusTransitionCount;
-        
         // Task stack
         [[gnu::section(".stack._TaskMSPComms")]]
         alignas(void*)
         static inline uint8_t Stack[512];
     };
     
+    struct _TaskBatteryStatus {
+        static void Run() {
+            constexpr auto UpdateInterval = Scheduler::template Ms<2000>;
+            
+            // Wait until we detect a battery
+            for (;;) {
+                _BatteryStatus = {
+                    .chargeStatus = STM::BatteryStatus::ChargeStatus::Shutdown,
+                    .level = _BatteryLevelGet(),
+                };
+                
+                if (_BatteryStatus.level != MSP::BatteryLevelInvalid) break;
+                Scheduler::Sleep(UpdateInterval);
+            }
+            
+            // Turn on battery charger
+            _BAT_CHRG_EN_::Write(0);
+            Scheduler::Sleep(Scheduler::template Ms<10>);
+            
+            for (;;) {
+                _BatteryStatus = {
+                    .chargeStatus = _ChargeStatusGet(),
+                    .level = _BatteryLevelGet(),
+                };
+                
+                _LEDsUpdate(_BatteryStatus.chargeStatus);
+                Scheduler::Sleep(UpdateInterval);
+            }
+        }
+        
+        static const STM::BatteryStatus& BatteryStatus() {
+            return _BatteryStatus;
+        }
+        
+        static void _LEDsUpdate(STM::BatteryStatus::ChargeStatus status) {
+            // Update LEDs
+            const bool red = (status == STM::BatteryStatus::ChargeStatus::Underway);
+            const bool green = (status == STM::BatteryStatus::ChargeStatus::Complete);
+            const MSP::Cmd cmd = {
+                .op = MSP::Cmd::Op::LEDSet,
+                .arg = { .LEDSet = { .red = red, .green = green }, },
+            };
+            
+            MSPSend(cmd);
+        }
+        
+        static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
+            using X = STM::BatteryStatus::ChargeStatus;
+            return (_BAT_CHRG_STAT::Read() ? X::Complete : X::Underway);
+        }
+        
+        static MSP::BatteryLevel _BatteryLevelGet() {
+            const auto resp = MSPSend({ .op = MSP::Cmd::Op::BatteryLevelGet });
+            return (resp && resp->ok ? resp->arg.BatteryLevelGet.level : MSP::BatteryLevelInvalid);
+        }
+        
+        static inline STM::BatteryStatus _BatteryStatus = {};
+        
+        // Task stack
+        [[gnu::section(".stack._TaskBatteryStatus")]]
+        alignas(void*)
+        static inline uint8_t Stack[256];
+    };
+    
     static void _Init() {
         GPIO::Init<
-            LED0,
+//            LED0,
             LED1,
             LED2,
             LED3,
@@ -435,6 +382,7 @@ private:
             _OSC_IN,
             _OSC_OUT,
             
+            _BAT_CHRG_EN_,
             _BAT_CHRG_STAT,
             
             typename _I2C::Pin::SCL,
@@ -463,13 +411,8 @@ private:
         // Configure USB
         USB::Init();
         
-        // Enable interrupts for BAT_CHRG_STAT
-        constexpr uint32_t InterruptPriority = 2; // Should be >0 so that SysTick can still preempt
-        HAL_NVIC_SetPriority(EXTI15_10_IRQn, InterruptPriority, 0);
-        HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-        
         // Start _TaskMSPComms task
-        Scheduler::template Start<_TaskMSPComms>();
+        Scheduler::template Start<_TaskMSPComms, _TaskBatteryStatus>();
     }
     
     static void _ClockInit() {
@@ -524,8 +467,6 @@ private:
     }
     
     static void _Reset(const STM::Cmd& cmd) {
-        // Reset tasks
-        _TaskMSPComms::Reset();
         // Reset USB endpoints
         USB::EndpointsReset();
         // Call supplied T_Reset function
@@ -554,7 +495,7 @@ private:
         USBAcceptCommand(true);
         
         alignas(void*) // Aligned to send via USB
-        const STM::BatteryStatus status = _TaskMSPComms::BatteryStatus();
+        const STM::BatteryStatus status = _TaskBatteryStatus::BatteryStatus();
         USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
     }
     
@@ -569,7 +510,7 @@ private:
     
     static void _LEDSet(const STM::Cmd& cmd) {
         switch (cmd.arg.LEDSet.idx) {
-        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
+//        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
         case 1:  USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
         case 2:  USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
         case 3:  USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;

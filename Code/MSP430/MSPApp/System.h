@@ -27,12 +27,13 @@ struct _Pin {
     using _UNUSED0                  = GPIO::PortB::Pin<0x2>;
 };
 
-class _TaskMain;
+class _TaskPower;
 class _TaskI2C;
+class _TaskButton;
+class _TaskMotion;
 class _TaskEvent;
 class _TaskSD;
 class _TaskImg;
-class _TaskMotion;
 
 static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz
 static constexpr uint32_t _ACLKFreqHz       = _XT1FreqHz;   // 32.768 kHz
@@ -60,10 +61,11 @@ using _Scheduler = Toastbox::Scheduler<
     nullptr,                                    // T_StackInterrupt: unused
     
     // T_Tasks: list of tasks
-    _TaskMain,
+    _TaskPower,
+    _TaskI2C,
+    _TaskButton,
+    _TaskMotion,
     _TaskEvent,
     _TaskSD,
-    _TaskImg,
-    _TaskI2C,
-    _TaskMotion
+    _TaskImg
 >;

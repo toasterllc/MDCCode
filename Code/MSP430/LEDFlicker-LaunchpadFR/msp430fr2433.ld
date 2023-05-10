@@ -1,0 +1,1 @@
+../MSPApp/msp430fr2433.ld

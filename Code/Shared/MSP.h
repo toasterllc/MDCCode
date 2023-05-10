@@ -9,10 +9,10 @@
 
 namespace MSP {
 
-using BatteryChargeLevel = uint16_t;
-constexpr BatteryChargeLevel BatteryChargeLevelInvalid  = 0x0000;
-constexpr BatteryChargeLevel BatteryChargeLevelMin      = 0x0001;
-constexpr BatteryChargeLevel BatteryChargeLevelMax      = 0xFFFF;
+using BatteryLevel = uint16_t;
+constexpr BatteryLevel BatteryLevelInvalid  = 0x0000;
+constexpr BatteryLevel BatteryLevelMin      = 0x0001;
+constexpr BatteryLevel BatteryLevelMax      = 0xFFFF;
 
 constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
     return base - ((idx+1) * ImgSD::Full::ImageBlockCount);
@@ -311,7 +311,7 @@ struct [[gnu::packed]] Cmd {
         TimeAdjust,
         HostModeSet,
         VDDIMGSDSet,
-        BatteryChargeLevelGet,
+        BatteryLevelGet,
     };
     
     Op op;
@@ -369,8 +369,8 @@ struct [[gnu::packed]] Resp {
         } TimeGet;
         
         struct [[gnu::packed]] {
-            BatteryChargeLevel level;
-        } BatteryChargeLevelGet;
+            BatteryLevel level;
+        } BatteryLevelGet;
         
         uint8_t _[ArgLen]; // Set size of argument
     } arg;

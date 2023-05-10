@@ -256,17 +256,18 @@ static void StatusGet(const Args& args, MDCUSBDevice& device) {
 static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus status) {
     using namespace STM;
     switch (status) {
-    case BatteryStatus::ChargeStatus::Shutdown: return "Shutdown";
-    case BatteryStatus::ChargeStatus::Underway: return "Underway";
-    case BatteryStatus::ChargeStatus::Complete: return "Complete";
-    default:                                    return "<Invalid>";
+    case BatteryStatus::ChargeStatus::Invalid:  return "invalid";
+    case BatteryStatus::ChargeStatus::Shutdown: return "shutdown";
+    case BatteryStatus::ChargeStatus::Underway: return "underway";
+    case BatteryStatus::ChargeStatus::Complete: return "complete";
     }
+    abort();
 }
 
-static std::string _StringForChargeLevel(const MSP::BatteryChargeLevel level) {
+static std::string _StringForChargeLevel(const MSP::BatteryLevel level) {
     using namespace STM;
-    if (level == MSP::BatteryChargeLevelInvalid) return "invalid";
-    const uint32_t percent = (((uint32_t)level-MSP::BatteryChargeLevelMin)*100) / (MSP::BatteryChargeLevelMax-MSP::BatteryChargeLevelMin);
+    if (level == MSP::BatteryLevelInvalid) return "invalid";
+    const uint32_t percent = (((uint32_t)level-MSP::BatteryLevelMin)*100) / (MSP::BatteryLevelMax-MSP::BatteryLevelMin);
     return std::to_string(percent) + "%";
 }
 
@@ -276,7 +277,7 @@ static void BatteryStatusGet(const Args& args, MDCUSBDevice& device) {
     
     printf("Battery status:\n");
     printf("  Charge status: %s\n", _StringForChargeStatus(status.chargeStatus));
-    printf("  Charge level:  %s\n", _StringForChargeLevel(status.level).c_str());
+    printf("  Charge level:  %s (0x%04jx)\n", _StringForChargeLevel(status.level).c_str(), (uintmax_t)status.level);
     printf("\n");
 }
 

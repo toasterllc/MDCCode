@@ -20,23 +20,23 @@ public:
     // We choose the maximum value of 64 to stretch the timer to the
     // longest duration possible in order minimize our number of wakes,
     // to save power.
-    static constexpr uint32_t TimerACLKFreqDivider = 64;
+    static constexpr uint32_t _ACLKFreqDivider = 64;
     
-    using Tocks16 = uint16_t;
-    using Tocks32 = uint32_t;
+    using _Tocks16 = uint16_t;
+    using _Tocks32 = uint32_t;
     
-    using TocksFreq = std::ratio<T_ACLKFreqHz, TimerACLKFreqDivider>;
-    static_assert(TocksFreq::num == 512); // Debug
-    static_assert(TocksFreq::den == 1); // Verify TocksFreq is an integer
+    using _TocksFreq = std::ratio<T_ACLKFreqHz, _ACLKFreqDivider>;
+    static_assert(_TocksFreq::num == 512); // Debug
+    static_assert(_TocksFreq::den == 1); // Verify _TocksFreq is an integer
     
-    using TicksPerTock = std::ratio_divide<Time::TicksFreq, TocksFreq>;
-    static_assert(TicksPerTock::num == 1); // Debug
-    static_assert(TicksPerTock::den == 32); // Debug
+    using _TicksPerTock = std::ratio_divide<Time::TicksFreq, _TocksFreq>;
+    static_assert(_TicksPerTock::num == 1); // Debug
+    static_assert(_TicksPerTock::den == 32); // Debug
     
-    static constexpr Tocks32 TimerIntervalTocks = 0x10000; // Use max interval possible (0xFFFF+1)
-    using TimerIntervalTicks = std::ratio_multiply<std::ratio<TimerIntervalTocks>, TicksPerTock>;
-    static_assert(TimerIntervalTicks::num == 2048); // Debug
-    static_assert(TimerIntervalTicks::den == 1); // Verify that TimerIntervalTicks is an integer
+    static constexpr _Tocks32 _TimerIntervalTocks = 0x10000; // Use max interval possible (0xFFFF+1)
+    using _TimerIntervalTicks = std::ratio_multiply<std::ratio<_TimerIntervalTocks>, _TicksPerTock>;
+    static_assert(_TimerIntervalTicks::num == 2048); // Debug
+    static_assert(_TimerIntervalTicks::den == 1); // Verify that _TimerIntervalTicks is an integer
     
     // Schedule(): sets the time that the timer should fire
     static void Schedule(const std::optional<Time::Instant>& time) {
@@ -86,26 +86,26 @@ public:
                 constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
                 // Ensure that casting deltaTicks to Time::Ticks16 is safe
                 static_assert(std::in_range<Time::Ticks16>(DeltaTicksMax));
-                // Ensure that casting TimerIntervalTicks::num to Time::Ticks16 is safe
-                static_assert(std::in_range<Time::Ticks16>(TimerIntervalTicks::num));
-                const uint16_t intervalCount = (Time::Ticks16)deltaTicks / (Time::Ticks16)TimerIntervalTicks::num;
+                // Ensure that casting _TimerIntervalTicks::num to Time::Ticks16 is safe
+                static_assert(std::in_range<Time::Ticks16>(_TimerIntervalTicks::num));
+                const uint16_t intervalCount = (Time::Ticks16)deltaTicks / (Time::Ticks16)_TimerIntervalTicks::num;
                 if (intervalCount) {
-                    _TimerWait(_CCRForTocks(TimerIntervalTocks), intervalCount);
+                    _TimerWait(_CCRForTocks(_TimerIntervalTocks), intervalCount);
                     if (_State.request.reset) continue;
                 }
             }
             
             // Wait for remaining time less than a full timer interval
             {
-                const Time::Ticks16 remainderTicks = (Time::Ticks16)deltaTicks % (Time::Ticks16)TimerIntervalTicks::num;
+                const Time::Ticks16 remainderTicks = (Time::Ticks16)deltaTicks % (Time::Ticks16)_TimerIntervalTicks::num;
                 // RemainderTicksMax: max value of remainderTicks at this point
-                constexpr auto RemainderTicksMax = TimerIntervalTicks::num-1;
-                // Ensure that casting TicksPerTock::num/den to Time::Ticks16 is safe
-                static_assert(std::in_range<Time::Ticks16>(TicksPerTock::num));
-                static_assert(std::in_range<Time::Ticks16>(TicksPerTock::den));
+                constexpr auto RemainderTicksMax = _TimerIntervalTicks::num-1;
+                // Ensure that casting _TicksPerTock::num/den to Time::Ticks16 is safe
+                static_assert(std::in_range<Time::Ticks16>(_TicksPerTock::num));
+                static_assert(std::in_range<Time::Ticks16>(_TicksPerTock::den));
                 // Ensure that our ticks -> tocks calculation can't overflow due to the multiplication
-                static_assert(std::in_range<Time::Ticks16>(RemainderTicksMax * TicksPerTock::den));
-                const Tocks16 remainderTocks = (remainderTicks * (Time::Ticks16)TicksPerTock::den) / (Time::Ticks16)TicksPerTock::num;
+                static_assert(std::in_range<Time::Ticks16>(RemainderTicksMax * _TicksPerTock::den));
+                const _Tocks16 remainderTocks = (remainderTicks * (Time::Ticks16)_TicksPerTock::den) / (Time::Ticks16)_TicksPerTock::num;
                 if (remainderTocks) {
                     _TimerWait(_CCRForTocks(remainderTocks), 1);
                     if (_State.request.reset) continue;
@@ -123,7 +123,7 @@ public:
     
     static bool ISRTimer(uint16_t iv) {
         switch (iv) {
-        case TA0IV_TAIFG:
+        case TA2IV_TAIFG:
             Assert(_State.timer.count);
             _State.timer.count--;
             if (!_State.timer.count) {
@@ -146,18 +146,18 @@ private:
     }
     
     static void _TimerStop() {
-        TA0CTL &= ~(MC1|MC0|TAIE);
+        TA2CTL &= ~(MC1|MC0|TAIE);
     }
     
     static void _TimerSet(uint16_t ccr) {
         // Stop timer
         _TimerStop();
         // Additional clock divider = /8
-        TA0EX0 = TAIDEX_7;
+        TA2EX0 = TAIDEX_7;
         // Set value to count to
-        TA0CCR0 = ccr;
+        TA2CCR0 = ccr;
         // Start timer
-        TA0CTL =
+        TA2CTL =
             TASSEL__ACLK    |   // clock source = ACLK
             ID__8           |   // clock divider = /8
             MC__UP          |   // mode = up
