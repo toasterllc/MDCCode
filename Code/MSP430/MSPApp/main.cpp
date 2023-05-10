@@ -33,6 +33,7 @@
 #include "Debug.h"
 #include "Charging.h"
 #include "System.h"
+#include "Property.h"
 using namespace GPIO;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
@@ -92,7 +93,6 @@ static void _EventsEnabledChanged();
 static void _MotionEnabledUpdate();
 static void _MotionEnabledChanged();
 
-static void _VDDBEnabledChanged();
 static void _VDDIMGSDEnabledChanged();
 
 // _On: power state assertion (the user-facing power state)
@@ -117,9 +117,6 @@ static T_Property<bool,_MotionEnabledChanged> _MotionEnabled;
 
 using _MotionRequested = T_AssertionCounter<_MotionEnabledUpdate>;
 using _MotionRequestedAssertion = T_SuppressibleAssertion<_MotionRequested>;
-
-// VDDB enable/disable
-using _VDDBEnabled = T_AssertionCounter<_VDDBEnabledChanged>;
 
 // VDDIMGSD enable/disable
 using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
@@ -234,12 +231,6 @@ int atexit(void (*)(void)) {
 }
 
 // MARK: - Power
-
-static void _VDDBEnabledChanged() {
-    _Pin::VDD_B_EN::Write(_VDDBEnabled::Asserted());
-    // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
-    _Scheduler::Sleep(_Scheduler::Ms<2>);
-}
 
 static void _VDDIMGSDEnabledChanged() {
     if (_VDDIMGSDEnabled::Asserted()) {
@@ -804,6 +795,12 @@ struct _TaskEvent {
         }
     }
     
+    static void _VDDBEnabledChanged() {
+        _Pin::VDD_B_EN::Write(_State.vddb);
+        // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
+        _Scheduler::Sleep(_Scheduler::Ms<2>);
+    }
+    
     static inline struct __State {
         __State() {} // Compiler bug workaround
         // live=false while initializing, where we execute events in 'fast-forward' mode,
@@ -815,7 +812,7 @@ struct _TaskEvent {
         // our Reset() function, so if the power assertion lived on the stack and
         // _TaskEvent is reset, its destructor would never be called and our state
         // would be corrupted.
-        _VDDBEnabled::Assertion vddb;
+        T_Property<bool,_VDDBEnabledChanged> vddb;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _State;
     
