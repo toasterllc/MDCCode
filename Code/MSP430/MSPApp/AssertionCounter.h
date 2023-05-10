@@ -10,12 +10,13 @@ auto... T_Changed
 >
 struct T_Property {
     T_Property() = default;
-    // Copy: illegal
-    T_Property(const T_Property& x) = delete;
-    T_Property& operator=(const T_Property& x) = delete;
+    T_Property(T x) : _x(x) {}
+    // Copy: allowed
+    T_Property(const T_Property& x) { *this = x._x; }
+    T_Property& operator=(const T_Property& x) { *this = x._x; return *this; }
     // Move: allowed
-    T_Property(T_Property&& x) = delete;
-    T_Property& operator=(T_Property&& x) = delete;
+    T_Property(T_Property&& x) { *this = x._x; }
+    T_Property& operator=(T_Property&& x) { *this = x._x; return *this; }
     
     // Cast
     operator T() const { return _x; }

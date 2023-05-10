@@ -94,7 +94,6 @@ static void _MotionEnabledChanged();
 
 static void _VDDBEnabledChanged();
 static void _VDDIMGSDEnabledChanged();
-static void _SysTickEnabledChanged();
 
 // _On: power state assertion (the user-facing power state)
 static T_Property<bool,_OnChanged,_EventsEnabledUpdate> _On;
@@ -110,14 +109,10 @@ static T_Property<bool,_OnChanged,_EventsEnabledUpdate> _On;
 [[gnu::section(".ram_backup_bss._OnSaved")]]
 static inline bool _OnSaved = false;
 
-// _HostMode: events pause/resume (for host mode)
-using _HostMode = T_AssertionCounter<_EventsEnabledUpdate>;
-
+// _EventsEnabled: whether _TaskEvent should be running and handling events
 static T_Property<bool,_EventsEnabledChanged,_MotionEnabledUpdate> _EventsEnabled;
 
-//static T_AssertionCounter<_EventsEnabledChanged,_MotionEnabledUpdate>::Assertion _EventsEnabled;
-
-// Motion enable/disable
+// _MotionEnabled: whether _TaskMotion should be running and observing motion
 static T_Property<bool,_MotionEnabledChanged> _MotionEnabled;
 
 using _MotionRequested = T_AssertionCounter<_MotionEnabledUpdate>;
@@ -128,9 +123,6 @@ using _VDDBEnabled = T_AssertionCounter<_VDDBEnabledChanged>;
 
 // VDDIMGSD enable/disable
 using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
-
-// VDDIMGSD enable/disable
-using _SysTickEnabled = T_AssertionCounter<_SysTickEnabledChanged>;
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionRequestedAssertion>;
@@ -277,15 +269,6 @@ static void _LEDFlash(OutputPriority& led) {
         _Scheduler::Delay(_Scheduler::Ms<50>);
     }
     led.set(_LEDPriority::Power, std::nullopt);
-}
-
-static void _OnChanged() {
-    _OnSaved = _On;
-    _LEDFlash(_On ? _LEDGreen_ : _LEDRed_);
-}
-
-static void _SysTickEnabledChanged() {
-    _SysTick::Enabled(_SysTickEnabled::Asserted());
 }
 
 // MARK: - ICE40
@@ -841,15 +824,6 @@ struct _TaskEvent {
     static inline uint8_t Stack[256];
 };
 
-static void _EventsEnabledUpdate() {
-    _EventsEnabled = _On && !_HostMode::Asserted();
-}
-
-static void _EventsEnabledChanged() {
-    if (_EventsEnabled) _TaskEvent::Start();
-    else                _TaskEvent::Reset();
-}
-
 // MARK: - _TaskMotion
 
 struct _TaskMotion {
@@ -894,15 +868,6 @@ struct _TaskMotion {
     SchedulerStack(".stack._TaskMotion")
     static inline uint8_t Stack[128];
 };
-
-static void _MotionEnabledUpdate() {
-    _MotionEnabled = _EventsEnabled && _MotionRequested::Asserted();
-}
-
-static void _MotionEnabledChanged() {
-    if (_MotionEnabled) _TaskMotion::Start();
-    else                _TaskMotion::Reset();
-}
 
 // MARK: - _TaskI2C
 
@@ -1014,6 +979,10 @@ struct _TaskI2C {
         return MSP::Resp{ .ok = false };
     }
     
+    static bool HostModeEnabled() {
+        return _HostModeState.en;
+    }
+    
 //    static void _HostModeSet(bool x) {
 //        // Short-circuit if nothing changed
 //        if (x == _HostModeState.en) return;
@@ -1029,7 +998,7 @@ struct _TaskI2C {
 //    }
     
     static inline struct {
-        _HostMode::Assertion en;
+        T_Property<bool,_EventsEnabledUpdate> en;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _HostModeState;
     
@@ -1250,7 +1219,7 @@ struct _TaskMain {
                 switch (_Button::EventRead()) {
                 case _Button::Event::Press: {
                     // Ignore button presses if we're off or in host mode
-                    if (!_On || _HostMode::Asserted()) break;
+                    if (!_On || _TaskI2C::HostModeEnabled()) break;
                     
                     for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
                         _TaskEvent::CaptureStart(*it, _RTC::Now());
@@ -1277,21 +1246,23 @@ struct _TaskMain {
         
         // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
         // We do this to prevent ourself from waking up unnecessarily, saving power.
-        _SysTick = _Scheduler::TickRequired();
+        _SysTickEnabled = _Scheduler::TickRequired();
         
         // We consider the sleep 'extended' if SysTick isn't needed during the sleep
 //        const bool extendedSleep = false;
 //        const bool extendedSleep = true;
-        const bool extendedSleep = !_SysTick;
+        const bool extendedSleep = !_SysTickEnabled;
         _Clock::Sleep(extendedSleep);
         
         // Unconditionally enable SysTick while we're awake
-        _SysTick = true;
+        _SysTickEnabled = true;
     }
     
-    // _SysTickEnabled: controls whether the SysTick timer is enabled
-    // We disable SysTick when going to sleep if no tasks are waiting for a certain amount of time to pass
-    static inline _SysTickEnabled::Assertion _SysTick;
+    static void _SysTickEnabledChanged() {
+        _SysTick::Enabled(_SysTickEnabled);
+    }
+    
+    static inline T_Property<bool,_SysTickEnabledChanged> _SysTickEnabled;
     
     // Task stack
     static constexpr auto& Stack = _TaskMainStack;
@@ -1312,6 +1283,31 @@ inline void Toastbox::IntState::Set(bool en) {
 
 static void _Sleep() {
     _TaskMain::Sleep();
+}
+
+// MARK: - Properties
+
+static void _OnChanged() {
+    _OnSaved = _On;
+    _LEDFlash(_On ? _LEDGreen_ : _LEDRed_);
+}
+
+static void _EventsEnabledUpdate() {
+    _EventsEnabled = _On && !_TaskI2C::HostModeEnabled();
+}
+
+static void _EventsEnabledChanged() {
+    if (_EventsEnabled) _TaskEvent::Start();
+    else                _TaskEvent::Reset();
+}
+
+static void _MotionEnabledUpdate() {
+    _MotionEnabled = _EventsEnabled && _MotionRequested::Asserted();
+}
+
+static void _MotionEnabledChanged() {
+    if (_MotionEnabled) _TaskMotion::Start();
+    else                _TaskMotion::Reset();
 }
 
 // MARK: - Interrupts
