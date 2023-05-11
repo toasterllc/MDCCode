@@ -96,7 +96,7 @@ static void _MotionEnabledUpdate();
 
 static void _VDDIMGSDEnabledChanged();
 
-// _On: power state assertion (the user-facing power state)
+// _On: user-controlled power state
 static T_Property<bool,_OnChanged,_EventsEnabledUpdate> _On;
 
 // _OnSaved: remembers our power state across crashes and LPM3.5.
@@ -121,9 +121,6 @@ using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionRequestedAssertion>;
-
-// _EventTimer: timer that triggers us to wake when the next event is ready to be handled
-using _EventTimer = T_Timer<_Scheduler, _RTC, _ACLKFreqHz>;
 
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
@@ -295,14 +292,18 @@ struct _TaskBattery {
             _BatteryLevel = _BatterySampler::Sample();
             
             // Reset our counters
-            _RTCCounter = SampleIntervalRTC;
-            _CaptureCounter = SampleIntervalCapture;
+            _RTCCounter = _SampleIntervalRTC;
+            _CaptureCounter = _SampleIntervalCapture;
             _Update = false;
         }
     }
     
     static MSP::BatteryLevel BatteryLevel() {
         return _BatteryLevel;
+    }
+    
+    static bool BatteryTrap() {
+        return _BatteryTrap;
     }
     
     static void Update() {
@@ -314,6 +315,10 @@ struct _TaskBattery {
     }
     
     static void CaptureNotify() {
+        // Short-circuit if we're in battery trap
+        // We don't want to monitor the battery while we're in battery trap, to minimize battery use
+        if (_BatteryTrap) return;
+        
         _CaptureCounter--; // Rollover OK since we reset _CaptureCounter in Run()
         if (!_CaptureCounter) {
             _Update = true;
@@ -321,6 +326,10 @@ struct _TaskBattery {
     }
     
     static bool ISRRTC() {
+        // Short-circuit if we're in battery trap
+        // We don't want to monitor the battery while we're in battery trap, to minimize battery use
+        if (_BatteryTrap) return false;
+        
         _RTCCounter--; // Rollover OK since we reset _RTCCounter in Run()
         if (!_RTCCounter) {
             _Update = true;
@@ -329,15 +338,46 @@ struct _TaskBattery {
         return false;
     }
     
-    static constexpr uint16_t SampleIntervalRTCDays = 4;
-    static constexpr uint16_t SampleIntervalRTC     = (SampleIntervalRTCDays * Time::Day) / _RTC::InterruptIntervalTicks;
-    static constexpr uint16_t SampleIntervalCapture = 512;
+    static void _BatteryLevelChanged() {
+        if (_BatteryLevel <= _BatteryTrapLevelEnter) {
+            _BatteryTrap = true;
+        } else if (_BatteryLevel >= _BatteryTrapLevelExit) {
+            _BatteryTrap = false;
+        }
+    }
     
-    static_assert(SampleIntervalRTC == 168); // Debug
+    static void _BatteryTrapChanged() {
+        // Turn ourself on when exiting battery trap
+        if (!_BatteryTrap) {
+            _On = true;
+        }
+    }
+    
+    static constexpr uint16_t _SampleIntervalRTCDays = 4;
+    static constexpr uint16_t _SampleIntervalRTC     = (_SampleIntervalRTCDays * Time::Day) / _RTC::InterruptIntervalTicks;
+    static constexpr uint16_t _SampleIntervalCapture = 512;
+    
+    static constexpr uint8_t _BatteryTrapPercentEnter = 2;
+    static constexpr uint8_t _BatteryTrapPercentExit  = 10;
+    
+    static constexpr MSP::BatteryLevel _BatteryTrapLevelEnter
+        = MSP::BatteryLevelMin + ((((uint32_t)MSP::BatteryLevelMax-MSP::BatteryLevelMin)*_BatteryTrapPercentEnter)/100);
+    static constexpr MSP::BatteryLevel _BatteryTrapLevelExit
+        = MSP::BatteryLevelMin + ((((uint32_t)MSP::BatteryLevelMax-MSP::BatteryLevelMin)*_BatteryTrapPercentExit)/100);
+    
+    static_assert(_SampleIntervalRTC     == 168);  // Debug
+    static_assert(_BatteryTrapLevelEnter == 1311); // Debug
+    static_assert(_BatteryTrapLevelExit  == 6554); // Debug
     
     static inline uint16_t _RTCCounter = 0;
     static inline uint16_t _CaptureCounter = 0;
-    static inline MSP::BatteryLevel _BatteryLevel = MSP::BatteryLevelInvalid;
+    
+    // _BatteryLevel: the cached battery charge level
+    static inline T_Property<MSP::BatteryLevel,_BatteryLevelChanged> _BatteryLevel = MSP::BatteryLevelInvalid;
+    
+    // _BatteryTrap: mode that disables all functionality except time-tracking
+    static inline T_Property<bool,_BatteryTrapChanged,_EventsEnabledUpdate> _BatteryTrap;
+    
     static inline bool _Update = false;
     
     // Task stack
@@ -785,6 +825,8 @@ struct _TaskEvent {
     }
     
     static void Reset() {
+        // Reset our timer
+        _EventTimer::Schedule(std::nullopt);
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Reset();
@@ -794,6 +836,14 @@ struct _TaskEvent {
         // Reset our state
         // We do this last so that our power assertions are reset last
         _State = {};
+    }
+    
+    static bool ISRRTC() {
+        return _EventTimer::ISRRTC();
+    }
+    
+    static bool ISRTimer(uint16_t iv) {
+        return _EventTimer::ISRTimer(iv);
     }
     
     static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
@@ -999,6 +1049,9 @@ struct _TaskEvent {
         // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
         _Scheduler::Sleep(_Scheduler::Ms<2>);
     }
+    
+    // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
+    using _EventTimer = T_Timer<_Scheduler, _RTC, _ACLKFreqHz>;
     
     static inline struct __State {
         __State() {} // Compiler bug workaround
@@ -1366,7 +1419,7 @@ static void _OnChanged() {
 }
 
 static void _EventsEnabledUpdate() {
-    _EventsEnabled = _On && !_TaskI2C::HostModeEnabled();
+    _EventsEnabled = _On && !_TaskBattery::BatteryTrap() && !_TaskI2C::HostModeEnabled();
 }
 
 static void _EventsEnabledChanged() {
@@ -1391,7 +1444,7 @@ void _ISR_RTC() {
     // Let _RTC know that we got an RTC interrupt
     _RTC::ISR(RTCIV);
     
-    wake |= _EventTimer::ISRRTC();
+    wake |= _TaskEvent::ISRRTC();
     wake |= _TaskBattery::ISRRTC();
     
     // Wake if directed
@@ -1400,7 +1453,7 @@ void _ISR_RTC() {
 
 [[gnu::interrupt]]
 void _ISR_TIMER0_A1() {
-    const bool wake = _EventTimer::ISRTimer(TA0IV);
+    const bool wake = _TaskEvent::ISRTimer(TA0IV);
     
 //    _Pin::LED_RED_::Write(1);
 //    for (;;) {
