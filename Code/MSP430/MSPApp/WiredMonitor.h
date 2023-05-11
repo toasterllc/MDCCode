@@ -12,6 +12,11 @@ struct T_WiredMonitor {
     
     using Pin = _Disabled;
     
+    // Clear(): prepare to observe another state transition
+    //
+    // Ints: disabled
+    //   Rationale: so that there's no race between us setting _Changed + configuring our pins,
+    //   and ISR() being called
     static void Clear() {
         _Changed = false;
         if (!_Wired) _Asserted::template Init<_Deasserted, _Disabled>();
@@ -27,6 +32,7 @@ struct T_WiredMonitor {
     }
     
     static void ISR(uint16_t iv) {
+        Debug::Print("WISR");
         _Changed = true;
         _Wired = !_Wired;
     }

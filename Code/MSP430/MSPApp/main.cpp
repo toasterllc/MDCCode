@@ -386,7 +386,8 @@ struct _TaskPower {
         BatteryLevelUpdate();
         
         // Start tasks
-        _Scheduler::Start<_TaskI2C, _TaskMotion>();
+        _Scheduler::Start<_TaskI2C>();
+//        _Scheduler::Start<_TaskI2C, _TaskMotion>();
     }
     
     static void Run() {
@@ -403,6 +404,9 @@ struct _TaskPower {
             
             // Update our wired state
             _Wired = _WiredMonitor::Wired();
+            
+            Debug::Print("W");
+            Debug::PrintHex(_Wired);
             
             if (_BatteryLevelUpdate) {
                 // Update our battery level
@@ -514,7 +518,6 @@ struct _TaskPower {
     
     static void _BatteryTrapChanged() {
         _BatteryTrapSaved = _BatteryTrap;
-        _LEDFlicker::Enabled(_BatteryTrap);
         // Update _On based on battery trap:
         //   When entering battery trap, turn off.
         //   When exiting battery trap, turn on.
@@ -530,7 +533,18 @@ struct _TaskPower {
         _SysTick::Enabled(_SysTickEnabled);
     }
     
+    static void _LEDFlickerEnabledUpdate() {
+        _LEDFlickerEnabled = _BatteryTrap && !_Wired && !_LEDFlashing;
+    }
+    
+    static void _LEDFlickerEnabledChanged() {
+        _LEDFlicker::Enabled(_LEDFlickerEnabled);
+    }
+    
     static void _LEDFlash(OutputPriority& led) {
+        _LEDFlashing = true;
+        _Scheduler::Delay(_Scheduler::Ms<50>);
+        
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
             led.set(_LEDPriority::Power, 0);
@@ -539,6 +553,8 @@ struct _TaskPower {
             _Scheduler::Delay(_Scheduler::Ms<50>);
         }
         led.set(_LEDPriority::Power, std::nullopt);
+        
+        _LEDFlashing = false;
     }
     
     static void Sleep() {
@@ -584,10 +600,16 @@ struct _TaskPower {
     static inline T_Property<MSP::BatteryLevel,_BatteryLevelChanged> _BatteryLevel = MSP::BatteryLevelInvalid;
     
     // _BatteryTrap: mode that disables all functionality except time-tracking
-    static inline T_Property<bool,_BatteryTrapChanged,_EventsEnabledUpdate> _BatteryTrap;
+    static inline T_Property<bool,_BatteryTrapChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate> _BatteryTrap;
     
     // _Wired: whether we're currently plugged in
-    static inline T_Property<bool,_WiredChanged,_I2CWiredChanged> _Wired;
+    static inline T_Property<bool,_WiredChanged,_I2CWiredChanged,_LEDFlickerEnabledUpdate> _Wired;
+    
+    // _LEDFlashing: whether we're currently flashing the LEDs manually
+    static inline T_Property<bool,_LEDFlickerEnabledUpdate> _LEDFlashing;
+    
+    // _LEDFlickerEnabled: whether the LED should flicker periodically (due to battery trap)
+    static inline T_Property<bool,_LEDFlickerEnabledChanged> _LEDFlickerEnabled;
     
     // _SysTickEnabled: whether SysTick should be enabled while we sleep
     static inline T_Property<bool,_SysTickEnabledChanged> _SysTickEnabled;

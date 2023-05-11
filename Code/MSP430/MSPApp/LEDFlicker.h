@@ -62,7 +62,7 @@ struct T_LEDFlicker {
             // Set the timer's initial value
             // This is necessary because the timer always starts driving the output as a 0 (ie LED on), and there
             // doesn't seem to be a way to set the timer's initial output to 1 instead (ie LED off). So instead we
-            // just start the timer at the instant that it flashes, so then it'll flash and immediately turn off.
+            // just start the timer at the instant that it flashes, so it'll flash and then immediately turn off.
             TA0R = _TA0CCR1;
             // Output mode = reset/set
             //   LED on when hitting TA0CCR1

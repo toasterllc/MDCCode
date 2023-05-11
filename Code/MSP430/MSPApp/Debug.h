@@ -6,7 +6,7 @@
 #include "MSP.h"
 #include "Toastbox/Scheduler.h"
 
-//#define DebugEnable 1
+#define DebugEnable 1
 
 class Debug {
 public:
@@ -14,11 +14,13 @@ public:
     
     static void Print(const char* msg)  { _Write(Packet::Type::Chars, msg, std::strlen(msg)); }
     
+    static void Print(bool x)           { Print((uint16_t)x); }
     static void Print(uint8_t x)        { Print((uint16_t)x); }
     static void Print(uint16_t x)       { _Write(Packet::Type::Dec16, &x, sizeof(x)); }
     static void Print(uint32_t x)       { _Write(Packet::Type::Dec32, &x, sizeof(x)); }
     static void Print(uint64_t x)       { _Write(Packet::Type::Dec64, &x, sizeof(x)); }
     
+    static void PrintHex(bool x)        { PrintHex((uint16_t)x); }
     static void PrintHex(uint8_t x)     { PrintHex((uint16_t)x); }
     static void PrintHex(uint16_t x)    { _Write(Packet::Type::Hex16, &x, sizeof(x)); }
     static void PrintHex(uint32_t x)    { _Write(Packet::Type::Hex32, &x, sizeof(x)); }
