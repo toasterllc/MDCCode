@@ -25,5 +25,5 @@ struct T_Charging {
         }
     }
     
-    static volatile inline bool _Charging = false;
+    static inline volatile bool _Charging = false;
 };

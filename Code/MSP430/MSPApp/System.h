@@ -28,7 +28,7 @@ struct _Pin {
 };
 
 class _TaskMain;
-class _TaskBattery;
+class _TaskPower;
 class _TaskI2C;
 class _TaskMotion;
 class _TaskEvent;
@@ -62,7 +62,7 @@ using _Scheduler = Toastbox::Scheduler<
     
     // T_Tasks: list of tasks
     _TaskMain,
-    _TaskBattery,    
+    _TaskPower,
     _TaskI2C,
     _TaskMotion,
     _TaskEvent,
