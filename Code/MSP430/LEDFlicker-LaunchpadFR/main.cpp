@@ -8,8 +8,7 @@ using namespace GPIO;
 
 struct _Pin {
     using LED1      = PortA::Pin<0x0, Option::Output0>;
-    using INT       = PortA::Pin<0x1, Option::Interrupt10>; // P1.1
-    using MCLK      = PortA::Pin<0x3, Option::Output0, Option::Sel10>; // P1.3 (MCLK)
+    using LED2      = PortA::Pin<0x1, Option::Output0, Option::Sel10>;
 };
 
 // Abort(): called by Assert() with the address that aborted
@@ -35,8 +34,6 @@ public:
     // Init(): initialize various clocks
     // Interrupts must be disabled
     static void Init() {
-//        const uint16_t* CSCTL0Cal16MHz = (uint16_t*)0x1A22;
-        
         // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.
         if constexpr (T_MCLKFreqHz > 8000000) {
@@ -65,14 +62,6 @@ public:
         
         // MCLK=DCOCLK, ACLK=REFOCLK
         CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
-        
-        // Decrease the XT1 drive strength to save a little current
-        CSCTL6 =
-            XT1DRIVE_0      |   // drive strength = lowest (to save current)
-            (XTS&0)         |   // mode = low frequency
-            (XT1BYPASS&0)   |   // bypass = disabled (ie XT1 source is an oscillator, not a clock signal)
-            (XT1AGCOFF&0)   |   // automatic gain = on
-            XT1AUTOOFF      ;   // auto off = enabled (default value)
     }
     
 private:
@@ -107,16 +96,6 @@ private:
 static constexpr uint32_t _MCLKFreqHz       = 16000000;     // 16 MHz
 using _Clock = T_Clock<_MCLKFreqHz>;
 
-[[gnu::interrupt]]
-void _ISR_PORT1() {
-    switch (P1IV) {
-    case _Pin::INT::IVPort1():
-        _Pin::LED1::Write(!_Pin::LED1::Read());
-        break;
-    default:
-        Assert(false);
-    }
-}
 
 inline bool Toastbox::IntState::Get() {
     return __get_SR_register() & GIE;
@@ -134,9 +113,25 @@ int main() {
     
     GPIO::Init<
         _Pin::LED1,
-        _Pin::INT,
-        _Pin::MCLK
+        _Pin::LED2
     >(Startup::ColdStart());
+    
+    
+    
+    // Additional clock divider = /3
+    TA0EX0 = TAIDEX_2;
+    TA0CCR1 = 65535-1;
+    TA0CCR0 = 65535-0;
+    
+    // Start timer
+    // Note that this clears TAIFG in case it was set!
+    TA0CTL =
+        TASSEL__ACLK    |   // clock source = ACLK
+        ID__1           |   // clock divider = /1
+        MC__UP          |   // mode = up
+        TACLR           ;   // reset timer state
+    
+    TA0CCTL1 = OUTMOD_3;
     
     __bis_SR_register(GIE | LPM3_bits);
     for (;;);

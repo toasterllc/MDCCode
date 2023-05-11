@@ -36,6 +36,7 @@
 #include "Property.h"
 #include "Time.h"
 #include "TimeConstants.h"
+#include "LEDFlicker.h"
 using namespace GPIO;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
@@ -51,6 +52,10 @@ using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::B
 using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
 
 using _Charging = T_Charging<_Pin::VDD_B_3V3_STM>;
+
+static constexpr uint32_t _FlickerPeriodMs      = 5000;
+static constexpr uint32_t _FlickerOnDurationMs  = 50;
+using _LEDFlicker = T_LEDFlicker<_Pin::LED_GREEN_, _ACLKFreqHz, _FlickerPeriodMs, _FlickerOnDurationMs>;
 
 static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -1241,6 +1246,9 @@ struct _TaskMain {
         _TaskBattery::Update();
         _TaskBattery::Wait();
         
+        _LEDFlicker::Enabled(true);
+        for (;;);
+        
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
         // restore our _On assertion based on it.
@@ -1452,8 +1460,16 @@ void _ISR_RTC() {
 }
 
 [[gnu::interrupt]]
-void _ISR_TIMER0_A1() {
-    const bool wake = _TaskEvent::ISRTimer(TA0IV);
+void _ISR_TIMER1_A1() {
+//    _Pin::LED_GREEN_::Write(!_Pin::LED_GREEN_::Read());
+    const bool wake = _SysTick::ISR(TA1IV);
+    // Wake if directed
+    if (wake) _Clock::Wake();
+}
+
+[[gnu::interrupt]]
+void _ISR_TIMER2_A1() {
+    const bool wake = _TaskEvent::ISRTimer(TA2IV);
     
 //    _Pin::LED_RED_::Write(1);
 //    for (;;) {
@@ -1463,14 +1479,6 @@ void _ISR_TIMER0_A1() {
 //        __delay_cycles(1000000);
 //    }
     
-    // Wake if directed
-    if (wake) _Clock::Wake();
-}
-
-[[gnu::interrupt]]
-void _ISR_TIMER1_A1() {
-//    _Pin::LED_GREEN_::Write(!_Pin::LED_GREEN_::Read());
-    const bool wake = _SysTick::ISR(TA1IV);
     // Wake if directed
     if (wake) _Clock::Wake();
 }
