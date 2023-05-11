@@ -25,7 +25,7 @@
 		5588914C273C6BCD0004458F /* RTC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTC.h; sourceTree = "<group>"; };
 		5588914D273C79540004458F /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
 		5588914E273C7DEB0004458F /* SPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SPI.h; sourceTree = "<group>"; };
-		55B515A02A0A1CD800FD9F17 /* Charging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Charging.h; sourceTree = "<group>"; };
+		55B515A02A0A1CD800FD9F17 /* WiredMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WiredMonitor.h; sourceTree = "<group>"; };
 		55B515B42A0B1A9F00FD9F17 /* Property.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Property.h; sourceTree = "<group>"; };
 		55B9EC94293AA2A300318243 /* msp430fr2433.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.txt; sourceTree = "<group>"; };
 		55B9EC95293AA2A300318243 /* msp430fr2433.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.ld; sourceTree = "<group>"; };
@@ -69,7 +69,7 @@
 				55B515B42A0B1A9F00FD9F17 /* Property.h */,
 				557C2F3229955ADE0063808A /* AssertionCounter.h */,
 				557ABD0929E47F450032619E /* Triggers.h */,
-				55B515A02A0A1CD800FD9F17 /* Charging.h */,
+				55B515A02A0A1CD800FD9F17 /* WiredMonitor.h */,
 				554F67502A0C97A400AE958F /* LEDFlicker.h */,
 				556277362A05BE8900998BE2 /* System.h */,
 				556E45EF26B12023006681FA /* main.cpp */,

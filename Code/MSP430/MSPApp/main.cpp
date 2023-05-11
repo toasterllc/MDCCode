@@ -31,7 +31,7 @@
 #include "Assert.h"
 #include "Timer.h"
 #include "Debug.h"
-#include "Charging.h"
+#include "WiredMonitor.h"
 #include "System.h"
 #include "Property.h"
 #include "Time.h"
@@ -51,7 +51,7 @@ using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::B
 
 using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
 
-using _Charging = T_Charging<_Pin::VDD_B_3V3_STM>;
+using _WiredMonitor = T_WiredMonitor<_Pin::VDD_B_3V3_STM>;
 
 static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -96,6 +96,8 @@ static void _MotionEnabledUpdate();
 static void _VDDIMGSDEnabledChanged();
 
 // _BatteryTrapSaved: remembers our battery-trap state across crashes and LPM3.5.
+//
+// This needs to be a global for the gnu::section attribute to work.
 [[gnu::section(".ram_backup_bss._BatteryTrapSaved")]]
 static inline bool _BatteryTrapSaved = false;
 
@@ -103,10 +105,7 @@ static inline bool _BatteryTrapSaved = false;
 // This is needed because we don't want the device to return to the
 // powered-off state after a crash.
 //
-// Stored in BAKMEM so it's kept alive through low-power modes <= LPM4.
-//
-// Apparently it has to be stored outside of _TaskMain for the gnu::section
-// attribute to work.
+// This needs to be a global for the gnu::section attribute to work.
 [[gnu::section(".ram_backup_bss._OnSaved")]]
 static inline bool _OnSaved = false;
 
@@ -121,6 +120,10 @@ using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionRequestedAssertion>;
+
+static bool _HostModeEnabled();
+static void _CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time);
+static void _I2CWiredChanged();
 
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
@@ -265,21 +268,141 @@ static void _ICEInit() {
 
 // MARK: - _TaskPower
 
+#define _TaskPowerStackSize 128
+
+SchedulerStack(".stack._TaskPower")
+uint8_t _TaskPowerStack[_TaskPowerStackSize];
+
+asm(".global _StartupStack");
+asm(".equ _StartupStack, _TaskPowerStack+" Stringify(_TaskPowerStackSize));
+
 struct _TaskPower {
-    static void Run() {
+    // _Init(): initialize system
+    //
+    // Ints: disabled
+    //   Rationale: GPIO::Init() and _RTC::Init() require it, and in general we don't want
+    //   interrupts to fire while we configure our other subsystems
+    static void _Init() {
+        // Init watchdog first
+        _Watchdog::Init();
+        
+        // Init GPIOs
+        GPIO::Init<
+            // Power control
+            _Pin::VDD_B_EN,
+            _Pin::VDD_B_1V8_IMG_SD_EN,
+            _Pin::VDD_B_2V8_IMG_SD_EN,
+            
+            // Clock (config chosen by _Clock)
+            _Clock::Pin::XIN,
+            _Clock::Pin::XOUT,
+            
+            // SPI (config chosen by _SPI)
+            _SPI::Pin::Clk,
+            _SPI::Pin::DataOut,
+            _SPI::Pin::DataIn,
+            
+            // I2C (config chosen by _I2C)
+            _I2C::Pin::SCL,
+            _I2C::Pin::SDA,
+            
+            // Motion (config chosen by _Motion)
+            _Motion::Pin::Power,
+            _Motion::Pin::Signal,
+            
+            // Battery (config chosen by _BatterySampler)
+            _BatterySampler::Pin::BatChrgLvlPin,
+            _BatterySampler::Pin::BatChrgLvlEn_Pin,
+            
+            // Button (config chosen by _Button)
+            _Button::Pin,
+            
+            // Wired
+            _WiredMonitor::Pin,
+            
+            // LEDs
+            _Pin::LED_GREEN_,
+            _Pin::LED_RED_
+        
+        >(Startup::ColdStart());
+        
+        // Init clock
+        _Clock::Init();
+        
+//        _Pin::LED_RED_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+//        }
+        
+//        _Pin::LED_RED_::Write(1);
+//        _Pin::LED_GREEN_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+//            __delay_cycles(1000000);
+//            _Pin::LED_RED_::Write(1);
+//            __delay_cycles(1000000);
+//        }
+        
+//        _Pin::LED_RED_::Write(1);
+//        _Pin::LED_GREEN_::Write(1);
+//        for (;;) {
+//            _Pin::LED_RED_::Write(0);
+////            __delay_cycles(1000000);
+//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//            _Pin::LED_RED_::Write(1);
+////            __delay_cycles(1000000);
+//            _Scheduler::Delay(_Scheduler::Ms<100>);
+//        }
+        
+        // Init RTC
+        // We need RTC to be unconditionally enabled for 2 reasons:
+        //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
+        //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
+        //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
+        _RTC::Init();
+        
+        // Init LEDs by setting their default-priority / 'backstop' values to off.
+        // This is necessary so that relinquishing the LEDs from I2C task causes
+        // them to turn off. If we didn't have a backstop value, the LEDs would
+        // remain in whatever state the I2C task set them to before relinquishing.
+        _LEDGreen_.set(_LEDPriority::Default, 1);
+        _LEDRed_.set(_LEDPriority::Default, 1);
+        
         // Init BatterySampler
         _BatterySampler::Init();
         
-        // Restore our battery trap state
+        // Restore our saved battery trap state
         _BatteryTrap = _BatteryTrapSaved;
         
         // Restore our saved power state
         _On = _OnSaved;
         
-        static bool charging = false;
+        // Trigger a battery level update when first starting
+        // (This will no-op if we're currently in battery trap and not wired,
+        // which is what we want, to save a little power.)
+        BatteryLevelUpdate();
+        
+        // Start tasks
+        _Scheduler::Start<_TaskI2C, _TaskMotion>();
+    }
+    
+    static void Run() {
+        // Disable interrupts because _Init(), _WiredMonitor, and _Button require it
+        Toastbox::IntState ints(false);
+        
+        _Init();
+        
         for (;;) {
             // Wait until something triggers us to update
-            _Scheduler::Wait([] { return _BatteryLevelUpdate || charging!=_Charging::Charging(); });
+            _Button::EventReset();
+            _WiredMonitor::Clear();
+            _Scheduler::Wait([] { return _WiredMonitor::Changed() || _BatteryLevelUpdate || _Button::EventPending(); });
+            
+            // Update our wired state
+            _Wired = _WiredMonitor::Wired();
             
             if (_BatteryLevelUpdate) {
                 // Update our battery level
@@ -296,10 +419,29 @@ struct _TaskPower {
                 }
             }
             
-            if (charging != _Charging::Charging()) {
-                charging = _Charging::Charging();
-                // Turn ourself on when we're plugged in
-                if (charging) _On = true;
+            if (_Button::EventPending()) {
+                switch (_Button::EventRead()) {
+                case _Button::Event::Press: {
+                    // Ignore button presses if we're off or in host mode
+                    if (!_On || _HostModeEnabled()) break;
+                    
+                    for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
+                        _CaptureStart(*it, _RTC::Now());
+                    }
+                    break;
+                }
+                
+                case _Button::Event::Hold:
+                    // If we're not in battery trap, toggle the power state
+                    if (!_BatteryTrap) {
+                        _On = !_On;
+                    
+                    // Otherwise if we are in battery trap, deny the power transition and blink the red LEDs
+                    } else {
+                        _LEDFlash(_LEDRed_);
+                    }
+                    break;
+                }
             }
         }
     }
@@ -308,8 +450,8 @@ struct _TaskPower {
         return _On;
     }
     
-    static void On(bool x) {
-        _On = x;
+    static bool Wired() {
+        return _Wired;
     }
     
     static MSP::BatteryLevel BatteryLevel() {
@@ -317,8 +459,8 @@ struct _TaskPower {
     }
     
     static void BatteryLevelUpdate() {
-        // When in battery trap mode, never sample the battery voltage unless we're charging.
-        if (_BatteryTrap && !_Charging::Charging()) return;
+        // When in battery trap, never sample the battery voltage unless we're wired.
+        if (_BatteryTrap && !_Wired) return;
         _BatteryLevelUpdate = true;
     }
     
@@ -365,7 +507,6 @@ struct _TaskPower {
             _BatteryTrap = true;
         
         // If our battery level raises above the Exit threshold, exit battery trap
-        // Only allow this to occur if we're charging though. This check is needed because we update the battery
         } else if (_BatteryLevel >= _BatteryTrapLevelExit) {
             _BatteryTrap = false;
         }
@@ -373,9 +514,20 @@ struct _TaskPower {
     
     static void _BatteryTrapChanged() {
         _BatteryTrapSaved = _BatteryTrap;
-        // Turn ourself on when exiting battery trap
-        if (!_BatteryTrap) _On = true;
         _LEDFlicker::Enabled(_BatteryTrap);
+        // Update _On based on battery trap:
+        //   When entering battery trap, turn off.
+        //   When exiting battery trap, turn on.
+        _On = !_BatteryTrap;
+    }
+    
+    static void _WiredChanged() {
+        // Turn ourself on if we become wired and we're not in battery trap
+        if (_Wired && !_BatteryTrap) _On = true;
+    }
+    
+    static void _SysTickEnabledChanged() {
+        _SysTick::Enabled(_SysTickEnabled);
     }
     
     static void _LEDFlash(OutputPriority& led) {
@@ -387,6 +539,23 @@ struct _TaskPower {
             _Scheduler::Delay(_Scheduler::Ms<50>);
         }
         led.set(_LEDPriority::Power, std::nullopt);
+    }
+    
+    static void Sleep() {
+        // Put ourself to sleep until an interrupt occurs
+        
+        // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
+        // We do this to prevent ourself from waking up unnecessarily, saving power.
+        _SysTickEnabled = _Scheduler::TickRequired();
+        
+        // We consider the sleep 'extended' if SysTick isn't needed during the sleep
+//        const bool extendedSleep = false;
+//        const bool extendedSleep = true;
+        const bool extendedSleep = !_SysTickEnabled;
+        _Clock::Sleep(extendedSleep);
+        
+        // Unconditionally enable SysTick while we're awake
+        _SysTickEnabled = true;
     }
     
     static constexpr uint16_t _SampleIntervalRTCDays = 4;
@@ -417,6 +586,12 @@ struct _TaskPower {
     // _BatteryTrap: mode that disables all functionality except time-tracking
     static inline T_Property<bool,_BatteryTrapChanged,_EventsEnabledUpdate> _BatteryTrap;
     
+    // _Wired: whether we're currently plugged in
+    static inline T_Property<bool,_WiredChanged,_I2CWiredChanged> _Wired;
+    
+    // _SysTickEnabled: whether SysTick should be enabled while we sleep
+    static inline T_Property<bool,_SysTickEnabledChanged> _SysTickEnabled;
+    
     static inline bool _BatteryLevelUpdate = false;
     
     static constexpr uint32_t _FlickerPeriodMs      = 5000;
@@ -424,8 +599,7 @@ struct _TaskPower {
     using _LEDFlicker = T_LEDFlicker<_Pin::LED_GREEN_, _ACLKFreqHz, _FlickerPeriodMs, _FlickerOnDurationMs>;
     
     // Task stack
-    SchedulerStack(".stack._TaskPower")
-    static inline uint8_t Stack[128];
+    static constexpr auto& Stack = _TaskPowerStack;
 };
 
 // MARK: - _TaskI2C
@@ -433,8 +607,8 @@ struct _TaskPower {
 struct _TaskI2C {
     static void Run() {
         for (;;) {
-            // Wait until STM is up (ie we're plugged in and charging)
-            _Scheduler::Wait([] { return _Charging::Charging(); });
+            // Wait until STM is up (ie we're plugged in and wired)
+            _Scheduler::Wait([] { return _TaskPower::Wired(); });
             
             _I2C::Init();
             
@@ -463,8 +637,9 @@ struct _TaskI2C {
         }
     }
     
-    static void Abort() {
-        _I2C::Abort();
+    static void WiredChanged() {
+        // If we became unwired, restart our I2C state machine
+        if (!_TaskPower::Wired()) _I2C::Abort();
     }
     
     static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
@@ -1174,248 +1349,6 @@ struct _TaskMotion {
     static inline uint8_t Stack[128];
 };
 
-// MARK: - _TaskMain
-
-#define _TaskMainStackSize 128
-
-SchedulerStack(".stack._TaskMain")
-uint8_t _TaskMainStack[_TaskMainStackSize];
-
-asm(".global _StartupStack");
-asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
-
-struct _TaskMain {
-    static void _Init() {
-        // Disable interrupts while we init our subsystems
-        Toastbox::IntState ints(false);
-        
-        // Init watchdog first
-        _Watchdog::Init();
-        
-        // Init GPIOs
-        GPIO::Init<
-            // Power control
-            _Pin::VDD_B_EN,
-            _Pin::VDD_B_1V8_IMG_SD_EN,
-            _Pin::VDD_B_2V8_IMG_SD_EN,
-            
-            // Clock (config chosen by _Clock)
-            _Clock::Pin::XIN,
-            _Clock::Pin::XOUT,
-            
-            // SPI (config chosen by _SPI)
-            _SPI::Pin::Clk,
-            _SPI::Pin::DataOut,
-            _SPI::Pin::DataIn,
-            
-            // I2C (config chosen by _I2C)
-            _I2C::Pin::SCL,
-            _I2C::Pin::SDA,
-            
-            // Motion (config chosen by _Motion)
-            _Motion::Pin::Power,
-            _Motion::Pin::Signal,
-            
-            // Battery (config chosen by _BatterySampler)
-            _BatterySampler::Pin::BatChrgLvlPin,
-            _BatterySampler::Pin::BatChrgLvlEn_Pin,
-            
-            // Button (config chosen by _Button)
-            _Button::Pin,
-            
-            // Charging
-            _Charging::Pin,
-            
-            // LEDs
-            _Pin::LED_GREEN_,
-            _Pin::LED_RED_
-        
-        >(Startup::ColdStart());
-        
-        // Init clock
-        _Clock::Init();
-        
-//        _Pin::LED_RED_::Write(1);
-//        for (;;) {
-//            _Pin::LED_RED_::Write(1);
-//            __delay_cycles(1000000);
-//            _Pin::LED_RED_::Write(0);
-//            __delay_cycles(1000000);
-//        }
-        
-//        _Pin::LED_RED_::Write(1);
-//        _Pin::LED_GREEN_::Write(1);
-//        for (;;) {
-//            _Pin::LED_RED_::Write(0);
-//            __delay_cycles(1000000);
-//            _Pin::LED_RED_::Write(1);
-//            __delay_cycles(1000000);
-//        }
-        
-//        _Pin::LED_RED_::Write(1);
-//        _Pin::LED_GREEN_::Write(1);
-//        for (;;) {
-//            _Pin::LED_RED_::Write(0);
-////            __delay_cycles(1000000);
-//            _Scheduler::Delay(_Scheduler::Ms<100>);
-//            _Pin::LED_RED_::Write(1);
-////            __delay_cycles(1000000);
-//            _Scheduler::Delay(_Scheduler::Ms<100>);
-//        }
-        
-        // Init RTC
-        // We need RTC to be unconditionally enabled for 2 reasons:
-        //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
-        //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
-        //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-        _RTC::Init();
-        
-        // Init LEDs by setting their default-priority / 'backstop' values to off.
-        // This is necessary so that relinquishing the LEDs from I2C task causes
-        // them to turn off. If we didn't have a backstop value, the LEDs would
-        // remain in whatever state the I2C task set them to before relinquishing.
-        _LEDGreen_.set(_LEDPriority::Default, 1);
-        _LEDRed_.set(_LEDPriority::Default, 1);
-        
-        // Start tasks
-        _Scheduler::Start<_TaskI2C, _TaskPower, _TaskMotion>();
-    }
-    
-    static void Run() {
-        _Init();
-        
-//        for (;;) {
-//            _Pin::LED_RED_::Write(1);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//            _Pin::LED_RED_::Write(0);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//        }
-        
-//        _Pin::LED_RED_::Write(1);
-//        for (;;) {
-//            _Pin::LED_RED_::Write(1);
-//            __delay_cycles(1000000);
-//            _Pin::LED_RED_::Write(0);
-//            __delay_cycles(1000000);
-//        }
-        
-//        for (bool on_=0;; on_=!on_) {
-////            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//        }
-        
-//        _On = true;
-//        for (bool on_=false;; on_=!on_) {
-////            __delay_cycles(1000000);
-////            _Pin::LED_GREEN_::Write(on_);
-////            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq::num);
-////            _Scheduler::Wait([] { return _EventTimer::Fired(); });
-//            
-//            const auto nextTime = _Triggers::EventFront()->time;
-//            const auto currTime = _RTC::Now();
-//            
-//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
-//        }
-        
-        
-        
-//        _On = true;
-//        for (bool on_=false;; on_=!on_) {
-////            __delay_cycles(1000000);
-////            _Pin::LED_GREEN_::Write(on_);
-//            _EventTimer::Schedule(_RTC::Now() + 5*Time::TicksFreq::num);
-//            _Scheduler::Wait([] { return _EventTimer::Fired(); });
-//        }
-        
-//        for (bool on_=false;; on_=!on_) {
-//            _Pin::LED_GREEN_::Write(on_);
-//            _Scheduler::Sleep(_Scheduler::Ms<1000>);
-//        }
-        
-//        for (;;) {
-//            _Pin::LED_RED_::Write(1);
-//            _Pin::LED_GREEN_::Write(1);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//            
-//            if (_Clock::_ClockFaults()) {
-//                _Pin::LED_RED_::Write(0);
-//            } else {
-//                _Pin::LED_GREEN_::Write(0);
-//            }
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//        }
-        
-//        for (;;) {
-////            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
-//            _Pin::LED_RED_::Write(0);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//            
-//            _Pin::LED_RED_::Write(1);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//        }
-        
-//        for (;;) {
-////            _LEDRed_.set(_LEDPriority::Power, !_LEDRed_.get());
-//            _Pin::LED_RED_::Write(0);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//            
-//            _Pin::LED_RED_::Write(1);
-//            _Scheduler::Sleep(_Scheduler::Ms<100>);
-//        }
-        
-        for (;;) {
-            // Button needs interrupts to be disabled
-            Toastbox::IntState ints(false);
-            
-            // Wait for a button press
-            _Button::Reset();
-            _Scheduler::Wait([] { return _Button::EventPending(); });
-            
-            switch (_Button::EventRead()) {
-            case _Button::Event::Press: {
-                // Ignore button presses if we're off or in host mode
-                if (!_TaskPower::On() || _TaskI2C::HostModeEnabled()) break;
-                
-                for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _TaskEvent::CaptureStart(*it, _RTC::Now());
-                }
-                break;
-            }
-            
-            case _Button::Event::Hold:
-                // Toggle our user-visible power state
-                _TaskPower::On(!_TaskPower::On());
-                break;
-            }
-        }
-    }
-    
-    static void Sleep() {
-        // Put ourself to sleep until an interrupt occurs
-        
-        // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
-        // We do this to prevent ourself from waking up unnecessarily, saving power.
-        _SysTickEnabled = _Scheduler::TickRequired();
-        
-        // We consider the sleep 'extended' if SysTick isn't needed during the sleep
-//        const bool extendedSleep = false;
-//        const bool extendedSleep = true;
-        const bool extendedSleep = !_SysTickEnabled;
-        _Clock::Sleep(extendedSleep);
-        
-        // Unconditionally enable SysTick while we're awake
-        _SysTickEnabled = true;
-    }
-    
-    static void _SysTickEnabledChanged() {
-        _SysTick::Enabled(_SysTickEnabled);
-    }
-    
-    static inline T_Property<bool,_SysTickEnabledChanged> _SysTickEnabled;
-    
-    // Task stack
-    static constexpr auto& Stack = _TaskMainStack;
-};
-
 // MARK: - IntState
 
 inline bool Toastbox::IntState::Get() {
@@ -1430,13 +1363,13 @@ inline void Toastbox::IntState::Set(bool en) {
 // MARK: - Sleep
 
 static void _Sleep() {
-    _TaskMain::Sleep();
+    _TaskPower::Sleep();
 }
 
 // MARK: - Properties
 
 static void _EventsEnabledUpdate() {
-    _EventsEnabled = _TaskPower::On() && !_TaskPower::BatteryTrap() && !_TaskI2C::HostModeEnabled();
+    _EventsEnabled = _TaskPower::On() && !_TaskI2C::HostModeEnabled();
 }
 
 static void _EventsEnabledChanged() {
@@ -1446,6 +1379,20 @@ static void _EventsEnabledChanged() {
 
 static void _MotionEnabledUpdate() {
     _TaskMotion::Enable(_EventsEnabled && _MotionRequested::Asserted());
+}
+
+// MARK: - Trampolines
+
+static bool _HostModeEnabled() {
+    return _TaskI2C::HostModeEnabled();
+}
+
+static void _CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
+    _TaskEvent::CaptureStart(ev, time);
+}
+
+static void _I2CWiredChanged() {
+    _TaskI2C::WiredChanged();
 }
 
 // MARK: - Interrupts
@@ -1505,11 +1452,9 @@ void _ISR_PORT2() {
         _Clock::Wake();
         break;
     
-    // Charging (ie VDD_B_3V3_STM)
-    case _Charging::Pin::IVPort2():
-        _Charging::ISR(iv);
-        // If the I2C master went away, abort whatever I2C was doing
-        if (!_Charging::Charging()) _TaskI2C::Abort();
+    // Wired (ie VDD_B_3V3_STM)
+    case _WiredMonitor::Pin::IVPort2():
+        _WiredMonitor::ISR(iv);
         // Wake ourself
         _Clock::Wake();
         break;
@@ -1600,7 +1545,7 @@ int main() {
     // This will cause us to reset ourself twice upon initial startup, but that's OK.
     //
     // We want to do this here before interrupts are first enabled, and not within
-    // _TaskMain, to ensure that we don't have pending resets after a reset (since some
+    // _TaskPower, to ensure that we don't have pending resets after a reset (since some
     // IFG flags persist across PUC/POR). We especially don't want our peripherals to
     // receive ISRs before they're initialized.
     //
@@ -1614,6 +1559,6 @@ int main() {
         _BOR();
     }
     
-    // Invokes the first task's Run() function (_TaskMain::Run)
+    // Invokes the first task's Run() function (_TaskPower::Run)
     _Scheduler::Run();
 }

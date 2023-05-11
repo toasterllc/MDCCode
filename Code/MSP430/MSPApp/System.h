@@ -27,7 +27,6 @@ struct _Pin {
     using _UNUSED0                  = GPIO::PortB::Pin<0x2>;
 };
 
-class _TaskMain;
 class _TaskPower;
 class _TaskI2C;
 class _TaskMotion;
@@ -61,7 +60,6 @@ using _Scheduler = Toastbox::Scheduler<
     nullptr,                                    // T_StackInterrupt: unused
     
     // T_Tasks: list of tasks
-    _TaskMain,
     _TaskPower,
     _TaskI2C,
     _TaskMotion,

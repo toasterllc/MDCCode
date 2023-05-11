@@ -19,11 +19,12 @@ public:
         Hold,
     };
     
-    // Reset(): start a new event-monitoring session
+    // EventReset(): start a new event-monitoring session
     //
-    // Interrupts must be disabled (so that there's no race between us
-    // calling Pin::Init() + resetting _Signal, and the ISR firing.)
-    static void Reset() {
+    // Ints: disabled
+    //   Rationale: so that there's no race between us calling Pin::Init() + resetting _Signal,
+    //   and the ISR firing.
+    static void EventReset() {
         // Wait for the button to be deasserted, in case it was already asserted when we entered this function
         {
             _DeassertedInterrupt::template Init<_AssertedInterrupt>();
@@ -44,8 +45,9 @@ public:
     
     // EventRead(): determine whether a button press or hold occurred
     //
-    // Interrupts must be disabled (so that there's no race between us
-    // calling Pin::Init() + resetting _Signal, and the ISR firing.)
+    // Ints: disabled
+    //   Rationale: so that there's no race between us calling Pin::Init() + resetting _Signal,
+    //   and the ISR firing.
     static Event EventRead() {
         Assert(_Signal);
         
