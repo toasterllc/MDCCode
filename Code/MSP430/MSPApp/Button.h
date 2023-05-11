@@ -19,37 +19,37 @@ public:
         Hold,
     };
     
-    // EventReset(): start a new event-monitoring session
+    // Init(): start a new event-monitoring session
     //
     // Ints: disabled
-    //   Rationale: so that there's no race between us calling Pin::Init() + resetting _Signal,
+    //   Rationale: so that there's no race between us calling Pin::Init() + resetting _Pending,
     //   and the ISR firing.
-    static void EventReset() {
+    static void Init() {
         // Wait for the button to be deasserted, in case it was already asserted when we entered this function
         {
             _DeassertedInterrupt::template Init<_AssertedInterrupt>();
-            _Signal = false;
-            T_Scheduler::Wait([] { return _Signal; });
+            _Pending = false;
+            T_Scheduler::Wait([] { return _Pending; });
             // Debounce delay
             T_Scheduler::Sleep(_DebounceDelay);
         }
         
         // Configure ourself for the asserted transition
         _AssertedInterrupt::template Init<_DeassertedInterrupt>();
-        _Signal = false;
+        _Pending = false;
     }
     
-    static bool EventPending() {
-        return _Signal;
+    static bool Pending() {
+        return _Pending;
     }
     
-    // EventRead(): determine whether a button press or hold occurred
+    // Read(): determine whether a button press or hold occurred
     //
     // Ints: disabled
-    //   Rationale: so that there's no race between us calling Pin::Init() + resetting _Signal,
+    //   Rationale: so that there's no race between us calling Pin::Init() + resetting _Pending,
     //   and the ISR firing.
-    static Event EventRead() {
-        Assert(_Signal);
+    static Event Read() {
+        Assert(_Pending);
         
         // Debounce after asserted transition
         T_Scheduler::Sleep(_DebounceDelay);
@@ -57,8 +57,8 @@ public:
         // Wait for 0->1 transition, or for the hold-timeout to elapse
         {
             _DeassertedInterrupt::template Init<_AssertedInterrupt>();
-            _Signal = false;
-            const bool ok = T_Scheduler::Wait(_HoldDuration, [] { return _Signal; });
+            _Pending = false;
+            const bool ok = T_Scheduler::Wait(_HoldDuration, [] { return _Pending; });
             // If we timed-out, then the button's being held
             if (!ok) return Event::Hold;
             // Otherwise, we didn't timeout, so the button was simply pressed
@@ -67,11 +67,11 @@ public:
     }
     
     static void ISR() {
-        _Signal = true;
+        _Pending = true;
     }
     
 private:
     static constexpr auto _HoldDuration = T_Scheduler::template Ms<1500>;
     static constexpr auto _DebounceDelay = T_Scheduler::template Ms<2>;
-    static inline volatile bool _Signal = false;
+    static inline volatile bool _Pending = false;
 };

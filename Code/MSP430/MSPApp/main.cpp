@@ -123,7 +123,6 @@ using _Triggers = T_Triggers<_State, _MotionRequestedAssertion>;
 
 static bool _HostModeEnabled();
 static void _CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time);
-static void _I2CWiredChanged();
 
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
@@ -387,7 +386,7 @@ struct _TaskPower {
         
         // Start tasks
         _Scheduler::Start<_TaskI2C>();
-//        _Scheduler::Start<_TaskI2C, _TaskMotion>();
+        _Scheduler::Start<_TaskI2C, _TaskMotion>();
     }
     
     static void Run() {
@@ -398,15 +397,12 @@ struct _TaskPower {
         
         for (;;) {
             // Wait until something triggers us to update
-            _Button::EventReset();
-            _WiredMonitor::Clear();
-            _Scheduler::Wait([] { return _WiredMonitor::Changed() || _BatteryLevelUpdate || _Button::EventPending(); });
+            _Button::Init();
+            _Scheduler::Wait([] { return _WiredMonitor::Changed() || _BatteryLevelUpdate || _Button::Pending(); });
             
-            // Update our wired state
+            // Consume any pending wired changes
             _Wired = _WiredMonitor::Wired();
-            
-            Debug::Print("W");
-            Debug::PrintHex(_Wired);
+            _WiredMonitor::Clear();
             
             if (_BatteryLevelUpdate) {
                 // Update our battery level
@@ -423,8 +419,8 @@ struct _TaskPower {
                 }
             }
             
-            if (_Button::EventPending()) {
-                switch (_Button::EventRead()) {
+            if (_Button::Pending()) {
+                switch (_Button::Read()) {
                 case _Button::Event::Press: {
                     // Ignore button presses if we're off or in host mode
                     if (!_On || _HostModeEnabled()) break;
@@ -452,10 +448,6 @@ struct _TaskPower {
     
     static bool On() {
         return _On;
-    }
-    
-    static bool Wired() {
-        return _Wired;
     }
     
     static MSP::BatteryLevel BatteryLevel() {
@@ -603,7 +595,7 @@ struct _TaskPower {
     static inline T_Property<bool,_BatteryTrapChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate> _BatteryTrap;
     
     // _Wired: whether we're currently plugged in
-    static inline T_Property<bool,_WiredChanged,_I2CWiredChanged,_LEDFlickerEnabledUpdate> _Wired;
+    static inline T_Property<bool,_WiredChanged,_LEDFlickerEnabledUpdate> _Wired;
     
     // _LEDFlashing: whether we're currently flashing the LEDs manually
     static inline T_Property<bool,_LEDFlickerEnabledUpdate> _LEDFlashing;
@@ -629,8 +621,8 @@ struct _TaskPower {
 struct _TaskI2C {
     static void Run() {
         for (;;) {
-            // Wait until STM is up (ie we're plugged in and wired)
-            _Scheduler::Wait([] { return _TaskPower::Wired(); });
+            // Wait until STM is up (ie we're plugged in)
+            _Scheduler::Wait([] { return _WiredMonitor::Wired(); });
             
             _I2C::Init();
             
@@ -661,7 +653,7 @@ struct _TaskI2C {
     
     static void WiredChanged() {
         // If we became unwired, restart our I2C state machine
-        if (!_TaskPower::Wired()) _I2C::Abort();
+        if (!_WiredMonitor::Wired()) _I2C::Abort();
     }
     
     static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
@@ -1413,10 +1405,6 @@ static void _CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant&
     _TaskEvent::CaptureStart(ev, time);
 }
 
-static void _I2CWiredChanged() {
-    _TaskI2C::WiredChanged();
-}
-
 // MARK: - Interrupts
 
 [[gnu::interrupt]]
@@ -1477,6 +1465,8 @@ void _ISR_PORT2() {
     // Wired (ie VDD_B_3V3_STM)
     case _WiredMonitor::Pin::IVPort2():
         _WiredMonitor::ISR(iv);
+        // Notify _TaskI2C that our wired state changed
+        _TaskI2C::WiredChanged();
         // Wake ourself
         _Clock::Wake();
         break;

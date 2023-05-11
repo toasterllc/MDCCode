@@ -139,5 +139,5 @@ private:
         return ev;
     }
     
-    static volatile inline _Events _Ev = _EventNone;
+    static inline volatile _Events _Ev = _EventNone;
 };

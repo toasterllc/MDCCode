@@ -6,37 +6,23 @@ template<
 typename T_Pin
 >
 struct T_WiredMonitor {
-    using _Asserted = typename T_Pin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
-    using _Deasserted = typename T_Pin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
-    using _Disabled = typename T_Pin::template Opts<GPIO::Option::Input, GPIO::Option::Resistor0>;
+    using _AssertedInterrupt = typename T_Pin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
+    using _DeassertedInterrupt = typename T_Pin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
     
-    using Pin = _Disabled;
+    using Pin = _AssertedInterrupt;
     
-    // Clear(): prepare to observe another state transition
-    //
-    // Ints: disabled
-    //   Rationale: so that there's no race between us setting _Changed + configuring our pins,
-    //   and ISR() being called
-    static void Clear() {
-        _Changed = false;
-        if (!_Wired) _Asserted::template Init<_Deasserted, _Disabled>();
-        else         _Deasserted::template Init<_Asserted>();
-    }
-    
-    static bool Changed() {
-        return _Changed;
-    }
-    
-    static bool Wired() {
-        return _Wired;
-    }
+    static bool Changed() { return _Changed;  }
+    static bool Wired()   { return _Wired;    }
+    static void Clear()   { _Changed = false; }
     
     static void ISR(uint16_t iv) {
-        Debug::Print("WISR");
+        const bool wired = (Pin::State::IES() == _AssertedInterrupt::IES());
         _Changed = true;
-        _Wired = !_Wired;
+        _Wired = wired;
+        if (!wired) _AssertedInterrupt::template Init<_DeassertedInterrupt>();
+        else        _DeassertedInterrupt::template Init<_AssertedInterrupt>();
     }
     
     static inline volatile bool _Changed = false;
-    static inline volatile bool _Wired = false;
+    static inline volatile bool _Wired   = false;
 };
