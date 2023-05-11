@@ -2,6 +2,7 @@
 #include <msp430.h>
 #include <type_traits>
 #include <initializer_list>
+#include <cstdint>
 
 namespace GPIO {
 

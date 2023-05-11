@@ -1,7 +1,9 @@
 #include <msp430.h>
 #include "GPIO.h"
 #include "Assert.h"
+#include "Startup.h"
 #include "Toastbox/Util.h"
+#include "Toastbox/Scheduler.h"
 using namespace GPIO;
 
 struct _Pin {
@@ -26,11 +28,6 @@ uint8_t _TaskMainStack[_TaskMainStackSize];
 
 asm(".global _StartupStack");
 asm(".equ _StartupStack, _TaskMainStack+" Stringify(_TaskMainStackSize));
-
-#pragma once
-#include <msp430.h>
-#include "GPIO.h"
-#include "Toastbox/Util.h"
 
 template<uint32_t T_MCLKFreqHz>
 class T_Clock {
@@ -139,7 +136,7 @@ int main() {
         _Pin::LED1,
         _Pin::INT,
         _Pin::MCLK
-    >();
+    >(Startup::ColdStart());
     
     __bis_SR_register(GIE | LPM3_bits);
     for (;;);
