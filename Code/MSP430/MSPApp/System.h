@@ -28,12 +28,12 @@ struct _Pin {
 };
 
 class _TaskMain;
-class _TaskI2C;
 class _TaskBattery;
+class _TaskI2C;
+class _TaskMotion;
 class _TaskEvent;
 class _TaskSD;
 class _TaskImg;
-class _TaskMotion;
 
 static constexpr uint32_t _XT1FreqHz        = 32768;        // 32.768 kHz
 static constexpr uint32_t _ACLKFreqHz       = _XT1FreqHz;   // 32.768 kHz
@@ -62,10 +62,10 @@ using _Scheduler = Toastbox::Scheduler<
     
     // T_Tasks: list of tasks
     _TaskMain,
+    _TaskBattery,    
     _TaskI2C,
-    _TaskBattery,
+    _TaskMotion,
     _TaskEvent,
     _TaskSD,
-    _TaskImg,
-    _TaskMotion
+    _TaskImg
 >;

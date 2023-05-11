@@ -93,7 +93,6 @@ static void _EventsEnabledUpdate();
 static void _EventsEnabledChanged();
 
 static void _MotionEnabledUpdate();
-static void _MotionEnabledChanged();
 
 static void _VDDIMGSDEnabledChanged();
 
@@ -113,9 +112,6 @@ static inline bool _OnSaved = false;
 
 // _EventsEnabled: whether _TaskEvent should be running and handling events
 static T_Property<bool,_EventsEnabledChanged,_MotionEnabledUpdate> _EventsEnabled;
-
-// _MotionEnabled: whether _TaskMotion should be running and observing motion
-static T_Property<bool,_MotionEnabledChanged> _MotionEnabled;
 
 using _MotionRequested = T_AssertionCounter<_MotionEnabledUpdate>;
 using _MotionRequestedAssertion = T_SuppressibleAssertion<_MotionRequested>;
@@ -342,6 +338,136 @@ struct _TaskBattery {
     // Task stack
     SchedulerStack(".stack._TaskBattery")
     static inline uint8_t Stack[128];
+};
+
+// MARK: - _TaskI2C
+
+struct _TaskI2C {
+    static void Run() {
+        for (;;) {
+            // Wait until STM is up (ie we're plugged in and charging)
+            _Scheduler::Wait([] { return _Charging::Charging(); });
+            
+            _I2C::Init();
+            
+            for (;;) {
+                // Wait for a command
+                MSP::Cmd cmd;
+                bool ok = _I2C::Recv(cmd);
+                if (!ok) break;
+                
+                // Handle command
+                const MSP::Resp resp = _CmdHandle(cmd);
+                
+                // Send response
+                ok = _I2C::Send(resp);
+                if (!ok) break;
+            }
+            
+            // Cleanup
+            
+            // Relinquish LEDs, which may have been set by _CmdHandle()
+            _LEDRed_.set(_LEDPriority::I2C, std::nullopt);
+            _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
+            
+            // Reset state
+            _HostModeState = {};
+        }
+    }
+    
+    static void Abort() {
+        _I2C::Abort();
+    }
+    
+    static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
+        using namespace MSP;
+        switch (cmd.op) {
+        case Cmd::Op::None:
+            return MSP::Resp{ .ok = false };
+        
+        case Cmd::Op::StateRead: {
+            const size_t off = cmd.arg.StateRead.off;
+            if (off > sizeof(::_State)) return MSP::Resp{ .ok = false };
+            const size_t rem = sizeof(::_State)-off;
+            const size_t len = std::min(rem, sizeof(MSP::Resp::arg.StateRead.data));
+            MSP::Resp resp = { .ok = true };
+            memcpy(resp.arg.StateRead.data, (uint8_t*)&::_State+off, len);
+            return resp;
+        }
+        
+        case Cmd::Op::StateWrite: {
+            const size_t off = cmd.arg.StateWrite.off;
+            if (off > sizeof(::_State)) return MSP::Resp{ .ok = false };
+            FRAMWriteEn writeEn; // Enable FRAM writing
+            const size_t rem = sizeof(::_State)-off;
+            const size_t len = std::min(rem, sizeof(MSP::Cmd::arg.StateWrite.data));
+            memcpy((uint8_t*)&::_State+off, cmd.arg.StateWrite.data, len);
+            return MSP::Resp{ .ok = true };
+        }
+        
+        case Cmd::Op::LEDSet:
+            _LEDRed_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
+            _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::TimeGet:
+            return MSP::Resp{
+                .ok = true,
+                .arg = { .TimeGet = { .state = _RTC::TimeState() } },
+            };
+        
+        case Cmd::Op::TimeSet:
+            // Only allow setting the time while we're in host mode
+            // and therefore _TaskEvent isn't running
+            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            _RTC::Init(&cmd.arg.TimeSet.state);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::TimeAdjust:
+            // Only allow setting the time while we're in host mode
+            // and therefore _TaskEvent isn't running
+            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            _RTC::Adjust(cmd.arg.TimeAdjust.adjustment);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::HostModeSet:
+            if (cmd.arg.HostModeSet.en) {
+                _HostModeState.en = true;
+            } else {
+                // Clear entire _HostModeState when exiting host mode
+                _HostModeState = {};
+            }
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::VDDIMGSDSet:
+            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            _HostModeState.vddImgSd = cmd.arg.VDDIMGSDSet.en;
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::BatteryLevelGet: {
+            _TaskBattery::Update();
+            _TaskBattery::Wait();
+            return MSP::Resp{
+                .ok = true,
+                .arg = { .BatteryLevelGet = { .level = _TaskBattery::BatteryLevel() } },
+            };
+        }}
+        
+        return MSP::Resp{ .ok = false };
+    }
+    
+    static bool HostModeEnabled() {
+        return _HostModeState.en;
+    }
+    
+    static inline struct {
+        T_Property<bool,_EventsEnabledUpdate> en;
+        _VDDIMGSDEnabled::Assertion vddImgSd;
+    } _HostModeState;
+    
+    // Task stack
+    SchedulerStack(".stack._TaskI2C")
+    static inline uint8_t Stack[256];
 };
 
 // MARK: - _TaskSD
@@ -891,178 +1017,60 @@ struct _TaskEvent {
 // MARK: - _TaskMotion
 
 struct _TaskMotion {
-    static void Start() {
-        _Scheduler::Start<_TaskMotion>();
-    }
-    
-    static void Reset() {
-        _Motion::Reset();
-        _Scheduler::Stop<_TaskMotion>();
-    }
-    
     static void Run() {
         // Disable interrupts because _Motion requires it
         Toastbox::IntState ints(false);
         
-        // Init/power on motion sensor
-        _Motion::Init();
-        
         for (;;) {
-            _Motion::WaitForMotion();
-            // When motion occurs, start captures for each enabled motion trigger
-            for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
-                _Triggers::MotionTrigger& trigger = *it;
-                // If this trigger is enabled...
-                if (trigger.enabled.get()) {
-                    const Time::Instant time = _RTC::Now();
-                    // Start capture
-                    _TaskEvent::CaptureStart(trigger, time);
-                    // Suppress motion for the specified duration, if suppression is enabled
-                    const uint32_t suppressTicks = trigger.base().suppressTicks;
-                    if (suppressTicks) {
-                        trigger.enabled.suppress(true);
-                        _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
-                    }
-                }
+            // Wait for motion to be enabled
+            _Scheduler::Wait([] { return _Enabled; });
+            
+            // Power on motion sensor and wait for it to start up
+            _Motion::Power(true);
+            
+            for (;;) {
+                _Motion::Reset();
+                
+                // Wait for motion, or for motion to be disabled
+                _Scheduler::Wait([] { return !_Enabled || _Motion::Motion(); });
+                if (!_Enabled) break;
+                
+                _HandleMotion();
             }
             
-            // Explicitly check _MotionEnabled and bail if we're not supposed to be running.
-            // This is necessary even though we stop _TaskMotion in Reset(), because we may have
-            // called Reset() ourself (by way of trigger.enabled.suppress()), and Scheduler::Stop()
-            // explicitly doesn't stop the current task.
-            if (!_MotionEnabled) return;
+            // Turn off motion sensor
+            _Motion::Power(false);
         }
     }
+    
+    static void Enable(bool x) {
+        _Enabled = x;
+    }
+    
+    static void _HandleMotion() {
+        // When motion occurs, start captures for each enabled motion trigger
+        for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+            _Triggers::MotionTrigger& trigger = *it;
+            // If this trigger is enabled...
+            if (trigger.enabled.get()) {
+                const Time::Instant time = _RTC::Now();
+                // Start capture
+                _TaskEvent::CaptureStart(trigger, time);
+                // Suppress motion for the specified duration, if suppression is enabled
+                const uint32_t suppressTicks = trigger.base().suppressTicks;
+                if (suppressTicks) {
+                    trigger.enabled.suppress(true);
+                    _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
+                }
+            }
+        }
+    }
+    
+    static inline bool _Enabled = false;
     
     // Task stack
     SchedulerStack(".stack._TaskMotion")
     static inline uint8_t Stack[128];
-};
-
-// MARK: - _TaskI2C
-
-struct _TaskI2C {
-    static void Run() {
-        for (;;) {
-            // Wait until STM is up (ie we're plugged in and charging)
-            _Scheduler::Wait([] { return _Charging::Charging(); });
-            
-            _I2C::Init();
-            
-            for (;;) {
-                // Wait for a command
-                MSP::Cmd cmd;
-                bool ok = _I2C::Recv(cmd);
-                if (!ok) break;
-                
-                // Handle command
-                const MSP::Resp resp = _CmdHandle(cmd);
-                
-                // Send response
-                ok = _I2C::Send(resp);
-                if (!ok) break;
-            }
-            
-            // Cleanup
-            
-            // Relinquish LEDs, which may have been set by _CmdHandle()
-            _LEDRed_.set(_LEDPriority::I2C, std::nullopt);
-            _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
-            
-            // Reset state
-            _HostModeState = {};
-        }
-    }
-    
-    static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
-        using namespace MSP;
-        switch (cmd.op) {
-        case Cmd::Op::None:
-            return MSP::Resp{ .ok = false };
-        
-        case Cmd::Op::StateRead: {
-            const size_t off = cmd.arg.StateRead.off;
-            if (off > sizeof(::_State)) return MSP::Resp{ .ok = false };
-            const size_t rem = sizeof(::_State)-off;
-            const size_t len = std::min(rem, sizeof(MSP::Resp::arg.StateRead.data));
-            MSP::Resp resp = { .ok = true };
-            memcpy(resp.arg.StateRead.data, (uint8_t*)&::_State+off, len);
-            return resp;
-        }
-        
-        case Cmd::Op::StateWrite: {
-            const size_t off = cmd.arg.StateWrite.off;
-            if (off > sizeof(::_State)) return MSP::Resp{ .ok = false };
-            FRAMWriteEn writeEn; // Enable FRAM writing
-            const size_t rem = sizeof(::_State)-off;
-            const size_t len = std::min(rem, sizeof(MSP::Cmd::arg.StateWrite.data));
-            memcpy((uint8_t*)&::_State+off, cmd.arg.StateWrite.data, len);
-            return MSP::Resp{ .ok = true };
-        }
-        
-        case Cmd::Op::LEDSet:
-            _LEDRed_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
-            _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::TimeGet:
-            return MSP::Resp{
-                .ok = true,
-                .arg = { .TimeGet = { .state = _RTC::TimeState() } },
-            };
-        
-        case Cmd::Op::TimeSet:
-            // Only allow setting the time while we're in host mode
-            // and therefore _TaskEvent isn't running
-            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
-            _RTC::Init(&cmd.arg.TimeSet.state);
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::TimeAdjust:
-            // Only allow setting the time while we're in host mode
-            // and therefore _TaskEvent isn't running
-            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
-            _RTC::Adjust(cmd.arg.TimeAdjust.adjustment);
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::HostModeSet:
-            if (cmd.arg.HostModeSet.en) {
-                _HostModeState.en = true;
-            } else {
-                // Clear entire _HostModeState when exiting host mode
-                _HostModeState = {};
-            }
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::VDDIMGSDSet:
-            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
-            _HostModeState.vddImgSd = cmd.arg.VDDIMGSDSet.en;
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::BatteryLevelGet: {
-            _TaskBattery::Update();
-            _TaskBattery::Wait();
-            return MSP::Resp{
-                .ok = true,
-                .arg = { .BatteryLevelGet = { .level = _TaskBattery::BatteryLevel() } },
-            };
-        }}
-        
-        return MSP::Resp{ .ok = false };
-    }
-    
-    static bool HostModeEnabled() {
-        return _HostModeState.en;
-    }
-    
-    static inline struct {
-        T_Property<bool,_EventsEnabledUpdate> en;
-        _VDDIMGSDEnabled::Assertion vddImgSd;
-    } _HostModeState;
-    
-    // Task stack
-    SchedulerStack(".stack._TaskI2C")
-    static inline uint8_t Stack[256];
 };
 
 // MARK: - _TaskMain
@@ -1169,7 +1177,7 @@ struct _TaskMain {
         _LEDRed_.set(_LEDPriority::Default, 1);
         
         // Start tasks
-        _Scheduler::Start<_TaskI2C, _TaskBattery>();
+        _Scheduler::Start<_TaskI2C, _TaskBattery, _TaskMotion>();
         
         // Update our battery status when restarting
         _TaskBattery::Update();
@@ -1362,12 +1370,7 @@ static void _EventsEnabledChanged() {
 }
 
 static void _MotionEnabledUpdate() {
-    _MotionEnabled = _EventsEnabled && _MotionRequested::Asserted();
-}
-
-static void _MotionEnabledChanged() {
-    if (_MotionEnabled) _TaskMotion::Start();
-    else                _TaskMotion::Reset();
+    _TaskMotion::Enable(_EventsEnabled && _MotionRequested::Asserted());
 }
 
 // MARK: - Interrupts
@@ -1431,7 +1434,7 @@ void _ISR_PORT2() {
     case _Charging::Pin::IVPort2():
         _Charging::ISR(iv);
         // If the I2C master went away, abort whatever I2C was doing
-        if (!_Charging::Charging()) _I2C::Abort();
+        if (!_Charging::Charging()) _TaskI2C::Abort();
         // Wake ourself
         _Clock::Wake();
         break;
