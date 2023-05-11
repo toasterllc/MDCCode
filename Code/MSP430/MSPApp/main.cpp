@@ -101,6 +101,10 @@ static void _MotionEnabledUpdate();
 
 static void _VDDIMGSDEnabledChanged();
 
+// _BatteryTrapSaved: remembers our battery-trap state across crashes and LPM3.5.
+[[gnu::section(".ram_backup_bss._BatteryTrapSaved")]]
+static inline bool _BatteryTrapSaved = false;
+
 // _On: user-controlled power state
 static T_Property<bool,_OnChanged,_EventsEnabledUpdate> _On;
 
@@ -286,6 +290,9 @@ struct _TaskBattery {
         // Disable interrupts so that ISRRTC() can't interrupt us setting our state
         Toastbox::IntState ints(false);
         
+        // Restore our battery trap state
+        _BatteryTrap = _BatteryTrapSaved;
+        
         // Init BatterySampler
         _BatterySampler::Init();
         
@@ -312,6 +319,8 @@ struct _TaskBattery {
     }
     
     static void Update() {
+        // When in battery trap mode, never sample the battery voltage unless we're charging.
+        if (_BatteryTrap && !_Charging::Charging()) return;
         _Update = true;
     }
     
@@ -344,14 +353,19 @@ struct _TaskBattery {
     }
     
     static void _BatteryLevelChanged() {
+        // If our battery level drops below the Enter threshold, enter battery trap
         if (_BatteryLevel <= _BatteryTrapLevelEnter) {
             _BatteryTrap = true;
+        
+        // If our battery level raises above the Exit threshold, exit battery trap
+        // Only allow this to occur if we're charging though. This check is needed because we update the battery
         } else if (_BatteryLevel >= _BatteryTrapLevelExit) {
             _BatteryTrap = false;
         }
     }
     
     static void _BatteryTrapChanged() {
+        _BatteryTrapSaved = _BatteryTrap;
         // Turn ourself on when exiting battery trap
         if (!_BatteryTrap) {
             _On = true;
@@ -1245,9 +1259,6 @@ struct _TaskMain {
         // Update our battery status when restarting
         _TaskBattery::Update();
         _TaskBattery::Wait();
-        
-        _LEDFlicker::Enabled(true);
-        for (;;);
         
         // Restore our saved power state
         // _OnSaved stores our power state across crashes/LPM3.5, so we need to
