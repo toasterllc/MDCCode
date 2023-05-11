@@ -314,14 +314,19 @@ struct _TaskBattery {
     }
     
     static void CaptureNotify() {
-        _CaptureCounter--;
-        _Update |= !_CaptureCounter;
+        _CaptureCounter--; // Rollover OK since we reset _CaptureCounter in Run()
+        if (!_CaptureCounter) {
+            _Update = true;
+        }
     }
     
     static bool ISRRTC() {
-        _RTCCounter--;
-        _Update |= !_RTCCounter;
-        return _Update;
+        _RTCCounter--; // Rollover OK since we reset _RTCCounter in Run()
+        if (!_RTCCounter) {
+            _Update = true;
+            return true;
+        }
+        return false;
     }
     
     static constexpr uint16_t SampleIntervalRTCDays = 4;
