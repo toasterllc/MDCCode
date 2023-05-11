@@ -55,7 +55,7 @@ public:
     //
     // Ints: disabled (so that there's no race between us calling configuring our
     // pins + resetting _Signal, and the ISR firing.)
-    static void Reset() {
+    static void SignalReset() {
         // Prepare interrupt pin
         // Switch to the _SignalOnPrepare config before switching to the _SignalOnEnabled
         // config. This is so we switch from a pullup resistor (via _SignalIgnored) to a
@@ -73,7 +73,7 @@ public:
         _Signal = false;
     }
     
-    static bool Motion() {
+    static bool Signal() {
         return _Signal;
     }
     

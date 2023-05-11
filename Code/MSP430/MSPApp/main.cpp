@@ -1029,10 +1029,9 @@ struct _TaskMotion {
             _Motion::Power(true);
             
             for (;;) {
-                _Motion::Reset();
-                
                 // Wait for motion, or for motion to be disabled
-                _Scheduler::Wait([] { return !_Enabled || _Motion::Motion(); });
+                _Motion::SignalReset();
+                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
                 if (!_Enabled) break;
                 
                 _HandleMotion();
