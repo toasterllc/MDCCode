@@ -309,7 +309,7 @@ private:
             
             // Bail if I2C comms failed when getting the battery charge level, since
             // I2C comms when setting the LEDs will fail too.
-            if (_BatteryStatus.level == MSP::BatteryChargeLevelInvalid) return;
+            if (_BatteryStatus.level == MSP::BatteryLevelInvalid) return;
             
             // Update LEDs
             const bool red = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway);
@@ -325,7 +325,7 @@ private:
         static STM::BatteryStatus _BatteryStatusGet() {
             STM::BatteryStatus status = {
                 .chargeStatus = _ChargeStatusGet(),
-                .level = MSP::BatteryChargeLevelInvalid,
+                .level = MSP::BatteryLevelInvalid,
             };
             
             // Only sample the battery voltage if charging is underway
@@ -336,9 +336,9 @@ private:
             // to ensure that we can detect the 'Shutdown' battery state.
             #warning TODO: uncomment `status.chargeStatus` check below
 //            if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
-                const auto resp = _Send({ .op = MSP::Cmd::Op::BatteryChargeLevelGet });
+                const auto resp = _Send({ .op = MSP::Cmd::Op::BatteryLevelGet });
                 if (resp && resp->ok) {
-                    status.level = resp->arg.BatteryChargeLevelGet.level;
+                    status.level = resp->arg.BatteryLevelGet.level;
                 }
 //            }
             
