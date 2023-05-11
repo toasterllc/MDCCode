@@ -282,14 +282,18 @@ struct _TaskPower {
             _Scheduler::Wait([] { return _BatteryLevelUpdate || charging!=_Charging::Charging(); });
             
             if (_BatteryLevelUpdate) {
-                // Disable interrupts so that ISRRTC() can't interrupt us setting our state
-                Toastbox::IntState ints(false);
                 // Update our battery level
                 _BatteryLevel = _BatterySampler::Sample();
-                // Reset our counters
-                _RTCCounter = _SampleIntervalRTC;
-                _CaptureCounter = _SampleIntervalCapture;
-                _BatteryLevelUpdate = false;
+                
+                // Update our state
+                {
+                    // Disable interrupts so that ISRRTC() can't interrupt us setting our state
+                    Toastbox::IntState ints(false);
+                    // Reset our counters
+                    _RTCCounter = _SampleIntervalRTC;
+                    _CaptureCounter = _SampleIntervalCapture;
+                    _BatteryLevelUpdate = false;
+                }
             }
             
             if (charging != _Charging::Charging()) {
