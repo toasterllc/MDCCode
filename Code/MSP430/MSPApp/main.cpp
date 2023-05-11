@@ -840,9 +840,10 @@ struct _TaskEvent {
         
         constexpr MSP::ImgRingBuf& imgRingBuf = ::_State.sd.imgRingBufs[0];
         
-        // Notify _TaskBattery that we're performing a capture, and wait for it to sample the battery if it's underway.
+        // Notify _TaskBattery that we're performing a capture, and wait for it to sample the battery if it decided to.
         // We do this here because we want the battery sampling to complete before we turn on VDDB / VDDIMGSD and start
-        // capturing an image, so that we sample the voltage with minimal noise due to activity.
+        // capturing an image, so that we sample the voltage while the system is quiet, instead of when the system is
+        // bursting with activity, which causes lots of noise on the battery line.
         _TaskBattery::CaptureNotify();
         _TaskBattery::Wait();
         
