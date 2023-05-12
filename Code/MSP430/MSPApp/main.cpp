@@ -535,7 +535,11 @@ struct _TaskPower {
     
     static void _LEDFlash(OutputPriority& led) {
         _LEDFlashing = true;
-        _Scheduler::Delay(_Scheduler::Ms<50>);
+        
+        // Turn off both LEDs
+        _LEDGreen_.set(_LEDPriority::Power, 1);
+        _LEDRed_.set(_LEDPriority::Power, 1);
+        _Scheduler::Delay(_Scheduler::Ms<100>);
         
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
@@ -544,7 +548,11 @@ struct _TaskPower {
             led.set(_LEDPriority::Power, 1);
             _Scheduler::Delay(_Scheduler::Ms<50>);
         }
-        led.set(_LEDPriority::Power, std::nullopt);
+        
+        // Relinquish both LEDs
+        _LEDGreen_.set(_LEDPriority::Power, std::nullopt);
+        _LEDRed_.set(_LEDPriority::Power, std::nullopt);
+        _Scheduler::Delay(_Scheduler::Ms<100>);
         
         _LEDFlashing = false;
     }

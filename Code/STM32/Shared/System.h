@@ -247,7 +247,7 @@ private:
         
         static void Run() {
             using Deadline = typename Scheduler::Deadline;
-            constexpr uint16_t BatteryStatusUpdateIntervalMs = 2000;
+            constexpr uint16_t BatteryStatusUpdateIntervalMs = 100;
             
             Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime();
             for (;;) {
