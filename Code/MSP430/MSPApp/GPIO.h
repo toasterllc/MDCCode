@@ -32,7 +32,7 @@ template<PortIndex T_PortIdx>
 class Port {
 public:
 #define OnlyPortA                                                   \
-    template<                                                      \
+    template<                                                       \
     PortIndex _T_PortIdx = PortIdx,                                 \
     typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0  \
     >
