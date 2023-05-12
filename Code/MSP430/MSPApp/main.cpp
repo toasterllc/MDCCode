@@ -121,9 +121,6 @@ using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionRequestedAssertion>;
 
-static bool _HostModeEnabled();
-static void _CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time);
-
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
     
@@ -385,20 +382,18 @@ struct _TaskPower {
         BatteryLevelUpdate();
         
         // Start tasks
-        _Scheduler::Start<_TaskI2C>();
-        _Scheduler::Start<_TaskI2C, _TaskMotion>();
+        _Scheduler::Start<_TaskI2C, _TaskMotion, _TaskButton>();
     }
     
     static void Run() {
-        // Disable interrupts because _Init(), _WiredMonitor, and _Button require it
+        // Disable interrupts because _Init() and _WiredMonitor
         Toastbox::IntState ints(false);
         
         _Init();
         
         for (;;) {
             // Wait until something triggers us to update
-            _Button::Init();
-            _Scheduler::Wait([] { return _WiredMonitor::Changed() || _BatteryLevelUpdate || _Button::Pending(); });
+            _Scheduler::Wait([] { return _WiredMonitor::Changed() || _BatteryLevelUpdate; });
             
             // Consume any pending wired changes
             _Wired = _WiredMonitor::Wired();
@@ -418,36 +413,18 @@ struct _TaskPower {
                     _BatteryLevelUpdate = false;
                 }
             }
-            
-            if (_Button::Pending()) {
-                switch (_Button::Read()) {
-                case _Button::Event::Press: {
-                    // Ignore button presses if we're off or in host mode
-                    if (!_On || _HostModeEnabled()) break;
-                    
-                    for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                        _CaptureStart(*it, _RTC::Now());
-                    }
-                    break;
-                }
-                
-                case _Button::Event::Hold:
-                    // If we're not in battery trap, toggle the power state
-                    if (!_BatteryTrap) {
-                        _On = !_On;
-                    
-                    // Otherwise if we are in battery trap, deny the power transition and blink the red LEDs
-                    } else {
-                        _LEDFlash(_LEDRed_);
-                    }
-                    break;
-                }
-            }
         }
     }
     
     static bool On() {
         return _On;
+    }
+    
+    static void On(bool x) {
+        // If we're not in battery trap, set the power state
+        if (!_BatteryTrap) _On = x;
+        // Otherwise deny the power transition by blinking the red LEDs
+        else _LEDFlash(_LEDRed_);
     }
     
     static MSP::BatteryLevel BatteryLevel() {
@@ -1311,6 +1288,41 @@ struct _TaskEvent {
     static inline uint8_t Stack[256];
 };
 
+// MARK: - _TaskButton
+
+struct _TaskButton {
+    static void Run() {
+        // Disable interrupts because _Button required it
+        Toastbox::IntState ints(false);
+        
+        for (;;) {
+            // Wait until something triggers us to update
+            _Button::Init();
+            _Scheduler::Wait([] { return _Button::Pending(); });
+            
+            switch (_Button::Read()) {
+            case _Button::Event::Press: {
+                // Ignore button presses if we're off or in host mode
+                if (!_TaskPower::On() || _TaskI2C::HostModeEnabled()) break;
+                
+                for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
+                    _TaskEvent::CaptureStart(*it, _RTC::Now());
+                }
+                break;
+            }
+            
+            case _Button::Event::Hold:
+                _TaskPower::On(!_TaskPower::On());
+                break;
+            }
+        }
+    }
+    
+    // Task stack
+    SchedulerStack(".stack._TaskButton")
+    static inline uint8_t Stack[128];
+};
+
 // MARK: - _TaskMotion
 
 struct _TaskMotion {
@@ -1399,16 +1411,6 @@ static void _EventsEnabledChanged() {
 
 static void _MotionEnabledUpdate() {
     _TaskMotion::Enable(_EventsEnabled && _MotionRequested::Asserted());
-}
-
-// MARK: - Trampolines
-
-static bool _HostModeEnabled() {
-    return _TaskI2C::HostModeEnabled();
-}
-
-static void _CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
-    _TaskEvent::CaptureStart(ev, time);
 }
 
 // MARK: - Interrupts
