@@ -71,7 +71,7 @@ public:
     }
     
 private:
-    static constexpr auto _HoldDuration = T_Scheduler::template Ms<1500>;
+    static constexpr auto _HoldDuration = T_Scheduler::template Ms<1400>;
     static constexpr auto _DebounceDelay = T_Scheduler::template Ms<2>;
     static inline volatile bool _Pending = false;
 };
