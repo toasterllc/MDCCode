@@ -6,7 +6,7 @@
 #include "MSP.h"
 #include "Toastbox/Scheduler.h"
 
-//#define DebugEnable 1
+#define DebugEnable 1
 
 class Debug {
 public:

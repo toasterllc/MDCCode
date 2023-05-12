@@ -398,7 +398,7 @@ struct _TaskPower {
         for (;;) {
             // Wait until something triggers us to update
             _Button::Init();
-            _Scheduler::Wait([] { return _WiredMonitor::Changed() || _BatteryLevelUpdate || _Button::Pending(); });
+            bool timeout_ = _Scheduler::Wait(_Scheduler::Ms<2000>, [] { return _WiredMonitor::Changed() || _BatteryLevelUpdate || _Button::Pending(); });
             
             // Consume any pending wired changes
             _Wired = _WiredMonitor::Wired();
@@ -419,30 +419,34 @@ struct _TaskPower {
                 }
             }
             
-            if (_Button::Pending()) {
-                switch (_Button::Read()) {
-                case _Button::Event::Press: {
-                    // Ignore button presses if we're off or in host mode
-                    if (!_On || _HostModeEnabled()) break;
-                    
-                    for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                        _CaptureStart(*it, _RTC::Now());
-                    }
-                    break;
-                }
-                
-                case _Button::Event::Hold:
-                    // If we're not in battery trap, toggle the power state
-                    if (!_BatteryTrap) {
-                        _On = !_On;
-                    
-                    // Otherwise if we are in battery trap, deny the power transition and blink the red LEDs
-                    } else {
-                        _LEDFlash(_LEDRed_);
-                    }
-                    break;
-                }
+            if (!timeout_) {
+                _On = !_On;
             }
+            
+//            if (_Button::Pending()) {
+//                switch (_Button::Read()) {
+//                case _Button::Event::Press: {
+//                    // Ignore button presses if we're off or in host mode
+//                    if (!_On || _HostModeEnabled()) break;
+//                    
+//                    for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
+//                        _CaptureStart(*it, _RTC::Now());
+//                    }
+//                    break;
+//                }
+//                
+//                case _Button::Event::Hold:
+//                    // If we're not in battery trap, toggle the power state
+//                    if (!_BatteryTrap) {
+//                        _On = !_On;
+//                    
+//                    // Otherwise if we are in battery trap, deny the power transition and blink the red LEDs
+//                    } else {
+//                        _LEDFlash(_LEDRed_);
+//                    }
+//                    break;
+//                }
+//            }
         }
     }
     
@@ -1256,12 +1260,10 @@ struct _TaskEvent {
         _Triggers::Init(startTime);
         
         // Fast-forward through events
-        if (Time::Absolute(startTime)) {
-            for (;;) {
-                _Triggers::Event* ev = _Triggers::EventFront();
-                if (!ev || (ev->time > startTime)) break;
-                _EventHandle(_EventPop());
-            }
+        for (;;) {
+            _Triggers::Event* ev = _Triggers::EventFront();
+            if (!ev || (ev->time > startTime)) break;
+            _EventHandle(_EventPop());
         }
         
         _State.live = true;
