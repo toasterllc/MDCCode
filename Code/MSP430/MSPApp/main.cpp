@@ -386,7 +386,7 @@ struct _TaskPower {
     }
     
     static void Run() {
-        // Disable interrupts because _Init() and _WiredMonitor
+        // Disable interrupts because _Init() and _WiredMonitor require it
         Toastbox::IntState ints(false);
         
         _Init();
@@ -487,15 +487,18 @@ struct _TaskPower {
     
     static void _BatteryTrapChanged() {
         _BatteryTrapSaved = _BatteryTrap;
-        // Update _On based on battery trap:
-        //   When entering battery trap, turn off.
-        //   When exiting battery trap, turn on.
-        _On = !_BatteryTrap;
+        // Turn ourself off when entering battery trap while we're not
+        // wired (ie when we're powered by the battery)
+        if (_BatteryTrap && !_Wired) {
+            _On = false;
+        }
     }
     
     static void _WiredChanged() {
-        // Turn ourself on if we become wired and we're not in battery trap
-        if (_Wired && !_BatteryTrap) _On = true;
+        // Plugged in: turn ourself on unconditionally
+        if (_Wired) _On = true;
+        // Unplugged: turn ourself off if we're in battery trap
+        else if (_BatteryTrap) _On = false;
     }
     
     static void _SysTickEnabledChanged() {
@@ -1327,28 +1330,28 @@ struct _TaskButton {
 
 struct _TaskMotion {
     static void Run() {
-        // Disable interrupts because _Motion requires it
-        Toastbox::IntState ints(false);
-        
-        for (;;) {
-            // Wait for motion to be enabled
-            _Scheduler::Wait([] { return _Enabled; });
-            
-            // Power on motion sensor and wait for it to start up
-            _Motion::Power(true);
-            
-            for (;;) {
-                // Wait for motion, or for motion to be disabled
-                _Motion::SignalReset();
-                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
-                if (!_Enabled) break;
-                
-                _HandleMotion();
-            }
-            
-            // Turn off motion sensor
-            _Motion::Power(false);
-        }
+//        // Disable interrupts because _Motion requires it
+//        Toastbox::IntState ints(false);
+//        
+//        for (;;) {
+//            // Wait for motion to be enabled
+//            _Scheduler::Wait([] { return _Enabled; });
+//            
+//            // Power on motion sensor and wait for it to start up
+//            _Motion::Power(true);
+//            
+//            for (;;) {
+//                // Wait for motion, or for motion to be disabled
+//                _Motion::SignalReset();
+//                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
+//                if (!_Enabled) break;
+//                
+//                _HandleMotion();
+//            }
+//            
+//            // Turn off motion sensor
+//            _Motion::Power(false);
+//        }
     }
     
     static void Enable(bool x) {

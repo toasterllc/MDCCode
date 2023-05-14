@@ -13,11 +13,9 @@ class T_BatterySampler {
 public:
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
-        #warning TODO: Keep BatChrgLvlEn_ asserted because it makes BAT_CHRG_STAT work for some reason.
-        #warning TODO: We need to debug and see if once we correct U5 to be a buffer (instead of an inverter),
-        #warning TODO: and we switch BatChrgLvlEn_ polarity back (BatChrgLvlEn_ -> BatChrgLvlEn), does
-        #warning TODO: BAT_CHRG_STAT work? Does it oscillate or does the high-z state work as expected?
-        using BatChrgLvlEn_Pin = typename T_BatChrgLvlEn_Pin::template Opts<GPIO::Option::Output0>;
+        #warning TODO: Switch polarity (BatChrgLvlEn_ -> BatChrgLvlEn) once we correct U5 to be a buffer instead of an inverter.
+        #warning TODO: Once we do that, verify that BAT_CHRG_STAT doesn't oscillate. See MDCNotes/MCP73831-Battery-Charger-Oscillation.txt.
+        using BatChrgLvlEn_Pin = typename T_BatChrgLvlEn_Pin::template Opts<GPIO::Option::Output1>;
     };
     
     static void Init() {
@@ -89,19 +87,17 @@ public:
         // Sample battery voltage
         uint16_t sampleBat = 0;
         {
-            #warning TODO: for the Rev8 board: uncomment our pin enabling/sleep/disabling code here, because BAT_CHRG_LVL_EN should work as intended on Rev8.
-            #warning TODO: on Rev7 it doesn't work as intended because U5 is an inverter instead of a buffer, so we decided to leave BAT_CHRG_LVL_EN enabled all the time, instead of enabling it only when sampling.
-//            // Enable BAT_CHRG_LVL buffer
-//            Pin::BatChrgLvlEn_Pin::Write(0);
-//            
-//            // Wait 5 time constants for BAT_CHRG_LVL to settle:
-//            //   5 time constants = 5*R*C (where R=1k, C=100n) = 500us
-//            T_Scheduler::Sleep(_Us<500>);
+            // Enable BAT_CHRG_LVL buffer
+            Pin::BatChrgLvlEn_Pin::Write(0);
+            
+            // Wait 5 time constants for BAT_CHRG_LVL to settle:
+            //   5 time constants = 5*R*C (where R=1k, C=100n) = 500us
+            T_Scheduler::Sleep(_Us<500>);
             
             sampleBat = _ChannelSample(_Channel::BatChrgLvl);
             
-//            // Disable BAT_CHRG_LVL buffer (to save power)
-//            Pin::BatChrgLvlEn_Pin::Write(1);
+            // Disable BAT_CHRG_LVL buffer (to save power)
+            Pin::BatChrgLvlEn_Pin::Write(1);
         }
         
         _ADCEnable(false);
@@ -258,6 +254,10 @@ private:
             { 4181, 65219 },
             { 4200, 65408 },    // y must be <= BatteryLevelMax
         };
+        
+        // If the measured voltage is less than the minimum voltage we expect, assume that we don't
+        // have a battery and return MSP::BatteryLevelInvalid.
+        if (mv < Table[0].mv) return MSP::BatteryLevelInvalid;
         
         auto it = std::lower_bound(std::begin(Table), std::end(Table), 0,
             [&](const Entry& entry, auto) -> bool {

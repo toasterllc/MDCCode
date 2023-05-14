@@ -1585,10 +1585,6 @@ extern "C" [[gnu::section(".isr")]] void ISR_I2C1_ER() {
     _System::ISR_I2CError();
 }
 
-extern "C" [[gnu::section(".isr")]] void ISR_EXTI15_10() {
-    _System::ISR_ExtInt_15_10();
-}
-
 // MARK: - Abort
 
 extern "C"
