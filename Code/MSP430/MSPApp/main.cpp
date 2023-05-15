@@ -326,44 +326,46 @@ struct _TaskPower {
         
         for (;;) {
             switch (_State) {
-            case __State::Off:
-                _Scheduler::Wait([] { return _BatteryTrapEnter() || _ButtonHold; });
-                if (_BatteryTrapEnter()) {
-                    _State = __State::OffBatteryTrap;
+            case _StateOff:
+                _Scheduler::Wait([] { return _Wired::Wired() || _BatteryTrapEnter() || _ButtonHold; });
+                if (_Wired::Wired()) {
+                    _State = _StateOn;
+                } else if (_BatteryTrapEnter()) {
+                    _State = _StateBatteryTrap;
                 } else {
-                    _State = __State::On;
+                    _State = _StateOn;
                     _ButtonHold = false;
                 }
                 break;
             
-            case __State::OffBatteryTrap:
+            case _StateOn:
+                _Scheduler::Wait([] { return _BatteryTrapEnter() || _ButtonHold; });
+                if (_BatteryTrapEnter()) {
+                    _State = _StateBatteryTrap;
+                } else {
+                    _State = _StateOff;
+                    _ButtonHold = false;
+                }
+                break;
+            
+            case _StateBatteryTrap:
                 _Scheduler::Wait([] { return _Wired::Wired() || _ButtonHold; });
                 if (_Wired::Wired()) {
-                    _State = __State::OnBatteryTrap;
+                    _State = _StateBatteryTrap|_StateOn;
                 } else {
 //                    BlinkRedLED();
                     _ButtonHold = false;
                 }
                 break;
             
-            case __State::On:
-                _Scheduler::Wait([] { return _BatteryTrapEnter() || _ButtonHold; });
-                if (_BatteryTrapEnter()) {
-                    _State = __State::OffBatteryTrap;
-                } else {
-                    _State = __State::Off;
-                    _ButtonHold = false;
-                }
-                break;
-            
-            case __State::OnBatteryTrap:
+            case _StateBatteryTrap|_StateOn:
                 _Scheduler::Wait([] { return !_Wired::Wired() || _BatteryTrapExit() || _ButtonHold; });
                 if (!_Wired::Wired()) {
-                    _State = __State::OffBatteryTrap;
+                    _State = _StateBatteryTrap;
                 } else if (_BatteryTrapExit()) {
-                    _State = __State::On;
+                    _State = _StateOn;
                 } else {
-                    _State = __State::Off;
+                    _State = _StateOff;
                     _ButtonHold = false;
                 }
                 break;
@@ -372,23 +374,11 @@ struct _TaskPower {
     }
     
     static bool On() {
-        switch (_State) {
-        case __State::Off:              return false;
-        case __State::OffBatteryTrap:   return false;
-        case __State::On:               return true;
-        case __State::OnBatteryTrap:    return true;
-        }
-        Assert(false);
+        return _State & _StateOn;
     }
     
     static bool BatteryTrap() {
-        switch (_State) {
-        case __State::Off:              return false;
-        case __State::OffBatteryTrap:   return true;
-        case __State::On:               return false;
-        case __State::OnBatteryTrap:    return true;
-        }
-        Assert(false);
+        return _State & _StateBatteryTrap;
     }
     
     static void ButtonHold() {
@@ -514,11 +504,11 @@ struct _TaskPower {
         _LEDGreen_.set(_LEDPriority::Default, 1);
         _LEDRed_.set(_LEDPriority::Default, 1);
         
-        // Restore our saved power state
-        _State = (__State)_TaskPowerStateSaved;
-        
         // Start tasks
         _Scheduler::Start<_TaskBatteryLevel, _TaskI2C, _TaskMotion, _TaskButton>();
+        
+        // Restore our saved power state
+        _State = _TaskPowerStateSaved;
         
         // Trigger a battery level update when first starting
         _TaskBatteryLevel::Update();
@@ -526,7 +516,7 @@ struct _TaskPower {
     }
     
     static void _StateChanged() {
-        _TaskPowerStateSaved = std::to_underlying((__State)_State);
+        _TaskPowerStateSaved = _State;
     }
     
     static bool _BatteryTrapEnter() {
@@ -538,7 +528,7 @@ struct _TaskPower {
     }
     
     static void _LEDFlickerEnabledUpdate() {
-//        _LEDFlickerEnabled = _BatteryTrap && !_Wired && !_LEDFlashing;
+        _LEDFlickerEnabled = BatteryTrap() && !_Wired::Wired() && !_LEDFlashing;
     }
     
     static void _LEDFlickerEnabledChanged() {
@@ -585,12 +575,9 @@ struct _TaskPower {
         _SysTick::Enabled(true);
     }
     
-    enum class __State : uint8_t {
-        Off,
-        OffBatteryTrap,
-        On,
-        OnBatteryTrap,
-    };
+    static constexpr uint8_t _StateOff          = 0;
+    static constexpr uint8_t _StateOn           = 1<<0;
+    static constexpr uint8_t _StateBatteryTrap  = 1<<1;
     
     static constexpr uint16_t _SampleIntervalRTCDays = 4;
     static constexpr uint16_t _SampleIntervalRTC     = (_SampleIntervalRTCDays * Time::Day) / _RTC::InterruptIntervalTicks;
@@ -613,7 +600,7 @@ struct _TaskPower {
     
     static inline bool _ButtonHold = false;
     
-    static inline T_Property<__State,_StateChanged,_EventsEnabledUpdate> _State = __State::Off;
+    static inline T_Property<uint8_t,_StateChanged,_EventsEnabledUpdate> _State = _StateOff;
     
     // _LEDFlashing: whether we're currently flashing the LEDs manually
     static inline T_Property<bool,_LEDFlickerEnabledUpdate> _LEDFlashing;
