@@ -5,6 +5,7 @@
 #include <atomic>
 #include <ratio>
 #include "Toastbox/Scheduler.h"
+#include "Toastbox/Util.h"
 #include "SDCard.h"
 #include "ICE.h"
 #include "ImgSensor.h"
@@ -31,7 +32,7 @@
 #include "Assert.h"
 #include "Timer.h"
 #include "Debug.h"
-#include "WiredMonitor.h"
+#include "Wired.h"
 #include "System.h"
 #include "Property.h"
 #include "Time.h"
@@ -51,7 +52,7 @@ using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::B
 
 using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
 
-using _WiredMonitor = T_WiredMonitor<_Pin::VDD_B_3V3_STM>;
+using _Wired = T_Wired<_Pin::VDD_B_3V3_STM>;
 
 static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -95,19 +96,11 @@ static void _MotionEnabledUpdate();
 
 static void _VDDIMGSDEnabledChanged();
 
-// _BatteryTrapSaved: remembers our battery-trap state across crashes and LPM3.5.
+// _TaskPowerStateSaved: remembers our power state across crashes and LPM3.5.
 //
 // This needs to be a global for the gnu::section attribute to work.
-[[gnu::section(".ram_backup_bss._BatteryTrapSaved")]]
-static inline bool _BatteryTrapSaved = false;
-
-// _OnSaved: remembers our power state across crashes and LPM3.5.
-// This is needed because we don't want the device to return to the
-// powered-off state after a crash.
-//
-// This needs to be a global for the gnu::section attribute to work.
-[[gnu::section(".ram_backup_bss._OnSaved")]]
-static inline bool _OnSaved = false;
+[[gnu::section(".ram_backup_bss._TaskPowerStateSaved")]]
+static inline uint8_t _TaskPowerStateSaved = 0;
 
 // _EventsEnabled: whether _TaskEvent should be running and handling events
 static T_Property<bool,_EventsEnabledChanged,_MotionEnabledUpdate> _EventsEnabled;
@@ -262,6 +255,58 @@ static void _ICEInit() {
     Assert(ok);
 }
 
+
+
+
+
+// MARK: - _TaskBatteryLevel
+
+struct _TaskBatteryLevel {
+    static void Run() {
+        // Init BatterySampler
+        _BatterySampler::Init();
+        
+        for (;;) {
+            // Wait until something triggers us to update
+            _Scheduler::Wait([] { return _Update; });
+            
+            // Update our battery level
+            _BatteryLevel = _BatterySampler::Sample();
+            
+            // Update our state
+            _Update = false;
+        }
+    }
+    
+    static MSP::BatteryLevel Get() {
+        return _BatteryLevel;
+    }
+    
+    static void Update() {
+        _Update = true;
+    }
+    
+    static void Wait() {
+        _Scheduler::Wait([] { return !_Update; });
+    }
+    
+    static inline MSP::BatteryLevel _BatteryLevel = MSP::BatteryLevelInvalid;
+    static inline bool _Update = false;
+    
+    // Task stack
+    SchedulerStack(".stack._TaskBatteryLevel")
+    static inline uint8_t Stack[128];
+};
+
+
+
+
+
+
+
+
+
+
 // MARK: - _TaskPower
 
 #define _TaskPowerStackSize 128
@@ -273,6 +318,108 @@ asm(".global _StartupStack");
 asm(".equ _StartupStack, _TaskPowerStack+" Stringify(_TaskPowerStackSize));
 
 struct _TaskPower {
+    static void Run() {
+        // Disable interrupts because _Init() and _Wired require it
+        Toastbox::IntState ints(false);
+        
+        _Init();
+        
+        for (;;) {
+            switch (_State) {
+            case __State::Off:
+                _Scheduler::Wait([] { return _BatteryTrapEnter() || _ButtonHold; });
+                if (_BatteryTrapEnter()) {
+                    _State = __State::OffBatteryTrap;
+                } else {
+                    _State = __State::On;
+                    _ButtonHold = false;
+                }
+                break;
+            
+            case __State::OffBatteryTrap:
+                _Scheduler::Wait([] { return _Wired::Wired() || _ButtonHold; });
+                if (_Wired::Wired()) {
+                    _State = __State::OnBatteryTrap;
+                } else {
+//                    BlinkRedLED();
+                    _ButtonHold = false;
+                }
+                break;
+            
+            case __State::On:
+                _Scheduler::Wait([] { return _BatteryTrapEnter() || _ButtonHold; });
+                if (_BatteryTrapEnter()) {
+                    _State = __State::OffBatteryTrap;
+                } else {
+                    _State = __State::Off;
+                    _ButtonHold = false;
+                }
+                break;
+            
+            case __State::OnBatteryTrap:
+                _Scheduler::Wait([] { return !_Wired::Wired() || _BatteryTrapExit() || _ButtonHold; });
+                if (!_Wired::Wired()) {
+                    _State = __State::OffBatteryTrap;
+                } else if (_BatteryTrapExit()) {
+                    _State = __State::On;
+                } else {
+                    _State = __State::Off;
+                    _ButtonHold = false;
+                }
+                break;
+            }
+        }
+    }
+    
+    static bool On() {
+        switch (_State) {
+        case __State::Off:              return false;
+        case __State::OffBatteryTrap:   return false;
+        case __State::On:               return true;
+        case __State::OnBatteryTrap:    return true;
+        }
+        Assert(false);
+    }
+    
+    static bool BatteryTrap() {
+        switch (_State) {
+        case __State::Off:              return false;
+        case __State::OffBatteryTrap:   return true;
+        case __State::On:               return false;
+        case __State::OnBatteryTrap:    return true;
+        }
+        Assert(false);
+    }
+    
+    static void ButtonHold() {
+        _ButtonHold = true;
+    }
+    
+    static void CaptureNotify() {
+        // Short-circuit if we're in battery trap
+        // We don't want to monitor the battery while we're in battery trap, to minimize battery use
+        if (BatteryTrap()) return;
+        
+        _CaptureCounter--; // Rollover OK since we reset _CaptureCounter in Run()
+        if (!_CaptureCounter) {
+            _TaskBatteryLevel::Update();
+            _TaskBatteryLevel::Wait();
+        }
+    }
+    
+    static bool ISRRTC() {
+        // Short-circuit if we're in battery trap
+        // We don't want to monitor the battery while we're in battery trap, to minimize battery use
+        if (BatteryTrap()) return false;
+        
+        _RTCCounter--; // Rollover OK since we reset _RTCCounter in Run()
+        if (!_RTCCounter) {
+            _TaskBatteryLevel::Update();
+            return true;
+        }
+        return false;
+    }
+    
     // _Init(): initialize system
     //
     // Ints: disabled
@@ -314,7 +461,7 @@ struct _TaskPower {
             _Button::Pin,
             
             // Wired
-            _WiredMonitor::Pin,
+            _Wired::Pin,
             
             // LEDs
             _Pin::LED_GREEN_,
@@ -367,146 +514,31 @@ struct _TaskPower {
         _LEDGreen_.set(_LEDPriority::Default, 1);
         _LEDRed_.set(_LEDPriority::Default, 1);
         
-        // Init BatterySampler
-        _BatterySampler::Init();
-        
-        // Restore our saved battery trap state
-        _BatteryTrap = _BatteryTrapSaved;
-        
         // Restore our saved power state
-        _On = _OnSaved;
-        
-        // Trigger a battery level update when first starting
-        // (This will no-op if we're currently in battery trap and not wired,
-        // which is what we want, to save a little power.)
-        BatteryLevelUpdate();
+        _State = (__State)_TaskPowerStateSaved;
         
         // Start tasks
-        _Scheduler::Start<_TaskI2C, _TaskMotion, _TaskButton>();
-    }
-    
-    static void Run() {
-        // Disable interrupts because _Init() and _WiredMonitor require it
-        Toastbox::IntState ints(false);
+        _Scheduler::Start<_TaskBatteryLevel, _TaskI2C, _TaskMotion, _TaskButton>();
         
-        _Init();
-        
-        for (;;) {
-            // Wait until something triggers us to update
-            _Scheduler::Wait([] { return _WiredMonitor::Changed() || _BatteryLevelUpdate; });
-            
-            // Consume any pending wired changes
-            _Wired = _WiredMonitor::Wired();
-            _WiredMonitor::Clear();
-            
-            if (_BatteryLevelUpdate) {
-                // Update our battery level
-                _BatteryLevel = _BatterySampler::Sample();
-                
-                // Update our state
-                {
-                    // Disable interrupts so that ISRRTC() can't interrupt us setting our state
-                    Toastbox::IntState ints(false);
-                    // Reset our counters
-                    _RTCCounter = _SampleIntervalRTC;
-                    _CaptureCounter = _SampleIntervalCapture;
-                    _BatteryLevelUpdate = false;
-                }
-            }
-        }
+        // Trigger a battery level update when first starting
+        _TaskBatteryLevel::Update();
+        _TaskBatteryLevel::Wait();
     }
     
-    static bool On() {
-        return _On;
+    static void _StateChanged() {
+        _TaskPowerStateSaved = std::to_underlying((__State)_State);
     }
     
-    static void On(bool x) {
-        // If we're not in battery trap, set the power state
-        if (!_BatteryTrap) _On = x;
-        // Otherwise deny the power transition by blinking the red LEDs
-        else _LEDFlash(_LEDRed_);
+    static bool _BatteryTrapEnter() {
+        return _TaskBatteryLevel::Get() <= _BatteryTrapLevelEnter;
     }
     
-    static MSP::BatteryLevel BatteryLevel() {
-        return _BatteryLevel;
-    }
-    
-    static void BatteryLevelUpdate() {
-        // When in battery trap, never sample the battery voltage unless we're wired.
-        if (_BatteryTrap && !_Wired) return;
-        _BatteryLevelUpdate = true;
-    }
-    
-    static void BatteryLevelWait() {
-        _Scheduler::Wait([] { return !_BatteryLevelUpdate; });
-    }
-    
-    static bool BatteryTrap() {
-        return _BatteryTrap;
-    }
-    
-    static void CaptureNotify() {
-        // Short-circuit if we're in battery trap
-        // We don't want to monitor the battery while we're in battery trap, to minimize battery use
-        if (_BatteryTrap) return;
-        
-        _CaptureCounter--; // Rollover OK since we reset _CaptureCounter in Run()
-        if (!_CaptureCounter) {
-            _BatteryLevelUpdate = true;
-        }
-    }
-    
-    static bool ISRRTC() {
-        // Short-circuit if we're in battery trap
-        // We don't want to monitor the battery while we're in battery trap, to minimize battery use
-        if (_BatteryTrap) return false;
-        
-        _RTCCounter--; // Rollover OK since we reset _RTCCounter in Run()
-        if (!_RTCCounter) {
-            _BatteryLevelUpdate = true;
-            return true;
-        }
-        return false;
-    }
-    
-    static void _OnChanged() {
-        _OnSaved = _On;
-        _LEDFlash(_On ? _LEDGreen_ : _LEDRed_);
-    }
-    
-    static void _BatteryLevelChanged() {
-        // If our battery level drops below the Enter threshold, enter battery trap
-        if (_BatteryLevel <= _BatteryTrapLevelEnter) {
-            _BatteryTrap = true;
-        
-        // If our battery level raises above the Exit threshold, exit battery trap
-        } else if (_BatteryLevel >= _BatteryTrapLevelExit) {
-            _BatteryTrap = false;
-        }
-    }
-    
-    static void _BatteryTrapChanged() {
-        _BatteryTrapSaved = _BatteryTrap;
-        // Turn ourself off when entering battery trap while we're not
-        // wired (ie when we're powered by the battery)
-        if (_BatteryTrap && !_Wired) {
-            _On = false;
-        }
-    }
-    
-    static void _WiredChanged() {
-        // Plugged in: turn ourself on unconditionally
-        if (_Wired) _On = true;
-        // Unplugged: turn ourself off if we're in battery trap
-        else if (_BatteryTrap) _On = false;
-    }
-    
-    static void _SysTickEnabledChanged() {
-        _SysTick::Enabled(_SysTickEnabled);
+    static bool _BatteryTrapExit() {
+        return _TaskBatteryLevel::Get() >= _BatteryTrapLevelExit;
     }
     
     static void _LEDFlickerEnabledUpdate() {
-        _LEDFlickerEnabled = _BatteryTrap && !_Wired && !_LEDFlashing;
+//        _LEDFlickerEnabled = _BatteryTrap && !_Wired && !_LEDFlashing;
     }
     
     static void _LEDFlickerEnabledChanged() {
@@ -542,17 +574,23 @@ struct _TaskPower {
         
         // Enable/disable SysTick depending on whether we have tasks that are waiting for a deadline to pass.
         // We do this to prevent ourself from waking up unnecessarily, saving power.
-        _SysTickEnabled = _Scheduler::TickRequired();
+        const bool systickEnabled = _Scheduler::TickRequired();
+        _SysTick::Enabled(systickEnabled);
         
         // We consider the sleep 'extended' if SysTick isn't needed during the sleep
-//        const bool extendedSleep = false;
-//        const bool extendedSleep = true;
-        const bool extendedSleep = !_SysTickEnabled;
+        const bool extendedSleep = !systickEnabled;
         _Clock::Sleep(extendedSleep);
         
         // Unconditionally enable SysTick while we're awake
-        _SysTickEnabled = true;
+        _SysTick::Enabled(true);
     }
+    
+    enum class __State : uint8_t {
+        Off,
+        OffBatteryTrap,
+        On,
+        OnBatteryTrap,
+    };
     
     static constexpr uint16_t _SampleIntervalRTCDays = 4;
     static constexpr uint16_t _SampleIntervalRTC     = (_SampleIntervalRTCDays * Time::Day) / _RTC::InterruptIntervalTicks;
@@ -573,28 +611,15 @@ struct _TaskPower {
     static inline uint16_t _RTCCounter = 0;
     static inline uint16_t _CaptureCounter = 0;
     
-    // _On: user-controlled power state
-    static inline T_Property<bool,_OnChanged,_EventsEnabledUpdate> _On;
+    static inline bool _ButtonHold = false;
     
-    // _BatteryLevel: the cached battery charge level
-    static inline T_Property<MSP::BatteryLevel,_BatteryLevelChanged> _BatteryLevel = MSP::BatteryLevelInvalid;
-    
-    // _BatteryTrap: mode that disables all functionality except time-tracking
-    static inline T_Property<bool,_BatteryTrapChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate> _BatteryTrap;
-    
-    // _Wired: whether we're currently plugged in
-    static inline T_Property<bool,_WiredChanged,_LEDFlickerEnabledUpdate> _Wired;
+    static inline T_Property<__State,_StateChanged,_EventsEnabledUpdate> _State = __State::Off;
     
     // _LEDFlashing: whether we're currently flashing the LEDs manually
     static inline T_Property<bool,_LEDFlickerEnabledUpdate> _LEDFlashing;
     
     // _LEDFlickerEnabled: whether the LED should flicker periodically (due to battery trap)
     static inline T_Property<bool,_LEDFlickerEnabledChanged> _LEDFlickerEnabled;
-    
-    // _SysTickEnabled: whether SysTick should be enabled while we sleep
-    static inline T_Property<bool,_SysTickEnabledChanged> _SysTickEnabled;
-    
-    static inline bool _BatteryLevelUpdate = false;
     
     static constexpr uint32_t _FlickerPeriodMs      = 5000;
     static constexpr uint32_t _FlickerOnDurationMs  = 20;
@@ -610,7 +635,7 @@ struct _TaskI2C {
     static void Run() {
         for (;;) {
             // Wait until STM is up (ie we're plugged in)
-            _Scheduler::Wait([] { return _WiredMonitor::Wired(); });
+            _Scheduler::Wait([] { return _Wired::Wired(); });
             
             _I2C::Init();
             
@@ -641,7 +666,7 @@ struct _TaskI2C {
     
     static void WiredChanged() {
         // If we became unwired, restart our I2C state machine
-        if (!_WiredMonitor::Wired()) _I2C::Abort();
+        if (!_Wired::Wired()) _I2C::Abort();
     }
     
     static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
@@ -710,11 +735,11 @@ struct _TaskI2C {
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::BatteryLevelGet: {
-            _TaskPower::BatteryLevelUpdate();
-            _TaskPower::BatteryLevelWait();
+            _TaskBatteryLevel::Update();
+            _TaskBatteryLevel::Wait();
             return MSP::Resp{
                 .ok = true,
-                .arg = { .BatteryLevelGet = { .level = _TaskPower::BatteryLevel() } },
+                .arg = { .BatteryLevelGet = { .level = _TaskBatteryLevel::Get() } },
             };
         }}
         
@@ -999,7 +1024,7 @@ struct _TaskImg {
                 .analogGain     = 0,
                 .id             = 0,
                 .timestamp      = 0,
-                .batteryLevel   = _TaskPower::BatteryLevel(),
+                .batteryLevel   = _TaskBatteryLevel::Get(),
             };
             
             header.coarseIntTime = _State.autoExp.integrationTime();
@@ -1115,7 +1140,6 @@ struct _TaskEvent {
         // capturing an image, so that we sample the voltage while the system is quiet, instead of when the system is
         // bursting with activity, which causes lots of noise on the battery line.
         _TaskPower::CaptureNotify();
-        _TaskPower::BatteryLevelWait();
         
         const bool green = ev.capture->leds & MSP::LEDs_::Green;
         const bool red = ev.capture->leds & MSP::LEDs_::Red;
@@ -1315,7 +1339,7 @@ struct _TaskButton {
             }
             
             case _Button::Event::Hold:
-                _TaskPower::On(!_TaskPower::On());
+                _TaskPower::ButtonHold();
                 break;
             }
         }
@@ -1330,28 +1354,28 @@ struct _TaskButton {
 
 struct _TaskMotion {
     static void Run() {
-//        // Disable interrupts because _Motion requires it
-//        Toastbox::IntState ints(false);
-//        
-//        for (;;) {
-//            // Wait for motion to be enabled
-//            _Scheduler::Wait([] { return _Enabled; });
-//            
-//            // Power on motion sensor and wait for it to start up
-//            _Motion::Power(true);
-//            
-//            for (;;) {
-//                // Wait for motion, or for motion to be disabled
-//                _Motion::SignalReset();
-//                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
-//                if (!_Enabled) break;
-//                
-//                _HandleMotion();
-//            }
-//            
-//            // Turn off motion sensor
-//            _Motion::Power(false);
-//        }
+        // Disable interrupts because _Motion requires it
+        Toastbox::IntState ints(false);
+        
+        for (;;) {
+            // Wait for motion to be enabled
+            _Scheduler::Wait([] { return _Enabled; });
+            
+            // Power on motion sensor and wait for it to start up
+            _Motion::Power(true);
+            
+            for (;;) {
+                // Wait for motion, or for motion to be disabled
+                _Motion::SignalReset();
+                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
+                if (!_Enabled) break;
+                
+                _HandleMotion();
+            }
+            
+            // Turn off motion sensor
+            _Motion::Power(false);
+        }
     }
     
     static void Enable(bool x) {
@@ -1474,8 +1498,8 @@ void _ISR_PORT2() {
         break;
     
     // Wired (ie VDD_B_3V3_STM)
-    case _WiredMonitor::Pin::IVPort2():
-        _WiredMonitor::ISR(iv);
+    case _Wired::Pin::IVPort2():
+        _Wired::ISR(iv);
         // Notify _TaskI2C that our wired state changed
         _TaskI2C::WiredChanged();
         // Wake ourself
