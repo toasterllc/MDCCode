@@ -248,11 +248,14 @@ private:
                 _Cmd.resp = _Send(_Cmd.cmd);
                 // Update our state
                 _Cmd.state = _State::Resp;
+                // Give Send() an oppurtunity to consume the response.
+                // We reset our state to Idle, instead to have the task calling Send() do it after it
+                // consumes the response, so that we can recover if the task calling Send() is stopped
+                // and therefore will never consume the response.
+                Scheduler::Yield();
+                // Reset our state
+                _Cmd.state = _State::Idle;
             }
-        }
-        
-        static void Reset() {
-            _Cmd.state = _State::Idle;
         }
         
         static std::optional<MSP::Resp> Send(const MSP::Cmd& cmd) {
@@ -263,8 +266,6 @@ private:
             _Cmd.state = _State::Cmd;
             // Wait until we get a response
             Scheduler::Wait([] { return _Cmd.state==_State::Resp; });
-            // Reset our state
-            _Cmd.state = _State::Idle;
             return _Cmd.resp;
         }
         
@@ -346,14 +347,6 @@ private:
             
             MSPSend(cmd);
         }
-        
-//        static STM::BatteryStatus _BatteryStatusGet() {
-//            const auto resp = MSPSend({ .op = MSP::Cmd::Op::BatteryLevelGet });
-//            return {
-//                .chargeStatus = _ChargeStatusGet(),
-//                .level = (resp && resp->ok ? resp->arg.BatteryLevelGet.level : MSP::BatteryLevelInvalid),
-//            };
-//        }
         
         static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
             using X = STM::BatteryStatus::ChargeStatus;
@@ -474,8 +467,6 @@ private:
     }
     
     static void _Reset(const STM::Cmd& cmd) {
-        // Reset tasks
-        _TaskMSPComms::Reset();
         // Reset USB endpoints
         USB::EndpointsReset();
         // Call supplied T_Reset function
