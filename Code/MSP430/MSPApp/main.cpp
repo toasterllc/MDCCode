@@ -443,8 +443,7 @@ struct _TaskPower {
         _State = _TaskPowerStateSaved;
         
         // Trigger a battery level update when first starting
-        _TaskPower::BatteryLevelUpdate();
-        _TaskPower::BatteryLevelWait();
+        BatteryLevelUpdate();
     }
     
     static void _StateChanged() {
@@ -1309,28 +1308,28 @@ struct _TaskButton {
 
 struct _TaskMotion {
     static void Run() {
-        // Disable interrupts because _Motion requires it
-        Toastbox::IntState ints(false);
-        
-        for (;;) {
-            // Wait for motion to be enabled
-            _Scheduler::Wait([] { return _Enabled; });
-            
-            // Power on motion sensor and wait for it to start up
-            _Motion::Power(true);
-            
-            for (;;) {
-                // Wait for motion, or for motion to be disabled
-                _Motion::SignalReset();
-                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
-                if (!_Enabled) break;
-                
-                _HandleMotion();
-            }
-            
-            // Turn off motion sensor
-            _Motion::Power(false);
-        }
+//        // Disable interrupts because _Motion requires it
+//        Toastbox::IntState ints(false);
+//        
+//        for (;;) {
+//            // Wait for motion to be enabled
+//            _Scheduler::Wait([] { return _Enabled; });
+//            
+//            // Power on motion sensor and wait for it to start up
+//            _Motion::Power(true);
+//            
+//            for (;;) {
+//                // Wait for motion, or for motion to be disabled
+//                _Motion::SignalReset();
+//                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
+//                if (!_Enabled) break;
+//                
+//                _HandleMotion();
+//            }
+//            
+//            // Turn off motion sensor
+//            _Motion::Power(false);
+//        }
     }
     
     static void Enable(bool x) {
