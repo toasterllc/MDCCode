@@ -20,5 +20,5 @@ struct T_WiredMonitor {
         else        _DeassertedInterrupt::template Init<_AssertedInterrupt>();
     }
     
-    static inline volatile bool _Wired   = false;
+    static inline volatile bool _Wired = false;
 };

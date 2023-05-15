@@ -284,15 +284,9 @@ struct _TaskPower {
                 _BatteryLevel = _BatterySampler::Sample();
                 
                 // Update our state
-                {
-                    // Disable interrupts so that ISRRTC() can't interrupt us setting our state
-                    Toastbox::IntState ints(false);
-                    // Reset our counters
-                    _RTCCounter = _SampleIntervalRTC;
-                    _CaptureCounter = _SampleIntervalCapture;
-                    _BatteryLevelUpdate = false;
-                }
-
+                _RTCCounter = _SampleIntervalRTC;
+                _CaptureCounter = _SampleIntervalCapture;
+                _BatteryLevelUpdate = false;
             }
         }
     }
@@ -314,16 +308,10 @@ struct _TaskPower {
     }
     
     static void ButtonHold() {
-        if (!_BatteryTrap()) {
-            _On(!_On());
-        
-        } else {
-            if (_Wired()) {
-                _On(!_On());
-            } else {
-                _LEDFlash(_LEDRed_);
-            }
-        }
+        // Allow the button to turn us on if we're not in battery trap, or we're wired
+        if (!_BatteryTrap() || _Wired()) _On(!_On());
+        // Otherwise, deny the request by flashing the red LEDs
+        else _LEDFlash(_LEDRed_);
     }
     
     static void CaptureNotify() {
@@ -460,6 +448,11 @@ struct _TaskPower {
     }
     
     static void _StateChanged() {
+        // Blink LEDs if our on state changed
+        const bool on = _State & _StateOn;
+        const bool onPrev = _TaskPowerStateSaved & _StateOn;
+        if (!onPrev && on) _LEDFlash(_LEDGreen_);
+        else if (onPrev && !on) _LEDFlash(_LEDRed_);
         _TaskPowerStateSaved = _State;
     }
     
@@ -482,12 +475,14 @@ struct _TaskPower {
         // Short-circuit if our state didn't change
         if (x == _Wired()) return;
         if (x) {
+            // When entering the Wired state, turn ourself on
             _State = _State | _StateOn | _StateWired;
         } else {
+            // When exiting the Wired state, also exit the On state if we're in the BatteryTrap state
             if (_BatteryTrap()) {
-                _State = _State & ~(_StateOn|_StateWired));
+                _State = _State & ~(_StateOn|_StateWired);
             } else {
-                _State = _State & ~_StateWired);
+                _State = _State & ~_StateWired;
             }
         }
     }
