@@ -5,7 +5,7 @@
 template<
 typename T_Pin
 >
-struct T_Wired {
+struct T_WiredMonitor {
     using _AssertedInterrupt = typename T_Pin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
     using _DeassertedInterrupt = typename T_Pin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
     
