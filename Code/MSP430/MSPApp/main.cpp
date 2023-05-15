@@ -522,20 +522,20 @@ struct _TaskPower {
         // Turn off both LEDs
         _LEDGreen_.set(_LEDPriority::Power, 1);
         _LEDRed_.set(_LEDPriority::Power, 1);
-        _Scheduler::Delay(_Scheduler::Ms<100>);
+        _Scheduler::Sleep(_Scheduler::Ms<100>);
         
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
             led.set(_LEDPriority::Power, 0);
-            _Scheduler::Delay(_Scheduler::Ms<50>);
+            _Scheduler::Sleep(_Scheduler::Ms<50>);
             led.set(_LEDPriority::Power, 1);
-            _Scheduler::Delay(_Scheduler::Ms<50>);
+            _Scheduler::Sleep(_Scheduler::Ms<50>);
         }
         
         // Relinquish both LEDs
         _LEDGreen_.set(_LEDPriority::Power, std::nullopt);
         _LEDRed_.set(_LEDPriority::Power, std::nullopt);
-        _Scheduler::Delay(_Scheduler::Ms<100>);
+        _Scheduler::Sleep(_Scheduler::Ms<100>);
         
         _LEDFlashing = false;
     }
