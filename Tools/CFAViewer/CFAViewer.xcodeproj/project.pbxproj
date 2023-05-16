@@ -83,6 +83,21 @@
 		55B9747724C50A81000B2633 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		55B9747924C50A86000B2633 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		55B9747B24C50A8A000B2633 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		55BB93AE2A1226420044C87B /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
+		55BB93AF2A12266C0044C87B /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
+		55BB93B02A1226830044C87B /* TimeAdjustment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeAdjustment.h; sourceTree = "<group>"; };
+		55BB94392A1226CB0044C87B /* tz_private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz_private.h; sourceTree = "<group>"; };
+		55BB943A2A1226CB0044C87B /* ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios.h; sourceTree = "<group>"; };
+		55BB943B2A1226CB0044C87B /* ptz.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ptz.h; sourceTree = "<group>"; };
+		55BB943C2A1226CB0044C87B /* solar_hijri.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = solar_hijri.h; sourceTree = "<group>"; };
+		55BB943D2A1226CB0044C87B /* date.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = date.h; sourceTree = "<group>"; };
+		55BB943E2A1226CB0044C87B /* julian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = julian.h; sourceTree = "<group>"; };
+		55BB943F2A1226CB0044C87B /* chrono_io.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = chrono_io.h; sourceTree = "<group>"; };
+		55BB94402A1226CB0044C87B /* iso_week.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iso_week.h; sourceTree = "<group>"; };
+		55BB94412A1226CB0044C87B /* tz.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz.h; sourceTree = "<group>"; };
+		55BB94422A1226CB0044C87B /* islamic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = islamic.h; sourceTree = "<group>"; };
+		55BB944A2A1226CB0044C87B /* tz.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tz.cpp; sourceTree = "<group>"; };
+		55BB944B2A1226CB0044C87B /* ios.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ios.mm; sourceTree = "<group>"; };
 		55D0820F27092A8200B9BB97 /* Assert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
 		55D08211270BACA600B9BB97 /* ChecksumFletcher32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
 		55DE385B25F83EFB00AD2223 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
@@ -183,6 +198,7 @@
 		556E45F326B13CBD006681FA /* Lib */ = {
 			isa = PBXGroup;
 			children = (
+				55BB93B12A1226CA0044C87B /* date */,
 				556E45F426B13CBD006681FA /* Toastbox */,
 			);
 			name = Lib;
@@ -265,6 +281,49 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		55BB93B12A1226CA0044C87B /* date */ = {
+			isa = PBXGroup;
+			children = (
+				55BB94372A1226CB0044C87B /* include */,
+				55BB94492A1226CB0044C87B /* src */,
+			);
+			path = date;
+			sourceTree = "<group>";
+		};
+		55BB94372A1226CB0044C87B /* include */ = {
+			isa = PBXGroup;
+			children = (
+				55BB94382A1226CB0044C87B /* date */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		55BB94382A1226CB0044C87B /* date */ = {
+			isa = PBXGroup;
+			children = (
+				55BB94392A1226CB0044C87B /* tz_private.h */,
+				55BB943A2A1226CB0044C87B /* ios.h */,
+				55BB943B2A1226CB0044C87B /* ptz.h */,
+				55BB943C2A1226CB0044C87B /* solar_hijri.h */,
+				55BB943D2A1226CB0044C87B /* date.h */,
+				55BB943E2A1226CB0044C87B /* julian.h */,
+				55BB943F2A1226CB0044C87B /* chrono_io.h */,
+				55BB94402A1226CB0044C87B /* iso_week.h */,
+				55BB94412A1226CB0044C87B /* tz.h */,
+				55BB94422A1226CB0044C87B /* islamic.h */,
+			);
+			path = date;
+			sourceTree = "<group>";
+		};
+		55BB94492A1226CB0044C87B /* src */ = {
+			isa = PBXGroup;
+			children = (
+				55BB944A2A1226CB0044C87B /* tz.cpp */,
+				55BB944B2A1226CB0044C87B /* ios.mm */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
 		55D0820C27092A8200B9BB97 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
@@ -273,6 +332,9 @@
 				55B66B4327168D5D00AD39A5 /* Img.h */,
 				5588910D2736258A0004458F /* ImgAutoExposure.h */,
 				55B66B482717696B00AD39A5 /* STM.h */,
+				55BB93AE2A1226420044C87B /* TimeString.h */,
+				55BB93AF2A12266C0044C87B /* Clock.h */,
+				55BB93B02A1226830044C87B /* TimeAdjustment.h */,
 			);
 			name = Shared;
 			path = ../../Code/Shared;
@@ -482,8 +544,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.dave.CFAViewer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = (
-					../..,
-					../../Code/Lib,
+					$PROJECT_DIR/../..,
+					$PROJECT_DIR/../../Code/Lib,
+					$PROJECT_DIR/../../Code/Lib/date/include,
 				);
 			};
 			name = Release;
