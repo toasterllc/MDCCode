@@ -278,7 +278,8 @@ public:
                 Assert(!status.datOutCRCErr());
                 break;
             }
-            // Busy
+            // Let other tasks run
+            _Sleep(_Us<100>);
         }
         
         WriteStop();
@@ -288,6 +289,8 @@ public:
         for (;;) {
             const _SDStatusResp status = T_ICE::SDStatus();
             if (status.dat0Idle()) break;
+            // Let other tasks run
+            _Sleep(_Us<100>);
         }
     }
     
