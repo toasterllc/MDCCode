@@ -440,6 +440,7 @@ struct _TaskPower {
         _Scheduler::Start<_TaskI2C, _TaskMotion, _TaskButton>();
         
         // Restore our saved power state
+        // This is necessary so that we return to our previous state after an abort.
         _State = _TaskPowerStateSaved;
         
         // Trigger a battery level update when first starting
