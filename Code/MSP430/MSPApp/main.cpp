@@ -1026,6 +1026,9 @@ struct _TaskEvent {
     static void Reset() {
         // Reset our timer
         _EventTimer::Schedule(std::nullopt);
+        // Reset LEDs
+        _LEDGreen_.set(_LEDPriority::Capture, std::nullopt);
+        _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Reset();
