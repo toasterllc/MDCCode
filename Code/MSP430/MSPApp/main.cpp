@@ -281,7 +281,7 @@ struct _TaskPower {
             
             if (_BatteryLevelUpdate) {
                 // Update our battery level
-                _BatteryLevel = _BatterySampler::Sample();
+                _BatteryLevelSet(_BatterySampler::Sample());
                 
                 // Update our state
                 _RTCCounter = _SampleIntervalRTC;
@@ -498,7 +498,12 @@ struct _TaskPower {
         else   _State = _State & ~_StateBatteryTrap;
     }
     
-    static void _BatteryTrapUpdate() {
+    static void _BatteryLevelSet(MSP::BatteryLevel x) {
+        // No short-circuit logic here because we need our first _BatteryLevel assignment
+        // to cause us to enter battery trap via our logic below, if the battery level is
+        // low enough.
+        _BatteryLevel = x;
+        
         // If our battery level drops below the Enter threshold, enter battery trap
         if (_BatteryLevel <= _BatteryTrapLevelEnter) {
             _BatteryTrap(true);
@@ -565,10 +570,12 @@ struct _TaskPower {
     static inline uint16_t _RTCCounter = 0;
     static inline uint16_t _CaptureCounter = 0;
     
-    static inline T_Property<MSP::BatteryLevel,_BatteryTrapUpdate> _BatteryLevel = MSP::BatteryLevelInvalid;
+    static inline MSP::BatteryLevel _BatteryLevel = MSP::BatteryLevelInvalid;
     static inline bool _BatteryLevelUpdate = false;
     
-    static inline T_Property<uint8_t,_StateChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate> _State = _StateOff;
+    // _State: our current power state
+    // Left uninitialized because we always initialize it with _TaskPowerStateSaved
+    static inline T_Property<uint8_t,_StateChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate> _State;
     
     // _LEDFlashing: whether we're currently flashing the LEDs manually
     static inline T_Property<bool,_LEDFlickerEnabledUpdate> _LEDFlashing;
