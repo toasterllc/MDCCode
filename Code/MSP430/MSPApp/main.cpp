@@ -284,8 +284,8 @@ struct _TaskPower {
                 _BatteryLevelSet(_BatterySampler::Sample());
                 
                 // Update our state
-                _RTCCounter = _SampleIntervalRTC;
-                _CaptureCounter = _SampleIntervalCapture;
+                _RTCCounter = _BatterySampleIntervalRTC;
+                _CaptureCounter = _BatterySampleIntervalCapture;
                 _BatteryLevelUpdate = false;
             }
         }
@@ -474,17 +474,19 @@ struct _TaskPower {
     static void _Wired(bool x) {
         // Short-circuit if our state didn't change
         if (x == _Wired()) return;
+        
+        uint8_t s = _State;
         if (x) {
-            // When entering the Wired state, turn ourself on
-            _State = _State | _StateOn | _StateWired;
+            // Entering the Wired state
+            // Turn ourself on
+            s |= _StateOn | _StateWired;
         } else {
-            // When exiting the Wired state, also exit the On state if we're in the BatteryTrap state
-            if (_BatteryTrap()) {
-                _State = _State & ~(_StateOn|_StateWired);
-            } else {
-                _State = _State & ~_StateWired;
-            }
+            // Exiting the Wired state
+            // Exit the On state if we're in BatteryTrap
+            if (_BatteryTrap()) s &= ~_StateOn;
+            s &= ~_StateWired;
         }
+        _State = s;
     }
     
     static void _BatteryLevelSet(MSP::BatteryLevel x) {
@@ -510,8 +512,17 @@ struct _TaskPower {
     static void _BatteryTrap(bool x) {
         // Short-circuit if our state didn't change
         if (x == _BatteryTrap()) return;
-        if (x) _State = _State |  _StateBatteryTrap;
-        else   _State = _State & ~_StateBatteryTrap;
+        
+        uint8_t s = _State;
+        if (x) {
+            // Entering BatteryTrap
+            // Turn ourself off if we're not wired
+            if (!_Wired()) s &= ~_StateOn;
+            s |= _StateBatteryTrap;
+        } else {
+            s &= ~_StateBatteryTrap;
+        }
+        _State = s;
     }
     
     static void _LEDFlickerEnabledUpdate() {
@@ -551,9 +562,9 @@ struct _TaskPower {
     static constexpr uint8_t _StateBatteryTrap  = 1<<1;
     static constexpr uint8_t _StateWired        = 1<<2;
     
-    static constexpr uint16_t _SampleIntervalRTCDays = 4;
-    static constexpr uint16_t _SampleIntervalRTC     = (_SampleIntervalRTCDays * Time::Day) / _RTC::InterruptIntervalTicks;
-    static constexpr uint16_t _SampleIntervalCapture = 512;
+    static constexpr uint16_t _BatterySampleIntervalRTCDays = 4;
+    static constexpr uint16_t _BatterySampleIntervalRTC     = (_BatterySampleIntervalRTCDays * Time::Day) / _RTC::InterruptIntervalTicks;
+    static constexpr uint16_t _BatterySampleIntervalCapture = 512;
     
     static constexpr uint8_t _BatteryTrapPercentEnter = 2;
     static constexpr uint8_t _BatteryTrapPercentExit  = 10;
@@ -563,9 +574,9 @@ struct _TaskPower {
     static constexpr MSP::BatteryLevel _BatteryTrapLevelExit
         = MSP::BatteryLevelMin + ((((uint32_t)MSP::BatteryLevelMax-MSP::BatteryLevelMin)*_BatteryTrapPercentExit)/100);
     
-    static_assert(_SampleIntervalRTC     == 168);  // Debug
-    static_assert(_BatteryTrapLevelEnter == 1311); // Debug
-    static_assert(_BatteryTrapLevelExit  == 6554); // Debug
+    static_assert(_BatterySampleIntervalRTC == 168);  // Debug
+    static_assert(_BatteryTrapLevelEnter    == 1311); // Debug
+    static_assert(_BatteryTrapLevelExit     == 6554); // Debug
     
     static inline uint16_t _RTCCounter = 0;
     static inline uint16_t _CaptureCounter = 0;
