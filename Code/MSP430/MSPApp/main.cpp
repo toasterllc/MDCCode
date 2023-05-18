@@ -487,17 +487,6 @@ struct _TaskPower {
         }
     }
     
-    static bool _BatteryTrap() {
-        return _State & _StateBatteryTrap;
-    }
-    
-    static void _BatteryTrap(bool x) {
-        // Short-circuit if our state didn't change
-        if (x == _BatteryTrap()) return;
-        if (x) _State = _State |  _StateBatteryTrap;
-        else   _State = _State & ~_StateBatteryTrap;
-    }
-    
     static void _BatteryLevelSet(MSP::BatteryLevel x) {
         // No short-circuit logic here because we need our first _BatteryLevel assignment
         // to cause us to enter battery trap via our logic below, if the battery level is
@@ -512,6 +501,17 @@ struct _TaskPower {
         } else if (_BatteryLevel >= _BatteryTrapLevelExit) {
             _BatteryTrap(false);
         }
+    }
+    
+    static bool _BatteryTrap() {
+        return _State & _StateBatteryTrap;
+    }
+    
+    static void _BatteryTrap(bool x) {
+        // Short-circuit if our state didn't change
+        if (x == _BatteryTrap()) return;
+        if (x) _State = _State |  _StateBatteryTrap;
+        else   _State = _State & ~_StateBatteryTrap;
     }
     
     static void _LEDFlickerEnabledUpdate() {
