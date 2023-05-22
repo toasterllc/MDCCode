@@ -117,7 +117,7 @@ public:
         mv /= 0x8000;
         // Convert to millivolts, correcting for the effect of the voltage divider
         mv *= 1500 * VoltageDividerNumer;
-        mv /= sample1V5 * VoltageDividerDenom;
+        mv /= (uint32_t)sample1V5 * VoltageDividerDenom;
         return _BatteryLevelForMillivolts(mv);
     }
     
