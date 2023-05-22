@@ -180,9 +180,9 @@ private:
         .Instance               = I2C1,
         
         .Init = {
+            // We looked at I2C comms on the scope, and between 100/400/1000 kHz, 100 kHz is the only speed
+            // where the lines have enough time to reach 3.3V; 400 kHz and 1000 kHz are too fast.
             .Timing             = 0x00707CBB, // SCL = 100 kHz
-//            .Timing             = 0x00300F38, // SCL = 400 kHz
-//            .Timing             = 0x00100413, // SCL = 1 MHz
             .OwnAddress1        = 0,
             .AddressingMode     = I2C_ADDRESSINGMODE_7BIT,
             .DualAddressMode    = I2C_DUALADDRESS_DISABLE,
