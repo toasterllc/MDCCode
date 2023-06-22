@@ -9,6 +9,8 @@
 
 #if !MetalShaderContext
 #import <atomic>
+#import <string>
+#import <Metal/Metal.h>
 #endif
 
 #if MetalShaderContext
@@ -137,3 +139,29 @@ namespace Sample {
 
 } // namespace MetalUtil
 } // namespace MDCTools
+
+#if !MetalShaderContext
+
+// MTLLibraryReturnsAutoreleasedFix:
+// We're seeing crashes on macOS 10.15.7 which appear to be because -newFunctionWithName:
+// returns an autoreleased object, but ARC expects a retained object because the method
+// starts with 'new'.
+// So we correct the issue by decorating the method appropriately with `ns_returns_not_retained`.
+// In the future this will cause a leak if Apple decides to fix the bug by making
+// -newFunctionWithName return a retained object.
+// Alternatively, things will work correctly if Apple fixes the bug by marking their
+// method with `ns_returns_not_retained`
+@protocol MTLLibraryReturnsAutoreleasedFix
+- (id<MTLFunction>)newFunctionWithName:(NSString*)functionName __attribute__((ns_returns_not_retained));
+@end
+
+namespace MDCTools::MetalUtil {
+
+inline id<MTLFunction> MTLFunctionWithName(id<MTLLibrary> lib, std::string_view name) {
+    id<MTLLibraryReturnsAutoreleasedFix> l = (id)lib;
+    return [l newFunctionWithName:@(name.data())];
+}
+
+}
+
+#endif

@@ -904,9 +904,9 @@ private:
         auto find = _renderPipelineStates.find(key);
         if (find != _renderPipelineStates.end()) return find->second;
         
-        id<MTLFunction> vertShader = [_lib newFunctionWithName:@(vertName.data())];
+        id<MTLFunction> vertShader = MDCTools::MetalUtil::MTLFunctionWithName(_lib, vertName);
         assert(vertShader);
-        id<MTLFunction> fragShader = [_lib newFunctionWithName:@(fragName.data())];
+        id<MTLFunction> fragShader = MDCTools::MetalUtil::MTLFunctionWithName(_lib, fragName);
         assert(fragShader);
         
         MTLRenderPipelineDescriptor* desc = [MTLRenderPipelineDescriptor new];
@@ -935,7 +935,7 @@ private:
         auto find = _computePipelineStates.find(fnName);
         if (find != _computePipelineStates.end()) return find->second;
         
-        id<MTLFunction> fn = [_lib newFunctionWithName:@(fnName.data())];
+        id<MTLFunction> fn = MDCTools::MetalUtil::MTLFunctionWithName(_lib, fnName);
         assert(fn);
         
         id<MTLComputePipelineState> ps = [dev newComputePipelineStateWithFunction:fn error:nil];
