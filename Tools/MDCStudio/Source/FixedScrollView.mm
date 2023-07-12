@@ -20,14 +20,26 @@
     NSView<FixedScrollViewDocument>* _doc;
     CGRect _docFrame;
     CGFloat _docMagnification;
+    
     struct {
         bool enabled = true;
         bool liveResizeUnderway = false;
         CGPoint document = {};
         CGPoint screen = {};
     } _anchor;
+    
     bool _magnifyToFit;
     std::optional<CGFloat> _modelMagnification;
+    
+    struct {
+        struct {
+            bool phase = false;
+            bool momentumPhase = false;
+        } scrollWheel;
+        
+        bool magnify = false;
+    } _interactionUnderway;
+    
     struct {
         NSTimer* magnifyToFitTimer = nil;
         bool magnify = false;
@@ -39,6 +51,9 @@
 - (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
     NSParameterAssert(doc);
     if (!(self = [super initWithFrame:{}])) return nil;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_liveMagnifyStarted)
+        name:NSScrollViewDidEndLiveMagnifyNotification object:nil];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_liveMagnifyEnded)
         name:NSScrollViewDidEndLiveMagnifyNotification object:nil];
@@ -200,6 +215,15 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     }];
 }
 
+- (void)_updateMagnifyInteractionUnderway:(bool)magnify animatedMagnify:(bool)animatedMagnify {
+    
+}
+
+- (void)_liveMagnifyStarted {
+    printf("_liveMagnifyStarted\n");
+    [self _updateMagnifyInteractionUnderway:true];
+}
+
 - (void)_liveMagnifyEnded {
     [self magnifySnapToFit];
 }
@@ -229,6 +253,51 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     
     const CGFloat fitMag = containerAxisSize/contentAxisSize;
     return fitMag;
+}
+
+- (bool)_interactionUnderway {
+    return _interactionUnderway.scrollWheel.phase || _interactionUnderway.scrollWheel.momentumPhase;
+}
+
+std::optional<bool> _BoolOptionalForEventPhase(NSEventPhase x) {
+    if (x & NSEventPhaseBegan) return true;
+    else if (x & (NSEventPhaseEnded|NSEventPhaseCancelled)) return false;
+    return std::nullopt;
+}
+
+- (void)_updateScrollWheelInteractionUnderway:(NSEventPhase)phase momentumPhase:(NSEventPhase)momentumPhase {
+    bool interactionUnderwayPrev = [self _interactionUnderway];
+    
+    std::optional<bool> p = _BoolOptionalForEventPhase(phase);
+    std::optional<bool> mp = _BoolOptionalForEventPhase(momentumPhase);
+    
+    if (p) _interactionUnderway.scrollWheel.phase = *p;
+    if (mp) _interactionUnderway.scrollWheel.momentumPhase = *mp;
+    
+    if ([self _interactionUnderway] != interactionUnderwayPrev) {
+        if ([_doc respondsToSelector:@selector(fixedInteractionUnderway:)]) {
+            [_doc fixedInteractionUnderway:[self _interactionUnderway]];
+        }
+    }
+    
+//    if (phase || momentumPhase) {
+//        
+//    }
+//    
+//    if (phase & NSEventPhaseBegan)
+//        _scrollWheelInteractionUnderway.phase = true;
+//    else if (phase & (NSEventPhaseEnded|NSEventPhaseCancelled))
+//        _scrollWheelInteractionUnderway.phase = false;
+//    
+//    bool x = plase
+//    
+//    _interactionUnderway 
+//    
+//    _interactionUnderway = x;
+//    printf("_setInteractionUnderway = %d\n", _interactionUnderway);
+//    if ([_doc respondsToSelector:@selector(fixedInteractionUnderway:)]) {
+//        [_doc fixedInteractionUnderway:_interactionUnderway];
+//    }
 }
 
 // MARK: - NSView Overrides
@@ -306,7 +375,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
 // scrolling quickly, especially when scrolling near the margin
 - (void)scrollWheel:(NSEvent*)event {
     const NSEventPhase phase = [event phase];
-    
+//    printf("FixedScrollView scrollWheel:\n");
     if (phase & NSEventPhaseBegan) {
         [self _scrollWheelReset];
         
@@ -323,6 +392,31 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     } else if (_scrollWheel.pan) {
         [super scrollWheel:event];
     }
+    
+    [self _updateScrollWheelInteractionUnderway:phase momentumPhase:[event momentumPhase]];
+    
+//    const NSEventPhase momentumPhase = [event momentumPhase];
+//    if (momentumPhase != NSEventPhaseNone) {
+//        if (momentumPhase & NSEventPhaseBegan) {
+//            printf("momentumPhase BEGAN\n");
+//        } else if (momentumPhase & (NSEventPhaseEnded|NSEventPhaseCancelled)) {
+//            printf("momentumPhase ENDED\n");
+//        }
+//    
+//    } else {
+//        if (phase & NSEventPhaseBegan) {
+//            printf("phase BEGAN\n");
+//        } else if (momentumPhase & (NSEventPhaseEnded|NSEventPhaseCancelled)) {
+//            printf("phase ENDED\n");
+//        }
+//    }
+    
+    
+//    if (phase & NSEventPhaseBegan) {
+//        [self _setInteractionUnderway:true];
+//    } else if (phase & (NSEventPhaseEnded|NSEventPhaseCancelled)) {
+//        [self _setInteractionUnderway:false];
+//    }
 }
 
 - (void)_scrollWheelMagnify:(NSEvent*)event {

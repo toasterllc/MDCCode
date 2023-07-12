@@ -23,6 +23,7 @@
 
 @optional
 - (void)fixedCreateConstraintsForContainer:(NSView*)container;
+- (void)fixedInteractionUnderway:(bool)underway;
 @end
 
 @interface FixedScrollView : NSScrollView
