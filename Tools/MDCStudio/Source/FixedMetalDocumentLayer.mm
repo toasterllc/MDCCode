@@ -67,6 +67,104 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     return _SIMDForMat(transform);
 }
 
+- (CGFloat)fixedMagnification {
+    return _magnification;
+}
+
+//- (simd_float2)fixedScale {
+//    const CGSize contentSize = [[self superlayer] bounds].size;
+//    const CGRect frame = [self frame];
+//    const CGRect bounds = [self bounds];
+////    const simd_float2 scale = {
+////        (float)(frame.size.width / contentSize.width),
+////        (float)(frame.size.height / contentSize.height),
+////    };
+////    simd_float2 scale = {
+////        (float)(frame.size.width / contentSize.width),
+////        (float)(frame.size.width / contentSize.height),
+////    };
+//    
+////        return {
+////            (float)(1/contentSize.width),
+////            (float)(1/contentSize.height),
+////        };
+////    
+////    return {1,1};
+//    
+////    const CGRect contentRect = [[[[self superlayer] superlayer] superlayer] convertRect:[self bounds] fromLayer:self];
+//    
+////    const CGRect contentRect = [[[[self superlayer] superlayer] superlayer] convertRect:[self bounds] toLayer:nil];
+//    
+//    return {(float)(1/_magnification), (float)(1/_magnification)};
+//    
+////    [self drawableSize];
+////    printf("%f %f");
+//////    printf("contentRect %f %f\n", contentRect.size.width, contentRect.size.height);
+//////    printf("contentSize %f %f\n", contentSize.width, contentSize.height);
+//////    printf("bounds %f %f\n", bounds.size.width, bounds.size.height);
+//////    printf("frame %f %f\n", frame.size.width, frame.size.height);
+////    
+////    simd_float2 scale = {
+////        (float)((frame.size.width/contentSize.width) * 100),
+////        (float)((frame.size.height/contentSize.height) * 100),
+////    };
+////    
+//////    float ar = (frame.size.width / frame.size.height);
+//////    if (ar < 1) {
+//////        printf("aaa\n");
+////////        scale.y /= ar;
+//////    } else {
+//////        printf("bbb\n");
+//////        scale.y *= ar;
+//////    }
+////    
+////    return scale;
+////    scale.y /= (frame.size.width / frame.size.height);
+//    
+//    
+////    if (frame.size.width > frame.size.height) {
+////        printf("AAA\n");
+////        return {
+////            (float)(frame.size.width / contentSize.width),
+////            (float)(frame.size.width / contentSize.height),
+////        };
+////    } else {
+////        printf("BBB\n");
+////        return {
+////            (float)(frame.size.width / contentSize.width),
+////            (float)(frame.size.width / contentSize.height),
+////        };
+////    }
+//    
+//
+//    
+//    
+////    if (frame.size.width < frame.size.height) {
+////        return {
+////            (float)(frame.size.width / contentSize.width),
+////            (float)(frame.size.height / contentSize.height),
+////        };
+////    } else {
+////        return {
+////            (float)(frame.size.width / contentSize.width),
+////            (float)(frame.size.width / contentSize.height),
+////        };
+////    }
+//    
+////    scale.x
+//    
+////    if (scale.x > scale.y) {
+////        scale.y /= scale.x;
+////        scale.x = 1;
+////    
+////    } else {
+////        scale.x /= scale.y;
+////        scale.y = 1;
+////    }
+//    
+////    return scale;
+//}
+
 // MARK: - CALayer Overrides
 
 - (void)setContentsScale:(CGFloat)scale {

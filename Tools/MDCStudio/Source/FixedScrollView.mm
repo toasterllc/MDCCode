@@ -374,6 +374,14 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     }
 }
 
+// _magnificationInflectionPoints: private NSScrollView method that controls
+// the magnifications points where increased resistance occurs, such that
+// crossing these points requires more effort.
+// We don't like the feel of it so we disable this resistance here.
+- (NSArray*)_magnificationInflectionPoints {
+    return @[];
+}
+
 @end
 
 @implementation FixedScrollView_ClipView

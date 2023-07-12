@@ -13,4 +13,8 @@
 // to normalized device coordinates (NDC) in the range [-1,1] where this NDC range x,y=[-1,1]
 // represents the visible region of the receiver, after magnification and translation.
 - (simd_float4x4)fixedTransform;
+
+// -fixedMagnification: returns the current magnification level
+- (CGFloat)fixedMagnification;
+
 @end
