@@ -15,6 +15,146 @@
 }
 @end
 
+struct InteractionUnderway {
+    
+//    void _updateAndNotify() {
+//        if (dirty()) {
+//            update();
+//            [doc fixedInteractionUnderway:state()];
+//        }
+//    }
+    
+    void _setter(const bool& x, bool y) {
+        x = y;
+        if (dirty()) {
+            update();
+            [doc fixedInteractionUnderway:state()];
+        }
+    }
+    
+    bool _scrollWheelUnderway = false;
+    void scrollWheelUnderway(bool x) { _setter(_scrollWheelUnderway, x); }
+    
+    bool momentumScrollWheelUnderway = false;
+    
+    bool magnifyUnderway = false;
+    bool snapToFitAnimationUnderway = false;
+    bool smartMagnifyAnimationUnderway = false;
+    
+    id<FixedScrollViewDocument> doc = nil;
+    
+    bool _statePrev = false;
+    
+    operator bool() const {
+        return state();
+    }
+    
+    bool state() const {
+        return _scrollWheelUnderway              ||
+               _momentumScrollWheelUnderway      ||
+               _magnifyUnderway                  ||
+               _snapToFitAnimationUnderway       ||
+               _smartMagnifyAnimationUnderway    ;
+    }
+    
+    bool dirty() const {
+        return state() != _statePrev;
+    }
+    
+    void update() {
+        _statePrev = state();
+    }
+};
+
+//struct InteractionUnderwayAssertion {
+//    
+//    static std::weak_ptr<InteractionUnderwayAssertion> Assert(std::weak_ptr<InteractionUnderwayAssertion>& ) {
+//        
+//    }
+//    
+//    InteractionUnderwayAssertion(id<FixedScrollViewDocument> doc) {
+//        if ([doc respondsToSelector:@selector(fixedInteractionUnderway:)]) {
+//            _doc = doc;
+//        }
+//        
+//        [_doc fixedInteractionUnderway:true];
+//    }
+//    
+//    ~InteractionUnderwayAssertion() {
+//        [_doc fixedInteractionUnderway:false];
+//    }
+//    
+//    id<FixedScrollViewDocument> _doc;
+//}
+
+
+
+
+
+
+struct AssertionCounter {
+    using Fn = std::function<void(bool)>;
+    using FnPtr = std::shared_ptr<Fn>;
+//    struct _Context {
+//        Fn fn;
+//    };
+    
+    struct Assertion {
+        Assertion(FnPtr fn) : _fn(fn) {
+            (*_fn)(true);
+        }
+        ~Assertion() {
+            (*_fn)(false);
+        }
+        FnPtr _fn;
+    };
+    using AssertionPtr = std::shared_ptr<Assertion>;
+    
+//    static std::weak_ptr<InteractionUnderwayAssertion> Assert(std::weak_ptr<InteractionUnderwayAssertion>& ) {
+//        
+//    }
+    
+    AssertionCounter(Fn fn=[](bool){}) : _fn(std::make_shared<Fn>(std::move(fn))) {
+    }
+    
+    AssertionPtr assertion() {
+        auto strong = _assertion.lock();
+        if (!strong) {
+            strong = std::make_shared<Assertion>();
+            _assertion = strong;
+        }
+        return strong;
+    }
+//    
+//    
+//    
+//    InteractionUnderwayAssertion(id<FixedScrollViewDocument> doc) {
+//        if ([doc respondsToSelector:@selector(fixedInteractionUnderway:)]) {
+//            _doc = doc;
+//        }
+//        
+//        [_doc fixedInteractionUnderway:true];
+//    }
+//    
+//    ~InteractionUnderwayAssertion() {
+//        [_doc fixedInteractionUnderway:false];
+//    }
+    
+    FnPtr _fn;
+    std::weak_ptr<Assertion> _assertion;
+    
+    id<FixedScrollViewDocument> _doc;
+};
+
+
+
+
+
+
+
+
+
+
 @implementation FixedScrollView {
 @public
     NSView<FixedScrollViewDocument>* _doc;
@@ -31,32 +171,7 @@
     bool _magnifyToFit;
     std::optional<CGFloat> _modelMagnification;
     
-    struct {
-        bool statePrev = false;
-        
-        struct {
-            bool phase = false;
-            bool momentumPhase = false;
-        } scrollWheel;
-        
-        struct {
-            bool state = false;
-            bool stateAnimated = false;
-        } magnify;
-        
-        bool state() const {
-            return scrollWheel.phase || scrollWheel.momentumPhase || magnify.state || magnify.stateAnimated;
-        }
-        
-        bool dirty() const {
-            return state() != statePrev;
-        }
-        
-        void update() {
-            statePrev = state();
-        }
-        
-    } _interactionUnderway;
+    AssertionCounter _interactionUnderway;
     
     struct {
         NSTimer* magnifyToFitTimer = nil;
@@ -79,6 +194,12 @@
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
     _doc = doc;
+    
+    if ([_doc respondsToSelector:@selector(fixedInteractionUnderway:)]) {
+        _interactionUnderway = AssertionCounter([doc] (bool underway) {
+            [doc fixedInteractionUnderway:underway];
+        });
+    }
     
     FixedScrollView_ClipView* clipView = [[FixedScrollView_ClipView alloc] initWithFrame:{}];
     clipView->fixedScrollView = self;
@@ -233,13 +354,26 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     }];
 }
 
+static void _InteractionUnderwayUpdate(FixedScrollView* self, const bool& x, bool y) {
+    x = y;
+    if (_interactionUnderway.dirty()) {
+        _interactionUnderway.update();
+        if ([_doc respondsToSelector:@selector(fixedInteractionUnderway:)]) {
+            [_doc fixedInteractionUnderway:_interactionUnderway];
+        }
+    }
+}
+
 - (void)_liveMagnifyStarted {
-    _interactionUnderway.magnify.state = true;
+    _InteractionUnderwayUpdate(self, _interactionUnderway.magnifyUnderway, true);
+    
+    
+    _interactionUnderway.magnifyUnderway = true;
     [self _interactionUnderwayChanged];
 }
 
 - (void)_liveMagnifyEnded {
-    _interactionUnderway.magnify.state = false;
+    _interactionUnderway.magnifyUnderway = false;
     [self magnifySnapToFit];
     [self _interactionUnderwayChanged];
 }
@@ -271,10 +405,6 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     return fitMag;
 }
 
-//- (bool)_interactionUnderway {
-//    return _interactionUnderway.scrollWheel.phase || _interactionUnderway.scrollWheel.momentumPhase;
-//}
-
 std::optional<bool> _BoolOptionalForEventPhase(NSEventPhase x) {
     if (x & NSEventPhaseBegan) return true;
     else if (x & (NSEventPhaseEnded|NSEventPhaseCancelled)) return false;
@@ -285,17 +415,17 @@ std::optional<bool> _BoolOptionalForEventPhase(NSEventPhase x) {
     if (_interactionUnderway.dirty()) {
         _interactionUnderway.update();
         if ([_doc respondsToSelector:@selector(fixedInteractionUnderway:)]) {
-            [_doc fixedInteractionUnderway:_interactionUnderway.state()];
+            [_doc fixedInteractionUnderway:_interactionUnderway];
         }
     }
 }
 
 - (void)_updateScrollWheelInteractionUnderway:(NSEventPhase)phase momentumPhase:(NSEventPhase)momentumPhase {
-    std::optional<bool> p = _BoolOptionalForEventPhase(phase);
-    std::optional<bool> mp = _BoolOptionalForEventPhase(momentumPhase);
+    std::optional<bool> scrollWheel = _BoolOptionalForEventPhase(phase);
+    std::optional<bool> momentum = _BoolOptionalForEventPhase(momentumPhase);
     
-    if (p) _interactionUnderway.scrollWheel.phase = *p;
-    if (mp) _interactionUnderway.scrollWheel.momentumPhase = *mp;
+    if (scrollWheel) _interactionUnderway.scrollWheelUnderway = *scrollWheel;
+    if (momentum) _interactionUnderway.momentumScrollWheelUnderway = *momentum;
     
     [self _interactionUnderwayChanged];
     
@@ -372,10 +502,12 @@ std::optional<bool> _BoolOptionalForEventPhase(NSEventPhase x) {
 }
 
 - (void)smartMagnifyWithEvent:(NSEvent*)event {
+    _interactionUnderway.smartMagnifyAnimationUnderway = true;
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
         [super smartMagnifyWithEvent:event];
     } completionHandler:^{
         [self magnifySnapToFit];
+        self->_interactionUnderway.smartMagnifyAnimationUnderway = false;
     }];
 }
 
