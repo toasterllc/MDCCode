@@ -21,6 +21,10 @@ struct AssertionCounter {
         return strong;
     }
     
+    operator bool() const {
+        return _assertion.lock() != nullptr;
+    }
+    
     FnPtr _fn;
     std::weak_ptr<_Assertion> _assertion;
 };
