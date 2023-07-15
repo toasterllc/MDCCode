@@ -67,10 +67,6 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     return _SIMDForMat(transform);
 }
 
-- (CGFloat)fixedMagnification {
-    return _magnification;
-}
-
 //- (simd_float2)fixedScale {
 //    const CGSize contentSize = [[self superlayer] bounds].size;
 //    const CGRect frame = [self frame];

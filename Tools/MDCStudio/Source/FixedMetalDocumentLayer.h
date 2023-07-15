@@ -14,7 +14,4 @@
 // represents the visible region of the receiver, after magnification and translation.
 - (simd_float4x4)fixedTransform;
 
-// -fixedMagnification: returns the current magnification level
-- (CGFloat)fixedMagnification;
-
 @end
