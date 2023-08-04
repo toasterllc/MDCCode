@@ -32,6 +32,7 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
 
 @implementation FixedMetalDocumentLayer {
 @private
+    CGPoint _translation;
     CGFloat _magnification;
 }
 
@@ -52,6 +53,14 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     [self setDrawableSize:{(CGFloat)drawableWidth, (CGFloat)drawableHeight}];
 }
 
+- (CGPoint)fixedTranslation {
+    return _translation;
+}
+
+- (CGFloat)fixedMagnification {
+    return _magnification;
+}
+
 - (simd_float4x4)fixedTransform {
     const CGRect frame = [self frame];
     // We expect our superlayer's size to be the full content size
@@ -61,7 +70,7 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
         _Translate(-1, -1*flip, 1)                          *
         _Scale(2, 2*flip, 1)                                *
         _Scale(1/frame.size.width, 1/frame.size.height, 1)  *
-        _Translate(-frame.origin.x, -frame.origin.y, 0)     *
+        _Translate(-_translation.x, -_translation.y, 0)     *
         _Scale(contentSize.width, contentSize.height, 1)    ;
     
     return _SIMDForMat(transform);
@@ -181,6 +190,7 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
 //}
 
 - (void)fixedTranslationChanged:(CGPoint)t magnification:(CGFloat)m {
+    _translation = t;
     _magnification = m;
     [self setNeedsDisplay];
 }
