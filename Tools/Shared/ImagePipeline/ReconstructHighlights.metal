@@ -12,18 +12,31 @@ namespace ImagePipeline {
 namespace Shader {
 namespace ReconstructHighlights {
 
+fragment float CreateThresholdMap(
+    texture2d<float> rgb [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    constexpr float Sat = 0.9999;
+    constexpr float Thresh[] = { .99, 0.25, 0.25/2, 0.25/4 };
+//    constexpr float Thresh[] = { 1, 0.5, 0.25, 0.125 };
+    const float3 s = rgb.sample({filter::linear}, in.posUnit).rgb;
+    const uint count = (uint)(s.r>Sat) + (uint)(s.g>Sat) + (uint)(s.b>Sat);
+    return Thresh[count];
+}
+
 fragment float2 CreateHighlightMap(
     constant float3& scale [[buffer(0)]],
-    constant float& thresh [[buffer(1)]],
-    constant float3& illum [[buffer(2)]],
-    texture2d<float> rgb [[texture(0)]],
+    constant float3& illum [[buffer(1)]],
+    texture2d<float> rgbTxt [[texture(0)]],
+    texture2d<float> threshTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     // Calculate the magnitude of the current pixel and
     // determine whether it's a highlight
     const float MagMax = length(scale); // Maximum length of an RGB vector
-    const float3 s = rgb.sample({filter::linear}, in.posUnit).rgb;
+    const float3 s = rgbTxt.sample({filter::linear}, in.posUnit).rgb;
     const float mag = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
+    const float thresh = threshTxt.sample({ filter::linear }, in.posUnit).r;
     if (mag < thresh) return 0;
     
     // Return the brightness of the illuminant using the sampled values

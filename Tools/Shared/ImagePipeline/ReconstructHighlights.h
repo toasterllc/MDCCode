@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
+#import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "ImagePipelineTypes.h"
 #import "../MetalUtil.h"
 
@@ -30,9 +31,32 @@ public:
             )
         );
         
+        Renderer::Txt thresholdMap = renderer.textureCreate(MTLPixelFormatR32Float, w, h,
+            MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite
+        );
+        renderer.render(thresholdMap,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "ReconstructHighlights::CreateThresholdMap",
+                // Texture args
+                rgb
+            )
+        );
+        
+        {
+            // Blur thresholdMap
+            Renderer::Txt thresholdMapBlurred = renderer.textureCreate(thresholdMap);
+            float radius = 20;
+            MPSImageGaussianBlur* blur = [[MPSImageGaussianBlur alloc] initWithDevice:renderer.dev sigma:radius];
+            [blur setEdgeMode:MPSImageEdgeModeClamp];
+            [blur encodeToCommandBuffer:renderer.cmdBuf()
+                sourceTexture:thresholdMap destinationTexture:thresholdMapBlurred];
+            thresholdMap = std::move(thresholdMapBlurred);
+        }
+        
+//        renderer.debugTextureShow(thresholdMap);
+        
         // `Scale` balances the raw colors from the sensor for the purpose
         // of highlight reconstruction (empirically determined)
-        const simd::float3 Scale = {1.179, 0.649, 1.180};
+        const simd::float3 Scale = { 1.179, 0.649, 1.180 };
         // `Thresh` is the threshold at which pixels are considered for
         // highlight reconstruction (empirically determined)
         const float Thresh = 0.774;
@@ -44,12 +68,14 @@ public:
             renderer.FragmentShader(ImagePipelineShaderNamespace "ReconstructHighlights::CreateHighlightMap",
                 // Buffer args
                 Scale,
-                Thresh,
                 simdIllumMin1,
                 // Texture args
-                rgb
+                rgb,
+                thresholdMap
             )
         );
+        
+//        renderer.debugShowTexture(raw);
         
         for (int i=0; i<1; i++) {
             Renderer::Txt tmp = renderer.textureCreate(highlightMap);
