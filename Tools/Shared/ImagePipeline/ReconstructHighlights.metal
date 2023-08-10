@@ -21,7 +21,7 @@ fragment float2 CreateHighlightMap(
 ) {
     // Calculate the magnitude of the current pixel and
     // determine whether it's a highlight
-    const float MagMax = length(scale*float3(1,1,1)); // Maximum length of an RGB vector
+    const float MagMax = length(scale); // Maximum length of an RGB vector
     const float3 s = rgb.sample({filter::linear}, in.posUnit).rgb;
     const float mag = length(scale*s) / MagMax; // Normalize magnitude so that the maximum brightness has mag=1
     if (mag < thresh) return 0;
