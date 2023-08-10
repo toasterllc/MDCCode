@@ -33,6 +33,7 @@
 #import "ImagePipeline.h"
 #import "EstimateIlluminant.h"
 #import "ColorMatrix.h"
+#import "Debug.h"
 using namespace CFAViewer;
 using namespace MDCTools::MetalUtil;
 using namespace MDCTools::ImagePipeline;
@@ -212,7 +213,7 @@ struct RawImage {
         .colorMatrix = std::nullopt,
         
         .defringe = { .en = false, },
-        .reconstructHighlights = { .en = false, },
+        .reconstructHighlights = { .en = true, },
         .debayerLMMSE = { .applyGamma = true, },
         
         .exposure = 0,
@@ -231,11 +232,11 @@ struct RawImage {
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
     // /Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa
-//    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker"}];
-//    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
+//    [self _loadImages:{"/Users/dave/Desktop/Old/2021-4-4/C5ImageSets/Indoor-Night2-ColorChecker"}];
+    [self _loadImages:{"/Users/dave/Desktop/Old/2021-4-4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_43.cfa"}];
-    
-    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];
+//    [self _loadImages:{"/Users/dave/Desktop/Highlight-Reconstruction-Test-Images/Kitchen-Day.cfa"}];
+//    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_78.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_64.cfa"}];
     
@@ -1178,6 +1179,9 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 }
 
 - (IBAction)_highlightFactorSliderAction:(id)sender {
+    Debug::Thresh = [_highlightFactorR0Slider doubleValue];
+    printf("Debug::Thresh %f\n", Debug::Thresh);
+    [self _render];
 //    Mat<double,9,1> highlightFactor(
 //        [_highlightFactorR0Slider doubleValue],
 //        [_highlightFactorR1Slider doubleValue],

@@ -44,6 +44,7 @@
 		552F4BCB29B1BE82000CEAB2 /* ThreePartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
 		552F4BCC29B1BE82000CEAB2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		552F4BCD29B1BE82000CEAB2 /* ThreePartView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ThreePartView.mm; sourceTree = "<group>"; };
+		553A29892A81659D00184FEE /* Debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
 		55671A30257E94BD00C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		55671A37257E984E00C1CDA4 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		556E45F526B13CBD006681FA /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
@@ -228,6 +229,7 @@
 		55B9745024C504E2000B2633 = {
 			isa = PBXGroup;
 			children = (
+				553A29892A81659D00184FEE /* Debug.h */,
 				556E45F326B13CBD006681FA /* Lib */,
 				55671A29257E94BD00C1CDA4 /* Shared */,
 				55D0820C27092A8200B9BB97 /* Shared */,

@@ -2,6 +2,7 @@
 #import <Metal/Metal.h>
 #import "ImagePipelineTypes.h"
 #import "../MetalUtil.h"
+//#import "Debug.h"
 
 namespace MDCTools::ImagePipeline {
 
@@ -50,6 +51,8 @@ public:
                 rgb
             )
         );
+        
+//        renderer.debugShowTexture(raw);
         
         for (int i=0; i<1; i++) {
             Renderer::Txt tmp = renderer.textureCreate(highlightMap);
