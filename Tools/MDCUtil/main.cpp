@@ -253,7 +253,7 @@ static void StatusGet(const Args& args, MDCUSBDevice& device) {
     printf("\n");
 }
 
-static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus status) {
+static const char* _StringForChargeStatus(STM::BatteryStatus::ChargeStatus status) {
     using namespace STM;
     switch (status) {
     case BatteryStatus::ChargeStatus::Invalid:  return "invalid";
@@ -264,7 +264,7 @@ static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus
     abort();
 }
 
-static std::string _StringForChargeLevel(const MSP::BatteryLevel level) {
+static std::string _StringForChargeLevel(MSP::BatteryLevel level) {
     using namespace STM;
     if (level == MSP::BatteryLevelInvalid) return "invalid";
     const uint32_t percent = (((uint32_t)level-MSP::BatteryLevelMin)*100) / (MSP::BatteryLevelMax-MSP::BatteryLevelMin);

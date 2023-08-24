@@ -18,7 +18,7 @@ struct _Pin {
     using VDD_B_2V8_IMG_SD_EN       = GPIO::PortA::Pin<0xB, GPIO::Option::Output0>;
     using MOTION_SIGNAL             = GPIO::PortA::Pin<0xC>;
     using BUTTON_SIGNAL_            = GPIO::PortA::Pin<0xD>;
-    using BAT_CHRG_LVL_EN_          = GPIO::PortA::Pin<0xE, GPIO::Option::Output1>;
+    using BAT_CHRG_LVL_EN           = GPIO::PortA::Pin<0xE, GPIO::Option::Output0>;
     using VDD_B_3V3_STM             = GPIO::PortA::Pin<0xF>;
     
     // Port B

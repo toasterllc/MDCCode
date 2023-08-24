@@ -48,7 +48,7 @@ using _ICE = T_ICE<_Scheduler>;
 using _I2C = T_I2C<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, MSP::I2CAddr>;
 using _Motion = T_Motion<_Scheduler, _Pin::MOTION_EN_, _Pin::MOTION_SIGNAL>;
 
-using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_>;
+using _BatterySampler = T_BatterySampler<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN>;
 
 using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
 
@@ -374,7 +374,7 @@ struct _TaskPower {
             
             // Battery (config chosen by _BatterySampler)
             _BatterySampler::Pin::BatChrgLvlPin,
-            _BatterySampler::Pin::BatChrgLvlEn_Pin,
+            _BatterySampler::Pin::BatChrgLvlEnPin,
             
             // Button (config chosen by _Button)
             _Button::Pin,

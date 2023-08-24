@@ -81,8 +81,8 @@ private:
     using _OSC_IN   = GPIO::PortH::Pin<0>;
     using _OSC_OUT  = GPIO::PortH::Pin<1>;
     
-    using _BAT_CHRG_EN_  = GPIO::PortB::Pin<10, GPIO::Option::OpenDrain, GPIO::Option::Output1>;
-    using _BAT_CHRG_STAT = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor0>;
+    using _BAT_CHRG_EN_  = GPIO::PortE::Pin<15, GPIO::Option::OpenDrain, GPIO::Option::Output1>;
+    using _BAT_CHRG_STAT = GPIO::PortB::Pin<10, GPIO::Option::Input, GPIO::Option::Resistor0>;
     
     [[noreturn]]
     static void _SchedulerStackOverflow() {
@@ -100,10 +100,8 @@ private:
     
 public:
     // LEDs
-//    using LED0 = GPIO::PortB::Pin<10, GPIO::Option::Output0>;
-    using LED1 = GPIO::PortB::Pin<12, GPIO::Option::Output0>;
-    using LED2 = GPIO::PortB::Pin<11, GPIO::Option::Output0>;
-    using LED3 = GPIO::PortB::Pin<13, GPIO::Option::Output0>;
+    using LED0 = GPIO::PortB::Pin<11, GPIO::Option::Output0>;
+    using LED1 = GPIO::PortB::Pin<13, GPIO::Option::Output0>;
     
     using Scheduler = Toastbox::Scheduler<
         SysTickPeriod,                              // T_TicksPeriod: period between ticks, in seconds
@@ -154,10 +152,8 @@ public:
         Toastbox::IntState ints(false);
         
         for (bool x=true;; x=!x) {
-//            LED0::Write(x);
+            LED0::Write(x);
             LED1::Write(x);
-            LED2::Write(x);
-            LED3::Write(x);
             for (volatile uint32_t i=0; i<(uint32_t)500000; i++);
         }
     }
@@ -368,10 +364,8 @@ private:
     
     static void _Init() {
         GPIO::Init<
-//            LED0,
+            LED0,
             LED1,
-            LED2,
-            LED3,
             
             MSPJTAG::Pin::Test,
             MSPJTAG::Pin::Rst_,
@@ -510,10 +504,8 @@ private:
     
     static void _LEDSet(const STM::Cmd& cmd) {
         switch (cmd.arg.LEDSet.idx) {
-//        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
+        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
         case 1:  USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
-        case 2:  USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
-        case 3:  USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
         default: USBAcceptCommand(false); return;
         }
     }

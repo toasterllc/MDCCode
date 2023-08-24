@@ -7,15 +7,13 @@
 template<
 typename T_Scheduler,
 typename T_BatChrgLvlPin,
-typename T_BatChrgLvlEn_Pin
+typename T_BatChrgLvlEnPin
 >
 class T_BatterySampler {
 public:
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
-        #warning TODO: Switch polarity (BatChrgLvlEn_ -> BatChrgLvlEn) once we correct U5 to be a buffer instead of an inverter.
-        #warning TODO: Once we do that, verify that BAT_CHRG_STAT doesn't oscillate. See MDCNotes/MCP73831-Battery-Charger-Oscillation.txt.
-        using BatChrgLvlEn_Pin = typename T_BatChrgLvlEn_Pin::template Opts<GPIO::Option::Output1>;
+        using BatChrgLvlEnPin = typename T_BatChrgLvlEnPin::template Opts<GPIO::Option::Output0>;
     };
     
     static void Init() {
@@ -88,7 +86,7 @@ public:
         uint16_t sampleBat = 0;
         {
             // Enable BAT_CHRG_LVL buffer
-            Pin::BatChrgLvlEn_Pin::Write(0);
+            Pin::BatChrgLvlEnPin::Write(1);
             
             // Wait 5 time constants for BAT_CHRG_LVL to settle:
             //   5 time constants = 5*R*C (where R=1k, C=100n) = 500us
@@ -97,7 +95,7 @@ public:
             sampleBat = _ChannelSample(_Channel::BatChrgLvl);
             
             // Disable BAT_CHRG_LVL buffer (to save power)
-            Pin::BatChrgLvlEn_Pin::Write(1);
+            Pin::BatChrgLvlEnPin::Write(0);
         }
         
         _ADCEnable(false);

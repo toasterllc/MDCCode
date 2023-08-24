@@ -192,7 +192,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
             .colorMatrix            = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
             
             .defringe               = { .en = false, },
-            .reconstructHighlights  = { .en = false, },
+            .reconstructHighlights  = { .en = opts.reconstructHighlights, },
             .debayerLMMSE           = { .applyGamma = true, },
             
             .exposure               = (float)opts.exposure,
