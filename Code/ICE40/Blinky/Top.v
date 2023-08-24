@@ -5,7 +5,7 @@
 module Top(
     input wire ice_img_clk16mhz,
     output wire[7:0] ice_stm_spi_d,
-    output wire[3:0] ice_led
+    output wire[1:0] ice_led
 );
     assign ice_stm_spi_d = 0;
     
@@ -26,13 +26,13 @@ module Top(
         counter <= counter+1;
     end
     
-    assign ice_led[3:0] = {4{`LeftBit(counter, 0)}};
+    assign ice_led[1:0] = {2{`LeftBit(counter, 0)}};
 endmodule
 
 `ifdef SIM
 module Testbench();
     reg ice_img_clk16mhz = 0;
-    wire[3:0] ice_led;
+    wire[1:0] ice_led;
     Top Top(
         .ice_img_clk16mhz(ice_img_clk16mhz),
         .ice_led(ice_led)

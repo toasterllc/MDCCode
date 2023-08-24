@@ -25,7 +25,7 @@ module Top(
     output wire         sd_pullup_1v8_en_,
     
     // LED port
-    output wire[3:0]    ice_led
+    output wire[1:0]    ice_led
     
 `ifdef SIM
     // Exported so that the sim can verify that the state machine is in reset

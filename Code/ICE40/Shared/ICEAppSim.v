@@ -63,7 +63,7 @@ module ICEAppSim();
     wire[1:0]   ram_dqm;
     wire[15:0]  ram_dq;
     
-    wire[3:0] ice_led;
+    wire[1:0] ice_led;
     wire sim_spiRst_;
     
     EndianSwap #(.Width(16)) LittleFromHost16();

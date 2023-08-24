@@ -82,7 +82,7 @@ module ICEApp(
 `endif // _ICEApp_Img_En
     
     // LED port
-    output reg[3:0]     ice_led = 0
+    output reg[1:0]     ice_led = 0
     
 `ifdef SIM
     // Exported so that the sim can verify that the state machine is in reset

@@ -50,7 +50,7 @@ module Top(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
     
-    // output reg[3:0]     ice_led = 0
+    // output reg[1:0]     ice_led = 0
 );
     // ====================
     // ImgI2CMaster
@@ -204,7 +204,7 @@ module Top(
         endcase
         
         if (img_captureTrigger) begin
-            // ice_led <= 4'b1111;
+            // ice_led <= 2'b11;
             img_state <= Img_State_Capture;
         end
     end
@@ -477,7 +477,7 @@ module Testbench();
     wire[1:0]   ram_dqm;
     wire[15:0]  ram_dq;
     
-    wire[3:0]   ice_led;
+    wire[1:0]   ice_led;
     
     Top Top(.*);
     

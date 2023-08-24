@@ -27,8 +27,8 @@
 `define     Resp_Arg_Ready_Ready_Bits                           0:0
 
 `define Msg_Type_LEDSet                                         `Msg_Type_StartBit | `Msg_Type_Len'h01
-`define     Msg_Arg_LEDSet_Val_Len                              4
-`define     Msg_Arg_LEDSet_Val_Bits                             3:0
+`define     Msg_Arg_LEDSet_Val_Len                              2
+`define     Msg_Arg_LEDSet_Val_Bits                             1:0
 
 `define Msg_Type_SDConfig                                       `Msg_Type_StartBit | `Msg_Type_Len'h02
 `define     Msg_Arg_SDConfig_PinMode_Len                        1

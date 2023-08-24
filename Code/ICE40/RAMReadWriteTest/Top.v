@@ -12,7 +12,7 @@
 module Top(
     input wire          ice_img_clk16mhz,
     
-    output reg[3:0]     ice_led = 0,
+    output reg[1:0]     ice_led = 0,
     
     output wire         ram_clk,
     output wire         ram_cke,
@@ -161,7 +161,7 @@ module Top(
                     $display("Read word: %h (expected: %h) ✅", read_data, read_data_expected);
                 end else begin
                     $display("Read word: %h (expected: %h) ❌", read_data, read_data_expected);
-                    ice_led <= 4'b1111;
+                    ice_led <= 2'b11;
                     `Finish;
                 end
                 word_idx <= word_idx+1;
@@ -196,7 +196,7 @@ endmodule
 `ifdef SIM
 module Testbench();
     reg ice_img_clk16mhz = 0;
-    wire[3:0] ice_led;
+    wire[1:0] ice_led;
     wire ram_clk;
     wire ram_cke;
     wire[1:0] ram_ba;
