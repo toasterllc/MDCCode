@@ -116,18 +116,11 @@ struct [[gnu::packed]] Repeat {
 };
 static_assert(sizeof(Repeat) == 2);
 
-using LEDs = uint8_t;
-struct LEDs_ { enum : LEDs {
-    None  = 0,
-    Green = 1<<0,
-    Red   = 1<<1,
-}; };
-
 // Capture: describes the capture action when a trigger occurs
 struct [[gnu::packed]] Capture {
     uint32_t delayTicks;
     uint16_t count;
-    LEDs leds;
+    uint8_t ledFlash;
     uint8_t _pad;
 };
 static_assert(!(sizeof(Capture) % 2)); // Check alignment

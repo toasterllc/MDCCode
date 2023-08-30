@@ -54,15 +54,8 @@ using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
 
 using _WiredMonitor = T_WiredMonitor<_Pin::VDD_B_3V3_STM>;
 
-static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
-static OutputPriority _LEDRed_(_Pin::LED_RED_{});
-
-struct _LEDPriority {
-    static constexpr uint8_t Power   = 0;
-    static constexpr uint8_t Capture = 1;
-    static constexpr uint8_t I2C     = 2;
-    static constexpr uint8_t Default = 3;
-};
+//static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
+//static OutputPriority _LEDRed_(_Pin::LED_RED_{});
 
 // _ImgSensor: image sensor object
 using _ImgSensor = Img::Sensor<
@@ -255,6 +248,77 @@ static void _ICEInit() {
     Assert(ok);
 }
 
+
+
+
+
+// MARK: - _TaskLED
+
+struct _TaskLED {
+    using Priority = uint8_t;
+    static constexpr Priority PriorityPower     = 0;
+    static constexpr Priority PriorityCapture   = 1;
+    static constexpr Priority PriorityI2C       = 2;
+    static constexpr Priority _PriorityCount    = 3;
+    
+    using State = uint8_t;
+    static constexpr State StateNone    = 0;
+    static constexpr State StateOff     = 1<<0;
+    static constexpr State StateRed     = 1<<1;
+    static constexpr State StateGreen   = 1<<2;
+    static constexpr State StateDim     = 1<<3;
+    static constexpr State StateFlash   = 1<<4; // Flash once
+    static constexpr State StateFlicker = 1<<5; // Flicker every 5s
+    
+    static void Run() {
+        for (;;) {
+            _Scheduler::Wait([] { return _StateCurr != _StatePrev; });
+            
+            // Change state
+            const bool onConstant =
+                (_StatePrev & (StateRed | StateGreen)) &&
+                !(_StatePrev & (StateFlash | StateFlicker));
+            
+            // Fade out
+            if (onConstant) {
+                
+            }
+            
+            // Update _StatePrev
+            _StatePrev = _StateCurr;
+        }
+    }
+    
+    static void Set(Priority pri, State state) {
+        _States[pri] = state;
+        
+        // Update _StateCurr
+        // By default, turn the LEDs off, unless there's an alternative state requested
+        _StateCurr = StateOff;
+        for (State s : _States) {
+            if (s != StateNone) {
+                _StateCurr = s;
+                break;
+            }
+        }
+    }
+    
+    static inline State _States[_PriorityCount] = {};
+    static inline State _StateCurr = StateOff;
+    static inline State _StatePrev = StateOff;
+    
+    // Task stack
+    SchedulerStack(".stack._TaskLED")
+    static inline uint8_t Stack[128];
+};
+
+
+
+
+
+
+
+
 // MARK: - _TaskPower
 
 #define _TaskPowerStackSize 128
@@ -311,7 +375,7 @@ struct _TaskPower {
         // Allow the button to turn us on if we're not in battery trap, or we're wired
         if (!_BatteryTrap() || _Wired()) _On(!_On());
         // Otherwise, deny the request by flashing the red LEDs
-        else _LEDFlash(_LEDRed_);
+//        else _LEDFlash(_LEDRed_);
     }
     
     static void CaptureNotify() {
@@ -383,8 +447,8 @@ struct _TaskPower {
             _WiredMonitor::Pin,
             
             // LEDs
-            _Pin::LED_GREEN_,
-            _Pin::LED_RED_
+            _Pin::LED_SIGNAL,
+            _Pin::LED_SEL
         
         >(Startup::ColdStart());
         
@@ -426,18 +490,11 @@ struct _TaskPower {
         //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
         _RTC::Init();
         
-        // Init LEDs by setting their default-priority / 'backstop' values to off.
-        // This is necessary so that relinquishing the LEDs from I2C task causes
-        // them to turn off. If we didn't have a backstop value, the LEDs would
-        // remain in whatever state the I2C task set them to before relinquishing.
-        _LEDGreen_.set(_LEDPriority::Default, 1);
-        _LEDRed_.set(_LEDPriority::Default, 1);
-        
         // Init BatterySampler
         _BatterySampler::Init();
         
         // Start tasks
-        _Scheduler::Start<_TaskI2C, _TaskMotion, _TaskButton>();
+        _Scheduler::Start<_TaskI2C, _TaskMotion, _TaskButton, _TaskLED>();
         
         // Restore our saved power state
         // This is necessary so that we return to our previous state after an abort.
@@ -451,8 +508,8 @@ struct _TaskPower {
         // Blink LEDs if our on state changed
         const bool on = _State & _StateOn;
         const bool onPrev = _TaskPowerStateSaved & _StateOn;
-        if (!onPrev && on) _LEDFlash(_LEDGreen_);
-        else if (onPrev && !on) _LEDFlash(_LEDRed_);
+//        if (!onPrev && on) _LEDFlash(_LEDGreen_);
+//        else if (onPrev && !on) _LEDFlash(_LEDRed_);
         _TaskPowerStateSaved = _State;
     }
     
@@ -526,35 +583,15 @@ struct _TaskPower {
     }
     
     static void _LEDFlickerEnabledUpdate() {
-        _LEDFlickerEnabled = _BatteryTrap() && !_Wired() && !_LEDFlashing;
+        _LEDFlickerEnabled = _BatteryTrap() && !_Wired();
     }
     
     static void _LEDFlickerEnabledChanged() {
-        _LEDFlicker::Enabled(_LEDFlickerEnabled);
-    }
-    
-    static void _LEDFlash(OutputPriority& led) {
-        _LEDFlashing = true;
-        
-        // Turn off both LEDs
-        _LEDGreen_.set(_LEDPriority::Power, 1);
-        _LEDRed_.set(_LEDPriority::Power, 1);
-        _Scheduler::Sleep(_Scheduler::Ms<100>);
-        
-        // Flash red LED to signal that we're turning off
-        for (int i=0; i<5; i++) {
-            led.set(_LEDPriority::Power, 0);
-            _Scheduler::Sleep(_Scheduler::Ms<50>);
-            led.set(_LEDPriority::Power, 1);
-            _Scheduler::Sleep(_Scheduler::Ms<50>);
+        if (_LEDFlickerEnabled) {
+            _TaskLED::Set(_TaskLED::PriorityPower, _TaskLED::StateRed | _TaskLED::StateFlicker);
+        } else {
+            _TaskLED::Set(_TaskLED::PriorityPower, _TaskLED::StateNone);
         }
-        
-        // Relinquish both LEDs
-        _LEDGreen_.set(_LEDPriority::Power, std::nullopt);
-        _LEDRed_.set(_LEDPriority::Power, std::nullopt);
-        _Scheduler::Sleep(_Scheduler::Ms<100>);
-        
-        _LEDFlashing = false;
     }
     
     static constexpr uint8_t _StateOff          = 0;
@@ -588,15 +625,12 @@ struct _TaskPower {
     // Left uninitialized because we always initialize it with _TaskPowerStateSaved
     static inline T_Property<uint8_t,_StateChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate> _State;
     
-    // _LEDFlashing: whether we're currently flashing the LEDs manually
-    static inline T_Property<bool,_LEDFlickerEnabledUpdate> _LEDFlashing;
-    
     // _LEDFlickerEnabled: whether the LED should flicker periodically (due to battery trap)
     static inline T_Property<bool,_LEDFlickerEnabledChanged> _LEDFlickerEnabled;
     
-    static constexpr uint32_t _FlickerPeriodMs      = 5000;
-    static constexpr uint32_t _FlickerOnDurationMs  = 20;
-    using _LEDFlicker = T_LEDFlicker<_Pin::LED_GREEN_, _ACLKFreqHz, _FlickerPeriodMs, _FlickerOnDurationMs>;
+//    static constexpr uint32_t _FlickerPeriodMs      = 5000;
+//    static constexpr uint32_t _FlickerOnDurationMs  = 20;
+//    using _LEDFlicker = T_LEDFlicker<_Pin::LED_GREEN_, _ACLKFreqHz, _FlickerPeriodMs, _FlickerOnDurationMs>;
     
     // Task stack
     static constexpr auto& Stack = _TaskPowerStack;
@@ -629,8 +663,7 @@ struct _TaskI2C {
             // Cleanup
             
             // Relinquish LEDs, which may have been set by _CmdHandle()
-            _LEDRed_.set(_LEDPriority::I2C, std::nullopt);
-            _LEDGreen_.set(_LEDPriority::I2C, std::nullopt);
+            _TaskLED::Set(_TaskLED::PriorityI2C, _TaskLED::StateNone);
             
             // Reset state
             _HostModeState = {};
@@ -668,10 +701,13 @@ struct _TaskI2C {
             return MSP::Resp{ .ok = true };
         }
         
-        case Cmd::Op::LEDSet:
-            _LEDRed_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
-            _LEDGreen_.set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
+        case Cmd::Op::LEDSet: {
+            _TaskLED::State state = _TaskLED::StateOff;
+            if (cmd.arg.LEDSet.red)   state = _TaskLED::StateRed   | _TaskLED::StateDim;
+            if (cmd.arg.LEDSet.green) state = _TaskLED::StateGreen | _TaskLED::StateDim;
+            _TaskLED::Set(_TaskLED::PriorityI2C, state);
             return MSP::Resp{ .ok = true };
+        }
         
         case Cmd::Op::TimeGet:
             return MSP::Resp{
@@ -1046,8 +1082,7 @@ struct _TaskEvent {
         // Reset our timer
         _EventTimer::Schedule(std::nullopt);
         // Reset LEDs
-        _LEDGreen_.set(_LEDPriority::Capture, std::nullopt);
-        _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
+        _TaskLED::Set(_TaskLED::PriorityCapture, _TaskLED::StateNone);
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Reset();
@@ -1117,10 +1152,9 @@ struct _TaskEvent {
         // bursting with activity, which causes lots of noise on the battery line.
         _TaskPower::CaptureNotify();
         
-        const bool green = ev.capture->leds & MSP::LEDs_::Green;
-        const bool red = ev.capture->leds & MSP::LEDs_::Red;
-        _LEDGreen_.set(_LEDPriority::Capture, !green);
-        _LEDRed_.set(_LEDPriority::Capture, !red);
+        if (ev.capture->ledFlash) {
+            _TaskLED::Set(_TaskLED::PriorityCapture, _TaskLED::StateGreen | _TaskLED::StateFlash);
+        }
         
         // Turn on VDD_B power (turns on ICE40)
         _State.vddb = true;
@@ -1160,8 +1194,7 @@ struct _TaskEvent {
             _TaskSD::Wait();
         }
         
-        _LEDGreen_.set(_LEDPriority::Capture, std::nullopt);
-        _LEDRed_.set(_LEDPriority::Capture, std::nullopt);
+        _TaskLED::Set(_TaskLED::PriorityCapture, _TaskLED::StateNone);
         
         _State.vddImgSd = false;
         _State.vddb = false;
@@ -1179,7 +1212,7 @@ struct _TaskEvent {
             _EventTimerSchedule();
         }
     }
-
+    
     static void EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
         const Time::Ticks32 delta = _RepeatAdvance(repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
@@ -1187,11 +1220,11 @@ struct _TaskEvent {
             EventInsert(ev, ev.time+delta);
         }
     }
-
+    
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::Ticks32 deltaTicks) {
         EventInsert(ev, time + deltaTicks);
     }
-
+    
     static void CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
         // Reset capture count
         ev.countRem = ev.capture->count;
@@ -1330,28 +1363,28 @@ struct _TaskButton {
 
 struct _TaskMotion {
     static void Run() {
-//        // Disable interrupts because _Motion requires it
-//        Toastbox::IntState ints(false);
-//        
-//        for (;;) {
-//            // Wait for motion to be enabled
-//            _Scheduler::Wait([] { return _Enabled; });
-//            
-//            // Power on motion sensor and wait for it to start up
-//            _Motion::Power(true);
-//            
-//            for (;;) {
-//                // Wait for motion, or for motion to be disabled
-//                _Motion::SignalReset();
-//                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
-//                if (!_Enabled) break;
-//                
-//                _HandleMotion();
-//            }
-//            
-//            // Turn off motion sensor
-//            _Motion::Power(false);
-//        }
+        // Disable interrupts because _Motion requires it
+        Toastbox::IntState ints(false);
+        
+        for (;;) {
+            // Wait for motion to be enabled
+            _Scheduler::Wait([] { return _Enabled; });
+            
+            // Power on motion sensor and wait for it to start up
+            _Motion::Power(true);
+            
+            for (;;) {
+                // Wait for motion, or for motion to be disabled
+                _Motion::SignalReset();
+                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
+                if (!_Enabled) break;
+                
+                _HandleMotion();
+            }
+            
+            // Turn off motion sensor
+            _Motion::Power(false);
+        }
     }
     
     static void Enable(bool x) {
@@ -1383,6 +1416,26 @@ struct _TaskMotion {
     SchedulerStack(".stack._TaskMotion")
     static inline uint8_t Stack[128];
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // MARK: - IntState
 

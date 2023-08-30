@@ -5,7 +5,7 @@
 struct _Pin {
     // Port A
     using VDD_B_1V8_IMG_SD_EN       = GPIO::PortA::Pin<0x0, GPIO::Option::Output0>;
-    using LED_GREEN_                = GPIO::PortA::Pin<0x1, GPIO::Option::Output1>;
+    using LED_SIGNAL                = GPIO::PortA::Pin<0x1, GPIO::Option::Output1>;
     using MSP_STM_I2C_SDA           = GPIO::PortA::Pin<0x2>;
     using MSP_STM_I2C_SCL           = GPIO::PortA::Pin<0x3>;
     using ICE_MSP_SPI_DATA_OUT      = GPIO::PortA::Pin<0x4>;
@@ -14,7 +14,7 @@ struct _Pin {
     using BAT_CHRG_LVL              = GPIO::PortA::Pin<0x7, GPIO::Option::Input>; // No pullup/pulldown because this is an analog input (and the voltage divider provides a physical pulldown)
     using MSP_XOUT                  = GPIO::PortA::Pin<0x8>;
     using MSP_XIN                   = GPIO::PortA::Pin<0x9>;
-    using LED_RED_                  = GPIO::PortA::Pin<0xA, GPIO::Option::Output1>;
+    using LED_SEL                   = GPIO::PortA::Pin<0xA, GPIO::Option::Output0>;
     using VDD_B_2V8_IMG_SD_EN       = GPIO::PortA::Pin<0xB, GPIO::Option::Output0>;
     using MOTION_SIGNAL             = GPIO::PortA::Pin<0xC>;
     using BUTTON_SIGNAL_            = GPIO::PortA::Pin<0xD>;
@@ -31,6 +31,7 @@ class _TaskPower;
 class _TaskI2C;
 class _TaskButton;
 class _TaskMotion;
+class _TaskLED;
 class _TaskEvent;
 class _TaskSD;
 class _TaskImg;
@@ -65,6 +66,7 @@ using _Scheduler = Toastbox::Scheduler<
     _TaskI2C,
     _TaskButton,
     _TaskMotion,
+    _TaskLED,
     _TaskEvent,
     _TaskSD,
     _TaskImg
