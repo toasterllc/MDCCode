@@ -2,11 +2,21 @@
 #include <msp430.h>
 #include "Toastbox/Util.h"
 
-template<typename T_Pin, uint32_t T_ACLKFreqHz, uint32_t T_PeriodMs, uint32_t T_OnDurationMs>
-struct T_LEDFlicker {
+template<
+typename T_SelectPin,
+typename T_SignalPin,
+uint32_t T_ACLKFreqHz,
+uint32_t T_PeriodMs,
+uint32_t T_OnDurationMs
+>
+struct T_LED {
+    struct Pin {
+        using SelectPin = typename T_SelectPin::template Opts<GPIO::Option::Output0>;
+        using SignalPin = _SignalInactivePin;
+    };
     
-    using _PinEnabled  = typename T_Pin::template Opts<GPIO::Option::Output1, GPIO::Option::Sel10>;
-    using _PinDisabled = typename T_Pin::template Opts<GPIO::Option::Output1>;
+    using _SignalInactivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1>;
+    using _SignalActivePin = typename T_SignalPin::template Opts<GPIO::Option::Sel10>;
     
     using _Tocks32 = uint32_t;
     
@@ -42,9 +52,82 @@ struct T_LEDFlicker {
     static constexpr uint16_t _TA0CCR0 = _CCRForTocks<_PeriodTocks>();
     static constexpr uint16_t _TA0CCR1 = _CCRForTocks<_PeriodTocks-_OnDurationTocks>();
     
-    static void Enabled(bool x) {
-        // Short-circuit if our state hasn't changed
-        if (x == Enabled()) return;
+    using State = uint8_t;
+    static constexpr State StateRed     = 1<<0;
+    static constexpr State StateGreen   = 1<<1;
+    static constexpr State StateDim     = 1<<2;
+    static constexpr State StateFlash   = 1<<3; // Flash once
+    static constexpr State StateFlicker = 1<<4; // Flicker every 5s
+    
+    static bool _On(State x) {
+        return x & (StateRed | StateGreen);
+    }
+    
+    static bool _Constant(State x) {
+        return !(x & (StateFlash | StateFlicker));
+    }
+    
+    static void _FadeOut() {
+        constexpr uint16_t TimerMax = 256;
+        
+        // Configure timer
+        TA0CTL =
+            TASSEL__ACLK    |   // clock source = ACLK
+            ID__1           |   // clock divider = /1
+            TACLR           ;   // reset timer state
+        
+        // Additional clock divider = /1
+        TA0EX0 = TAIDEX_0;
+        // TA0CCR1 = value that causes LED to turn on
+        TA0CCR1 = TimerMax;
+        // TA0CCR0 = value that causes LED to turn off
+        TA0CCR0 = TimerMax-1;
+        // Start timer
+        TA0CTL |= MC__UP;
+        
+        // Output mode = reset/set
+        //   LED on when hitting TA0CCR1
+        //   LED off when hitting TA0CCR0
+        TA0CCTL1 = OUTMOD_7;
+        for (uint16_t i=0; i<=TimerMax; i++) {
+            TA0CCR1 = i;
+            _Scheduler::Sleep(_Scheduler::Ms<8>);
+        }
+    }
+    
+    static void StateSet(State x) {
+        // Fade out LED if needed
+        if (_On(x) && _Constant(x)) {
+            _FadeOut();
+        }
+        
+        _State = x;
+        SelectPin::Write(_State & StateRed);
+        
+        if (_On(x)) {
+            if (_State & StateFlash) {
+                
+            
+            } else if (_State & StateFlicker) {
+                
+            
+            } else {
+                _State & StateDim;
+            }
+            
+            _SignalActivePin::template Init<_SignalInactivePin>();
+        
+        } else {
+            // Off
+            
+            // Stop the timer and mask the interrupt
+            // Masking the interrupt seems like a better idea than clearing TAIFG, in case
+            // there's a race between us clearing TAIFG + stopping the timer, and a
+            // an incoming TAIFG=1.
+            TA0CTL &= ~(MC1|MC0);
+            
+            _SignalInactivePin::template Init<_SignalActivePin>();
+        }
         
         if (x) {
             // Configure timer
@@ -85,7 +168,7 @@ struct T_LEDFlicker {
         }
     }
     
-    static bool Enabled() {
-        return TA0CTL & (MC1|MC0);
+    static State StateGet() {
+        return _State;
     }
 };

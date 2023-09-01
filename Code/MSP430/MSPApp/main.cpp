@@ -54,6 +54,10 @@ using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
 
 using _WiredMonitor = T_WiredMonitor<_Pin::VDD_B_3V3_STM>;
 
+static constexpr uint32_t _FlickerPeriodMs      = 5000;
+static constexpr uint32_t _FlickerOnDurationMs  = 20;
+using _LED = T_LED<_Pin::LED_SEL, _Pin::LED_SIGNAL, _ACLKFreqHz, _FlickerPeriodMs, _FlickerOnDurationMs>;
+
 //static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 //static OutputPriority _LEDRed_(_Pin::LED_RED_{});
 
@@ -447,8 +451,8 @@ struct _TaskPower {
             _WiredMonitor::Pin,
             
             // LEDs
-            _Pin::LED_SIGNAL,
-            _Pin::LED_SEL
+            _LED::Pin::SelectPin,
+            _LED::Pin::SignalPin
         
         >(Startup::ColdStart());
         
@@ -627,10 +631,6 @@ struct _TaskPower {
     
     // _LEDFlickerEnabled: whether the LED should flicker periodically (due to battery trap)
     static inline T_Property<bool,_LEDFlickerEnabledChanged> _LEDFlickerEnabled;
-    
-//    static constexpr uint32_t _FlickerPeriodMs      = 5000;
-//    static constexpr uint32_t _FlickerOnDurationMs  = 20;
-//    using _LEDFlicker = T_LEDFlicker<_Pin::LED_GREEN_, _ACLKFreqHz, _FlickerPeriodMs, _FlickerOnDurationMs>;
     
     // Task stack
     static constexpr auto& Stack = _TaskPowerStack;
