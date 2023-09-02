@@ -10,13 +10,13 @@ uint32_t T_PeriodMs,
 uint32_t T_OnDurationMs
 >
 struct T_LED {
+    using _SignalInactivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1>;
+    using _SignalActivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1, GPIO::Option::Sel10>;
+    
     struct Pin {
         using SelectPin = typename T_SelectPin::template Opts<GPIO::Option::Output0>;
         using SignalPin = _SignalInactivePin;
     };
-    
-    using _SignalInactivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1>;
-    using _SignalActivePin = typename T_SignalPin::template Opts<GPIO::Option::Sel10>;
     
     using _Tocks32 = uint32_t;
     
@@ -67,9 +67,9 @@ struct T_LED {
         return !(x & (StateFlash | StateFlicker));
     }
     
-    static void _FadeOut() {
-        constexpr uint16_t TimerMax = 256;
-        
+    static void _Fade(bool dir) {
+        constexpr uint16_t TimerMax = 128;
+            
         // Configure timer
         TA0CTL =
             TASSEL__ACLK    |   // clock source = ACLK
@@ -82,29 +82,31 @@ struct T_LED {
         TA0CCR1 = TimerMax;
         // TA0CCR0 = value that causes LED to turn off
         TA0CCR0 = TimerMax-1;
+        // Output mode:
+        //   dir == true/fade in: set/reset
+        //   dir == false/fade out: reset/set
+        TA0CCTL1 = (dir ? OUTMOD_3 : OUTMOD_7);
         // Start timer
         TA0CTL |= MC__UP;
         
-        // Output mode = reset/set
-        //   LED on when hitting TA0CCR1
-        //   LED off when hitting TA0CCR0
-        TA0CCTL1 = OUTMOD_7;
         for (uint16_t i=0; i<=TimerMax; i++) {
             TA0CCR1 = i;
-            _Scheduler::Sleep(_Scheduler::Ms<8>);
+            _Scheduler::Sleep(_Scheduler::Ms<4>);
         }
     }
     
     static void StateSet(State x) {
         // Fade out LED if needed
         if (_On(x) && _Constant(x)) {
-            _FadeOut();
+            _Fade(false);
         }
         
         _State = x;
-        SelectPin::Write(_State & StateRed);
+        Pin::SelectPin::Write(_State & StateRed);
         
         if (_On(x)) {
+            _SignalActivePin::template Init<_SignalInactivePin>();
+            
             if (_State & StateFlash) {
                 
             
@@ -112,10 +114,8 @@ struct T_LED {
                 
             
             } else {
-                _State & StateDim;
+                _Fade(true);
             }
-            
-            _SignalActivePin::template Init<_SignalInactivePin>();
         
         } else {
             // Off
@@ -128,47 +128,49 @@ struct T_LED {
             
             _SignalInactivePin::template Init<_SignalActivePin>();
         }
-        
-        if (x) {
-            // Configure timer
-            TA0CTL =
-                TASSEL__ACLK    |   // clock source = ACLK
-                ID__1           |   // clock divider = /1
-                TACLR           ;   // reset timer state
-            
-            // Additional clock divider = /3
-            TA0EX0 = _TAIDEX<_ACLKFreqDivider>();
-            // TA0CCR1 = value that causes LED to turn on
-            TA0CCR1 = _TA0CCR1;
-            // TA0CCR0 = value that causes LED to turn off
-            TA0CCR0 = _TA0CCR0;
-            // Set the timer's initial value
-            // This is necessary because the timer always starts driving the output as a 0 (ie LED on), and there
-            // doesn't seem to be a way to set the timer's initial output to 1 instead (ie LED off). So instead we
-            // just start the timer at the instant that it flashes, so it'll flash and then immediately turn off.
-            TA0R = _TA0CCR1;
-            // Output mode = reset/set
-            //   LED on when hitting TA0CCR1
-            //   LED off when hitting TA0CCR0
-            TA0CCTL1 = OUTMOD_7;
-            // Start timer
-            TA0CTL |= MC__UP;
-            
-            // Configure pin to be controlled by timer
-            _PinEnabled::template Init<_PinDisabled>();
-        
-        } else {
-            // Return pin to manual control
-            _PinDisabled::template Init<_PinEnabled>();
-            // Stop the timer and mask the interrupt
-            // Masking the interrupt seems like a better idea than clearing TAIFG, in case
-            // there's a race between us clearing TAIFG + stopping the timer, and a
-            // an incoming TAIFG=1.
-            TA0CTL &= ~(MC1|MC0);
-        }
+//        
+//        if (x) {
+//            // Configure timer
+//            TA0CTL =
+//                TASSEL__ACLK    |   // clock source = ACLK
+//                ID__1           |   // clock divider = /1
+//                TACLR           ;   // reset timer state
+//            
+//            // Additional clock divider = /3
+//            TA0EX0 = _TAIDEX<_ACLKFreqDivider>();
+//            // TA0CCR1 = value that causes LED to turn on
+//            TA0CCR1 = _TA0CCR1;
+//            // TA0CCR0 = value that causes LED to turn off
+//            TA0CCR0 = _TA0CCR0;
+//            // Set the timer's initial value
+//            // This is necessary because the timer always starts driving the output as a 0 (ie LED on), and there
+//            // doesn't seem to be a way to set the timer's initial output to 1 instead (ie LED off). So instead we
+//            // just start the timer at the instant that it flashes, so it'll flash and then immediately turn off.
+//            TA0R = _TA0CCR1;
+//            // Output mode = reset/set
+//            //   LED on when hitting TA0CCR1
+//            //   LED off when hitting TA0CCR0
+//            TA0CCTL1 = OUTMOD_7;
+//            // Start timer
+//            TA0CTL |= MC__UP;
+//            
+//            // Configure pin to be controlled by timer
+//            _PinEnabled::template Init<_PinDisabled>();
+//        
+//        } else {
+//            // Return pin to manual control
+//            _PinDisabled::template Init<_PinEnabled>();
+//            // Stop the timer and mask the interrupt
+//            // Masking the interrupt seems like a better idea than clearing TAIFG, in case
+//            // there's a race between us clearing TAIFG + stopping the timer, and a
+//            // an incoming TAIFG=1.
+//            TA0CTL &= ~(MC1|MC0);
+//        }
     }
     
     static State StateGet() {
         return _State;
     }
+    
+    static inline State _State = 0;
 };

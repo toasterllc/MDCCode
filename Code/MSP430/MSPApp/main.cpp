@@ -37,7 +37,7 @@
 #include "Property.h"
 #include "Time.h"
 #include "TimeConstants.h"
-#include "LEDFlicker.h"
+#include "LED.h"
 using namespace GPIO;
 
 using _Clock = T_Clock<_Scheduler, _MCLKFreqHz, _Pin::MSP_XIN, _Pin::MSP_XOUT>;
@@ -265,51 +265,30 @@ struct _TaskLED {
     static constexpr Priority PriorityI2C       = 2;
     static constexpr Priority _PriorityCount    = 3;
     
-    using State = uint8_t;
-    static constexpr State StateNone    = 0;
-    static constexpr State StateOff     = 1<<0;
-    static constexpr State StateRed     = 1<<1;
-    static constexpr State StateGreen   = 1<<2;
-    static constexpr State StateDim     = 1<<3;
-    static constexpr State StateFlash   = 1<<4; // Flash once
-    static constexpr State StateFlicker = 1<<5; // Flicker every 5s
-    
     static void Run() {
         for (;;) {
-            _Scheduler::Wait([] { return _StateCurr != _StatePrev; });
-            
-            // Change state
-            const bool onConstant =
-                (_StatePrev & (StateRed | StateGreen)) &&
-                !(_StatePrev & (StateFlash | StateFlicker));
-            
-            // Fade out
-            if (onConstant) {
-                
-            }
-            
-            // Update _StatePrev
-            _StatePrev = _StateCurr;
+            _Scheduler::Wait([] { return (bool)_Pending; });
+            _LED::StateSet(*_Pending);
+            _Pending = std::nullopt;
         }
     }
     
-    static void Set(Priority pri, State state) {
+    static void Set(Priority pri, std::optional<_LED::State> state) {
         _States[pri] = state;
         
-        // Update _StateCurr
+        // Update _Pending
         // By default, turn the LEDs off, unless there's an alternative state requested
-        _StateCurr = StateOff;
-        for (State s : _States) {
-            if (s != StateNone) {
-                _StateCurr = s;
+        _Pending = 0;
+        for (std::optional<_LED::State> s : _States) {
+            if (s) {
+                _Pending = s;
                 break;
             }
         }
     }
     
-    static inline State _States[_PriorityCount] = {};
-    static inline State _StateCurr = StateOff;
-    static inline State _StatePrev = StateOff;
+    static inline std::optional<_LED::State> _States[_PriorityCount];
+    static inline std::optional<_LED::State> _Pending;
     
     // Task stack
     SchedulerStack(".stack._TaskLED")
@@ -512,8 +491,8 @@ struct _TaskPower {
         // Blink LEDs if our on state changed
         const bool on = _State & _StateOn;
         const bool onPrev = _TaskPowerStateSaved & _StateOn;
-//        if (!onPrev && on) _LEDFlash(_LEDGreen_);
-//        else if (onPrev && !on) _LEDFlash(_LEDRed_);
+        if (!onPrev && on) _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateGreen);
+        else if (onPrev && !on) _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed);
         _TaskPowerStateSaved = _State;
     }
     
@@ -592,9 +571,9 @@ struct _TaskPower {
     
     static void _LEDFlickerEnabledChanged() {
         if (_LEDFlickerEnabled) {
-            _TaskLED::Set(_TaskLED::PriorityPower, _TaskLED::StateRed | _TaskLED::StateFlicker);
+            _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed | _LED::StateFlicker);
         } else {
-            _TaskLED::Set(_TaskLED::PriorityPower, _TaskLED::StateNone);
+            _TaskLED::Set(_TaskLED::PriorityPower, 0);
         }
     }
     
@@ -663,7 +642,7 @@ struct _TaskI2C {
             // Cleanup
             
             // Relinquish LEDs, which may have been set by _CmdHandle()
-            _TaskLED::Set(_TaskLED::PriorityI2C, _TaskLED::StateNone);
+            _TaskLED::Set(_TaskLED::PriorityI2C, std::nullopt);
             
             // Reset state
             _HostModeState = {};
@@ -702,9 +681,9 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::LEDSet: {
-            _TaskLED::State state = _TaskLED::StateOff;
-            if (cmd.arg.LEDSet.red)   state = _TaskLED::StateRed   | _TaskLED::StateDim;
-            if (cmd.arg.LEDSet.green) state = _TaskLED::StateGreen | _TaskLED::StateDim;
+            _LED::State state = 0;
+            if (cmd.arg.LEDSet.red)   state = _LED::StateRed   | _LED::StateDim;
+            if (cmd.arg.LEDSet.green) state = _LED::StateGreen | _LED::StateDim;
             _TaskLED::Set(_TaskLED::PriorityI2C, state);
             return MSP::Resp{ .ok = true };
         }
@@ -1082,7 +1061,7 @@ struct _TaskEvent {
         // Reset our timer
         _EventTimer::Schedule(std::nullopt);
         // Reset LEDs
-        _TaskLED::Set(_TaskLED::PriorityCapture, _TaskLED::StateNone);
+        _TaskLED::Set(_TaskLED::PriorityCapture, std::nullopt);
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Reset();
@@ -1153,7 +1132,7 @@ struct _TaskEvent {
         _TaskPower::CaptureNotify();
         
         if (ev.capture->ledFlash) {
-            _TaskLED::Set(_TaskLED::PriorityCapture, _TaskLED::StateGreen | _TaskLED::StateFlash);
+            _TaskLED::Set(_TaskLED::PriorityCapture, _LED::StateGreen | _LED::StateFlash);
         }
         
         // Turn on VDD_B power (turns on ICE40)
@@ -1194,7 +1173,7 @@ struct _TaskEvent {
             _TaskSD::Wait();
         }
         
-        _TaskLED::Set(_TaskLED::PriorityCapture, _TaskLED::StateNone);
+        _TaskLED::Set(_TaskLED::PriorityCapture, std::nullopt);
         
         _State.vddImgSd = false;
         _State.vddb = false;
