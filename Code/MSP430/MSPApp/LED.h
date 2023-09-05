@@ -67,9 +67,17 @@ struct T_LED {
         return !(x & (StateFlash | StateFlicker));
     }
     
-    static void _Fade(bool dir) {
-        constexpr uint16_t TimerMax = 128;
-            
+    enum class __State {
+        Off,
+        Dim,
+        On,
+    };
+    
+    static void _Set(__State x) {
+        constexpr uint16_t StepCount = 256;
+        
+//        TA0CTL &= ~(MC1|MC0);
+        
         // Configure timer
         TA0CTL =
             TASSEL__ACLK    |   // clock source = ACLK
@@ -79,55 +87,125 @@ struct T_LED {
         // Additional clock divider = /1
         TA0EX0 = TAIDEX_0;
         // TA0CCR1 = value that causes LED to turn on
-        TA0CCR1 = TimerMax;
+        TA0CCR1 = StepCount;
         // TA0CCR0 = value that causes LED to turn off
-        TA0CCR0 = TimerMax-1;
+        TA0CCR0 = StepCount-1;
         // Output mode:
-        //   dir == true/fade in: set/reset
-        //   dir == false/fade out: reset/set
-        TA0CCTL1 = (dir ? OUTMOD_3 : OUTMOD_7);
+        //   on == true/fade in: set/reset
+        //   on == false/fade out: reset/set
+        TA0CCTL1 = OUTMOD_3;
+//        TA0CCTL1 = (x==__State::Off ? OUTMOD_7 : OUTMOD_3);
+//        TA0CCTL1 = OUTMOD_3;//(x==__State::Off ? OUTMOD_7 : OUTMOD_3);
         // Start timer
         TA0CTL |= MC__UP;
         
-        for (uint16_t i=0; i<=TimerMax; i++) {
-            TA0CCR1 = i;
-            _Scheduler::Sleep(_Scheduler::Ms<4>);
-        }
-    }
-    
-    static void StateSet(State x) {
-        // Fade out LED if needed
-        if (_On(x) && _Constant(x)) {
-            _Fade(false);
-        }
-        
-        _State = x;
-        Pin::SelectPin::Write(_State & StateRed);
-        
-        if (_On(x)) {
-            _SignalActivePin::template Init<_SignalInactivePin>();
+        if (x == __State::Dim) {
+            TA0CCR1 = 0;
+            _Scheduler::Sleep(_Scheduler::Ms<1000>);
             
-            if (_State & StateFlash) {
-                
-            
-            } else if (_State & StateFlicker) {
-                
-            
-            } else {
-                _Fade(true);
+            for (uint16_t i=0; i<=64; i++) {
+                TA0CCR1 = i;
+                _Scheduler::Sleep(_Scheduler::Ms<8>);
             }
         
         } else {
-            // Off
+//            for (int16_t i=64; i>=0; i--) {
+//                TA0CCR1 = i;
+//                _Scheduler::Sleep(_Scheduler::Ms<8>);
+//            }
             
-            // Stop the timer and mask the interrupt
-            // Masking the interrupt seems like a better idea than clearing TAIFG, in case
-            // there's a race between us clearing TAIFG + stopping the timer, and a
-            // an incoming TAIFG=1.
-            TA0CTL &= ~(MC1|MC0);
+            TA0CCR1 = 256-64;
+            _Scheduler::Sleep(_Scheduler::Ms<1000>);
             
-            _SignalInactivePin::template Init<_SignalActivePin>();
+            for (uint16_t i=256-64; i<=256; i++) {
+                TA0CCR1 = i;
+                _Scheduler::Sleep(_Scheduler::Ms<8>);
+            }
+            
+            
+//            for (int16_t i=64; i>=0; i--) {
+//                TA0CCR1 = i;
+//                _Scheduler::Sleep(_Scheduler::Ms<8>);
+//            }
+            
+            
+            
+//            for (uint16_t i=0; i<=64; i++) {
+//                TA0CCR1 = i;
+//                _Scheduler::Sleep(_Scheduler::Ms<8>);
+//            }
+            
+            
+//            for (uint16_t i=0; i<=256; i++) {
+//                TA0CCR1 = i;
+//                _Scheduler::Sleep(_Scheduler::Ms<2>);
+//            }
         }
+        
+        
+//        if (x == __State::Dim) {
+//            for (uint16_t i=0; i<=StepCount/16; i++) {
+//                TA0CCR1 = i;
+//                _Scheduler::Sleep(_Scheduler::Ms<4>);
+//            }
+//        
+//        } else {
+//            for (uint16_t i=0; i<=StepCount; i++) {
+//                TA0CCR1 = i;
+//                _Scheduler::Sleep(_Scheduler::Ms<4>);
+//            }
+//        }
+    }
+    
+    static void StateSet(State x) {
+        _State = x;
+        Pin::SelectPin::Write(_State & StateRed);
+        
+        _SignalActivePin::template Init<_SignalInactivePin>();
+        
+        _Set(x & StateDim ? __State::Dim : __State::Off);
+        
+        
+        
+        
+        
+        
+        
+//        // Fade out LED if needed
+//        if (_On(x) && _Constant(x)) {
+//            _Set(__State::Off);
+//        }
+//        
+//        _State = x;
+//        Pin::SelectPin::Write(_State & StateRed);
+//        
+//        if (_On(x)) {
+//            _SignalActivePin::template Init<_SignalInactivePin>();
+//            
+//            if (_State & StateFlash) {
+//                
+//            
+//            } else if (_State & StateFlicker) {
+//                
+//            
+//            } else if (_State & StateDim) {
+//                _Set(__State::Dim);
+//            
+//            } else {
+//                _Set(__State::On);
+//            }
+//        
+//        } else {
+//            // Off
+//            
+//            // Stop the timer and mask the interrupt
+//            // Masking the interrupt seems like a better idea than clearing TAIFG, in case
+//            // there's a race between us clearing TAIFG + stopping the timer, and a
+//            // an incoming TAIFG=1.
+//            TA0CTL &= ~(MC1|MC0);
+//            
+//            _SignalInactivePin::template Init<_SignalActivePin>();
+//        }
 //        
 //        if (x) {
 //            // Configure timer

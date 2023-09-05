@@ -319,6 +319,60 @@ struct _TaskPower {
         
         _Init();
         
+        
+        
+        _LED::Pin::SelectPin::Write(0);
+        
+        _LED::_SignalActivePin::template Init<_LED::_SignalInactivePin>();
+        
+        
+        
+        constexpr uint16_t StepCount = 256;
+        
+//        TA0CTL &= ~(MC1|MC0);
+        
+        // Configure timer
+        TA0CTL =
+            TASSEL__ACLK    |   // clock source = ACLK
+            ID__1           |   // clock divider = /1
+            TACLR           ;   // reset timer state
+        
+        // Additional clock divider = /1
+        TA0EX0 = TAIDEX_0;
+        // TA0CCR1 = value that causes LED to turn on
+        TA0CCR1 = StepCount;
+        // TA0CCR0 = value that causes LED to turn off
+        TA0CCR0 = StepCount-1;
+        // Output mode:
+        //   on == true/fade in: set/reset
+        //   on == false/fade out: reset/set
+        TA0CCTL1 = OUTMOD_3;
+//        TA0CCTL1 = (x==__State::Off ? OUTMOD_7 : OUTMOD_3);
+//        TA0CCTL1 = OUTMOD_3;//(x==__State::Off ? OUTMOD_7 : OUTMOD_3);
+        // Start timer
+        TA0CTL |= MC__UP;
+        
+        
+        
+        for (;;) {
+            TA0R = StepCount/2;
+            {
+                for (uint16_t i=0; i<=64; i++) {
+                    TA0CCR1 = i;
+                    _Scheduler::Sleep(_Scheduler::Ms<8>);
+                }
+            }
+            
+            TA0R = StepCount/2;
+            {
+                for (int16_t i=64; i>=0; i--) {
+                    TA0CCR1 = i;
+                    _Scheduler::Sleep(_Scheduler::Ms<8>);
+                }
+            }
+        }
+        
+        
         for (;;) {
             // Wait until something triggers us to update
             _Scheduler::Wait([] { return _Wired()!=_WiredMonitor::Wired() || _BatteryLevelUpdate; });
@@ -491,8 +545,8 @@ struct _TaskPower {
         // Blink LEDs if our on state changed
         const bool on = _State & _StateOn;
         const bool onPrev = _TaskPowerStateSaved & _StateOn;
-        if (!onPrev && on) _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateGreen);
-        else if (onPrev && !on) _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed);
+        if (!onPrev && on) _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateGreen|_LED::StateDim);
+        else if (onPrev && !on) _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed|_LED::StateDim);
         _TaskPowerStateSaved = _State;
     }
     
