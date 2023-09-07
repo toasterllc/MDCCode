@@ -73,8 +73,32 @@ struct T_LED {
         On,
     };
     
+    static uint16_t _Count(__State x) {
+        switch (x) {
+        case __State::Off:  return 0;
+        case __State::Dim:  return 64;
+        case __State::On:   return 256;
+        }
+    }
+    
     static void _Fade(__State from, __State to) {
-        constexpr uint16_t StepCount = 256;
+        const uint16_t fromCount = _Count(from);
+        const uint16_t toCount = _Count(to);
+        const int16_t delta = toCount > fromCount ? 1 : -1;
+        
+//        constexpr uint16_t CountDim = 64;
+//        constexpr uint16_t CountFull = 256;
+        
+//        uint16_t countStart
+        
+//        off -> dim
+//        off -> on
+//        
+//        dim -> off
+//        dim -> on
+//        
+//        on -> off
+//        on -> dim
         
 //        TA0CTL &= ~(MC1|MC0);
         
@@ -87,9 +111,9 @@ struct T_LED {
         // Additional clock divider = /1
         TA0EX0 = TAIDEX_0;
         // TA0CCR1 = value that causes LED to turn on
-        TA0CCR1 = StepCount;
+        TA0CCR1 = CountFull;
         // TA0CCR0 = value that causes LED to turn off
-        TA0CCR0 = StepCount-1;
+        TA0CCR0 = CountFull-1;
         // Output mode:
         //   on == true/fade in: set/reset
         //   on == false/fade out: reset/set
@@ -97,74 +121,69 @@ struct T_LED {
         // Start timer
         TA0CTL |= MC__UP;
         
-        if (x == __State::Dim) {
-            TA0R = StepCount/2;
-            
-            for (int16_t i=0; i<=64; i++) {
-                TA0CCR1 = i;
-                _Scheduler::Sleep(_Scheduler::Ms<8>);
-            }
+        TA0R = CountFull/2;
         
-        } else {
-            TA0R = StepCount/2;
-            
-            for (int16_t i=StepCount; i>=0; i--) {
-                TA0CCR1 = i;
-                _Scheduler::Sleep(_Scheduler::Ms<8>);
-            }
-            
-            
-//            for (int16_t i=64; i>=0; i--) {
-//                TA0CCR1 = i;
-//                _Scheduler::Sleep(_Scheduler::Ms<8>);
-//            }
-            
-            
-            
-//            for (uint16_t i=0; i<=64; i++) {
-//                TA0CCR1 = i;
-//                _Scheduler::Sleep(_Scheduler::Ms<8>);
-//            }
-            
-            
-//            for (uint16_t i=0; i<=256; i++) {
-//                TA0CCR1 = i;
-//                _Scheduler::Sleep(_Scheduler::Ms<2>);
-//            }
+        for (int16_t i=fromCount;; i+=delta) {
+            TA0CCR1 = i;
+            _Scheduler::Sleep(_Scheduler::Ms<8>);
+            if (i == toCount) break;
         }
         
-        
 //        if (x == __State::Dim) {
-//            for (uint16_t i=0; i<=StepCount/16; i++) {
+//            TA0R = CountFull/2;
+//            
+//            for (int16_t i=0; i<=64; i++) {
 //                TA0CCR1 = i;
-//                _Scheduler::Sleep(_Scheduler::Ms<4>);
+//                _Scheduler::Sleep(_Scheduler::Ms<8>);
 //            }
 //        
 //        } else {
-//            for (uint16_t i=0; i<=StepCount; i++) {
+//            TA0R = CountFull/2;
+//            
+//            for (int16_t i=CountFull; i>=0; i--) {
 //                TA0CCR1 = i;
-//                _Scheduler::Sleep(_Scheduler::Ms<4>);
+//                _Scheduler::Sleep(_Scheduler::Ms<8>);
 //            }
+//            
+//            
+////            for (int16_t i=64; i>=0; i--) {
+////                TA0CCR1 = i;
+////                _Scheduler::Sleep(_Scheduler::Ms<8>);
+////            }
+//            
+//            
+//            
+////            for (uint16_t i=0; i<=64; i++) {
+////                TA0CCR1 = i;
+////                _Scheduler::Sleep(_Scheduler::Ms<8>);
+////            }
+//            
+//            
+////            for (uint16_t i=0; i<=256; i++) {
+////                TA0CCR1 = i;
+////                _Scheduler::Sleep(_Scheduler::Ms<2>);
+////            }
 //        }
+//        
+//        
+////        if (x == __State::Dim) {
+////            for (uint16_t i=0; i<=StepCount/16; i++) {
+////                TA0CCR1 = i;
+////                _Scheduler::Sleep(_Scheduler::Ms<4>);
+////            }
+////        
+////        } else {
+////            for (uint16_t i=0; i<=StepCount; i++) {
+////                TA0CCR1 = i;
+////                _Scheduler::Sleep(_Scheduler::Ms<4>);
+////            }
+////        }
     }
     
     static void StateSet(State x) {
-        _State = x;
-        Pin::SelectPin::Write(_State & StateRed);
-        
-        _SignalActivePin::template Init<_SignalInactivePin>();
-        
-        _Set(x & StateDim ? __State::Dim : __State::Off);
-        
-        
-        
-        
-        
-        
-        
         // Fade out LED if needed
         if (_On(x) && _Constant(x)) {
-            _Set(__State::Off);
+            _Fade(_State, __State::Off);
         }
         
         _State = x;
@@ -179,11 +198,8 @@ struct T_LED {
             } else if (_State & StateFlicker) {
                 
             
-            } else if (_State & StateDim) {
-                _Set(__State::Dim);
-            
             } else {
-                _Set(__State::On);
+                _Fade(__State::Off, _State);
             }
         
         } else {
