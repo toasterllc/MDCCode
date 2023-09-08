@@ -53,11 +53,14 @@ struct T_LED {
     static constexpr uint16_t _TA0CCR1 = _CCRForTocks<_PeriodTocks-_OnDurationTocks>();
     
     using State = uint8_t;
+    static constexpr State StateOff     = 0;
     static constexpr State StateRed     = 1<<0;
     static constexpr State StateGreen   = 1<<1;
     static constexpr State StateDim     = 1<<2;
     static constexpr State StateFlash   = 1<<3; // Flash once
     static constexpr State StateFlicker = 1<<4; // Flicker every 5s
+    
+    enum class _FadeState { Off, Dim, On };
     
     static bool _On(State x) {
         return x & (StateRed | StateGreen);
@@ -67,24 +70,29 @@ struct T_LED {
         return !(x & (StateFlash | StateFlicker));
     }
     
-    enum class __State {
-        Off,
-        Dim,
-        On,
-    };
+    static _FadeState _Convert(State x) {
+        if (_On(x) && _Constant(x)) {
+            if (x & StateDim) return _FadeState::Dim;
+            return _FadeState::On;
+        }
+        return _FadeState::Off;
+    }
     
-    static uint16_t _Count(__State x) {
+    static constexpr int16_t _CountFull = 256;
+    
+    static int16_t _Count(_FadeState x) {
         switch (x) {
-        case __State::Off:  return 0;
-        case __State::Dim:  return 64;
-        case __State::On:   return 256;
+        default:
+        case _FadeState::Off:  return 0;
+        case _FadeState::Dim:  return _CountFull/32;
+        case _FadeState::On:   return _CountFull;
         }
     }
     
-    static void _Fade(__State from, __State to) {
-        const uint16_t fromCount = _Count(from);
-        const uint16_t toCount = _Count(to);
-        const int16_t delta = toCount > fromCount ? 1 : -1;
+    static void _Fade(_FadeState begin, _FadeState end) {
+        const int16_t countBegin = _Count(begin);
+        const int16_t countEnd = _Count(end);
+        const int16_t delta = countEnd>=countBegin ? 1 : -1;
         
 //        constexpr uint16_t CountDim = 64;
 //        constexpr uint16_t CountFull = 256;
@@ -111,9 +119,9 @@ struct T_LED {
         // Additional clock divider = /1
         TA0EX0 = TAIDEX_0;
         // TA0CCR1 = value that causes LED to turn on
-        TA0CCR1 = CountFull;
+        TA0CCR1 = _CountFull;
         // TA0CCR0 = value that causes LED to turn off
-        TA0CCR0 = CountFull-1;
+        TA0CCR0 = _CountFull-1;
         // Output mode:
         //   on == true/fade in: set/reset
         //   on == false/fade out: reset/set
@@ -121,15 +129,15 @@ struct T_LED {
         // Start timer
         TA0CTL |= MC__UP;
         
-        TA0R = CountFull/2;
+        TA0R = _CountFull/2;
         
-        for (int16_t i=fromCount;; i+=delta) {
+        for (int16_t i=countBegin;; i+=delta) {
             TA0CCR1 = i;
-            _Scheduler::Sleep(_Scheduler::Ms<8>);
-            if (i == toCount) break;
+            _Scheduler::Sleep(_Scheduler::Ms<32>);
+            if (i == countEnd) break;
         }
         
-//        if (x == __State::Dim) {
+//        if (x == _FadeState::Dim) {
 //            TA0R = CountFull/2;
 //            
 //            for (int16_t i=0; i<=64; i++) {
@@ -166,7 +174,7 @@ struct T_LED {
 //        }
 //        
 //        
-////        if (x == __State::Dim) {
+////        if (x == _FadeState::Dim) {
 ////            for (uint16_t i=0; i<=StepCount/16; i++) {
 ////                TA0CCR1 = i;
 ////                _Scheduler::Sleep(_Scheduler::Ms<4>);
@@ -182,8 +190,11 @@ struct T_LED {
     
     static void StateSet(State x) {
         // Fade out LED if needed
-        if (_On(x) && _Constant(x)) {
-            _Fade(_State, __State::Off);
+        const _FadeState fadeStateBegin = _Convert(_State);
+        const _FadeState fadeStateEnd = _Convert(x);
+        
+        if (fadeStateBegin != _FadeState::Off) {
+            _Fade(fadeStateBegin, _FadeState::Off);
         }
         
         _State = x;
@@ -199,7 +210,7 @@ struct T_LED {
                 
             
             } else {
-                _Fade(__State::Off, _State);
+                _Fade(_FadeState::Off, fadeStateEnd);
             }
         
         } else {
@@ -213,49 +224,11 @@ struct T_LED {
             
             _SignalInactivePin::template Init<_SignalActivePin>();
         }
-        
-        if (x) {
-            // Configure timer
-            TA0CTL =
-                TASSEL__ACLK    |   // clock source = ACLK
-                ID__1           |   // clock divider = /1
-                TACLR           ;   // reset timer state
-            
-            // Additional clock divider = /3
-            TA0EX0 = _TAIDEX<_ACLKFreqDivider>();
-            // TA0CCR1 = value that causes LED to turn on
-            TA0CCR1 = _TA0CCR1;
-            // TA0CCR0 = value that causes LED to turn off
-            TA0CCR0 = _TA0CCR0;
-            // Set the timer's initial value
-            // This is necessary because the timer always starts driving the output as a 0 (ie LED on), and there
-            // doesn't seem to be a way to set the timer's initial output to 1 instead (ie LED off). So instead we
-            // just start the timer at the instant that it flashes, so it'll flash and then immediately turn off.
-            TA0R = _TA0CCR1;
-            // Output mode = reset/set
-            //   LED on when hitting TA0CCR1
-            //   LED off when hitting TA0CCR0
-            TA0CCTL1 = OUTMOD_7;
-            // Start timer
-            TA0CTL |= MC__UP;
-            
-            // Configure pin to be controlled by timer
-            _PinEnabled::template Init<_PinDisabled>();
-        
-        } else {
-            // Return pin to manual control
-            _PinDisabled::template Init<_PinEnabled>();
-            // Stop the timer and mask the interrupt
-            // Masking the interrupt seems like a better idea than clearing TAIFG, in case
-            // there's a race between us clearing TAIFG + stopping the timer, and a
-            // an incoming TAIFG=1.
-            TA0CTL &= ~(MC1|MC0);
-        }
     }
     
-    static State StateGet() {
-        return _State;
-    }
+//    static State StateGet() {
+//        return _State;
+//    }
     
     static inline State _State = 0;
 };

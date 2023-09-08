@@ -354,11 +354,19 @@ struct _TaskPower {
         return _On();
     }
     
+    static void ButtonHoldPrepare() {
+        _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateOff);
+    }
+    
     static void ButtonHold() {
         // Allow the button to turn us on if we're not in battery trap, or we're wired
         if (!_BatteryTrap() || _Wired()) _On(!_On());
         // Otherwise, deny the request by flashing the red LEDs
 //        else _LEDFlash(_LEDRed_);
+    }
+    
+    static void ButtonHoldCleanup() {
+        _TaskLED::Set(_TaskLED::PriorityPower, std::nullopt);
     }
     
     static void CaptureNotify() {
@@ -1306,32 +1314,70 @@ struct _TaskEvent {
 // MARK: - _TaskButton
 
 struct _TaskButton {
+    static void _ButtonPress() {
+        // Ignore button presses if we're off or in host mode
+        if (!_TaskPower::On() || _TaskI2C::HostModeEnabled()) return;
+        
+        for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
+            _TaskEvent::CaptureStart(*it, _RTC::Now());
+        }
+    }
+    
+    static void _ButtonHoldPrepare() {
+        _TaskPower::ButtonHoldPrepare();
+    }
+    
+    static void _ButtonHold() {
+        _TaskPower::ButtonHold();
+    }
+    
+    static void _ButtonHoldCleanup() {
+        _TaskPower::ButtonHoldCleanup();
+    }
+    
     static void Run() {
         // Disable interrupts because _Button required it
         Toastbox::IntState ints(false);
         
+        // Wait until button is released
+        {
+            _Button::ConfigUp();
+            _Button::Wait();
+        }
+        
         for (;;) {
-            // Wait until something triggers us to update
-            _Button::Init();
-            _Scheduler::Wait([] { return _Button::Pending(); });
-            
-            switch (_Button::Read()) {
-            case _Button::Event::Press: {
-                // Ignore button presses if we're off or in host mode
-                if (!_TaskPower::On() || _TaskI2C::HostModeEnabled()) break;
-                
-                for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-                    _TaskEvent::CaptureStart(*it, _RTC::Now());
-                }
-                break;
+            // Wait until button is pressed
+            {
+                _Button::ConfigDown();
+                _Button::Wait();
             }
             
-            case _Button::Event::Hold:
-                _TaskPower::ButtonHold();
-                break;
+            // Wait until button is released
+            {
+                _Button::ConfigUp();
+                const bool up = _Button::Wait(_HoldShortDuration);
+                if (up) {
+                    _ButtonPress();
+                    continue;
+                }
+            }
+            
+            // Wait until button is released
+            {
+                _ButtonHoldPrepare();
+                const bool up = _Button::Wait(_HoldLongDuration);
+                if (!up) {
+                    _ButtonHold();
+                    // Wait until button is actually released
+                    _Button::Wait();
+                }
+                _ButtonHoldCleanup();
             }
         }
     }
+    
+    static constexpr auto _HoldShortDuration = _Scheduler::Ms<100>;
+    static constexpr auto _HoldLongDuration = _Scheduler::Ms<1300>;
     
     // Task stack
     SchedulerStack(".stack._TaskButton")
