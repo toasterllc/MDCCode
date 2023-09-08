@@ -260,7 +260,7 @@ static void _ICEInit() {
 
 struct _TaskLED {
     using Priority = uint8_t;
-    static constexpr Priority PriorityPower     = 0;
+    static constexpr Priority PriorityButton    = 0;
     static constexpr Priority PriorityCapture   = 1;
     static constexpr Priority PriorityI2C       = 2;
     static constexpr Priority _PriorityCount    = 3;
@@ -268,8 +268,9 @@ struct _TaskLED {
     static void Run() {
         for (;;) {
             _Scheduler::Wait([] { return (bool)_Pending; });
-            _LED::StateSet(*_Pending);
+            const _LED::State s = *_Pending;
             _Pending = std::nullopt;
+            _LED::StateSet(s);
         }
     }
     
@@ -359,20 +360,23 @@ struct _TaskPower {
     }
     
     static void ButtonHoldPrepare() {
-        _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateOff);
+        _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateOff);
     }
     
     static void ButtonHold() {
         // Allow the button to turn us on if we're not in battery trap, or we're wired
-        if (!_BatteryTrap() || _Wired()) _On(!_On());
+        if (!_BatteryTrap() || _Wired()) {
+            _On(!_On());
+            _TaskLED::Set(_TaskLED::PriorityButton, (_On() ? _LED::StateGreen : _LED::StateRed) | _LED::StateDim);
+        }
         // Otherwise, deny the request by flashing the red LEDs
 //        else _LEDFlash(_LEDRed_);
     }
     
     static void ButtonHoldCleanup() {
-        _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateOff);
+        _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateOff);
         _Scheduler::Sleep(_Scheduler::Ms<1000>);
-        _TaskLED::Set(_TaskLED::PriorityPower, std::nullopt);
+        _TaskLED::Set(_TaskLED::PriorityButton, std::nullopt);
     }
     
     static void CaptureNotify() {
@@ -502,11 +506,11 @@ struct _TaskPower {
     }
     
     static void _StateChanged() {
-        // Blink LEDs if our on state changed
-        const bool on = _State & _StateOn;
-        const bool onPrev = _TaskPowerStateSaved & _StateOn;
-        if (!onPrev && on) _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateGreen|_LED::StateDim);
-        else if (onPrev && !on) _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed|_LED::StateDim);
+//        // Blink LEDs if our on state changed
+//        const bool on = _State & _StateOn;
+//        const bool onPrev = _TaskPowerStateSaved & _StateOn;
+//        if (!onPrev && on) _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateGreen|_LED::StateDim);
+//        else if (onPrev && !on) _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateRed|_LED::StateDim);
         _TaskPowerStateSaved = _State;
     }
     
@@ -584,11 +588,11 @@ struct _TaskPower {
     }
     
     static void _LEDFlickerEnabledChanged() {
-        if (_LEDFlickerEnabled) {
-            _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed | _LED::StateFlicker);
-        } else {
-            _TaskLED::Set(_TaskLED::PriorityPower, 0);
-        }
+//        if (_LEDFlickerEnabled) {
+//            _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateRed | _LED::StateFlicker);
+//        } else {
+//            _TaskLED::Set(_TaskLED::PriorityButton, 0);
+//        }
     }
     
     static constexpr uint8_t _StateOff          = 0;
@@ -654,7 +658,6 @@ struct _TaskI2C {
             }
             
             // Cleanup
-            
             // Relinquish LEDs, which may have been set by _CmdHandle()
             _TaskLED::Set(_TaskLED::PriorityI2C, std::nullopt);
             
@@ -1395,52 +1398,52 @@ struct _TaskButton {
 
 struct _TaskMotion {
     static void Run() {
-        // Disable interrupts because _Motion requires it
-        Toastbox::IntState ints(false);
-        
-        for (;;) {
-            // Wait for motion to be enabled
-            _Scheduler::Wait([] { return _Enabled; });
-            
-            // Power on motion sensor and wait for it to start up
-            _Motion::Power(true);
-            
-            for (;;) {
-                // Wait for motion, or for motion to be disabled
-                _Motion::SignalReset();
-                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
-                if (!_Enabled) break;
-                
-                _HandleMotion();
-            }
-            
-            // Turn off motion sensor
-            _Motion::Power(false);
-        }
+//        // Disable interrupts because _Motion requires it
+//        Toastbox::IntState ints(false);
+//        
+//        for (;;) {
+//            // Wait for motion to be enabled
+//            _Scheduler::Wait([] { return _Enabled; });
+//            
+//            // Power on motion sensor and wait for it to start up
+//            _Motion::Power(true);
+//            
+//            for (;;) {
+//                // Wait for motion, or for motion to be disabled
+//                _Motion::SignalReset();
+//                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
+//                if (!_Enabled) break;
+//                
+//                _HandleMotion();
+//            }
+//            
+//            // Turn off motion sensor
+//            _Motion::Power(false);
+//        }
     }
     
     static void Enable(bool x) {
         _Enabled = x;
     }
-    
-    static void _HandleMotion() {
-        // When motion occurs, start captures for each enabled motion trigger
-        for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
-            _Triggers::MotionTrigger& trigger = *it;
-            // If this trigger is enabled...
-            if (trigger.enabled.get()) {
-                const Time::Instant time = _RTC::Now();
-                // Start capture
-                _TaskEvent::CaptureStart(trigger, time);
-                // Suppress motion for the specified duration, if suppression is enabled
-                const uint32_t suppressTicks = trigger.base().suppressTicks;
-                if (suppressTicks) {
-                    trigger.enabled.suppress(true);
-                    _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
-                }
-            }
-        }
-    }
+//    
+//    static void _HandleMotion() {
+//        // When motion occurs, start captures for each enabled motion trigger
+//        for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+//            _Triggers::MotionTrigger& trigger = *it;
+//            // If this trigger is enabled...
+//            if (trigger.enabled.get()) {
+//                const Time::Instant time = _RTC::Now();
+//                // Start capture
+//                _TaskEvent::CaptureStart(trigger, time);
+//                // Suppress motion for the specified duration, if suppression is enabled
+//                const uint32_t suppressTicks = trigger.base().suppressTicks;
+//                if (suppressTicks) {
+//                    trigger.enabled.suppress(true);
+//                    _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
+//                }
+//            }
+//        }
+//    }
     
     static inline bool _Enabled = false;
     

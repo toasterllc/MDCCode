@@ -83,7 +83,7 @@ struct T_LED {
         switch (x) {
         default:
         case _FadeState::Off:  return 0;
-        case _FadeState::Dim:  return _CountFull/32;
+        case _FadeState::Dim:  return _CountFull/16;
         case _FadeState::On:   return _CountFull;
         }
     }
@@ -132,7 +132,7 @@ struct T_LED {
         
         for (int16_t i=countBegin;; i+=delta) {
             TA0CCR1 = i;
-            _Scheduler::Sleep(_Scheduler::Ms<32>);
+            _Scheduler::Sleep(_Scheduler::Ms<16>);
             if (i == countEnd) break;
         }
     }
