@@ -57,8 +57,7 @@ struct T_LED {
     static constexpr State StateRed     = 1<<0;
     static constexpr State StateGreen   = 1<<1;
     static constexpr State StateDim     = 1<<2;
-    static constexpr State StateFlash   = 1<<3; // Flash once
-    static constexpr State StateFlicker = 1<<4; // Flicker every 5s
+    static constexpr State StateFlicker = 1<<3; // Flicker every 5s
     
     enum class _FadeState { Off, Dim, On };
     
@@ -67,7 +66,7 @@ struct T_LED {
     }
     
     static bool _Constant(State x) {
-        return !(x & (StateFlash | StateFlicker));
+        return !(x & StateFlicker);
     }
     
     static _FadeState _Convert(State x) {
@@ -129,66 +128,23 @@ struct T_LED {
         // Start timer
         TA0CTL |= MC__UP;
         
-        TA0R = _CountFull/2;
+        TA0R = _CountFull/4;
         
         for (int16_t i=countBegin;; i+=delta) {
             TA0CCR1 = i;
             _Scheduler::Sleep(_Scheduler::Ms<32>);
             if (i == countEnd) break;
         }
+    }
+    
+    static void Flash() {
         
-//        if (x == _FadeState::Dim) {
-//            TA0R = CountFull/2;
-//            
-//            for (int16_t i=0; i<=64; i++) {
-//                TA0CCR1 = i;
-//                _Scheduler::Sleep(_Scheduler::Ms<8>);
-//            }
-//        
-//        } else {
-//            TA0R = CountFull/2;
-//            
-//            for (int16_t i=CountFull; i>=0; i--) {
-//                TA0CCR1 = i;
-//                _Scheduler::Sleep(_Scheduler::Ms<8>);
-//            }
-//            
-//            
-////            for (int16_t i=64; i>=0; i--) {
-////                TA0CCR1 = i;
-////                _Scheduler::Sleep(_Scheduler::Ms<8>);
-////            }
-//            
-//            
-//            
-////            for (uint16_t i=0; i<=64; i++) {
-////                TA0CCR1 = i;
-////                _Scheduler::Sleep(_Scheduler::Ms<8>);
-////            }
-//            
-//            
-////            for (uint16_t i=0; i<=256; i++) {
-////                TA0CCR1 = i;
-////                _Scheduler::Sleep(_Scheduler::Ms<2>);
-////            }
-//        }
-//        
-//        
-////        if (x == _FadeState::Dim) {
-////            for (uint16_t i=0; i<=StepCount/16; i++) {
-////                TA0CCR1 = i;
-////                _Scheduler::Sleep(_Scheduler::Ms<4>);
-////            }
-////        
-////        } else {
-////            for (uint16_t i=0; i<=StepCount; i++) {
-////                TA0CCR1 = i;
-////                _Scheduler::Sleep(_Scheduler::Ms<4>);
-////            }
-////        }
     }
     
     static void StateSet(State x) {
+        // Short-circuit if the state didn't change
+        if (x == _State) return;
+        
         // Fade out LED if needed
         const _FadeState fadeStateBegin = _Convert(_State);
         const _FadeState fadeStateEnd = _Convert(x);
@@ -203,10 +159,7 @@ struct T_LED {
         if (_On(x)) {
             _SignalActivePin::template Init<_SignalInactivePin>();
             
-            if (_State & StateFlash) {
-                
-            
-            } else if (_State & StateFlicker) {
+            if (_State & StateFlicker) {
                 
             
             } else {

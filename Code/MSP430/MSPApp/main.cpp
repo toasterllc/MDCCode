@@ -287,6 +287,10 @@ struct _TaskLED {
         }
     }
     
+    static void Flash() {
+        _LED::Flash();
+    }
+    
     static inline std::optional<_LED::State> _States[_PriorityCount];
     static inline std::optional<_LED::State> _Pending;
     
@@ -366,6 +370,8 @@ struct _TaskPower {
     }
     
     static void ButtonHoldCleanup() {
+        _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateOff);
+        _Scheduler::Sleep(_Scheduler::Ms<1000>);
         _TaskLED::Set(_TaskLED::PriorityPower, std::nullopt);
     }
     
@@ -1140,7 +1146,8 @@ struct _TaskEvent {
         _TaskPower::CaptureNotify();
         
         if (ev.capture->ledFlash) {
-            _TaskLED::Set(_TaskLED::PriorityCapture, _LED::StateGreen | _LED::StateFlash);
+            _TaskLED::Flash();
+//            _TaskLED::Set(_TaskLED::PriorityCapture, _LED::StateGreen | _LED::StateFlash);
         }
         
         // Turn on VDD_B power (turns on ICE40)
