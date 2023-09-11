@@ -267,33 +267,42 @@ struct _TaskLED {
     
     static void Run() {
         for (;;) {
-            _Scheduler::Wait([] { return (bool)_Pending; });
-            const _LED::State s = *_Pending;
-            _Pending = std::nullopt;
-            _LED::StateSet(s);
+            // Wait until we're signalled
+            _Scheduler::Wait([] { return (bool)_State || _Flash; });
+            
+            // Consume new state
+            const std::optional<_LED::State> state = _State;
+            const bool flash = _Flash;
+            _State = std::nullopt;
+            _Flash = false;
+            
+            // Handle state/flash
+            if (state) _LED::StateSet(*state);
+            if (flash) _LED::Flash();
         }
     }
     
     static void Set(Priority pri, std::optional<_LED::State> state) {
         _States[pri] = state;
         
-        // Update _Pending
+        // Update _State
         // By default, turn the LEDs off, unless there's an alternative state requested
-        _Pending = 0;
+        _State = 0;
         for (std::optional<_LED::State> s : _States) {
             if (s) {
-                _Pending = s;
+                _State = s;
                 break;
             }
         }
     }
     
     static void Flash() {
-        _LED::Flash();
+        _Flash = true;
     }
     
     static inline std::optional<_LED::State> _States[_PriorityCount];
-    static inline std::optional<_LED::State> _Pending;
+    static inline std::optional<_LED::State> _State;
+    static inline bool _Flash = false;
     
     // Task stack
     SchedulerStack(".stack._TaskLED")
@@ -1145,7 +1154,6 @@ struct _TaskEvent {
         
         if (ev.capture->ledFlash) {
             _TaskLED::Flash();
-//            _TaskLED::Set(_TaskLED::PriorityCapture, _LED::StateGreen | _LED::StateFlash);
         }
         
         // Turn on VDD_B power (turns on ICE40)
