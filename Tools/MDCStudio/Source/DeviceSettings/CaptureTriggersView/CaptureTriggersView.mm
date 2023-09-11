@@ -92,7 +92,7 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
                 .value = 5,
                 .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .leds = LEDs_::None,
+            .ledFlash = false,
         };
         
         break;
@@ -118,7 +118,7 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
                 .value = 5,
                 .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .leds = LEDs_::None,
+            .ledFlash = false,
         };
         
         x.constraints = {
@@ -147,7 +147,7 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
                 .value = 5,
                 .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .leds = LEDs_::None,
+            .ledFlash = false,
         };
         
         break;
@@ -575,7 +575,7 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     IBOutlet NSTextField*        _capture_IntervalLabel;
     IBOutlet NSTextField*        _capture_IntervalField;
     IBOutlet NSPopUpButton*      _capture_IntervalUnitMenu;
-    IBOutlet NSSegmentedControl* _capture_LEDsControl;
+    IBOutlet NSButton*           _capture_LEDFlashCheckbox;
     
     // Constraints
     IBOutlet NSView*            _battery_ContainerView;
@@ -924,25 +924,6 @@ static void _Copy(Calendar::DaysOfYear& x, NSTokenField* field) {
 }
 
 template<bool T_Forward>
-static void _Copy(LEDs& x, NSSegmentedControl* control) {
-    if constexpr (T_Forward) {
-        size_t idx = 0;
-        for (auto y : { LEDs_::Green, LEDs_::Red }) {
-            [control setSelected:(x & y) forSegment:idx];
-            idx++;
-        }
-    } else {
-        LEDs r = LEDs_::None;
-        size_t idx = 0;
-        for (auto y : { LEDs_::Green, LEDs_::Red }) {
-            r |= ([control isSelectedForSegment:idx] ? y : 0);
-            idx++;
-        }
-        x = r;
-    }
-}
-
-template<bool T_Forward>
 static void _Copy(Repeat& x, CaptureTriggersView* view, const char* menuLabel) {
     auto& v = *view;
     
@@ -1007,7 +988,7 @@ static void _Copy(Capture& x, CaptureTriggersView* view) {
         [v._capture_IntervalUnitMenu setEnabled:x.count>1];
     }
     
-    _Copy<T_Forward>(x.leds, v._capture_LEDsControl);
+    _Copy<T_Forward>(x.ledFlash, v._capture_LEDFlashCheckbox);
 }
 
 template<bool T_Forward>

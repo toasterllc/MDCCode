@@ -31,13 +31,6 @@ struct [[gnu::packed]] Repeat {
     };
 };
 
-using LEDs = uint8_t;
-struct LEDs_ { enum : LEDs {
-    None  = 0,
-    Green = 1<<0,
-    Red   = 1<<1,
-}; };
-
 struct [[gnu::packed]] Duration {
     enum class Unit : uint8_t {
         Seconds,
@@ -68,7 +61,7 @@ inline Ticks TicksForDuration(const Duration& x) {
 struct [[gnu::packed]] Capture {
     uint16_t count;
     Duration interval;
-    LEDs leds;
+    bool ledFlash;
 };
 
 struct [[gnu::packed]] Trigger {
@@ -279,19 +272,11 @@ inline void Deserialize(Triggers& x, const T& data) {
 //    return x;
 //}
 
-
-inline MSP::LEDs _Convert(const LEDs& x) {
-    MSP::LEDs r = MSP::LEDs_::None;
-    if (x & LEDs_::Green) r |= MSP::LEDs_::Green;
-    if (x & LEDs_::Red)   r |= MSP::LEDs_::Red;
-    return r;
-}
-
 inline MSP::Capture _Convert(const Capture& x) {
     return MSP::Capture{
         .delayTicks = Toastbox::Cast<decltype(MSP::Capture::delayTicks)>(TicksForDuration(x.interval).count()),
         .count = x.count,
-        .leds = _Convert(x.leds),
+        .ledFlash = x.ledFlash,
     };
 }
 
