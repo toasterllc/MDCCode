@@ -3,6 +3,7 @@
 #include "Toastbox/Util.h"
 
 template<
+typename T_Scheduler,
 typename T_SelectPin,
 typename T_SignalPin,
 uint32_t T_ACLKFreqHz,
@@ -13,9 +14,12 @@ struct T_LED {
     using _SignalInactivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1>;
     using _SignalActivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1, GPIO::Option::Sel10>;
     
+    using _SelectGreenPin = typename T_SelectPin::template Opts<GPIO::Option::Output0>;
+    using _SelectRedPin = typename T_SelectPin::template Opts<GPIO::Option::Output1>;
+    
     struct Pin {
-        using SelectPin = typename T_SelectPin::template Opts<GPIO::Option::Output0>;
-        using SignalPin = _SignalInactivePin;
+        using Select = _SelectGreenPin;
+        using Signal = _SignalInactivePin;
     };
     
     using _Tocks32 = uint32_t;
@@ -132,13 +136,49 @@ struct T_LED {
         
         for (int16_t i=countBegin;; i+=delta) {
             TA0CCR1 = i;
-            _Scheduler::Sleep(_Scheduler::Ms<16>);
+            T_Scheduler::Sleep(_Scheduler::Ms<16>);
             if (i == countEnd) break;
         }
     }
     
     static void Flash() {
+        // Take manual control of pins
+        _SignalInactivePin::template Init<_SignalActivePin>();
+        _SelectGreenPin::template Init<_SelectRedPin>();
         
+        _SignalInactivePin::Write(0);
+        T_Scheduler::Sleep(_Scheduler::Ms<100>);
+        _SignalInactivePin::Write(1);
+        
+        _PinsConfig(_State);
+        
+//        // Take manual control of pin
+//        Pin::
+//        using _SignalInactivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1>;
+//        using _SignalActivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1, GPIO::Option::Sel10>;
+        
+//        _SignalInactivePin
+//        _SelectGreenPin::template Init<_SelectRedPin>();
+//        
+//        
+//        
+//        if (_On(_State) && _Constant(_State)) {
+//            // Turn off
+//            _SignalInactivePin::template Init<_SignalActivePin>();
+//            
+////            Pin::Select
+//        } else {
+//            // Turn on
+//            
+//        }
+    }
+    
+    static void _PinsConfig(State x) {
+        if (x & StateGreen) _SelectGreenPin::template Init<_SelectRedPin>();
+        else                _SelectRedPin::template Init<_SelectGreenPin>();
+        
+        if (_On(x)) _SignalActivePin::template Init<_SignalInactivePin>();
+        else        _SignalInactivePin::template Init<_SignalActivePin>();
     }
     
     static void StateSet(State x) {
@@ -154,11 +194,9 @@ struct T_LED {
         }
         
         _State = x;
-        Pin::SelectPin::Write(_State & StateRed);
+        _PinsConfig(_State);
         
         if (_On(x)) {
-            _SignalActivePin::template Init<_SignalInactivePin>();
-            
             if (_State & StateFlicker) {
                 
             
@@ -174,8 +212,6 @@ struct T_LED {
             // there's a race between us clearing TAIFG + stopping the timer, and a
             // an incoming TAIFG=1.
             TA0CTL &= ~(MC1|MC0);
-            
-            _SignalInactivePin::template Init<_SignalActivePin>();
         }
     }
     

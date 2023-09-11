@@ -56,7 +56,7 @@ using _WiredMonitor = T_WiredMonitor<_Pin::VDD_B_3V3_STM>;
 
 static constexpr uint32_t _FlickerPeriodMs      = 5000;
 static constexpr uint32_t _FlickerOnDurationMs  = 20;
-using _LED = T_LED<_Pin::LED_SEL, _Pin::LED_SIGNAL, _ACLKFreqHz, _FlickerPeriodMs, _FlickerOnDurationMs>;
+using _LED = T_LED<_Scheduler, _Pin::LED_SEL, _Pin::LED_SIGNAL, _ACLKFreqHz, _FlickerPeriodMs, _FlickerOnDurationMs>;
 
 //static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 //static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -438,8 +438,8 @@ struct _TaskPower {
             _Motion::Pin::Signal,
             
             // Battery (config chosen by _BatterySampler)
-            _BatterySampler::Pin::BatChrgLvlPin,
-            _BatterySampler::Pin::BatChrgLvlEnPin,
+            _BatterySampler::Pin::BatChrgLvl,
+            _BatterySampler::Pin::BatChrgLvlEn,
             
             // Button (config chosen by _Button)
             _Button::Pin,
@@ -448,8 +448,8 @@ struct _TaskPower {
             _WiredMonitor::Pin,
             
             // LEDs
-            _LED::Pin::SelectPin,
-            _LED::Pin::SignalPin
+            _LED::Pin::Select,
+            _LED::Pin::Signal
         
         >(Startup::ColdStart());
         
@@ -1376,7 +1376,9 @@ struct _TaskButton {
             {
                 _ButtonHoldPrepare();
                 const bool up = _Button::Wait(_HoldLongDuration);
-                if (!up) {
+                if (up) {
+                    _ButtonPress();
+                } else {
                     _ButtonHold();
                     // Wait until button is actually released
                     _Button::Wait();
@@ -1386,8 +1388,8 @@ struct _TaskButton {
         }
     }
     
-    static constexpr auto _HoldShortDuration = _Scheduler::Ms<100>;
-    static constexpr auto _HoldLongDuration = _Scheduler::Ms<1300>;
+    static constexpr auto _HoldShortDuration = _Scheduler::Ms<300>;
+    static constexpr auto _HoldLongDuration = _Scheduler::Ms<1100>;
     
     // Task stack
     SchedulerStack(".stack._TaskButton")

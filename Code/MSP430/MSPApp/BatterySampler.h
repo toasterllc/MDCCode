@@ -12,14 +12,14 @@ typename T_BatChrgLvlEnPin
 class T_BatterySampler {
 public:
     struct Pin {
-        using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
-        using BatChrgLvlEnPin = typename T_BatChrgLvlEnPin::template Opts<GPIO::Option::Output0>;
+        using BatChrgLvl = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
+        using BatChrgLvlEn = typename T_BatChrgLvlEnPin::template Opts<GPIO::Option::Output0>;
     };
     
     static void Init() {
         // Configure ADC pin
-        static_assert(Pin::BatChrgLvlPin::PinIdx < 8);
-        SYSCFG2 |= Pin::BatChrgLvlPin::Bit;
+        static_assert(Pin::BatChrgLvl::PinIdx < 8);
+        SYSCFG2 |= Pin::BatChrgLvl::Bit;
         
         // Configure ADC10
         {
@@ -86,7 +86,7 @@ public:
         uint16_t sampleBat = 0;
         {
             // Enable BAT_CHRG_LVL buffer
-            Pin::BatChrgLvlEnPin::Write(1);
+            Pin::BatChrgLvlEn::Write(1);
             
             // Wait 5 time constants for BAT_CHRG_LVL to settle:
             //   5 time constants = 5*R*C (where R=1k, C=100n) = 500us
@@ -95,7 +95,7 @@ public:
             sampleBat = _ChannelSample(_Channel::BatChrgLvl);
             
             // Disable BAT_CHRG_LVL buffer (to save power)
-            Pin::BatChrgLvlEnPin::Write(0);
+            Pin::BatChrgLvlEn::Write(0);
         }
         
         _ADCEnable(false);
@@ -129,7 +129,7 @@ public:
     
 private:
     struct _Channel {
-        static constexpr uint16_t BatChrgLvl = Pin::BatChrgLvlPin::PinIdx;
+        static constexpr uint16_t BatChrgLvl = Pin::BatChrgLvl::PinIdx;
         static constexpr uint16_t IntRef1V5  = 13; // Internal 1.5V reference is connected to ADC channel 13
     };
     
