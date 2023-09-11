@@ -377,16 +377,6 @@ static const char* _StringForTriggerEventType(MSP::Triggers::Event::Type x) {
     return "unknown";
 }
 
-static const char* _StringForLEDs(MSP::LEDs x) {
-    switch (x) {
-    case MSP::LEDs_::None:                      return "none";
-    case MSP::LEDs_::Green:                     return "green";
-    case MSP::LEDs_::Red:                       return "red";
-    case MSP::LEDs_::Green | MSP::LEDs_::Red:   return "green|red";
-    }
-    return "unknown";
-}
-
 static const char* _StringForResetType(MSP::Reset::Type x) {
     switch (x) {
     case MSP::Reset::Type::Reset: return "reset";
@@ -526,7 +516,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         printf(     "        capture\n");
         printf(     "          delayTicks:          %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         printf(     "          count:               %ju\n",             (uintmax_t)it->capture.count);
-        printf(     "          leds:                %s\n",              _StringForLEDs(it->capture.leds));
+        printf(     "          ledFlash:            %ju\n",             (uintmax_t)it->capture.ledFlash);
     }
     
     printf(         "    motionTrigger\n");
@@ -535,7 +525,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         printf(     "        capture\n");
         printf(     "          delayTicks:          %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         printf(     "          count:               %ju\n",             (uintmax_t)it->capture.count);
-        printf(     "          leds:                %s\n",              _StringForLEDs(it->capture.leds));
+        printf(     "          ledFlash:            %ju\n",             (uintmax_t)it->capture.ledFlash);
         printf(     "        count:                 %ju\n",             (uintmax_t)it->count);
         printf(     "        durationTicks:         %ju (%.1f)\n",      (uintmax_t)it->durationTicks, _SecondsForTicks(it->durationTicks));
         printf(     "        suppressTicks:         %ju (%.1f)\n",      (uintmax_t)it->suppressTicks, _SecondsForTicks(it->suppressTicks));
@@ -547,7 +537,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         printf(     "        capture\n");
         printf(     "          delayTicks:          %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         printf(     "          count:               %ju\n",             (uintmax_t)it->capture.count);
-        printf(     "          leds:                0x%02jx (%s)\n",    (uintmax_t)it->capture.leds, _StringForLEDs(it->capture.leds));
+        printf(     "          ledFlash:            %ju\n",             (uintmax_t)it->capture.ledFlash);
     }
     
     printf(         "    source\n");
