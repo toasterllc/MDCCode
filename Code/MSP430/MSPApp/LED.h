@@ -67,8 +67,8 @@ struct T_LED {
     }
     
     static constexpr int16_t _CountFull = 256;
-    static constexpr int16_t _CountOn = _CountFull/16;
-    static constexpr int16_t _CountOff = 0;
+    static constexpr int16_t _CountOn   = _CountFull/16;
+    static constexpr int16_t _CountOff  = 0;
     static constexpr auto _FlashDuration = _Scheduler::Ms<30>;
     
     static int16_t _Count(bool on) {
