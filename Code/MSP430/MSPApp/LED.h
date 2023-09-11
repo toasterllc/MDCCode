@@ -60,58 +60,25 @@ struct T_LED {
     static constexpr State StateOff     = 0;
     static constexpr State StateRed     = 1<<0;
     static constexpr State StateGreen   = 1<<1;
-    static constexpr State StateDim     = 1<<2;
-    static constexpr State StateFlicker = 1<<3; // Flicker every 5s
+    static constexpr State StateFlicker = 1<<2; // Flicker every 5s
     
-    enum class _FadeState { Off, Dim, On };
-    
-    static bool _On(State x) {
-        return x & (StateRed | StateGreen);
-    }
-    
-    static bool _Constant(State x) {
-        return !(x & StateFlicker);
-    }
-    
-    static _FadeState _Convert(State x) {
-        if (_On(x) && _Constant(x)) {
-            if (x & StateDim) return _FadeState::Dim;
-            return _FadeState::On;
-        }
-        return _FadeState::Off;
+    static bool _OnConstant(State x) {
+        return x==StateRed || x==StateGreen;
     }
     
     static constexpr int16_t _CountFull = 256;
+    static constexpr int16_t _CountOn = _CountFull/16;
+    static constexpr int16_t _CountOff = 0;
+    static constexpr auto _FlashDuration = _Scheduler::Ms<30>;
     
-    static int16_t _Count(_FadeState x) {
-        switch (x) {
-        default:
-        case _FadeState::Off:  return 0;
-        case _FadeState::Dim:  return _CountFull/16;
-        case _FadeState::On:   return _CountFull;
-        }
+    static int16_t _Count(bool on) {
+        return (on ? _CountOn : _CountOff);
     }
     
-    static void _Fade(_FadeState begin, _FadeState end) {
-        const int16_t countBegin = _Count(begin);
-        const int16_t countEnd = _Count(end);
+    static void _Fade(bool on) {
+        const int16_t countBegin = _Count(!on);
+        const int16_t countEnd = _Count(on);
         const int16_t delta = countEnd>=countBegin ? 1 : -1;
-        
-//        constexpr uint16_t CountDim = 64;
-//        constexpr uint16_t CountFull = 256;
-        
-//        uint16_t countStart
-        
-//        off -> dim
-//        off -> on
-//        
-//        dim -> off
-//        dim -> on
-//        
-//        on -> off
-//        on -> dim
-        
-//        TA0CTL &= ~(MC1|MC0);
         
         // Configure timer
         TA0CTL =
@@ -141,68 +108,42 @@ struct T_LED {
         }
     }
     
+    static void _PinsConfig(State x) {
+        if (x & StateGreen) _SelectGreenPin::template Init<_SelectRedPin>();
+        else                _SelectRedPin::template Init<_SelectGreenPin>();
+        
+        if (x == StateOff) _SignalInactivePin::template Init<_SignalActivePin>();
+        else               _SignalActivePin::template Init<_SignalInactivePin>();
+    }
+    
     static void Flash() {
         // Take manual control of pins
         _SignalInactivePin::template Init<_SignalActivePin>();
         _SelectGreenPin::template Init<_SelectRedPin>();
         
         _SignalInactivePin::Write(0);
-        T_Scheduler::Sleep(_Scheduler::Ms<100>);
+        T_Scheduler::Sleep(_FlashDuration);
         _SignalInactivePin::Write(1);
         
+        // Return pins to their previous state
         _PinsConfig(_State);
-        
-//        // Take manual control of pin
-//        Pin::
-//        using _SignalInactivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1>;
-//        using _SignalActivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1, GPIO::Option::Sel10>;
-        
-//        _SignalInactivePin
-//        _SelectGreenPin::template Init<_SelectRedPin>();
-//        
-//        
-//        
-//        if (_On(_State) && _Constant(_State)) {
-//            // Turn off
-//            _SignalInactivePin::template Init<_SignalActivePin>();
-//            
-////            Pin::Select
-//        } else {
-//            // Turn on
-//            
-//        }
-    }
-    
-    static void _PinsConfig(State x) {
-        if (x & StateGreen) _SelectGreenPin::template Init<_SelectRedPin>();
-        else                _SelectRedPin::template Init<_SelectGreenPin>();
-        
-        if (_On(x)) _SignalActivePin::template Init<_SignalInactivePin>();
-        else        _SignalInactivePin::template Init<_SignalActivePin>();
     }
     
     static void StateSet(State x) {
         // Short-circuit if the state didn't change
         if (x == _State) return;
         
-        // Fade out LED if needed
-        const _FadeState fadeStateBegin = _Convert(_State);
-        const _FadeState fadeStateEnd = _Convert(x);
-        
-        if (fadeStateBegin != _FadeState::Off) {
-            _Fade(fadeStateBegin, _FadeState::Off);
-        }
+        // Fade LED off if it's on
+        if (_OnConstant(_State)) _Fade(false);
         
         _State = x;
         _PinsConfig(_State);
         
-        if (_On(x)) {
-            if (_State & StateFlicker) {
-                
+        if (_OnConstant(x)) {
+            _Fade(true);
+        
+        } else if (_State & StateFlicker) {
             
-            } else {
-                _Fade(_FadeState::Off, fadeStateEnd);
-            }
         
         } else {
             // Off
@@ -215,9 +156,5 @@ struct T_LED {
         }
     }
     
-//    static State StateGet() {
-//        return _State;
-//    }
-    
-    static inline State _State = 0;
+    static inline State _State = StateOff;
 };

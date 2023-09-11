@@ -367,7 +367,7 @@ struct _TaskPower {
         // Allow the button to turn us on if we're not in battery trap, or we're wired
         if (!_BatteryTrap() || _Wired()) {
             _On(!_On());
-            _TaskLED::Set(_TaskLED::PriorityButton, (_On() ? _LED::StateGreen : _LED::StateRed) | _LED::StateDim);
+            _TaskLED::Set(_TaskLED::PriorityButton, _On() ? _LED::StateGreen : _LED::StateRed);
         }
         // Otherwise, deny the request by flashing the red LEDs
 //        else _LEDFlash(_LEDRed_);
@@ -506,11 +506,6 @@ struct _TaskPower {
     }
     
     static void _StateChanged() {
-//        // Blink LEDs if our on state changed
-//        const bool on = _State & _StateOn;
-//        const bool onPrev = _TaskPowerStateSaved & _StateOn;
-//        if (!onPrev && on) _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateGreen|_LED::StateDim);
-//        else if (onPrev && !on) _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateRed|_LED::StateDim);
         _TaskPowerStateSaved = _State;
     }
     
@@ -699,8 +694,8 @@ struct _TaskI2C {
         
         case Cmd::Op::LEDSet: {
             _LED::State state = 0;
-            if (cmd.arg.LEDSet.red)   state = _LED::StateRed   | _LED::StateDim;
-            if (cmd.arg.LEDSet.green) state = _LED::StateGreen | _LED::StateDim;
+            if (cmd.arg.LEDSet.red)   state = _LED::StateRed;
+            if (cmd.arg.LEDSet.green) state = _LED::StateGreen;
             _TaskLED::Set(_TaskLED::PriorityI2C, state);
             return MSP::Resp{ .ok = true };
         }
