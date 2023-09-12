@@ -33,6 +33,15 @@ public:
     // pins + resetting _Signal, and the ISR firing.)
     static void Power(bool on) {
         if (on) {
+            // Enable the motion signal's pullup first, which has the effect of turning on
+            // the motion sensor very slowly
+            // This is a nasty hack to workaround the fact that we don't have a resistor on
+            // the gate of Q4 to limit the inrush current when turning the motion sensor on.
+            // If we turn on Q4 first, VDD_A_3V3 droops to ~2.2V and causes the MSP430 to
+            // brownout.
+            _SignalOnIgnored::template Init<_SignalOff>();
+            T_Scheduler::Sleep(_PrePowerOnDelay);
+            
             // Turn on motion sensor power
             // We activate a pullup on the signal line (via _SignalIgnored) to minimize
             // current draw on the signal line during this time. This is because the sensor's
@@ -40,7 +49,6 @@ public:
             // care about its value during power on, we don't want our pulldown draining
             // current in case the sensor is driving a 1.)
             _PowerOn::template Init<_PowerOff>();
-            _SignalOnIgnored::template Init<_SignalOff>();
             // Wait _PowerOnTimeMs for the sensor to turn on and stabilize
             T_Scheduler::Sleep(_PowerOnDelay);
         
@@ -63,6 +71,8 @@ public:
         // we enable interrupts, otherwise we'll get a spurious interrupt simply due to the
         // pullup resistor that we had previously.
         _SignalOnPrepare::template Init<_SignalOnIgnored>();
+        
+//        T_Scheduler::Sleep(_SignalResetDelay);
         
         // Enable interrupt
         #warning TODO: verify that we don't get a spurious interrupt here! we can verify simply by having a motion trigger enable at a partilcular time, and then verify that, in the absence of motion, no images are captured at that time.
@@ -111,7 +121,9 @@ public:
     }
     
 private:
-    // _PowerOnDelay: time that it takes for the motion sensor to power on and stabilize
+    static constexpr auto _PrePowerOnDelay = T_Scheduler::template Ms<100>;
     static constexpr auto _PowerOnDelay = T_Scheduler::template Ms<30000>;
+//    static constexpr auto _SignalResetDelay = T_Scheduler::template Ms<100>;
+    
     static inline volatile bool _Signal = false;
 };
