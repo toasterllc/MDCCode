@@ -49,6 +49,18 @@ public:
             // care about its value during power on, we don't want our pulldown draining
             // current in case the sensor is driving a 1.)
             _PowerOn::template Init<_PowerOff>();
+            
+            // Prepare interrupt pin
+            // Switch to the _SignalOnPrepare config before switching to the _SignalOnEnabled
+            // config. This is so we switch from a pullup resistor (via _SignalIgnored) to a
+            // pulldown resistor (via _SignalOnPrepare), so that the signal line is low before
+            // we enable interrupts, otherwise we'll get a spurious interrupt simply due to the
+            // pullup resistor that we had previously.
+            _SignalOnPrepare::template Init<_SignalOnIgnored>();
+            
+            // Enable interrupt
+            _SignalOnEnabled::template Init<_SignalOnPrepare>();
+            
             // Wait _PowerOnTimeMs for the sensor to turn on and stabilize
             T_Scheduler::Sleep(_PowerOnDelay);
         
@@ -64,21 +76,6 @@ public:
     // Ints: disabled (so that there's no race between us calling configuring our
     // pins + resetting _Signal, and the ISR firing.)
     static void SignalReset() {
-        // Prepare interrupt pin
-        // Switch to the _SignalOnPrepare config before switching to the _SignalOnEnabled
-        // config. This is so we switch from a pullup resistor (via _SignalIgnored) to a
-        // pulldown resistor (via _SignalOnPrepare), so that the signal line is low before
-        // we enable interrupts, otherwise we'll get a spurious interrupt simply due to the
-        // pullup resistor that we had previously.
-        _SignalOnPrepare::template Init<_SignalOnIgnored>();
-        
-//        T_Scheduler::Sleep(_SignalResetDelay);
-        
-        // Enable interrupt
-        #warning TODO: verify that we don't get a spurious interrupt here! we can verify simply by having a motion trigger enable at a partilcular time, and then verify that, in the absence of motion, no images are captured at that time.
-        #warning TODO: if we do get a spurious interrupt, add a delay above
-        _SignalOnEnabled::template Init<_SignalOnPrepare>();
-        
         // Reset signal
         _Signal = false;
     }
@@ -117,13 +114,12 @@ public:
     static void ISR() {
         _Signal = true;
         // Return pin to the ignored state so our pulldown isn't wasting power until we need it again
-        _SignalOnIgnored::template Init<_SignalOff>();
+//        _SignalOnIgnored::template Init<_SignalOff>();
     }
     
 private:
     static constexpr auto _PrePowerOnDelay = T_Scheduler::template Ms<100>;
     static constexpr auto _PowerOnDelay = T_Scheduler::template Ms<30000>;
-//    static constexpr auto _SignalResetDelay = T_Scheduler::template Ms<100>;
     
     static inline volatile bool _Signal = false;
 };

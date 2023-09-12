@@ -1403,52 +1403,52 @@ struct _TaskButton {
 
 struct _TaskMotion {
     static void Run() {
-//        // Disable interrupts because _Motion requires it
-//        Toastbox::IntState ints(false);
-//        
-//        for (;;) {
-//            // Wait for motion to be enabled
-//            _Scheduler::Wait([] { return _Enabled; });
-//            
-//            // Power on motion sensor and wait for it to start up
-//            _Motion::Power(true);
-//            
-//            for (;;) {
-//                // Wait for motion, or for motion to be disabled
-//                _Motion::SignalReset();
-//                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
-//                if (!_Enabled) break;
-//                
-//                _HandleMotion();
-//            }
-//            
-//            // Turn off motion sensor
-//            _Motion::Power(false);
-//        }
+        // Disable interrupts because _Motion requires it
+        Toastbox::IntState ints(false);
+        
+        for (;;) {
+            // Wait for motion to be enabled
+            _Scheduler::Wait([] { return _Enabled; });
+            
+            // Power on motion sensor and wait for it to start up
+            _Motion::Power(true);
+            
+            for (;;) {
+                // Wait for motion, or for motion to be disabled
+                _Motion::SignalReset();
+                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
+                if (!_Enabled) break;
+                
+                _HandleMotion();
+            }
+            
+            // Turn off motion sensor
+            _Motion::Power(false);
+        }
     }
     
     static void Enable(bool x) {
         _Enabled = x;
     }
-//    
-//    static void _HandleMotion() {
-//        // When motion occurs, start captures for each enabled motion trigger
-//        for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
-//            _Triggers::MotionTrigger& trigger = *it;
-//            // If this trigger is enabled...
-//            if (trigger.enabled.get()) {
-//                const Time::Instant time = _RTC::Now();
-//                // Start capture
-//                _TaskEvent::CaptureStart(trigger, time);
-//                // Suppress motion for the specified duration, if suppression is enabled
-//                const uint32_t suppressTicks = trigger.base().suppressTicks;
-//                if (suppressTicks) {
-//                    trigger.enabled.suppress(true);
-//                    _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
-//                }
-//            }
-//        }
-//    }
+    
+    static void _HandleMotion() {
+        // When motion occurs, start captures for each enabled motion trigger
+        for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+            _Triggers::MotionTrigger& trigger = *it;
+            // If this trigger is enabled...
+            if (trigger.enabled.get()) {
+                const Time::Instant time = _RTC::Now();
+                // Start capture
+                _TaskEvent::CaptureStart(trigger, time);
+                // Suppress motion for the specified duration, if suppression is enabled
+                const uint32_t suppressTicks = trigger.base().suppressTicks;
+                if (suppressTicks) {
+                    trigger.enabled.suppress(true);
+                    _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
+                }
+            }
+        }
+    }
     
     static inline bool _Enabled = false;
     
