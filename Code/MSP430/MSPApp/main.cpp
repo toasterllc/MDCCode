@@ -261,9 +261,10 @@ static void _ICEInit() {
 struct _TaskLED {
     using Priority = uint8_t;
     static constexpr Priority PriorityButton    = 0;
-    static constexpr Priority PriorityCapture   = 1;
-    static constexpr Priority PriorityI2C       = 2;
-    static constexpr Priority _PriorityCount    = 3;
+    static constexpr Priority PriorityPower     = 1;
+    static constexpr Priority PriorityCapture   = 2;
+    static constexpr Priority PriorityI2C       = 3;
+    static constexpr Priority _PriorityCount    = 4;
     
     static void Run() {
         for (;;) {
@@ -364,29 +365,10 @@ struct _TaskPower {
         _Scheduler::Wait([] { return !_BatteryLevelUpdate; });
     }
     
-    static bool On() {
-        return _On();
-    }
-    
-    static void ButtonHoldPrepare() {
-        _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateOff);
-    }
-    
-    static void ButtonHold() {
-        // Allow the button to turn us on if we're not in battery trap, or we're wired
-        if (!_BatteryTrap() || _Wired()) {
-            _On(!_On());
-            _TaskLED::Set(_TaskLED::PriorityButton, _On() ? _LED::StateGreen : _LED::StateRed);
-        }
-        // Otherwise, deny the request by flashing the red LEDs
-//        else _LEDFlash(_LEDRed_);
-    }
-    
-    static void ButtonHoldCleanup() {
-        _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateOff);
-        _Scheduler::Sleep(_Scheduler::Ms<1000>);
-        _TaskLED::Set(_TaskLED::PriorityButton, std::nullopt);
-    }
+    static bool On() { return _On(); }
+    static void On(bool x) { _On(x); }
+    static bool Wired() { return _Wired(); }
+    static bool BatteryTrap() { return _BatteryTrap(); }
     
     static void CaptureNotify() {
         // Short-circuit if we're in battery trap
@@ -592,11 +574,11 @@ struct _TaskPower {
     }
     
     static void _LEDFlickerEnabledChanged() {
-//        if (_LEDFlickerEnabled) {
-//            _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateRed | _LED::StateFlicker);
-//        } else {
-//            _TaskLED::Set(_TaskLED::PriorityButton, 0);
-//        }
+        if (_LEDFlickerEnabled) {
+            _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed | _LED::StateFlicker);
+        } else {
+            _TaskLED::Set(_TaskLED::PriorityPower, std::nullopt);
+        }
     }
     
     static constexpr uint8_t _StateOff          = 0;
@@ -1327,6 +1309,26 @@ struct _TaskEvent {
 // MARK: - _TaskButton
 
 struct _TaskButton {
+    static bool _ButtonInteractionAllowed() {
+        // Allow the button to turn us on if we're not in battery trap, or we're wired
+        return !_TaskPower::BatteryTrap() || _TaskPower::Wired();
+    }
+    
+    static void _ButtonHoldPrepare() {
+        _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateOff);
+    }
+    
+    static void _ButtonHold() {
+        _TaskPower::On(!_TaskPower::On());
+        _TaskLED::Set(_TaskLED::PriorityButton, _TaskPower::On() ? _LED::StateGreen : _LED::StateRed);
+    }
+    
+    static void _ButtonHoldCleanup() {
+        _TaskLED::Set(_TaskLED::PriorityButton, _LED::StateOff);
+        _Scheduler::Sleep(_Scheduler::Ms<1000>);
+        _TaskLED::Set(_TaskLED::PriorityButton, std::nullopt);
+    }
+    
     static void _ButtonPress() {
         // Ignore button presses if we're off or in host mode
         if (!_TaskPower::On() || _TaskI2C::HostModeEnabled()) return;
@@ -1336,20 +1338,8 @@ struct _TaskButton {
         }
     }
     
-    static void _ButtonHoldPrepare() {
-        _TaskPower::ButtonHoldPrepare();
-    }
-    
-    static void _ButtonHold() {
-        _TaskPower::ButtonHold();
-    }
-    
-    static void _ButtonHoldCleanup() {
-        _TaskPower::ButtonHoldCleanup();
-    }
-    
     static void Run() {
-        // Disable interrupts because _Button required it
+        // Disable interrupts because _Button requires it
         Toastbox::IntState ints(false);
         
         // Wait until button is released
@@ -1364,6 +1354,9 @@ struct _TaskButton {
                 _Button::ConfigDown();
                 _Button::Wait();
             }
+            
+            // Ignore button interaction if necessary
+            if (!_ButtonInteractionAllowed()) continue;
             
             // Wait until button is released
             {
