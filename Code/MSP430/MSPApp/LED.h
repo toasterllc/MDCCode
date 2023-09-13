@@ -89,18 +89,16 @@ struct T_LED {
         // Additional clock divider = /1
         TA0EX0 = TAIDEX_0;
         // TA0CCR1 = value that causes LED to turn on
-        TA0CCR1 = _CountFull;
+        TA0CCR1 = countBegin;
         // TA0CCR0 = value that causes LED to turn off
         TA0CCR0 = _CountFull-1;
-        // Output mode:
-        //    on (fade in):  set/reset
-        //   !on (fade out): reset/set
+        // Output mode: set/reset
         TA0CCTL1 = OUTMOD_3;
         // Start timer
         TA0CTL |= MC__UP;
-        
-        TA0R = _CountFull/4;
-        
+        // Set the timer's initial value, which helps prevent a momentary LED glitch
+        TA0R = _CountFull-1;
+        // Perform the LED fade
         for (int16_t i=countBegin;; i+=delta) {
             TA0CCR1 = i;
             T_Scheduler::Sleep(_Scheduler::Ms<16>);

@@ -334,6 +334,12 @@ struct _TaskPower {
         
         _Init();
         
+//        _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed | _LED::StateFlicker);
+//        
+//        for (;;) {
+//            _Scheduler::Yield();
+//        }
+        
         for (;;) {
             // Wait until something triggers us to update
             _Scheduler::Wait([] { return _Wired()!=_WiredMonitor::Wired() || _BatteryLevelUpdate; });
