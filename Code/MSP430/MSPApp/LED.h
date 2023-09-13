@@ -7,8 +7,8 @@ typename T_Scheduler,
 typename T_SelectPin,
 typename T_SignalPin,
 uint32_t T_ACLKFreqHz,
-uint32_t T_PeriodMs,
-uint32_t T_OnDurationMs
+uint32_t T_FlickerPeriodMs,
+uint32_t T_FlickerOnDurationMs
 >
 struct T_LED {
     using _SignalInactivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1>;
@@ -45,16 +45,16 @@ struct T_LED {
     
     static constexpr _Tocks32 _TocksMax = 0x10000;
     static constexpr uint32_t _ACLKFreqDivider = 3;
-    
     using _TocksFreq = std::ratio<T_ACLKFreqHz, _ACLKFreqDivider>;
-    using _PeriodTocksRatio = std::ratio_multiply<_TocksFreq, std::ratio<T_PeriodMs,1000>>;
-    using _OnDurationTocksRatio = std::ratio_multiply<_TocksFreq, std::ratio<T_OnDurationMs,1000>>;
     
-    static constexpr _Tocks32 _PeriodTocks = _PeriodTocksRatio::num / _PeriodTocksRatio::den;
-    static constexpr _Tocks32 _OnDurationTocks = _OnDurationTocksRatio::num / _OnDurationTocksRatio::den;
+    using _FlickerPeriodTocksRatio = std::ratio_multiply<_TocksFreq, std::ratio<T_FlickerPeriodMs,1000>>;
+    using _FlickerOnDurationTocksRatio = std::ratio_multiply<_TocksFreq, std::ratio<T_FlickerOnDurationMs,1000>>;
     
-    static constexpr uint16_t _TA0CCR0 = _CCRForTocks<_PeriodTocks>();
-    static constexpr uint16_t _TA0CCR1 = _CCRForTocks<_PeriodTocks-_OnDurationTocks>();
+    static constexpr _Tocks32 _FlickerPeriodTocks = _FlickerPeriodTocksRatio::num / _FlickerPeriodTocksRatio::den;
+    static constexpr _Tocks32 _FlickerOnDurationTocks = _FlickerOnDurationTocksRatio::num / _FlickerOnDurationTocksRatio::den;
+    
+    static constexpr uint16_t _FlickerTA0CCR0 = _CCRForTocks<_FlickerPeriodTocks>();
+    static constexpr uint16_t _FlickerTA0CCR1 = _CCRForTocks<_FlickerPeriodTocks-_FlickerOnDurationTocks>();
     
     using State = uint8_t;
     static constexpr State StateOff     = 0;
@@ -93,8 +93,8 @@ struct T_LED {
         // TA0CCR0 = value that causes LED to turn off
         TA0CCR0 = _CountFull-1;
         // Output mode:
-        //   on == true/fade in: set/reset
-        //   on == false/fade out: reset/set
+        //    on (fade in):  set/reset
+        //   !on (fade out): reset/set
         TA0CCTL1 = OUTMOD_3;
         // Start timer
         TA0CTL |= MC__UP;
@@ -106,6 +106,32 @@ struct T_LED {
             T_Scheduler::Sleep(_Scheduler::Ms<16>);
             if (i == countEnd) break;
         }
+    }
+    
+    static void _Flicker() {
+        // Configure timer
+        TA0CTL =
+            TASSEL__ACLK    |   // clock source = ACLK
+            ID__1           |   // clock divider = /1
+            TACLR           ;   // reset timer state
+        
+        // Additional clock divider = /3
+        TA0EX0 = _TAIDEX<_ACLKFreqDivider>();
+        // TA0CCR1 = value that causes LED to turn on
+        TA0CCR1 = _FlickerTA0CCR1;
+        // TA0CCR0 = value that causes LED to turn off
+        TA0CCR0 = _FlickerTA0CCR0;
+        // Set the timer's initial value
+        // This is necessary because the timer always starts driving the output as a 0 (ie LED on), and there
+        // doesn't seem to be a way to set the timer's initial output to 1 instead (ie LED off). So instead we
+        // just start the timer at the instant that it flashes, so it'll flash and then immediately turn off.
+        TA0R = _FlickerTA0CCR1;
+        // Output mode = reset/set
+        //   LED on when hitting TA0CCR1
+        //   LED off when hitting TA0CCR0
+        TA0CCTL1 = OUTMOD_7;
+        // Start timer
+        TA0CTL |= MC__UP;
     }
     
     static void _PinsConfig(State x) {
@@ -143,7 +169,7 @@ struct T_LED {
             _Fade(true);
         
         } else if (_State & StateFlicker) {
-            
+            _Flicker();
         
         } else {
             // Off
