@@ -34,11 +34,14 @@ public:
     static void Power(bool on) {
         if (on) {
             // Enable the motion signal's pullup first, which has the effect of turning on
-            // the motion sensor very slowly
-            // This is a nasty hack to workaround the fact that we don't have a resistor on
-            // the gate of Q4 to limit the inrush current when turning the motion sensor on.
-            // If we turn on Q4 first, VDD_A_3V3 droops to ~2.2V and causes the MSP430 to
-            // brownout.
+            // the motion sensor very slowly.
+            //
+            // *** This is a nasty hack that slowly pre-charges the motion sensor via our pullup
+            // *** resistor on the motion sensor's output (MOTION_SIGNAL).
+            // *** If we turn on Q4 first, VDD_A_3V3 droops to ~2.2V and causes the MSP430 to
+            // *** brownout.
+            // *** To correct this, we need to add a physical resistor to Q4's gate to slow the
+            // *** inrush current when turning on Q4.
             _SignalOnIgnored::template Init<_SignalOff>();
             T_Scheduler::Sleep(_PrePowerOnDelay);
             
