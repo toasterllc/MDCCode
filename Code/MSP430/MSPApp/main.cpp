@@ -262,9 +262,8 @@ struct _TaskLED {
     using Priority = uint8_t;
     static constexpr Priority PriorityButton    = 0;
     static constexpr Priority PriorityPower     = 1;
-    static constexpr Priority PriorityCapture   = 2;
-    static constexpr Priority PriorityI2C       = 3;
-    static constexpr Priority _PriorityCount    = 4;
+    static constexpr Priority PriorityI2C       = 2;
+    static constexpr Priority _PriorityCount    = 3;
     
     static void Run() {
         for (;;) {
@@ -1069,8 +1068,6 @@ struct _TaskEvent {
     static void Reset() {
         // Reset our timer
         _EventTimer::Schedule(std::nullopt);
-        // Reset LEDs
-        _TaskLED::Set(_TaskLED::PriorityCapture, std::nullopt);
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Reset();
@@ -1181,8 +1178,6 @@ struct _TaskEvent {
             _TaskSD::Write(srcRAMBlock);
             _TaskSD::Wait();
         }
-        
-        _TaskLED::Set(_TaskLED::PriorityCapture, std::nullopt);
         
         _State.vddImgSd = false;
         _State.vddb = false;
