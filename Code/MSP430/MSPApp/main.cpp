@@ -615,7 +615,7 @@ struct _TaskPower {
     
     // _State: our current power state
     // Left uninitialized because we always initialize it with _TaskPowerStateSaved
-    static inline T_Property<uint8_t,_StateChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate> _State;
+    static inline T_Property<uint8_t,_StateChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate,_MotionEnabledUpdate> _State;
     
     // _LEDFlickerEnabled: whether the LED should flicker periodically (due to battery trap)
     static inline T_Property<bool,_LEDFlickerEnabledChanged> _LEDFlickerEnabled;
@@ -1314,7 +1314,7 @@ struct _TaskEvent {
 
 struct _TaskButton {
     static bool _ButtonInteractionAllowed() {
-        // Allow the button to turn us on if we're not in battery trap, or we're wired
+        // Allow button interaction if we're not in battery trap, or we're wired
         return !_TaskPower::BatteryTrap() || _TaskPower::Wired();
     }
     
@@ -1334,8 +1334,8 @@ struct _TaskButton {
     }
     
     static void _ButtonPress() {
-        // Ignore button presses if we're off or in host mode
-        if (!_TaskPower::On() || _TaskI2C::HostModeEnabled()) return;
+        // Ignore button presses if events are disabled
+        if (!_EventsEnabled) return;
         
         for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
             _TaskEvent::CaptureStart(*it, _RTC::Now());
@@ -1414,7 +1414,18 @@ struct _TaskMotion {
                 // Wait for motion, or for motion to be disabled
                 _Motion::SignalReset();
                 _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
-                if (!_Enabled) break;
+                
+                // When potentially disabling the motion sensor, institute a debounce to filter 1->0->1 glitches.
+                // This is so we don't have to pay for the full motion-sensor power-on time (30s) for a momentary
+                // glitch.
+                // Such glitches can occur when we go from wired->unwired, since we power on the motion sensor
+                // when we're wired. (We do this in case the device is reconfigured to enable the motion sensor,
+                // so it's ready to go as soon as we're unwired, and we don't have to pay the 30s penalty.)
+                if (!_Enabled) {
+                    _Scheduler::Wait(_DisableDebounceDuration, [] { return _Enabled; });
+                    if (_Enabled) continue;
+                    else          break;
+                }
                 
                 _HandleMotion();
             }
@@ -1429,6 +1440,9 @@ struct _TaskMotion {
     }
     
     static void _HandleMotion() {
+        // Ignore motion if events are disabled
+        if (!_EventsEnabled) return;
+        
         // When motion occurs, start captures for each enabled motion trigger
         for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
             _Triggers::MotionTrigger& trigger = *it;
@@ -1447,6 +1461,7 @@ struct _TaskMotion {
         }
     }
     
+    static constexpr auto _DisableDebounceDuration = _Scheduler::Ms<1000>;
     static inline bool _Enabled = false;
     
     // Task stack
@@ -1515,7 +1530,7 @@ static void _EventsEnabledChanged() {
 }
 
 static void _MotionEnabledUpdate() {
-    _TaskMotion::Enable(_EventsEnabled && _MotionRequested::Asserted());
+    _TaskMotion::Enable(_TaskPower::Wired() || (_EventsEnabled && _MotionRequested::Asserted()));
 }
 
 // MARK: - Interrupts
