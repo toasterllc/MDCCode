@@ -163,7 +163,7 @@ struct T_LED {
         _State = x;
         _PinsConfig(_State);
         
-        if (_OnConstant(x)) {
+        if (_OnConstant(_State)) {
             _Fade(true);
         
         } else if (_State & StateFlicker) {
