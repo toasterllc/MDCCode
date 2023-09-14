@@ -1209,6 +1209,9 @@ struct _TaskEvent {
     }
     
     static void CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
+        // Bail if the CaptureImageEvent is already underway
+        if (ev.countRem) return;
+        
         // Reset capture count
         ev.countRem = ev.capture->count;
         if (ev.countRem) {

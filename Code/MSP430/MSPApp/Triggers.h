@@ -68,7 +68,8 @@ struct T_Triggers {
     
     struct CaptureImageEvent : Event {
         CaptureImageEvent() = default;
-        CaptureImageEvent(const MSP::Capture& capture) : Event(Event::Type::CaptureImage), capture(&capture) {}
+        CaptureImageEvent(const MSP::Capture& capture) :
+            Event(Event::Type::CaptureImage), capture(&capture), countRem(0) {}
         
         const MSP::Capture* capture;
         uint16_t countRem;
