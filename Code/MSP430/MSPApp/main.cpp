@@ -28,7 +28,6 @@
 #include "AssertionCounter.h"
 #include "Triggers.h"
 #include "Motion.h"
-#include "SuppressibleAssertion.h"
 #include "Assert.h"
 #include "Timer.h"
 #include "Debug.h"
@@ -89,7 +88,7 @@ static MSP::State _State = {
 static void _EventsEnabledUpdate();
 static void _EventsEnabledChanged();
 
-static void _MotionEnabledUpdate();
+static void _MotionPoweredUpdate();
 
 static void _VDDIMGSDEnabledChanged();
 
@@ -100,16 +99,15 @@ static void _VDDIMGSDEnabledChanged();
 static inline uint8_t _TaskPowerStateSaved = 0;
 
 // _EventsEnabled: whether _TaskEvent should be running and handling events
-static T_Property<bool,_EventsEnabledChanged,_MotionEnabledUpdate> _EventsEnabled;
+static T_Property<bool,_EventsEnabledChanged,_MotionPoweredUpdate> _EventsEnabled;
 
-using _MotionRequested = T_AssertionCounter<_MotionEnabledUpdate>;
-using _MotionRequestedAssertion = T_SuppressibleAssertion<_MotionRequested>;
+using _MotionPowered = T_AssertionCounter<_MotionPoweredUpdate>;
 
 // VDDIMGSD enable/disable
 using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
 
 // _Triggers: stores our current event state
-using _Triggers = T_Triggers<_State, _MotionRequestedAssertion>;
+using _Triggers = T_Triggers<_State, _MotionPowered::Assertion>;
 
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
@@ -615,7 +613,7 @@ struct _TaskPower {
     
     // _State: our current power state
     // Left uninitialized because we always initialize it with _TaskPowerStateSaved
-    static inline T_Property<uint8_t,_StateChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate,_MotionEnabledUpdate> _State;
+    static inline T_Property<uint8_t,_StateChanged,_EventsEnabledUpdate,_LEDFlickerEnabledUpdate,_MotionPoweredUpdate> _State;
     
     // _LEDFlickerEnabled: whether the LED should flicker periodically (due to battery trap)
     static inline T_Property<bool,_LEDFlickerEnabledChanged> _LEDFlickerEnabled;
@@ -1095,34 +1093,34 @@ struct _TaskEvent {
         EventInsert(ev, ev.repeat);
     }
     
-    static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
+    static void _MotionPowerOn(_Triggers::MotionPowerOnEvent& ev) {
         _Triggers::MotionTrigger& trigger = ev.trigger();
         
         // Enable motion
-        trigger.enabled.set(true);
+        trigger.powered = true;
         
         // Schedule the MotionDisable event, if applicable
         // This needs to happen before we reschedule `ev` because we need its .time to
         // properly schedule the MotionDisableEvent!
         const uint32_t durationTicks = trigger.base().durationTicks;
         if (durationTicks) {
-            EventInsert((_Triggers::MotionDisableEvent&)trigger, ev.time, durationTicks);
+            EventInsert((_Triggers::MotionPowerOffEvent&)trigger, ev.time, durationTicks);
         }
         
-        // Reschedule MotionEnableEvent for its next trigger time
+        // Reschedule MotionPowerOnEvent for its next trigger time
         EventInsert(ev, ev.repeat);
     }
     
-    static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
+    static void _MotionPowerOff(_Triggers::MotionPowerOffEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
-        trigger.enabled.set(false);
+        trigger.powered = false;
     }
     
-    static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
-        // We should never get a MotionUnsuppressEvent event while in fast-forward mode
+    static void _MotionActivate(_Triggers::MotionActivateEvent& ev) {
+        // We should never get a MotionActivateEvent event while in fast-forward mode
         Assert(_State.live);
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
-        trigger.enabled.suppress(false);
+        trigger.active = true;
     }
     
     static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
@@ -1244,9 +1242,9 @@ struct _TaskEvent {
         using T = _Triggers::Event::Type;
         switch (ev.type) {
         case T::TimeTrigger:      _TimeTrigger(      (_Triggers::TimeTriggerEvent&)ev      ); break;
-        case T::MotionEnable:     _MotionEnable(     (_Triggers::MotionEnableEvent&)ev     ); break;
-        case T::MotionDisable:    _MotionDisable(    (_Triggers::MotionDisableEvent&)ev    ); break;
-        case T::MotionUnsuppress: _MotionUnsuppress( (_Triggers::MotionUnsuppressEvent&)ev ); break;
+        case T::MotionPowerOn:    _MotionPowerOn(    (_Triggers::MotionPowerOnEvent&)ev    ); break;
+        case T::MotionPowerOff:   _MotionPowerOff(   (_Triggers::MotionPowerOffEvent&)ev   ); break;
+        case T::MotionActivate:   _MotionActivate(   (_Triggers::MotionActivateEvent&)ev   ); break;
         case T::CaptureImage:     _CaptureImage(     (_Triggers::CaptureImageEvent&)ev     ); break;
         }
     }
@@ -1404,8 +1402,8 @@ struct _TaskMotion {
         Toastbox::IntState ints(false);
         
         for (;;) {
-            // Wait for motion to be enabled
-            _Scheduler::Wait([] { return _Enabled; });
+            // Wait for motion to be powered
+            _Scheduler::Wait([] { return _Power; });
             
             // Power on motion sensor and wait for it to start up
             _Motion::Power(true);
@@ -1413,7 +1411,7 @@ struct _TaskMotion {
             for (;;) {
                 // Wait for motion, or for motion to be disabled
                 _Motion::SignalReset();
-                _Scheduler::Wait([] { return !_Enabled || _Motion::Signal(); });
+                _Scheduler::Wait([] { return !_Power || _Motion::Signal(); });
                 
                 // When potentially disabling the motion sensor, institute a debounce to filter 1->0->1 glitches.
                 // This is so we don't have to pay for the full motion-sensor power-on time (30s) for a momentary
@@ -1421,10 +1419,10 @@ struct _TaskMotion {
                 // Such glitches can occur when we go from wired->unwired, since we power on the motion sensor
                 // when we're wired. (We do this in case the device is reconfigured to enable the motion sensor,
                 // so it's ready to go as soon as we're unwired, and we don't have to pay the 30s penalty.)
-                if (!_Enabled) {
-                    _Scheduler::Wait(_DisableDebounceDuration, [] { return _Enabled; });
-                    if (_Enabled) continue;
-                    else          break;
+                if (!_Power) {
+                    _Scheduler::Wait(_PowerOffDebounceDuration, [] { return _Power; });
+                    if (_Power) continue;
+                    else        break;
                 }
                 
                 _HandleMotion();
@@ -1435,34 +1433,36 @@ struct _TaskMotion {
         }
     }
     
-    static void Enable(bool x) {
-        _Enabled = x;
+    static void Power(bool x) {
+        _Power = x;
     }
     
     static void _HandleMotion() {
         // Ignore motion if events are disabled
+        // This can happen if we're wired (and therefore motion is enabled),
+        // but we're powered off.
         if (!_EventsEnabled) return;
         
         // When motion occurs, start captures for each enabled motion trigger
         for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
             _Triggers::MotionTrigger& trigger = *it;
             // If this trigger is enabled...
-            if (trigger.enabled.get()) {
+            if (trigger.powered && trigger.active) {
                 const Time::Instant time = _RTC::Now();
                 // Start capture
                 _TaskEvent::CaptureStart(trigger, time);
                 // Suppress motion for the specified duration, if suppression is enabled
                 const uint32_t suppressTicks = trigger.base().suppressTicks;
                 if (suppressTicks) {
-                    trigger.enabled.suppress(true);
-                    _TaskEvent::EventInsert((_Triggers::MotionUnsuppressEvent&)trigger, time, suppressTicks);
+                    trigger.active = false;
+                    _TaskEvent::EventInsert((_Triggers::MotionActivateEvent&)trigger, time, suppressTicks);
                 }
             }
         }
     }
     
-    static constexpr auto _DisableDebounceDuration = _Scheduler::Ms<1000>;
-    static inline bool _Enabled = false;
+    static constexpr auto _PowerOffDebounceDuration = _Scheduler::Ms<1000>;
+    static inline bool _Power = false;
     
     // Task stack
     SchedulerStack(".stack._TaskMotion")
@@ -1529,8 +1529,8 @@ static void _EventsEnabledChanged() {
     else                _TaskEvent::Reset();
 }
 
-static void _MotionEnabledUpdate() {
-    _TaskMotion::Enable(_TaskPower::Wired() || (_EventsEnabled && _MotionRequested::Asserted()));
+static void _MotionPoweredUpdate() {
+    _TaskMotion::Power(_TaskPower::Wired() || (_EventsEnabled && _MotionPowered::Asserted()));
 }
 
 // MARK: - Interrupts

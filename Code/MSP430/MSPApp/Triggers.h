@@ -10,7 +10,7 @@
 //       We created _T_Base for this reason, and can remove it and replace all uses with T_Base when we switch.
 template<
 auto& T_Base,
-typename T_MotionEnabled
+typename T_MotionPowered
 >
 struct T_Triggers {
     struct Trigger;
@@ -20,16 +20,16 @@ struct T_Triggers {
     struct Event {
         enum class Type : uint8_t {
             TimeTrigger,
-            MotionEnable,
-            MotionDisable,
-            MotionUnsuppress,
+            MotionPowerOn,
+            MotionPowerOff,
+            MotionActivate,
             CaptureImage
         };
         
         static Event::Type Convert(MSP::Triggers::Event::Type x) {
             switch (x) {
             case MSP::Triggers::Event::Type::TimeTrigger:  return Type::TimeTrigger;
-            case MSP::Triggers::Event::Type::MotionEnable: return Type::MotionEnable;
+            case MSP::Triggers::Event::Type::MotionEnable: return Type::MotionPowerOn;
             }
             Assert(false);
         }
@@ -54,16 +54,16 @@ struct T_Triggers {
         auto& trigger() { return _TimeTrigger[RepeatEvent::base().idx]; }
     };
     
-    struct MotionEnableEvent : RepeatEvent {
+    struct MotionPowerOnEvent : RepeatEvent {
         auto& trigger() { return _MotionTrigger[RepeatEvent::base().idx]; }
     };
     
-    struct MotionDisableEvent : Event {
-        MotionDisableEvent() : Event(Event::Type::MotionDisable) {}
+    struct MotionPowerOffEvent : Event {
+        MotionPowerOffEvent() : Event(Event::Type::MotionPowerOff) {}
     };
     
-    struct MotionUnsuppressEvent : Event {
-        MotionUnsuppressEvent() : Event(Event::Type::MotionUnsuppress) {}
+    struct MotionActivateEvent : Event {
+        MotionActivateEvent() : Event(Event::Type::MotionActivate) {}
     };
     
     struct CaptureImageEvent : Event {
@@ -81,12 +81,13 @@ struct T_Triggers {
         auto& base() { return _BaseElm(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
-    struct MotionTrigger : CaptureImageEvent, MotionDisableEvent, MotionUnsuppressEvent {
+    struct MotionTrigger : CaptureImageEvent, MotionPowerOffEvent, MotionActivateEvent {
         MotionTrigger() = default;
-        MotionTrigger(typename _Base::MotionTrigger& b) : CaptureImageEvent(b.capture) {}
+        MotionTrigger(typename _Base::MotionTrigger& b) : CaptureImageEvent(b.capture), active(false) {}
         auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }
         
-        T_MotionEnabled enabled;
+        T_MotionPowered powered;
+        bool active;
     };
     
     struct ButtonTrigger : CaptureImageEvent {
