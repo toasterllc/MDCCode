@@ -344,28 +344,28 @@ inline uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_secon
 
 // _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
 template<typename T>
-inline date::local_seconds _PastTime(const T& now, std::chrono::seconds delta) {
+inline date::local_seconds _PastTime(const T& now, Calendar::TimeOfDay timeOfDay, std::chrono::seconds delta) {
     const auto midnight = floor<date::days>(now);
-    const auto t = midnight+delta;
+    const auto t = midnight+timeOfDay+delta;
     if (t < now) return t;
     return t-date::days(1);
 }
 
 inline Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz,
-    const date::local_seconds& tp) {
+    const date::local_seconds& tp, std::chrono::seconds delta) {
     
-    const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
+    const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp+delta));
     const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
     return Time::Clock::TimeInstantFromTimePoint(tpDevice);
 }
 
 inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type,
-    std::chrono::seconds delta, const Repeat* repeat, uint8_t idx) {
+    Calendar::TimeOfDay timeOfDay, std::chrono::seconds delta, const Repeat* repeat, uint8_t idx) {
     
     using namespace std::chrono;
     const date::time_zone& tz = *date::current_zone();
     const auto now = tz.to_local(system_clock::now());
-    const auto pastTimeOfDay = _PastTime(now, delta);
+    const auto pastTimeOfDay = _PastTime(now, timeOfDay, delta);
     
     // Handle non-repeating events
     if (!repeat) {
@@ -397,7 +397,7 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         date::local_days day = midnight;
         date::local_seconds tp;
         for (;;) {
-            tp = day+delta;
+            tp = day+timeOfDay+delta;
             // If `tp` is in the past and `day` is in x.DaysOfWeek, we're done
             if (tp<now && DaysOfWeekGet(repeat->DaysOfWeek, Calendar::DayOfWeek(day))) {
                 break;
@@ -434,9 +434,9 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
             // Determine if doy's month+day of the current year is in the past.
             // If it's in the future, subtract one year and use that.
             const date::year nowYear = date::year_month_day(floor<date::days>(now)).year();
-            auto tp = date::local_days{ nowYear / doy.month() / doy.day() } + delta;
+            auto tp = date::local_days{ nowYear / doy.month() / doy.day() } + timeOfDay + delta;
             if (tp >= now) {
-                tp = date::local_days{ (nowYear-date::years(1)) / doy.month() / doy.day() } + delta;
+                tp = date::local_days{ (nowYear-date::years(1)) / doy.month() / doy.day() } + timeOfDay;
                 // Logic error if tp is still in the future, even after subtracting a year
                 assert(tp < now);
             }
@@ -551,7 +551,8 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             // Create events for the trigger
             {
                 const auto events = _EventsCreate(MSP::Triggers::Event::Type::TimeTrigger,
-                    x.schedule.time, &x.schedule.repeat, t.timeTriggerCount);
+                    x.schedule.time, std::chrono::seconds(0),
+                    &x.schedule.repeat, t.timeTriggerCount);
                 _AddEvents(t, events);
             }
             
@@ -578,7 +579,8 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             // Create events for the trigger
             {
                 const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionPowerOn,
-                    _MotionTimeOfDay(x)-MotionPowerOnDelaySec, _MotionRepeat(x), t.motionTriggerCount);
+                    _MotionTimeOfDay(x), -MotionPowerOnDelaySec,
+                    _MotionRepeat(x), t.motionTriggerCount);
                 _AddEvents(t, events);
             }
             
