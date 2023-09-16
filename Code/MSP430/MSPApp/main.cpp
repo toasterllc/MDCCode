@@ -109,10 +109,6 @@ using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionPowered::Assertion>;
 
-static constexpr Time::Ticks32 _TicksForMs(uint64_t ms) {
-    return ((ms * Time::TicksPeriod::den) / (1000 * Time::TicksPeriod::num));
-}
-
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
     
@@ -1102,14 +1098,10 @@ struct _TaskEvent {
         
         // Enable motion
         trigger.powered = true;
-        trigger.enabled = false;
         
-        // Schedule MotionEnableEvent, `PowerOnDelayMs` in the future
-        EventInsert((_Triggers::MotionEnableEvent&)ev, ev.time, _TicksForMs(_Motion::PowerOnDelayMs));
-        
-        // Schedule the MotionPowerOff event, if applicable.
+        // Schedule the MotionDisable event, if applicable
         // This needs to happen before we reschedule `ev` because we need its .time to
-        // properly schedule the MotionPowerOffEvent!
+        // properly schedule the MotionDisableEvent!
         const uint32_t durationTicks = trigger.base().durationTicks;
         if (durationTicks) {
             EventInsert((_Triggers::MotionPowerOffEvent&)trigger, ev.time, durationTicks);
@@ -1415,7 +1407,7 @@ struct _TaskMotion {
             _Motion::Power(true);
             
             for (;;) {
-                // Wait for motion, or for a power off request
+                // Wait for motion, or for motion to be disabled
                 _Motion::SignalReset();
                 _Scheduler::Wait([] { return !_Power || _Motion::Signal(); });
                 

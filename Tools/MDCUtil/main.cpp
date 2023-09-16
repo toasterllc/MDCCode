@@ -371,8 +371,8 @@ static const char* _StringForRepeatType(MSP::Repeat::Type x) {
 static const char* _StringForTriggerEventType(MSP::Triggers::Event::Type x) {
     using X = MSP::Triggers::Event::Type;
     switch (x) {
-    case X::TimeTrigger:   return "TimeTrigger";
-    case X::MotionPowerOn: return "MotionPowerOn";
+    case X::TimeTrigger:  return "TimeTrigger";
+    case X::MotionEnable: return "MotionEnable";
     }
     return "unknown";
 }

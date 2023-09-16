@@ -14,8 +14,6 @@ constexpr BatteryLevel BatteryLevelInvalid  = 0x0000;
 constexpr BatteryLevel BatteryLevelMin      = 0x0001;
 constexpr BatteryLevel BatteryLevelMax      = 0xFFFF;
 
-constexpr uint32_t MotionPowerOnDelaySec    = 30;
-
 constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
     return base - ((idx+1) * ImgSD::Full::ImageBlockCount);
 }
@@ -131,7 +129,7 @@ struct [[gnu::packed]] Triggers {
     struct [[gnu::packed]] Event {
         enum class Type : uint8_t {
             TimeTrigger,
-            MotionPowerOn,
+            MotionEnable,
         };
         Time::Instant time;
         Type type;

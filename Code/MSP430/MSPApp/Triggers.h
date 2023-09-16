@@ -28,8 +28,8 @@ struct T_Triggers {
         
         static Event::Type Convert(MSP::Triggers::Event::Type x) {
             switch (x) {
-            case MSP::Triggers::Event::Type::TimeTrigger:   return Type::TimeTrigger;
-            case MSP::Triggers::Event::Type::MotionPowerOn: return Type::MotionPowerOn;
+            case MSP::Triggers::Event::Type::TimeTrigger:  return Type::TimeTrigger;
+            case MSP::Triggers::Event::Type::MotionEnable: return Type::MotionEnable;
             }
             Assert(false);
         }

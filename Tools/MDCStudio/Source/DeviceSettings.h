@@ -344,9 +344,9 @@ inline uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_secon
 
 // _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
 template<typename T>
-inline date::local_seconds _PastTime(const T& now, Calendar::TimeOfDay timeOfDay, std::chrono::seconds delta) {
+inline date::local_seconds _PastTime(const T& now, Calendar::TimeOfDay timeOfDay) {
     const auto midnight = floor<date::days>(now);
-    const auto t = midnight+timeOfDay+delta;
+    const auto t = midnight+timeOfDay;
     if (t < now) return t;
     return t-date::days(1);
 }
@@ -358,12 +358,12 @@ inline Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz, const d
 }
 
 inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type,
-    Calendar::TimeOfDay timeOfDay, std::chrono::seconds delta, const Repeat* repeat, uint8_t idx) {
+    Calendar::TimeOfDay timeOfDay, const Repeat* repeat, uint8_t idx) {
     
     using namespace std::chrono;
     const date::time_zone& tz = *date::current_zone();
     const auto now = tz.to_local(system_clock::now());
-    const auto pastTimeOfDay = _PastTime(now, timeOfDay, delta);
+    const auto pastTimeOfDay = _PastTime(now, timeOfDay);
     
     // Handle non-repeating events
     if (!repeat) {
@@ -548,9 +548,7 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             
             // Create events for the trigger
             {
-                const auto events = _EventsCreate(MSP::Triggers::Event::Type::TimeTrigger,
-                    x.schedule.time, std::chrono::seconds(0),
-                    &x.schedule.repeat, t.timeTriggerCount);
+                const auto events = _EventsCreate(MSP::Triggers::Event::Type::TimeTrigger, x.schedule.time, &x.schedule.repeat, t.timeTriggerCount);
                 _AddEvents(t, events);
             }
             
@@ -565,8 +563,6 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
         }
         
         case Trigger::Type::Motion: {
-            constexpr auto MotionPowerOnDelaySec = std::chrono::seconds(MSP::MotionPowerOnDelaySec);
-            
             // Make sure there's an available slot for the trigger
             if (t.motionTriggerCount >= std::size(t.motionTrigger)) {
                 throw Toastbox::RuntimeError("no remaining motion triggers");
@@ -576,22 +572,14 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             
             // Create events for the trigger
             {
-                const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionPowerOn,
-                    _MotionTimeOfDay(x), -MotionPowerOnDelaySec,
-                    _MotionRepeat(x), t.motionTriggerCount);
+                const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionEnable, _MotionTimeOfDay(x), _MotionRepeat(x), t.motionTriggerCount);
                 _AddEvents(t, events);
             }
             
             // Create trigger
             {
                 const uint16_t count = (x.constraints.maxTriggerCount.enable ? x.constraints.maxTriggerCount.count : 0);
-                
-                Ticks durationTicks = _MotionEnableDurationTicks(x);
-                // Add `MotionPowerOnDelaySec`, because we subtracted `MotionPowerOnDelaySec`
-                // from the trigger start time, which is necessary to give the motion sensor
-                // time to turn on.
-                if (durationTicks.count()) durationTicks += MotionPowerOnDelaySec;
-                
+                const Ticks durationTicks = _MotionEnableDurationTicks(x);
                 const Ticks suppressTicks = _MotionSuppressTicks(x);
                 
                 t.motionTrigger[t.motionTriggerCount] = {
