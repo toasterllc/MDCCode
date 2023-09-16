@@ -351,10 +351,8 @@ inline date::local_seconds _PastTime(const T& now, Calendar::TimeOfDay timeOfDay
     return t-date::days(1);
 }
 
-inline Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz,
-    const date::local_seconds& tp, std::chrono::seconds delta) {
-    
-    const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp+delta));
+inline Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz, const date::local_seconds& tp) {
+    const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
     const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
     return Time::Clock::TimeInstantFromTimePoint(tpDevice);
 }
@@ -397,7 +395,7 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         date::local_days day = midnight;
         date::local_seconds tp;
         for (;;) {
-            tp = day+timeOfDay+delta;
+            tp = day+timeOfDay;
             // If `tp` is in the past and `day` is in x.DaysOfWeek, we're done
             if (tp<now && DaysOfWeekGet(repeat->DaysOfWeek, Calendar::DayOfWeek(day))) {
                 break;
@@ -434,7 +432,7 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
             // Determine if doy's month+day of the current year is in the past.
             // If it's in the future, subtract one year and use that.
             const date::year nowYear = date::year_month_day(floor<date::days>(now)).year();
-            auto tp = date::local_days{ nowYear / doy.month() / doy.day() } + timeOfDay + delta;
+            auto tp = date::local_days{ nowYear / doy.month() / doy.day() } + timeOfDay;
             if (tp >= now) {
                 tp = date::local_days{ (nowYear-date::years(1)) / doy.month() / doy.day() } + timeOfDay;
                 // Logic error if tp is still in the future, even after subtracting a year
