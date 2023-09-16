@@ -109,6 +109,10 @@ using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionPowered::Assertion>;
 
+static constexpr Time::Ticks32 _TicksForMs(uint64_t ms) {
+    return ((ms * Time::TicksPeriod::den) / (1000 * Time::TicksPeriod::num));
+}
+
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
     
@@ -1098,10 +1102,14 @@ struct _TaskEvent {
         
         // Enable motion
         trigger.powered = true;
+        trigger.enabled = false;
         
-        // Schedule the MotionDisable event, if applicable
+        // Schedule MotionEnableEvent, `PowerOnDelayMs` in the future
+        EventInsert((_Triggers::MotionEnableEvent&)ev, ev.time, _TicksForMs(_Motion::PowerOnDelayMs));
+        
+        // Schedule the MotionPowerOff event, if applicable.
         // This needs to happen before we reschedule `ev` because we need its .time to
-        // properly schedule the MotionDisableEvent!
+        // properly schedule the MotionPowerOffEvent!
         const uint32_t durationTicks = trigger.base().durationTicks;
         if (durationTicks) {
             EventInsert((_Triggers::MotionPowerOffEvent&)trigger, ev.time, durationTicks);
@@ -1116,11 +1124,9 @@ struct _TaskEvent {
         trigger.powered = false;
     }
     
-    static void _MotionActivate(_Triggers::MotionActivateEvent& ev) {
-        // We should never get a MotionActivateEvent event while in fast-forward mode
-        Assert(_State.live);
+    static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
-        trigger.active = true;
+        trigger.enabled = true;
     }
     
     static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
@@ -1244,7 +1250,7 @@ struct _TaskEvent {
         case T::TimeTrigger:      _TimeTrigger(      (_Triggers::TimeTriggerEvent&)ev      ); break;
         case T::MotionPowerOn:    _MotionPowerOn(    (_Triggers::MotionPowerOnEvent&)ev    ); break;
         case T::MotionPowerOff:   _MotionPowerOff(   (_Triggers::MotionPowerOffEvent&)ev   ); break;
-        case T::MotionActivate:   _MotionActivate(   (_Triggers::MotionActivateEvent&)ev   ); break;
+        case T::MotionEnable:     _MotionEnable(     (_Triggers::MotionEnableEvent&)ev     ); break;
         case T::CaptureImage:     _CaptureImage(     (_Triggers::CaptureImageEvent&)ev     ); break;
         }
     }
@@ -1409,7 +1415,7 @@ struct _TaskMotion {
             _Motion::Power(true);
             
             for (;;) {
-                // Wait for motion, or for motion to be disabled
+                // Wait for motion, or for a power off request
                 _Motion::SignalReset();
                 _Scheduler::Wait([] { return !_Power || _Motion::Signal(); });
                 
@@ -1447,15 +1453,15 @@ struct _TaskMotion {
         for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
             _Triggers::MotionTrigger& trigger = *it;
             // If this trigger is enabled...
-            if (trigger.powered && trigger.active) {
+            if (trigger.powered && trigger.enabled) {
                 const Time::Instant time = _RTC::Now();
                 // Start capture
                 _TaskEvent::CaptureStart(trigger, time);
                 // Suppress motion for the specified duration, if suppression is enabled
                 const uint32_t suppressTicks = trigger.base().suppressTicks;
                 if (suppressTicks) {
-                    trigger.active = false;
-                    _TaskEvent::EventInsert((_Triggers::MotionActivateEvent&)trigger, time, suppressTicks);
+                    trigger.enabled = false;
+                    _TaskEvent::EventInsert((_Triggers::MotionEnableEvent&)trigger, time, suppressTicks);
                 }
             }
         }

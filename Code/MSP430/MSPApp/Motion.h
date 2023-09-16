@@ -3,6 +3,7 @@
 #include "Toastbox/Scheduler.h"
 #include "GPIO.h"
 #include "Assert.h"
+#include "MSP.h"
 
 template<
 typename T_Scheduler,
@@ -64,7 +65,7 @@ public:
             // Enable interrupt
             _SignalOnEnabled::template Init<_SignalOnPrepare>();
             
-            // Wait _PowerOnTimeMs for the sensor to turn on and stabilize
+            // Wait _PowerOnDelay for the sensor to turn on and stabilize
             T_Scheduler::Sleep(_PowerOnDelay);
         
         } else {
@@ -120,9 +121,14 @@ public:
 //        _SignalOnIgnored::template Init<_SignalOff>();
     }
     
+    static constexpr uint32_t PowerOnDelayMs = 30000;
+    static_assert(PowerOnDelayMs == 1000*MSP::MotionPowerOnDelaySec);
+    
 private:
-    static constexpr auto _PrePowerOnDelay = T_Scheduler::template Ms<100>;
-    static constexpr auto _PowerOnDelay = T_Scheduler::template Ms<30000>;
+    static constexpr uint32_t _PrePowerOnDelayMs = 100;
+    
+    static constexpr auto _PrePowerOnDelay = T_Scheduler::template Ms<_PrePowerOnDelayMs>;
+    static constexpr auto _PowerOnDelay = T_Scheduler::template Ms<PowerOnDelayMs - _PrePowerOnDelayMs>;
     
     static inline volatile bool _Signal = false;
 };
