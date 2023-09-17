@@ -20,9 +20,10 @@ struct T_Triggers {
     struct Event {
         enum class Type : uint8_t {
             TimeTrigger,
+            MotionEnable,
             MotionPowerOn,
             MotionPowerOff,
-            MotionEnable,
+            MotionUnsuppress,
             CaptureImage
         };
         
@@ -66,6 +67,10 @@ struct T_Triggers {
         MotionPowerOffEvent() : Event(Event::Type::MotionPowerOff) {}
     };
     
+    struct MotionUnsuppressEvent : Event {
+        MotionUnsuppressEvent() : Event(Event::Type::MotionUnsuppress) {}
+    };
+    
     struct CaptureImageEvent : Event {
         CaptureImageEvent() = default;
         CaptureImageEvent(const MSP::Capture& capture) :
@@ -81,7 +86,7 @@ struct T_Triggers {
         auto& base() { return _BaseElm(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
-    struct MotionTrigger : CaptureImageEvent, MotionPowerOnEvent, MotionPowerOffEvent {
+    struct MotionTrigger : CaptureImageEvent, MotionPowerOnEvent, MotionPowerOffEvent, MotionUnsuppressEvent {
         MotionTrigger() = default;
         MotionTrigger(typename _Base::MotionTrigger& b) : CaptureImageEvent(b.capture), enabled(false) {}
         auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }

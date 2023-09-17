@@ -148,13 +148,15 @@ static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     Assert(false);
 }
 
+[[gnu::noinline]]
 static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::Ticks32 deltaTicks) {
     return time + deltaTicks;
 }
 
+[[gnu::noinline]]
 static constexpr Time::Instant _TimeInstantSubtract(const Time::Instant& time, Time::Ticks32 deltaTicks) {
     if (time < deltaTicks) return 0;
-    return time-deltaTicks;
+    return time - deltaTicks;
 }
 
 static constexpr Time::Ticks32 _TicksForMs(uint64_t ms) {
@@ -1111,6 +1113,33 @@ struct _TaskEvent {
         EventInsert(ev, ev.repeat);
     }
     
+    static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
+        _Triggers::MotionTrigger& trigger = ev.trigger();
+        
+        // Power on the motion sensor, because it may not be powered already, because the very
+        // first MotionEnableEvent doesn't have a corresponding MotionPowerOnEvent, because we
+        // schedule the MotionPowerOnEvent as a result of the MotionEnableEvent, below.
+        trigger.powered = true;
+        trigger.enabled = true;
+        
+        // Schedule the MotionPowerOff event, if applicable.
+        // This needs to happen before we reschedule `ev` because we need its .time to
+        // properly schedule the MotionPowerOffEvent!
+        const uint32_t durationTicks = trigger.base().durationTicks;
+        if (durationTicks) {
+            EventInsert(_Cast<_Triggers::MotionPowerOffEvent&>(trigger), _TimeInstantAdd(ev.time, durationTicks));
+        }
+        
+        // Reschedule MotionEnableEvent for its next trigger time
+        const bool repeat = EventInsert(ev, ev.repeat);
+        
+        // Schedule the MotionPowerOn event `PowerOnDelayMs` before the MotionEnableEvent.
+        if (repeat) {
+            EventInsert(_Cast<_Triggers::MotionPowerOnEvent>(trigger),
+                _TimeInstantSubtract(ev.time, _TicksForMs(_Motion::PowerOnDelayMs)));
+        }
+    }
+    
     static void _MotionPowerOn(_Triggers::MotionPowerOnEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         // Power on motion sensor
@@ -1123,28 +1152,9 @@ struct _TaskEvent {
         trigger.powered = false;
     }
     
-    static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
-        _Triggers::MotionTrigger& trigger = ev.trigger();
-        
-        // Power on the motion sensor, because it may not be on already, because the very
-        // first MotionEnableEvent doesn't have a corresponding MotionPowerOnEvent.
-        trigger.powered = true;
+    static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
+        _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.enabled = true;
-        
-        // Schedule the MotionPowerOff event, if applicable
-        // This needs to happen before we reschedule `ev` because we need its .time to
-        // properly schedule the MotionDisableEvent!
-        const uint32_t durationTicks = trigger.base().durationTicks;
-        if (durationTicks) {
-            EventInsert(_Cast<_Triggers::MotionPowerOffEvent&>(trigger), _TimeInstantAdd(ev.time, durationTicks));
-        }
-        
-        // Reschedule MotionEnableEvent for its next trigger time
-        EventInsert(ev, ev.repeat);
-        
-        // Schedule the MotionPowerOn event `PowerOnDelayMs` before the MotionEnableEvent
-        EventInsert(_Cast<_Triggers::MotionPowerOnEvent>(trigger),
-            _TimeInstantSubtract(ev.time, _TicksForMs(_Motion::PowerOnDelayMs)));
     }
     
     static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
@@ -1218,12 +1228,14 @@ struct _TaskEvent {
         }
     }
     
-    static void EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
+    static bool EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
         const Time::Ticks32 delta = _RepeatAdvance(repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
             EventInsert(ev, _TimeInstantAdd(ev.time, delta));
+            return true;
         }
+        return false;
     }
     
 //    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::Ticks32 deltaTicks) {
@@ -1265,11 +1277,12 @@ struct _TaskEvent {
         // Handle the event
         using T = _Triggers::Event::Type;
         switch (ev.type) {
-        case T::TimeTrigger:      _TimeTrigger(    _Cast<_Triggers::TimeTriggerEvent&>(ev)    ); break;
-        case T::MotionPowerOn:    _MotionPowerOn(  _Cast<_Triggers::MotionPowerOnEvent&>(ev)  ); break;
-        case T::MotionPowerOff:   _MotionPowerOff( _Cast<_Triggers::MotionPowerOffEvent&>(ev) ); break;
-        case T::MotionEnable:     _MotionEnable(   _Cast<_Triggers::MotionEnableEvent&>(ev)   ); break;
-        case T::CaptureImage:     _CaptureImage(   _Cast<_Triggers::CaptureImageEvent&>(ev)   ); break;
+        case T::TimeTrigger:      _TimeTrigger(      _Cast<_Triggers::TimeTriggerEvent&>(ev)      ); break;
+        case T::MotionEnable:     _MotionEnable(     _Cast<_Triggers::MotionEnableEvent&>(ev)     ); break;
+        case T::MotionPowerOn:    _MotionPowerOn(    _Cast<_Triggers::MotionPowerOnEvent&>(ev)    ); break;
+        case T::MotionPowerOff:   _MotionPowerOff(   _Cast<_Triggers::MotionPowerOffEvent&>(ev)   ); break;
+        case T::MotionUnsuppress: _MotionUnsuppress( _Cast<_Triggers::MotionUnsuppressEvent&>(ev) ); break;
+        case T::CaptureImage:     _CaptureImage(     _Cast<_Triggers::CaptureImageEvent&>(ev)     ); break;
         }
     }
     
@@ -1479,7 +1492,7 @@ struct _TaskMotion {
                 const Time::Ticks32 suppressTicks = trigger.base().suppressTicks;
                 if (suppressTicks) {
                     trigger.enabled = false;
-                    _TaskEvent::EventInsert(_Cast<_Triggers::MotionEnableEvent>(trigger),
+                    _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressEvent>(trigger),
                         _TimeInstantAdd(time, suppressTicks));
                 }
             }
