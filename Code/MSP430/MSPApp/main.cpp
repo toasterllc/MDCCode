@@ -1133,7 +1133,7 @@ struct _TaskEvent {
         // Reschedule MotionEnableEvent for its next trigger time
         const bool repeat = EventInsert(ev, ev.repeat);
         
-        // Schedule the MotionPowerOn event `PowerOnDelayMs` before the MotionEnableEvent.
+        // Schedule MotionPowerOn event `PowerOnDelayMs` before the MotionEnableEvent.
         if (repeat) {
             EventInsert(_Cast<_Triggers::MotionPowerOnEvent>(trigger),
                 _TimeInstantSubtract(ev.time, _TicksForMs(_Motion::PowerOnDelayMs)));
@@ -1475,13 +1475,6 @@ struct _TaskMotion {
         _Power = x;
     }
     
-    static bool _MotionTriggerActive(_Triggers::MotionTrigger& x) {
-        if (!x.powered) return false;
-        if (x.suppress) return false;
-        if (x.base().count && !x.countRem) return false;
-        return true;
-    }
-    
     static void _HandleMotion() {
         // Ignore motion if events are disabled
         // This can happen if we're wired (and therefore motion is enabled),
@@ -1493,7 +1486,7 @@ struct _TaskMotion {
             _Triggers::MotionTrigger& trigger = *it;
             
             // Check if we should ignore this trigger
-            if (!_MotionTriggerActive(trigger)) continue;
+            if (!trigger.powered || trigger.suppress) continue;
             
             // Start capture
             const Time::Instant time = _RTC::Now();
@@ -1501,14 +1494,26 @@ struct _TaskMotion {
             if (!captureStarted) continue;
             
             // Update the number of motion triggers remaining
-            if (trigger.countRem) trigger.countRem--;
+            if (trigger.countRem) {
+                trigger.countRem--;
+                if (!trigger.countRem) {
+                    trigger.powered = false;
+                }
+            }
             
             // Suppress motion for the specified duration, if suppression is enabled
             const Time::Ticks32 suppressTicks = trigger.base().suppressTicks;
             if (suppressTicks) {
+                trigger.powered = false;
                 trigger.suppress = true;
-                _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressEvent>(trigger),
-                    _TimeInstantAdd(time, suppressTicks));
+                
+                // Schedule MotionUnsuppressEvent
+                const Time::Instant unsuppressTime = _TimeInstantAdd(time, suppressTicks);
+                _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressEvent>(trigger), unsuppressTime);
+                
+                // Schedule MotionPowerOn event `PowerOnDelayMs` before the MotionUnsuppressEvent.
+                const Time::Instant powerOnTime = _TimeInstantSubtract(unsuppressTime, _TicksForMs(_Motion::PowerOnDelayMs));
+                _TaskEvent::EventInsert(_Cast<_Triggers::MotionPowerOnEvent>(trigger), powerOnTime);
             }
         }
     }
