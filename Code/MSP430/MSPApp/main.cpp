@@ -1120,7 +1120,8 @@ struct _TaskEvent {
         // first MotionEnableEvent doesn't have a corresponding MotionPowerOnEvent, because we
         // schedule the MotionPowerOnEvent as a result of the MotionEnableEvent, below.
         trigger.powered = true;
-        trigger.enabled = true;
+        trigger.state |= _Triggers::MotionTrigger::StateEnable;
+        trigger.countRem = trigger.base().count;
         
         // Schedule the MotionPowerOff event, if applicable.
         // This needs to happen before we reschedule `ev` because we need its .time to
@@ -1154,7 +1155,7 @@ struct _TaskEvent {
     
     static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
-        trigger.enabled = true;
+        trigger.state &= ~_Triggers::MotionTrigger::StateSuppress;
     }
     
     static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
@@ -1474,6 +1475,14 @@ struct _TaskMotion {
         _Power = x;
     }
     
+    static bool _MotionTriggerActive(_Triggers::MotionTrigger& x) {
+        if (!x.powered) return false;
+        if (!(x.state & _Triggers::MotionTrigger::StateEnable)) return false;
+        if (x.state & _Triggers::MotionTrigger::StateSuppress) return false;
+        if (x.base().count && !x.countRem) return false;
+        return true;
+    }
+    
     static void _HandleMotion() {
         // Ignore motion if events are disabled
         // This can happen if we're wired (and therefore motion is enabled),
@@ -1483,18 +1492,23 @@ struct _TaskMotion {
         // When motion occurs, start captures for each enabled motion trigger
         for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
             _Triggers::MotionTrigger& trigger = *it;
-            // If this trigger is enabled...
-            if (trigger.powered && trigger.enabled) {
-                const Time::Instant time = _RTC::Now();
-                // Start capture
-                _TaskEvent::CaptureStart(trigger, time);
-                // Suppress motion for the specified duration, if suppression is enabled
-                const Time::Ticks32 suppressTicks = trigger.base().suppressTicks;
-                if (suppressTicks) {
-                    trigger.enabled = false;
-                    _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressEvent>(trigger),
-                        _TimeInstantAdd(time, suppressTicks));
-                }
+            
+            // Check if we should ignore this trigger
+            if (!_MotionTriggerActive(trigger)) continue;
+            
+            // Update the number of motion triggers remaining
+            if (trigger.countRem) trigger.countRem--;
+            
+            // Start capture
+            const Time::Instant time = _RTC::Now();
+            _TaskEvent::CaptureStart(trigger, time);
+            
+            // Suppress motion for the specified duration, if suppression is enabled
+            const Time::Ticks32 suppressTicks = trigger.base().suppressTicks;
+            if (suppressTicks) {
+                trigger.state |= _Triggers::MotionTrigger::StateSuppress;
+                _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressEvent>(trigger),
+                    _TimeInstantAdd(time, suppressTicks));
             }
         }
     }

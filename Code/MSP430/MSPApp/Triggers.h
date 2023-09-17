@@ -87,12 +87,17 @@ struct T_Triggers {
     };
     
     struct MotionTrigger : CaptureImageEvent, MotionPowerOnEvent, MotionPowerOffEvent, MotionUnsuppressEvent {
+        using State = uint8_t;
+        static constexpr State StateEnable   = 1<<0;
+        static constexpr State StateSuppress = 1<<1;
+        
         MotionTrigger() = default;
-        MotionTrigger(typename _Base::MotionTrigger& b) : CaptureImageEvent(b.capture), enabled(false) {}
+        MotionTrigger(typename _Base::MotionTrigger& b) : CaptureImageEvent(b.capture), state(0), countRem(0) {}
         auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }
         
         T_MotionPowered powered;
-        bool enabled;
+        State state;
+        uint16_t countRem;
     };
     
     struct ButtonTrigger : CaptureImageEvent {
