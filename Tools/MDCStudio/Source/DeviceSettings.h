@@ -518,10 +518,12 @@ Calendar::TimeOfDay _MotionTimeOfDay(const T& x) {
 }
 
 // _MotionRepeat(): get the Repeat for a motion trigger
-// Returns nullptr if motion is always supposed to be enabled
+// Returns nullptr if motion is always enabled and `maxTriggerCount` is disabled.
+// If `maxTriggerCount` is enabled, the Repeat is required by MSPApp to reset the
+// trigger count daily at midnight.
 template<typename T>
 const Repeat* _MotionRepeat(const T& x) {
-    if (_MotionAlwaysEnabled(x)) return nullptr;
+    if (_MotionAlwaysEnabled(x) && !x.constraints.maxTriggerCount.enable) return nullptr;
     return &x.schedule.repeat;
 }
 
