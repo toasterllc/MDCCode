@@ -572,7 +572,8 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             
             // Create events for the trigger
             {
-                const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionEnable, _MotionTimeOfDay(x), _MotionRepeat(x), t.motionTriggerCount);
+                const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionEnable,
+                    _MotionTimeOfDay(x), _MotionRepeat(x), t.motionTriggerCount);
                 _AddEvents(t, events);
             }
             

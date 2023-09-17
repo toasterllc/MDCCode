@@ -28,8 +28,8 @@ struct T_Triggers {
         
         static Event::Type Convert(MSP::Triggers::Event::Type x) {
             switch (x) {
-            case MSP::Triggers::Event::Type::TimeTrigger:  return Type::TimeTrigger;
-            case MSP::Triggers::Event::Type::MotionEnable: return Type::MotionEnable;
+            case MSP::Triggers::Event::Type::TimeTrigger:   return Type::TimeTrigger;
+            case MSP::Triggers::Event::Type::MotionEnable:  return Type::MotionEnable;
             }
             Assert(false);
         }
@@ -54,16 +54,16 @@ struct T_Triggers {
         auto& trigger() { return _TimeTrigger[RepeatEvent::base().idx]; }
     };
     
-    struct MotionPowerOnEvent : RepeatEvent {
+    struct MotionEnableEvent : RepeatEvent {
         auto& trigger() { return _MotionTrigger[RepeatEvent::base().idx]; }
+    };
+    
+    struct MotionPowerOnEvent : Event {
+        MotionPowerOnEvent() : Event(Event::Type::MotionPowerOn) {}
     };
     
     struct MotionPowerOffEvent : Event {
         MotionPowerOffEvent() : Event(Event::Type::MotionPowerOff) {}
-    };
-    
-    struct MotionEnableEvent : Event {
-        MotionEnableEvent() : Event(Event::Type::MotionEnable) {}
     };
     
     struct CaptureImageEvent : Event {
@@ -81,7 +81,7 @@ struct T_Triggers {
         auto& base() { return _BaseElm(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
-    struct MotionTrigger : CaptureImageEvent, MotionPowerOffEvent, MotionEnableEvent {
+    struct MotionTrigger : CaptureImageEvent, MotionPowerOnEvent, MotionPowerOffEvent {
         MotionTrigger() = default;
         MotionTrigger(typename _Base::MotionTrigger& b) : CaptureImageEvent(b.capture), enabled(false) {}
         auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }

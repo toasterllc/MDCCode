@@ -148,9 +148,9 @@ struct [[gnu::packed]] Triggers {
         // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
         uint16_t count;
         // durationTicks: duration for which motion should be enabled (0 == forever)
-        uint32_t durationTicks;
+        Time::Ticks32 durationTicks;
         // suppressTicks: duration to suppress motion, after motion occurs (0 == no suppression)
-        uint32_t suppressTicks;
+        Time::Ticks32 suppressTicks;
     };
     static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
     
