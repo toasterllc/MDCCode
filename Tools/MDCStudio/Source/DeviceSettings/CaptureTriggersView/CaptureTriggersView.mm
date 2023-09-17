@@ -92,7 +92,7 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
                 .value = 5,
                 .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .ledFlash = false,
+            .ledFlash = true,
         };
         
         break;
@@ -118,7 +118,7 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
                 .value = 5,
                 .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .ledFlash = false,
+            .ledFlash = true,
         };
         
         x.constraints = {
@@ -147,7 +147,7 @@ static void _TriggerInit(Trigger& t, Trigger::Type type) {
                 .value = 5,
                 .unit = DeviceSettings::Duration::Unit::Seconds,
             },
-            .ledFlash = false,
+            .ledFlash = true,
         };
         
         break;

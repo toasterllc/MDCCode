@@ -63,7 +63,7 @@ public:
             _device.device.mspHostModeSet(true);
             
             // Adjust the device's time to correct it for crystal innaccuracy
-            std::cout << "Adjusting device time:";
+            std::cout << "Adjusting device time:\n";
             _device.device.mspTimeAdjust();
             
             // Load ICE40 with our app
