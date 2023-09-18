@@ -20,10 +20,14 @@ struct T_Triggers {
     struct Event {
         enum class Type : uint8_t {
             TimeTrigger,
+            
+            MotionEnablePrepare,
             MotionEnable,
-            MotionPowerOn,
-            MotionPowerOff,
+            MotionDisable,
+            
+            MotionUnsuppressPrepare,
             MotionUnsuppress,
+            
             CaptureImage
         };
         
@@ -59,17 +63,29 @@ struct T_Triggers {
         auto& trigger() { return _MotionTrigger[RepeatEvent::base().idx]; }
     };
     
-    struct MotionPowerOnEvent : Event {
-        MotionPowerOnEvent() : Event(Event::Type::MotionPowerOn) {}
+    
+    
+    
+    struct MotionEnablePrepareEvent : Event {
+        MotionEnablePrepareEvent() : Event(Event::Type::MotionEnablePrepare) {}
     };
     
-    struct MotionPowerOffEvent : Event {
-        MotionPowerOffEvent() : Event(Event::Type::MotionPowerOff) {}
+    struct MotionDisableEvent : Event {
+        MotionDisableEvent() : Event(Event::Type::MotionDisable) {}
+    };
+    
+    
+    
+    struct MotionUnsuppressPrepareEvent : Event {
+        MotionUnsuppressPrepareEvent() : Event(Event::Type::MotionUnsuppressPrepare) {}
     };
     
     struct MotionUnsuppressEvent : Event {
         MotionUnsuppressEvent() : Event(Event::Type::MotionUnsuppress) {}
     };
+    
+    
+    
     
     struct CaptureImageEvent : Event {
         CaptureImageEvent() = default;
@@ -86,7 +102,11 @@ struct T_Triggers {
         auto& base() { return _BaseElm(_T_Base.timeTrigger, _TimeTrigger, *this); }
     };
     
-    struct MotionTrigger : CaptureImageEvent, MotionPowerOnEvent, MotionPowerOffEvent, MotionUnsuppressEvent {
+    struct MotionTrigger :
+        CaptureImageEvent,
+        MotionEnablePrepareEvent, MotionDisableEvent,
+        MotionUnsuppressPrepareEvent, MotionUnsuppressEvent {
+        
         MotionTrigger() = default;
         MotionTrigger(typename _Base::MotionTrigger& b) : CaptureImageEvent(b.capture), suppress(false), countRem(0) {}
         auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }
