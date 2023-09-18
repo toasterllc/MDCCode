@@ -159,15 +159,6 @@ static constexpr Time::Instant _TimeInstantSubtract(const Time::Instant& time, T
     return time - deltaTicks;
 }
 
-//[[gnu::noinline]]
-//static void _MotionTriggerStateUpdate(_Triggers::MotionTrigger& trigger,
-//_Triggers::MotionTrigger::State set, _Triggers::MotionTrigger::State clear=0) {
-//    
-//    trigger.state |= set;
-//    trigger.state &= ~clear;
-//    trigger.powered = (trigger.state & StatePowerEnable) && !(trigger.state & (StatePowerSuppress|StateMaxImageCount));
-//}
-
 static constexpr Time::Ticks32 _TicksForMs(uint64_t ms) {
     return ((ms * Time::TicksPeriod::den) / (1000 * Time::TicksPeriod::num));
 }

@@ -203,7 +203,7 @@ private:
     // _BatteryLevelForMillivolts(): converts a voltage (in millivolts) into a linear
     // range between BatteryLevelMin and BatteryLevelMax
     static MSP::BatteryLevel _BatteryLevelForMillivolts(uint16_t mv) {
-//        return mv;
+        return mv;
         
         struct Entry {
             uint16_t mv;
