@@ -21,11 +21,11 @@ struct T_Triggers {
         enum class Type : uint8_t {
             TimeTrigger,
             
-            MotionEnablePrepare,
+            MotionEnablePower,
             MotionEnable,
             MotionDisable,
             
-            MotionUnsuppressPrepare,
+            MotionUnsuppressPower,
             MotionUnsuppress,
             
             CaptureImage
@@ -66,8 +66,8 @@ struct T_Triggers {
     
     
     
-    struct MotionEnablePrepareEvent : Event {
-        MotionEnablePrepareEvent() : Event(Event::Type::MotionEnablePrepare) {}
+    struct MotionEnablePowerEvent : Event {
+        MotionEnablePowerEvent() : Event(Event::Type::MotionEnablePower) {}
     };
     
     struct MotionDisableEvent : Event {
@@ -76,8 +76,8 @@ struct T_Triggers {
     
     
     
-    struct MotionUnsuppressPrepareEvent : Event {
-        MotionUnsuppressPrepareEvent() : Event(Event::Type::MotionUnsuppressPrepare) {}
+    struct MotionUnsuppressPowerEvent : Event {
+        MotionUnsuppressPowerEvent() : Event(Event::Type::MotionUnsuppressPower) {}
     };
     
     struct MotionUnsuppressEvent : Event {
@@ -104,15 +104,41 @@ struct T_Triggers {
     
     struct MotionTrigger :
         CaptureImageEvent,
-        MotionEnablePrepareEvent, MotionDisableEvent,
-        MotionUnsuppressPrepareEvent, MotionUnsuppressEvent {
+        MotionEnablePowerEvent, MotionDisableEvent,
+        MotionUnsuppressPowerEvent, MotionUnsuppressEvent {
+        
+        using State = uint8_t;
+        static constexpr State StatePowerEnable     = 1<<0;
+        static constexpr State StatePowerSuppress   = 1<<1;
+        static constexpr State StateMotionEnable    = 1<<2;
+        static constexpr State StateMotionSuppress  = 1<<3;
+        static constexpr State StateMaxImageCount   = 1<<4;
         
         MotionTrigger() = default;
-        MotionTrigger(typename _Base::MotionTrigger& b) : CaptureImageEvent(b.capture), suppress(false), countRem(0) {}
+        MotionTrigger(typename _Base::MotionTrigger& b) : CaptureImageEvent(b.capture), state(0), countRem(0) {}
         auto& base() { return _BaseElm(_T_Base.motionTrigger, _MotionTrigger, *this); }
         
+        static constexpr bool _Enabled(State x) {
+            return x == (StatePowerEnable|StateMotionEnable);
+        }
+        
+        static constexpr bool _Powered(State x) {
+            return (x & StatePowerEnable) && !(x & (StatePowerSuppress|StateMaxImageCount));
+        }
+        
+        bool enabled() const {
+            return _Enabled(state);
+        }
+        
+        [[gnu::noinline]]
+        void stateUpdate(State set, State clear=0) {
+            state |= set;
+            state &= ~clear;
+            powered = _Powered(state);
+        }
+        
+        State state;
         T_MotionPowered powered;
-        bool suppress;
         uint16_t countRem;
     };
     

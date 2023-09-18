@@ -159,6 +159,15 @@ static constexpr Time::Instant _TimeInstantSubtract(const Time::Instant& time, T
     return time - deltaTicks;
 }
 
+//[[gnu::noinline]]
+//static void _MotionTriggerStateUpdate(_Triggers::MotionTrigger& trigger,
+//_Triggers::MotionTrigger::State set, _Triggers::MotionTrigger::State clear=0) {
+//    
+//    trigger.state |= set;
+//    trigger.state &= ~clear;
+//    trigger.powered = (trigger.state & StatePowerEnable) && !(trigger.state & (StatePowerSuppress|StateMaxImageCount));
+//}
+
 static constexpr Time::Ticks32 _TicksForMs(uint64_t ms) {
     return ((ms * Time::TicksPeriod::den) / (1000 * Time::TicksPeriod::num));
 }
@@ -1113,19 +1122,22 @@ struct _TaskEvent {
         EventInsert(ev, ev.repeat);
     }
     
-    static void _MotionEnablePrepare(_Triggers::MotionEnablePrepareEvent& ev) {
+    static void _MotionEnablePower(_Triggers::MotionEnablePowerEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         // Power on motion sensor
-        trigger.powered = true;
+        trigger.stateUpdate(_Triggers::MotionTrigger::StatePowerEnable);
     }
     
     static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
         _Triggers::MotionTrigger& trigger = ev.trigger();
         
         // Power on the motion sensor, because it may not be powered already, because the very
-        // first MotionEnableEvent doesn't have a corresponding MotionEnablePrepareEvent, because we
-        // schedule the MotionEnablePrepareEvent as a result of the MotionEnableEvent, below.
-        trigger.powered = true;
+        // first MotionEnableEvent doesn't have a corresponding MotionEnablePowerEvent, because we
+        // schedule the MotionEnablePowerEvent as a result of the MotionEnableEvent, below.
+        trigger.stateUpdate(
+            _Triggers::MotionTrigger::StatePowerEnable|_Triggers::MotionTrigger::StateMotionEnable,
+            _Triggers::MotionTrigger::StateMaxImageCount
+        );
         trigger.countRem = trigger.base().count;
         
         // Schedule the MotionDisableEvent, if applicable.
@@ -1139,29 +1151,38 @@ struct _TaskEvent {
         // Reschedule MotionEnableEvent for its next trigger time
         const bool repeat = EventInsert(ev, ev.repeat);
         
-        // Schedule MotionEnablePrepareEvent event `PowerOnDelayMs` before the MotionEnableEvent.
+        // Schedule MotionEnablePowerEvent event `PowerOnDelayMs` before the MotionEnableEvent.
         if (repeat) {
-            EventInsert(_Cast<_Triggers::MotionEnablePrepareEvent>(trigger),
+            EventInsert(_Cast<_Triggers::MotionEnablePowerEvent>(trigger),
                 _TimeInstantSubtract(ev.time, _TicksForMs(_Motion::PowerOnDelayMs)));
         }
     }
     
     static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
-        // Power off motion sensor
-        trigger.powered = false;
+        // Disable power / motion
+        trigger.stateUpdate(
+            0,
+            _Triggers::MotionTrigger::StatePowerEnable|_Triggers::MotionTrigger::StateMotionEnable
+        );
     }
     
-    static void _MotionUnsuppressPrepare(_Triggers::MotionUnsuppressPrepareEvent& ev) {
+    static void _MotionUnsuppressPower(_Triggers::MotionUnsuppressPowerEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
-        // Turn on motion sensor in preparation for unsuppressing motion
-        trigger.powered = true;
+        // Unsuppress motion power
+        trigger.stateUpdate(
+            0,
+            _Triggers::MotionTrigger::StatePowerSuppress
+        );
     }
     
     static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         // Unsuppress motion
-        trigger.suppress = false;
+        trigger.stateUpdate(
+            0,
+            _Triggers::MotionTrigger::StateMotionSuppress
+        );
     }
     
     static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
@@ -1286,19 +1307,19 @@ struct _TaskEvent {
         using T = _Triggers::Event::Type;
         switch (ev.type) {
         case T::TimeTrigger:
-            _TimeTrigger(             _Cast<_Triggers::TimeTriggerEvent&>(ev)              ); break;
-        case T::MotionEnablePrepare:
-            _MotionEnablePrepare(     _Cast<_Triggers::MotionEnablePrepareEvent&>(ev)      ); break;
+            _TimeTrigger(           _Cast<_Triggers::TimeTriggerEvent&>(ev)             ); break;
+        case T::MotionEnablePower:
+            _MotionEnablePower(     _Cast<_Triggers::MotionEnablePowerEvent&>(ev)       ); break;
         case T::MotionEnable:
-            _MotionEnable(            _Cast<_Triggers::MotionEnableEvent&>(ev)             ); break;
+            _MotionEnable(          _Cast<_Triggers::MotionEnableEvent&>(ev)            ); break;
         case T::MotionDisable:
-            _MotionDisable(           _Cast<_Triggers::MotionDisableEvent&>(ev)            ); break;
-        case T::MotionUnsuppressPrepare:
-            _MotionUnsuppressPrepare( _Cast<_Triggers::MotionUnsuppressPrepareEvent&>(ev)  ); break;
+            _MotionDisable(         _Cast<_Triggers::MotionDisableEvent&>(ev)           ); break;
+        case T::MotionUnsuppressPower:
+            _MotionUnsuppressPower( _Cast<_Triggers::MotionUnsuppressPowerEvent&>(ev)   ); break;
         case T::MotionUnsuppress:
-            _MotionUnsuppress(        _Cast<_Triggers::MotionUnsuppressEvent&>(ev)         ); break;
+            _MotionUnsuppress(      _Cast<_Triggers::MotionUnsuppressEvent&>(ev)        ); break;
         case T::CaptureImage:
-            _CaptureImage(            _Cast<_Triggers::CaptureImageEvent&>(ev)             ); break;
+            _CaptureImage(          _Cast<_Triggers::CaptureImageEvent&>(ev)            ); break;
         }
     }
     
@@ -1501,34 +1522,39 @@ struct _TaskMotion {
             _Triggers::MotionTrigger& trigger = *it;
             
             // Check if we should ignore this trigger
-            if (!trigger.powered || trigger.suppress) continue;
+            if (!trigger.enabled()) continue;
             
             // Start capture
             const Time::Instant time = _RTC::Now();
             const bool captureStarted = _TaskEvent::CaptureStart(trigger, time);
+            // CaptureStart() returns false if a capture is already in progress for this trigger.
+            // Short-circuit if that's the case.
             if (!captureStarted) continue;
             
-            // Update the number of motion triggers remaining
+            // Update the number of motion triggers remaining.
+            // If this was the last trigger that we're allowed, set the `StateMaxImageCount` bit,
+            // which will .
             if (trigger.countRem) {
                 trigger.countRem--;
                 if (!trigger.countRem) {
-                    trigger.powered = false;
+                    trigger.stateUpdate(_Triggers::MotionTrigger::StateMaxImageCount);
                 }
             }
             
             // Suppress motion for the specified duration, if suppression is enabled
             const Time::Ticks32 suppressTicks = trigger.base().suppressTicks;
             if (suppressTicks) {
-                trigger.powered = false;
-                trigger.suppress = true;
+                // Suppress power/motion immediately
+                trigger.stateUpdate(
+                    _Triggers::MotionTrigger::StatePowerSuppress|_Triggers::MotionTrigger::StateMotionSuppress);
                 
                 // Schedule MotionUnsuppressEvent
                 const Time::Instant unsuppressTime = _TimeInstantAdd(time, suppressTicks);
                 _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressEvent>(trigger), unsuppressTime);
                 
-                // Schedule MotionUnsuppressPrepareEvent event `PowerOnDelayMs` before the MotionUnsuppressEvent.
+                // Schedule MotionUnsuppressPowerEvent event `PowerOnDelayMs` before the MotionUnsuppressEvent.
                 const Time::Instant prepareTime = _TimeInstantSubtract(unsuppressTime, _TicksForMs(_Motion::PowerOnDelayMs));
-                _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressPrepareEvent>(trigger), prepareTime);
+                _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressPowerEvent>(trigger), prepareTime);
             }
         }
     }
