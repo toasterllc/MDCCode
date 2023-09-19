@@ -309,7 +309,7 @@ private:
                     .level = _BatteryLevelGet(),
                 };
                 
-                if (_BatteryStatus.level != MSP::BatteryLevelInvalid) break;
+                if (_BatteryStatus.level != MSP::BatteryLevelMvInvalid) break;
                 Scheduler::Sleep(UpdateInterval);
             }
             
@@ -349,9 +349,9 @@ private:
             return (_BAT_CHRG_STAT::Read() ? X::Complete : X::Underway);
         }
         
-        static MSP::BatteryLevel _BatteryLevelGet() {
+        static MSP::BatteryLevelMv _BatteryLevelGet() {
             const auto resp = MSPSend({ .op = MSP::Cmd::Op::BatteryLevelGet });
-            return (resp && resp->ok ? resp->arg.BatteryLevelGet.level : MSP::BatteryLevelInvalid);
+            return (resp && resp->ok ? resp->arg.BatteryLevelGet.level : MSP::BatteryLevelMvInvalid);
         }
         
         static inline STM::BatteryStatus _BatteryStatus = {};

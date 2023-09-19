@@ -376,7 +376,7 @@ struct _TaskPower {
         }
     }
     
-    static MSP::BatteryLevel BatteryLevelGet() {
+    static MSP::BatteryLevelMv BatteryLevelGet() {
         return _BatteryLevel;
     }
     
@@ -556,7 +556,7 @@ struct _TaskPower {
         _State = s;
     }
     
-    static void _BatteryLevelSet(MSP::BatteryLevel x) {
+    static void _BatteryLevelSet(MSP::BatteryLevelMv x) {
         // No short-circuit logic here because we need our first _BatteryLevel assignment
         // to cause us to enter battery trap via our logic below, if the battery level is
         // low enough.
@@ -612,23 +612,18 @@ struct _TaskPower {
     static constexpr uint16_t _BatterySampleIntervalRTCDays = 4;
     static constexpr uint16_t _BatterySampleIntervalRTC     = (_BatterySampleIntervalRTCDays * Time::Day) / _RTC::InterruptIntervalTicks;
     static constexpr uint16_t _BatterySampleIntervalCapture = 512;
-    
-    static constexpr uint8_t _BatteryTrapPercentEnter = 2;
-    static constexpr uint8_t _BatteryTrapPercentExit  = 10;
-    
-    static constexpr MSP::BatteryLevel _BatteryTrapLevelEnter
-        = MSP::BatteryLevelMin + ((((uint32_t)MSP::BatteryLevelMax-MSP::BatteryLevelMin)*_BatteryTrapPercentEnter)/100);
-    static constexpr MSP::BatteryLevel _BatteryTrapLevelExit
-        = MSP::BatteryLevelMin + ((((uint32_t)MSP::BatteryLevelMax-MSP::BatteryLevelMin)*_BatteryTrapPercentExit)/100);
-    
     static_assert(_BatterySampleIntervalRTC == 168);  // Debug
-    static_assert(_BatteryTrapLevelEnter    == 1311); // Debug
-    static_assert(_BatteryTrapLevelExit     == 6554); // Debug
+    
+    // _BatteryTrapLevelEnter/_BatteryTrapLevelExit: these are the millivolt values corresponding
+    // to the indicated battery percentages. These were calculated by linearizing the battery
+    // discharge plot. (See battery discharge table in MDCStudio.)
+    static constexpr MSP::BatteryLevelMv _BatteryTrapLevelEnter = 3321; // 2% battery
+    static constexpr MSP::BatteryLevelMv _BatteryTrapLevelExit  = 3681; // 10% battery
     
     static inline uint16_t _RTCCounter = 0;
     static inline uint16_t _CaptureCounter = 0;
     
-    static inline MSP::BatteryLevel _BatteryLevel = MSP::BatteryLevelInvalid;
+    static inline MSP::BatteryLevelMv _BatteryLevel = MSP::BatteryLevelMvInvalid;
     static inline bool _BatteryLevelUpdate = false;
     
     // _State: our current power state

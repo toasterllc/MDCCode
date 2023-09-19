@@ -264,10 +264,13 @@ static const char* _StringForChargeStatus(STM::BatteryStatus::ChargeStatus statu
     abort();
 }
 
-static std::string _StringForChargeLevel(MSP::BatteryLevel level) {
+static std::string _StringForBatteryLevel(MSP::BatteryLevelMv level) {
     using namespace STM;
-    if (level == MSP::BatteryLevelInvalid) return "invalid";
-    const uint32_t percent = (((uint32_t)level-MSP::BatteryLevelMin)*100) / (MSP::BatteryLevelMax-MSP::BatteryLevelMin);
+    
+    const MSP::BatteryLevel levelLinear = MSP::BatteryLevelLinearize(level);
+    if (levelLinear == MSP::BatteryLevelMvInvalid) return "invalid";
+    
+    const uint32_t percent = (((uint32_t)levelLinear-MSP::BatteryLevelMin)*100) / (MSP::BatteryLevelMax-MSP::BatteryLevelMin);
     return std::to_string(percent) + "%";
 }
 
@@ -277,7 +280,7 @@ static void BatteryStatusGet(const Args& args, MDCUSBDevice& device) {
     
     printf("Battery status:\n");
     printf("  Charge status: %s\n", _StringForChargeStatus(status.chargeStatus));
-    printf("  Charge level:  %s (0x%04jx)\n", _StringForChargeLevel(status.level).c_str(), (uintmax_t)status.level);
+    printf("  Battery level: %s (%ju mv)\n", _StringForBatteryLevel(status.level).c_str(), (uintmax_t)status.level);
     printf("\n");
 }
 
