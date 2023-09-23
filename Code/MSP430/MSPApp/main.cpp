@@ -278,10 +278,10 @@ static void _ICEInit() {
 
 struct _TaskLED {
     using Priority = uint8_t;
-    static constexpr Priority PriorityButton    = 0;
-    static constexpr Priority PriorityPower     = 1;
-    static constexpr Priority PriorityI2C       = 2;
-    static constexpr Priority _PriorityCount    = 3;
+    static constexpr Priority PriorityButton        = 0;
+    static constexpr Priority PriorityBatteryTrap   = 1;
+    static constexpr Priority PriorityChargeState   = 2;
+    static constexpr Priority _PriorityCount        = 3;
     
     static void Run() {
         for (;;) {
@@ -350,12 +350,6 @@ struct _TaskPower {
         Toastbox::IntState ints(false);
         
         _Init();
-        
-//        _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed | _LED::StateFlicker);
-//        
-//        for (;;) {
-//            _Scheduler::Yield();
-//        }
         
         for (;;) {
             // Wait until something triggers us to update
@@ -598,9 +592,9 @@ struct _TaskPower {
     
     static void _LEDFlickerEnabledChanged() {
         if (_LEDFlickerEnabled) {
-            _TaskLED::Set(_TaskLED::PriorityPower, _LED::StateRed | _LED::StateFlicker);
+            _TaskLED::Set(_TaskLED::PriorityBatteryTrap, _LED::StateRed | _LED::StateFlicker);
         } else {
-            _TaskLED::Set(_TaskLED::PriorityPower, std::nullopt);
+            _TaskLED::Set(_TaskLED::PriorityBatteryTrap, std::nullopt);
         }
     }
     
@@ -663,7 +657,7 @@ struct _TaskI2C {
             
             // Cleanup
             // Relinquish LEDs, which may have been set by _CmdHandle()
-            _TaskLED::Set(_TaskLED::PriorityI2C, std::nullopt);
+            _TaskLED::Set(_TaskLED::PriorityChargeState, std::nullopt);
             
             // Reset state
             _HostModeState = {};
@@ -701,11 +695,15 @@ struct _TaskI2C {
             return MSP::Resp{ .ok = true };
         }
         
-        case Cmd::Op::LEDSet: {
-            _LED::State state = 0;
-            if (cmd.arg.LEDSet.red)   state = _LED::StateRed;
-            if (cmd.arg.LEDSet.green) state = _LED::StateGreen;
-            _TaskLED::Set(_TaskLED::PriorityI2C, state);
+        case Cmd::Op::ChargeStatusGet: {
+            return MSP::Resp{
+                .ok = true,
+                .arg = { .ChargeStatusGet = { .status = _HostModeState.chargeStatus } },
+            };
+        }
+        
+        case Cmd::Op::ChargeStatusSet: {
+            _HostModeState.chargeStatus = cmd.arg.ChargeStatusSet.status;
             return MSP::Resp{ .ok = true };
         }
         
@@ -759,8 +757,21 @@ struct _TaskI2C {
         return _HostModeState.en;
     }
     
+    static std::optional<_LED::State> _LEDStateForChargeStatus(MSP::ChargeStatus x) {
+        switch (x) {
+        case MSP::ChargeStatus::Underway: return _LED::StateRed;
+        case MSP::ChargeStatus::Complete: return _LED::StateGreen;
+        default: return std::nullopt;
+        }
+    }
+    
+    static void _ChargeStatusChanged() {
+        _TaskLED::Set(_TaskLED::PriorityChargeState, _LEDStateForChargeStatus(_HostModeState.chargeStatus));
+    }
+    
     static inline struct {
         T_Property<bool,_EventsEnabledUpdate> en;
+        T_Property<MSP::ChargeStatus,_ChargeStatusChanged> chargeStatus;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _HostModeState;
     

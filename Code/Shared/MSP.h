@@ -391,6 +391,13 @@ struct [[gnu::packed]] TimeAdjustment {
 static_assert(!(sizeof(TimeAdjustment) % 2)); // Check alignment
 static_assert(sizeof(TimeAdjustment) == 14); // Debug
 
+enum class ChargeStatus : uint8_t {
+    Invalid,
+    Shutdown,
+    Underway,
+    Complete,
+};
+
 struct [[gnu::packed]] Cmd {
     static constexpr uint8_t ArgLen = 16;
     
@@ -398,7 +405,8 @@ struct [[gnu::packed]] Cmd {
         None,
         StateRead,
         StateWrite,
-        LEDSet,
+        ChargeStatusGet,
+        ChargeStatusSet,
         TimeGet,
         TimeSet,
         TimeAdjust,
@@ -421,9 +429,8 @@ struct [[gnu::packed]] Cmd {
         } StateWrite;
         
         struct [[gnu::packed]] {
-            uint8_t red;
-            uint8_t green;
-        } LEDSet;
+            ChargeStatus status;
+        } ChargeStatusSet;
         
         struct [[gnu::packed]] {
             TimeState state;
@@ -456,6 +463,10 @@ struct [[gnu::packed]] Resp {
         struct [[gnu::packed]] {
             uint8_t data[ArgLen];
         } StateRead;
+        
+        struct [[gnu::packed]] {
+            ChargeStatus status;
+        } ChargeStatusGet;
         
         struct [[gnu::packed]] {
             TimeState state;

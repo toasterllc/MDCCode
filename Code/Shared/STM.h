@@ -244,13 +244,6 @@ static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketS
 static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
 
 struct [[gnu::packed]] BatteryStatus {
-    enum class ChargeStatus : uint8_t {
-        Invalid,
-        Shutdown,
-        Underway,
-        Complete,
-    };
-    
     ChargeStatus chargeStatus = ChargeStatus::Invalid;
     MSP::BatteryLevelMv level = MSP::BatteryLevelMvInvalid;
 };
