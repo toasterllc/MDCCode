@@ -956,7 +956,7 @@ private:
                         _batteryLevel.level = 0;
                     }
                     
-                    printf("[_batteryLevel_thread] Updated battery level: %.2f\n", _batteryLevel.level);
+                    printf("[_batteryLevel_thread] Updated battery level: %.3f\n", _batteryLevel.level);
                 }
                 
                 _notifyObservers();

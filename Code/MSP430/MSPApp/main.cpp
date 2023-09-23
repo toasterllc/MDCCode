@@ -1229,7 +1229,7 @@ struct _TaskEvent {
             // Capture image to RAM
             _TaskImg::Capture(imgRingBuf.buf.id);
             const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
-            
+             
             // Copy image from RAM -> SD card
             _TaskSD::Write(srcRAMBlock);
             _TaskSD::Wait();
