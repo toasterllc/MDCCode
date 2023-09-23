@@ -702,10 +702,8 @@ struct _TaskI2C {
                 .ok = true,
                 .arg = {
                     .BatteryStatusGet = {
-                        .status = {
-                            .chargeStatus = _HostModeState.chargeStatus,
-                            .level = _TaskPower::BatteryLevelGet(),
-                        },
+                        .chargeStatus = _HostModeState.chargeStatus,
+                        .level = _TaskPower::BatteryLevelGet(),
                     },
                 },
             };

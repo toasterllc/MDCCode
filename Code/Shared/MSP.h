@@ -398,11 +398,6 @@ enum class ChargeStatus : uint8_t {
     Complete,
 };
 
-struct [[gnu::packed]] BatteryStatus {
-    ChargeStatus chargeStatus = ChargeStatus::Invalid;
-    BatteryLevelMv level = MSP::BatteryLevelMvInvalid;
-};
-
 struct [[gnu::packed]] Cmd {
     static constexpr uint8_t ArgLen = 16;
     
@@ -469,7 +464,8 @@ struct [[gnu::packed]] Resp {
         } StateRead;
         
         struct [[gnu::packed]] {
-            BatteryStatus status;
+            ChargeStatus chargeStatus;
+            BatteryLevelMv level;
         } BatteryStatusGet;
         
         struct [[gnu::packed]] {

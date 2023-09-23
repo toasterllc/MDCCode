@@ -305,8 +305,8 @@ private:
             // Wait until we detect a battery
             for (;;) {
                 _BatteryStatus = {
-                    .chargeStatus = STM::BatteryStatus::ChargeStatus::Shutdown,
-                    .level = _BatteryLevelGet(),
+                    .chargeStatus = MSP::ChargeStatus::Shutdown,
+                    .level = _BatteryStatusGet().level,
                 };
                 
                 if (_BatteryStatus.level != MSP::BatteryLevelMvInvalid) break;
@@ -319,11 +319,11 @@ private:
             
             for (;;) {
                 _BatteryStatus = {
-                    .chargeStatus = _ChargeStatusGet(),
-                    .level = _BatteryLevelGet(),
+                    .chargeStatus = _ChargeStatusRead(),
+                    .level = _BatteryStatusGet().level,
                 };
                 
-                _LEDsUpdate(_BatteryStatus.chargeStatus);
+                _ChargeStatusSet(_BatteryStatus.chargeStatus);
                 Scheduler::Sleep(UpdateInterval);
             }
         }
@@ -332,26 +332,25 @@ private:
             return _BatteryStatus;
         }
         
-        static void _LEDsUpdate(STM::BatteryStatus::ChargeStatus status) {
-            // Update LEDs
-            const bool red = (status == STM::BatteryStatus::ChargeStatus::Underway);
-            const bool green = (status == STM::BatteryStatus::ChargeStatus::Complete);
+        static void _ChargeStatusSet(MSP::ChargeStatus status) {
             const MSP::Cmd cmd = {
-                .op = MSP::Cmd::Op::LEDSet,
-                .arg = { .LEDSet = { .red = red, .green = green }, },
+                .op = MSP::Cmd::Op::ChargeStatusSet,
+                .arg = { .ChargeStatusSet = { .status = status }, },
             };
-            
             MSPSend(cmd);
         }
         
-        static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
-            using X = STM::BatteryStatus::ChargeStatus;
-            return (_BAT_CHRG_STAT::Read() ? X::Complete : X::Underway);
+        static MSP::ChargeStatus _ChargeStatusRead() {
+            return (_BAT_CHRG_STAT::Read() ? MSP::ChargeStatus::Complete : MSP::ChargeStatus::Underway);
         }
         
-        static MSP::BatteryLevelMv _BatteryLevelGet() {
-            const auto resp = MSPSend({ .op = MSP::Cmd::Op::BatteryLevelGet });
-            return (resp && resp->ok ? resp->arg.BatteryLevelGet.level : MSP::BatteryLevelMvInvalid);
+        static STM::BatteryStatus _BatteryStatusGet() {
+            const auto resp = MSPSend({ .op = MSP::Cmd::Op::BatteryStatusGet });
+            if (!resp->ok) return {};
+            return {
+                .chargeStatus = resp->arg.BatteryStatusGet.chargeStatus,
+                .level = resp->arg.BatteryStatusGet.level,
+            };
         }
         
         static inline STM::BatteryStatus _BatteryStatus = {};
