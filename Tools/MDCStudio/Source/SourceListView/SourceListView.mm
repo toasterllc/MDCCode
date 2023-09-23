@@ -19,17 +19,17 @@ using namespace MDCStudio;
 @public
     SourceListView* sourceListView;
 @protected
-    IBOutlet NSLayoutConstraint* _indent;
+//    IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
 }
 
 - (NSString*)name { abort(); }
 - (bool)selectable { abort(); }
 - (CGFloat)height { return 20; }
-- (CGFloat)indent { return 12; }
+//- (CGFloat)indent { return 0; }
 
 - (void)update {
-    [_indent setConstant:[self indent]];
+//    [_indent setConstant:[self indent]];
     [_height setConstant:[self height]];
     [[self textField] setStringValue:[self name]];
 }
@@ -67,8 +67,8 @@ using namespace MDCStudio;
 }
 - (NSString*)name { return name; }
 - (bool)selectable { return true; }
-- (CGFloat)height { return 50; }
-- (CGFloat)indent { return [super indent]+5; }
+- (CGFloat)height { return 74; }
+//- (CGFloat)indent { return [super indent]+5; }
 @end
 
 @interface SourceListView_Library : SourceListView_SectionItem
@@ -82,6 +82,7 @@ using namespace MDCStudio;
 
 @implementation SourceListView_Device {
 @public
+    IBOutlet NSImageView* _batteryImageView;
     MDCDevicePtr device;
 }
 
@@ -91,12 +92,28 @@ using namespace MDCStudio;
     assert(!device); // We're one-time use since MDCDevice observers can't be removed
     device = dev;
     __weak auto selfWeak = self;
-    dev->observerAdd([=] {
+    device->observerAdd([=] {
         auto selfStrong = selfWeak;
         if (!selfStrong) return false;
         dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong update]; });
         return true;
     });
+}
+
+static NSString* _BatteryLevelImage(float level) {
+    if (level == 1) {
+        return @"SourceList-Battery-Charged";
+    } else if (level == 0) {
+        return @"SourceList-Battery-Error";
+    } else {
+        const int levelInt = ((int)(level*10))*10;
+        return [NSString stringWithFormat:@"SourceList-Battery-Charging-%d", levelInt];
+    }
+}
+
+- (void)update {
+    [super update];
+    [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage(device->batteryLevel())]];
 }
 
 - (IBAction)textFieldAction:(id)sender {
@@ -215,10 +232,10 @@ using namespace MDCStudio;
 //        _librariesSection->items.push_back(library);
         
         _outlineItems = {
-            spacer1,
+//            spacer1,
             _devicesSection,
-            spacer2,
-            _librariesSection,
+//            spacer2,
+//            _librariesSection,
         };
         
         [self _updateDevices];

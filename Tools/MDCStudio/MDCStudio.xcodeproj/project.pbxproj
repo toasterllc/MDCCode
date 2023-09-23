@@ -52,6 +52,7 @@
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C846279001CA005ABD39 /* ImageGridLayer.metal */; };
 		55C90C7129B795B3007CC97E /* libbc7enc_rdo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */; };
+		55C9BDE82ABE930C008557B9 /* SourceList-Battery-Error.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55C9BDE62ABE930C008557B9 /* SourceList-Battery-Error.pdf */; };
 		55D30A2E29A828E60080BCBD /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55D30A2C29A828070080BCBD /* tz.cpp */; };
 		55D30A3F29A96D670080BCBD /* ImageCornerButton-3.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55D30A3A29A96D670080BCBD /* ImageCornerButton-3.pdf */; };
 		55D30A4029A96D670080BCBD /* ImageCornerButton-4.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55D30A3B29A96D670080BCBD /* ImageCornerButton-4.pdf */; };
@@ -60,6 +61,18 @@
 		55D30A4329A96D670080BCBD /* ImageCornerButton-1.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55D30A3E29A96D670080BCBD /* ImageCornerButton-1.pdf */; };
 		55D4AAA127B1D3E70052EFEE /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */; };
 		55D4AAA327B1D3F20052EFEE /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA227B1D3F20052EFEE /* Accelerate.framework */; };
+		55DFB5352ABB8AA50035E1BC /* SourceList-Photon-Icon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB5332ABB8AA50035E1BC /* SourceList-Photon-Icon.pdf */; };
+		55DFB5412ABE1FFA0035E1BC /* SourceList-Battery-Charging-70.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB5362ABE1FF90035E1BC /* SourceList-Battery-Charging-70.pdf */; };
+		55DFB5422ABE1FFA0035E1BC /* SourceList-Battery-Charging-30.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB5372ABE1FF90035E1BC /* SourceList-Battery-Charging-30.pdf */; };
+		55DFB5432ABE1FFA0035E1BC /* SourceList-Battery-Charging-20.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB5382ABE1FF90035E1BC /* SourceList-Battery-Charging-20.pdf */; };
+		55DFB5442ABE1FFA0035E1BC /* SourceList-Gear.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB5392ABE1FF90035E1BC /* SourceList-Gear.pdf */; };
+		55DFB5452ABE1FFA0035E1BC /* SourceList-Battery-Charging-10.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB53A2ABE1FF90035E1BC /* SourceList-Battery-Charging-10.pdf */; };
+		55DFB5462ABE1FFA0035E1BC /* SourceList-Battery-Charged.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB53B2ABE1FF90035E1BC /* SourceList-Battery-Charged.pdf */; };
+		55DFB5472ABE1FFA0035E1BC /* SourceList-Battery-Charging-80.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB53C2ABE1FF90035E1BC /* SourceList-Battery-Charging-80.pdf */; };
+		55DFB5482ABE1FFA0035E1BC /* SourceList-Battery-Charging-40.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB53D2ABE1FF90035E1BC /* SourceList-Battery-Charging-40.pdf */; };
+		55DFB5492ABE1FFA0035E1BC /* SourceList-Battery-Charging-60.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB53E2ABE1FF90035E1BC /* SourceList-Battery-Charging-60.pdf */; };
+		55DFB54A2ABE1FFA0035E1BC /* SourceList-Battery-Charging-90.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB53F2ABE1FF90035E1BC /* SourceList-Battery-Charging-90.pdf */; };
+		55DFB54B2ABE1FFA0035E1BC /* SourceList-Battery-Charging-50.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55DFB5402ABE1FF90035E1BC /* SourceList-Battery-Charging-50.pdf */; };
 		55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */; };
 		55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F7D28C00D6B00FCCEA0 /* LocalContrast.metal */; };
 		55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8028C00D6B00FCCEA0 /* Saturation.metal */; };
@@ -225,6 +238,7 @@
 		55C90C6329B70494007CC97E /* LRU.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LRU.h; sourceTree = "<group>"; };
 		55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = bc7enc_rdo.xcodeproj; path = ../../Code/Lib/bc7enc_rdo/bc7enc_rdo.xcodeproj; sourceTree = "<group>"; };
 		55C90C7329B79651007CC97E /* BC7Encoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BC7Encoder.h; sourceTree = "<group>"; };
+		55C9BDE62ABE930C008557B9 /* SourceList-Battery-Error.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Error.pdf"; sourceTree = "<group>"; };
 		55D3097E29A80F2E0080BCBD /* Time.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Time.h; sourceTree = "<group>"; };
 		55D3099229A822D60080BCBD /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
 		55D30A1B29A828070080BCBD /* tz_private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz_private.h; sourceTree = "<group>"; };
@@ -247,6 +261,18 @@
 		55D30A4629A9A0A90080BCBD /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
 		55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 		55D4AAA227B1D3F20052EFEE /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		55DFB5332ABB8AA50035E1BC /* SourceList-Photon-Icon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Photon-Icon.pdf"; sourceTree = "<group>"; };
+		55DFB5362ABE1FF90035E1BC /* SourceList-Battery-Charging-70.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-70.pdf"; sourceTree = "<group>"; };
+		55DFB5372ABE1FF90035E1BC /* SourceList-Battery-Charging-30.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-30.pdf"; sourceTree = "<group>"; };
+		55DFB5382ABE1FF90035E1BC /* SourceList-Battery-Charging-20.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-20.pdf"; sourceTree = "<group>"; };
+		55DFB5392ABE1FF90035E1BC /* SourceList-Gear.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Gear.pdf"; sourceTree = "<group>"; };
+		55DFB53A2ABE1FF90035E1BC /* SourceList-Battery-Charging-10.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-10.pdf"; sourceTree = "<group>"; };
+		55DFB53B2ABE1FF90035E1BC /* SourceList-Battery-Charged.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charged.pdf"; sourceTree = "<group>"; };
+		55DFB53C2ABE1FF90035E1BC /* SourceList-Battery-Charging-80.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-80.pdf"; sourceTree = "<group>"; };
+		55DFB53D2ABE1FF90035E1BC /* SourceList-Battery-Charging-40.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-40.pdf"; sourceTree = "<group>"; };
+		55DFB53E2ABE1FF90035E1BC /* SourceList-Battery-Charging-60.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-60.pdf"; sourceTree = "<group>"; };
+		55DFB53F2ABE1FF90035E1BC /* SourceList-Battery-Charging-90.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-90.pdf"; sourceTree = "<group>"; };
+		55DFB5402ABE1FF90035E1BC /* SourceList-Battery-Charging-50.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-50.pdf"; sourceTree = "<group>"; };
 		55E43F7928C0085500FCCEA0 /* CFA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFA.h; sourceTree = "<group>"; };
 		55E43F7B28C00D6B00FCCEA0 /* ImagePipeline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImagePipeline.h; sourceTree = "<group>"; };
 		55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Defringe.mm; sourceTree = "<group>"; };
@@ -535,6 +561,19 @@
 			isa = PBXGroup;
 			children = (
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
+				55DFB5332ABB8AA50035E1BC /* SourceList-Photon-Icon.pdf */,
+				55C9BDE62ABE930C008557B9 /* SourceList-Battery-Error.pdf */,
+				55DFB53B2ABE1FF90035E1BC /* SourceList-Battery-Charged.pdf */,
+				55DFB53A2ABE1FF90035E1BC /* SourceList-Battery-Charging-10.pdf */,
+				55DFB5382ABE1FF90035E1BC /* SourceList-Battery-Charging-20.pdf */,
+				55DFB5372ABE1FF90035E1BC /* SourceList-Battery-Charging-30.pdf */,
+				55DFB53D2ABE1FF90035E1BC /* SourceList-Battery-Charging-40.pdf */,
+				55DFB5402ABE1FF90035E1BC /* SourceList-Battery-Charging-50.pdf */,
+				55DFB53E2ABE1FF90035E1BC /* SourceList-Battery-Charging-60.pdf */,
+				55DFB5362ABE1FF90035E1BC /* SourceList-Battery-Charging-70.pdf */,
+				55DFB53C2ABE1FF90035E1BC /* SourceList-Battery-Charging-80.pdf */,
+				55DFB53F2ABE1FF90035E1BC /* SourceList-Battery-Charging-90.pdf */,
+				55DFB5392ABE1FF90035E1BC /* SourceList-Gear.pdf */,
 				55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */,
 				55425B7E29A3F39600F25D57 /* Inspector-Brightness-Max.pdf */,
 				55425B8229A3F39700F25D57 /* Inspector-Brightness-Min.pdf */,
@@ -806,31 +845,42 @@
 				55F8877F29D3A7110075593F /* CaptureTriggersView.xib in Resources */,
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
 				557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */,
+				55DFB5452ABE1FFA0035E1BC /* SourceList-Battery-Charging-10.pdf in Resources */,
 				55425B9129A3F39700F25D57 /* Inspector-Exposure-Min.pdf in Resources */,
 				552F4BB629AE6E84000CEAB2 /* Inspector-Clear.pdf in Resources */,
+				55DFB5492ABE1FFA0035E1BC /* SourceList-Battery-Charging-60.pdf in Resources */,
 				55425B8C29A3F39700F25D57 /* Inspector-Brightness-Min.pdf in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
+				55C9BDE82ABE930C008557B9 /* SourceList-Battery-Error.pdf in Resources */,
 				55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */,
 				55425B8A29A3F39700F25D57 /* Inspector-WhiteBalance-Max.pdf in Resources */,
 				55425B8F29A3F39700F25D57 /* Inspector-Contrast-Min.pdf in Resources */,
 				55425B9029A3F39700F25D57 /* Inspector-WhiteBalance-Min.pdf in Resources */,
+				55DFB5412ABE1FFA0035E1BC /* SourceList-Battery-Charging-70.pdf in Resources */,
 				553031FF27BC45A100BEFFEA /* Mask.png in Resources */,
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
+				55DFB5422ABE1FFA0035E1BC /* SourceList-Battery-Charging-30.pdf in Resources */,
+				55DFB5472ABE1FFA0035E1BC /* SourceList-Battery-Charging-80.pdf in Resources */,
 				55425B8E29A3F39700F25D57 /* Inspector-Exposure-Max.pdf in Resources */,
 				5530DC3D29DCDA50005FEC0A /* DeviceSettingsView.xib in Resources */,
 				55F8883629D9EF1C0075593F /* CaptureTriggers-Icon-Button-Large.pdf in Resources */,
 				55D30A4129A96D670080BCBD /* ImageCornerButton-0.pdf in Resources */,
+				55DFB5442ABE1FFA0035E1BC /* SourceList-Gear.pdf in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
 				55F8883929D9EF1C0075593F /* CaptureTriggers-Icon-Time-Large.pdf in Resources */,
 				55425B8929A3F39700F25D57 /* Inspector-Contrast-Max.pdf in Resources */,
+				55DFB5462ABE1FFA0035E1BC /* SourceList-Battery-Charged.pdf in Resources */,
 				55D30A4329A96D670080BCBD /* ImageCornerButton-1.pdf in Resources */,
 				55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */,
 				55D30A4229A96D670080BCBD /* ImageCornerButton-2.pdf in Resources */,
 				55425B8B29A3F39700F25D57 /* Inspector-Saturation-Min.pdf in Resources */,
+				55DFB5482ABE1FFA0035E1BC /* SourceList-Battery-Charging-40.pdf in Resources */,
 				55D30A4029A96D670080BCBD /* ImageCornerButton-4.pdf in Resources */,
 				55F8883B29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf in Resources */,
 				55D30A3F29A96D670080BCBD /* ImageCornerButton-3.pdf in Resources */,
 				55F8883729D9EF1C0075593F /* CaptureTriggers-Icon-Button-Small.pdf in Resources */,
+				55DFB5432ABE1FFA0035E1BC /* SourceList-Battery-Charging-20.pdf in Resources */,
+				55DFB54B2ABE1FFA0035E1BC /* SourceList-Battery-Charging-50.pdf in Resources */,
 				55425B8D29A3F39700F25D57 /* Inspector-Saturation-Max.pdf in Resources */,
 				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
@@ -838,7 +888,9 @@
 				55425B2629A0752300F25D57 /* InspectorView.xib in Resources */,
 				55425B8829A3F39700F25D57 /* Inspector-Brightness-Max.pdf in Resources */,
 				55F8883A29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Small.pdf in Resources */,
+				55DFB54A2ABE1FFA0035E1BC /* SourceList-Battery-Charging-90.pdf in Resources */,
 				55F8D01027BDF26400757165 /* Shadow.png in Resources */,
+				55DFB5352ABB8AA50035E1BC /* SourceList-Photon-Icon.pdf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
