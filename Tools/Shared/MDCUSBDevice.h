@@ -188,6 +188,16 @@ public:
     }
     
     // MARK: - STMApp Commands
+    void hostModeSet(bool en) {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = {
+            .op = STM::Op::HostModeSet,
+            .arg = { .HostModeSet = { .en = en } },
+        };
+        _sendCmd(cmd);
+        _checkStatus("HostModeSet command failed");
+    }
+    
     void iceRAMWrite(const void* data, size_t len) {
         assert(_mode == STM::Status::Mode::STMApp);
         if (len >= std::numeric_limits<uint32_t>::max())
@@ -249,16 +259,6 @@ public:
         // Send data
         _dev.write(STM::Endpoint::DataOut, data, len);
         _checkStatus("ICEFlashWrite command failed");
-    }
-    
-    void mspHostModeSet(bool en) {
-        assert(_mode == STM::Status::Mode::STMApp);
-        const STM::Cmd cmd = {
-            .op = STM::Op::MSPHostModeSet,
-            .arg = { .MSPHostModeSet = { .en = en } },
-        };
-        _sendCmd(cmd);
-        _checkStatus("MSPHostModeSet command failed");
     }
     
 //    MSP::State::Header mspStateHeaderRead() {

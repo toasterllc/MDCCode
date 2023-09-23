@@ -59,7 +59,7 @@ public:
             _mspState = _device.device.mspStateRead();
             
             // Enter host mode
-            _device.device.mspHostModeSet(true);
+            _device.device.hostModeSet(true);
             
             // Adjust the device's time to correct it for crystal innaccuracy
             std::cout << "Adjusting device time:\n";

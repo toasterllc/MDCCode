@@ -893,11 +893,14 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static void _MSPHostModeSet(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.MSPHostModeSet;
+static void _HostModeSet(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.HostModeSet;
     
     // Accept command
     _System::USBAcceptCommand(true);
+    
+    // Update whether the charge status LED updates are paused.
+    _System::ChargeStatusPause(arg.en);
     
     const MSP::Cmd mspCmd = {
         .op = MSP::Cmd::Op::HostModeSet,
@@ -1523,12 +1526,13 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     _TasksReset();
     
     switch (cmd.op) {
+    // Host mode
+    case Op::HostModeSet:           _HostModeSet(cmd);                  break;
     // ICE40 Bootloader
     case Op::ICERAMWrite:           _ICERAMWrite(cmd);                  break;
     case Op::ICEFlashRead:          _ICEFlashRead(cmd);                 break;
     case Op::ICEFlashWrite:         _ICEFlashWrite(cmd);                break;
     // MSP430
-    case Op::MSPHostModeSet:        _MSPHostModeSet(cmd);               break;
     case Op::MSPStateRead:          _MSPStateRead(cmd);                 break;
     case Op::MSPStateWrite:         _MSPStateWrite(cmd);                break;
     case Op::MSPTimeGet:            _MSPTimeGet(cmd);                   break;

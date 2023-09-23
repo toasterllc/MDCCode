@@ -33,11 +33,12 @@ enum class Op : uint8_t {
     STMReset,
     
     // STMApp
+    HostModeSet,
+    
     ICERAMWrite,
     ICEFlashRead,
     ICEFlashWrite,
     
-    MSPHostModeSet,
     MSPStateRead,
     MSPStateWrite,
     MSPTimeGet,
@@ -96,7 +97,7 @@ struct [[gnu::packed]] Cmd {
         
         struct [[gnu::packed]] {
             uint8_t en;
-        } MSPHostModeSet;
+        } HostModeSet;
         
         struct [[gnu::packed]] {
             uint32_t len;
