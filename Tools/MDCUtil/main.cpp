@@ -253,13 +253,13 @@ static void StatusGet(const Args& args, MDCUSBDevice& device) {
     printf("\n");
 }
 
-static const char* _StringForChargeStatus(STM::BatteryStatus::ChargeStatus status) {
-    using namespace STM;
+static const char* _StringForChargeStatus(MSP::ChargeStatus status) {
+    using namespace MSP;
     switch (status) {
-    case BatteryStatus::ChargeStatus::Invalid:  return "invalid";
-    case BatteryStatus::ChargeStatus::Shutdown: return "shutdown";
-    case BatteryStatus::ChargeStatus::Underway: return "underway";
-    case BatteryStatus::ChargeStatus::Complete: return "complete";
+    case ChargeStatus::Invalid:  return "invalid";
+    case ChargeStatus::Shutdown: return "shutdown";
+    case ChargeStatus::Underway: return "underway";
+    case ChargeStatus::Complete: return "complete";
     }
     abort();
 }

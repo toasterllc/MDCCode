@@ -934,7 +934,7 @@ private:
     // MARK: - Battery Level
     
     void _batteryLevel_thread() {
-        constexpr auto UpdateInterval = std::chrono::seconds(30);
+        constexpr auto UpdateInterval = std::chrono::seconds(2);
         
         try {
             for (;;) {
@@ -946,10 +946,10 @@ private:
                     
                     const STM::BatteryStatus batteryStatus = _device.device.batteryStatusGet();
                     
-                    if (batteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Complete) {
+                    if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
                         _batteryLevel.level = 1;
                     
-                    } else if (batteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
+                    } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
                         _batteryLevel.level = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
                     
                     } else {

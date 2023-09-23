@@ -304,11 +304,7 @@ private:
             
             // Wait until we detect a battery
             for (;;) {
-                _BatteryStatus = {
-                    .chargeStatus = MSP::ChargeStatus::Shutdown,
-                    .level = _BatteryStatusGet().level,
-                };
-                
+                _BatteryStatus = _BatteryStatusGet();
                 if (_BatteryStatus.level != MSP::BatteryLevelMvInvalid) break;
                 Scheduler::Sleep(UpdateInterval);
             }
@@ -316,6 +312,15 @@ private:
             // Turn on battery charger
             _BAT_CHRG_EN_::Write(0);
             Scheduler::Sleep(Scheduler::template Ms<10>);
+            
+            // If we're already displaying a charge status, wait a bit for battery
+            // charging to stabilize. This delay is necessary to workaround the fact
+            // that our _BAT_CHRG_EN_ net glitches when loading STMApp, causing
+            // charging to briefly be interrupted, which would cause the LED to
+            // transition from green->red->green, if not for this workaround.
+            if (_BatteryStatus.chargeStatus != MSP::ChargeStatus::Invalid) {
+                Scheduler::Sleep(Scheduler::template Ms<5000>);
+            }
             
             for (;;) {
                 _BatteryStatus = {
