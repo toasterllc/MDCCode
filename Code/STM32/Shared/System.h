@@ -314,13 +314,15 @@ private:
             Scheduler::Sleep(Scheduler::template Ms<10>);
             
             // If we're already displaying a charge status, wait a bit for battery
-            // charging to stabilize. This delay is necessary to workaround the fact
-            // that our _BAT_CHRG_EN_ net glitches when loading STMApp (because the
-            // STM32 GPIO configuration gets reset when the chip resets), causing
-            // charging to be momentarily interrupted, which would cause the LED to
-            // transition from green->red->green, if not for this workaround.
+            // charging to stabilize.
+            //
+            // This delay is necessary to workaround the fact that our _BAT_CHRG_EN_
+            // net glitches when loading STMApp (because the STM32 GPIO configuration
+            // gets reset when the chip resets), causing charging to be momentarily
+            // interrupted, which would cause the LED to transition from
+            // green->red->green, if not for this workaround.
             if (_BatteryStatus.chargeStatus != MSP::ChargeStatus::Invalid) {
-                Scheduler::Sleep(Scheduler::template Ms<5000>);
+                Scheduler::Sleep(Scheduler::template Ms<10000>);
             }
             
             for (;;) {
