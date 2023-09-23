@@ -74,7 +74,7 @@
                                                 </connections>
                                             </textField>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g8q-te-9OC" userLabel="Settings Button">
-                                                <rect key="frame" x="217" y="13" width="17" height="17"/>
+                                                <rect key="frame" x="217" y="14" width="17" height="17"/>
                                                 <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="SourceList-Gear" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="rni-HE-MKl">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
@@ -84,7 +84,10 @@
                                                 </connections>
                                             </button>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="YYE-UM-oso" userLabel="Battery Image">
-                                                <rect key="frame" x="207" y="42" width="30" height="14"/>
+                                                <rect key="frame" x="207" y="38" width="30" height="20"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="height" constant="20" id="277-f4-oyy"/>
+                                                </constraints>
                                                 <imageCell key="cell" refusesFirstResponder="YES" image="SourceList-Battery-Charging-50" id="4Gd-m7-o2q"/>
                                             </imageView>
                                         </subviews>
@@ -95,10 +98,10 @@
                                             <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" constant="-17" id="Kje-qB-Fxx"/>
                                             <constraint firstItem="cuS-aa-uKX" firstAttribute="leading" secondItem="MZn-BH-IiQ" secondAttribute="leading" id="NdT-qC-bXN"/>
                                             <constraint firstAttribute="height" constant="74" id="T60-bh-CJV"/>
-                                            <constraint firstItem="g8q-te-9OC" firstAttribute="top" secondItem="YYE-UM-oso" secondAttribute="bottom" constant="12" id="fnt-jE-AJb"/>
+                                            <constraint firstItem="g8q-te-9OC" firstAttribute="top" secondItem="YYE-UM-oso" secondAttribute="bottom" constant="7" id="fnt-jE-AJb"/>
                                             <constraint firstItem="MZn-BH-IiQ" firstAttribute="top" secondItem="7cJ-fN-hbY" secondAttribute="top" constant="5" id="hP7-ya-fk0"/>
                                             <constraint firstItem="7cJ-fN-hbY" firstAttribute="centerY" secondItem="08g-eg-N7V" secondAttribute="centerY" id="iyb-P3-8nF"/>
-                                            <constraint firstItem="YYE-UM-oso" firstAttribute="top" secondItem="08g-eg-N7V" secondAttribute="top" constant="18" id="n6q-U0-zNV"/>
+                                            <constraint firstItem="YYE-UM-oso" firstAttribute="top" secondItem="08g-eg-N7V" secondAttribute="top" constant="16" id="n6q-U0-zNV"/>
                                             <constraint firstItem="YYE-UM-oso" firstAttribute="leading" secondItem="MZn-BH-IiQ" secondAttribute="trailing" constant="8" id="qQx-fS-mN8"/>
                                             <constraint firstItem="7cJ-fN-hbY" firstAttribute="bottom" secondItem="cuS-aa-uKX" secondAttribute="bottom" constant="5" id="yey-f8-vqZ"/>
                                         </constraints>
