@@ -243,9 +243,4 @@ struct [[gnu::packed]] ImgCaptureStats {
 static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
 static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
 
-struct [[gnu::packed]] BatteryStatus {
-    ChargeStatus chargeStatus = ChargeStatus::Invalid;
-    MSP::BatteryLevelMv level = MSP::BatteryLevelMvInvalid;
-};
-
 } // namespace STM

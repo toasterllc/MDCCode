@@ -695,10 +695,19 @@ struct _TaskI2C {
             return MSP::Resp{ .ok = true };
         }
         
-        case Cmd::Op::ChargeStatusGet: {
+        case Cmd::Op::BatteryStatusGet: {
+            _TaskPower::BatteryLevelUpdate();
+            _TaskPower::BatteryLevelWait();
             return MSP::Resp{
                 .ok = true,
-                .arg = { .ChargeStatusGet = { .status = _HostModeState.chargeStatus } },
+                .arg = {
+                    .BatteryStatusGet = {
+                        .status = {
+                            .chargeStatus = _HostModeState.chargeStatus,
+                            .level = _TaskPower::BatteryLevelGet(),
+                        },
+                    },
+                },
             };
         }
         
@@ -740,15 +749,7 @@ struct _TaskI2C {
             if (!_HostModeState.en) return MSP::Resp{ .ok = false };
             _HostModeState.vddImgSd = cmd.arg.VDDIMGSDSet.en;
             return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::BatteryLevelGet: {
-            _TaskPower::BatteryLevelUpdate();
-            _TaskPower::BatteryLevelWait();
-            return MSP::Resp{
-                .ok = true,
-                .arg = { .BatteryLevelGet = { .level = _TaskPower::BatteryLevelGet() } },
-            };
-        }}
+        }
         
         return MSP::Resp{ .ok = false };
     }

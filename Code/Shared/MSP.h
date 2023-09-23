@@ -398,6 +398,11 @@ enum class ChargeStatus : uint8_t {
     Complete,
 };
 
+struct [[gnu::packed]] BatteryStatus {
+    ChargeStatus chargeStatus = ChargeStatus::Invalid;
+    BatteryLevelMv level = MSP::BatteryLevelMvInvalid;
+};
+
 struct [[gnu::packed]] Cmd {
     static constexpr uint8_t ArgLen = 16;
     
@@ -405,14 +410,13 @@ struct [[gnu::packed]] Cmd {
         None,
         StateRead,
         StateWrite,
-        ChargeStatusGet,
+        BatteryStatusGet,
         ChargeStatusSet,
         TimeGet,
         TimeSet,
         TimeAdjust,
         HostModeSet,
         VDDIMGSDSet,
-        BatteryLevelGet,
     };
     
     Op op;
@@ -465,16 +469,12 @@ struct [[gnu::packed]] Resp {
         } StateRead;
         
         struct [[gnu::packed]] {
-            ChargeStatus status;
-        } ChargeStatusGet;
+            BatteryStatus status;
+        } BatteryStatusGet;
         
         struct [[gnu::packed]] {
             TimeState state;
         } TimeGet;
-        
-        struct [[gnu::packed]] {
-            BatteryLevelMv level;
-        } BatteryLevelGet;
         
         uint8_t _[ArgLen]; // Set size of argument
     } arg;
