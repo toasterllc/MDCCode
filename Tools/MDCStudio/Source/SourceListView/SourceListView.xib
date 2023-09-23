@@ -36,6 +36,10 @@
                                 </textFieldCell>
                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                 <prototypeCellViews>
+                                    <tableCellView identifier="SourceListView_RowView" id="2gM-Xi-JvJ" customClass="SourceListView_RowView">
+                                        <rect key="frame" x="1" y="1" width="247" height="17"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+                                    </tableCellView>
                                     <tableCellView identifier="SourceListView_Device" translatesAutoresizingMaskIntoConstraints="NO" id="08g-eg-N7V" customClass="SourceListView_Device">
                                         <rect key="frame" x="0.0" y="0.0" width="247" height="74"/>
                                         <subviews>
@@ -70,7 +74,7 @@
                                                 </connections>
                                             </textField>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g8q-te-9OC" userLabel="Settings Button">
-                                                <rect key="frame" x="217" y="14" width="17" height="17"/>
+                                                <rect key="frame" x="217" y="13" width="17" height="17"/>
                                                 <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="SourceList-Gear" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="rni-HE-MKl">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
@@ -80,7 +84,7 @@
                                                 </connections>
                                             </button>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="YYE-UM-oso" userLabel="Battery Image">
-                                                <rect key="frame" x="207" y="43" width="30" height="14"/>
+                                                <rect key="frame" x="207" y="42" width="30" height="14"/>
                                                 <imageCell key="cell" refusesFirstResponder="YES" image="SourceList-Battery-Charging-50" id="4Gd-m7-o2q"/>
                                             </imageView>
                                         </subviews>
@@ -94,7 +98,7 @@
                                             <constraint firstItem="g8q-te-9OC" firstAttribute="top" secondItem="YYE-UM-oso" secondAttribute="bottom" constant="12" id="fnt-jE-AJb"/>
                                             <constraint firstItem="MZn-BH-IiQ" firstAttribute="top" secondItem="7cJ-fN-hbY" secondAttribute="top" constant="5" id="hP7-ya-fk0"/>
                                             <constraint firstItem="7cJ-fN-hbY" firstAttribute="centerY" secondItem="08g-eg-N7V" secondAttribute="centerY" id="iyb-P3-8nF"/>
-                                            <constraint firstItem="YYE-UM-oso" firstAttribute="top" secondItem="08g-eg-N7V" secondAttribute="top" constant="17" id="n6q-U0-zNV"/>
+                                            <constraint firstItem="YYE-UM-oso" firstAttribute="top" secondItem="08g-eg-N7V" secondAttribute="top" constant="18" id="n6q-U0-zNV"/>
                                             <constraint firstItem="YYE-UM-oso" firstAttribute="leading" secondItem="MZn-BH-IiQ" secondAttribute="trailing" constant="8" id="qQx-fS-mN8"/>
                                             <constraint firstItem="7cJ-fN-hbY" firstAttribute="bottom" secondItem="cuS-aa-uKX" secondAttribute="bottom" constant="5" id="yey-f8-vqZ"/>
                                         </constraints>

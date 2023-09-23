@@ -88,6 +88,13 @@ static NSString* _BatteryLevelImage(float level) {
 
 @end
 
+@interface SourceListView_RowView : NSTableRowView
+@end
+
+@implementation SourceListView_RowView
+- (BOOL)isEmphasized { return false; }
+@end
+
 #define Device          SourceListView_Device
 #define Item            SourceListView_Item
 #define RowView         SourceListView_RowView
@@ -274,6 +281,10 @@ static NSString* _BatteryLevelImage(float level) {
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView shouldShowOutlineCellForItem:(id)item {
     return false;
+}
+
+- (NSTableRowView*)outlineView:(NSOutlineView*)outlineView rowViewForItem:(id)item {
+    return [_outlineView makeViewWithIdentifier:NSStringFromClass([RowView class]) owner:nil];
 }
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
