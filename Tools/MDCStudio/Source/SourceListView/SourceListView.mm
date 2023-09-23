@@ -17,67 +17,29 @@ using namespace MDCStudio;
 
 @implementation SourceListView_Item {
 @public
-    SourceListView* sourceListView;
+    NSString* name;
+    __weak SourceListView* sourceListView;
 @protected
 //    IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
 }
 
-- (NSString*)name { abort(); }
-- (bool)selectable { abort(); }
-- (CGFloat)height { return 20; }
+- (NSString*)name { return name; }
+- (bool)selectable { return true; }
+- (CGFloat)height { return 74; }
 //- (CGFloat)indent { return 0; }
 
 - (void)update {
 //    [_indent setConstant:[self indent]];
     [_height setConstant:[self height]];
-    [[self textField] setStringValue:[self name]];
-}
-
-@end
-
-@interface SourceListView_Section : SourceListView_Item
-@end
-
-@implementation SourceListView_Section {
-@public
-    NSString* name;
-    std::vector<SourceListView_Item*> items;
-}
-
-- (NSString*)name { return [name uppercaseString]; }
-- (bool)selectable { return false; }
-- (CGFloat)height { return 20; }
-
-- (void)update {
-    [super update];
-    for (SourceListView_Item* it : items) {
-        [it update];
+    if (![[self textField] currentEditor]) {
+        [[self textField] setStringValue:[self name]];
     }
 }
 
 @end
 
-@interface SourceListView_SectionItem : SourceListView_Item
-@end
-
-@implementation SourceListView_SectionItem {
-@public
-    NSString* name;
-}
-- (NSString*)name { return name; }
-- (bool)selectable { return true; }
-- (CGFloat)height { return 74; }
-//- (CGFloat)indent { return [super indent]+5; }
-@end
-
-@interface SourceListView_Library : SourceListView_SectionItem
-@end
-
-@implementation SourceListView_Library
-@end
-
-@interface SourceListView_Device : SourceListView_SectionItem
+@interface SourceListView_Device : SourceListView_Item
 @end
 
 @implementation SourceListView_Device {
@@ -126,32 +88,9 @@ static NSString* _BatteryLevelImage(float level) {
 
 @end
 
-@interface SourceListView_Spacer : SourceListView_Item
-@end
-
-@implementation SourceListView_Spacer {
-@public
-    CGFloat height;
-}
-- (NSString*)name { return @""; }
-- (bool)selectable { return false; }
-- (CGFloat)height { return height; }
-@end
-
-@interface SourceListView_RowView : NSTableRowView
-@end
-
-@implementation SourceListView_RowView
-- (BOOL)isEmphasized { return false; }
-@end
-
 #define Device          SourceListView_Device
 #define Item            SourceListView_Item
-#define Library         SourceListView_Library
 #define RowView         SourceListView_RowView
-#define Section         SourceListView_Section
-#define SectionItem     SourceListView_SectionItem
-#define Spacer          SourceListView_Spacer
 
 // MARK: - SourceListView
 
@@ -160,9 +99,7 @@ static NSString* _BatteryLevelImage(float level) {
     IBOutlet NSView* _nibView;
     IBOutlet NSOutlineView* _outlineView;
     
-//    Section* _devicesSection;
-//    Section* _librariesSection;
-    std::vector<Item*> _outlineItems;
+    std::vector<Item*> _items;
     
     __weak id<SourceListViewDelegate> _delegate;
 }
@@ -211,44 +148,19 @@ static NSString* _BatteryLevelImage(float level) {
     
     // Populate NSOutlineView
     {
-//        Spacer* spacer1 = [self _createItemWithClass:[Spacer class]];
-//        spacer1->height = 3;
-//        
-//        _devicesSection = [self _createItemWithClass:[Section class]];
-//        _devicesSection->name = @"Devices";
-//        
-//        Spacer* spacer2 = [self _createItemWithClass:[Spacer class]];
-//        spacer2->height = 10;
-//        
-//        _librariesSection = [self _createItemWithClass:[Section class]];
-//        _librariesSection->name = @"Libraries";
-        
-    //    Device* device = [self _createItemWithClass:[Device class]];
-    //    device->name = @"MDC Device 123456";
-    //    _devicesSection->items.push_back(device);
-        
-//        Library* library = [self _createItemWithClass:[Library class]];
-//        library->name = @"New Library";
-//        _librariesSection->items.push_back(library);
-        
-        _outlineItems = {
-//            spacer1,
-//            _devicesSection,
-//            spacer2,
-//            _librariesSection,
-        };
+        _items = {};
         
         [self _updateDevices];
         [_outlineView reloadData];
         
-        for (auto item : _outlineItems) {
+        for (auto item : _items) {
             [_outlineView expandItem:item];
         }
         
         // Select first device by default
         const NSInteger selectedRow = [_outlineView selectedRow];
-        if (selectedRow<0 && !_outlineItems.empty()) {
-            [_outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:[_outlineView rowForItem:_outlineItems.at(0)]] byExtendingSelection:false];
+        if (selectedRow<0 && !_items.empty()) {
+            [_outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:[_outlineView rowForItem:_items.at(0)]] byExtendingSelection:false];
         }
     }
 }
@@ -283,7 +195,7 @@ static NSString* _BatteryLevelImage(float level) {
     std::set<MDCDevicePtr> oldDevices;
     std::set<MDCDevicePtr> newDevices;
     {
-        for (Item* it : _outlineItems) {
+        for (Item* it : _items) {
             oldDevices.insert(Toastbox::Cast<Device*>(it)->device);
         }
         
@@ -292,10 +204,10 @@ static NSString* _BatteryLevelImage(float level) {
     }
     
     // Remove disconnected devices
-    for (auto it=_outlineItems.begin(); it!=_outlineItems.end();) {
+    for (auto it=_items.begin(); it!=_items.end();) {
         MDCDevicePtr dev = Toastbox::Cast<Device*>(*it)->device;
         if (newDevices.find(dev) == newDevices.end()) {
-            it = _outlineItems.erase(it);
+            it = _items.erase(it);
         } else {
             it++;
         }
@@ -306,12 +218,12 @@ static NSString* _BatteryLevelImage(float level) {
         if (oldDevices.find(dev) == oldDevices.end()) {
             Device* item = [self _createItemWithClass:[Device class]];
             [item setDevice:dev];
-            _outlineItems.push_back(item);
+            _items.push_back(item);
         }
     }
     
     // Sort devices
-    std::sort(_outlineItems.begin(), _outlineItems.end(), [](Item* a, Item* b) {
+    std::sort(_items.begin(), _items.end(), [](Item* a, Item* b) {
         return [Toastbox::Cast<Device*>(a)->name compare:Toastbox::Cast<Device*>(b)->name] == NSOrderedDescending;
     });
 }
@@ -329,60 +241,11 @@ static NSString* _BatteryLevelImage(float level) {
     [_delegate sourceListView:self showDeviceSettings:device];
 }
 
-//- (void)_handleDevicesChanged {
-//    std::set<MDCDevicePtr> connected;
-//    std::set<MDCDevicePtr> disconnected;
-//    
-//    // Determine which devices were connected/disconnected
-//    {
-//        std::set<MDCDevicePtr> oldDevices;
-//        for (Item* it : _devicesSection->items) {
-//            oldDevices.insert(Cast<Device>(it)->device);
-//        }
-//        
-//        std::vector<MDCDevicePtr> newDevicesVec = MDCDevicesManager::Devices();
-//        std::set<MDCDevicePtr> newDevices(newDevicesVec.begin(), newDevicesVec.end());
-//        
-//        for (const MDCDevicePtr& dev : newDevices) {
-//            if (oldDevices.find(dev) == oldDevices.end()) {
-//                connected.insert(dev);
-//            }
-//        }
-//        
-//        for (const MDCDevicePtr& dev : oldDevices) {
-//            if (newDevices.find(dev) == newDevices.end()) {
-//                disconnected.insert(dev);
-//            }
-//        }
-//    }
-//    
-//    // Handle disconnected devices
-//    for (auto it=_devicesSection->items.rend(); it!=_devicesSection->items.rbegin(); it++) {
-//        
-//    }
-//    
-//    for (Item* it : _devicesSection->items) {
-//        oldDevices.insert(Cast<Device>(it)->device);
-//    }
-//    
-//    for (const MDCDevicePtr& dev : disconnected) {
-//        
-//    }
-//    
-//    // Handle connected devices
-//    for (const MDCDevicePtr& dev : connected) {
-//        
-//    }
-//}
-
 // MARK: - Outline View Data Source / Delegate
 
 - (NSInteger)outlineView:(NSOutlineView*)outlineView numberOfChildrenOfItem:(id)item {
     if (item == nullptr) {
-        return _outlineItems.size();
-    
-    } else if (auto it = Toastbox::CastOrNull<Section*>(item)) {
-        return it->items.size();
+        return _items.size();
     
     } else {
         abort();
@@ -391,10 +254,7 @@ static NSString* _BatteryLevelImage(float level) {
 
 - (id)outlineView:(NSOutlineView*)outlineView child:(NSInteger)index ofItem:(id)item {
     if (item == nullptr) {
-        return _outlineItems[index];
-    
-    } else if (auto section = Toastbox::CastOrNull<Section*>(item)) {
-        return section->items.at(index);
+        return _items[index];
     
     } else {
         abort();
@@ -402,9 +262,6 @@ static NSString* _BatteryLevelImage(float level) {
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView isItemExpandable:(id)item {
-    if (auto it = Toastbox::CastOrNull<Section*>(item)) {
-        return true;
-    }
     return false;
 }
 
@@ -417,10 +274,6 @@ static NSString* _BatteryLevelImage(float level) {
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView shouldShowOutlineCellForItem:(id)item {
     return false;
-}
-
-- (NSTableRowView*)outlineView:(NSOutlineView*)outlineView rowViewForItem:(id)item {
-    return [_outlineView makeViewWithIdentifier:NSStringFromClass([RowView class]) owner:nil];
 }
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
