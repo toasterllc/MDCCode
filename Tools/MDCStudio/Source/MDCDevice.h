@@ -704,7 +704,7 @@ private:
                         }
                         
                         addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
-//                        addCount = 10000;
+//                        addCount = 1000;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.add(addCount);
                     }
