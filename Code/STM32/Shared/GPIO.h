@@ -299,41 +299,41 @@ public:
         }
         
         // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
-        template <typename T_Prev>
+        template<typename... T_Prev>
         static constexpr void Init() {
             // Set output value (ODR) before changing the mode (MODER), so we don't intermittently
             // drive the wrong value when going changing from input->output
-            if constexpr (ODR() != T_Prev::ODR())
+            if constexpr (((ODR() != T_Prev::ODR()) || ...))
             State::ODR(ODR());
             
-            if constexpr (MODER() != T_Prev::MODER())
+            if constexpr (((MODER() != T_Prev::MODER()) || ...))
             State::MODER(MODER());
             
-            if constexpr (OTYPER() != T_Prev::OTYPER())
+            if constexpr (((OTYPER() != T_Prev::OTYPER()) || ...))
             State::OTYPER(OTYPER());
             
-            if constexpr (OSPEEDR() != T_Prev::OSPEEDR())
+            if constexpr (((OSPEEDR() != T_Prev::OSPEEDR()) || ...))
             State::OSPEEDR(OSPEEDR());
             
-            if constexpr (PUPDR() != T_Prev::PUPDR())
+            if constexpr (((PUPDR() != T_Prev::PUPDR()) || ...))
             State::PUPDR(PUPDR());
             
-            if constexpr (AFRL() != T_Prev::AFRL())
+            if constexpr (((AFRL() != T_Prev::AFRL()) || ...))
             State::AFRL(AFRL());
             
-            if constexpr (AFRH() != T_Prev::AFRH())
+            if constexpr (((AFRH() != T_Prev::AFRH()) || ...))
             State::AFRH(AFRH());
             
-            if constexpr (IMR() != T_Prev::IMR())
+            if constexpr (((IMR() != T_Prev::IMR()) || ...))
             State::IMR(IMR());
             
-            if constexpr (EMR() != T_Prev::EMR())
+            if constexpr (((EMR() != T_Prev::EMR()) || ...))
             State::EMR(EMR());
             
-            if constexpr (RTSR() != T_Prev::RTSR())
+            if constexpr (((RTSR() != T_Prev::RTSR()) || ...))
             State::RTSR(RTSR());
             
-            if constexpr (FTSR() != T_Prev::FTSR())
+            if constexpr (((FTSR() != T_Prev::FTSR()) || ...))
             State::FTSR(FTSR());
         }
         

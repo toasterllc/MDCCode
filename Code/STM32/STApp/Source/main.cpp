@@ -38,8 +38,8 @@ static _BufQueue _Bufs;
 
 using _ICE_CRST_                = GPIO::PortF::Pin<11, GPIO::Option::Output1>;
 using _ICE_CDONE                = GPIO::PortB::Pin<1,  GPIO::Option::Input>;
-using _ICE_STM_SPI_CS_          = GPIO::PortE::Pin<12, GPIO::Option::Output1, GPIO::Option::Speed3>;
 using _ICE_STM_SPI_D_READY      = GPIO::PortA::Pin<3,  GPIO::Option::Input>;
+using _ICE_STM_SPI_CS_          = GPIO::PortE::Pin<12, GPIO::Option::Output1, GPIO::Option::Speed3>;
 using _ICE_STM_FLASH_EN         = GPIO::PortF::Pin<5,  GPIO::Option::Output0>;
 
 using _ICE_STM_SPI_CLK          = GPIO::PortB::Pin<2,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
@@ -56,6 +56,10 @@ using _ICE_STM_SPI_CLK_MANUAL   = GPIO::PortB::Pin<2,  GPIO::Option::Output0>;
 using _ICE_STM_SPI_D4_MANUAL    = GPIO::PortE::Pin<7,  GPIO::Option::Input>;
 using _ICE_STM_SPI_D5_MANUAL    = GPIO::PortE::Pin<8,  GPIO::Option::Output0>;
 
+using _ICE_STM_SPI_CS_INPUT_    = GPIO::PortE::Pin<12, GPIO::Option::Input>;
+using _ICE_STM_FLASH_EN_INPUT   = GPIO::PortF::Pin<5,  GPIO::Option::Input>;
+using _ICE_STM_SPI_CLK_INPUT    = GPIO::PortB::Pin<2,  GPIO::Option::Input>;
+
 using _System = System<
     STM::Status::Mode::STMApp,  // T_Mode
     true,                       // T_USBDMAEn
@@ -66,11 +70,11 @@ using _System = System<
     std::tuple<
         _ICE_CRST_,
         _ICE_CDONE,
-        _ICE_STM_SPI_CS_,
         _ICE_STM_SPI_D_READY,
-        _ICE_STM_FLASH_EN,
         
-        _ICE_STM_SPI_CLK,
+        _ICE_STM_SPI_CS_INPUT_,
+        _ICE_STM_FLASH_EN_INPUT,
+        _ICE_STM_SPI_CLK_INPUT,
         _ICE_STM_SPI_D0,
         _ICE_STM_SPI_D1,
         _ICE_STM_SPI_D2,
@@ -282,18 +286,22 @@ void _QSPIConfigSet(const _QSPI::Config* config) {
     if (config) {
         _QSPI::ConfigSet(*config);
         
-        _ICE_STM_SPI_CLK::Init<_ICE_STM_SPI_CLK_MANUAL>();
+        _ICE_STM_SPI_CLK::Init<_ICE_STM_SPI_CLK_MANUAL, _ICE_STM_SPI_CLK_INPUT>();
         _ICE_STM_SPI_D4::Init<_ICE_STM_SPI_D4_MANUAL>();
         _ICE_STM_SPI_D5::Init<_ICE_STM_SPI_D5_MANUAL>();
     
     // Manual mode
     } else {
-        _ICE_STM_SPI_CLK_MANUAL::Init<_ICE_STM_SPI_CLK>();
+        _ICE_STM_SPI_CLK_MANUAL::Init<_ICE_STM_SPI_CLK, _ICE_STM_SPI_CLK_INPUT>();
         _ICE_STM_SPI_D4_MANUAL::Init<_ICE_STM_SPI_D4>();
         _ICE_STM_SPI_D5_MANUAL::Init<_ICE_STM_SPI_D5>();
     }
     
+    // Make sure we're manually controlling _ICE_STM_FLASH_EN
+    _ICE_STM_FLASH_EN::Init<_ICE_STM_FLASH_EN_INPUT>();
+    
     // We manually control chip-select
+    _ICE_STM_SPI_CS_::Init<_ICE_STM_SPI_CS_INPUT_>();
     _ICE_STM_SPI_CS_::Write(1);
 }
 
@@ -901,6 +909,16 @@ static void _HostModeSet(const STM::Cmd& cmd) {
     
     // Update whether the charge status LED updates are paused.
     _System::ChargeStatusPause(arg.en);
+    
+    // Reset ICE40 since it may have been loaded with an image while in host mode
+//    _ICE_STM_SPI_CS_::Write(1);
+//    _ICE_STM_FLASH_EN::Write(1);
+//    _ICE_STM_SPI_CLK::;
+    
+    _ICE_CRST_::Write(0);
+    _Scheduler::Sleep(_Scheduler::Ms<1>);
+    _ICE_CRST_::Write(1);
+    _Scheduler::Sleep(_Scheduler::Ms<30>);
     
     const MSP::Cmd mspCmd = {
         .op = MSP::Cmd::Op::HostModeSet,

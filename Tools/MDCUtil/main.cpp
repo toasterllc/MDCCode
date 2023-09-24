@@ -36,10 +36,10 @@ const CmdStr LEDSetCmd              = "LEDSet";
 const CmdStr STMWriteCmd            = "STMWrite";
 
 // STMApp Commands
+const CmdStr HostModeSetCmd         = "HostModeSet";
 const CmdStr ICERAMWriteCmd         = "ICERAMWrite";
 const CmdStr ICEFlashReadCmd        = "ICEFlashRead";
 const CmdStr ICEFlashWriteCmd       = "ICEFlashWrite";
-const CmdStr MSPHostModeSetCmd      = "MSPHostModeSet";
 const CmdStr MSPStateReadCmd        = "MSPStateRead";
 const CmdStr MSPStateWriteCmd       = "MSPStateWrite";
 const CmdStr MSPTimeGetCmd          = "MSPTimeGet";
@@ -67,11 +67,12 @@ static void printUsage() {
     cout << "  " << STMWriteCmd             << " <file>\n";
     
     // STMApp Commands
+    cout << "  " << HostModeSetCmd          << " <0/1>\n";
+    
     cout << "  " << ICERAMWriteCmd          << " <file>\n";
     cout << "  " << ICEFlashReadCmd         << " <addr> <len>\n";
     cout << "  " << ICEFlashWriteCmd        << " <file>\n";
     
-    cout << "  " << MSPHostModeSetCmd       << " <0/1>\n";
     cout << "  " << MSPStateReadCmd         << "\n";
     cout << "  " << MSPStateWriteCmd        << "\n";
     cout << "  " << MSPTimeGetCmd           << "\n";
@@ -102,6 +103,10 @@ struct Args {
     } STMWrite = {};
     
     struct {
+        bool en;
+    } HostModeSet = {};
+    
+    struct {
         std::string filePath;
     } ICERAMWrite = {};
     
@@ -113,10 +118,6 @@ struct Args {
     struct {
         std::string filePath;
     } ICEFlashWrite = {};
-    
-    struct {
-        bool en;
-    } MSPHostModeSet = {};
     
     struct {
         uintptr_t addr = 0;
@@ -171,6 +172,10 @@ static Args parseArgs(int argc, const char* argv[]) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.STMWrite.filePath = strs[1];
     
+    } else if (args.cmd == lower(HostModeSetCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("missing argument: host mode state");
+        IntForStr(args.HostModeSet.en, strs[1]);
+    
     } else if (args.cmd == lower(ICERAMWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.ICERAMWrite.filePath = strs[1];
@@ -183,10 +188,6 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == lower(ICEFlashWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.ICEFlashWrite.filePath = strs[1];
-    
-    } else if (args.cmd == lower(MSPHostModeSetCmd)) {
-        if (strs.size() < 2) throw std::runtime_error("missing argument: host mode state");
-        IntForStr(args.MSPHostModeSet.en, strs[1]);
     
     } else if (args.cmd == lower(MSPStateReadCmd)) {
     
@@ -292,6 +293,11 @@ static void LEDSet(const Args& args, MDCUSBDevice& device) {
     device.ledSet(args.LEDSet.idx, args.LEDSet.on);
 }
 
+static void HostModeSet(const Args& args, MDCUSBDevice& device) {
+    printf("HostModeSet: %d\n", (int)args.HostModeSet.en);
+    device.hostModeSet(args.HostModeSet.en);
+}
+
 static void STMWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.STMWrite.filePath.c_str());
     
@@ -353,11 +359,6 @@ static void ICEFlashWrite(const Args& args, MDCUSBDevice& device) {
         f.write((char*)buf.get(), len);
         throw Toastbox::RuntimeError("data written doesn't match data read (wrote to %s)", ReadBackDataFilename);
     }
-}
-
-static void MSPHostModeSet(const Args& args, MDCUSBDevice& device) {
-    printf("MSPHostModeSet: %d\n", (int)args.MSPHostModeSet.en);
-    device.mspHostModeSet(args.MSPHostModeSet.en);
 }
 
 static const char* _StringForRepeatType(MSP::Repeat::Type x) {
@@ -890,10 +891,10 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(BootloaderInvokeCmd))    BootloaderInvoke(args, device);
         else if (args.cmd == lower(LEDSetCmd))              LEDSet(args, device);
         else if (args.cmd == lower(STMWriteCmd))            STMWrite(args, device);
+        else if (args.cmd == lower(HostModeSetCmd))         HostModeSet(args, device);
         else if (args.cmd == lower(ICERAMWriteCmd))         ICERAMWrite(args, device);
         else if (args.cmd == lower(ICEFlashReadCmd))        ICEFlashRead(args, device);
         else if (args.cmd == lower(ICEFlashWriteCmd))       ICEFlashWrite(args, device);
-        else if (args.cmd == lower(MSPHostModeSetCmd))      MSPHostModeSet(args, device);
         else if (args.cmd == lower(MSPStateReadCmd))        MSPStateRead(args, device);
         else if (args.cmd == lower(MSPStateWriteCmd))       MSPStateWrite(args, device);
         else if (args.cmd == lower(MSPTimeGetCmd))          MSPTimeGet(args, device);
