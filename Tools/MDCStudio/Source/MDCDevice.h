@@ -61,9 +61,6 @@ public:
             // Enter host mode to adjust the device time
             auto hostMode = _hostModeAssertion.assertion();
             
-            // Acquire device lock
-            auto lock = _deviceLock();
-            
             // Update our _mspState from the device
             _mspState = _device.device.mspStateRead();
             
@@ -145,7 +142,7 @@ public:
     void settings(const MSP::Settings& x) {
         _mspState.settings = x;
         {
-            auto lock = _deviceLock();
+            auto hostMode = _hostModeAssertion.assertion();
             _device.device.mspStateWrite(_mspState);
         }
     }
@@ -642,31 +639,7 @@ private:
     
     void _sync_thread() {
         try {
-            // Enter host mode for the entire duration of our sync
-            auto hostMode = _hostModeAssertion.assertion();
-            
-            // Init ICE40 and SD card
-            {
-                auto lock = _deviceLock();
-                
-                // Load ICE40 with our app
-                _ICEConfigure(_device.device);
-                
-                // Init SD card
-                const STM::SDCardInfo sdCardInfo = _device.device.sdInit();
-                
-                if (!_mspState.sd.valid) {
-                    // _mspState.sd isn't valid, so there's no syncing that can be done
-                    throw Toastbox::RuntimeError("!_mspState.sd.valid");
-                }
-                
-                // Current SD card id doesn't match MSP's card id
-                // Don't sync photos because we don't know what we're actually reading from the device
-                if (memcmp(&sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
-                    throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspState.sd.cardId");
-                }
-            }
-            
+            // Enter SD mode for the entire duration of our sync
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
             const Img::Id deviceImgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)_mspState.sd.imgCap);
             const Img::Id deviceImgIdEnd = imgRingBuf.buf.id;
@@ -768,32 +741,85 @@ private:
         return nullptr;
     }
     
-    void _sdRead_handleWork(_SDReadWork&& work) {
-        const _SDBlock blockBegin = work.region.begin;
-        const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
-        // Verify that the length of data that we're reading will fit in our buffer
-        assert(len <= work.buf.cap());
-        
-        {
-//            printf("[__sdRead_handleWork] reading [%ju,%ju) (%.1f MB)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd, (float)len/(1024*1024));
-            _deviceSDRead(blockBegin, len, work.buf.storage());
-        }
-        
-        work.callback(std::move(work));
-    }
+//    void _sdRead_handleWork(_SDReadWork&& work) {
+//        const _SDBlock blockBegin = work.region.begin;
+//        const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
+//        // Verify that the length of data that we're reading will fit in our buffer
+//        assert(len <= work.buf.cap());
+//        
+//        {
+//            printf("[_sdRead_handleWork] reading blockBegin:%ju len:%ju (%.1f MB)\n",
+//                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
+//            
+//            _deviceSDRead(blockBegin, len, work.buf.storage());
+//        }
+//        
+//        work.callback(std::move(work));
+//    }
     
     void _sdRead_thread() {
+        constexpr auto SDModeTimeout = std::chrono::seconds(3);
         try {
             for (;;) {
-                _SDReadWork work;
-                {
-                    // Wait for work
-                    _SDReadWorkQueue* queue = nullptr;
-                    auto lock = _sdRead.signal.wait([&] { return (queue = _sdRead_nextQueue()); });
-                    work = std::move(queue->front());
-                    queue->pop();
+                // Wait for work
+                printf("[_sdRead_thread] Waiting for work...\n");
+                _sdRead.signal.wait([&] { return _sdRead_nextQueue(); });
+                
+                // Initiate SD mode
+                printf("[_sdRead_thread] Entering SD mode...\n");
+                auto sdMode = _sdModeAssertion.assertion();
+                printf("[_sdRead_thread] Entered SD mode\n");
+                
+                std::optional<_SDBlock> sdReadEnd;
+                for (;;) {
+                    _SDReadWork work;
+                    {
+                        // Wait for work
+                        _SDReadWorkQueue* queue = nullptr;
+                        auto lock = _sdRead.signal.wait_for(SDModeTimeout,
+                            [&] { return (queue = _sdRead_nextQueue()); });
+                        // Check if we timed out waiting for work
+                        if (!queue) break;
+                        work = std::move(queue->front());
+                        queue->pop();
+                    }
+                    
+                    {
+                        const _SDBlock blockBegin = work.region.begin;
+                        const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
+                        // Verify that the length of data that we're reading will fit in our buffer
+                        assert(len <= work.buf.cap());
+                        
+                        {
+                            printf("[_sdRead_thread] reading blockBegin:%ju len:%ju (%.1f MB)\n",
+                                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
+                            
+                            const _SDBlock block = blockBegin;
+                            void*const dst = work.buf.storage();
+                            if (!sdReadEnd || *sdReadEnd!=block) {
+                                printf("[_deviceSDRead] Starting readout at %ju\n", (uintmax_t)block);
+                                // If readout was in progress at a different address, reset the device
+                                if (sdReadEnd) {
+                                    _device.device.reset();
+                                }
+                                
+                                // Verify that blockBegin can be safely cast to SD::Block
+                                assert(std::numeric_limits<SD::Block>::max() >= block);
+                                _device.device.sdRead((SD::Block)block);
+                                _device.device.readout(dst, len);
+                            
+                            } else {
+                                printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
+                                _device.device.readout(dst, len);
+                            }
+                            sdReadEnd = _SDBlockEnd(block, len);
+                        }
+                        
+                        work.callback(std::move(work));
+                    }
                 }
-                _sdRead_handleWork(std::move(work));
+                
+                printf("[_sdRead_thread] No more work; exiting SD mode\n");
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -902,79 +928,48 @@ private:
     }
     
     std::unique_lock<std::mutex> _deviceLock() {
-        auto lock = std::unique_lock(_device.lock);
-        if (_device.sdReadEnd) {
-            // Readout is in progress; stop it by resetting the device
-            _device.device.reset();
-            // Clear sdReadEnd to indicate that readout is no longer underway
-            _device.sdReadEnd = std::nullopt;
-        }
-        return lock;
-    }
-    
-    void _deviceSDRead(_SDBlock block, size_t len, void* dst) {
-        auto lock = std::unique_lock(_device.lock);
-        if (!_device.sdReadEnd || *_device.sdReadEnd!=block) {
-            printf("[_deviceSDRead] Starting readout at %ju\n", (uintmax_t)block);
-            // If readout was in progress at a different address, reset the device
-            if (_device.sdReadEnd) {
-                _device.device.reset();
-            }
-            
-            // Verify that blockBegin can be safely cast to SD::Block
-            assert(std::numeric_limits<SD::Block>::max() >= block);
-            _device.device.sdRead((SD::Block)block);
-            _device.device.readout(dst, len);
-        
-        } else {
-//            printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
-            _device.device.readout(dst, len);
-        }
-        _device.sdReadEnd = _SDBlockEnd(block, len);
+        printf("_deviceLock()\n");
+        return std::unique_lock(_device.lock);
+//        auto lock = std::unique_lock(_device.lock);
+//        if (_device.sdReadEnd) {
+//            // Readout is in progress; stop it by resetting the device
+//            _device.device.reset();
+//            // Clear sdReadEnd to indicate that readout is no longer underway
+//            _device.sdReadEnd = std::nullopt;
+//        }
+//        return lock;
     }
     
     // MARK: - Battery Level
-    
-    // _batteryLevel_update()
-    // _batteryLevel.signal.lock must be held!
-    void _batteryLevel_update() {
-        // Update battery level
-        {
-            auto lock = _deviceLock();
-            
-            const STM::BatteryStatus batteryStatus = _device.device.batteryStatusGet();
-            
-            if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
-                _batteryLevel.level = 1;
-            
-            } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
-                _batteryLevel.level = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
-            
-            } else {
-                _batteryLevel.level = 0;
-            }
-            
-            printf("[_batteryLevel_thread] Updated battery level: %.3f\n", _batteryLevel.level);
-        }
-        
-        _notifyObservers();
-    }
-    
     void _batteryLevel_thread() {
         constexpr auto UpdateInterval = std::chrono::seconds(2);
-        
         try {
             for (;;) {
-                auto lock = _batteryLevel.signal.lock();
-                
-                // Don't talk to device if we're in host mode,
-                // to prevent interrupting the SD card readout
-                if (!_hostModeAssertion) {
-                    _batteryLevel_update();
+                // Update battery level
+                {
+                    auto lock = _deviceLock();
+                    const STM::BatteryStatus batteryStatus = _device.device.batteryStatusGet();
+                    {
+                        auto lock = _batteryLevel.signal.lock();
+                        
+                        if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
+                            _batteryLevel.level = 1;
+                        
+                        } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
+                            _batteryLevel.level = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
+                        
+                        } else {
+                            _batteryLevel.level = 0;
+                        }
+                    }
+                    
+                    printf("[_batteryLevel_thread] Updated battery level: %.3f\n", _batteryLevel.level);
                 }
                 
+                _notifyObservers();
+                
                 // Sleep for 30 seconds
-                _batteryLevel.signal.wait_for(lock, UpdateInterval, [] { return false; });
+                _batteryLevel.signal.wait_for(UpdateInterval, [] { return false; });
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -985,13 +980,73 @@ private:
         }
     }
     
+    void _hostModeSet(bool en) {
+        if (en) {
+            _hostMode.deviceLock = _deviceLock();
+            _device.device.hostModeSet(true);
+        
+        } else {
+            _device.device.hostModeSet(false);
+            _hostMode.deviceLock = {};
+        }
+    }
+    
+    void _sdModeSet(bool en) {
+        if (en) {
+            auto timeStart = std::chrono::steady_clock::now();
+            
+            // Enter host mode while we're in SD mode, since MSP can't talk to
+            // ICE40 or SD card while we're using it.
+            _sdMode.hostModeAssertion = _hostModeAssertion.assertion();
+            
+            // Load ICE40 with our app
+            _ICEConfigure(_device.device);
+            
+            // Init SD card
+            const STM::SDCardInfo sdCardInfo = _device.device.sdInit();
+            
+            if (!_mspState.sd.valid) {
+                // _mspState.sd isn't valid, so there's no syncing that can be done
+                throw Toastbox::RuntimeError("!_mspState.sd.valid");
+            }
+            
+            // Current SD card id doesn't match MSP's card id
+            // Don't sync photos because we don't know what we're actually reading from the device
+            if (memcmp(&sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
+                throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspState.sd.cardId");
+            }
+            
+            // Print timing
+            {
+                using namespace std::chrono;
+                const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+                printf("[_sync_thread] SD init took %ju ms\n", (uintmax_t)duration.count());
+            }
+        
+        } else {
+            // Assume that we were in the middle of readout; reset the device to exit readout.
+            _device.device.reset();
+            // Exit host mode
+            _sdMode.hostModeAssertion = nullptr;
+        }
+    }
+    
     // MARK: - Members
     
     struct {
         std::mutex lock; // Protects this struct
         MDCUSBDevice device;
-        std::optional<_SDBlock> sdReadEnd;
     } _device;
+    
+    struct {
+        std::unique_lock<std::mutex> deviceLock;
+    } _hostMode;
+    AssertionCounter _hostModeAssertion = AssertionCounter([this] (bool x) { _hostModeSet(x); });
+    
+    struct {
+        AssertionCounter::Assertion hostModeAssertion;
+    } _sdMode;
+    AssertionCounter _sdModeAssertion = AssertionCounter([this] (bool x) { _sdModeSet(x); });
     
     const _Path _dir;
     ImageLibrary _imageLibrary;
@@ -1004,11 +1059,6 @@ private:
     _ThumbCache _thumbCache;
     _ImageCache _imageCache;
     _LoadStatePool _loadStates;
-    
-    AssertionCounter _hostModeAssertion = AssertionCounter([this] (bool hostMode) {
-        auto lock = _deviceLock();
-        _device.device.hostModeSet(hostMode);
-    });
     
     struct {
         std::thread thread;

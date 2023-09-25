@@ -288,7 +288,11 @@ static NSString* _BatteryLevelImage(float level) {
 }
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
-    [Toastbox::Cast<Item*>(item) update];
+    Item* it = Toastbox::Cast<Item*>(item);
+    // Clear identifier to prevent SourceListView_Item from being reused,
+    // because SourceListView_Device doesn't support reuse. See -setDevice:.
+    [it setIdentifier:nil];
+    [it update];
     return item;
 }
 
