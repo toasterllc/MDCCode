@@ -53,9 +53,18 @@ using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
 
 using _WiredMonitor = T_WiredMonitor<_Pin::VDD_B_3V3_STM>;
 
-static constexpr uint32_t _FlickerPeriodMs      = 5000;
+static constexpr uint32_t _FlickerSlowPeriodMs  = 5000;
 static constexpr uint32_t _FlickerOnDurationMs  = 20;
-using _LED = T_LED<_Scheduler, _Pin::LED_SEL, _Pin::LED_SIGNAL, _ACLKFreqHz, _FlickerPeriodMs, _FlickerOnDurationMs>;
+static constexpr uint32_t _FlickerFastPeriodMs  = 100;
+using _LED = T_LED<
+    _Scheduler,
+    _Pin::LED_SEL,
+    _Pin::LED_SIGNAL,
+    _ACLKFreqHz,
+    _FlickerSlowPeriodMs,
+    _FlickerOnDurationMs,
+    _FlickerFastPeriodMs
+>;
 
 //static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
 //static OutputPriority _LEDRed_(_Pin::LED_RED_{});
@@ -280,8 +289,9 @@ struct _TaskLED {
     using Priority = uint8_t;
     static constexpr Priority PriorityButton        = 0;
     static constexpr Priority PriorityBatteryTrap   = 1;
-    static constexpr Priority PriorityChargeState   = 2;
-    static constexpr Priority _PriorityCount        = 3;
+    static constexpr Priority PriorityHostMode      = 2;
+    static constexpr Priority PriorityChargeState   = 3;
+    static constexpr Priority _PriorityCount        = 4;
     
     static void Run() {
         for (;;) {
@@ -592,7 +602,7 @@ struct _TaskPower {
     
     static void _LEDFlickerEnabledChanged() {
         if (_LEDFlickerEnabled) {
-            _TaskLED::Set(_TaskLED::PriorityBatteryTrap, _LED::StateRed | _LED::StateFlicker);
+            _TaskLED::Set(_TaskLED::PriorityBatteryTrap, _LED::StateRed | _LED::StateFlickerSlow);
         } else {
             _TaskLED::Set(_TaskLED::PriorityBatteryTrap, std::nullopt);
         }
@@ -689,6 +699,9 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::StateWrite: {
+            // Only allow setting the time while we're in host mode
+            // and therefore _TaskEvent isn't running
+            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
             const size_t off = cmd.arg.StateWrite.off;
             if (off > sizeof(::_State)) return MSP::Resp{ .ok = false };
             FRAMWriteEn writeEn; // Enable FRAM writing
@@ -771,8 +784,16 @@ struct _TaskI2C {
         _TaskLED::Set(_TaskLED::PriorityChargeState, _LEDStateForChargeStatus(_ChargeStatus));
     }
     
+    static void _HostModeChanged() {
+        if (_HostModeState.en) {
+            _TaskLED::Set(_TaskLED::PriorityHostMode, _LED::StateRed | _LED::StateGreen | _LED::StateFlickerFast);
+        } else {
+            _TaskLED::Set(_TaskLED::PriorityHostMode, std::nullopt);
+        }
+    }
+    
     static inline struct {
-        T_Property<bool,_EventsEnabledUpdate> en;
+        T_Property<bool,_HostModeChanged,_EventsEnabledUpdate> en;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _HostModeState;
     

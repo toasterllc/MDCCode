@@ -7,15 +7,17 @@ typename T_Scheduler,
 typename T_SelectPin,
 typename T_SignalPin,
 uint32_t T_ACLKFreqHz,
-uint32_t T_FlickerPeriodMs,
-uint32_t T_FlickerOnDurationMs
+uint32_t T_FlickerSlowPeriodMs,
+uint32_t T_FlickerSlowOnDurationMs,
+uint32_t T_FlickerFastPeriodMs
 >
 struct T_LED {
     using _SignalInactivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1>;
     using _SignalActivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1, GPIO::Option::Sel10>;
     
-    using _SelectGreenPin = typename T_SelectPin::template Opts<GPIO::Option::Output0>;
-    using _SelectRedPin = typename T_SelectPin::template Opts<GPIO::Option::Output1>;
+    using _SelectGreenRedPin = typename T_SelectPin::template Opts<GPIO::Option::Output0, GPIO::Option::Sel10>;
+    using _SelectGreenPin    = typename T_SelectPin::template Opts<GPIO::Option::Output0>;
+    using _SelectRedPin      = typename T_SelectPin::template Opts<GPIO::Option::Output1>;
     
     struct Pin {
         using Select = _SelectGreenPin;
@@ -47,20 +49,30 @@ struct T_LED {
     static constexpr uint32_t _ACLKFreqDivider = 3;
     using _TocksFreq = std::ratio<T_ACLKFreqHz, _ACLKFreqDivider>;
     
-    using _FlickerPeriodTocksRatio = std::ratio_multiply<_TocksFreq, std::ratio<T_FlickerPeriodMs,1000>>;
-    using _FlickerOnDurationTocksRatio = std::ratio_multiply<_TocksFreq, std::ratio<T_FlickerOnDurationMs,1000>>;
+    struct _FlickerSlow {
+        using PeriodTocksRatio = std::ratio_multiply<_TocksFreq, std::ratio<T_FlickerSlowPeriodMs,1000>>;
+        using OnDurationTocksRatio = std::ratio_multiply<_TocksFreq, std::ratio<T_FlickerSlowOnDurationMs,1000>>;
+        
+        static constexpr _Tocks32 PeriodTocks = PeriodTocksRatio::num / PeriodTocksRatio::den;
+        static constexpr _Tocks32 OnDurationTocks = OnDurationTocksRatio::num / OnDurationTocksRatio::den;
+        
+        static constexpr uint16_t TA0CCR0 = _CCRForTocks<PeriodTocks>();
+        static constexpr uint16_t TA0CCR1 = _CCRForTocks<PeriodTocks-OnDurationTocks>();
+    };
     
-    static constexpr _Tocks32 _FlickerPeriodTocks = _FlickerPeriodTocksRatio::num / _FlickerPeriodTocksRatio::den;
-    static constexpr _Tocks32 _FlickerOnDurationTocks = _FlickerOnDurationTocksRatio::num / _FlickerOnDurationTocksRatio::den;
-    
-    static constexpr uint16_t _FlickerTA0CCR0 = _CCRForTocks<_FlickerPeriodTocks>();
-    static constexpr uint16_t _FlickerTA0CCR1 = _CCRForTocks<_FlickerPeriodTocks-_FlickerOnDurationTocks>();
+    struct _FlickerFast {
+        using PeriodTocksRatio = std::ratio_multiply<_TocksFreq, std::ratio<T_FlickerFastPeriodMs,1000>>;
+        static constexpr _Tocks32 PeriodTocks = PeriodTocksRatio::num / PeriodTocksRatio::den;
+        static constexpr uint16_t TA0CCR0 = _CCRForTocks<2*PeriodTocks>();
+        static constexpr uint16_t TA0CCR1 = _CCRForTocks<PeriodTocks>();
+    };
     
     using State = uint8_t;
-    static constexpr State StateOff     = 0;
-    static constexpr State StateRed     = 1<<0;
-    static constexpr State StateGreen   = 1<<1;
-    static constexpr State StateFlicker = 1<<2; // Flicker every 5s
+    static constexpr State StateOff         = 0;
+    static constexpr State StateRed         = 1<<0;
+    static constexpr State StateGreen       = 1<<1;
+    static constexpr State StateFlickerSlow = 1<<2; // Flicker every 5s
+    static constexpr State StateFlickerFast = 1<<3; // Flicker rapidly
     
     static bool _OnConstant(State x) {
         return x==StateRed || x==StateGreen;
@@ -106,7 +118,7 @@ struct T_LED {
         }
     }
     
-    static void _Flicker() {
+    static void _Flicker(bool fast) {
         // Configure timer
         TA0CTL =
             TASSEL__ACLK    |   // clock source = ACLK
@@ -116,14 +128,14 @@ struct T_LED {
         // Additional clock divider = /3
         TA0EX0 = _TAIDEX<_ACLKFreqDivider>();
         // TA0CCR1 = value that causes LED to turn on
-        TA0CCR1 = _FlickerTA0CCR1;
+        TA0CCR1 = (fast ? _FlickerFast::TA0CCR1 : _FlickerSlow::TA0CCR1);
         // TA0CCR0 = value that causes LED to turn off
-        TA0CCR0 = _FlickerTA0CCR0;
+        TA0CCR0 = (fast ? _FlickerFast::TA0CCR0 : _FlickerSlow::TA0CCR0);
         // Set the timer's initial value
         // This is necessary because the timer always starts driving the output as a 0 (ie LED on), and there
         // doesn't seem to be a way to set the timer's initial output to 1 instead (ie LED off). So instead we
         // just start the timer at the instant that it flashes, so it'll flash and then immediately turn off.
-        TA0R = _FlickerTA0CCR1;
+        TA0R = (fast ? _FlickerFast::TA0CCR1 : _FlickerSlow::TA0CCR1);
         // Output mode = reset/set
         //   LED on when hitting TA0CCR1
         //   LED off when hitting TA0CCR0
@@ -133,8 +145,12 @@ struct T_LED {
     }
     
     static void _PinsConfig(State x) {
-        if (x & StateGreen) _SelectGreenPin::template Init<_SelectRedPin>();
-        else                _SelectRedPin::template Init<_SelectGreenPin>();
+        if ((x & StateRed) && (x & StateGreen))
+            _SelectGreenRedPin::template Init<_SelectGreenRedPin, _SelectGreenPin, _SelectRedPin>();
+        else if (x & StateGreen)
+            _SelectGreenPin::template Init<_SelectGreenRedPin, _SelectGreenPin, _SelectRedPin>();
+        else
+            _SelectRedPin::template Init<_SelectGreenRedPin, _SelectGreenPin, _SelectRedPin>();
         
         if (x == StateOff) _SignalInactivePin::template Init<_SignalActivePin>();
         else               _SignalActivePin::template Init<_SignalInactivePin>();
@@ -143,7 +159,7 @@ struct T_LED {
     static void Flash() {
         // Take manual control of pins
         _SignalInactivePin::template Init<_SignalActivePin>();
-        _SelectGreenPin::template Init<_SelectRedPin>();
+        _SelectGreenPin::template Init<_SelectGreenRedPin, _SelectGreenPin, _SelectRedPin>();
         
         _SignalInactivePin::Write(0);
         T_Scheduler::Sleep(_FlashDuration);
@@ -166,8 +182,11 @@ struct T_LED {
         if (_OnConstant(_State)) {
             _Fade(true);
         
-        } else if (_State & StateFlicker) {
-            _Flicker();
+        } else if (_State & StateFlickerSlow) {
+            _Flicker(false);
+        
+        } else if (_State & StateFlickerFast) {
+            _Flicker(true);
         
         } else {
             // Off
