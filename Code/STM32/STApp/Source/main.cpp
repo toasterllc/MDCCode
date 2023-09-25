@@ -970,7 +970,7 @@ static void _HostModeSet(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Update whether the charge status LED updates are paused.
-    _System::ChargeStatusPause(arg.en);
+    _System::BatteryStatusPause(arg.en);
     
     // Reset ICE40 since it may have been reprogrammed while in host mode
     _SPIConfigSet<_SPIConfigs::Floating>();

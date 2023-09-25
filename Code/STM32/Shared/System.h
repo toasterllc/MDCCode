@@ -142,8 +142,8 @@ public:
         USBSendStatus(s);
     }
     
-    static void ChargeStatusPause(bool x) {
-        _TaskBatteryStatus::ChargeStatusPause(x);
+    static void BatteryStatusPause(bool x) {
+        _TaskBatteryStatus::BatteryStatusPause(x);
     }
     
     static std::optional<MSP::Resp> MSPSend(const MSP::Cmd& cmd) {
@@ -330,13 +330,13 @@ private:
             }
             
             for (;;) {
-                _BatteryStatus = {
-                    .chargeStatus = _ChargeStatusRead(),
-                    .level = _BatteryStatusGet().level,
-                };
-                
-                // Set the charge status LED if it's not paused
-                if (!_ChargeStatusPause) {
+                if (!_BatteryStatusPause) {
+                    _BatteryStatus = {
+                        .chargeStatus = _ChargeStatusRead(),
+                        .level = _BatteryStatusGet().level,
+                    };
+                    
+                    // Set the charge status LED if it's not paused
                     _ChargeStatusSet(_BatteryStatus.chargeStatus);
                 }
                 Scheduler::Sleep(UpdateInterval);
@@ -347,8 +347,8 @@ private:
             return _BatteryStatus;
         }
         
-        static void ChargeStatusPause(bool x) {
-            _ChargeStatusPause = x;
+        static void BatteryStatusPause(bool x) {
+            _BatteryStatusPause = x;
         }
         
         static void _ChargeStatusSet(MSP::ChargeStatus status) {
@@ -373,7 +373,7 @@ private:
         }
         
         static inline STM::BatteryStatus _BatteryStatus = {};
-        static inline bool _ChargeStatusPause = false;
+        static inline bool _BatteryStatusPause = false;
         
         // Task stack
         [[gnu::section(".stack._TaskBatteryStatus")]]

@@ -655,12 +655,15 @@ struct _TaskI2C {
                 if (!ok) break;
             }
             
-            // Cleanup
-            // Relinquish LEDs, which may have been set by _CmdHandle()
-            _TaskLED::Set(_TaskLED::PriorityChargeState, std::nullopt);
+            _Scheduler::Sleep(_Scheduler::Ms<10>);
             
-            // Reset state
-            _HostModeState = {};
+            if (!_WiredMonitor::Wired()) {
+                // Reset host mode state
+                _HostModeState = {};
+                
+                // Clear charge status
+                _ChargeStatus = MSP::ChargeStatus::Invalid;
+            }
         }
     }
     
@@ -702,7 +705,7 @@ struct _TaskI2C {
                 .ok = true,
                 .arg = {
                     .BatteryStatusGet = {
-                        .chargeStatus = _HostModeState.chargeStatus,
+                        .chargeStatus = _ChargeStatus,
                         .level = _TaskPower::BatteryLevelGet(),
                     },
                 },
@@ -710,7 +713,7 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::ChargeStatusSet: {
-            _HostModeState.chargeStatus = cmd.arg.ChargeStatusSet.status;
+            _ChargeStatus = cmd.arg.ChargeStatusSet.status;
             return MSP::Resp{ .ok = true };
         }
         
@@ -765,14 +768,15 @@ struct _TaskI2C {
     }
     
     static void _ChargeStatusChanged() {
-        _TaskLED::Set(_TaskLED::PriorityChargeState, _LEDStateForChargeStatus(_HostModeState.chargeStatus));
+        _TaskLED::Set(_TaskLED::PriorityChargeState, _LEDStateForChargeStatus(_ChargeStatus));
     }
     
     static inline struct {
         T_Property<bool,_EventsEnabledUpdate> en;
-        T_Property<MSP::ChargeStatus,_ChargeStatusChanged> chargeStatus;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _HostModeState;
+    
+    static inline T_Property<MSP::ChargeStatus,_ChargeStatusChanged> _ChargeStatus;
     
     // Task stack
     SchedulerStack(".stack._TaskI2C")
