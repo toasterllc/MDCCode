@@ -86,6 +86,14 @@ private:
     
     [[noreturn]]
     static void _SchedulerStackOverflow() {
+//        Toastbox::IntState ints(false);
+//        
+//        for (bool x=true;; x=!x) {
+//            LED0::Write(x);
+//            LED1::Write(x);
+//            for (volatile uint32_t i=0; i<(uint32_t)2000000; i++);
+//        }
+        
         Assert(false);
     }
     
@@ -378,7 +386,7 @@ private:
         // Task stack
         [[gnu::section(".stack._TaskBatteryStatus")]]
         alignas(void*)
-        static inline uint8_t Stack[256];
+        static inline uint8_t Stack[512];
     };
     
     static void _Init() {
