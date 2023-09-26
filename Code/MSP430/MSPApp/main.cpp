@@ -22,7 +22,6 @@
 #include "GetBits.h"
 #include "ImgSD.h"
 #include "I2C.h"
-#include "OutputPriority.h"
 #include "BatterySampler.h"
 #include "Button.h"
 #include "AssertionCounter.h"
@@ -65,9 +64,6 @@ using _LED = T_LED<
     _FlickerOnDurationMs,
     _FlickerFastPeriodMs
 >;
-
-//static OutputPriority _LEDGreen_(_Pin::LED_GREEN_{});
-//static OutputPriority _LEDRed_(_Pin::LED_RED_{});
 
 // _ImgSensor: image sensor object
 using _ImgSensor = Img::Sensor<
@@ -684,37 +680,40 @@ struct _TaskI2C {
     
     static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
         using namespace MSP;
+        
+        MSP::Resp resp = { .ok = false };
+        
         switch (cmd.op) {
-        case Cmd::Op::None:
-            return MSP::Resp{ .ok = false };
+        default: break;
         
         case Cmd::Op::StateRead: {
             const size_t off = cmd.arg.StateRead.off;
-            if (off > sizeof(::_State)) return MSP::Resp{ .ok = false };
+            if (off > sizeof(::_State)) break;
             const size_t rem = sizeof(::_State)-off;
             const size_t len = std::min(rem, sizeof(MSP::Resp::arg.StateRead.data));
-            MSP::Resp resp = { .ok = true };
+            resp.ok = true;
             memcpy(resp.arg.StateRead.data, (uint8_t*)&::_State+off, len);
-            return resp;
+            break;
         }
         
         case Cmd::Op::StateWrite: {
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
-            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            if (!_HostModeState.en) break;
             const size_t off = cmd.arg.StateWrite.off;
-            if (off > sizeof(::_State)) return MSP::Resp{ .ok = false };
+            if (off > sizeof(::_State)) break;
             FRAMWriteEn writeEn; // Enable FRAM writing
             const size_t rem = sizeof(::_State)-off;
             const size_t len = std::min(rem, sizeof(MSP::Cmd::arg.StateWrite.data));
             memcpy((uint8_t*)&::_State+off, cmd.arg.StateWrite.data, len);
-            return MSP::Resp{ .ok = true };
+            resp.ok = true;
+            break;
         }
         
         case Cmd::Op::BatteryStatusGet: {
             _TaskPower::BatteryLevelUpdate();
             _TaskPower::BatteryLevelWait();
-            return MSP::Resp{
+            resp = MSP::Resp{
                 .ok = true,
                 .arg = {
                     .BatteryStatusGet = {
@@ -723,32 +722,37 @@ struct _TaskI2C {
                     },
                 },
             };
+            break;
         }
         
         case Cmd::Op::ChargeStatusSet: {
             _ChargeStatus = cmd.arg.ChargeStatusSet.status;
-            return MSP::Resp{ .ok = true };
+            resp.ok = true;
+            break;
         }
         
         case Cmd::Op::TimeGet:
-            return MSP::Resp{
+            resp = MSP::Resp{
                 .ok = true,
                 .arg = { .TimeGet = { .state = _RTC::TimeState() } },
             };
+            break;
         
         case Cmd::Op::TimeSet:
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
-            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            if (!_HostModeState.en) break;
             _RTC::Init(&cmd.arg.TimeSet.state);
-            return MSP::Resp{ .ok = true };
+            resp.ok = true;
+            break;
         
         case Cmd::Op::TimeAdjust:
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
-            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            if (!_HostModeState.en) break;
             _RTC::Adjust(cmd.arg.TimeAdjust.adjustment);
-            return MSP::Resp{ .ok = true };
+            resp.ok = true;
+            break;
         
         case Cmd::Op::HostModeSet:
             if (cmd.arg.HostModeSet.en) {
@@ -757,15 +761,17 @@ struct _TaskI2C {
                 // Clear entire _HostModeState when exiting host mode
                 _HostModeState = {};
             }
-            return MSP::Resp{ .ok = true };
+            resp.ok = true;
+            break;
         
         case Cmd::Op::VDDIMGSDSet:
-            if (!_HostModeState.en) return MSP::Resp{ .ok = false };
+            if (!_HostModeState.en) break;
             _HostModeState.vddImgSd = cmd.arg.VDDIMGSDSet.en;
-            return MSP::Resp{ .ok = true };
+            resp.ok = true;
+            break;
         }
         
-        return MSP::Resp{ .ok = false };
+        return resp;
     }
     
     static bool HostModeEnabled() {
