@@ -28,7 +28,7 @@ struct T_Triggers {
             MotionUnsuppressPower,
             MotionUnsuppress,
             
-            CaptureImage
+            CaptureImage,
         };
         
         static Event::Type Convert(MSP::Triggers::Event::Type x) {

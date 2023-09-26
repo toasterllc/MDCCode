@@ -125,14 +125,15 @@ public:
     static bool ISR(uint16_t iv) {
         switch (iv) {
         case ADCIV_ADCIFG:      _SampleHandle(ADCMEM0); break;
-        // TODO: we got an abort here in the `default:` case at one point, so we added all these ADCIV_*
-        // cases so we can tell what happened when the abort happens in the future.
-        case ADCIV_NONE:        Assert(false);
-        case ADCIV_ADCOVIFG:    Assert(false);
-        case ADCIV_ADCTOVIFG:   Assert(false);
-        case ADCIV_ADCHIIFG:    Assert(false);
-        case ADCIV_ADCLOIFG:    Assert(false);
-        case ADCIV_ADCINIFG:    Assert(false);
+        #warning TODO: temporarily commenting out code below to conserve code space
+//        // TODO: we got an abort here in the `default:` case at one point, so we added all these ADCIV_*
+//        // cases so we can tell what happened when the abort happens in the future.
+//        case ADCIV_NONE:        Assert(false);
+//        case ADCIV_ADCOVIFG:    Assert(false);
+//        case ADCIV_ADCTOVIFG:   Assert(false);
+//        case ADCIV_ADCHIIFG:    Assert(false);
+//        case ADCIV_ADCLOIFG:    Assert(false);
+//        case ADCIV_ADCINIFG:    Assert(false);
         default:                Assert(false);
         }
         return _Sample.done;

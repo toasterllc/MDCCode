@@ -52,9 +52,9 @@ using _Button = T_Button<_Scheduler, _Pin::BUTTON_SIGNAL_>;
 
 using _WiredMonitor = T_WiredMonitor<_Pin::VDD_B_3V3_STM>;
 
-static constexpr uint32_t _FlickerSlowPeriodMs  = 5000;
-static constexpr uint32_t _FlickerOnDurationMs  = 20;
-static constexpr uint32_t _FlickerFastPeriodMs  = 100;
+static constexpr uint32_t _FlickerSlowPeriodMs = 5000;
+static constexpr uint32_t _FlickerOnDurationMs = 20;
+static constexpr uint32_t _FlickerFastPeriodMs = 100;
 using _LED = T_LED<
     _Scheduler,
     _Pin::LED_SEL,
