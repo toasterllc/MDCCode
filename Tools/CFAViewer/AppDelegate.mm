@@ -490,7 +490,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
                 
                 case STM::Status::Mode::STMApp: {
                     // Enter host mode
-                    mdc->mspHostModeSet(true);
+                    mdc->hostModeSet(true);
                     
                     _configureDevice(*mdc);
                     
