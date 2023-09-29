@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="LoadPhotosView">
+            <connections>
+                <outlet property="_height" destination="QoL-nR-ojh" id="Jfu-z1-C3V"/>
+                <outlet property="_label" destination="lj9-Jf-aEb" id="DWQ-eB-ITN"/>
+                <outlet property="_nibView" destination="ZH5-YY-POW" id="24a-ji-BQO"/>
+            </connections>
+        </customObject>
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="UGk-s3-Z5P">
+            <rect key="frame" x="0.0" y="0.0" width="830" height="120"/>
+            <subviews>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="ZH5-YY-POW">
+                    <rect key="frame" x="265" y="0.0" width="300" height="120"/>
+                    <subviews>
+                        <visualEffectView blendingMode="withinWindow" material="menu" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
+                            <rect key="frame" x="0.0" y="0.0" width="300" height="120"/>
+                            <subviews>
+                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lj9-Jf-aEb">
+                                    <rect key="frame" x="94" y="62" width="43" height="38"/>
+                                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="28" id="f3j-ad-pqi">
+                                        <font key="font" metaFont="system" size="32"/>
+                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qoJ-Kq-CeU">
+                                    <rect key="frame" x="139" y="81" width="64" height="16"/>
+                                    <textFieldCell key="cell" lineBreakMode="clipping" title="additional" id="CcI-qh-dqj">
+                                        <font key="font" usesAppearanceFont="YES"/>
+                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zwD-sA-WTQ">
+                                    <rect key="frame" x="139" y="67" width="46" height="16"/>
+                                    <textFieldCell key="cell" lineBreakMode="clipping" title="photos" id="zvG-iz-5ed">
+                                        <font key="font" usesAppearanceFont="YES"/>
+                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DUf-K3-QmS">
+                                    <rect key="frame" x="94" y="24" width="112" height="32"/>
+                                    <constraints>
+                                        <constraint firstAttribute="width" constant="100" id="qiD-L8-HWx"/>
+                                    </constraints>
+                                    <buttonCell key="cell" type="push" title="Load" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ziJ-si-Khp">
+                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="load:" target="-2" id="W52-bC-oHJ"/>
+                                    </connections>
+                                </button>
+                            </subviews>
+                            <constraints>
+                                <constraint firstItem="qoJ-Kq-CeU" firstAttribute="leading" secondItem="lj9-Jf-aEb" secondAttribute="trailing" constant="6" id="8Ya-p3-mif"/>
+                                <constraint firstItem="lj9-Jf-aEb" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" constant="20" id="D5J-uK-kFp"/>
+                                <constraint firstItem="DUf-K3-QmS" firstAttribute="top" secondItem="lj9-Jf-aEb" secondAttribute="bottom" constant="10" id="Twu-tT-JTh"/>
+                                <constraint firstItem="DUf-K3-QmS" firstAttribute="centerX" secondItem="MCr-up-gtv" secondAttribute="centerX" id="bQk-1E-NpW"/>
+                                <constraint firstItem="qoJ-Kq-CeU" firstAttribute="centerY" secondItem="lj9-Jf-aEb" secondAttribute="centerY" constant="-8" id="hbk-Mi-tHg"/>
+                                <constraint firstItem="zwD-sA-WTQ" firstAttribute="top" secondItem="qoJ-Kq-CeU" secondAttribute="bottom" constant="-2" id="kM9-xh-EPS"/>
+                                <constraint firstItem="lj9-Jf-aEb" firstAttribute="centerX" secondItem="MCr-up-gtv" secondAttribute="centerX" constant="-35" id="mqN-LZ-RoJ"/>
+                                <constraint firstItem="zwD-sA-WTQ" firstAttribute="leading" secondItem="qoJ-Kq-CeU" secondAttribute="leading" id="nAM-h5-feb"/>
+                            </constraints>
+                        </visualEffectView>
+                    </subviews>
+                    <constraints>
+                        <constraint firstItem="MCr-up-gtv" firstAttribute="leading" secondItem="ZH5-YY-POW" secondAttribute="leading" id="dme-WA-fnw"/>
+                        <constraint firstItem="MCr-up-gtv" firstAttribute="top" secondItem="ZH5-YY-POW" secondAttribute="top" id="nuB-HI-RwC"/>
+                        <constraint firstAttribute="bottom" secondItem="MCr-up-gtv" secondAttribute="bottom" id="rlf-hT-F9H"/>
+                        <constraint firstAttribute="width" constant="300" id="siR-xD-IbR"/>
+                        <constraint firstAttribute="trailing" secondItem="MCr-up-gtv" secondAttribute="trailing" id="yZi-4O-lac"/>
+                    </constraints>
+                </customView>
+            </subviews>
+            <constraints>
+                <constraint firstAttribute="bottom" secondItem="ZH5-YY-POW" secondAttribute="bottom" id="0fW-BW-aDA"/>
+                <constraint firstItem="ZH5-YY-POW" firstAttribute="top" secondItem="UGk-s3-Z5P" secondAttribute="top" id="54A-PO-S10"/>
+                <constraint firstAttribute="height" constant="120" id="QoL-nR-ojh"/>
+                <constraint firstItem="ZH5-YY-POW" firstAttribute="centerX" secondItem="UGk-s3-Z5P" secondAttribute="centerX" id="ukA-cY-AIh"/>
+            </constraints>
+            <point key="canvasLocation" x="698" y="83"/>
+        </customView>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+    </objects>
+</document>

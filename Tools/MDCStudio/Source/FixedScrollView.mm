@@ -438,6 +438,23 @@ static bool _EventPhaseBegan(NSEventPhase x) {
     }
 }
 
+//- (void)setContentInsets:(NSEdgeInsets)x {
+//    NSLog(@"MEOWMIX -setContentInsets");
+//    [super setContentInsets:x];
+//}
+
+//static CGRect _CGRectInset(CGRect rect, NSEdgeInsets inset) {
+//    // Left/right
+//    rect.origin.x += inset.left;
+//    rect.size.width -= inset.left + inset.right;
+//    
+//    // Top/bottom
+//    rect.origin.y += inset.top;
+//    rect.size.height -= inset.top + inset.bottom;
+//    
+//    return rect;
+//}
+
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
     [super reflectScrolledClipView:clipView];
     
@@ -448,12 +465,18 @@ static bool _EventPhaseBegan(NSEventPhase x) {
     const CGRect visibleRect = [doc visibleRect];//[doc convertRectToLayer:[doc visibleRect]];
     
     CGRect docFrame = visibleRect;
+    
     if ([doc isFlipped]) {
         docFrame.origin.y -= heightExtra;
         docFrame.size.height += heightExtra;
     } else {
         docFrame.size.height += heightExtra;
     }
+    
+//    const NSEdgeInsets inset = {100,0,0,0};
+//    const NSEdgeInsets inset = [self contentInsets];
+//    docFrame = _CGRectInset(docFrame, inset);
+//    printf("%p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
     
     if (!CGRectEqualToRect(docFrame, _docFrame) || mag!=_docMagnification) {
         _docFrame = docFrame;

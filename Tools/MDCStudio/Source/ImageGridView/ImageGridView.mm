@@ -6,6 +6,7 @@
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "Grid.h"
+#import "LoadPhotosView/LoadPhotosView.h"
 #import "Code/Shared/Img.h"
 #import "Toastbox/LRU.h"
 #import "Toastbox/IterAny.h"
@@ -61,6 +62,8 @@ struct _ThumbRenderThreadState {
     uint32_t _cellHeight;
     Grid _grid;
     bool _sortNewestFirst;
+    CGFloat _containerWidth;
+    NSEdgeInsets _contentInsets;
     
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
@@ -94,12 +97,8 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _cellWidth = _ThumbWidth;
     _cellHeight = _ThumbHeight;
     
-    _grid.setBorderSize({
-        .left   = 6,//(int32_t)_cellWidth/5,
-        .right  = 6,//(int32_t)_cellWidth/5,
-        .top    = 6,//(int32_t)_cellHeight/5,
-        .bottom = 6,//(int32_t)_cellHeight/5,
-    });
+    // Init our grid border
+    [self setContentInsets:{}];
     
     _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
     _grid.setCellSpacing({6, 6});
@@ -182,16 +181,37 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     return _grid;
 }
 
-- (void)setContainerWidth:(CGFloat)width {
-    _grid.setContainerWidth((int32_t)lround(width*[self contentsScale]));
+- (void)setContainerWidth:(CGFloat)x {
+    NSLog(@"-[ImageGridLayer setContainerWidth:]");
+    _containerWidth = x*[self contentsScale];
+    _grid.setContainerWidth((int32_t)lround(_containerWidth));
 }
 
 - (CGFloat)containerHeight {
+    NSLog(@"-[ImageGridLayer containerHeight]");
     return _grid.containerHeight() / [self contentsScale];
 }
 
 - (size_t)columnCount {
     return _grid.columnCount();
+}
+
+- (void)setContentsScale:(CGFloat)x {
+    NSLog(@"-[ImageGridLayer setContentsScale:]");
+    [super setContentsScale:x];
+    [self setContainerWidth:_containerWidth];
+    [self setContentInsets:_contentInsets];
+}
+
+- (void)setContentInsets:(NSEdgeInsets)contentInsets {
+    const CGFloat k = [self contentsScale];
+    _contentInsets = contentInsets;
+    _grid.setBorderSize({
+        .left   = 6+(int32_t)lround(k*_contentInsets.left),
+        .right  = 6+(int32_t)lround(k*_contentInsets.right),
+        .top    = 6+(int32_t)lround(k*_contentInsets.top),
+        .bottom = 6+(int32_t)lround(k*_contentInsets.bottom),
+    });
 }
 
 - (void)recomputeGrid {
@@ -985,7 +1005,9 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 @end
 
 
-@implementation ImageGridScrollView
+@implementation ImageGridScrollView {
+    LoadPhotosView* _loadPhotosView;
+}
 
 - (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
     if (!(self = [super initWithFixedDocument:doc])) return nil;
@@ -994,7 +1016,37 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     // resizes when its superviews resize (because its width needs to be the same as its superviews).
     // So disable that behavior.
     [self setAnchorDuringResize:false];
+    
+    _loadPhotosView = [LoadPhotosView new];
+    [self setLoadPhotoCount:5];
     return self;
+}
+
+- (void)setLoadPhotoCount:(NSUInteger)count {
+//    const NSEdgeInsets inset = [self contentInsets];
+//    printf("AAA %p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
+    
+    
+    if (count) {
+        [_loadPhotosView setLoadCount:count];
+        ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
+        [layer setContentInsets:{[_loadPhotosView height],0,0,0}];
+        
+        [self addFloatingSubview:_loadPhotosView forAxis:NSEventGestureAxisVertical];
+//        [self setContentInsets:{100,0,0,0}];
+        
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_loadPhotosView]|"
+            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_loadPhotosView)]];
+    
+    } else {
+//        [self setContentInsets:{0,0,0,0}];
+        [_loadPhotosView removeFromSuperview];
+    }
+    
+//    {
+//        const NSEdgeInsets inset = [self contentInsets];
+//        printf("BBB %p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
+//    }
 }
 
 - (void)tile {
