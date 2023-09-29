@@ -1030,7 +1030,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     if (count) {
         [_loadPhotosView setLoadCount:count];
         ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
-        [layer setContentInsets:{[_loadPhotosView height],0,0,0}];
+//        [layer setContentInsets:{[_loadPhotosView height],0,0,0}];
         
         [self addFloatingSubview:_loadPhotosView forAxis:NSEventGestureAxisVertical];
 //        [self setContentInsets:{100,0,0,0}];
