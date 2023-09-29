@@ -48,7 +48,7 @@ static void _InitCommon(LoadPhotosView* self) {
 }
 
 - (void)setLoadCount:(NSUInteger)x {
-    [_label setStringValue:[NSString stringWithFormat:@"%@ additional photos", @(x)]];
+    [_label setStringValue:[NSString stringWithFormat:@"%@", @(x)]];
 }
 
 - (IBAction)load:(id)sender {
