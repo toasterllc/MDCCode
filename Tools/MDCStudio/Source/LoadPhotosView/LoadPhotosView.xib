@@ -13,10 +13,10 @@
             </connections>
         </customObject>
         <visualEffectView wantsLayer="YES" blendingMode="withinWindow" material="fullScreenUI" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
-            <rect key="frame" x="0.0" y="0.0" width="830" height="76"/>
+            <rect key="frame" x="0.0" y="0.0" width="830" height="50"/>
             <subviews>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lj9-Jf-aEb">
-                    <rect key="frame" x="640" y="33" width="64" height="33"/>
+                    <rect key="frame" x="598" y="8" width="64" height="33"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="60" id="mwX-3N-hB6"/>
                     </constraints>
@@ -27,21 +27,32 @@
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qoJ-Kq-CeU">
-                    <rect key="frame" x="708" y="34" width="64" height="32"/>
+                    <rect key="frame" x="663" y="11" width="64" height="28"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="60" id="JyA-p5-zGK"/>
                     </constraints>
                     <textFieldCell key="cell" title="additional photos" id="CcI-qh-dqj">
-                        <font key="font" metaFont="systemThin" size="13"/>
+                        <font key="font" metaFont="systemThin" size="11"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zEQ-4d-gM0">
+                    <rect key="frame" x="18" y="14" width="310" height="21"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="10 photos from Feb 2023 – March 2023" id="utu-oB-Dri">
+                        <font key="font" metaFont="systemThin" size="18"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DUf-K3-QmS">
-                    <rect key="frame" x="665" y="4" width="110" height="27"/>
-                    <buttonCell key="cell" type="push" title="Load" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ziJ-si-Khp">
+                    <rect key="frame" x="724" y="7" width="92" height="32"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="80" id="MBv-PR-nJm"/>
+                    </constraints>
+                    <buttonCell key="cell" type="push" title="Load" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ziJ-si-Khp">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
                         <action selector="load:" target="-2" id="W52-bC-oHJ"/>
@@ -49,14 +60,15 @@
                 </button>
             </subviews>
             <constraints>
-                <constraint firstItem="qoJ-Kq-CeU" firstAttribute="trailing" secondItem="DUf-K3-QmS" secondAttribute="trailing" id="1b4-aN-Jwk"/>
-                <constraint firstAttribute="height" constant="76" id="3zV-F0-Xdo"/>
+                <constraint firstItem="zEQ-4d-gM0" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="20" id="192-UL-lTY"/>
+                <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
                 <constraint firstItem="qoJ-Kq-CeU" firstAttribute="centerY" secondItem="lj9-Jf-aEb" secondAttribute="centerY" constant="-1" id="8Vm-eH-XFz"/>
-                <constraint firstItem="qoJ-Kq-CeU" firstAttribute="leading" secondItem="lj9-Jf-aEb" secondAttribute="trailing" constant="8" id="8Ya-p3-mif"/>
-                <constraint firstItem="qoJ-Kq-CeU" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" constant="10" id="L7O-bj-lwE"/>
-                <constraint firstItem="DUf-K3-QmS" firstAttribute="top" secondItem="lj9-Jf-aEb" secondAttribute="bottom" constant="5" id="ed8-Vn-CU7"/>
-                <constraint firstAttribute="trailing" secondItem="qoJ-Kq-CeU" secondAttribute="trailing" constant="60" id="gsO-ci-VD6"/>
-                <constraint firstItem="qoJ-Kq-CeU" firstAttribute="leading" secondItem="DUf-K3-QmS" secondAttribute="leading" constant="40" id="xg8-Ku-zgR"/>
+                <constraint firstItem="qoJ-Kq-CeU" firstAttribute="leading" secondItem="lj9-Jf-aEb" secondAttribute="trailing" constant="5" id="8Ya-p3-mif"/>
+                <constraint firstItem="qoJ-Kq-CeU" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" constant="11" id="L7O-bj-lwE"/>
+                <constraint firstItem="DUf-K3-QmS" firstAttribute="leading" secondItem="qoJ-Kq-CeU" secondAttribute="trailing" constant="5" id="ah8-7g-HUi"/>
+                <constraint firstItem="DUf-K3-QmS" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" constant="1" id="eas-Fj-CSk"/>
+                <constraint firstItem="zEQ-4d-gM0" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" constant="1" id="hfG-ee-3wU"/>
+                <constraint firstAttribute="trailing" secondItem="DUf-K3-QmS" secondAttribute="trailing" constant="20" id="xIs-ca-fF9"/>
             </constraints>
             <point key="canvasLocation" x="696" y="-337"/>
         </visualEffectView>
