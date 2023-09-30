@@ -34,6 +34,10 @@ private:
 public:
     using Observer = std::function<bool()>;
     
+    struct Status {
+        float batteryLevel = 0;
+    };
+    
     MDCDevice(MDCUSBDevice&& dev) :
     _device(decltype(_device){ .device = std::move(dev) }),
     _dir(_DirForSerial(_device.device.serial())),
@@ -79,20 +83,20 @@ public:
                 _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
             }
             
-            _batteryLevel.thread = std::thread([&] { _batteryLevel_thread(); });
+            _status.thread = std::thread([&] { _status_thread(); });
         }
     }
     
     ~MDCDevice() {
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
-        _batteryLevel.signal.stop();
+        _status.signal.stop();
         
         // Wait for threads to stop
         if (_sync.thread.joinable()) _sync.thread.join();
         _sdRead.thread.join();
         for (std::thread& t : _thumbRender.threads) t.join();
-        _batteryLevel.thread.join();
+        _status.thread.join();
     }
     
     const std::string& name() {
@@ -107,9 +111,9 @@ public:
         _notifyObservers();
     }
     
-    float batteryLevel() {
-        auto lock = _batteryLevel.signal.lock();
-        return _batteryLevel.level;
+    Status status() {
+        auto lock = _status.signal.lock();
+        return _status.status;
     }
     
     const Toastbox::SendRight& service() const {
@@ -941,42 +945,51 @@ private:
     }
     
     // MARK: - Battery Level
-    void _batteryLevel_thread() {
+    void _status_thread() {
         constexpr auto UpdateInterval = std::chrono::seconds(2);
         try {
             for (;;) {
                 // Update battery level
                 {
                     auto lock = _deviceLock();
+                    
+                    const MSP::State mspState = _device.device.mspStateRead();
+                    const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
+                    const Img::Id deviceImgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
+                    const Img::Id deviceImgIdEnd = imgRingBuf.buf.id;
+                    const Img::Id libImgIdEnd = (!_imageLibrary.empty() ? _imageLibrary.back()->info.id+1 : 0);
+                    const uint64_t addCount = deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd);
+                    
                     const STM::BatteryStatus batteryStatus = _device.device.batteryStatusGet();
                     {
-                        auto lock = _batteryLevel.signal.lock();
+                        auto lock = _status.signal.lock();
                         
                         if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
-                            _batteryLevel.level = 1;
+                            _status.status.batteryLevel = 1;
                         
                         } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
-                            _batteryLevel.level = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
+                            _status.status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
                         
                         } else {
-                            _batteryLevel.level = 0;
+                            _status.status.batteryLevel = 0;
                         }
                     }
                     
-                    printf("[_batteryLevel_thread] Updated battery level: %.3f\n", _batteryLevel.level);
+                    printf("[_status_thread] Updated battery level: %.3f\n", _status.status.batteryLevel);
+                    printf("[_status_thread] Additional photos: %ju\n", (uintmax_t)addCount);
                 }
                 
                 _notifyObservers();
                 
                 // Sleep for 30 seconds
-                _batteryLevel.signal.wait_for(UpdateInterval, [] { return false; });
+                _status.signal.wait_for(UpdateInterval, [] { return false; });
             }
         
         } catch (const Toastbox::Signal::Stop&) {
-            printf("[_batteryLevel_thread] Stopping\n");
+            printf("[_status_thread] Stopping\n");
         
         } catch (const std::exception& e) {
-            printf("[_batteryLevel_thread] Error: %s\n", e.what());
+            printf("[_status_thread] Error: %s\n", e.what());
         }
     }
     
@@ -1079,8 +1092,8 @@ private:
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        float level = 0;
-    } _batteryLevel;
+        Status status;
+    } _status;
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;

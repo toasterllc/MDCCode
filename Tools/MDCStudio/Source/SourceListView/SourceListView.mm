@@ -75,7 +75,7 @@ static NSString* _BatteryLevelImage(float level) {
 
 - (void)update {
     [super update];
-    [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage(device->batteryLevel())]];
+    [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage(device->status().batteryLevel)]];
 }
 
 - (IBAction)textFieldAction:(id)sender {

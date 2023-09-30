@@ -63,6 +63,10 @@ static void _InitCommon(ImageGridHeaderView* self) {
     }
 }
 
+- (void)setStatus:(NSString*)status {
+    [_statusLabel setStringValue:status];
+}
+
 - (IBAction)load:(id)sender {
     [_delegate imageGridHeaderViewLoad:self];
 }

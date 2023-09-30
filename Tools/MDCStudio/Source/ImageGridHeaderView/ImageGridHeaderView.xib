@@ -74,13 +74,19 @@
                         <constraint firstItem="DUf-K3-QmS" firstAttribute="leading" secondItem="qoJ-Kq-CeU" secondAttribute="trailing" constant="5" id="yDq-85-vkm"/>
                     </constraints>
                 </customView>
+                <progressIndicator wantsLayer="YES" maxValue="100" doubleValue="50" controlSize="small" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="n4F-mV-p8l">
+                    <rect key="frame" x="-5" y="-8" width="840" height="12"/>
+                </progressIndicator>
             </subviews>
             <constraints>
                 <constraint firstItem="zEQ-4d-gM0" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="20" id="192-UL-lTY"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" id="3HK-Zs-34g"/>
                 <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" id="Dgn-19-9hS"/>
+                <constraint firstItem="n4F-mV-p8l" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="-5" id="JbQ-ZB-X8m"/>
+                <constraint firstAttribute="bottom" secondItem="n4F-mV-p8l" secondAttribute="top" constant="3.5" id="Ufw-5O-21d"/>
                 <constraint firstItem="zEQ-4d-gM0" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" constant="1" id="hfG-ee-3wU"/>
+                <constraint firstAttribute="trailing" secondItem="n4F-mV-p8l" secondAttribute="trailing" constant="-5" id="pqh-6y-C1S"/>
                 <constraint firstAttribute="bottom" secondItem="bA5-3S-iVB" secondAttribute="bottom" id="vBD-Wv-Kni"/>
                 <constraint firstAttribute="trailing" secondItem="bA5-3S-iVB" secondAttribute="trailing" constant="20" id="wOa-Ys-JHJ"/>
             </constraints>
