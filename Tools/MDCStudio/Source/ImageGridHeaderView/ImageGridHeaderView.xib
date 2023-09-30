@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="ImageGridHeaderView">
+            <connections>
+                <outlet property="_height" destination="3zV-F0-Xdo" id="rxk-22-Crj"/>
+                <outlet property="_loadPhotosContainerView" destination="bA5-3S-iVB" id="ubC-S2-eQG"/>
+                <outlet property="_loadPhotosCountLabel" destination="lj9-Jf-aEb" id="Qev-FI-9rx"/>
+                <outlet property="_nibView" destination="MCr-up-gtv" id="MuD-1o-jBO"/>
+                <outlet property="_statusLabel" destination="zEQ-4d-gM0" id="UXb-DA-TRV"/>
+            </connections>
+        </customObject>
+        <visualEffectView wantsLayer="YES" blendingMode="withinWindow" material="fullScreenUI" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
+            <rect key="frame" x="0.0" y="0.0" width="830" height="50"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zEQ-4d-gM0">
+                    <rect key="frame" x="18" y="14" width="310" height="21"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="10 photos from Feb 2023 – March 2023" id="utu-oB-Dri">
+                        <font key="font" metaFont="systemThin" size="18"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="bA5-3S-iVB">
+                    <rect key="frame" x="600" y="0.0" width="210" height="50"/>
+                    <subviews>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lj9-Jf-aEb">
+                            <rect key="frame" x="-2" y="9" width="64" height="33"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="60" id="mwX-3N-hB6"/>
+                            </constraints>
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="28" id="f3j-ad-pqi">
+                                <font key="font" metaFont="system" size="28"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qoJ-Kq-CeU">
+                            <rect key="frame" x="63" y="12" width="64" height="28"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="60" id="JyA-p5-zGK"/>
+                            </constraints>
+                            <textFieldCell key="cell" title="additional photos" id="CcI-qh-dqj">
+                                <font key="font" metaFont="systemThin" size="11"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DUf-K3-QmS">
+                            <rect key="frame" x="124" y="8" width="92" height="32"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="80" id="MBv-PR-nJm"/>
+                            </constraints>
+                            <buttonCell key="cell" type="push" title="Load" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ziJ-si-Khp">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="load:" target="-2" id="W52-bC-oHJ"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                    <constraints>
+                        <constraint firstItem="lj9-Jf-aEb" firstAttribute="centerY" secondItem="bA5-3S-iVB" secondAttribute="centerY" id="4ft-VC-pwt"/>
+                        <constraint firstItem="qoJ-Kq-CeU" firstAttribute="leading" secondItem="lj9-Jf-aEb" secondAttribute="trailing" constant="5" id="6lf-W7-aQq"/>
+                        <constraint firstAttribute="trailing" secondItem="DUf-K3-QmS" secondAttribute="trailing" id="Q1s-Py-xt0"/>
+                        <constraint firstItem="DUf-K3-QmS" firstAttribute="centerY" secondItem="bA5-3S-iVB" secondAttribute="centerY" id="Vsz-7t-4Pu"/>
+                        <constraint firstItem="lj9-Jf-aEb" firstAttribute="leading" secondItem="bA5-3S-iVB" secondAttribute="leading" id="hws-8o-TvO"/>
+                        <constraint firstItem="qoJ-Kq-CeU" firstAttribute="centerY" secondItem="lj9-Jf-aEb" secondAttribute="centerY" constant="-1" id="qlb-Fu-QAm"/>
+                        <constraint firstItem="DUf-K3-QmS" firstAttribute="leading" secondItem="qoJ-Kq-CeU" secondAttribute="trailing" constant="5" id="yDq-85-vkm"/>
+                    </constraints>
+                </customView>
+            </subviews>
+            <constraints>
+                <constraint firstItem="zEQ-4d-gM0" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="20" id="192-UL-lTY"/>
+                <constraint firstItem="bA5-3S-iVB" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" id="3HK-Zs-34g"/>
+                <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
+                <constraint firstItem="bA5-3S-iVB" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" id="Dgn-19-9hS"/>
+                <constraint firstItem="zEQ-4d-gM0" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" constant="1" id="hfG-ee-3wU"/>
+                <constraint firstAttribute="bottom" secondItem="bA5-3S-iVB" secondAttribute="bottom" id="vBD-Wv-Kni"/>
+                <constraint firstAttribute="trailing" secondItem="bA5-3S-iVB" secondAttribute="trailing" constant="20" id="wOa-Ys-JHJ"/>
+            </constraints>
+            <point key="canvasLocation" x="696" y="-337"/>
+        </visualEffectView>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+    </objects>
+</document>

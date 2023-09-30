@@ -6,7 +6,7 @@
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "Grid.h"
-#import "LoadPhotosView/LoadPhotosView.h"
+#import "ImageGridHeaderView/ImageGridHeaderView.h"
 #import "Code/Shared/Img.h"
 #import "Toastbox/LRU.h"
 #import "Toastbox/IterAny.h"
@@ -1006,7 +1006,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 
 @implementation ImageGridScrollView {
-    LoadPhotosView* _loadPhotosView;
+    ImageGridHeaderView* _headerView;
 }
 
 - (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
@@ -1017,37 +1017,48 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     // So disable that behavior.
     [self setAnchorDuringResize:false];
     
-    _loadPhotosView = [LoadPhotosView new];
-    [self setLoadPhotoCount:5];
+    // Add header view
+    {
+        ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
+        _headerView = [ImageGridHeaderView new];
+        [layer setContentInsets:{[_headerView height]+10,0,0,0}];
+        [self addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
+        
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
+            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
+    }
+    
     return self;
 }
 
-- (void)setLoadPhotoCount:(NSUInteger)count {
-//    const NSEdgeInsets inset = [self contentInsets];
-//    printf("AAA %p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
-    
-    
-    if (count) {
-        [_loadPhotosView setLoadCount:count];
-        ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
-        [layer setContentInsets:{[_loadPhotosView height]+10,0,0,0}];
-        
-        [self addFloatingSubview:_loadPhotosView forAxis:NSEventGestureAxisVertical];
-//        [self setContentInsets:{100,0,0,0}];
-        
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_loadPhotosView]|"
-            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_loadPhotosView)]];
-    
-    } else {
-//        [self setContentInsets:{0,0,0,0}];
-        [_loadPhotosView removeFromSuperview];
-    }
-    
-//    {
-//        const NSEdgeInsets inset = [self contentInsets];
-//        printf("BBB %p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
+//- (void)setLoadPhotoCount:(NSUInteger)count {
+////    const NSEdgeInsets inset = [self contentInsets];
+////    printf("AAA %p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
+//    
+//    [_headerView setLoadCount:count];
+//    
+//    
+//    if (count) {
+//        [_headerView setLoadCount:count];
+//        ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
+//        [layer setContentInsets:{[_headerView height]+10,0,0,0}];
+//        
+//        [self addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
+////        [self setContentInsets:{100,0,0,0}];
+//        
+//        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
+//            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
+//    
+//    } else {
+////        [self setContentInsets:{0,0,0,0}];
+//        [_headerView removeFromSuperview];
 //    }
-}
+//    
+////    {
+////        const NSEdgeInsets inset = [self contentInsets];
+////        printf("BBB %p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
+////    }
+//}
 
 - (void)tile {
     [super tile];

@@ -44,8 +44,8 @@
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
 		557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557ABCED29DD24230032619E /* BatteryLifeView.mm */; };
 		557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 557ABCEE29DD24230032619E /* BatteryLifeView.xib */; };
-		558E20092AC4B608001E743A /* LoadPhotosView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 558E20052AC4B608001E743A /* LoadPhotosView.xib */; };
-		558E200A2AC4B608001E743A /* LoadPhotosView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558E20062AC4B608001E743A /* LoadPhotosView.mm */; };
+		558E20092AC4B608001E743A /* ImageGridHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 558E20052AC4B608001E743A /* ImageGridHeaderView.xib */; };
+		558E200A2AC4B608001E743A /* ImageGridHeaderView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558E20062AC4B608001E743A /* ImageGridHeaderView.mm */; };
 		558FFC5829C8F26F0022E840 /* EstimateIlluminant.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */; };
 		55A36AB827A35ABD00FD0181 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55A36AB727A35ABD00FD0181 /* IOKit.framework */; };
 		55C456862955A1AE00A20363 /* FixedScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456822955A1AE00A20363 /* FixedScrollView.mm */; };
@@ -218,9 +218,9 @@
 		557ABD8929E7E90B0032619E /* DeviceSettings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeviceSettings.h; sourceTree = "<group>"; };
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
-		558E20052AC4B608001E743A /* LoadPhotosView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = LoadPhotosView.xib; sourceTree = "<group>"; };
-		558E20062AC4B608001E743A /* LoadPhotosView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LoadPhotosView.mm; sourceTree = "<group>"; };
-		558E20072AC4B608001E743A /* LoadPhotosView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoadPhotosView.h; sourceTree = "<group>"; };
+		558E20052AC4B608001E743A /* ImageGridHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageGridHeaderView.xib; sourceTree = "<group>"; };
+		558E20062AC4B608001E743A /* ImageGridHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridHeaderView.mm; sourceTree = "<group>"; };
+		558E20072AC4B608001E743A /* ImageGridHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridHeaderView.h; sourceTree = "<group>"; };
 		558FFC4629C7EF920022E840 /* IterAny.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IterAny.h; sourceTree = "<group>"; };
 		558FFC5629C8F26F0022E840 /* EstimateIlluminant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminant.h; sourceTree = "<group>"; };
 		558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminant.mm; sourceTree = "<group>"; };
@@ -606,7 +606,7 @@
 			isa = PBXGroup;
 			children = (
 				551328BA27B45E6200CD823B /* ImageGridView */,
-				558E20042AC4B608001E743A /* LoadPhotosView */,
+				558E20042AC4B608001E743A /* ImageGridHeaderView */,
 				55F8D01127BEF3E500757165 /* ImageView */,
 				5544A7E927B5E011006AB473 /* SourceListView */,
 				55425B1C29A02F6500F25D57 /* InspectorView */,
@@ -669,14 +669,14 @@
 			path = BatteryLifeView;
 			sourceTree = "<group>";
 		};
-		558E20042AC4B608001E743A /* LoadPhotosView */ = {
+		558E20042AC4B608001E743A /* ImageGridHeaderView */ = {
 			isa = PBXGroup;
 			children = (
-				558E20072AC4B608001E743A /* LoadPhotosView.h */,
-				558E20062AC4B608001E743A /* LoadPhotosView.mm */,
-				558E20052AC4B608001E743A /* LoadPhotosView.xib */,
+				558E20072AC4B608001E743A /* ImageGridHeaderView.h */,
+				558E20062AC4B608001E743A /* ImageGridHeaderView.mm */,
+				558E20052AC4B608001E743A /* ImageGridHeaderView.xib */,
 			);
-			path = LoadPhotosView;
+			path = ImageGridHeaderView;
 			sourceTree = "<group>";
 		};
 		55C90C6A29B795A4007CC97E /* Products */ = {
@@ -861,7 +861,7 @@
 				55F8877F29D3A7110075593F /* CaptureTriggersView.xib in Resources */,
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
 				557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */,
-				558E20092AC4B608001E743A /* LoadPhotosView.xib in Resources */,
+				558E20092AC4B608001E743A /* ImageGridHeaderView.xib in Resources */,
 				55DFB5452ABE1FFA0035E1BC /* SourceList-Battery-Charging-10.pdf in Resources */,
 				55425B9129A3F39700F25D57 /* Inspector-Exposure-Min.pdf in Resources */,
 				552F4BB629AE6E84000CEAB2 /* Inspector-Clear.pdf in Resources */,
@@ -939,7 +939,7 @@
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
 				55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */,
 				55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */,
-				558E200A2AC4B608001E743A /* LoadPhotosView.mm in Sources */,
+				558E200A2AC4B608001E743A /* ImageGridHeaderView.mm in Sources */,
 				55F8882729D8DADD0075593F /* TokenField.mm in Sources */,
 				55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */,
 				55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */,

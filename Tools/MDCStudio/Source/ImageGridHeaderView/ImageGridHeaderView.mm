@@ -1,13 +1,18 @@
-#import "LoadPhotosView.h"
+#import "ImageGridHeaderView.h"
 
-@implementation LoadPhotosView {
-    id<LoadPhotosViewDelegate> _delegate;
+@implementation ImageGridHeaderView {
+    id<ImageGridHeaderViewDelegate> _delegate;
     IBOutlet NSView* _nibView;
-    IBOutlet NSTextField* _label;
+    
     IBOutlet NSLayoutConstraint* _height;
+    
+    IBOutlet NSTextField* _statusLabel;
+    
+    IBOutlet NSView* _loadPhotosContainerView;
+    IBOutlet NSTextField* _loadPhotosCountLabel;
 }
 
-static void _InitCommon(LoadPhotosView* self) {
+static void _InitCommon(ImageGridHeaderView* self) {
     // Load view from nib
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
@@ -21,6 +26,8 @@ static void _InitCommon(LoadPhotosView* self) {
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
+    
+    [self setLoadCount:0];
     
 //    [self setWantsLayer:true];
 //    [[self layer] setBackgroundColor:[[NSColor colorWithSRGBRed:.110 green:.113 blue:.113 alpha:.7] CGColor]];
@@ -43,16 +50,21 @@ static void _InitCommon(LoadPhotosView* self) {
     return [_height constant];
 }
 
-- (void)setDelegate:(id<LoadPhotosViewDelegate>)x {
+- (void)setDelegate:(id<ImageGridHeaderViewDelegate>)x {
     _delegate = x;
 }
 
 - (void)setLoadCount:(NSUInteger)x {
-    [_label setStringValue:[NSString stringWithFormat:@"%@", @(x)]];
+    if (x) {
+        [_statusLabel setStringValue:[NSString stringWithFormat:@"%@", @(x)]];
+        [_loadPhotosContainerView setHidden:false];
+    } else {
+        [_loadPhotosContainerView setHidden:true];
+    }
 }
 
 - (IBAction)load:(id)sender {
-    [_delegate loadPhotosViewLoad:self];
+    [_delegate imageGridHeaderViewLoad:self];
 }
 
 @end
