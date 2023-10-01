@@ -3,6 +3,7 @@ using namespace MDCStudio;
 
 @implementation DeviceImageGridHeaderView {
     MDCStudio::MDCDevicePtr _device;
+    ImageLibrary* _imageLibrary;
     __weak id<DeviceImageGridHeaderViewDelegate> _delegate;
     IBOutlet NSView* _nibView;
     IBOutlet NSLayoutConstraint* _height;
@@ -15,14 +16,24 @@ using namespace MDCStudio;
     if (!(self = [super initWithFrame:{}])) return nil;
     
     _device = device;
-    __weak auto selfWeak = self;
-    _device->observerAdd([=] {
-        auto selfStrong = selfWeak;
-        if (!selfStrong) return false;
-        dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong deviceChanged]; });
-        return true;
-    });
+    _imageLibrary = &_device->imageLibrary();
     
+    __weak auto selfWeak = self;
+    {
+        _device->observerAdd([=] {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _update]; });
+            return true;
+        });
+    }
+    
+    // Add ourself as an observer of the image library
+    {
+        auto lock = std::unique_lock(*_imageLibrary);
+        _imageLibrary->observerAdd([=](const ImageLibrary::Event& ev) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _update]; });
+            return true;
+        });
+    }
     
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
@@ -36,7 +47,7 @@ using namespace MDCStudio;
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
     
-    [self setLoadCount:0];
+    [self _update];
     return self;
 }
 
@@ -48,17 +59,23 @@ using namespace MDCStudio;
     _delegate = x;
 }
 
-- (void)setLoadCount:(NSUInteger)x {
-    if (x) {
-        [_loadPhotosCountLabel setStringValue:[NSString stringWithFormat:@"%@", @(x)]];
+- (void)_update {
+    [self _updateStatus];
+    [self _updateLoadCount];
+}
+
+- (void)_updateStatus {
+    [_statusLabel setStringValue:[NSString stringWithFormat:@"%ju photos", (uintmax_t)_imageLibrary->recordCount()]];
+}
+
+- (void)_updateLoadCount {
+    const size_t loadCount = _LoadCount(_device);
+    if (loadCount) {
+        [_loadPhotosCountLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)loadCount]];
         [_loadPhotosContainerView setHidden:false];
     } else {
         [_loadPhotosContainerView setHidden:true];
     }
-}
-
-- (void)setStatus:(NSString*)status {
-    [_statusLabel setStringValue:status];
 }
 
 static size_t _LoadCount(const MDCDevice::Status& status, ImageLibrary& imgLib) {
@@ -79,11 +96,6 @@ static size_t _LoadCount(const MDCDevice::Status& status, ImageLibrary& imgLib) 
 
 static size_t _LoadCount(MDCDevicePtr device) {
     return _LoadCount(device->status(), device->imageLibrary());
-}
-
-- (void)deviceChanged {
-    [self setLoadCount:_LoadCount(_device)];
-    printf("DeviceImageGridHeaderView: deviceChanged\n");
 }
 
 - (IBAction)load:(id)sender {

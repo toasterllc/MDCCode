@@ -70,6 +70,9 @@ public:
             // Update our _mspState from the device
             _mspState = _device.device.mspStateRead();
             
+            // Update our _status struct
+            _status_update(_device.device.batteryStatusGet(), _mspState);
+            
             // Adjust the device's time to correct it for crystal innaccuracy
             std::cout << "Adjusting device time:\n";
             _device.device.mspTimeAdjust();
@@ -946,45 +949,43 @@ private:
 //        return lock;
     }
     
-    // MARK: - Battery Level
+    // MARK: - Device Status
+    void _status_update(const STM::BatteryStatus& batteryStatus, const MSP::State& mspState) {
+        auto lock = _status.signal.lock();
+        
+        // Update _status.status.batteryLevel
+        {
+            if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
+                _status.status.batteryLevel = 1;
+            
+            } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
+                _status.status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
+            
+            } else {
+                _status.status.batteryLevel = 0;
+            }
+        }
+        
+        // Update _status.status.imgIdBegin/imgIdEnd
+        {
+            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
+            _status.status.imgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
+            _status.status.imgIdEnd = imgRingBuf.buf.id;
+        }
+        
+        printf("[_status_update] Updated status: batteryLevel=%.3f imgIdBegin=%ju imgIdEnd=%ju\n",
+            _status.status.batteryLevel,
+            (uintmax_t)_status.status.imgIdBegin,
+            (uintmax_t)_status.status.imgIdEnd);
+    }
+    
     void _status_thread() {
         constexpr auto UpdateInterval = std::chrono::seconds(2);
         try {
             for (;;) {
-                // Update battery level
                 {
                     auto lock = _deviceLock();
-                    const STM::BatteryStatus batteryStatus = _device.device.batteryStatusGet();
-                    const MSP::State mspState = _device.device.mspStateRead();
-                    
-                    {
-                        auto lock = _status.signal.lock();
-                        
-                        // Update _status.status.batteryLevel
-                        {
-                            if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
-                                _status.status.batteryLevel = 1;
-                            
-                            } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
-                                _status.status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
-                            
-                            } else {
-                                _status.status.batteryLevel = 0;
-                            }
-                        }
-                        
-                        // Update _status.status.imgIdBegin/imgIdEnd
-                        {
-                            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
-                            _status.status.imgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
-                            _status.status.imgIdEnd = imgRingBuf.buf.id;
-                        }
-                    }
-                    
-                    printf("[_status_thread] Updated status: batteryLevel=%.3f imgIdBegin=%ju imgIdEnd=%ju\n",
-                        _status.status.batteryLevel,
-                        (uintmax_t)_status.status.imgIdBegin,
-                        (uintmax_t)_status.status.imgIdEnd);
+                    _status_update(_device.device.batteryStatusGet(), _device.device.mspStateRead());
                 }
                 
                 _notifyObservers();

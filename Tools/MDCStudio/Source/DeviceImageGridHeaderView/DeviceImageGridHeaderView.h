@@ -10,6 +10,4 @@
 @interface DeviceImageGridHeaderView : NSView
 - (instancetype)initWithDevice:(MDCStudio::MDCDevicePtr)device;
 - (void)setDelegate:(id<DeviceImageGridHeaderViewDelegate>)x;
-- (void)setLoadCount:(NSUInteger)x;
-- (void)setStatus:(NSString*)x;
 @end
