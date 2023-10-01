@@ -657,15 +657,20 @@ private:
     
     // MARK: - Sync
     
-    MSP::State _mspStateRead() {
-        auto lock = _deviceLock();
-        return _device.device.mspStateRead();
-    }
-    
     void _sync_thread() {
         try {
             // Enter SD mode for the entire duration of our sync
-            const MSP::State mspState = _mspStateRead();
+            auto lock = _deviceLock();
+                const MSP::State mspState = _device.device.mspStateRead();
+            lock.unlock();
+            
+            // Update our status
+            // This is necessary so that the status struct's imgIdBegin/imgIdEnd is always >= _imageLibrary
+            {
+                auto lock = _status.signal.lock();
+                _status_update(lock, mspState);
+            }
+            
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
             const Img::Id deviceImgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
             const Img::Id deviceImgIdEnd = imgRingBuf.buf.id;
@@ -969,33 +974,30 @@ private:
     }
     
     // MARK: - Device Status
+    void _status_update(std::unique_lock<std::mutex>& lock, const STM::BatteryStatus& batteryStatus) {
+        // Update _status.status.batteryLevel
+        if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
+            _status.status.batteryLevel = 1;
+        
+        } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
+            _status.status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
+        
+        } else {
+            _status.status.batteryLevel = 0;
+        }
+    }
+    
+    void _status_update(std::unique_lock<std::mutex>& lock, const MSP::State& mspState) {
+        // Update _status.status.imgIdBegin/imgIdEnd
+        const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
+        _status.status.imgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
+        _status.status.imgIdEnd = imgRingBuf.buf.id;
+    }
+    
     void _status_update(const STM::BatteryStatus& batteryStatus, const MSP::State& mspState) {
         auto lock = _status.signal.lock();
-        
-        // Update _status.status.batteryLevel
-        {
-            if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
-                _status.status.batteryLevel = 1;
-            
-            } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
-                _status.status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
-            
-            } else {
-                _status.status.batteryLevel = 0;
-            }
-        }
-        
-        // Update _status.status.imgIdBegin/imgIdEnd
-        {
-            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
-            _status.status.imgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
-            _status.status.imgIdEnd = imgRingBuf.buf.id;
-        }
-        
-        printf("[_status_update] Updated status: batteryLevel=%.3f imgIdBegin=%ju imgIdEnd=%ju\n",
-            _status.status.batteryLevel,
-            (uintmax_t)_status.status.imgIdBegin,
-            (uintmax_t)_status.status.imgIdEnd);
+        _status_update(lock, batteryStatus);
+        _status_update(lock, mspState);
     }
     
     void _status_thread() {
@@ -1003,7 +1005,7 @@ private:
         try {
             for (;;) {
                 {
-                    auto lock = _deviceLock();
+                    auto deviceLock = _deviceLock();
                     _status_update(_device.device.batteryStatusGet(), _device.device.mspStateRead());
                 }
                 
