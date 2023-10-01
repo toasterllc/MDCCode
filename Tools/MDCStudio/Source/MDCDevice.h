@@ -36,6 +36,8 @@ public:
     
     struct Status {
         float batteryLevel = 0;
+        Img::Id imgIdBegin = 0;
+        Img::Id imgIdEnd = 0;
     };
     
     MDCDevice(MDCUSBDevice&& dev) :
@@ -952,31 +954,37 @@ private:
                 // Update battery level
                 {
                     auto lock = _deviceLock();
-                    
-                    const MSP::State mspState = _device.device.mspStateRead();
-                    const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
-                    const Img::Id deviceImgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
-                    const Img::Id deviceImgIdEnd = imgRingBuf.buf.id;
-                    const Img::Id libImgIdEnd = (!_imageLibrary.empty() ? _imageLibrary.back()->info.id+1 : 0);
-                    const uint64_t addCount = deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd);
-                    
                     const STM::BatteryStatus batteryStatus = _device.device.batteryStatusGet();
+                    const MSP::State mspState = _device.device.mspStateRead();
+                    
                     {
                         auto lock = _status.signal.lock();
                         
-                        if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
-                            _status.status.batteryLevel = 1;
+                        // Update _status.status.batteryLevel
+                        {
+                            if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
+                                _status.status.batteryLevel = 1;
+                            
+                            } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
+                                _status.status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
+                            
+                            } else {
+                                _status.status.batteryLevel = 0;
+                            }
+                        }
                         
-                        } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
-                            _status.status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
-                        
-                        } else {
-                            _status.status.batteryLevel = 0;
+                        // Update _status.status.imgIdBegin/imgIdEnd
+                        {
+                            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
+                            _status.status.imgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
+                            _status.status.imgIdEnd = imgRingBuf.buf.id;
                         }
                     }
                     
-                    printf("[_status_thread] Updated battery level: %.3f\n", _status.status.batteryLevel);
-                    printf("[_status_thread] Additional photos: %ju\n", (uintmax_t)addCount);
+                    printf("[_status_thread] Updated status: batteryLevel=%.3f imgIdBegin=%ju imgIdEnd=%ju\n",
+                        _status.status.batteryLevel,
+                        (uintmax_t)_status.status.imgIdBegin,
+                        (uintmax_t)_status.status.imgIdEnd);
                 }
                 
                 _notifyObservers();

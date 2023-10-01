@@ -10,10 +10,11 @@
 #import "Prefs.h"
 #import "DeviceSettings/DeviceSettingsView.h"
 #import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
+#import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
 
 using namespace MDCStudio;
 
-@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate, DeviceSettingsViewDelegate>
+@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate, DeviceSettingsViewDelegate, DeviceImageGridHeaderViewDelegate>
 @end
 
 @implementation Document {
@@ -440,6 +441,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         {
             DeviceImageGridScrollView* imageGridScrollView =
                 [[DeviceImageGridScrollView alloc] initWithDevice:device];
+            [[imageGridScrollView headerView] setDelegate:self];
             
             ImageGridView* imageGridView = [imageGridScrollView imageGridView];
             [imageGridView setDelegate:self];
@@ -563,6 +565,12 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     
     [_window endSheet:[_deviceSettings.view window]];
     _deviceSettings = {};
+}
+
+// MARK: - DeviceImageGridHeaderViewDelegate
+
+- (void)deviceImageGridHeaderViewLoad:(DeviceImageGridHeaderView*)x {
+    printf("deviceImageGridHeaderViewLoad\n");
 }
 
 @end
