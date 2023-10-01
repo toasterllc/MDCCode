@@ -182,13 +182,13 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 }
 
 - (void)setContainerWidth:(CGFloat)x {
-    NSLog(@"-[ImageGridLayer setContainerWidth:]");
+//    NSLog(@"-[ImageGridLayer setContainerWidth:]");
     _containerWidth = x*[self contentsScale];
     _grid.setContainerWidth((int32_t)lround(_containerWidth));
 }
 
 - (CGFloat)containerHeight {
-    NSLog(@"-[ImageGridLayer containerHeight]");
+//    NSLog(@"-[ImageGridLayer containerHeight]");
     return _grid.containerHeight() / [self contentsScale];
 }
 
@@ -197,7 +197,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 }
 
 - (void)setContentsScale:(CGFloat)x {
-    NSLog(@"-[ImageGridLayer setContentsScale:]");
+//    NSLog(@"-[ImageGridLayer setContentsScale:]");
     [super setContentsScale:x];
     [self setContainerWidth:_containerWidth];
     [self setContentInsets:_contentInsets];

@@ -321,6 +321,26 @@ struct [[gnu::packed]] Settings {
     static_assert(sizeof(triggers) == 868); // Debug
 };
 
+struct [[gnu::packed]] SDState {
+    // cardId: the SD card's CID, used to determine when the SD card has been
+    // changed, and therefore we need to update `imgCap` and reset `ringBufs`
+    SD::CardId cardId;
+    // imgCap: image capacity; the number of images that bounds the ring buffer
+    uint32_t imgCap;
+    // baseFull / baseThumb: the first block of the full-size and thumb image regions.
+    // The SD card is broken into 2 regions (fullSize, thumbnails), to allow the host
+    // to quickly read the thumbnails.
+    SD::Block baseFull;
+    SD::Block baseThumb;
+    // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
+    // power failure while updating one
+    ImgRingBuf imgRingBufs[2];
+    bool valid;
+    uint8_t _pad;
+};
+static_assert(!(sizeof(SDState) % 2)); // Check alignment
+static_assert(sizeof(SDState) == 56); // Debug
+
 struct [[gnu::packed]] State {
     struct [[gnu::packed]] Header {
         uint32_t magic;
@@ -331,23 +351,7 @@ struct [[gnu::packed]] State {
     Header header;
     static_assert(sizeof(header) == 8);
     
-    struct [[gnu::packed]] {
-        // cardId: the SD card's CID, used to determine when the SD card has been
-        // changed, and therefore we need to update `imgCap` and reset `ringBufs`
-        SD::CardId cardId;
-        // imgCap: image capacity; the number of images that bounds the ring buffer
-        uint32_t imgCap;
-        // baseFull / baseThumb: the first block of the full-size and thumb image regions.
-        // The SD card is broken into 2 regions (fullSize, thumbnails), to allow the host
-        // to quickly read the thumbnails.
-        SD::Block baseFull;
-        SD::Block baseThumb;
-        // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
-        // power failure while updating one
-        ImgRingBuf imgRingBufs[2];
-        bool valid;
-        uint8_t _pad;
-    } sd;
+    SDState sd;
 //    StaticPrint(sizeof(sd));
     static_assert(!(sizeof(sd) % 2)); // Check alignment
     static_assert(sizeof(sd) == 56); // Debug

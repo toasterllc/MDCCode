@@ -64,8 +64,25 @@ using namespace MDCStudio;
     [self _updateLoadCount];
 }
 
+static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
+    auto lock = std::unique_lock(imgLib);
+    if (imgLib.empty()) return @"No photos";
+    
+    auto front = imgLib.front();
+    auto back = imgLib.back();
+    
+//    auto tbegin = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(front->info.timestamp));
+//    auto tend = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(back->info.timestamp));
+    
+    
+    
+    
+    
+    return [NSString stringWithFormat:@"%ju photos", (uintmax_t)imgLib.recordCount()];
+}
+
 - (void)_updateStatus {
-    [_statusLabel setStringValue:[NSString stringWithFormat:@"%ju photos", (uintmax_t)_imageLibrary->recordCount()]];
+    [_statusLabel setStringValue:_ImageLibraryStatus(*_imageLibrary)];
 }
 
 - (void)_updateLoadCount {

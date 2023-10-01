@@ -67,11 +67,13 @@ public:
             // Enter host mode to adjust the device time
             auto hostMode = _hostModeAssertion.assertion();
             
-            // Update our _mspState from the device
-            _mspState = _device.device.mspStateRead();
+            // Update our mspState from the device
+            const MSP::State mspState = _device.device.mspStateRead();
+            _mspSDState = mspState.sd;
+            _mspSettings = mspState.settings;
             
             // Update our _status struct
-            _status_update(_device.device.batteryStatusGet(), _mspState);
+            _status_update(_device.device.batteryStatusGet(), mspState);
             
             // Adjust the device's time to correct it for crystal innaccuracy
             std::cout << "Adjusting device time:\n";
@@ -145,14 +147,16 @@ public:
     }
     
     const MSP::Settings& settings() {
-        return _mspState.settings;
+        return _mspSettings;
     }
     
     void settings(const MSP::Settings& x) {
-        _mspState.settings = x;
+        _mspSettings = x;
         {
             auto hostMode = _hostModeAssertion.assertion();
-            _device.device.mspStateWrite(_mspState);
+            MSP::State mspState = _device.device.mspStateRead();
+            mspState.settings = _mspSettings;
+            _device.device.mspStateWrite(mspState);
         }
     }
     
@@ -1042,15 +1046,15 @@ private:
             // Init SD card
             const STM::SDCardInfo sdCardInfo = _device.device.sdInit();
             
-            if (!_mspState.sd.valid) {
-                // _mspState.sd isn't valid, so there's no syncing that can be done
-                throw Toastbox::RuntimeError("!_mspState.sd.valid");
+            if (!_mspSDState.valid) {
+                // _mspSDState isn't valid, so there's no syncing that can be done
+                throw Toastbox::RuntimeError("!_mspSDState.valid");
             }
             
             // Current SD card id doesn't match MSP's card id
             // Don't sync photos because we don't know what we're actually reading from the device
-            if (memcmp(&sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
-                throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspState.sd.cardId");
+            if (memcmp(&sdCardInfo.cardId, &_mspSDState.cardId, sizeof(_mspSDState.cardId))) {
+                throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
             }
             
             // Print timing
@@ -1088,7 +1092,8 @@ private:
     const _Path _dir;
     ImageLibrary _imageLibrary;
 //    ImageCache _imageCache;
-    MSP::State _mspState;
+    MSP::SDState _mspSDState;
+    MSP::Settings _mspSettings;
     
     std::string _name;
     std::forward_list<Observer> _observers;
