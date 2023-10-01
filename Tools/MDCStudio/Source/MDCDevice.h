@@ -80,8 +80,6 @@ public:
         
         // Start threads
         {
-            _sync.thread = std::thread([&] { _sync_thread(); });
-            
             _sdRead.thread = std::thread([&] { _sdRead_thread(); });
             
             for (int i=0; i<_CPUCount(); i++) {
@@ -89,6 +87,8 @@ public:
             }
             
             _status.thread = std::thread([&] { _status_thread(); });
+            
+            sync();
         }
     }
     
@@ -154,6 +154,13 @@ public:
             auto hostMode = _hostModeAssertion.assertion();
             _device.device.mspStateWrite(_mspState);
         }
+    }
+    
+    void sync() {
+        if (_sync.running) return;
+        if (_sync.thread.joinable()) _sync.thread.join();
+        _sync.running = true;
+        _sync.thread = std::thread([&] { _sync_thread(); });
     }
     
     // MARK: - ImageSource
@@ -646,11 +653,17 @@ private:
     
     // MARK: - Sync
     
+    MSP::State _mspStateRead() {
+        auto lock = _deviceLock();
+        return _device.device.mspStateRead();
+    }
+    
     void _sync_thread() {
         try {
             // Enter SD mode for the entire duration of our sync
-            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
-            const Img::Id deviceImgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)_mspState.sd.imgCap);
+            const MSP::State mspState = _mspStateRead();
+            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
+            const Img::Id deviceImgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
             const Img::Id deviceImgIdEnd = imgRingBuf.buf.id;
             
             {
@@ -699,13 +712,13 @@ private:
                         while (addCount) {
                             it--;
                             id--;
-                            idx = (idx ? idx-1 : _mspState.sd.imgCap-1);
+                            idx = (idx ? idx-1 : mspState.sd.imgCap-1);
                             addCount--;
                             
                             ImageRecordPtr rec = *it;
                             rec->info.id = id;
-                            rec->info.addrFull = MSP::SDBlockFull(_mspState.sd.baseFull, idx);
-                            rec->info.addrThumb = MSP::SDBlockThumb(_mspState.sd.baseThumb, idx);
+                            rec->info.addrFull = MSP::SDBlockFull(mspState.sd.baseFull, idx);
+                            rec->info.addrThumb = MSP::SDBlockThumb(mspState.sd.baseThumb, idx);
                             
                             rec->status.loadCount = 0;
                         }
@@ -737,6 +750,8 @@ private:
         } catch (const std::exception& e) {
             printf("[_sync_thread] Error: %s\n", e.what());
         }
+        
+        _sync.running = false;
     }
     
     // MARK: - SD Read
@@ -1084,6 +1099,7 @@ private:
     
     struct {
         std::thread thread;
+        std::atomic<bool> running;
     } _sync;
     
     struct {

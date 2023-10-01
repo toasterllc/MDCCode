@@ -570,7 +570,8 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 // MARK: - DeviceImageGridHeaderViewDelegate
 
 - (void)deviceImageGridHeaderViewLoad:(DeviceImageGridHeaderView*)x {
-    printf("deviceImageGridHeaderViewLoad\n");
+    MDCDevicePtr device = Toastbox::Cast<MDCDevicePtr>([_sourceListView selection]);
+    device->sync();
 }
 
 @end
