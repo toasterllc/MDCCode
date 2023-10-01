@@ -6,7 +6,7 @@
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "Grid.h"
-#import "ImageGridHeaderView/ImageGridHeaderView.h"
+#import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
 #import "Code/Shared/Img.h"
 #import "Toastbox/LRU.h"
 #import "Toastbox/IterAny.h"
@@ -1006,7 +1006,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 
 @implementation ImageGridScrollView {
-    ImageGridHeaderView* _headerView;
+    NSView* _headerView;
 }
 
 - (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
@@ -1016,19 +1016,20 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     // resizes when its superviews resize (because its width needs to be the same as its superviews).
     // So disable that behavior.
     [self setAnchorDuringResize:false];
+    return self;
+}
+
+- (void)setHeaderView:(NSView*)x {
+    [_headerView removeFromSuperview];
+    _headerView = x;
     
     // Add header view
-    {
-        ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
-        _headerView = [ImageGridHeaderView new];
-        [layer setContentInsets:{[_headerView height]+10,0,0,0}];
-        [self addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
-        
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
-            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
-    }
+    ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
+    [layer setContentInsets:{[_headerView intrinsicContentSize].height+10,0,0,0}];
+    [self addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
     
-    return self;
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
 }
 
 //- (void)setLoadPhotoCount:(NSUInteger)count {

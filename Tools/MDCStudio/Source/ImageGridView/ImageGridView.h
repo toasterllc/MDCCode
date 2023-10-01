@@ -26,4 +26,5 @@
 @end
 
 @interface ImageGridScrollView : FixedScrollView
+- (void)setHeaderView:(NSView*)x;
 @end

@@ -5,7 +5,7 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="ImageGridHeaderView">
+        <customObject id="-2" userLabel="File's Owner" customClass="DeviceImageGridHeaderView">
             <connections>
                 <outlet property="_height" destination="3zV-F0-Xdo" id="rxk-22-Crj"/>
                 <outlet property="_loadPhotosContainerView" destination="bA5-3S-iVB" id="ubC-S2-eQG"/>

@@ -9,6 +9,7 @@
 #import "MockImageSource.h"
 #import "Prefs.h"
 #import "DeviceSettings/DeviceSettingsView.h"
+#import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
 
 using namespace MDCStudio;
 
@@ -434,24 +435,27 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 //    }
     
     assert(sourceListView == _sourceListView);
-    ImageSourcePtr imageSource = [_sourceListView selection];
-    if (imageSource) {
+    MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>([_sourceListView selection]);
+    if (device) {
         {
-            ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
+            DeviceImageGridScrollView* imageGridScrollView =
+                [[DeviceImageGridScrollView alloc] initWithDevice:device];
+            
+            ImageGridView* imageGridView = [imageGridScrollView imageGridView];
             [imageGridView setDelegate:self];
             _UpdateImageGridViewFromPrefs(PrefsGlobal(), imageGridView);
-            _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
+            _imageGridScrollView = imageGridScrollView;
         }
         
         {
-            ImageView* imageView = [[ImageView alloc] initWithImageSource:imageSource];
+            ImageView* imageView = [[ImageView alloc] initWithImageSource:device];
             [imageView setDelegate:self];
             _imageScrollView = [[ImageScrollView alloc] initWithFixedDocument:imageView];
             [_imageScrollView setMagnifyToFit:true animate:false];
         }
         
         {
-            _inspectorView = [[InspectorView alloc] initWithImageSource:imageSource];
+            _inspectorView = [[InspectorView alloc] initWithImageSource:device];
         }
         
         _SetView(_center, _imageGridScrollView);
