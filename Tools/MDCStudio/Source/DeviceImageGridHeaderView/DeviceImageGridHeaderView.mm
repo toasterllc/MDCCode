@@ -1,4 +1,6 @@
 #import "DeviceImageGridHeaderView.h"
+#import "date/date.h"
+#import "date/tz.h"
 using namespace MDCStudio;
 
 @implementation DeviceImageGridHeaderView {
@@ -65,20 +67,59 @@ using namespace MDCStudio;
 }
 
 static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
+    using namespace std::chrono;
+    NSCalendar* cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    NSDateFormatter* monthYearFormatter = [[NSDateFormatter alloc] init];
+    [monthYearFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+    [monthYearFormatter setCalendar:cal];
+    [monthYearFormatter setTimeZone:[cal timeZone]];
+    [monthYearFormatter setLocalizedDateFormatFromTemplate:@"MMMYYYY"];
+    [monthYearFormatter setLenient:true];
+    
     auto lock = std::unique_lock(imgLib);
     if (imgLib.empty()) return @"No photos";
     
-    auto front = imgLib.front();
-    auto back = imgLib.back();
+//    auto front = imgLib.front();
+//    auto back = imgLib.back();
     
-//    auto tbegin = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(front->info.timestamp));
-//    auto tend = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(back->info.timestamp));
+    auto itBegin = std::upper_bound(imgLib.begin(), imgLib.end(), 0,
+        [&](auto, const auto& x) -> bool {
+            return x->status.loadCount > 0;
+        });
     
+    auto itEnd = std::lower_bound(imgLib.begin(), imgLib.end(), 0,
+        [&](const auto& x, auto) -> bool {
+            return x->status.loadCount > 0;
+        });
     
+    auto refBegin = *itBegin;
+    auto refEnd = *std::prev(itEnd);
     
+    auto tbegin = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(refBegin->info.timestamp));
+    auto tend = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(refEnd->info.timestamp));
     
+    auto ymdBegin = date::year_month_day(std::chrono::floor<date::days>(tbegin));
+    auto ymdEnd = date::year_month_day(std::chrono::floor<date::days>(tend));
     
-    return [NSString stringWithFormat:@"%ju photos", (uintmax_t)imgLib.recordCount()];
+    const milliseconds msBegin = duration_cast<milliseconds>(tbegin.time_since_epoch());
+    const milliseconds msEnd = duration_cast<milliseconds>(tend.time_since_epoch());
+    
+    NSDate* dateBegin = [NSDate dateWithTimeIntervalSince1970:(double)msBegin.count()/1000.];
+    NSDate* dateEnd = [NSDate dateWithTimeIntervalSince1970:(double)msEnd.count()/1000.];
+    
+    NSString* strBegin = [monthYearFormatter stringFromDate:dateBegin];
+    NSString* strEnd = [monthYearFormatter stringFromDate:dateEnd];
+    
+    NSString* dateDesc = nil;
+    if (ymdBegin.year()==ymdEnd.year() && ymdBegin.month()==ymdEnd.month()) {
+        // Same month and year
+        dateDesc = strBegin;
+    } else {
+        // Different month/year
+        dateDesc = [NSString stringWithFormat:@"%@ – %@", strBegin, strEnd];
+    }
+    
+    return [NSString stringWithFormat:@"%ju photos from %@", (uintmax_t)imgLib.recordCount(), dateDesc];
 }
 
 - (void)_updateStatus {

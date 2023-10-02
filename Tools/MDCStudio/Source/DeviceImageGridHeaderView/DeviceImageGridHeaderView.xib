@@ -44,7 +44,7 @@
                             <constraints>
                                 <constraint firstAttribute="width" constant="60" id="JyA-p5-zGK"/>
                             </constraints>
-                            <textFieldCell key="cell" title="additional photos" id="CcI-qh-dqj">
+                            <textFieldCell key="cell" title="unloaded photos" id="CcI-qh-dqj">
                                 <font key="font" metaFont="systemThin" size="11"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
