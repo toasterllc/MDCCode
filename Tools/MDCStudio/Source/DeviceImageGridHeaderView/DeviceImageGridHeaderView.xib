@@ -7,8 +7,8 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="DeviceImageGridHeaderView">
             <connections>
-                <outlet property="_height" destination="3zV-F0-Xdo" id="rxk-22-Crj"/>
-                <outlet property="_loadPhotosContainerView" destination="bA5-3S-iVB" id="ubC-S2-eQG"/>
+                <outlet property="_heightConstraint" destination="3zV-F0-Xdo" id="Wtu-KW-VjE"/>
+                <outlet property="_hideLoadPhotosConstraint" destination="LYc-fl-6F9" id="3sd-dO-kJI"/>
                 <outlet property="_loadPhotosCountLabel" destination="lj9-Jf-aEb" id="Qev-FI-9rx"/>
                 <outlet property="_nibView" destination="MCr-up-gtv" id="MuD-1o-jBO"/>
                 <outlet property="_progressIndicator" destination="n4F-mV-p8l" id="gSP-C6-ji7"/>
@@ -18,16 +18,16 @@
         <visualEffectView wantsLayer="YES" blendingMode="withinWindow" material="fullScreenUI" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
             <rect key="frame" x="0.0" y="0.0" width="830" height="50"/>
             <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zEQ-4d-gM0">
+                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="zEQ-4d-gM0">
                     <rect key="frame" x="18" y="14" width="310" height="21"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="10 photos from Feb 2023 – March 2023" id="utu-oB-Dri">
+                    <textFieldCell key="cell" lineBreakMode="truncatingTail" title="10 photos from Feb 2023 – March 2023" id="utu-oB-Dri">
                         <font key="font" metaFont="systemThin" size="18"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="bA5-3S-iVB">
-                    <rect key="frame" x="626" y="0.0" width="184" height="50"/>
+                    <rect key="frame" x="626" y="0.0" width="204" height="50"/>
                     <subviews>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lj9-Jf-aEb">
                             <rect key="frame" x="-2" y="9" width="38" height="33"/>
@@ -65,10 +65,10 @@
                     <constraints>
                         <constraint firstItem="lj9-Jf-aEb" firstAttribute="centerY" secondItem="bA5-3S-iVB" secondAttribute="centerY" id="4ft-VC-pwt"/>
                         <constraint firstItem="qoJ-Kq-CeU" firstAttribute="leading" secondItem="lj9-Jf-aEb" secondAttribute="trailing" constant="5" id="6lf-W7-aQq"/>
-                        <constraint firstAttribute="trailing" secondItem="DUf-K3-QmS" secondAttribute="trailing" id="Q1s-Py-xt0"/>
+                        <constraint firstAttribute="trailing" secondItem="DUf-K3-QmS" secondAttribute="trailing" constant="20" id="Q1s-Py-xt0"/>
                         <constraint firstItem="DUf-K3-QmS" firstAttribute="centerY" secondItem="bA5-3S-iVB" secondAttribute="centerY" id="Vsz-7t-4Pu"/>
-                        <constraint firstItem="lj9-Jf-aEb" firstAttribute="leading" secondItem="bA5-3S-iVB" secondAttribute="leading" id="hws-8o-TvO"/>
                         <constraint firstItem="qoJ-Kq-CeU" firstAttribute="centerY" secondItem="lj9-Jf-aEb" secondAttribute="centerY" constant="-1" id="qlb-Fu-QAm"/>
+                        <constraint firstItem="lj9-Jf-aEb" firstAttribute="leading" secondItem="bA5-3S-iVB" secondAttribute="leading" id="w9A-PC-W7V"/>
                         <constraint firstItem="DUf-K3-QmS" firstAttribute="leading" secondItem="qoJ-Kq-CeU" secondAttribute="trailing" constant="5" id="yDq-85-vkm"/>
                     </constraints>
                 </customView>
@@ -82,11 +82,13 @@
                 <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" id="Dgn-19-9hS"/>
                 <constraint firstItem="n4F-mV-p8l" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="-5" id="JbQ-ZB-X8m"/>
+                <constraint firstItem="bA5-3S-iVB" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="trailing" priority="250" id="LYc-fl-6F9"/>
+                <constraint firstItem="bA5-3S-iVB" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="zEQ-4d-gM0" secondAttribute="trailing" priority="500" constant="10" id="MtU-vv-WcH"/>
                 <constraint firstAttribute="bottom" secondItem="n4F-mV-p8l" secondAttribute="top" constant="3.5" id="Ufw-5O-21d"/>
                 <constraint firstItem="zEQ-4d-gM0" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" constant="1" id="hfG-ee-3wU"/>
                 <constraint firstAttribute="trailing" secondItem="n4F-mV-p8l" secondAttribute="trailing" constant="-5" id="pqh-6y-C1S"/>
                 <constraint firstAttribute="bottom" secondItem="bA5-3S-iVB" secondAttribute="bottom" id="vBD-Wv-Kni"/>
-                <constraint firstAttribute="trailing" secondItem="bA5-3S-iVB" secondAttribute="trailing" constant="20" id="wOa-Ys-JHJ"/>
+                <constraint firstAttribute="trailing" secondItem="bA5-3S-iVB" secondAttribute="trailing" priority="500" id="wOa-Ys-JHJ"/>
             </constraints>
             <point key="canvasLocation" x="696" y="-337"/>
         </visualEffectView>

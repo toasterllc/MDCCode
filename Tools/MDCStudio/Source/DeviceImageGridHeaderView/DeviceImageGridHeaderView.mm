@@ -8,9 +8,9 @@ using namespace MDCStudio;
     ImageLibrary* _imageLibrary;
     __weak id<DeviceImageGridHeaderViewDelegate> _delegate;
     IBOutlet NSView* _nibView;
-    IBOutlet NSLayoutConstraint* _height;
+    IBOutlet NSLayoutConstraint* _heightConstraint;
+    IBOutlet NSLayoutConstraint* _hideLoadPhotosConstraint;
     IBOutlet NSTextField* _statusLabel;
-    IBOutlet NSView* _loadPhotosContainerView;
     IBOutlet NSTextField* _loadPhotosCountLabel;
     IBOutlet NSProgressIndicator* _progressIndicator;
 }
@@ -55,7 +55,7 @@ using namespace MDCStudio;
 }
 
 - (NSSize)intrinsicContentSize {
-    return { NSViewNoIntrinsicMetric, [_height constant] };
+    return { NSViewNoIntrinsicMetric, [_heightConstraint constant] };
 }
 
 - (void)setDelegate:(id<DeviceImageGridHeaderViewDelegate>)x {
@@ -165,9 +165,9 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
         const std::optional<size_t> loadCount = _LoadCount(status, *_imageLibrary);
         if (loadCount && *loadCount) {
             [_loadPhotosCountLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)*loadCount]];
-            [_loadPhotosContainerView setHidden:false];
+            [_hideLoadPhotosConstraint setPriority:NSLayoutPriorityDefaultLow];
         } else {
-            [_loadPhotosContainerView setHidden:true];
+            [_hideLoadPhotosConstraint setPriority:NSLayoutPriorityRequired];
         }
     }
     
