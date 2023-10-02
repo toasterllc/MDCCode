@@ -12,6 +12,7 @@ using namespace MDCStudio;
     IBOutlet NSTextField* _statusLabel;
     IBOutlet NSView* _loadPhotosContainerView;
     IBOutlet NSTextField* _loadPhotosCountLabel;
+    IBOutlet NSProgressIndicator* _progressIndicator;
 }
 
 - (instancetype)initWithDevice:(MDCStudio::MDCDevicePtr)device {
@@ -59,11 +60,6 @@ using namespace MDCStudio;
 
 - (void)setDelegate:(id<DeviceImageGridHeaderViewDelegate>)x {
     _delegate = x;
-}
-
-- (void)_update {
-    [self _updateStatus];
-    [self _updateLoadCount];
 }
 
 static auto _FirstLoaded(ImageLibrary& imgLib) {
@@ -131,7 +127,9 @@ static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
 }
 
 static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibrary& imgLib) {
-    if (status.syncing) return std::nullopt;
+    // Short-circut if syncing is in progress.
+    // In that case, we don't want to show the 'Load' button in the header
+    if (status.sync) return std::nullopt;
     
     {
         auto lock = std::unique_lock(imgLib);
@@ -150,23 +148,52 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     }
 }
 
-static std::optional<size_t> _LoadCount(MDCDevicePtr device) {
-    return _LoadCount(device->status(), device->imageLibrary());
-}
+//static std::optional<size_t> _LoadCount(const MDCDevice::Status& status MDCDevicePtr device) {
+//    return _LoadCount(device->status(), device->imageLibrary());
+//}
 
-- (void)_updateStatus {
-    [_statusLabel setStringValue:_ImageLibraryStatus(*_imageLibrary)];
-}
-
-- (void)_updateLoadCount {
-    const std::optional<size_t> loadCount = _LoadCount(_device);
-    if (loadCount && *loadCount) {
-        [_loadPhotosCountLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)*loadCount]];
-        [_loadPhotosContainerView setHidden:false];
-    } else {
-        [_loadPhotosContainerView setHidden:true];
+- (void)_update {
+    const MDCDevice::Status status = _device->status();
+    
+    // Update status
+    {
+        [_statusLabel setStringValue:_ImageLibraryStatus(*_imageLibrary)];
+    }
+    
+    // Update unloaded photo count
+    {
+        const std::optional<size_t> loadCount = _LoadCount(status, *_imageLibrary);
+        if (loadCount && *loadCount) {
+            [_loadPhotosCountLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)*loadCount]];
+            [_loadPhotosContainerView setHidden:false];
+        } else {
+            [_loadPhotosContainerView setHidden:true];
+        }
+    }
+    
+    // Upload load progress
+    {
+        [_progressIndicator setDoubleValue:(status.sync ? status.sync->progress : 0)];
     }
 }
+
+//- (void)_updateStatus {
+//    [_statusLabel setStringValue:_ImageLibraryStatus(*_imageLibrary)];
+//}
+//
+//- (void)_updateLoadCount {
+//    const std::optional<size_t> loadCount = _LoadCount(_device);
+//    if (loadCount && *loadCount) {
+//        [_loadPhotosCountLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)*loadCount]];
+//        [_loadPhotosContainerView setHidden:false];
+//    } else {
+//        [_loadPhotosContainerView setHidden:true];
+//    }
+//}
+//
+//- (void)_updateLoadProgress {
+//    [_progressIndicator setDoubleValue:];
+//}
 
 - (IBAction)load:(id)sender {
     [_delegate deviceImageGridHeaderViewLoad:self];

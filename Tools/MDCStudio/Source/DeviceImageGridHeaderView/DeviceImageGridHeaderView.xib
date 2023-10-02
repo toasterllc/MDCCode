@@ -11,6 +11,7 @@
                 <outlet property="_loadPhotosContainerView" destination="bA5-3S-iVB" id="ubC-S2-eQG"/>
                 <outlet property="_loadPhotosCountLabel" destination="lj9-Jf-aEb" id="Qev-FI-9rx"/>
                 <outlet property="_nibView" destination="MCr-up-gtv" id="MuD-1o-jBO"/>
+                <outlet property="_progressIndicator" destination="n4F-mV-p8l" id="gSP-C6-ji7"/>
                 <outlet property="_statusLabel" destination="zEQ-4d-gM0" id="UXb-DA-TRV"/>
             </connections>
         </customObject>
@@ -71,7 +72,7 @@
                         <constraint firstItem="DUf-K3-QmS" firstAttribute="leading" secondItem="qoJ-Kq-CeU" secondAttribute="trailing" constant="5" id="yDq-85-vkm"/>
                     </constraints>
                 </customView>
-                <progressIndicator wantsLayer="YES" maxValue="100" doubleValue="50" controlSize="small" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="n4F-mV-p8l">
+                <progressIndicator wantsLayer="YES" maxValue="1" controlSize="small" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="n4F-mV-p8l">
                     <rect key="frame" x="-5" y="-8" width="840" height="12"/>
                 </progressIndicator>
             </subviews>

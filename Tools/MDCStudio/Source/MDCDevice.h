@@ -35,10 +35,14 @@ public:
     using Observer = std::function<bool()>;
     
     struct Status {
+        struct Sync {
+            float progress = 0;
+        };
+        
         float batteryLevel = 0;
         Img::Id imgIdBegin = 0;
         Img::Id imgIdEnd = 0;
-        bool syncing = false;
+        std::optional<Sync> sync;
     };
     
     MDCDevice(MDCUSBDevice&& dev) :
@@ -164,8 +168,9 @@ public:
     void sync() {
         {
             auto lock = _status.signal.lock();
-            if (_status.status.syncing) return;
-            _status.status.syncing = true;
+            // Bail if syncing is already underway
+            if (_status.status.sync) return;
+            _status.status.sync = Status::Sync{};
         }
         
         if (_sync.thread.joinable()) _sync.thread.join();
@@ -530,7 +535,7 @@ private:
             _imageLibrary.notify(ImageLibrary::Event::Type::ChangeThumbnail, notify);
         }
         
-        if (!count) state.signal.signalOne();
+        if (!count || !notify.empty()) state.signal.signalAll();
     }
     
     void _renderEnqueue(std::unique_lock<std::mutex>& lock, _LoadState& state, bool initial, bool validateChecksum, ImageRecordPtr rec, _ThumbBuffer buf) {
@@ -558,13 +563,28 @@ private:
         };
     }
     
-    void _loadImages(Priority priority, bool initial, std::set<ImageRecordPtr> recs) {
+    void _loadImages(Priority priority, bool initial,
+        std::set<ImageRecordPtr> recs, std::function<void(float)> progressCallback=nullptr) {
+        
         const size_t imageCount = recs.size();
         auto timeStart = std::chrono::steady_clock::now();
         
         auto state = _loadStates.pop().entry();
         assert(!state->underway);
-        state->underway += recs.size();
+        state->underway += imageCount;
+        
+        std::thread progressThread;
+        if (progressCallback) {
+            progressThread = std::thread([&] {
+                state->signal.wait([&] {
+                    const float progress = (float)(imageCount - state->underway) / imageCount;
+                    progressCallback(progress);
+                    return !state->underway;
+                });
+            });
+        }
+        
+        printf("_loadImages(_LoadState: %p)\n", &*state);
         
         // Kick off rendering for all the recs that are in the cache
         {
@@ -623,6 +643,9 @@ private:
         
         // Wait until everything's done
         state->signal.wait([&] { return !state->underway; });
+        
+        // Wait for progress thread to exit
+        if (progressThread.joinable()) progressThread.join();
         
         // Print profile stats
         {
@@ -757,7 +780,13 @@ private:
                     }
                     
                     printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
-                    _loadImages(Priority::Low, true, recs);
+                    _loadImages(Priority::Low, true, recs, [=] (float progress) {
+                        {
+                            auto lock = _status.signal.lock();
+                            _status.status.sync->progress = progress;
+                        }
+                        _notifyObservers();
+                    });
                 }
             }
         
@@ -771,7 +800,7 @@ private:
         // Update syncing status
         {
             auto lock = _status.signal.lock();
-            _status.status.syncing = false;
+            _status.status.sync = std::nullopt;
         }
         
         // Notify observers that syncing is complete
@@ -839,8 +868,8 @@ private:
                         assert(len <= work.buf.cap());
                         
                         {
-                            printf("[_sdRead_thread] reading blockBegin:%ju len:%ju (%.1f MB)\n",
-                                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
+//                            printf("[_sdRead_thread] reading blockBegin:%ju len:%ju (%.1f MB)\n",
+//                                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
                             
                             const _SDBlock block = blockBegin;
                             void*const dst = work.buf.storage();
@@ -857,7 +886,7 @@ private:
                                 _device.device.readout(dst, len);
                             
                             } else {
-                                printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
+//                                printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
                                 _device.device.readout(dst, len);
                             }
                             sdReadEnd = _SDBlockEnd(block, len);
