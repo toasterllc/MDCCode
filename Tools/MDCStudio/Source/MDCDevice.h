@@ -38,6 +38,7 @@ public:
         float batteryLevel = 0;
         Img::Id imgIdBegin = 0;
         Img::Id imgIdEnd = 0;
+        bool syncing = false;
     };
     
     MDCDevice(MDCUSBDevice&& dev) :
@@ -161,10 +162,17 @@ public:
     }
     
     void sync() {
-        if (_sync.running) return;
+        {
+            auto lock = _status.signal.lock();
+            if (_status.status.syncing) return;
+            _status.status.syncing = true;
+        }
+        
         if (_sync.thread.joinable()) _sync.thread.join();
-        _sync.running = true;
         _sync.thread = std::thread([&] { _sync_thread(); });
+        
+        // Notify observers that syncing started
+        _notifyObservers();
     }
     
     // MARK: - ImageSource
@@ -760,7 +768,14 @@ private:
             printf("[_sync_thread] Error: %s\n", e.what());
         }
         
-        _sync.running = false;
+        // Update syncing status
+        {
+            auto lock = _status.signal.lock();
+            _status.status.syncing = false;
+        }
+        
+        // Notify observers that syncing is complete
+        _notifyObservers();
     }
     
     // MARK: - SD Read

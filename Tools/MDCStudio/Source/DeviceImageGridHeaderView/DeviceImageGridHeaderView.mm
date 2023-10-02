@@ -66,6 +66,21 @@ using namespace MDCStudio;
     [self _updateLoadCount];
 }
 
+static auto _FirstLoaded(ImageLibrary& imgLib) {
+    for (auto it=imgLib.begin(); it!=imgLib.end(); it++) {
+        if ((*it)->status.loadCount) return it;
+    }
+    return imgLib.end();
+}
+
+static auto _LastLoaded(ImageLibrary& imgLib) {
+    for (auto it=imgLib.rbegin(); it!=imgLib.rend(); it++) {
+        if ((*it)->status.loadCount) return it;
+    }
+    return imgLib.rend();
+}
+
+
 static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
     using namespace std::chrono;
     NSCalendar* cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
@@ -79,47 +94,64 @@ static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
     auto lock = std::unique_lock(imgLib);
     if (imgLib.empty()) return @"No photos";
     
-//    auto front = imgLib.front();
-//    auto back = imgLib.back();
+    // itFirst: first loaded record
+    auto itFirst = _FirstLoaded(imgLib);
+    // No loaded photos yet
+    if (itFirst == imgLib.end()) return @"No photos";
     
-    auto itBegin = std::upper_bound(imgLib.begin(), imgLib.end(), 0,
-        [&](auto, const auto& x) -> bool {
-            return x->status.loadCount > 0;
-        });
+    // itLast: last loaded record
+    auto itLast = _LastLoaded(imgLib);
     
-    auto itEnd = std::lower_bound(imgLib.begin(), imgLib.end(), 0,
-        [&](const auto& x, auto) -> bool {
-            return x->status.loadCount > 0;
-        });
+    auto refFirst = *itFirst;
+    auto refLast = *itLast;
     
-    auto refBegin = *itBegin;
-    auto refEnd = *std::prev(itEnd);
+    auto tFirst = date::clock_cast<system_clock>(Time::Clock::TimePointFromTimeInstant(refFirst->info.timestamp));
+    auto tLast = date::clock_cast<system_clock>(Time::Clock::TimePointFromTimeInstant(refLast->info.timestamp));
     
-    auto tbegin = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(refBegin->info.timestamp));
-    auto tend = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(refEnd->info.timestamp));
+    const milliseconds msFirst = duration_cast<milliseconds>(tFirst.time_since_epoch());
+    const milliseconds msLast = duration_cast<milliseconds>(tLast.time_since_epoch());
     
-    auto ymdBegin = date::year_month_day(std::chrono::floor<date::days>(tbegin));
-    auto ymdEnd = date::year_month_day(std::chrono::floor<date::days>(tend));
+    NSDate* dateFirst = [NSDate dateWithTimeIntervalSince1970:(double)msFirst.count()/1000.];
+    NSDate* dateLast = [NSDate dateWithTimeIntervalSince1970:(double)msLast.count()/1000.];
     
-    const milliseconds msBegin = duration_cast<milliseconds>(tbegin.time_since_epoch());
-    const milliseconds msEnd = duration_cast<milliseconds>(tend.time_since_epoch());
-    
-    NSDate* dateBegin = [NSDate dateWithTimeIntervalSince1970:(double)msBegin.count()/1000.];
-    NSDate* dateEnd = [NSDate dateWithTimeIntervalSince1970:(double)msEnd.count()/1000.];
-    
-    NSString* strBegin = [monthYearFormatter stringFromDate:dateBegin];
-    NSString* strEnd = [monthYearFormatter stringFromDate:dateEnd];
+    NSString* strFirst = [monthYearFormatter stringFromDate:dateFirst];
+    NSString* strLast = [monthYearFormatter stringFromDate:dateLast];
     
     NSString* dateDesc = nil;
-    if (ymdBegin.year()==ymdEnd.year() && ymdBegin.month()==ymdEnd.month()) {
+    
+    if ([strFirst isEqualToString:strLast]) {
         // Same month and year
-        dateDesc = strBegin;
+        dateDesc = strFirst;
     } else {
         // Different month/year
-        dateDesc = [NSString stringWithFormat:@"%@ – %@", strBegin, strEnd];
+        dateDesc = [NSString stringWithFormat:@"%@ – %@", strFirst, strLast];
     }
     
     return [NSString stringWithFormat:@"%ju photos from %@", (uintmax_t)imgLib.recordCount(), dateDesc];
+}
+
+static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibrary& imgLib) {
+    if (status.syncing) return std::nullopt;
+    
+    {
+        auto lock = std::unique_lock(imgLib);
+        const Img::Id libImgIdEnd = (!imgLib.empty() ? imgLib.back()->info.id+1 : 0);
+        
+        // Calculate how many images to add to the end of the library: device has, lib doesn't
+        if (libImgIdEnd > status.imgIdEnd) {
+            #warning TODO: how do we properly handle this situation?
+            throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, status.imgIdEnd: %ju)",
+                (uintmax_t)libImgIdEnd,
+                (uintmax_t)status.imgIdEnd
+            );
+        }
+        
+        return status.imgIdEnd - std::max(status.imgIdBegin, libImgIdEnd);
+    }
+}
+
+static std::optional<size_t> _LoadCount(MDCDevicePtr device) {
+    return _LoadCount(device->status(), device->imageLibrary());
 }
 
 - (void)_updateStatus {
@@ -127,33 +159,13 @@ static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
 }
 
 - (void)_updateLoadCount {
-    const size_t loadCount = _LoadCount(_device);
-    if (loadCount) {
-        [_loadPhotosCountLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)loadCount]];
+    const std::optional<size_t> loadCount = _LoadCount(_device);
+    if (loadCount && *loadCount) {
+        [_loadPhotosCountLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)*loadCount]];
         [_loadPhotosContainerView setHidden:false];
     } else {
         [_loadPhotosContainerView setHidden:true];
     }
-}
-
-static size_t _LoadCount(const MDCDevice::Status& status, ImageLibrary& imgLib) {
-    auto lock = std::unique_lock(imgLib);
-    const Img::Id libImgIdEnd = (!imgLib.empty() ? imgLib.back()->info.id+1 : 0);
-    
-    // Calculate how many images to add to the end of the library: device has, lib doesn't
-    if (libImgIdEnd > status.imgIdEnd) {
-        #warning TODO: how do we properly handle this situation?
-        throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, status.imgIdEnd: %ju)",
-            (uintmax_t)libImgIdEnd,
-            (uintmax_t)status.imgIdEnd
-        );
-    }
-    
-    return status.imgIdEnd - std::max(status.imgIdBegin, libImgIdEnd);
-}
-
-static size_t _LoadCount(MDCDevicePtr device) {
-    return _LoadCount(device->status(), device->imageLibrary());
 }
 
 - (IBAction)load:(id)sender {
