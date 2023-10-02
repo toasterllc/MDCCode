@@ -574,7 +574,7 @@ private:
         state->underway += imageCount;
         
         std::thread progressThread;
-        if (progressCallback) {
+        if (progressCallback && imageCount) {
             progressThread = std::thread([&] {
                 state->signal.wait([&] {
                     const float progress = (float)(imageCount - state->underway) / imageCount;
@@ -583,8 +583,6 @@ private:
                 });
             });
         }
-        
-        printf("_loadImages(_LoadState: %p)\n", &*state);
         
         // Kick off rendering for all the recs that are in the cache
         {

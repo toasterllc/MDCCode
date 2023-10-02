@@ -173,7 +173,8 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     
     // Upload load progress
     {
-        [_progressIndicator setDoubleValue:(status.sync ? status.sync->progress : 0)];
+        const float progress = (status.sync ? status.sync->progress : 0);
+        [_progressIndicator setDoubleValue:progress];
     }
 }
 
