@@ -345,36 +345,28 @@ private:
             for (;;) {
                 if (!_BatteryStatusPause) {
                     const MSP::ChargeStatus chargeStatus = _ChargeStatusRead();
-                    bool resampleBattery = true;
-                    
                     if (chargeStatus == MSP::ChargeStatus::Underway) {
                         chargeUnderwayCount++;
                         if (chargeUnderwayCount >= ResampleBatteryIntervalCount) {
                             chargeUnderwayCount = 0;
-                        } else {
-                            resampleBattery = false;
-                        }
-                        
-                        if (resampleBattery) {
+                            
                             // Temporarily disable the battery chager while we sample the battery
                             _BAT_CHRG_EN_::Write(1);
                             Scheduler::Sleep(Scheduler::template Ms<1000>);
+                            // Sample battery
+                            batteryLevel = _BatteryStatusGet().level;
+                            // Re-enable the battery charger
+                            _BAT_CHRG_EN_::Write(0);
                         }
-                    }
-                    
-                    if (resampleBattery) {
+                    } else {
                         batteryLevel = _BatteryStatusGet().level;
+                        chargeUnderwayCount = 0;
                     }
                     
                     _BatteryStatus = {
                         .chargeStatus = chargeStatus,
                         .level = batteryLevel,
                     };
-                    
-                    if (chargeStatus == MSP::ChargeStatus::Underway) {
-                        // Re-enable the battery charger
-                        _BAT_CHRG_EN_::Write(0);
-                    }
                     
                     // Set the charge status LED
                     _ChargeStatusSet(_BatteryStatus.chargeStatus);
