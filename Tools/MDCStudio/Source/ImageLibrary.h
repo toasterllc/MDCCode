@@ -24,6 +24,9 @@ struct [[gnu::packed]] ImageInfo {
     uint16_t coarseIntTime = 0;
     uint16_t analogGain = 0;
     
+    uint16_t batteryLevelMv = 0;
+    uint16_t _pad[3] = {};
+    
     // illumEst: estimated illuminant
     double illumEst[3] = {0,0,0};
     

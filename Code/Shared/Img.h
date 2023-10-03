@@ -17,19 +17,19 @@ struct [[gnu::packed]] Header {
     static constexpr MagicNumber24 MagicNumber  = { 0xC0FFEE };
     static constexpr uint8_t Version            = 0;
     
-    MagicNumber24 magic;    // 0xC0FFEE
-    uint8_t version;        // 0x00
+    MagicNumber24 magic;        // 0xC0FFEE
+    uint8_t version;            // 0x00
     
-    uint16_t imageWidth;    // 0x0900 == 2304
-    uint16_t imageHeight;   // 0x0510 == 1296
+    uint16_t imageWidth;        // 0x0900 == 2304
+    uint16_t imageHeight;       // 0x0510 == 1296
     
-    uint16_t coarseIntTime; // 0x1111
-    uint16_t analogGain;    // 0x2222
+    uint16_t coarseIntTime;     // 0x1111
+    uint16_t analogGain;        // 0x2222
     
-    Id id;                  // 0xA7A6A5A4A3A2A1A0
-    uint64_t timestamp;     // 0xB7B6B5B4B3B2B1B0
+    Id id;                      // 0xA7A6A5A4A3A2A1A0
+    uint64_t timestamp;         // 0xB7B6B5B4B3B2B1B0
     
-    uint16_t batteryLevel;  // 0x4342
+    uint16_t batteryLevelMv;    // 0x4342
     
     uint8_t _pad[2];
 };

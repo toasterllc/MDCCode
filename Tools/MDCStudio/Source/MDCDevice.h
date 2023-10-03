@@ -959,6 +959,8 @@ private:
                         
                         rec.info.coarseIntTime  = imgHeader.coarseIntTime;
                         rec.info.analogGain     = imgHeader.analogGain;
+                        
+                        rec.info.batteryLevelMv = imgHeader.batteryLevelMv;
                     }
                     
                     // Populate .options

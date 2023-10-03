@@ -4,6 +4,7 @@
 #import "ImageCornerButton/ImageCornerButton.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/Clock.h"
+#import "Code/Shared/MSP.h"
 #import "Toastbox/DurationString.h"
 #import "Toastbox/Mac/Util.h"
 #import "ImageUtil.h"
@@ -750,6 +751,15 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             }
             
             {
+                Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
+                it->name = @"Battery";
+                it->valueIndent = 115;
+                it->getter = _GetterCreate(self, _Get_batteryLevel);
+                it->darkBackground = true;
+                [section addItem:it];
+            }
+            
+            {
                 Item_Spacer* it = [self _createItemWithClass:[Item_Spacer class]];
                 it->height = 10;
                 it->darkBackground = true;
@@ -1119,6 +1129,14 @@ static id _Get_integrationTime(const ImageRecord& rec) {
 
 static id _Get_analogGain(const ImageRecord& rec) {
     return @(rec.info.analogGain);
+}
+
+static id _Get_batteryLevel(const ImageRecord& rec) {
+    const MSP::BatteryLevel batteryLevel = MSP::BatteryLevelLinearize(rec.info.batteryLevelMv);
+    if (batteryLevel == MSP::BatteryLevelInvalid) return @"Invalid";
+    const float percentage = std::clamp(((float)(batteryLevel-MSP::BatteryLevelMin) / (MSP::BatteryLevelMax-MSP::BatteryLevelMin))*100, 0.f, 100.f);
+    
+    return [NSString stringWithFormat:@"%ju%%", (uintmax_t)std::round(percentage)];
 }
 
 static id _Get_whiteBalanceAuto(const ImageRecord& rec) {

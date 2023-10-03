@@ -75,8 +75,10 @@ public:
         // We're not using _sendCmd() because the Reset command is special and doesn't respond with the typical
         // 'command-accepted' status on the DataIn endpoint, which _sendCmd() expects. (The Reset command
         // doesn't send this status because the state of endpoint is assumed broken hence the need to reset.)
+        printf("[MDCUSBDevice] reset vendor request start\n");
         const STM::Cmd cmd = { .op = STM::Op::Reset };
         _dev.vendorRequestOut(0, cmd);
+        printf("[MDCUSBDevice] reset vendor request end\n");
         
         // Reset endpoints
         const std::vector<uint8_t> eps = _dev.endpoints();
