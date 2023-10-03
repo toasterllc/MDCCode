@@ -972,12 +972,14 @@ static void _HostModeSet(const STM::Cmd& cmd) {
     // Update whether the charge status LED updates are paused.
     _System::BatteryStatusPause(arg.en);
     
-    // Reset ICE40 since it may have been reprogrammed while in host mode
-    _SPIConfigSet<_SPIConfigs::Floating>();
-    _ICE_CRST_::Write(0);
-    _Scheduler::Sleep(_Scheduler::Ms<1>);
-    _ICE_CRST_::Write(1);
-    _Scheduler::Sleep(_Scheduler::Ms<30>);
+    // If we're exiting host mode, reset ICE40 since it may have been reprogrammed while in host mode
+    if (!arg.en) {
+        _SPIConfigSet<_SPIConfigs::Floating>();
+        _ICE_CRST_::Write(0);
+        _Scheduler::Sleep(_Scheduler::Ms<1>);
+        _ICE_CRST_::Write(1);
+        _Scheduler::Sleep(_Scheduler::Ms<30>);
+    }
     
     const MSP::Cmd mspCmd = {
         .op = MSP::Cmd::Op::HostModeSet,

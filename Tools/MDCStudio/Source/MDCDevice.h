@@ -70,7 +70,7 @@ public:
         
         {
             // Enter host mode to adjust the device time
-            auto hostMode = _hostModeAssertion.assertion();
+            auto hostMode = _hostMode();
             
             // Update our mspState from the device
             const MSP::State mspState = _device.device.mspStateRead();
@@ -158,7 +158,7 @@ public:
     void settings(const MSP::Settings& x) {
         _mspSettings = x;
         {
-            auto hostMode = _hostModeAssertion.assertion();
+            auto hostMode = _hostMode();
             MSP::State mspState = _device.device.mspStateRead();
             mspState.settings = _mspSettings;
             _device.device.mspStateWrite(mspState);
@@ -330,6 +330,14 @@ private:
     using _SDReadWorkQueue = std::queue<_SDReadWork>;
     using _RenderWorkQueue = std::queue<_RenderWork>;
 //    using _ImageLoadQueue = std::queue<_RenderWork>;
+    
+    struct __Cleanup {
+        __Cleanup(std::function<void()> fn) : _fn(fn) {}
+        ~__Cleanup() { _fn(); }
+        std::function<void()> _fn;
+    };
+    
+    using _Cleanup = std::unique_ptr<__Cleanup>;
     
     static int _CPUCount() {
         static int CPUCount = std::max(1, (int)std::thread::hardware_concurrency());
@@ -842,7 +850,7 @@ private:
                 
                 // Initiate SD mode
                 printf("[_sdRead_thread] Entering SD mode...\n");
-                auto sdMode = _sdModeAssertion.assertion();
+                auto sdMode = _sdMode();
                 printf("[_sdRead_thread] Entered SD mode\n");
                 
                 std::optional<_SDBlock> sdReadEnd;
@@ -1070,14 +1078,26 @@ private:
         }
     }
     
+    _Cleanup _hostMode() {
+        _hostModeSet(true);
+        return std::make_unique<__Cleanup>([=] { _hostModeSet(false); });
+    }
+    
+    _Cleanup _sdMode() {
+        _sdModeSet(true);
+        return std::make_unique<__Cleanup>([=] { _sdModeSet(false); });
+    }
+    
     void _hostModeSet(bool en) {
         if (en) {
-            _hostMode.deviceLock = _deviceLock();
+            printf("_hostModeSet(1)\n");
+            _device.lock.lock();
             _device.device.hostModeSet(true);
         
         } else {
+            printf("_hostModeSet(0)\n");
             _device.device.hostModeSet(false);
-            _hostMode.deviceLock = {};
+            _device.lock.unlock();
         }
     }
     
@@ -1087,7 +1107,7 @@ private:
             
             // Enter host mode while we're in SD mode, since MSP can't talk to
             // ICE40 or SD card while we're using it.
-            _sdMode.hostModeAssertion = _hostModeAssertion.assertion();
+            _hostModeSet(true);
             
             // Load ICE40 with our app
             _ICEConfigure(_device.device);
@@ -1113,7 +1133,7 @@ private:
             // Assume that we were in the middle of readout; reset the device to exit readout.
             _device.device.reset();
             // Exit host mode
-            _sdMode.hostModeAssertion = nullptr;
+            _hostModeSet(false);
         }
     }
     
@@ -1124,15 +1144,37 @@ private:
         MDCUSBDevice device;
     } _device;
     
-    struct {
-        std::unique_lock<std::mutex> deviceLock;
-    } _hostMode;
-    AssertionCounter _hostModeAssertion = AssertionCounter([this] (bool x) { _hostModeSet(x); });
-    
-    struct {
-        AssertionCounter::Assertion hostModeAssertion;
-    } _sdMode;
-    AssertionCounter _sdModeAssertion = AssertionCounter([this] (bool x) { _sdModeSet(x); });
+//    struct _HostMode {
+//        _HostMode(MDCUSBDevice& device) : _device(device) {
+//            
+//        }
+//        
+//        virtual ~_HostMode() {
+//            
+//        }
+//        
+//        MDCUSBDevice& _device;
+//    };
+//    
+//    struct _SDMode : _HostMode {
+//        _SDMode(MDCUSBDevice& device) : _HostMode(device) {
+//            
+//        }
+//        
+//        virtual ~_SDMode() {
+//            
+//        }
+//    };
+//    
+//    struct {
+//        std::unique_lock<std::mutex> deviceLock;
+//        std::mutex lock; // Host mode lock
+//    } _hostMode;
+//    
+//    struct {
+//        std::unique_lock<std::mutex> hostModeLock;
+//        std::mutex lock; // SD mode lock
+//    } _sdMode;
     
     const _Path _dir;
     ImageLibrary _imageLibrary;
