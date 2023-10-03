@@ -312,7 +312,10 @@ private:
     
     struct _TaskBatteryStatus {
         static void Run() {
-            constexpr auto UpdateInterval = Scheduler::template Ms<2000>;
+            constexpr uint32_t UpdateIntervalMs = 2000;
+            constexpr uint32_t ResampleBatteryIntervalMs = 150000;
+            constexpr uint32_t ResampleBatteryIntervalCount = ResampleBatteryIntervalMs / UpdateIntervalMs;
+            constexpr auto UpdateInterval = Scheduler::template Ms<UpdateIntervalMs>;
             
             // Wait until we detect a battery
             for (;;) {
@@ -337,14 +340,43 @@ private:
                 Scheduler::Sleep(Scheduler::template Ms<10000>);
             }
             
+            uint32_t chargeUnderwayCount = 0;
+            MSP::BatteryLevelMv batteryLevel = _BatteryStatus.level;
             for (;;) {
                 if (!_BatteryStatusPause) {
+                    const MSP::ChargeStatus chargeStatus = _ChargeStatusRead();
+                    bool resampleBattery = true;
+                    
+                    if (chargeStatus == MSP::ChargeStatus::Underway) {
+                        chargeUnderwayCount++;
+                        if (chargeUnderwayCount >= ResampleBatteryIntervalCount) {
+                            chargeUnderwayCount = 0;
+                        } else {
+                            resampleBattery = false;
+                        }
+                        
+                        if (resampleBattery) {
+                            // Temporarily disable the battery chager while we sample the battery
+                            _BAT_CHRG_EN_::Write(1);
+                            Scheduler::Sleep(Scheduler::template Ms<1000>);
+                        }
+                    }
+                    
+                    if (resampleBattery) {
+                        batteryLevel = _BatteryStatusGet().level;
+                    }
+                    
                     _BatteryStatus = {
-                        .chargeStatus = _ChargeStatusRead(),
-                        .level = _BatteryStatusGet().level,
+                        .chargeStatus = chargeStatus,
+                        .level = batteryLevel,
                     };
                     
-                    // Set the charge status LED if it's not paused
+                    if (chargeStatus == MSP::ChargeStatus::Underway) {
+                        // Re-enable the battery charger
+                        _BAT_CHRG_EN_::Write(0);
+                    }
+                    
+                    // Set the charge status LED
                     _ChargeStatusSet(_BatteryStatus.chargeStatus);
                 }
                 Scheduler::Sleep(UpdateInterval);
