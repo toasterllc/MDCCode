@@ -397,7 +397,6 @@ struct _TaskPower {
         // Short-circuit if we're in battery trap
         // We don't want to monitor the battery while we're in battery trap, to minimize battery use
         if (_BatteryTrap()) return;
-        
         _CaptureCounter--; // Rollover OK since we reset _CaptureCounter in Run()
         if (!_CaptureCounter) {
             BatteryLevelUpdate();
@@ -1074,12 +1073,13 @@ struct _TaskImg {
                 .analogGain     = 0,
                 .id             = 0,
                 .timestamp      = 0,
-                .batteryLevel   = _TaskPower::BatteryLevelGet(),
+                .batteryLevelMv = MSP::BatteryLevelMvInvalid,
             };
             
-            header.coarseIntTime = _State.autoExp.integrationTime();
-            header.id = id;
-            header.timestamp = _RTC::Now();
+            header.coarseIntTime    = _State.autoExp.integrationTime();
+            header.id               = id;
+            header.timestamp        = _RTC::Now();
+            header.batteryLevelMv   = _TaskPower::BatteryLevelGet();
             
             // Capture an image to RAM
             #warning TODO: optimize the header logic so that we don't set the magic/version/imageWidth/imageHeight every time, since it only needs to be set once per ice40 power-on

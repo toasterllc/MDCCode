@@ -1135,7 +1135,7 @@ static id _Get_batteryLevel(const ImageRecord& rec) {
     const MSP::BatteryLevel batteryLevel = MSP::BatteryLevelLinearize(rec.info.batteryLevelMv);
     if (batteryLevel == MSP::BatteryLevelInvalid) return @"Invalid";
     const float percentage = std::clamp(((float)(batteryLevel-MSP::BatteryLevelMin) / (MSP::BatteryLevelMax-MSP::BatteryLevelMin))*100, 0.f, 100.f);
-    
+//    printf("BATTERY: %ju (%f)\n", (uintmax_t)rec.info.batteryLevelMv, percentage);
     return [NSString stringWithFormat:@"%ju%%", (uintmax_t)std::round(percentage)];
 }
 
