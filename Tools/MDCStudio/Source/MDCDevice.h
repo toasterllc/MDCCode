@@ -1031,9 +1031,14 @@ private:
     
     void _status_update(std::unique_lock<std::mutex>& lock, const MSP::State& mspState) {
         // Update _status.status.imgIdBegin/imgIdEnd
-        const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
-        _status.status.imgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
-        _status.status.imgIdEnd = imgRingBuf.buf.id;
+        try {
+            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
+            _status.status.imgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
+            _status.status.imgIdEnd = imgRingBuf.buf.id;
+        
+        } catch (const std::exception& e) {
+            printf("[_status_update] Error: %s\n", e.what());
+        }
     }
     
     void _status_update(const STM::BatteryStatus& batteryStatus, const MSP::State& mspState) {
@@ -1090,15 +1095,11 @@ private:
             // Init SD card
             const STM::SDCardInfo sdCardInfo = _device.device.sdInit();
             
-            if (!_mspSDState.valid) {
-                // _mspSDState isn't valid, so there's no syncing that can be done
-                throw Toastbox::RuntimeError("!_mspSDState.valid");
-            }
-            
-            // Current SD card id doesn't match MSP's card id
-            // Don't sync photos because we don't know what we're actually reading from the device
-            if (memcmp(&sdCardInfo.cardId, &_mspSDState.cardId, sizeof(_mspSDState.cardId))) {
-                throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
+            // If _mspSDState is valid, verify that the current SD card id matches MSP's card id
+            if (_mspSDState.valid) {
+                if (memcmp(&sdCardInfo.cardId, &_mspSDState.cardId, sizeof(_mspSDState.cardId))) {
+                    throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
+                }
             }
             
             // Print timing
@@ -1136,8 +1137,8 @@ private:
     const _Path _dir;
     ImageLibrary _imageLibrary;
 //    ImageCache _imageCache;
-    MSP::SDState _mspSDState;
-    MSP::Settings _mspSettings;
+    MSP::SDState _mspSDState = {};
+    MSP::Settings _mspSettings = {};
     
     std::string _name;
     std::forward_list<Observer> _observers;
