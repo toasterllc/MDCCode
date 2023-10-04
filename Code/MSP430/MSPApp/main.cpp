@@ -95,8 +95,6 @@ static void _EventsEnabledChanged();
 
 static void _MotionPoweredUpdate();
 
-static void _VDDIMGSDEnabledChanged();
-
 // _TaskPowerStateSaved: remembers our power state across crashes and LPM3.5.
 //
 // This needs to be a global for the gnu::section attribute to work.
@@ -106,10 +104,11 @@ static inline uint8_t _TaskPowerStateSaved = 0;
 // _EventsEnabled: whether _TaskEvent should be running and handling events
 static T_Property<bool,_EventsEnabledChanged,_MotionPoweredUpdate> _EventsEnabled;
 
-using _MotionPowered = T_AssertionCounter<_MotionPoweredUpdate>;
+struct _MotionPowered : T_AssertionCounter<_MotionPoweredUpdate> {};
 
 // VDDIMGSD enable/disable
-using _VDDIMGSDEnabled = T_AssertionCounter<_VDDIMGSDEnabledChanged>;
+struct _VDDBEnabled : T_AssertionCounter<> {};
+struct _VDDIMGSDEnabled : T_AssertionCounter<> {};
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionPowered::Assertion>;
@@ -213,6 +212,7 @@ static void _BOR() {
 extern "C"
 [[noreturn, gnu::used]]
 void Abort(uintptr_t addr) {
+    Debug::Print("A");
     // Disable interrupts
     Toastbox::IntState::Set(false);
     // Record the abort
@@ -232,34 +232,6 @@ void abort() {
 extern "C"
 int atexit(void (*)(void)) {
     return 0;
-}
-
-// MARK: - Power
-
-static void _VDDIMGSDEnabledChanged() {
-    // This function can be called from multiple threads, so wait until it's not underway.
-    static bool busy = false;
-    _Scheduler::Wait([] { return !busy; });
-    busy = true;
-    
-    if (_VDDIMGSDEnabled::Asserted()) {
-        _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-        _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
-        
-        // Rails take ~1ms to turn on, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms<2>);
-    
-    } else {
-        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-        _Pin::VDD_B_2V8_IMG_SD_EN::Write(0);
-        _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
-        
-        // Rails take ~1.5ms to turn off, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms<2>);
-    }
-    
-    busy = false;
 }
 
 // MARK: - ICE40
@@ -366,7 +338,13 @@ struct _TaskPower {
         
         for (;;) {
             // Wait until something triggers us to update
-            _Scheduler::Wait([] { return _Wired()!=_WiredMonitor::Wired() || _BatteryLevelUpdate; });
+            _Scheduler::Wait([] {
+                return
+                    _Wired()!=_WiredMonitor::Wired()                    ||
+                    _BatteryLevelUpdate                                 ||
+                    _VDDBEnabled != ::_VDDBEnabled::Asserted()          ||
+                    _VDDIMGSDEnabled != ::_VDDIMGSDEnabled::Asserted()  ;
+            });
             
             // Update our wired state
             _Wired(_WiredMonitor::Wired());
@@ -380,6 +358,9 @@ struct _TaskPower {
                 _CaptureCounter = _BatterySampleIntervalCapture;
                 _BatteryLevelUpdate = false;
             }
+            
+            _VDDBEnabled = ::_VDDBEnabled::Asserted();
+            _VDDIMGSDEnabled = ::_VDDIMGSDEnabled::Asserted();
         }
     }
     
@@ -610,6 +591,32 @@ struct _TaskPower {
         }
     }
     
+    static void _VDDBEnabledChanged() {
+        _Pin::VDD_B_EN::Write(_VDDBEnabled);
+        // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
+        _Scheduler::Sleep(_Scheduler::Ms<2>);
+    }
+    
+    static void _VDDIMGSDEnabledChanged() {
+        if (_VDDIMGSDEnabled) {
+            Debug::Print("V1");
+            _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
+            _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+            _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
+            
+            // Rails take ~1ms to turn on, so wait 2ms to be sure
+            _Scheduler::Sleep(_Scheduler::Ms<2>);
+        
+        } else {
+            Debug::Print("V0");
+            // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+            _Pin::VDD_B_2V8_IMG_SD_EN::Write(0);
+            _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
+            // Rails take ~1.5ms to turn off, so wait 2ms to be sure
+            _Scheduler::Sleep(_Scheduler::Ms<2>);
+        }
+    }
+    
     static constexpr uint8_t _StateOff          = 0;
     static constexpr uint8_t _StateOn           = 1<<0;
     static constexpr uint8_t _StateBatteryTrap  = 1<<1;
@@ -638,6 +645,9 @@ struct _TaskPower {
     
     // _LEDFlickerEnabled: whether the LED should flicker periodically (due to battery trap)
     static inline T_Property<bool,_LEDFlickerEnabledChanged> _LEDFlickerEnabled;
+    
+    static inline T_Property<bool,_VDDBEnabledChanged> _VDDBEnabled;
+    static inline T_Property<bool,_VDDIMGSDEnabledChanged> _VDDIMGSDEnabled;
     
     // Task stack
     static constexpr auto& Stack = _TaskPowerStack;
@@ -797,8 +807,10 @@ struct _TaskI2C {
     
     static void _HostModeChanged() {
         if (_HostModeState.en) {
+            Debug::Print("H1");
             _TaskLED::Set(_TaskLED::PriorityHostMode, _LED::StateRed | _LED::StateGreen | _LED::StateFlickerFast);
         } else {
+            Debug::Print("H0");
             _TaskLED::Set(_TaskLED::PriorityHostMode, std::nullopt);
         }
     }
@@ -1222,6 +1234,8 @@ struct _TaskEvent {
         // We should never get a CaptureImageEvent event while in fast-forward mode
         Assert(_State.live);
         
+        Debug::Print("C1");
+        
         constexpr MSP::ImgRingBuf& imgRingBuf = ::_State.sd.imgRingBufs[0];
         
         // Notify _TaskPower that we're performing a capture, and wait for it to sample the battery if it decided to.
@@ -1244,12 +1258,17 @@ struct _TaskEvent {
         _Scheduler::Sleep(_Scheduler::Ms<30>);
         _ICEInit();
         
+        Debug::Print("C2");
+        
         // Reset SD nets before we turn on SD power
         _TaskSD::CardReset();
         _TaskSD::Wait();
         
         // Turn on IMG/SD power
         _State.vddImgSd = true;
+        
+        Debug::Print("C3");
+        _Scheduler::Sleep(_Scheduler::Ms<3000>);
         
         // Init image sensor / SD card
         _TaskImg::SensorInit();
@@ -1271,6 +1290,8 @@ struct _TaskEvent {
             _TaskSD::Write(srcRAMBlock);
             _TaskSD::Wait();
         }
+        
+        Debug::Print("C4");
         
         _State.vddImgSd = false;
         _State.vddb = false;
@@ -1386,12 +1407,6 @@ struct _TaskEvent {
         }
     }
     
-    static void _VDDBEnabledChanged() {
-        _Pin::VDD_B_EN::Write(_State.vddb);
-        // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms<2>);
-    }
-    
     // _EventTimer: timer that triggers us to wake when the next event is ready to be handled
     using _EventTimer = T_Timer<_Scheduler, _RTC, _ACLKFreqHz>;
     
@@ -1406,7 +1421,7 @@ struct _TaskEvent {
         // our Reset() function, so if the power assertion lived on the stack and
         // _TaskEvent is reset, its destructor would never be called and our state
         // would be corrupted.
-        T_Property<bool,_VDDBEnabledChanged> vddb;
+        _VDDBEnabled::Assertion vddb;
         _VDDIMGSDEnabled::Assertion vddImgSd;
     } _State;
     
