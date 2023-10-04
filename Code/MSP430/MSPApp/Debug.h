@@ -6,7 +6,7 @@
 #include "MSP.h"
 #include "Toastbox/Scheduler.h"
 
-#define DebugEnable 0
+#define DebugEnable 1
 
 class Debug {
 public:
@@ -28,7 +28,9 @@ public:
     
     static bool Empty() {
 #if DebugEnable
-        return !_RLen;
+        // We're empty when there's no more data to be transferred into SYSJMBO0,
+        // and SYSJMBO0 is empty.
+        return !_RLen && (SYSJMBC & JMBOUT0FG);
 #else
         return true;
 #endif
