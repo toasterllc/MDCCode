@@ -57,7 +57,6 @@ public:
     }
     
     static MSP::BatteryLevelMv Sample() {
-        return 4200;
         _ADCEnable(true);
         
         // Sample internal reference
