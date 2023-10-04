@@ -104,11 +104,8 @@ static inline uint8_t _TaskPowerStateSaved = 0;
 // _EventsEnabled: whether _TaskEvent should be running and handling events
 static T_Property<bool,_EventsEnabledChanged,_MotionPoweredUpdate> _EventsEnabled;
 
+// _MotionPowered: whether the motion sensor should have power applied
 struct _MotionPowered : T_AssertionCounter<_MotionPoweredUpdate> {};
-
-// VDDIMGSD enable/disable
-struct _VDDBEnabled : T_AssertionCounter<> {};
-struct _VDDIMGSDEnabled : T_AssertionCounter<> {};
 
 // _Triggers: stores our current event state
 using _Triggers = T_Triggers<_State, _MotionPowered::Assertion>;
@@ -338,13 +335,7 @@ struct _TaskPower {
         
         for (;;) {
             // Wait until something triggers us to update
-            _Scheduler::Wait([] {
-                return
-                    _Wired()!=_WiredMonitor::Wired()                    ||
-                    _BatteryLevelUpdate                                 ||
-                    _VDDBEnabled != ::_VDDBEnabled::Asserted()          ||
-                    _VDDIMGSDEnabled != ::_VDDIMGSDEnabled::Asserted()  ;
-            });
+            _Scheduler::Wait([] { return _Wired()!=_WiredMonitor::Wired() || _BatteryLevelUpdate; });
             
             // Update our wired state
             _Wired(_WiredMonitor::Wired());
@@ -358,9 +349,6 @@ struct _TaskPower {
                 _CaptureCounter = _BatterySampleIntervalCapture;
                 _BatteryLevelUpdate = false;
             }
-            
-            _VDDBEnabled = ::_VDDBEnabled::Asserted();
-            _VDDIMGSDEnabled = ::_VDDIMGSDEnabled::Asserted();
         }
     }
     
@@ -403,6 +391,32 @@ struct _TaskPower {
             return true;
         }
         return false;
+    }
+    
+    static void VDDBEnabled(bool en) {
+        _Pin::VDD_B_EN::Write(en);
+        // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
+        _Scheduler::Sleep(_Scheduler::Ms<2>);
+    }
+    
+    static void VDDIMGSDEnabled(bool en) {
+        if (en) {
+            Debug::Print("V1");
+            _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
+            _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+            _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
+            
+            // Rails take ~1ms to turn on, so wait 2ms to be sure
+            _Scheduler::Sleep(_Scheduler::Ms<2>);
+        
+        } else {
+            Debug::Print("V0");
+            // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+            _Pin::VDD_B_2V8_IMG_SD_EN::Write(0);
+            _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
+            // Rails take ~1.5ms to turn off, so wait 2ms to be sure
+            _Scheduler::Sleep(_Scheduler::Ms<2>);
+        }
     }
     
     // _Init(): initialize system
@@ -591,32 +605,6 @@ struct _TaskPower {
         }
     }
     
-    static void _VDDBEnabledChanged() {
-        _Pin::VDD_B_EN::Write(_VDDBEnabled);
-        // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms<2>);
-    }
-    
-    static void _VDDIMGSDEnabledChanged() {
-        if (_VDDIMGSDEnabled) {
-            Debug::Print("V1");
-            _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
-            _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-            _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
-            
-            // Rails take ~1ms to turn on, so wait 2ms to be sure
-            _Scheduler::Sleep(_Scheduler::Ms<2>);
-        
-        } else {
-            Debug::Print("V0");
-            // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-            _Pin::VDD_B_2V8_IMG_SD_EN::Write(0);
-            _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
-            // Rails take ~1.5ms to turn off, so wait 2ms to be sure
-            _Scheduler::Sleep(_Scheduler::Ms<2>);
-        }
-    }
-    
     static constexpr uint8_t _StateOff          = 0;
     static constexpr uint8_t _StateOn           = 1<<0;
     static constexpr uint8_t _StateBatteryTrap  = 1<<1;
@@ -645,9 +633,6 @@ struct _TaskPower {
     
     // _LEDFlickerEnabled: whether the LED should flicker periodically (due to battery trap)
     static inline T_Property<bool,_LEDFlickerEnabledChanged> _LEDFlickerEnabled;
-    
-    static inline T_Property<bool,_VDDBEnabledChanged> _VDDBEnabled;
-    static inline T_Property<bool,_VDDIMGSDEnabledChanged> _VDDIMGSDEnabled;
     
     // Task stack
     static constexpr auto& Stack = _TaskPowerStack;
@@ -680,8 +665,9 @@ struct _TaskI2C {
             _Scheduler::Sleep(_Scheduler::Ms<10>);
             
             if (!_WiredMonitor::Wired()) {
+                
                 // Reset host mode state
-                _HostModeState = {};
+                _HostModeEnabled = false;
                 // Clear charge status
                 _ChargeStatus = MSP::ChargeStatus::Invalid;
             }
@@ -714,7 +700,7 @@ struct _TaskI2C {
         case Cmd::Op::StateWrite: {
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
-            if (!_HostModeState.en) break;
+            if (!_HostModeEnabled) break;
             const size_t off = cmd.arg.StateWrite.off;
             if (off > sizeof(::_State)) break;
             FRAMWriteEn writeEn; // Enable FRAM writing
@@ -756,7 +742,7 @@ struct _TaskI2C {
         case Cmd::Op::TimeSet:
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
-            if (!_HostModeState.en) break;
+            if (!_HostModeEnabled) break;
             _RTC::Init(&cmd.arg.TimeSet.state);
             resp.ok = true;
             break;
@@ -764,24 +750,19 @@ struct _TaskI2C {
         case Cmd::Op::TimeAdjust:
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
-            if (!_HostModeState.en) break;
+            if (!_HostModeEnabled) break;
             _RTC::Adjust(cmd.arg.TimeAdjust.adjustment);
             resp.ok = true;
             break;
         
         case Cmd::Op::HostModeSet:
-            if (cmd.arg.HostModeSet.en) {
-                _HostModeState.en = true;
-            } else {
-                // Clear entire _HostModeState when exiting host mode
-                _HostModeState = {};
-            }
+            _HostModeEnabled = cmd.arg.HostModeSet.en;
             resp.ok = true;
             break;
         
         case Cmd::Op::VDDIMGSDSet:
-            if (!_HostModeState.en) break;
-            _HostModeState.vddImgSd = cmd.arg.VDDIMGSDSet.en;
+            if (!_HostModeEnabled) break;
+            _TaskPower::VDDIMGSDEnabled(cmd.arg.VDDIMGSDSet.en);
             resp.ok = true;
             break;
         }
@@ -790,7 +771,7 @@ struct _TaskI2C {
     }
     
     static bool HostModeEnabled() {
-        return _HostModeState.en;
+        return _HostModeEnabled;
     }
     
     static std::optional<_LED::State> _LEDStateForChargeStatus(MSP::ChargeStatus x) {
@@ -805,21 +786,20 @@ struct _TaskI2C {
         _TaskLED::Set(_TaskLED::PriorityChargeState, _LEDStateForChargeStatus(_ChargeStatus));
     }
     
-    static void _HostModeChanged() {
-        if (_HostModeState.en) {
+    static void _HostModeEnabledChanged() {
+        if (_HostModeEnabled) {
             Debug::Print("H1");
             _TaskLED::Set(_TaskLED::PriorityHostMode, _LED::StateRed | _LED::StateGreen | _LED::StateFlickerFast);
         } else {
             Debug::Print("H0");
             _TaskLED::Set(_TaskLED::PriorityHostMode, std::nullopt);
+            
+            // Turn off power when exiting host mode
+            _TaskPower::VDDIMGSDEnabled(false);
         }
     }
     
-    static inline struct {
-        T_Property<bool,_HostModeChanged,_EventsEnabledUpdate> en;
-        _VDDIMGSDEnabled::Assertion vddImgSd;
-    } _HostModeState;
-    
+    static inline T_Property<bool,_HostModeEnabledChanged,_EventsEnabledUpdate> _HostModeEnabled;
     static inline T_Property<MSP::ChargeStatus,_ChargeStatusChanged> _ChargeStatus;
     
     // Task stack
@@ -1146,6 +1126,9 @@ struct _TaskEvent {
         _TaskImg::Reset();
         // Stop tasks
         _Scheduler::Stop<_TaskSD, _TaskImg, _TaskEvent>();
+        // Turn off power
+        _TaskPower::VDDIMGSDEnabled(false);
+        _TaskPower::VDDBEnabled(false);
         // Reset our state
         // We do this last so that our power assertions are reset last
         _State = {};
@@ -1249,7 +1232,7 @@ struct _TaskEvent {
         }
         
         // Turn on VDD_B power (turns on ICE40)
-        _State.vddb = true;
+        _TaskPower::VDDBEnabled(true);
         
         // Wait for ICE40 to start
         // We specify (within the bitstream itself, via icepack) that ICE40 should load
@@ -1265,10 +1248,9 @@ struct _TaskEvent {
         _TaskSD::Wait();
         
         // Turn on IMG/SD power
-        _State.vddImgSd = true;
+        _TaskPower::VDDIMGSDEnabled(true);
         
         Debug::Print("C3");
-        _Scheduler::Sleep(_Scheduler::Ms<3000>);
         
         // Init image sensor / SD card
         _TaskImg::SensorInit();
@@ -1293,8 +1275,8 @@ struct _TaskEvent {
         
         Debug::Print("C4");
         
-        _State.vddImgSd = false;
-        _State.vddb = false;
+        _TaskPower::VDDIMGSDEnabled(false);
+        _TaskPower::VDDBEnabled(false);
         
         ev.countRem--;
         if (ev.countRem) {
@@ -1416,13 +1398,6 @@ struct _TaskEvent {
         // solely to arrive at the correct state for the current time.
         // live=true once we're done initializing and executing events normally.
         bool live = false;
-        // power / vddb / vddImgSd: our power assertions
-        // These need to be ivars because _TaskEvent can be reset at any time via
-        // our Reset() function, so if the power assertion lived on the stack and
-        // _TaskEvent is reset, its destructor would never be called and our state
-        // would be corrupted.
-        _VDDBEnabled::Assertion vddb;
-        _VDDIMGSDEnabled::Assertion vddImgSd;
     } _State;
     
     // Task stack
