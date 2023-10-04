@@ -209,7 +209,6 @@ static void _BOR() {
 extern "C"
 [[noreturn, gnu::used]]
 void Abort(uintptr_t addr) {
-    Debug::Print("A");
     // Disable interrupts
     Toastbox::IntState::Set(false);
     // Record the abort
@@ -401,7 +400,6 @@ struct _TaskPower {
     
     static void VDDIMGSDEnabled(bool en) {
         if (en) {
-            Debug::Print("V1");
             _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
             _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
             _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
@@ -410,7 +408,6 @@ struct _TaskPower {
             _Scheduler::Sleep(_Scheduler::Ms<2>);
         
         } else {
-            Debug::Print("V0");
             // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
             _Pin::VDD_B_2V8_IMG_SD_EN::Write(0);
             _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
@@ -788,10 +785,8 @@ struct _TaskI2C {
     
     static void _HostModeEnabledChanged() {
         if (_HostModeEnabled) {
-            Debug::Print("H1");
             _TaskLED::Set(_TaskLED::PriorityHostMode, _LED::StateRed | _LED::StateGreen | _LED::StateFlickerFast);
         } else {
-            Debug::Print("H0");
             _TaskLED::Set(_TaskLED::PriorityHostMode, std::nullopt);
             
             // Turn off power when exiting host mode
@@ -1217,8 +1212,6 @@ struct _TaskEvent {
         // We should never get a CaptureImageEvent event while in fast-forward mode
         Assert(_State.live);
         
-        Debug::Print("C1");
-        
         constexpr MSP::ImgRingBuf& imgRingBuf = ::_State.sd.imgRingBufs[0];
         
         // Notify _TaskPower that we're performing a capture, and wait for it to sample the battery if it decided to.
@@ -1241,16 +1234,12 @@ struct _TaskEvent {
         _Scheduler::Sleep(_Scheduler::Ms<30>);
         _ICEInit();
         
-        Debug::Print("C2");
-        
         // Reset SD nets before we turn on SD power
         _TaskSD::CardReset();
         _TaskSD::Wait();
         
         // Turn on IMG/SD power
         _TaskPower::VDDIMGSDEnabled(true);
-        
-        Debug::Print("C3");
         
         // Init image sensor / SD card
         _TaskImg::SensorInit();
@@ -1272,8 +1261,6 @@ struct _TaskEvent {
             _TaskSD::Write(srcRAMBlock);
             _TaskSD::Wait();
         }
-        
-        Debug::Print("C4");
         
         _TaskPower::VDDIMGSDEnabled(false);
         _TaskPower::VDDBEnabled(false);
