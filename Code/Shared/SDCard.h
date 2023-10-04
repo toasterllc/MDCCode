@@ -62,21 +62,24 @@ public:
         //   State: Idle -> Ready
         //   Initialize
         // ====================
-        for (;;) {
-            // CMD55
-            _SendCmd(_CMD55, 0);
-            
-            // CMD41
-            {
-                const _SDStatusResp status = _SendCmd(_CMD41, 0x51008000);
-                // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
-                // Check if card is ready. If it's not, retry ACMD41.
-                const bool ready = status.template respGetBit<39>();
-                if (!ready) continue;
-                // Check S18A; for LVS initialization, it's expected to be 0
-                const bool S18A = status.template respGetBit<32>();
-                Assert(S18A == 1);
-                break;
+        {
+            constexpr uint16_t MaxAttempts = 1000;
+            for (uint16_t i=0; i<MaxAttempts; i++) {
+                // CMD55
+                _SendCmd(_CMD55, 0);
+                
+                // CMD41
+                {
+                    const _SDStatusResp status = _SendCmd(_CMD41, 0x51008000);
+                    // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
+                    // Check if card is ready. If it's not, retry ACMD41.
+                    const bool ready = status.template respGetBit<39>();
+                    if (!ready) continue;
+                    // Check S18A; for LVS initialization, it's expected to be 0
+                    const bool S18A = status.template respGetBit<32>();
+                    Assert(S18A == 1);
+                    break;
+                }
             }
         }
         
@@ -105,12 +108,12 @@ public:
             T_ICE::Transfer(_ConfigSlowPushPull);
             _Sleep(_Us<25>); // Wait 10 400kHz cycles
             
-            // Wait for SD card to indicate that it's ready (DAT0=1)
-            #warning TODO: implement timeout in case something's broken
-            for (;;) {
-                const _SDStatusResp status = T_ICE::SDStatus();
-                if (status.dat0Idle()) break;
-            }
+            // Wait 1ms, the max amount of time that the SD card has to signal that it's ready via DAT0=1
+            _Sleep(_Ms<1>);
+            
+            // Check that SD card is indicating that it's ready (DAT0=1)
+            const _SDStatusResp status = T_ICE::SDStatus();
+            Assert(status.dat0Idle());
         }
         
         // ====================
@@ -264,6 +267,9 @@ public:
     }
     
     static void WriteImage(uint16_t rca, uint8_t srcRAMBlock, SD::Block dstSDBlock, Img::Size imgSize) {
+        constexpr auto SleepDuration = _Us<100>;
+        constexpr uint16_t MaxAttempts = 10000; // Sleep .1ms * 10000 = 1000ms total
+        
         const uint32_t blockCountEst = (imgSize==Img::Size::Full ? ImgSD::Full::ImageBlockCount : ImgSD::Thumb::ImageBlockCount);
         WriteStart(rca, dstSDBlock, blockCountEst);
         
@@ -272,25 +278,25 @@ public:
         
         #warning TODO: call error handler if this takes too long -- look at SD spec for max time
         // Wait for writing to finish
-        for (;;) {
+        for (uint16_t i=0; i<MaxAttempts; i++) {
             const _SDStatusResp status = T_ICE::SDStatus();
             if (status.datOutDone()) {
                 Assert(!status.datOutCRCErr());
                 break;
             }
             // Let other tasks run
-            _Sleep(_Us<100>);
+            _Sleep(SleepDuration);
         }
         
         WriteStop();
         
         #warning TODO: call error handler if this takes too long -- look at SD spec for max time
         // Wait for SD card to indicate that it's ready (DAT0=1)
-        for (;;) {
+        for (uint16_t i=0; i<MaxAttempts; i++) {
             const _SDStatusResp status = T_ICE::SDStatus();
             if (status.dat0Idle()) break;
             // Let other tasks run
-            _Sleep(_Us<100>);
+            _Sleep(SleepDuration);
         }
     }
     
@@ -398,36 +404,6 @@ private:
             resp++;
         }
     }
-    
-//    template<size_t T_Len>
-//    static void _SDRespGet(void* dst) {
-//        using Resp = typename T_ICE::Resp;
-//        static_assert((T_Len % sizeof(Resp)) == 0);
-//        
-//        Resp* resp = (Resp*)dst;
-//        for (size_t i=0; i<(T_Len/sizeof(Resp)); i++) {
-//            T_ICE::Transfer(_SDRespMsg(i), resp);
-//            resp++;
-//        }
-//    }
-    
-//    template<typename T>
-//    static T _SDResp128Get() {
-//        // Get the 128-bit response
-//        T dst;
-//        _SDRespResp resp;
-//        static_assert((sizeof(T) % sizeof(resp.payload)) == 0);
-//        for (size_t i=0; i<sizeof(T)/sizeof(resp); i++) {
-//            T_ICE::Transfer(_SDRespMsg(i), &resp);
-//            memcpy(((uint8_t*)&dst) + sizeof(resp.payload)*i, resp.payload, sizeof(resp.payload));
-//        }
-//        return dst;
-//    }
-    
-//    bool _enabled = false;
-//    uint16_t _rca = 0;
-//    CardId _cardId;
-//    CardData _cardData;
 };
 
 } // namespace SD
