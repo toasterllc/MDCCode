@@ -29,6 +29,11 @@ public:
             _Sleep(_Ms<15>);
         }
         
+        // Init I2C bus
+        {
+            T_ICE::ImgI2CInit();
+        }
+        
         // Configure internal register initialization
         {
             T_ICE::ImgI2CWrite(0x3052, 0xA114);

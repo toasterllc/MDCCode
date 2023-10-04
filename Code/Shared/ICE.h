@@ -374,6 +374,15 @@ public:
         Assert(false);
     }
     
+    static void ImgI2CInit() {
+        // Issue a dummy transaction to make sure the I2C bus is ready.
+        // We do this simply to get a START/STOP condition issued to initialize the bus.
+        // This is necessary because we've had cases where the first I2C transaction fails,
+        // presumably because the image sensor's I2C state machine isn't in the correct
+        // state upon power up / reset.
+        ImgI2C(false, 0, 0);
+    }
+    
     static uint16_t ImgI2CRead(uint16_t addr) {
         const ImgI2CStatusResp resp = ImgI2C(false, addr, 0);
         Assert(!resp.err());

@@ -237,6 +237,11 @@ int atexit(void (*)(void)) {
 // MARK: - Power
 
 static void _VDDIMGSDEnabledChanged() {
+    // This function can be called from multiple threads, so wait until it's not underway.
+    static bool busy = false;
+    _Scheduler::Wait([] { return !busy; });
+    busy = true;
+    
     if (_VDDIMGSDEnabled::Asserted()) {
         _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
         _Scheduler::Sleep(_Scheduler::Us<100>); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
@@ -253,6 +258,8 @@ static void _VDDIMGSDEnabledChanged() {
         // Rails take ~1.5ms to turn off, so wait 2ms to be sure
         _Scheduler::Sleep(_Scheduler::Ms<2>);
     }
+    
+    busy = false;
 }
 
 // MARK: - ICE40
@@ -665,7 +672,6 @@ struct _TaskI2C {
             if (!_WiredMonitor::Wired()) {
                 // Reset host mode state
                 _HostModeState = {};
-                
                 // Clear charge status
                 _ChargeStatus = MSP::ChargeStatus::Invalid;
             }
