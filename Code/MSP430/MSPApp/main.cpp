@@ -1504,6 +1504,9 @@ struct _TaskButton {
 // MARK: - _TaskMotion
 
 struct _TaskMotion {
+    // _TaskMotion::Run() is a good size to put in the 'Information FRAM' section (a 512 byte section)
+    // to free up some space for the regular FRAM section.
+    [[gnu::section(".fram_info"), gnu::used]]
     static void Run() {
         // Disable interrupts because _Motion requires it
         Toastbox::IntState ints(false);

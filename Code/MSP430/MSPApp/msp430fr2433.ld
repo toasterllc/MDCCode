@@ -41,8 +41,8 @@ MEMORY {
   SFR              : ORIGIN = 0x0000, LENGTH = 0x0010 /* END=0x0010, size 16 */
   BSL              : ORIGIN = 0x1000, LENGTH = 0x0800
   RAM              : ORIGIN = 0x2000, LENGTH = 0x1000 /* END=0x2FFF, size 4096 */
-  INFOMEM          : ORIGIN = 0x1800, LENGTH = 0x0200 /* END=0x19FF, size 512 as 1 512-byte segments */
-  INFOA            : ORIGIN = 0x1800, LENGTH = 0x0200 /* END=0x19FF, size 512 */
+  INFOMEM (rx)     : ORIGIN = 0x1800, LENGTH = 0x0200 /* END=0x19FF, size 512 as 1 512-byte segments */
+  INFOA (rx)       : ORIGIN = 0x1800, LENGTH = 0x0200 /* END=0x19FF, size 512 */
   FRAM (rx)        : ORIGIN = 0xC400, LENGTH = 0x3B80 /* END=0xFF7F, size 15232 */
   JTAGSIGNATURE    : ORIGIN = 0xFF80, LENGTH = 0x0004
   BSLSIGNATURE     : ORIGIN = 0xFF84, LENGTH = 0x0004
@@ -65,11 +65,7 @@ SECTIONS
     *(.rodata .rodata.* .gnu.linkonce.r.* .const .const:*)
     *(.rodata1)
     KEEP (*(.gcc_except_table)) *(.gcc_except_table.*)
-
-  /* We moved rodata/rodata2 from FRAM -> INFOMEM to make use of the otherwise unused FRAM 'Information Memory'.
-     If rodata/rodata2 overflow INFOMEM, switch rodata/rodata2 back to using the FRAM region, and find some
-     other region to make use of INFOMEM. */
-  } > INFOMEM
+  } > FRAM
 
   /* Note: This is a separate .rodata section for sections which are
      read only but which older linkers treat as read-write.
@@ -115,11 +111,7 @@ SECTIONS
     KEEP (*(EXCLUDE_FILE (*crtend*.o ) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
-
-  /* We moved rodata/rodata2 from FRAM -> INFOMEM to make use of the otherwise unused FRAM 'Information Memory'.
-     If rodata/rodata2 overflow INFOMEM, switch rodata/rodata2 back to using the FRAM region, and find some
-     other region to make use of INFOMEM. */
-  } > INFOMEM
+  } > FRAM
 
   /* This section contains data that is initialised during load
      but not on application reset.  */
