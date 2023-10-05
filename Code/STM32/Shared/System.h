@@ -150,10 +150,6 @@ public:
         USBSendStatus(s);
     }
     
-    static void BatteryStatusPause(bool x) {
-        _TaskBatteryStatus::BatteryStatusPause(x);
-    }
-    
     static std::optional<MSP::Resp> MSPSend(const MSP::Cmd& cmd) {
         return _TaskMSPComms::Send(cmd);
     }
@@ -343,44 +339,38 @@ private:
             uint32_t chargeUnderwayCount = 0;
             MSP::BatteryLevelMv batteryLevel = _BatteryStatus.level;
             for (;;) {
-                if (!_BatteryStatusPause) {
-                    const MSP::ChargeStatus chargeStatus = _ChargeStatusRead();
-                    if (chargeStatus == MSP::ChargeStatus::Underway) {
-                        chargeUnderwayCount++;
-                        if (chargeUnderwayCount >= ResampleBatteryIntervalCount) {
-                            chargeUnderwayCount = 0;
-                            
-                            // Temporarily disable the battery chager while we sample the battery
-                            _BAT_CHRG_EN_::Write(1);
-                            Scheduler::Sleep(Scheduler::template Ms<1000>);
-                            // Sample battery
-                            batteryLevel = _BatteryStatusGet().level;
-                            // Re-enable the battery charger
-                            _BAT_CHRG_EN_::Write(0);
-                        }
-                    } else {
-                        batteryLevel = _BatteryStatusGet().level;
+                const MSP::ChargeStatus chargeStatus = _ChargeStatusRead();
+                if (chargeStatus == MSP::ChargeStatus::Underway) {
+                    chargeUnderwayCount++;
+                    if (chargeUnderwayCount >= ResampleBatteryIntervalCount) {
                         chargeUnderwayCount = 0;
+                        
+                        // Temporarily disable the battery chager while we sample the battery
+                        _BAT_CHRG_EN_::Write(1);
+                        Scheduler::Sleep(Scheduler::template Ms<1000>);
+                        // Sample battery
+                        batteryLevel = _BatteryStatusGet().level;
+                        // Re-enable the battery charger
+                        _BAT_CHRG_EN_::Write(0);
                     }
-                    
-                    _BatteryStatus = {
-                        .chargeStatus = chargeStatus,
-                        .level = batteryLevel,
-                    };
-                    
-                    // Set the charge status LED
-                    _ChargeStatusSet(_BatteryStatus.chargeStatus);
+                } else {
+                    batteryLevel = _BatteryStatusGet().level;
+                    chargeUnderwayCount = 0;
                 }
+                
+                _BatteryStatus = {
+                    .chargeStatus = chargeStatus,
+                    .level = batteryLevel,
+                };
+                
+                // Set the charge status LED
+                _ChargeStatusSet(_BatteryStatus.chargeStatus);
                 Scheduler::Sleep(UpdateInterval);
             }
         }
         
         static const STM::BatteryStatus& BatteryStatus() {
             return _BatteryStatus;
-        }
-        
-        static void BatteryStatusPause(bool x) {
-            _BatteryStatusPause = x;
         }
         
         static void _ChargeStatusSet(MSP::ChargeStatus status) {
@@ -405,7 +395,6 @@ private:
         }
         
         static inline STM::BatteryStatus _BatteryStatus = {};
-        static inline bool _BatteryStatusPause = false;
         
         // Task stack
         [[gnu::section(".stack._TaskBatteryStatus")]]
