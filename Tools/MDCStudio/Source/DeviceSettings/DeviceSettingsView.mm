@@ -8,8 +8,7 @@
     __weak id<DeviceSettingsViewDelegate> _delegate;
     
     IBOutlet NSView* _nibView;
-    IBOutlet NSTabView* _tabView;
-    IBOutlet NSSegmentedControl* _segmentedControl;
+    IBOutlet NSView* _containerView;
     IBOutlet NSView* _headerBackground;
     
     CaptureTriggersView* _captureTriggersView;
@@ -40,14 +39,13 @@
     }
     
     _captureTriggersView = [[CaptureTriggersView alloc] initWithTriggers:_settings.triggers];
-    [[_tabView tabViewItems][0] setView:_captureTriggersView];
+    [_containerView addSubview:_captureTriggersView];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_captureTriggersView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_captureTriggersView)]];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_captureTriggersView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_captureTriggersView)]];
     
-    [self->_segmentedControl setSelectedSegment:0];
-    [self _actionSectionChanged:nil];
+    [[[_headerBackground bottomAnchor] constraintEqualToAnchor:[[_captureTriggersView deviceSettingsView_HeaderEndView] topAnchor]] setActive:true];
     
     return self;
 }
@@ -64,17 +62,17 @@
 //    return self;
 //}
 
-- (IBAction)_actionSectionChanged:(id)sender {
-    const NSInteger idx = [_segmentedControl selectedSegment];
-    [_tabView selectTabViewItemAtIndex:idx];
-    
-    NSView* view = [[_tabView tabViewItemAtIndex:idx] view];
-//    static int i = 0;
-//    i++;
-//    if (i > 3) {
-    [[[_headerBackground bottomAnchor] constraintEqualToAnchor:[[view deviceSettingsView_HeaderEndView] topAnchor]] setActive:true];
-//    }
-}
+//- (IBAction)_actionSectionChanged:(id)sender {
+//    const NSInteger idx = [_segmentedControl selectedSegment];
+//    [_tabView selectTabViewItemAtIndex:idx];
+//    
+//    NSView* view = [[_tabView tabViewItemAtIndex:idx] view];
+////    static int i = 0;
+////    i++;
+////    if (i > 3) {
+//    [[[_headerBackground bottomAnchor] constraintEqualToAnchor:[[view deviceSettingsView_HeaderEndView] topAnchor]] setActive:true];
+////    }
+//}
 
 - (IBAction)_actionOK:(id)sender {
     // Commit changes for current field

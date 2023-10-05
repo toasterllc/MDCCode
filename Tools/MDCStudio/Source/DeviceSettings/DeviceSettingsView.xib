@@ -7,10 +7,9 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="DeviceSettingsView">
             <connections>
+                <outlet property="_containerView" destination="P5p-bo-0PS" id="fj6-L1-Ut2"/>
                 <outlet property="_headerBackground" destination="ZMn-44-fZX" id="XUJ-s4-M55"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="284-K1-4nm"/>
-                <outlet property="_segmentedControl" destination="0mG-ww-k7b" id="R9J-57-oV6"/>
-                <outlet property="_tabView" destination="NLY-ZL-vCb" id="Fi3-gv-mgr"/>
             </connections>
         </customObject>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
@@ -25,46 +24,9 @@
                         <constraint firstAttribute="height" constant="25" placeholder="YES" id="flT-Wt-dhI"/>
                     </constraints>
                 </visualEffectView>
-                <tabView drawsBackground="NO" type="noTabsNoBorder" translatesAutoresizingMaskIntoConstraints="NO" id="NLY-ZL-vCb">
-                    <rect key="frame" x="0.0" y="61" width="600" height="685"/>
-                    <font key="font" metaFont="system"/>
-                    <tabViewItems>
-                        <tabViewItem label="Capture Triggers" identifier="" id="t1H-wv-Rdu">
-                            <view key="view" translatesAutoresizingMaskIntoConstraints="NO" id="Opp-py-5Rd">
-                                <rect key="frame" x="0.0" y="0.0" width="600" height="685"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                            </view>
-                        </tabViewItem>
-                        <tabViewItem label="Battery Life" identifier="" id="0vi-hB-ilh">
-                            <view key="view" translatesAutoresizingMaskIntoConstraints="NO" id="l27-h2-i0f" customClass="BatteryLifeView">
-                                <rect key="frame" x="0.0" y="0.0" width="600" height="685"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                            </view>
-                        </tabViewItem>
-                    </tabViewItems>
-                </tabView>
-                <box hidden="YES" verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="nZd-r3-PiT">
-                    <rect key="frame" x="0.0" y="764" width="175" height="5"/>
-                </box>
-                <box hidden="YES" verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="fEs-i7-uB3">
-                    <rect key="frame" x="425" y="764" width="175" height="5"/>
-                </box>
-                <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0mG-ww-k7b">
-                    <rect key="frame" x="173" y="754" width="254" height="24"/>
-                    <constraints>
-                        <constraint firstAttribute="width" constant="250" id="o2f-wa-7tR"/>
-                    </constraints>
-                    <segmentedCell key="cell" borderStyle="border" alignment="left" segmentDistribution="fill" style="rounded" trackingMode="selectOne" id="SHN-1U-Rd5">
-                        <font key="font" metaFont="system"/>
-                        <segments>
-                            <segment label="Capture Triggers"/>
-                            <segment label="Battery Life" selected="YES" tag="1"/>
-                        </segments>
-                    </segmentedCell>
-                    <connections>
-                        <action selector="_actionSectionChanged:" target="-2" id="Ler-il-cY6"/>
-                    </connections>
-                </segmentedControl>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="P5p-bo-0PS">
+                    <rect key="frame" x="0.0" y="61" width="600" height="731"/>
+                </customView>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="loq-oF-BLr">
                     <rect key="frame" x="504" y="13" width="82" height="32"/>
                     <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="iMF-nE-jdf">
@@ -90,31 +52,23 @@ Gw
                 </button>
             </subviews>
             <constraints>
-                <constraint firstItem="0mG-ww-k7b" firstAttribute="centerY" secondItem="nZd-r3-PiT" secondAttribute="centerY" id="1UN-Hh-uy6"/>
                 <constraint firstItem="loq-oF-BLr" firstAttribute="firstBaseline" secondItem="HXO-cR-ctO" secondAttribute="firstBaseline" id="1cD-Zb-En7"/>
+                <constraint firstItem="loq-oF-BLr" firstAttribute="top" secondItem="P5p-bo-0PS" secondAttribute="bottom" constant="20" id="3jx-ma-fIp"/>
                 <constraint firstAttribute="trailing" secondItem="htS-Zh-S2s" secondAttribute="trailing" id="7TX-rW-Gh8"/>
+                <constraint firstItem="P5p-bo-0PS" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="7bg-ON-6g5"/>
                 <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="600" id="9OT-Nk-FLC"/>
                 <constraint firstAttribute="bottom" secondItem="HXO-cR-ctO" secondAttribute="bottom" constant="20" id="A1Y-aZ-deN"/>
                 <constraint firstAttribute="trailing" secondItem="ZMn-44-fZX" secondAttribute="trailing" id="AVH-eM-Vte"/>
-                <constraint firstItem="0mG-ww-k7b" firstAttribute="centerX" secondItem="8kh-WA-1UA" secondAttribute="centerX" id="B1j-fz-R8g"/>
                 <constraint firstAttribute="trailing" secondItem="loq-oF-BLr" secondAttribute="trailing" constant="20" id="CCA-sD-e5Z"/>
                 <constraint firstItem="htS-Zh-S2s" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="FDu-59-hjn"/>
                 <constraint firstItem="loq-oF-BLr" firstAttribute="width" secondItem="HXO-cR-ctO" secondAttribute="width" id="KC7-Zv-CsK"/>
-                <constraint firstItem="NLY-ZL-vCb" firstAttribute="top" secondItem="0mG-ww-k7b" secondAttribute="bottom" constant="10" id="KPh-mI-TQd"/>
                 <constraint firstAttribute="bottom" secondItem="htS-Zh-S2s" secondAttribute="bottom" id="QJf-R3-SoD"/>
+                <constraint firstItem="P5p-bo-0PS" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="Rq9-7t-K7y"/>
                 <constraint firstItem="ZMn-44-fZX" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="SAA-b3-Mh5"/>
-                <constraint firstAttribute="trailing" secondItem="NLY-ZL-vCb" secondAttribute="trailing" id="WIZ-j9-MkW"/>
-                <constraint firstItem="0mG-ww-k7b" firstAttribute="trailing" secondItem="fEs-i7-uB3" secondAttribute="leading" id="XfE-fk-tFj"/>
                 <constraint firstItem="loq-oF-BLr" firstAttribute="leading" secondItem="HXO-cR-ctO" secondAttribute="trailing" constant="12" id="XlP-Nb-K2B"/>
                 <constraint firstItem="ZMn-44-fZX" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="azL-4A-h0G"/>
                 <constraint firstItem="htS-Zh-S2s" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="bCa-pb-x1k"/>
-                <constraint firstItem="NLY-ZL-vCb" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="dwS-vm-SoD"/>
-                <constraint firstItem="nZd-r3-PiT" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="gKH-dh-4e1"/>
-                <constraint firstItem="loq-oF-BLr" firstAttribute="top" secondItem="NLY-ZL-vCb" secondAttribute="bottom" constant="20" id="pe6-sx-tNw"/>
-                <constraint firstItem="fEs-i7-uB3" firstAttribute="centerY" secondItem="0mG-ww-k7b" secondAttribute="centerY" id="rJ3-v4-iIo"/>
-                <constraint firstItem="0mG-ww-k7b" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" constant="15" id="s4J-Wv-uaE"/>
-                <constraint firstItem="0mG-ww-k7b" firstAttribute="leading" secondItem="nZd-r3-PiT" secondAttribute="trailing" id="u3w-X1-oah"/>
-                <constraint firstAttribute="trailing" secondItem="fEs-i7-uB3" secondAttribute="trailing" id="vl1-Nr-5kf"/>
+                <constraint firstAttribute="trailing" secondItem="P5p-bo-0PS" secondAttribute="trailing" id="eFz-Li-mq9"/>
                 <constraint firstAttribute="bottom" secondItem="loq-oF-BLr" secondAttribute="bottom" constant="20" id="y02-sQ-oup"/>
             </constraints>
             <point key="canvasLocation" x="12" y="-537"/>
