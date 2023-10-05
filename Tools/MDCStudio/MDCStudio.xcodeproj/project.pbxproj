@@ -44,6 +44,7 @@
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
 		557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557ABCED29DD24230032619E /* BatteryLifeView.mm */; };
 		557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 557ABCEE29DD24230032619E /* BatteryLifeView.xib */; };
+		55838C7C2ACF345800D4B024 /* SourceList-Battery-Charging-0.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55838C7A2ACF345800D4B024 /* SourceList-Battery-Charging-0.pdf */; };
 		558E20092AC4B608001E743A /* DeviceImageGridHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 558E20052AC4B608001E743A /* DeviceImageGridHeaderView.xib */; };
 		558E200A2AC4B608001E743A /* DeviceImageGridHeaderView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558E20062AC4B608001E743A /* DeviceImageGridHeaderView.mm */; };
 		558E201B2AC8F977001E743A /* DeviceImageGridScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558E20192AC8F977001E743A /* DeviceImageGridScrollView.mm */; };
@@ -219,6 +220,7 @@
 		557ABD8929E7E90B0032619E /* DeviceSettings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeviceSettings.h; sourceTree = "<group>"; };
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
+		55838C7A2ACF345800D4B024 /* SourceList-Battery-Charging-0.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-0.pdf"; sourceTree = "<group>"; };
 		558E20052AC4B608001E743A /* DeviceImageGridHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceImageGridHeaderView.xib; sourceTree = "<group>"; };
 		558E20062AC4B608001E743A /* DeviceImageGridHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceImageGridHeaderView.mm; sourceTree = "<group>"; };
 		558E20072AC4B608001E743A /* DeviceImageGridHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceImageGridHeaderView.h; sourceTree = "<group>"; };
@@ -572,6 +574,7 @@
 				55DFB5332ABB8AA50035E1BC /* SourceList-Photon-Icon.pdf */,
 				55C9BDE62ABE930C008557B9 /* SourceList-Battery-Error.pdf */,
 				55DFB53B2ABE1FF90035E1BC /* SourceList-Battery-Charged.pdf */,
+				55838C7A2ACF345800D4B024 /* SourceList-Battery-Charging-0.pdf */,
 				55DFB53A2ABE1FF90035E1BC /* SourceList-Battery-Charging-10.pdf */,
 				55DFB5382ABE1FF90035E1BC /* SourceList-Battery-Charging-20.pdf */,
 				55DFB5372ABE1FF90035E1BC /* SourceList-Battery-Charging-30.pdf */,
@@ -891,6 +894,7 @@
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
 				55DFB5422ABE1FFA0035E1BC /* SourceList-Battery-Charging-30.pdf in Resources */,
 				55DFB5472ABE1FFA0035E1BC /* SourceList-Battery-Charging-80.pdf in Resources */,
+				55838C7C2ACF345800D4B024 /* SourceList-Battery-Charging-0.pdf in Resources */,
 				55425B8E29A3F39700F25D57 /* Inspector-Exposure-Max.pdf in Resources */,
 				5530DC3D29DCDA50005FEC0A /* DeviceSettingsView.xib in Resources */,
 				55F8883629D9EF1C0075593F /* CaptureTriggers-Icon-Button-Large.pdf in Resources */,
