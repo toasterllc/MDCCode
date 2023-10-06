@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdlib>
 #include "Code/Shared/MSP.h"
+#include "Code/Shared/Time.h"
+#include "Code/Shared/TimeConstants.h"
 #include "Code/Shared/Assert.h"
 
 // TODO: when we move to using >=C++20, we want to give _State.settings.events as T_Base, but we have to give
@@ -233,6 +235,45 @@ struct T_MSPTriggers {
     
     static auto ButtonTriggerBegin() { return std::begin(_ButtonTrigger); }
     static auto ButtonTriggerEnd() { return std::begin(_ButtonTrigger)+_T_Base.buttonTriggerCount; }
+    
+    static Time::Ticks32 RepeatAdvance(MSP::Repeat& x) {
+        static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
+        
+        switch (x.type) {
+        case MSP::Repeat::Type::Never:
+            return 0;
+        
+        case MSP::Repeat::Type::Daily:
+            Assert(x.Daily.interval);
+            return Time::Day*x.Daily.interval;
+        
+        case MSP::Repeat::Type::Weekly: {
+            #warning TODO: verify this works properly
+            // Determine the next trigger day, calculating the duration of time until then
+            Assert(x.Weekly.days & 1); // Weekly.days must always rest on an active day
+            x.Weekly.days |= 0x80;
+            uint8_t count = 0;
+            do {
+                x.Weekly.days >>= 1;
+                count++;
+            } while (!(x.Weekly.days & 1));
+            return count*Time::Day;
+        }
+        
+        case MSP::Repeat::Type::Yearly:
+            #warning TODO: verify this works properly
+            // Return 1 year (either 365 or 366 days) in microseconds
+            // We appropriately handle leap years by referencing `leapPhase`
+            if (x.Yearly.leapPhase) {
+                x.Yearly.leapPhase--;
+                return Time::Year;
+            } else {
+                x.Yearly.leapPhase = 3;
+                return YearPlusDay;
+            }
+        }
+        Assert(false);
+    }
     
     template<typename T_Dst, typename T_Src, size_t T_Count>
     static T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {

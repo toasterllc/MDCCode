@@ -753,13 +753,15 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 }
 
 - (const MSP::Triggers&)triggers {
-    BatteryLifeEstimate::Parameters params;
-    BatteryLifeEstimate::Estimator est(BatteryLifeEstimate::BestCase, params, [self _triggers]);
-    est.estimate();
-    
-//    BatteryLifeEstimate::BatteryLifeEstimate(BatteryLifeEstimate::BestCase, params, [self _triggers]);
+//    BatteryLifeEstimate::Parameters params;
+//    BatteryLifeEstimate::Estimator est(BatteryLifeEstimate::BestCase, params, [self _triggers]);
+//    est.estimate();
     
     _triggers = Convert([self _triggers]);
+    
+    BatteryLifeEstimate::Parameters params;
+    BatteryLifeEstimate::Estimate(BatteryLifeEstimate::BestCase, params, _triggers);
+    
     return _triggers;
 }
 

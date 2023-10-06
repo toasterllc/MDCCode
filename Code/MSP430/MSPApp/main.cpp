@@ -110,45 +110,6 @@ struct _MotionPowered : T_AssertionCounter<_MotionPoweredUpdate> {};
 // _Triggers: stores our current event state
 using _Triggers = T_MSPTriggers<_State, _MotionPowered::Assertion>;
 
-static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
-    static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
-    
-    switch (x.type) {
-    case MSP::Repeat::Type::Never:
-        return 0;
-    
-    case MSP::Repeat::Type::Daily:
-        Assert(x.Daily.interval);
-        return Time::Day*x.Daily.interval;
-    
-    case MSP::Repeat::Type::Weekly: {
-        #warning TODO: verify this works properly
-        // Determine the next trigger day, calculating the duration of time until then
-        Assert(x.Weekly.days & 1); // Weekly.days must always rest on an active day
-        x.Weekly.days |= 0x80;
-        uint8_t count = 0;
-        do {
-            x.Weekly.days >>= 1;
-            count++;
-        } while (!(x.Weekly.days & 1));
-        return count*Time::Day;
-    }
-    
-    case MSP::Repeat::Type::Yearly:
-        #warning TODO: verify this works properly
-        // Return 1 year (either 365 or 366 days) in microseconds
-        // We appropriately handle leap years by referencing `leapPhase`
-        if (x.Yearly.leapPhase) {
-            x.Yearly.leapPhase--;
-            return Time::Year;
-        } else {
-            x.Yearly.leapPhase = 3;
-            return YearPlusDay;
-        }
-    }
-    Assert(false);
-}
-
 [[gnu::noinline]]
 static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::Ticks32 deltaTicks) {
     return time + deltaTicks;
@@ -1280,7 +1241,7 @@ struct _TaskEvent {
     }
     
     static bool EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-        const Time::Ticks32 delta = _RepeatAdvance(repeat);
+        const Time::Ticks32 delta = _Triggers::RepeatAdvance(repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
             EventInsert(ev, _TimeInstantAdd(ev.time, delta));

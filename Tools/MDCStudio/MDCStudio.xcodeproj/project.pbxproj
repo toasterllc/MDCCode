@@ -222,6 +222,7 @@
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
 		55838C7A2ACF345800D4B024 /* SourceList-Battery-Charging-0.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-0.pdf"; sourceTree = "<group>"; };
 		55838C7E2ACF4B3A00D4B024 /* BatteryLifeEstimate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BatteryLifeEstimate.h; sourceTree = "<group>"; };
+		55838C7F2AD0903000D4B024 /* TimeConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeConstants.h; sourceTree = "<group>"; };
 		558E20052AC4B608001E743A /* DeviceImageGridHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceImageGridHeaderView.xib; sourceTree = "<group>"; };
 		558E20062AC4B608001E743A /* DeviceImageGridHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceImageGridHeaderView.mm; sourceTree = "<group>"; };
 		558E20072AC4B608001E743A /* DeviceImageGridHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceImageGridHeaderView.h; sourceTree = "<group>"; };
@@ -487,6 +488,7 @@
 				5544AE1327B5E585006AB473 /* SD.h */,
 				5544AE1427B5E585006AB473 /* Assert.h */,
 				55D3097E29A80F2E0080BCBD /* Time.h */,
+				55838C7F2AD0903000D4B024 /* TimeConstants.h */,
 				55D3099229A822D60080BCBD /* Clock.h */,
 			);
 			path = Shared;
