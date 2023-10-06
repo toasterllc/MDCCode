@@ -171,7 +171,7 @@
                     </scroller>
                 </scrollView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="iG6-k9-Zxe" userLabel="No Triggers View">
-                    <rect key="frame" x="201" y="273" width="198" height="62"/>
+                    <rect key="frame" x="201" y="263" width="198" height="62"/>
                     <subviews>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tcN-PV-F9r">
                             <rect key="frame" x="-2" y="34" width="202" height="28"/>
@@ -273,7 +273,7 @@ CA
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zvO-5Q-yeO">
-                    <rect key="frame" x="246" y="205" width="109" height="16"/>
+                    <rect key="frame" x="246" y="207" width="109" height="16"/>
                     <buttonCell key="cell" type="square" title="  10 – 30 days" bezelStyle="shadowlessSquare" image="CaptureTriggers-Battery" imagePosition="left" alignment="left" state="on" imageScaling="proportionallyDown" inset="2" id="VBd-qm-etN">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -305,14 +305,14 @@ CA
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="centerY" secondItem="EQc-nq-cmH" secondAttribute="centerY" id="LLE-8n-ub1"/>
                 <constraint firstItem="zvO-5Q-yeO" firstAttribute="centerX" secondItem="8kh-WA-1UA" secondAttribute="centerX" id="U7p-RO-0La"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" constant="-12" id="Vx3-Pn-lP8"/>
-                <constraint firstItem="EQc-nq-cmH" firstAttribute="centerY" secondItem="zvO-5Q-yeO" secondAttribute="centerY" id="Wwh-if-YRc"/>
+                <constraint firstItem="EQc-nq-cmH" firstAttribute="centerY" secondItem="zvO-5Q-yeO" secondAttribute="centerY" constant="2" id="Wwh-if-YRc"/>
                 <constraint firstItem="iG6-k9-Zxe" firstAttribute="centerX" secondItem="RYD-Tl-az2" secondAttribute="centerX" id="Xv8-y2-a79"/>
                 <constraint firstItem="Py0-Ga-GEC" firstAttribute="top" secondItem="RBu-R2-DJH" secondAttribute="bottom" id="btL-3Q-fuc"/>
                 <constraint firstItem="l89-2D-33X" firstAttribute="top" secondItem="Py0-Ga-GEC" secondAttribute="top" id="dBx-qG-QuM"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="top" secondItem="RYD-Tl-az2" secondAttribute="bottom" constant="8" id="eyo-cv-mc1"/>
                 <constraint firstAttribute="bottom" secondItem="Py0-Ga-GEC" secondAttribute="bottom" id="gQQ-vs-edZ"/>
                 <constraint firstItem="l89-2D-33X" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="heE-n2-Te4"/>
-                <constraint firstItem="iG6-k9-Zxe" firstAttribute="centerY" secondItem="RYD-Tl-az2" secondAttribute="centerY" constant="30" id="l4j-zn-tRW"/>
+                <constraint firstItem="iG6-k9-Zxe" firstAttribute="centerY" secondItem="RYD-Tl-az2" secondAttribute="centerY" constant="40" id="l4j-zn-tRW"/>
                 <constraint firstItem="Py0-Ga-GEC" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="s2s-8j-nhR"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" id="uSV-CQ-a5h"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="leading" secondItem="EQc-nq-cmH" secondAttribute="trailing" id="yih-vp-0ex"/>
