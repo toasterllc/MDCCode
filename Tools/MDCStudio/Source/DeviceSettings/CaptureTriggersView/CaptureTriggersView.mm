@@ -539,6 +539,7 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     IBOutlet ContainerSubview*  _detailView;
     IBOutlet NSControl*         _addButton;
     IBOutlet NSControl*         _removeButton;
+    IBOutlet NSControl*         _batteryLifeButton;
     IBOutlet NSView*            _noTriggersView;
     
     IBOutlet NSView*             _separatorLine;
@@ -610,6 +611,7 @@ static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
     [self->_noTriggersView setHidden:!emptyMode];
     [self->_addButton setHidden:emptyMode];
     [self->_removeButton setHidden:emptyMode];
+    [self->_batteryLifeButton setHidden:emptyMode];
     [self->_separatorLineOffset setConstant:(emptyMode ? 1000 : 8)];
 }
 

@@ -8,6 +8,7 @@
         <customObject id="-2" userLabel="File's Owner" customClass="CaptureTriggersView">
             <connections>
                 <outlet property="_addButton" destination="RBu-R2-DJH" id="KEK-MS-anF"/>
+                <outlet property="_batteryLifeButton" destination="zvO-5Q-yeO" id="qqN-Qi-l1T"/>
                 <outlet property="_battery_ContainerView" destination="2Xg-db-P6E" id="mRX-N0-xTW"/>
                 <outlet property="_battery_Motion_IgnoreTrigger_Checkbox" destination="xue-BB-gUz" id="FC5-OI-RhZ"/>
                 <outlet property="_battery_Motion_IgnoreTrigger_DurationField" destination="Ucp-vv-qKL" id="ngp-hK-RhZ"/>
@@ -271,6 +272,17 @@ CA
                         <action selector="_actionRemove:" target="-2" id="rxK-gJ-uvG"/>
                     </connections>
                 </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zvO-5Q-yeO">
+                    <rect key="frame" x="246" y="205" width="109" height="16"/>
+                    <buttonCell key="cell" type="square" title="  10 – 30 days" bezelStyle="shadowlessSquare" image="CaptureTriggers-Battery" imagePosition="left" alignment="left" state="on" imageScaling="proportionallyDown" inset="2" id="VBd-qm-etN">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                        <string key="keyEquivalent" base64-UTF8="YES">
+CA
+</string>
+                    </buttonCell>
+                    <color key="contentTintColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                </button>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Py0-Ga-GEC">
                     <rect key="frame" x="0.0" y="0.0" width="600" height="200"/>
                     <constraints>
@@ -291,7 +303,9 @@ CA
                 <constraint firstAttribute="trailing" secondItem="Py0-Ga-GEC" secondAttribute="trailing" id="IIf-Qx-Gke"/>
                 <constraint firstItem="RYD-Tl-az2" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="Jcp-3s-WDp"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="centerY" secondItem="EQc-nq-cmH" secondAttribute="centerY" id="LLE-8n-ub1"/>
+                <constraint firstItem="zvO-5Q-yeO" firstAttribute="centerX" secondItem="8kh-WA-1UA" secondAttribute="centerX" id="U7p-RO-0La"/>
                 <constraint firstItem="RBu-R2-DJH" firstAttribute="trailing" secondItem="RYD-Tl-az2" secondAttribute="trailing" constant="-12" id="Vx3-Pn-lP8"/>
+                <constraint firstItem="EQc-nq-cmH" firstAttribute="centerY" secondItem="zvO-5Q-yeO" secondAttribute="centerY" id="Wwh-if-YRc"/>
                 <constraint firstItem="iG6-k9-Zxe" firstAttribute="centerX" secondItem="RYD-Tl-az2" secondAttribute="centerX" id="Xv8-y2-a79"/>
                 <constraint firstItem="Py0-Ga-GEC" firstAttribute="top" secondItem="RBu-R2-DJH" secondAttribute="bottom" id="btL-3Q-fuc"/>
                 <constraint firstItem="l89-2D-33X" firstAttribute="top" secondItem="Py0-Ga-GEC" secondAttribute="top" id="dBx-qG-QuM"/>
@@ -940,6 +954,7 @@ CA
         </customView>
     </objects>
     <resources>
+        <image name="CaptureTriggers-Battery" width="22" height="12"/>
         <image name="CaptureTriggers-Icon-Button-Small" width="22" height="22"/>
         <image name="CaptureTriggers-Icon-Motion-Small" width="23" height="22"/>
         <image name="CaptureTriggers-Icon-Time-Small" width="23" height="23"/>
