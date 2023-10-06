@@ -1108,21 +1108,15 @@ struct _TaskEvent {
     
     static void _MotionEnablePower(_Triggers::MotionEnablePowerEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
-        // Power on motion sensor
-        trigger.stateUpdate(_Triggers::MotionTrigger::StatePowerEnable);
+        // Enable motion power
+        trigger.enablePower();
     }
     
     static void _MotionEnable(_Triggers::MotionEnableEvent& ev) {
         _Triggers::MotionTrigger& trigger = ev.trigger();
         
-        // Power on the motion sensor, because it may not be powered already, because the very
-        // first MotionEnableEvent doesn't have a corresponding MotionEnablePowerEvent, because we
-        // schedule the MotionEnablePowerEvent as a result of the MotionEnableEvent, below.
-        trigger.stateUpdate(
-            _Triggers::MotionTrigger::StatePowerEnable|_Triggers::MotionTrigger::StateMotionEnable,
-            _Triggers::MotionTrigger::StateMaxImageCount
-        );
-        trigger.countRem = trigger.base().count;
+        // Enable motion power / motion
+        trigger.enable();
         
         // Schedule the MotionDisableEvent, if applicable.
         // This needs to happen before we reschedule `ev` because we need its .time to
@@ -1144,29 +1138,20 @@ struct _TaskEvent {
     
     static void _MotionDisable(_Triggers::MotionDisableEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
-        // Disable power / motion
-        trigger.stateUpdate(
-            0,
-            _Triggers::MotionTrigger::StatePowerEnable|_Triggers::MotionTrigger::StateMotionEnable
-        );
+        // Disable motion power / motion
+        trigger.disable();
     }
     
     static void _MotionUnsuppressPower(_Triggers::MotionUnsuppressPowerEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         // Unsuppress motion power
-        trigger.stateUpdate(
-            0,
-            _Triggers::MotionTrigger::StatePowerSuppress
-        );
+        trigger.unsuppressPower();
     }
     
     static void _MotionUnsuppress(_Triggers::MotionUnsuppressEvent& ev) {
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         // Unsuppress motion
-        trigger.stateUpdate(
-            0,
-            _Triggers::MotionTrigger::StateMotionSuppress
-        );
+        trigger.unsuppressMotion();
     }
     
     static void _CaptureImage(_Triggers::CaptureImageEvent& ev) {
@@ -1511,7 +1496,7 @@ struct _TaskMotion {
             if (trigger.countRem) {
                 trigger.countRem--;
                 if (!trigger.countRem) {
-                    trigger.stateUpdate(_Triggers::MotionTrigger::StateMaxImageCount);
+                    trigger.hitMaxImageCount();
                 }
             }
             
@@ -1519,8 +1504,7 @@ struct _TaskMotion {
             const Time::Ticks32 suppressTicks = trigger.base().suppressTicks;
             if (suppressTicks) {
                 // Suppress power/motion immediately
-                trigger.stateUpdate(
-                    _Triggers::MotionTrigger::StatePowerSuppress|_Triggers::MotionTrigger::StateMotionSuppress);
+                trigger.suppress();
                 
                 // Schedule MotionUnsuppressEvent
                 const Time::Instant unsuppressTime = _TimeInstantAdd(time, suppressTicks);

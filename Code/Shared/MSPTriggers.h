@@ -131,8 +131,75 @@ struct T_MSPTriggers {
             return _Enabled(state);
         }
         
+        void enable() {
+            // Enable power / motion
+            // Include StatePowerEnable to power on the motion sensor, because it may not be powered already,
+            // because the very first MotionEnableEvent doesn't have a corresponding MotionEnablePowerEvent,
+            // because we schedule the MotionEnablePowerEvent as a result of the MotionEnableEvent, below.
+            stateUpdate(
+                StatePowerEnable|StateMotionEnable,
+                StateMaxImageCount
+            );
+            countRem = base().count;
+        }
+        
+        void disable() {
+            // Disable power / motion
+            stateUpdate(
+                0,
+                StatePowerEnable|StateMotionEnable
+            );
+        }
+        
+        void enablePower() {
+            // Enable power
+            stateUpdate(
+                StatePowerEnable,
+                0
+            );
+        }
+        
+        void suppress() {
+            // Suppress power / motion
+            stateUpdate(
+                StatePowerSuppress|StateMotionSuppress,
+                0
+            );
+        }
+        
+        void unsuppress() {
+            // Unsuppress power / motion
+            stateUpdate(
+                0,
+                StatePowerSuppress|StateMotionSuppress
+            );
+        }
+        
+        void unsuppressPower() {
+            // Unsuppress power
+            stateUpdate(
+                0,
+                StatePowerSuppress
+            );
+        }
+        
+        void unsuppressMotion() {
+            // Unsuppress motion
+            stateUpdate(
+                0,
+                StateMotionSuppress
+            );
+        }
+        
+        void hitMaxImageCount() {
+            stateUpdate(
+                StateMaxImageCount,
+                0
+            );
+        }
+        
         [[gnu::noinline]]
-        void stateUpdate(State set, State clear=0) {
+        void stateUpdate(State set, State clear) {
             state |= set;
             state &= ~clear;
             powered = _Powered(state);

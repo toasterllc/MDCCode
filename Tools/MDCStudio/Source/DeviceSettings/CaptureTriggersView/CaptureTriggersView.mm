@@ -759,8 +759,11 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     
     _triggers = Convert([self _triggers]);
     
-    BatteryLifeEstimate::Parameters params;
-    BatteryLifeEstimate::Estimate(BatteryLifeEstimate::BestCase, params, _triggers);
+    BatteryLifeEstimate::Parameters params = {
+        .stimulusInterval = std::chrono::seconds(3),
+    };
+    BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::WorstCase, params, _triggers);
+    estimator.estimate();
     
     return _triggers;
 }

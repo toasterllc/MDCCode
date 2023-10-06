@@ -86,6 +86,14 @@ struct Clock {
         assert(!Time::Absolute(t));
         return duration(t);
     }
+    
+    static duration DurationFromTicks(Ticks64 x) {
+        return duration(x);
+    }
+    
+    static Ticks64 TicksFromDuration(duration x) {
+        return x.count();
+    }
 };
 
 } // namespace Time
