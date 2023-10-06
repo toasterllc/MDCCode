@@ -25,6 +25,9 @@ __Abort:
     // ARM32
     asm volatile("mov r0, %0" : : "i" (&&__Abort) : );      /* r0 = $PC */
     asm volatile("b Abort" : : : );                         /* call Abort() */
+#elif defined(__APPLE__)
+    void abort(void);
+    abort();
 #else
     #error Task: Unsupported architecture
 #endif
