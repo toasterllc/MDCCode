@@ -90,58 +90,6 @@ inline std::chrono::seconds Estimate(const Constants& consts,
         _Triggers::EventPop();
         _EventHandle(ev);
     }
-        
-        
-//        if (!ev || (ev->time > startTime)) break;
-//        _EventHandle(_EventPop());
-    
-    
-//    constexpr float ImageCaptureCost = 1.f / BatteryImageCaptureCapacity;
-//    
-//    struct Trigger {
-//        virtual ~Trigger() {}
-//    };
-//    using TriggerPtr = std::unique_ptr<Trigger>;
-//    
-//    struct Event {
-//        Time::Clock::time_point time;
-//        virtual ~Event() {}
-//    };
-//    using EventPtr = std::unique_ptr<Event>;
-//    
-//    struct BatteryDailySelfDischargeEvent : Event {};
-//    struct StimulusEvent : Event {};
-//    
-//    float batteryLevel = 1;
-//    
-//    std::list<TriggerPtr> triggers;
-//    std::list<EventPtr> events;
-//    for (size_t i=0; i<triggers.count; i++) {
-//        const auto& trigger = triggers.triggers[i];
-//        
-//    }
-//    
-//    
-//    for (;;) {
-//        EventPtr event = std::move(events.front());
-//        events.pop_front();
-//        
-//        if (auto x = dynamic_cast<BatteryDailySelfDischargeEvent*>(event.get())) {
-//            batteryLevel *= 1-consts.batteryDailySelfDischarge;
-//            
-//        
-//        } else if (auto x = dynamic_cast<StimulusEvent*>(event.get())) {
-//            for (auto& trigger : triggers) {
-//                
-//            }
-//        
-//        } else {
-//            // Unknown type
-//            abort();
-//        }
-//        
-//        printf("Battery level: %.1f%%\n", batteryLevel*100);
-//    }
     
     return std::chrono::seconds(0);
 }
