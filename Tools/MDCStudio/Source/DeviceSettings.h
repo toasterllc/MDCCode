@@ -342,6 +342,12 @@ inline uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_secon
     abort();
 }
 
+inline Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz, const date::local_seconds& tp) {
+    const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
+    const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
+    return Time::Clock::TimeInstantFromTimePoint(tpDevice);
+}
+
 // _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
 template<typename T>
 inline date::local_seconds _PastTime(const T& now, Calendar::TimeOfDay timeOfDay) {
@@ -351,10 +357,54 @@ inline date::local_seconds _PastTime(const T& now, Calendar::TimeOfDay timeOfDay
     return t-date::days(1);
 }
 
-inline Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz, const date::local_seconds& tp) {
-    const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
-    const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
-    return Time::Clock::TimeInstantFromTimePoint(tpDevice);
+
+
+// _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
+template<typename T>
+inline date::local_seconds _PastDayOfWeek(const T& now, Calendar::TimeOfDay timeOfDay, Calendar::DaysOfWeek daysOfWeek) {
+    // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
+    // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
+    // then it doesn't qualify.)
+    const date::local_days midnight = floor<date::days>(now);
+    date::local_days day = midnight;
+    date::local_seconds tp;
+    for (;;) {
+        tp = day+timeOfDay;
+        // If `tp` is in the past and `day` is in x.DaysOfWeek, we're done
+        if (tp<now && DaysOfWeekGet(daysOfWeek, Calendar::DayOfWeek(day))) {
+            break;
+        }
+        day -= date::days(1);
+    }
+    return tp;
+}
+
+// _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
+template<typename T>
+inline date::local_seconds _PastDayOfYear(const T& now, Calendar::TimeOfDay timeOfDay, Calendar::DayOfYear dayOfYear) {
+    // Determine if doy's month+day of the current year is in the past.
+    // If it's in the future, subtract one year and use that.
+    const date::year nowYear = date::year_month_day(floor<date::days>(now)).year();
+    auto tp = date::local_days{ nowYear / dayOfYear.month() / dayOfYear.day() } + timeOfDay;
+    if (tp >= now) {
+        tp = date::local_days{ (nowYear-date::years(1)) / dayOfYear.month() / dayOfYear.day() } + timeOfDay;
+        // Logic error if tp is still in the future, even after subtracting a year
+        assert(tp < now);
+    }
+    return tp;
+}
+
+// _DaysOfWeekBitfield(): Generate the days bitfield by advancing `daysOfWeek`
+// backwards until we hit whatever day of week that `tp` is.
+inline uint8_t _DaysOfWeekBitfield(const date::local_seconds& tp, Calendar::DaysOfWeek daysOfWeek) {
+    const date::local_days day = floor<date::days>(tp);
+    uint8_t days = daysOfWeek.x;
+    for (Calendar::DayOfWeek i=Calendar::DayOfWeek(0); i!=Calendar::DayOfWeek(day); i--) {
+        days = _DaysOfWeekAdvance(days, -1);
+    }
+    // Low bit of `days` should be set, otherwise it's a logic bug
+    assert(days & 1);
+    return days;
 }
 
 inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type,
@@ -388,31 +438,12 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         }};
     
     case Repeat::Type::DaysOfWeek: {
-        // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
-        // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
-        // then it doesn't qualify.)
-        const date::local_days midnight = floor<date::days>(now);
-        date::local_days day = midnight;
-        date::local_seconds tp;
-        for (;;) {
-            tp = day+timeOfDay;
-            // If `tp` is in the past and `day` is in x.DaysOfWeek, we're done
-            if (tp<now && DaysOfWeekGet(repeat->DaysOfWeek, Calendar::DayOfWeek(day))) {
-                break;
-            }
-            day -= date::days(1);
-        }
-        
-        // Generate the days bitfield by advancing x.DaysOfWeek backwards until we
-        // hit whatever day of week that `day` is. This is necessary because the time
-        // that we return and the days bitfield need to be aligned so that they
-        // represent the same day.
-        uint8_t days = repeat->DaysOfWeek.x;
-        for (Calendar::DayOfWeek i=Calendar::DayOfWeek(0); i!=Calendar::DayOfWeek(day); i--) {
-            days = _DaysOfWeekAdvance(days, -1);
-        }
-        // Low bit of `days` should be set, otherwise it's a logic bug
-        assert(days & 1);
+        const date::local_seconds tp = _PastDayOfWeek(now, timeOfDay, repeat->DaysOfWeek);
+        // Create the DaysOfWeek bitfield that's aligned to whatever day of
+        // the week `tp` is.
+        // This is necessary because the time that we return and the days
+        // bitfield need to be aligned so that they represent the same day.
+        const uint8_t days = _DaysOfWeekBitfield(tp, repeat->DaysOfWeek);
         
         return { MSP::Triggers::Event{
             .time = _TimeInstantForLocalTime(tz, tp),
@@ -431,14 +462,7 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         for (Calendar::DayOfYear doy : daysOfYear) {
             // Determine if doy's month+day of the current year is in the past.
             // If it's in the future, subtract one year and use that.
-            const date::year nowYear = date::year_month_day(floor<date::days>(now)).year();
-            auto tp = date::local_days{ nowYear / doy.month() / doy.day() } + timeOfDay;
-            if (tp >= now) {
-                tp = date::local_days{ (nowYear-date::years(1)) / doy.month() / doy.day() } + timeOfDay;
-                // Logic error if tp is still in the future, even after subtracting a year
-                assert(tp < now);
-            }
-            
+            const date::local_seconds tp = _PastDayOfYear(now, timeOfDay, doy);
             events.push_back({
                 .time = _TimeInstantForLocalTime(tz, tp),
                 .type = type,
