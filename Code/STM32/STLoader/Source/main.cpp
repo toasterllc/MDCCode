@@ -1,9 +1,9 @@
 #include <cstring>
 #include <algorithm>
-#include "Toastbox/Scheduler.h"
-#include "Toastbox/Math.h"
-#include "Assert.h"
-#include "STM.h"
+#include "Code/Lib/Toastbox/Scheduler.h"
+#include "Code/Lib/Toastbox/Math.h"
+#include "Code/Shared/Assert.h"
+#include "Code/Shared/STM.h"
 #include "USB.h"
 #include "System.h"
 using namespace STM;

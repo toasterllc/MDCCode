@@ -1,6 +1,6 @@
 #pragma once
 #include "ICE.h"
-#include "Assert.h"
+#include "Code/Shared/Assert.h"
 
 namespace Img {
 

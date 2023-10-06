@@ -1,8 +1,8 @@
 #pragma once
 #include <msp430.h>
-#include "MSP.h"
+#include "Code/Shared/MSP.h"
 #include "RegLocker.h"
-#include "Assert.h"
+#include "Code/Shared/Assert.h"
 
 template<
 typename T_Scheduler,

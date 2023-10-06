@@ -1,10 +1,10 @@
 #pragma once
-#include "Toastbox/Enum.h"
-#include "Toastbox/USB.h"
+#include "Code/Lib/Toastbox/Enum.h"
+#include "Code/Lib/Toastbox/USB.h"
 #include "Img.h"
 #include "SD.h"
 #include "ImgSD.h"
-#include "MSP.h"
+#include "Code/Shared/MSP.h"
 
 namespace STM {
 

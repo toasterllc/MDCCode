@@ -2,17 +2,17 @@
 #include <cstring>
 #include <tuple>
 #include <ratio>
+#include "Code/Lib/Toastbox/Scheduler.h"
+#include "Code/Lib/Toastbox/Util.h"
+#include "Code/Shared/STM.h"
+#include "Code/Shared/Assert.h"
+#include "Code/Shared/MSP.h"
 #include "GPIO.h"
-#include "STM.h"
 #include "USB.h"
 #include "I2C.h"
-#include "MSP.h"
 #include "BoolLock.h"
 #include "USBConfig.h"
-#include "Assert.h"
 #include "MSP430JTAG.h"
-#include "Toastbox/Scheduler.h"
-#include "Toastbox/Util.h"
 
 // MARK: - Interrupt Stack
 // This is the stack that's used to handle interrupts.

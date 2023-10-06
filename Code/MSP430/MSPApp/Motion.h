@@ -1,8 +1,8 @@
 #pragma once
 #include <msp430.h>
-#include "Toastbox/Scheduler.h"
+#include "Code/Lib/Toastbox/Scheduler.h"
 #include "GPIO.h"
-#include "Assert.h"
+#include "Code/Shared/Assert.h"
 
 template<
 typename T_Scheduler,

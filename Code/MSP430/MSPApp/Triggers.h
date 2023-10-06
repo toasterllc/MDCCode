@@ -1,8 +1,7 @@
 #pragma once
 #include <cstdlib>
-#include "MSP.h"
-#include "Assert.h"
-#include "System.h"
+#include "Code/Shared/MSP.h"
+#include "Code/Shared/Assert.h"
 
 // TODO: when we move to using >=C++20, we want to give _State.settings.events as T_Base, but we have to give
 //       the whole _State while we're on C++17, because C++17 doesn't allow giving subojects as non-type

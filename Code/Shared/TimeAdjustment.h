@@ -1,8 +1,8 @@
 #pragma once
 #include "Time.h"
 #include "Clock.h"
-#include "MSP.h"
-#include "Toastbox/Cast.h"
+#include "Code/Shared/MSP.h"
+#include "Code/Lib/Toastbox/Cast.h"
 
 namespace Time {
 

@@ -56,7 +56,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
-#include "Assert.h"
+#include "Code/Shared/Assert.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{

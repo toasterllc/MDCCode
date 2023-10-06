@@ -1,7 +1,7 @@
 #pragma once
 #include "stm32f7xx.h"
 #include "GPIO.h"
-#include "Toastbox/Scheduler.h"
+#include "Code/Lib/Toastbox/Scheduler.h"
 
 template <
 typename T_Scheduler

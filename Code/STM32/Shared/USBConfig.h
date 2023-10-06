@@ -1,7 +1,7 @@
 #pragma once
-#include "Toastbox/USB.h"
-#include "Toastbox/Endian.h"
-#include "STM.h"
+#include "Code/Lib/Toastbox/USB.h"
+#include "Code/Lib/Toastbox/Endian.h"
+#include "Code/Shared/STM.h"
 
 struct USBConfig {
 private:

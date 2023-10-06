@@ -1,10 +1,10 @@
 #pragma once
 #include "ICE.h"
-#include "Toastbox/Scheduler.h"
+#include "Code/Lib/Toastbox/Scheduler.h"
 #include "Img.h"
 #include "SD.h"
 #include "ImgSD.h"
-#include "Assert.h"
+#include "Code/Shared/Assert.h"
 
 namespace SD {
 

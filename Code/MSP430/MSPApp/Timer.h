@@ -2,9 +2,9 @@
 #include <msp430.h>
 #include <ratio>
 #include <limits>
-#include "Time.h"
-#include "Assert.h"
-#include "Toastbox/Util.h"
+#include "Code/Lib/Toastbox/Util.h"
+#include "Code/Shared/Time.h"
+#include "Code/Shared/Assert.h"
 
 // T_Timer: a one-shot timer that can be scheduled for times in the near future
 // to distant future (up to ~4 years -- 0xFFFF*T_RTC::InterruptIntervalUs).
