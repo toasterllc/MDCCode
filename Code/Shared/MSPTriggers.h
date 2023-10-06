@@ -11,7 +11,7 @@ template<
 auto& T_Base,
 typename T_MotionPowered
 >
-struct T_Triggers {
+struct T_MSPTriggers {
     struct Trigger;
     static constexpr auto& _T_Base = T_Base.settings.triggers;
     using _Base = std::remove_reference_t<decltype(_T_Base)>;

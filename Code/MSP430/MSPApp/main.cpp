@@ -16,6 +16,7 @@
 #include "Code/Shared/ImgSD.h"
 #include "Code/Shared/Time.h"
 #include "Code/Shared/TimeConstants.h"
+#include "Code/Shared/MSPTriggers.h"
 #include "Startup.h"
 #include "GPIO.h"
 #include "Clock.h"
@@ -28,7 +29,6 @@
 #include "BatterySampler.h"
 #include "Button.h"
 #include "AssertionCounter.h"
-#include "Triggers.h"
 #include "Motion.h"
 #include "Timer.h"
 #include "Debug.h"
@@ -108,7 +108,7 @@ static T_Property<bool,_EventsEnabledChanged,_MotionPoweredUpdate> _EventsEnable
 struct _MotionPowered : T_AssertionCounter<_MotionPoweredUpdate> {};
 
 // _Triggers: stores our current event state
-using _Triggers = T_Triggers<_State, _MotionPowered::Assertion>;
+using _Triggers = T_MSPTriggers<_State, _MotionPowered::Assertion>;
 
 static Time::Ticks32 _RepeatAdvance(MSP::Repeat& x) {
     static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
