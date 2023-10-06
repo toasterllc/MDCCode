@@ -99,6 +99,10 @@ static void _SetView(T& x, NSView* y) {
         [selfStrong _prefsChanged];
         return true;
     });
+    
+    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer*) {
+        [self _showDeviceSettings:nullptr];
+    }];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
@@ -526,7 +530,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     
     _deviceSettings = {
         .device = device,
-        .view = [[DeviceSettingsView alloc] initWithSettings:device->settings() delegate:self],
+        .view = [[DeviceSettingsView alloc] initWithSettings:{} delegate:self],
     };
     
     NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}

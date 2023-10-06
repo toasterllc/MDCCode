@@ -14,6 +14,7 @@
 #import "Toastbox/String.h"
 #import "Toastbox/Defer.h"
 #import "Code/Shared/Clock.h"
+#import "BatteryLifeEstimate.h"
 using namespace MDCStudio;
 using namespace DeviceSettings;
 
@@ -752,6 +753,12 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 }
 
 - (const MSP::Triggers&)triggers {
+    BatteryLifeEstimate::Parameters params;
+    BatteryLifeEstimate::Estimator est(BatteryLifeEstimate::BestCase, params, [self _triggers]);
+    est.estimate();
+    
+//    BatteryLifeEstimate::BatteryLifeEstimate(BatteryLifeEstimate::BestCase, params, [self _triggers]);
+    
     _triggers = Convert([self _triggers]);
     return _triggers;
 }

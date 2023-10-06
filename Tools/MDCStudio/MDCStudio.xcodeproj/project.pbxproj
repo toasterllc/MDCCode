@@ -221,6 +221,7 @@
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
 		55838C7A2ACF345800D4B024 /* SourceList-Battery-Charging-0.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-0.pdf"; sourceTree = "<group>"; };
+		55838C7E2ACF4B3A00D4B024 /* BatteryLifeEstimate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BatteryLifeEstimate.h; sourceTree = "<group>"; };
 		558E20052AC4B608001E743A /* DeviceImageGridHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceImageGridHeaderView.xib; sourceTree = "<group>"; };
 		558E20062AC4B608001E743A /* DeviceImageGridHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceImageGridHeaderView.mm; sourceTree = "<group>"; };
 		558E20072AC4B608001E743A /* DeviceImageGridHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceImageGridHeaderView.h; sourceTree = "<group>"; };
@@ -645,6 +646,7 @@
 				5562353A27B5086E0008074C /* Util.h */,
 				557ABD8829E7E90B0032619E /* Calendar.h */,
 				557ABD8929E7E90B0032619E /* DeviceSettings.h */,
+				55838C7E2ACF4B3A00D4B024 /* BatteryLifeEstimate.h */,
 				55496F46278CFC0400BCA739 /* AppDelegate.mm */,
 				55496F4E278CFC0600BCA739 /* main.mm */,
 			);
