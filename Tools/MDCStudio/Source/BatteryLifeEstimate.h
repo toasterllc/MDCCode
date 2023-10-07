@@ -39,7 +39,8 @@ struct Estimator {
         _batteryLevel = 1;
         _MSPState.settings.triggers = _triggers;
         
-        _time = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
+        const auto timeStart = Time::Clock::now();
+        _time = Time::Clock::TimeInstantFromTimePoint(timeStart);
         _Triggers::Init(_time);
         
         // Insert our special events (_BatteryDailySelfDischargeEvent / _ExternalStimulusEvent)
@@ -65,7 +66,7 @@ struct Estimator {
             // Make our current time the event's time
             _time = ev.time;
             
-            // Print the current time + battery level
+//            // Print the current time + battery level
 //            _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
             
             // Handle the event
@@ -75,7 +76,15 @@ struct Estimator {
             if (_batteryLevel < _BatteryEmptyLevel) break;
         }
         
-        return std::chrono::seconds(0);
+        // Print the current time + battery level
+        _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
+        
+        const auto timeEnd = Time::Clock::TimePointFromTimeInstant(_time);
+        const std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(timeEnd-timeStart);
+        const date::days durationDays = std::chrono::duration_cast<date::days>(timeEnd-timeStart);
+        printf("Battery lasted %ju days (%ju seconds)\n", (uintmax_t)durationDays.count(), (uintmax_t)duration.count());
+        
+        return duration;
     }
     
     static inline MSP::State _MSPState;
@@ -227,10 +236,11 @@ struct Estimator {
     }
     
     void _printTime() {
-        const auto tp = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(_time));
-        const date::sys_days dp = date::floor<date::days>(tp);
-        const date::year_month_day ymd = date::year_month_day(dp);
-        const date::time_of_day<std::chrono::microseconds> hhmmss = date::make_time(tp - dp);
+        const date::time_zone& tz = *date::current_zone();
+        const auto tp = tz.to_local(Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(_time)));
+        const auto days = date::floor<date::days>(tp);
+        const auto ymd = date::year_month_day(days);
+        const auto hhmmss = date::make_time(tp-days);
         
         std::cout << "[ ";
         std::cout << ymd.year() << "-" << ymd.month() << "-" << ymd.day();
