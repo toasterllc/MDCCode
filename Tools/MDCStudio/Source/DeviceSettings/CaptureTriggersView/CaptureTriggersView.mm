@@ -740,6 +740,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         printf("[CaptureTriggersView] Failed to deserailize triggers: %s\n", e.what());
     }
     
+    [self _updateBatteryLife];
     return self;
 }
 
@@ -755,26 +756,33 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 }
 
 - (void)_updateBatteryLife {
-    BatteryLifeEstimate::Parameters params = {
-        .stimulusInterval = std::chrono::seconds(3),
-    };
-    BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::WorstCase, params, _triggers);
-    estimator.estimate();
+    const MSP::Triggers mspTriggers = [self triggers];
+    
+    // Worst case
+    std::chrono::seconds batteryLifeMin(0);
+    {
+        BatteryLifeEstimate::Parameters params = {
+            .stimulusInterval = std::chrono::seconds(3),
+        };
+        BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::WorstCase, params, mspTriggers);
+        batteryLifeMin = estimator.estimate();
+    }
+    
+    // Best case
+    std::chrono::seconds batteryLifeMax(0);
+    {
+        BatteryLifeEstimate::Parameters params = {
+            .stimulusInterval = std::chrono::seconds(3),
+        };
+        BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::BestCase, params, mspTriggers);
+        batteryLifeMax = estimator.estimate();
+    }
+    
+    [_batteryLifeButton setStringValue:@"hello"];
 }
 
 - (const MSP::Triggers&)triggers {
-//    BatteryLifeEstimate::Parameters params;
-//    BatteryLifeEstimate::Estimator est(BatteryLifeEstimate::BestCase, params, [self _triggers]);
-//    est.estimate();
-    
     _triggers = Convert([self _triggers]);
-    
-    BatteryLifeEstimate::Parameters params = {
-        .stimulusInterval = std::chrono::seconds(3),
-    };
-    BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::WorstCase, params, _triggers);
-    estimator.estimate();
-    
     return _triggers;
 }
 
@@ -1131,56 +1139,63 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     
     NSLog(@"_actionViewChanged");
     ListItem* it = [self _selectedItem];
-    if (!it) return;
-    Trigger& trigger = it->trigger;
-    
-    // Commit editing the active editor
-    if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
-        // We call -insertNewline twice because NSTokenField has 2 sequential states
-        // that the return key transitions through, and we want to transition through
-        // both to get to the final "select all" state.
-        [x insertNewline:nil];
-        [x insertNewline:nil];
-    }
-    
-    _Store(self, trigger);
-    
-    if (initRepeat) {
-        switch (trigger.type) {
-        case Trigger::Type::Time:   _TriggerInitRepeat(trigger.time.schedule.repeat); break;
-        case Trigger::Type::Motion: _TriggerInitRepeat(trigger.motion.schedule.repeat); break;
-        default:                    abort();
+    if (it) {
+        Trigger& trigger = it->trigger;
+        
+        // Commit editing the active editor
+        if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
+            // We call -insertNewline twice because NSTokenField has 2 sequential states
+            // that the return key transitions through, and we want to transition through
+            // both to get to the final "select all" state.
+            [x insertNewline:nil];
+            [x insertNewline:nil];
         }
+        
+        _Store(self, trigger);
+        
+        if (initRepeat) {
+            switch (trigger.type) {
+            case Trigger::Type::Time:   _TriggerInitRepeat(trigger.time.schedule.repeat); break;
+            case Trigger::Type::Motion: _TriggerInitRepeat(trigger.motion.schedule.repeat); break;
+            default:                    abort();
+            }
+        }
+        
+        _Load(self, trigger);
+        [it updateView];
     }
-    
-    _Load(self, trigger);
-    [it updateView];
 }
 
 - (IBAction)_actionViewChanged:(id)sender {
     _StoreLoad(self);
+    [self _updateBatteryLife];
 }
 
 - (IBAction)_actionRepeatMenuChanged:(id)sender {
     _StoreLoad(self, true);
+    [self _updateBatteryLife];
 }
 
 - (IBAction)_actionAddTimeTrigger:(id)sender {
     _ListItemAdd(self, _TriggerMake(Trigger::Type::Time), true);
+    [self _updateBatteryLife];
 }
 
 - (IBAction)_actionAddMotionTrigger:(id)sender {
     _ListItemAdd(self, _TriggerMake(Trigger::Type::Motion), true);
+    [self _updateBatteryLife];
 }
 
 - (IBAction)_actionAddButtonTrigger:(id)sender {
     _ListItemAdd(self, _TriggerMake(Trigger::Type::Button), true);
+    [self _updateBatteryLife];
 }
 
 - (IBAction)_actionRemove:(id)sender {
     NSInteger idx = [_tableView selectedRow];
     if (idx < 0) return;
     _ListItemRemove(self, idx);
+    [self _updateBatteryLife];
 }
 
 // MARK: - Table View Data Source / Delegate

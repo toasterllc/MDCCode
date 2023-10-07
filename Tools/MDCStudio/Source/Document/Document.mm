@@ -567,8 +567,8 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         }
     }
     
-    [_window endSheet:[_deviceSettings.view window]];
-    _deviceSettings = {};
+//    [_window endSheet:[_deviceSettings.view window]];
+//    _deviceSettings = {};
 }
 
 // MARK: - DeviceImageGridHeaderViewDelegate

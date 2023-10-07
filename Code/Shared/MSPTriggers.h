@@ -46,6 +46,10 @@ struct T_MSPTriggers {
         Time::Instant time;
         Event* next;
         Type type;
+        
+        bool scheduled() const {
+            return next != nullptr;
+        }
     };
     
     struct RepeatEvent : Event {
@@ -239,27 +243,8 @@ struct T_MSPTriggers {
         }
     }
     
-    // _EventPop(): remove event from linked list
-    // Requires event to exist in the list!
-    static Event& _EventPop(Event& ev) {
-        Event** prev = &_Front;
-        Event* curr = _Front;
-        while (curr!=_End && curr!=&ev) {
-            prev = &curr->next;
-            curr = curr->next;
-        }
-        Assert(curr);
-        
-        *prev = ev.next;
-        ev.next = nullptr;
-        return ev;
-    }
-    
     static void EventInsert(Event& ev, const Time::Instant& t) {
-        // Only pop the event if we know it's in the list, to avoid having to search
-        // for it (since we're using a singly-linked list to save memory).
-        if (ev.next) _EventPop(ev);
-        
+        EventPop(ev);
         ev.time = t;
         
         Event** prev = &_Front;
@@ -273,16 +258,27 @@ struct T_MSPTriggers {
         ev.next = curr;
     }
     
-//    static Event* EventPop(const Time::Instant& t) {
-//        if (!_Front) return nullptr;
-//        // If the front event occurs after the current time, no events are ready yet.
-//        if (_Front->time >= t) return nullptr;
-//        return &_EventPop(*_Front);
-//    }
-    
     static void EventPop() {
         Assert(_Front != _End);
-        _EventPop(*_Front);
+        EventPop(*_Front);
+    }
+    
+    // EventPop(): remove event from linked list
+    static void EventPop(Event& ev) {
+        // Only pop the event if we know it's in the list, to avoid having to search
+        // for it (since we're using a singly-linked list to save memory).
+        if (!ev.scheduled()) return;
+        
+        Event** prev = &_Front;
+        Event* curr = _Front;
+        while (curr!=_End && curr!=&ev) {
+            prev = &curr->next;
+            curr = curr->next;
+        }
+        Assert(curr);
+        
+        *prev = ev.next;
+        ev.next = nullptr;
     }
     
     static Event* EventFront() {

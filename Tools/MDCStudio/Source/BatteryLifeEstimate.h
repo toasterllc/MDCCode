@@ -12,6 +12,7 @@
 namespace MDCStudio::BatteryLifeEstimate {
 
 struct Constants {
+    uint32_t batteryImageCaptureCapacity = 0;
     float batteryDailySelfDischarge = 0;
 };
 
@@ -20,14 +21,17 @@ struct Parameters {
 };
 
 constexpr Constants WorstCase = {
+    .batteryImageCaptureCapacity = 50000,
     .batteryDailySelfDischarge = 0.0017083156,     // 5% per month == 1-(1-.05)^(1/30) per day
 };
 
 constexpr Constants BestCase = {
+    .batteryImageCaptureCapacity = 80000,
     .batteryDailySelfDischarge = 0.0006731968785,  // 2% per month == 1-(1-.02)^(1/30) per day
 };
 
 struct Estimator {
+//#define printf
     Estimator(const Constants& consts,
         const Parameters& params,
         const MSP::Triggers& triggers) : _consts(consts), _params(params), _triggers(triggers) {
@@ -46,7 +50,6 @@ struct Estimator {
         // Insert our special events (_BatteryDailySelfDischargeEvent / _ExternalStimulusEvent)
         // by calling their respective event functions
         _batteryDailySelfDischarge();
-        _externalStimulus();
         
         // Fast-forward through events
         for (;;) {
@@ -57,24 +60,35 @@ struct Estimator {
             _eventHandle(*ev);
         }
         
+        printf("===== LIVE =====\n");
         _live = true;
         
-        for (;;) {
+        uint64_t i;
+        for (i=0;; i++) {
             _Triggers::Event& ev = *_Triggers::EventFront();
             _Triggers::EventPop();
             
             // Make our current time the event's time
             _time = ev.time;
             
-//            // Print the current time + battery level
-//            _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
+            // Print the current time + battery level
+            _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
             
             // Handle the event
             _eventHandle(ev);
             
+            if (_motionEnabled() && !_externalStimulusEvent.scheduled()) {
+                _externalStimulusSchedule();
+            } else if (!_motionEnabled() && _externalStimulusEvent.scheduled()) {
+                _externalStimulusCancel();
+            }
+            
             // Bail once the battery level is below our threshold
             if (_batteryLevel < _BatteryEmptyLevel) break;
         }
+        
+//#undef printf
+        printf("ITERATIONS: %ju\n", (uintmax_t)i);
         
         // Print the current time + battery level
         _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
@@ -83,6 +97,7 @@ struct Estimator {
         const std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(timeEnd-timeStart);
         const date::days durationDays = std::chrono::duration_cast<date::days>(timeEnd-timeStart);
         printf("Battery lasted %ju days (%ju seconds)\n", (uintmax_t)durationDays.count(), (uintmax_t)duration.count());
+//#define printf
         
         return duration;
     }
@@ -90,8 +105,8 @@ struct Estimator {
     static inline MSP::State _MSPState;
     using _Triggers = T_MSPTriggers<_MSPState, bool>;
     
-    static inline _Triggers::Event _BatteryDailySelfDischargeEvent = {};
-    static inline _Triggers::Event _ExternalStimulusEvent = {};
+    _Triggers::Event _batteryDailySelfDischargeEvent = {};
+    _Triggers::Event _externalStimulusEvent = {};
     
     void _eventInsert(_Triggers::Event& ev, const Time::Instant& time) {
         _Triggers::EventInsert(ev, time);
@@ -105,10 +120,14 @@ struct Estimator {
     
     void _batteryDailySelfDischarge() {
         if (_live) {
-            _printTime(); printf("Battery self-discharge\n");
+//            _printTime(); printf("Battery self-discharge\n");
             _batteryLevel *= 1-_consts.batteryDailySelfDischarge;
         }
-        _eventInsert(_BatteryDailySelfDischargeEvent, _time+Time::Day);
+        _batteryDailySelfDischargeSchedule();
+    }
+    
+    void _batteryDailySelfDischargeSchedule() {
+        _eventInsert(_batteryDailySelfDischargeEvent, _time+Time::Day);
     }
     
     void _handleMotion() {
@@ -149,17 +168,26 @@ struct Estimator {
     
     void _handleButton() {
         for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
-            _printTime(); printf("Button trigger\n");
+//            _printTime(); printf("Button trigger\n");
             _captureImages(*it);
         }
     }
     
     void _externalStimulus() {
         if (_live) {
+            _printTime(); printf("External stimulus\n");
             _handleMotion();
             _handleButton();
         }
-        _eventInsert(_ExternalStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.stimulusInterval));
+        _externalStimulusSchedule();
+    }
+    
+    void _externalStimulusSchedule() {
+        _eventInsert(_externalStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.stimulusInterval));
+    }
+    
+    void _externalStimulusCancel() {
+        _Triggers::EventPop();
     }
     
     void _timeTrigger(_Triggers::TimeTriggerEvent& ev) {
@@ -200,15 +228,15 @@ struct Estimator {
     void _captureImages(_Triggers::CaptureImageEvent& ev) {
         assert(_live);
         _printTime(); printf("Capture %ju images\n", (uintmax_t)ev.capture->count);
-        _batteryLevel -= ev.capture->count * _ImageCaptureCost;
+        _batteryLevel -= ev.capture->count * _imageCaptureCost();
     }
     
     void _eventHandle(_Triggers::Event& ev) {
         // Handle our special events
-        if (&ev == &_BatteryDailySelfDischargeEvent) {
+        if (&ev == &_batteryDailySelfDischargeEvent) {
             return _batteryDailySelfDischarge();
         
-        } else if (&ev == &_ExternalStimulusEvent) {
+        } else if (&ev == &_externalStimulusEvent) {
             return _externalStimulus();
         }
         
@@ -249,15 +277,21 @@ struct Estimator {
         std::cout << " ] ";
     }
     
+    bool _motionEnabled() const {
+        for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+            _Triggers::MotionTrigger& trigger = *it;
+            if (trigger.enabled()) return true;
+        }
+        return false;
+    }
+    
+    float _imageCaptureCost() const {
+        return 1.f / _consts.batteryImageCaptureCapacity;
+    }
+    
     // BatteryEmptyLevel: consider battery dead at 2%
     // This needs to match MSP's battery trap level
     static constexpr float _BatteryEmptyLevel = 0.02;
-
-    // BatteryImageCaptureCapacity: assume the device's battery can capture 60000 images with a full battery
-    static constexpr uint32_t _BatteryImageCaptureCapacity = 60000;
-    
-    // _ImageCaptureCost: the battery cost of a single image capture
-    static constexpr float _ImageCaptureCost = 1.f / _BatteryImageCaptureCapacity;
     
     const Constants _consts;
     const Parameters _params;
@@ -266,6 +300,7 @@ struct Estimator {
     Time::Instant _time = 0;
     bool _live = false;
     float _batteryLevel = 0;
+//#undef printf
 };
 
 } // namespace MDCStudio::BatteryLifeEstimate
