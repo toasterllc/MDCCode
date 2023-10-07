@@ -13,8 +13,6 @@ namespace MDCStudio::BatteryLifeEstimate {
 
 struct Constants {
     float batteryDailySelfDischarge = 0;
-//    float batteryEmptyLevel                 = 0;
-//    uint32_t batteryImageCaptureCapacity    = 0;
 };
 
 struct Parameters {
@@ -23,53 +21,11 @@ struct Parameters {
 
 constexpr Constants WorstCase = {
     .batteryDailySelfDischarge = 0.0017083156,     // 5% per month == 1-(1-.05)^(1/30) per day
-//    .batteryEmptyLevel              = BatteryEmptyLevel,
-//    .batteryImageCaptureCapacity    = BatteryImageCaptureCapacity,
 };
 
 constexpr Constants BestCase = {
     .batteryDailySelfDischarge = 0.0006731968785,  // 2% per month == 1-(1-.02)^(1/30) per day
-//    .batteryEmptyLevel              = BatteryEmptyLevel,
-//    .batteryImageCaptureCapacity    = BatteryImageCaptureCapacity,
 };
-
-//inline std::chrono::seconds Estimate(const Constants& consts,
-//    const Parameters& params, const MSP::Triggers& mspTriggers) {
-//    
-//    _MSPState.settings.triggers = mspTriggers;
-//    
-//    const Time::Instant now = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
-//    _Triggers::Init(now);
-//    
-//    // Fast-forward through events
-//    for (;;) {
-//        _Triggers::Event& ev = *_Triggers::EventFront();
-//        _Triggers::EventPop();
-//        _EventHandle(ev);
-//    }
-//    
-//    return std::chrono::seconds(0);
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 struct Estimator {
     Estimator(const Constants& consts,
@@ -121,86 +77,6 @@ struct Estimator {
         
         return std::chrono::seconds(0);
     }
-    
-    
-    
-//    std::chrono::seconds estimate() {
-//        
-//        
-//        using namespace std::chrono;
-//        using namespace DeviceSettings;
-//        const date::time_zone& tz = *date::current_zone();
-//        const date::local_seconds now = floor<std::chrono::seconds>(tz.to_local(system_clock::now()));
-//        const date::local_seconds start = now;
-//        date::local_seconds time = start;
-//        float batteryLevel = 1;
-//        
-//        std::list<_TriggerPtr> triggers;
-//        std::list<_EventPtr> events;
-//        for (size_t i=0; i<_triggers.count; i++) {
-//            const auto& triggerBase = _triggers.triggers[i];
-//            switch (triggerBase.type) {
-//            case Trigger::Type::Time: {
-//                auto trigger = std::make_unique<_TimeTrigger>();
-//                trigger->base = &triggerBase;
-//                
-//                auto ev = std::make_unique<_TimeTriggerEvent>();
-//                ev->time = _PastTime(now, triggerBase.time.schedule.time);
-//                ev->trigger = &*trigger;
-//                break;
-//            }
-//            
-//            case Trigger::Type::Motion: {
-//                
-//                break;
-//            }
-//            
-//            case Trigger::Type::Button: {
-//                
-//                break;
-//            }
-//            
-//            default: abort();
-//            }
-//        }
-//        
-//        {
-//            auto x = std::make_unique<_BatteryDailySelfDischargeEvent>();
-//            x->time = time;
-//            _advance(*x);
-//            _Insert(events, std::move(x));
-//        }
-//        
-//        {
-//            auto x = std::make_unique<_StimulusEvent>();
-//            x->time = time;
-//            _advance(*x);
-//            _Insert(events, std::move(x));
-//        }
-//        
-//        for (;;) {
-//            _EventPtr event = std::move(events.front());
-//            events.pop_front();
-//            
-//            if (auto x = dynamic_cast<_BatteryDailySelfDischargeEvent*>(event.get())) {
-//                batteryLevel *= 1-_consts.batteryDailySelfDischarge;
-//                _advance(*x);
-//            
-//            } else if (auto x = dynamic_cast<_StimulusEvent*>(event.get())) {
-//                for (auto& trigger : triggers) {
-//                    
-//                }
-//                _advance(*x);
-//            
-//            } else {
-//                // Unknown type
-//                abort();
-//            }
-//            
-//            _Insert(events, std::move(event));
-//            printf("Battery level: %.1f%%\n", batteryLevel*100);
-//        }
-//    }
     
     static inline MSP::State _MSPState;
     using _Triggers = T_MSPTriggers<_MSPState, bool>;
@@ -361,21 +237,6 @@ struct Estimator {
         std::cout << " @ ";
         std::cout << hhmmss.hours().count() << ":" << hhmmss.minutes().count() << ":" << hhmmss.seconds().count();
         std::cout << " ] ";
-        
-//        std::cout << "Year: " << the_date.year()
-//        std::cout << "Month: " << (unsigned)the_date.month() << std::endl;
-//        std::cout << "Date: " << the_date.day() << std::endl;
-//
-//        std::cout << "Hour: " << the_time.hours().count() << std::endl;
-//        std::cout << "Minutes: " << the_time.minutes().count() << std::endl;
-//        std::cout << "Seconds: " << the_time.seconds().count() << std::endl;
-//        
-//        printf("[ %ju-%ju-%ju @ %ju:%ju:%ju ] ",
-//            (uintmax_t)(int)ymd.year(), (uintmax_t)(unsigned)ymd.month(), (uintmax_t)(unsigned)ymd.day(),
-//            (uintmax_t)0, (uintmax_t)0, (uintmax_t)0
-//        );
-        
-//        const auto now = std::chrono::system_clock::now();
     }
     
     // BatteryEmptyLevel: consider battery dead at 2%
