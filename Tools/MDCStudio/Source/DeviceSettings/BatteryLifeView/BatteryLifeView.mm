@@ -35,8 +35,4 @@ static void _Init(BatteryLifeView* self) {
     return self;
 }
 
-- (NSView*)deviceSettingsView_HeaderEndView {
-    return self;
-}
-
 @end

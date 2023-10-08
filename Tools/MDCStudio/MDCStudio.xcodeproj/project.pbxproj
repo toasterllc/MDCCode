@@ -13,6 +13,8 @@
 		553031FF27BC45A100BEFFEA /* Mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FB27BC45A100BEFFEA /* Mask.png */; };
 		5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */; };
 		5530DC3D29DCDA50005FEC0A /* DeviceSettingsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */; };
+		553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */; };
+		553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */; };
 		55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B2229A02F7D00F25D57 /* InspectorView.mm */; };
 		55425B2629A0752300F25D57 /* InspectorView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55425B2529A0752300F25D57 /* InspectorView.xib */; };
 		55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B5C29A2B8C900F25D57 /* ImageCornerButton.mm */; };
@@ -130,6 +132,8 @@
 		5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsView.mm; sourceTree = "<group>"; };
 		5530DC3A29DCDA3E005FEC0A /* DeviceSettingsView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceSettingsView.h; sourceTree = "<group>"; };
 		5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceSettingsView.xib; sourceTree = "<group>"; };
+		553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-BestIcon.pdf"; sourceTree = "<group>"; };
+		553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-WorstIcon.pdf"; sourceTree = "<group>"; };
 		55425B1929A01BE000F25D57 /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		55425B2229A02F7D00F25D57 /* InspectorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorView.mm; sourceTree = "<group>"; };
 		55425B2329A02F7D00F25D57 /* InspectorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorView.h; sourceTree = "<group>"; };
@@ -679,6 +683,8 @@
 				557ABCEF29DD24230032619E /* BatteryLifeView.h */,
 				557ABCED29DD24230032619E /* BatteryLifeView.mm */,
 				557ABCEE29DD24230032619E /* BatteryLifeView.xib */,
+				553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */,
+				553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */,
 			);
 			path = BatteryLifeView;
 			sourceTree = "<group>";
@@ -882,10 +888,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				55F8877F29D3A7110075593F /* CaptureTriggersView.xib in Resources */,
+				553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */,
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
 				557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */,
 				558E20092AC4B608001E743A /* DeviceImageGridHeaderView.xib in Resources */,
 				55838C932AD0BE7200D4B024 /* SourceList-Battery-Error.pdf in Resources */,
+				553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */,
 				55838C962AD0BE7200D4B024 /* SourceList-Battery-Charging-0.pdf in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
 				55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */,

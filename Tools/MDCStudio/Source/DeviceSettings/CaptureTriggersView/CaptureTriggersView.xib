@@ -282,6 +282,9 @@ CA
 </string>
                     </buttonCell>
                     <color key="contentTintColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                    <connections>
+                        <action selector="_actionBatteryLife:" target="-2" id="puO-8q-0ff"/>
+                    </connections>
                 </button>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Py0-Ga-GEC">
                     <rect key="frame" x="0.0" y="0.0" width="600" height="200"/>

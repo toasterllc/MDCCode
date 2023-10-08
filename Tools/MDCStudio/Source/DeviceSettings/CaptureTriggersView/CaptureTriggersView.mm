@@ -16,6 +16,7 @@
 #import "Calendar.h"
 #import "Code/Shared/Clock.h"
 #import "BatteryLifeEstimate.h"
+#import "DeviceSettings/BatteryLifeView/BatteryLifeView.h"
 using namespace MDCStudio;
 using namespace DeviceSettings;
 
@@ -1260,6 +1261,15 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     if (idx < 0) return;
     _ListItemRemove(self, idx);
     [self _updateBatteryLife];
+}
+
+- (IBAction)_actionBatteryLife:(id)sender {
+    BatteryLifeView* view = [[BatteryLifeView alloc] initWithFrame:{}];
+    NSViewController* vc = [NSViewController new];
+    [vc setView:view];
+    NSPopover* popover = [NSPopover new];
+    [popover setContentViewController:vc];
+    [popover showRelativeToRect:{} ofView:_batteryLifeButton preferredEdge:NSRectEdgeMaxY];
 }
 
 // MARK: - Table View Data Source / Delegate
