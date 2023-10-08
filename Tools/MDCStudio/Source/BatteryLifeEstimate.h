@@ -41,6 +41,10 @@ struct Estimator {
     }
     
     std::chrono::seconds estimate() {
+        // Since _MSPState is static, require that we're called from a single thread (the main thread) only.
+        // In the future we'd like to remove this requirement; see comment about _MSPState.
+        assert([NSThread isMainThread]);
+        
         _batteryLevel = 1;
         _MSPState.settings.triggers = _triggers;
         
@@ -96,6 +100,9 @@ struct Estimator {
         return duration;
     }
     
+    // TODO: for now MSP::State is static which is gross and means we're not thread safe.
+    // In the future, figure out how to make it non-static, but still share the T_MSPTriggers
+    // code with MSPApp.
     static inline MSP::State _MSPState;
     using _Triggers = T_MSPTriggers<_MSPState, bool>;
     
