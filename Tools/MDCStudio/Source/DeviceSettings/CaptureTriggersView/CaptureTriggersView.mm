@@ -763,8 +763,10 @@ static std::string _RangeString(std::chrono::seconds xmin, std::chrono::seconds 
     std::stringstream ss;
     if (min == max) {
         ss << min.count() << " " << unit;
+        if (min.count() != 1) ss << "s";
     } else {
         ss << min.count() << " – " << max.count() << " " << unit;
+        if (max.count() != 1) ss << "s";
     }
     return ss.str();
 }
@@ -795,10 +797,10 @@ static std::string _RangeString(std::chrono::seconds xmin, std::chrono::seconds 
     constexpr std::chrono::seconds Month = date::days(30);
     std::string title;
     if (batteryLifeMin>Year && batteryLifeMax>Year) {
-        title = _RangeString<date::years>(batteryLifeMin, batteryLifeMax, "years").c_str();
+        title = _RangeString<date::years>(batteryLifeMin, batteryLifeMax, "year").c_str();
     
     } else if (batteryLifeMin>2*Month && batteryLifeMax>2*Month) {
-        title = _RangeString<date::months>(batteryLifeMin, batteryLifeMax, "months").c_str();
+        title = _RangeString<date::months>(batteryLifeMin, batteryLifeMax, "month").c_str();
         
 //        const date::months monthsMin = date::floor<date::months>(batteryLifeMin);
 //        const date::months monthsMax = date::floor<date::months>(batteryLifeMax);
@@ -821,7 +823,7 @@ static std::string _RangeString(std::chrono::seconds xmin, std::chrono::seconds 
 //        }
     
     } else {
-        title = _RangeString<date::days>(batteryLifeMin, batteryLifeMax, "days").c_str();
+        title = _RangeString<date::days>(batteryLifeMin, batteryLifeMax, "day").c_str();
         
 //        const date::days daysMin = date::floor<date::days>(batteryLifeMin);
 //        const date::days daysMax = date::floor<date::days>(batteryLifeMax);

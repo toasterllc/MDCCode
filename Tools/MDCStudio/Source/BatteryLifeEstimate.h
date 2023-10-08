@@ -97,6 +97,8 @@ struct Estimator {
         const date::days durationDays = std::chrono::duration_cast<date::days>(timeEnd-timeStart);
         printf("Battery lasted %ju days (%ju seconds)\n", (uintmax_t)durationDays.count(), (uintmax_t)duration.count());
         
+        if (duration < _BatteryLifeMin) return _BatteryLifeMin;
+        if (duration > _BatteryLifeMax) return _BatteryLifeMax;
         return duration;
     }
     
@@ -329,6 +331,9 @@ struct Estimator {
     float _imageCaptureCost() const {
         return 1.f / _consts.batteryImageCaptureCapacity;
     }
+    
+    static constexpr date::days _BatteryLifeMin = date::days(1);
+    static constexpr date::days _BatteryLifeMax = date::days(365*3);
     
     // BatteryEmptyLevel: consider battery dead at 2%
     // This needs to match MSP's battery trap level
