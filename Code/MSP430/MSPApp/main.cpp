@@ -1492,7 +1492,7 @@ struct _TaskMotion {
             
             // Update the number of motion triggers remaining.
             // If this was the last trigger that we're allowed, set the `StateMaxImageCount` bit,
-            // which will .
+            // which will disable motion for this trigger until the next MotionEnableEvent.
             if (trigger.countRem) {
                 trigger.countRem--;
                 if (!trigger.countRem) {
