@@ -201,9 +201,27 @@ struct Estimator {
         return false;
     }
     
+    // _NextInterval(): returns the next Time::Instant that occurs at a regular interval of `interval`.
+    // This is necessary so that our stimuluses occur at regular X-second intervals irrespective of
+    // events that are occuring, as opposed to the stimulus occuring at LastEventTime+interval,
+    // which would give an optimisic view of the battery life.
+    static Time::Instant _NextInterval(Time::Instant t, std::chrono::seconds interval) {
+        const Time::Ticks64 ticks = Time::Clock::TicksFromDuration(interval);
+        return ((t+ticks)/ticks)*ticks;
+    }
+    
     void _motionStimulusSchedule() {
         if (_motionStimulusScheduleNeeded()) {
-            _eventInsert(_motionStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.motionStimulusInterval));
+//            ((_time+60)/60)*60
+//            
+//            ((0+60)/60)*60 = 60
+//            ((1+60)/60)*60 = 60
+//            ((59+60)/60)*60 = 60
+//            
+//            ((60+60)/60)*60 = 120
+//            ((60+60)/60)*60 = 120
+            
+            _eventInsert(_motionStimulusEvent, _NextInterval(_time, _params.motionStimulusInterval));
         }
     }
     
@@ -231,7 +249,7 @@ struct Estimator {
     
     void _buttonStimulusSchedule() {
         if (_buttonStimulusScheduleNeeded()) {
-            _eventInsert(_buttonStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.buttonStimulusInterval));
+            _eventInsert(_buttonStimulusEvent, _NextInterval(_time, _params.buttonStimulusInterval));
         }
     }
     

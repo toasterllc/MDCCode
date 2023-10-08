@@ -522,7 +522,11 @@ Ticks _MotionEnableDurationTicks(const T& x) {
     
     // Enabled for part of the day
     if (x.schedule.timeRange.enable) {
-        return x.schedule.timeRange.end-x.schedule.timeRange.start;
+        if (x.schedule.timeRange.end > x.schedule.timeRange.start) {
+            return x.schedule.timeRange.end-x.schedule.timeRange.start;
+        } else {
+            return x.schedule.timeRange.end + (date::days(1) - x.schedule.timeRange.start);
+        }
     }
     
     // Enabled all day (0:00 to 23:59)
