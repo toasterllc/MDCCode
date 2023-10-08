@@ -438,6 +438,7 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         }};
     
     case Repeat::Type::DaysOfWeek: {
+        // If no days are selected, dont' return any events
         if (Calendar::DaysOfWeekEmpty(repeat->DaysOfWeek)) return {};
         
         const date::local_seconds tp = _PastDayOfWeek(now, timeOfDay, repeat->DaysOfWeek);
