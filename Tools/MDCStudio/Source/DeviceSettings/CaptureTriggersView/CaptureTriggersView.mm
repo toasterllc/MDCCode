@@ -6,13 +6,14 @@
 #import <cmath>
 #import <string>
 #import <set>
-#import "DeviceSettings.h"
-#import "Calendar.h"
 #import "Toastbox/Mac/Util.h"
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/NumForStr.h"
 #import "Toastbox/String.h"
 #import "Toastbox/Defer.h"
+#import "Toastbox/DurationString.h"
+#import "DeviceSettings.h"
+#import "Calendar.h"
 #import "Code/Shared/Clock.h"
 #import "BatteryLifeEstimate.h"
 using namespace MDCStudio;
@@ -539,7 +540,7 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     IBOutlet ContainerSubview*  _detailView;
     IBOutlet NSControl*         _addButton;
     IBOutlet NSControl*         _removeButton;
-    IBOutlet NSControl*         _batteryLifeButton;
+    IBOutlet NSButton*          _batteryLifeButton;
     IBOutlet NSView*            _noTriggersView;
     
     IBOutlet NSView*             _separatorLine;
@@ -755,15 +756,30 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     return triggers;
 }
 
+template<typename T>
+static std::string _RangeString(std::chrono::seconds xmin, std::chrono::seconds xmax, std::string_view unit) {
+    const T min = date::floor<T>(xmin);
+    const T max = date::floor<T>(xmax);
+    std::stringstream ss;
+    if (min == max) {
+        ss << min.count() << " " << unit;
+    } else {
+        ss << min.count() << " – " << max.count() << " " << unit;
+    }
+    return ss.str();
+}
+
 - (void)_updateBatteryLife {
     const MSP::Triggers mspTriggers = [self triggers];
+    
+    const BatteryLifeEstimate::Parameters params = {
+        .motionStimulusInterval = std::chrono::seconds(60),
+        .buttonStimulusInterval = std::chrono::seconds(6*60*60),
+    };
     
     // Worst case
     std::chrono::seconds batteryLifeMin(0);
     {
-        BatteryLifeEstimate::Parameters params = {
-            .stimulusInterval = std::chrono::seconds(3),
-        };
         BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::WorstCase, params, mspTriggers);
         batteryLifeMin = estimator.estimate();
     }
@@ -771,14 +787,60 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     // Best case
     std::chrono::seconds batteryLifeMax(0);
     {
-        BatteryLifeEstimate::Parameters params = {
-            .stimulusInterval = std::chrono::seconds(3),
-        };
         BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::BestCase, params, mspTriggers);
         batteryLifeMax = estimator.estimate();
     }
     
-    [_batteryLifeButton setStringValue:@"hello"];
+    constexpr std::chrono::seconds Year = date::days(365);
+    constexpr std::chrono::seconds Month = date::days(30);
+    std::string title;
+    if (batteryLifeMin>Year && batteryLifeMax>Year) {
+        title = _RangeString<date::years>(batteryLifeMin, batteryLifeMax, "years").c_str();
+    
+    } else if (batteryLifeMin>2*Month && batteryLifeMax>2*Month) {
+        title = _RangeString<date::months>(batteryLifeMin, batteryLifeMax, "months").c_str();
+        
+//        const date::months monthsMin = date::floor<date::months>(batteryLifeMin);
+//        const date::months monthsMax = date::floor<date::months>(batteryLifeMax);
+//        if (monthsMin == monthsMax) {
+//            title = [NSString stringWithFormat:@"  %ju months",
+//                (uintmax_t)monthsMin.count()];
+//        } else {
+//            title = [NSString stringWithFormat:@"  %ju – %ju months",
+//                (uintmax_t)monthsMin.count(), (uintmax_t)monthsMax.count()];
+//        }
+        
+//        const float monthsMin = std::floor((float)batteryLifeMin.count() / Month.count());
+//        const float monthsMax = std::floor((float)batteryLifeMax.count() / Month.count());
+//        if (monthsMin == monthsMax) {
+//            title = [NSString stringWithFormat:@"  %ju months",
+//                (uintmax_t)monthsMin];
+//        } else {
+//            title = [NSString stringWithFormat:@"  %ju – %ju months",
+//                (uintmax_t)monthsMin, (uintmax_t)monthsMax];
+//        }
+    
+    } else {
+        title = _RangeString<date::days>(batteryLifeMin, batteryLifeMax, "days").c_str();
+        
+//        const date::days daysMin = date::floor<date::days>(batteryLifeMin);
+//        const date::days daysMax = date::floor<date::days>(batteryLifeMax);
+//        if (daysMin == daysMax) {
+//            title = [NSString stringWithFormat:@"  %ju days",
+//                (uintmax_t)daysMin.count()];
+//        } else {
+//            title = [NSString stringWithFormat:@"  %ju – %ju days",
+//                (uintmax_t)daysMin.count(), (uintmax_t)daysMax.count()];
+//        }
+    }
+    
+    [_batteryLifeButton setTitle:[NSString stringWithFormat:@"  %@", @(title.c_str())]];
+    
+//    const std::string minStr = Toastbox::DurationString(false, batteryLifeMin);
+//    const std::string maxStr = Toastbox::DurationString(false, batteryLifeMax);
+//    [_batteryLifeButton setTitle:[NSString stringWithFormat:@"  %s – %s", minStr.c_str(), maxStr.c_str()]];
+    
+//    [_batteryLifeButton setStringValue:@"hello"];
 }
 
 - (const MSP::Triggers&)triggers {

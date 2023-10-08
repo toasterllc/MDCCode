@@ -17,7 +17,8 @@ struct Constants {
 };
 
 struct Parameters {
-    std::chrono::seconds stimulusInterval = std::chrono::seconds(0); // Motion / button press interval
+    std::chrono::seconds motionStimulusInterval = std::chrono::seconds(0);
+    std::chrono::seconds buttonStimulusInterval = std::chrono::seconds(0);
 };
 
 constexpr Constants WorstCase = {
@@ -36,7 +37,8 @@ struct Estimator {
         const Parameters& params,
         const MSP::Triggers& triggers) : _consts(consts), _params(params), _triggers(triggers) {
         
-        assert(params.stimulusInterval.count() > 0);
+        assert(params.motionStimulusInterval.count() > 0);
+        assert(params.buttonStimulusInterval.count() > 0);
     }
     
     std::chrono::seconds estimate() {
@@ -47,9 +49,7 @@ struct Estimator {
         _time = Time::Clock::TimeInstantFromTimePoint(timeStart);
         _Triggers::Init(_time);
         
-        // Insert our special events (_BatteryDailySelfDischargeEvent / _ExternalStimulusEvent)
-        // by calling their respective event functions
-        _batteryDailySelfDischarge();
+        _batteryDailySelfDischargeSchedule();
         
         // Fast-forward through events
         for (;;) {
@@ -72,16 +72,16 @@ struct Estimator {
             _time = ev.time;
             
             // Print the current time + battery level
-            _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
+//            _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
             
             // Handle the event
             _eventHandle(ev);
             
-            if (_motionEnabled() && !_externalStimulusEvent.scheduled()) {
-                _externalStimulusSchedule();
-            } else if (!_motionEnabled() && _externalStimulusEvent.scheduled()) {
-                _externalStimulusCancel();
-            }
+//            if (_motionEnabled() && !_externalStimulusEvent.scheduled()) {
+//                _externalStimulusSchedule();
+//            } else if (!_motionEnabled() && _externalStimulusEvent.scheduled()) {
+//                _externalStimulusCancel();
+//            }
             
             // Bail once the battery level is below our threshold
             if (_batteryLevel < _BatteryEmptyLevel) break;
@@ -91,7 +91,7 @@ struct Estimator {
         printf("ITERATIONS: %ju\n", (uintmax_t)i);
         
         // Print the current time + battery level
-        _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
+//        _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
         
         const auto timeEnd = Time::Clock::TimePointFromTimeInstant(_time);
         const std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(timeEnd-timeStart);
@@ -106,7 +106,8 @@ struct Estimator {
     using _Triggers = T_MSPTriggers<_MSPState, bool>;
     
     _Triggers::Event _batteryDailySelfDischargeEvent = {};
-    _Triggers::Event _externalStimulusEvent = {};
+    _Triggers::Event _motionStimulusEvent = {};
+    _Triggers::Event _buttonStimulusEvent = {};
     
     void _eventInsert(_Triggers::Event& ev, const Time::Instant& time) {
         _Triggers::EventInsert(ev, time);
@@ -130,7 +131,22 @@ struct Estimator {
         _eventInsert(_batteryDailySelfDischargeEvent, _time+Time::Day);
     }
     
-    void _handleMotion() {
+    bool _captureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
+        // Bail if the CaptureImageEvent is already underway
+        if (ev.countRem) return false;
+        
+        // Reset capture count
+        ev.countRem = ev.capture->count;
+        if (ev.countRem) {
+            _eventInsert(ev, time);
+        }
+        return true;
+    }
+    
+    void _motionStimulus() {
+        assert(_live);
+//        _printTime(); printf("Motion stimulus\n");
+        
         // When motion occurs, start captures for each enabled motion trigger
         for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
 //            _printTime(); printf("Motion trigger\n");
@@ -140,8 +156,11 @@ struct Estimator {
             // Check if we should ignore this trigger
             if (!trigger.enabled()) continue;
             
-            // Capture images for the trigger
-            _captureImages(trigger);
+            // Start capture
+            const bool captureStarted = _captureStart(trigger, _time);
+            // _captureStart() returns false if a capture is already in progress for this trigger.
+            // Short-circuit if that's the case.
+            if (!captureStarted) continue;
             
             // Update the number of motion triggers remaining.
             // If this was the last trigger that we're allowed, set the `StateMaxImageCount` bit,
@@ -164,36 +183,51 @@ struct Estimator {
                 _eventInsert(static_cast<_Triggers::MotionUnsuppressEvent&>(trigger), unsuppressTime);
             }
         }
+        
+        _motionStimulusSchedule();
     }
     
-    void _handleButton() {
+    void _motionStimulusSchedule() {
+        if (_motionEnabled()) {
+            _eventInsert(_motionStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.motionStimulusInterval));
+        }
+    }
+    
+    void _buttonStimulus() {
+        assert(_live);
+//        _printTime(); printf("Button stimulus\n");
         for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
 //            _printTime(); printf("Button trigger\n");
-            _captureImages(*it);
+            _captureStart(*it, _time);
         }
+        _buttonStimulusSchedule();
     }
     
-    void _externalStimulus() {
-        if (_live) {
-            _printTime(); printf("External stimulus\n");
-            _handleMotion();
-            _handleButton();
-        }
-        _externalStimulusSchedule();
+    void _buttonStimulusSchedule() {
+        _eventInsert(_buttonStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.buttonStimulusInterval));
     }
     
-    void _externalStimulusSchedule() {
-        _eventInsert(_externalStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.stimulusInterval));
-    }
-    
-    void _externalStimulusCancel() {
-        _Triggers::EventPop();
-    }
+//    void _externalStimulus() {
+//        if (_live) {
+//            _printTime(); printf("External stimulus\n");
+//            _handleMotion();
+//            _handleButton();
+//        }
+//        _externalStimulusSchedule();
+//    }
+//    
+//    void _externalStimulusSchedule() {
+//        _eventInsert(_externalStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.stimulusInterval));
+//    }
+//    
+//    void _externalStimulusCancel() {
+//        _Triggers::EventPop();
+//    }
     
     void _timeTrigger(_Triggers::TimeTriggerEvent& ev) {
+        _Triggers::TimeTrigger& trigger = ev.trigger();
         if (_live) {
-            _printTime(); printf("Time trigger\n");
-            _captureImages(ev.trigger());
+            _captureStart(trigger, ev.time);
         }
         _eventInsert(ev, ev.repeat);
     }
@@ -212,6 +246,9 @@ struct Estimator {
         
         // Reschedule MotionEnableEvent for its next trigger time
         _eventInsert(ev, ev.repeat);
+        
+        // Schedule the motion stimulus
+        _motionStimulusSchedule();
     }
     
     void _motionDisable(_Triggers::MotionDisableEvent& ev) {
@@ -223,21 +260,37 @@ struct Estimator {
         assert(_live);
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.unsuppress();
+        
+        // Schedule the motion stimulus
+        _motionStimulusSchedule();
     }
     
-    void _captureImages(_Triggers::CaptureImageEvent& ev) {
+    void _captureImage(_Triggers::CaptureImageEvent& ev) {
+        // We should never get a CaptureImageEvent event while in fast-forward mode
         assert(_live);
-        _printTime(); printf("Capture %ju images\n", (uintmax_t)ev.capture->count);
-        _batteryLevel -= ev.capture->count * _imageCaptureCost();
+        
+        _batteryLevel -= _imageCaptureCost();
+        
+        ev.countRem--;
+        if (ev.countRem) {
+            _eventInsert(ev, ev.time+ev.capture->delayTicks);
+        }
     }
+    
+//    void _captureImages(_Triggers::CaptureImageEvent& ev) {
+//        assert(_live);
+////        _printTime(); printf("Capture %ju images\n", (uintmax_t)ev.capture->count);
+//        _batteryLevel -= ev.capture->count * _imageCaptureCost();
+//    }
     
     void _eventHandle(_Triggers::Event& ev) {
         // Handle our special events
         if (&ev == &_batteryDailySelfDischargeEvent) {
             return _batteryDailySelfDischarge();
-        
-        } else if (&ev == &_externalStimulusEvent) {
-            return _externalStimulus();
+        } else if (&ev == &_motionStimulusEvent) {
+            return _motionStimulus();
+        } else if (&ev == &_buttonStimulusEvent) {
+            return _buttonStimulus();
         }
         
         // Handle the event
@@ -258,8 +311,7 @@ struct Estimator {
         case T::MotionUnsuppress:
             return _motionUnsuppress(static_cast<_Triggers::MotionUnsuppressEvent&>(ev));
         case T::CaptureImage:
-            // Should never occur
-            abort();
+            return _captureImage(static_cast<_Triggers::CaptureImageEvent&>(ev)); break;
         }
     }
     
