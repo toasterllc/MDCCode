@@ -212,15 +212,6 @@ struct Estimator {
     
     void _motionStimulusSchedule() {
         if (_motionStimulusScheduleNeeded()) {
-//            ((_time+60)/60)*60
-//            
-//            ((0+60)/60)*60 = 60
-//            ((1+60)/60)*60 = 60
-//            ((59+60)/60)*60 = 60
-//            
-//            ((60+60)/60)*60 = 120
-//            ((60+60)/60)*60 = 120
-            
             _eventInsert(_motionStimulusEvent, _NextInterval(_time, _params.motionStimulusInterval));
         }
     }

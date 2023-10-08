@@ -523,8 +523,10 @@ Ticks _MotionEnableDurationTicks(const T& x) {
     // Enabled for part of the day
     if (x.schedule.timeRange.enable) {
         if (x.schedule.timeRange.end > x.schedule.timeRange.start) {
+            // Doesn't cross midnight: eg 9am-5pm
             return x.schedule.timeRange.end-x.schedule.timeRange.start;
         } else {
+            // Crosses midnight; eg: 11pm-4am
             return x.schedule.timeRange.end + (date::days(1) - x.schedule.timeRange.start);
         }
     }
