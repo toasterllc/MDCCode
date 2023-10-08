@@ -50,7 +50,6 @@ struct Estimator {
         _Triggers::Init(_time);
         
         _batteryDailySelfDischargeSchedule();
-        _buttonStimulusSchedule();
         
         // Fast-forward through events
         for (;;) {
@@ -86,6 +85,9 @@ struct Estimator {
             
             // Bail once the battery level is below our threshold
             if (_batteryLevel < _BatteryEmptyLevel) break;
+            
+            _motionStimulusSchedule();
+            _buttonStimulusSchedule();
         }
         
 //#undef printf
@@ -184,12 +186,23 @@ struct Estimator {
                 _eventInsert(static_cast<_Triggers::MotionUnsuppressEvent&>(trigger), unsuppressTime);
             }
         }
-        
-        _motionStimulusSchedule();
+    }
+    
+    bool _motionStimulusScheduleNeeded() const {
+        // If the motion stimulus is already scheduled: don't reschedule
+        if (_motionStimulusEvent.scheduled()) return false;
+        // Check if there are any motion triggers that are enabled (.enabled()==true) for which
+        // captures aren't currently underway (ev.countRem==0)
+        for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
+            const _Triggers::MotionTrigger& trigger = *it;
+            const _Triggers::CaptureImageEvent& ev = trigger;
+            if (trigger.enabled() && !ev.countRem) return true;
+        }
+        return false;
     }
     
     void _motionStimulusSchedule() {
-        if (_motionEnabled()) {
+        if (_motionStimulusScheduleNeeded()) {
             _eventInsert(_motionStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.motionStimulusInterval));
         }
     }
@@ -201,11 +214,25 @@ struct Estimator {
 //            _printTime(); printf("Button trigger\n");
             _captureStart(*it, _time);
         }
-        _buttonStimulusSchedule();
+    }
+    
+    bool _buttonStimulusScheduleNeeded() const {
+        // If the button stimulus is already scheduled: don't reschedule
+        if (_buttonStimulusEvent.scheduled()) return false;
+        // Check if there are any button triggers that for which
+        // captures aren't currently underway (ev.countRem==0)
+        for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
+            const _Triggers::ButtonTrigger& trigger = *it;
+            const _Triggers::CaptureImageEvent& ev = trigger;
+            if (!ev.countRem) return true;
+        }
+        return false;
     }
     
     void _buttonStimulusSchedule() {
-        _eventInsert(_buttonStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.buttonStimulusInterval));
+        if (_buttonStimulusScheduleNeeded()) {
+            _eventInsert(_buttonStimulusEvent, _time + Time::Clock::TicksFromDuration(_params.buttonStimulusInterval));
+        }
     }
     
 //    void _externalStimulus() {
@@ -247,9 +274,6 @@ struct Estimator {
         
         // Reschedule MotionEnableEvent for its next trigger time
         _eventInsert(ev, ev.repeat);
-        
-        // Schedule the motion stimulus
-        _motionStimulusSchedule();
     }
     
     void _motionDisable(_Triggers::MotionDisableEvent& ev) {
@@ -261,9 +285,6 @@ struct Estimator {
         assert(_live);
         _Triggers::MotionTrigger& trigger = (_Triggers::MotionTrigger&)ev;
         trigger.unsuppress();
-        
-        // Schedule the motion stimulus
-        _motionStimulusSchedule();
     }
     
     void _captureImage(_Triggers::CaptureImageEvent& ev) {
@@ -328,14 +349,6 @@ struct Estimator {
         std::cout << " @ ";
         std::cout << hhmmss.hours().count() << ":" << hhmmss.minutes().count() << ":" << hhmmss.seconds().count();
         std::cout << " ] ";
-    }
-    
-    bool _motionEnabled() const {
-        for (auto it=_Triggers::MotionTriggerBegin(); it!=_Triggers::MotionTriggerEnd(); it++) {
-            _Triggers::MotionTrigger& trigger = *it;
-            if (trigger.enabled()) return true;
-        }
-        return false;
     }
     
     float _imageCaptureCost() const {

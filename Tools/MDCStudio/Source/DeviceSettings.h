@@ -438,6 +438,8 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         }};
     
     case Repeat::Type::DaysOfWeek: {
+        if (Calendar::DaysOfWeekEmpty(repeat->DaysOfWeek)) return {};
+        
         const date::local_seconds tp = _PastDayOfWeek(now, timeOfDay, repeat->DaysOfWeek);
         // Create the DaysOfWeek bitfield that's aligned to whatever day of
         // the week `tp` is.

@@ -65,6 +65,10 @@ inline constexpr uint8_t DaysOfWeekMask(DayOfWeek day) {
     return 1 << day.c_encoding();
 }
 
+inline bool DaysOfWeekEmpty(DaysOfWeek x) {
+    return !x.x;
+}
+
 inline bool DaysOfWeekGet(DaysOfWeek x, DayOfWeek day) {
     return x.x & DaysOfWeekMask(day);
 }
