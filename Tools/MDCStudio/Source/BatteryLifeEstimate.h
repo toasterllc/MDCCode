@@ -50,6 +50,7 @@ struct Estimator {
         _Triggers::Init(_time);
         
         _batteryDailySelfDischargeSchedule();
+        _buttonStimulusSchedule();
         
         // Fast-forward through events
         for (;;) {
