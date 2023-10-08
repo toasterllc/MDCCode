@@ -533,6 +533,9 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
 #define ContainerSubview CaptureTriggersView_ContainerSubview
 
 
+@interface CaptureTriggersView () <NSPopoverDelegate>
+@end
+
 @implementation CaptureTriggersView {
 @public
     IBOutlet NSView*            _nibView;
@@ -596,6 +599,8 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     MSP::Triggers _triggers;
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
+    
+    NSPopover* _batteryLifePopover;
 }
 
 //- (void)description {
@@ -1267,9 +1272,19 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     BatteryLifeView* view = [[BatteryLifeView alloc] initWithFrame:{}];
     NSViewController* vc = [NSViewController new];
     [vc setView:view];
-    NSPopover* popover = [NSPopover new];
-    [popover setContentViewController:vc];
-    [popover showRelativeToRect:{} ofView:_batteryLifeButton preferredEdge:NSRectEdgeMaxY];
+    
+    if (!_batteryLifePopover) {
+        _batteryLifePopover = [NSPopover new];
+        [_batteryLifePopover setDelegate:self];
+        [_batteryLifePopover setBehavior:NSPopoverBehaviorTransient];
+        [_batteryLifePopover setContentViewController:vc];
+    }
+    [_batteryLifePopover showRelativeToRect:{} ofView:_batteryLifeButton preferredEdge:NSRectEdgeMaxY];
+}
+
+- (BOOL)popoverShouldClose:(NSPopover*)popover {
+    NSLog(@"popoverShouldClose");
+    return true;
 }
 
 // MARK: - Table View Data Source / Delegate

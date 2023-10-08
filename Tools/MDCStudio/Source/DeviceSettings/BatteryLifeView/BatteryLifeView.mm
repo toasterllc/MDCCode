@@ -35,4 +35,16 @@ static void _Init(BatteryLifeView* self) {
     return self;
 }
 
+//- (void)keyDown:(NSEvent *)event {
+//    NSLog(@"keyDown:");
+//}
+
+- (BOOL)acceptsFirstResponder {
+    return true;
+}
+
+- (void)cancelOperation:(id)sender {
+    [[self window] performClose:nil];
+}
+
 @end
