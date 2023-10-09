@@ -54,33 +54,16 @@ struct Estimator {
         _batteryLevel = 1;
         _MSPState.settings.triggers = _triggers;
         
-        std::vector<Point> points;
-        const auto timeStart = Time::Clock::now();
-        _time = Time::Clock::TimeInstantFromTimePoint(timeStart);
+        const Time::Instant timeStart = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
+        
+        _time = timeStart;
         _Triggers::Init(_time);
         
-        _batteryDailySelfDischargeSchedule();
-        
-        // Fast-forward through events
-        for (;;) {
-            _Triggers::Event* ev = _Triggers::EventFront();
-            assert(ev);
-            if (ev->time >= _time) break;
-            _Triggers::EventPop();
-            _eventHandle(*ev);
-        }
-        
-        printf("===== LIVE =====\n");
-        _live = true;
-        
-        // Confirm that fast-forwarding through the events didn't affect the battery level
-        assert(_batteryLevel == 1);
-        
         // Insert the initial point where the battery is fully charged
-        points.push_back({
+        std::vector<Point> points = {{
             .time = _duration(timeStart),
             .batteryLevel = _batteryLevel,
-        });
+        }};
         
         uint64_t i;
         for (i=0;; i++) {
@@ -89,6 +72,13 @@ struct Estimator {
             
             // Make our current time the event's time
             _time = ev.time;
+            
+            // Go live when we hit the current time
+            if (!_live) {
+                if (_time >= timeStart) {
+                    _live = true;
+                }
+            }
             
             // Print the current time + battery level
 //            _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
@@ -112,6 +102,7 @@ struct Estimator {
                 return points;
             }
             
+            _batteryDailySelfDischargeSchedule();
             _motionStimulusSchedule();
             _buttonStimulusSchedule();
         }
@@ -137,9 +128,10 @@ struct Estimator {
     _Triggers::Event _motionStimulusEvent = {};
     _Triggers::Event _buttonStimulusEvent = {};
     
-    std::chrono::seconds _duration(Time::Clock::time_point timeStart) {
-        const auto tp = Time::Clock::TimePointFromTimeInstant(_time);
-        return std::chrono::duration_cast<std::chrono::seconds>(tp-timeStart);
+    std::chrono::seconds _duration(Time::Instant timeStart) {
+        const auto t1 = Time::Clock::TimePointFromTimeInstant(timeStart);
+        const auto t2 = Time::Clock::TimePointFromTimeInstant(_time);
+        return std::chrono::duration_cast<std::chrono::seconds>(t2-t1);
     }
     
     void _eventInsert(_Triggers::Event& ev, const Time::Instant& time) {
@@ -161,7 +153,15 @@ struct Estimator {
     }
     
     void _batteryDailySelfDischargeSchedule() {
-        _eventInsert(_batteryDailySelfDischargeEvent, _time+Time::Day);
+        if (_batteryDailySelfDischargeScheduleNeeded()) {
+            _eventInsert(_batteryDailySelfDischargeEvent, _NextInterval(_time, date::days(1)));
+        }
+    }
+    
+    bool _batteryDailySelfDischargeScheduleNeeded() const {
+        // If the motion stimulus is already scheduled: don't reschedule
+        if (_batteryDailySelfDischargeEvent.scheduled()) return false;
+        return true;
     }
     
     bool _captureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
@@ -177,7 +177,7 @@ struct Estimator {
     }
     
     void _motionStimulus() {
-        assert(_live);
+        if (!_live) return;
 //        _printTime(); printf("Motion stimulus\n");
         
         // When motion occurs, start captures for each enabled motion trigger
@@ -247,7 +247,7 @@ struct Estimator {
     }
     
     void _buttonStimulus() {
-        assert(_live);
+        if (!_live) return;
 //        _printTime(); printf("Button stimulus\n");
         for (auto it=_Triggers::ButtonTriggerBegin(); it!=_Triggers::ButtonTriggerEnd(); it++) {
 //            _printTime(); printf("Button trigger\n");
