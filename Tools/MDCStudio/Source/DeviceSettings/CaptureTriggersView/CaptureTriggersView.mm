@@ -186,36 +186,12 @@ static Trigger _TriggerMake(Trigger::Type type) {
 @implementation DayOfYearObj
 @end
 
-
-
-
-static std::string StringFromUnit(const DeviceSettings::Duration::Unit& x) {
-    using X = std::remove_reference_t<decltype(x)>;
-    switch (x) {
-    case X::Seconds: return "seconds";
-    case X::Minutes: return "minutes";
-    case X::Hours:   return "hours";
-    case X::Days:    return "days";
-    default:         abort();
-    }
-}
-
-static DeviceSettings::Duration::Unit UnitFromString(std::string x) {
-    using X = DeviceSettings::Duration::Unit;
-    for (auto& c : x) c = std::tolower(c);
-         if (x == "seconds") return X::Seconds;
-    else if (x == "minutes") return X::Minutes;
-    else if (x == "hours")   return X::Hours;
-    else if (x == "days")    return X::Days;
-    else abort();
-}
-
 static std::string StringFromRepeatType(const Repeat::Type& x) {
     using X = std::remove_reference_t<decltype(x)>;
     switch (x) {
     case X::Daily:       return "every day";
-    case X::DaysOfWeek:    return "on days";
-    case X::DaysOfYear:    return "on dates";
+    case X::DaysOfWeek:  return "on days";
+    case X::DaysOfYear:  return "on dates";
     case X::DayInterval: return "on interval";
     default:             abort();
     }
@@ -352,43 +328,18 @@ static std::string _RepeatDescription(const Repeat& x) {
     std::string s;
     switch (x.type) {
     case T::Daily:       return "daily";
-    case T::DaysOfWeek:    return _DaysOfWeekDescription(x.DaysOfWeek);
-    case T::DaysOfYear:    return _DaysOfYearDescription(x.DaysOfYear);
+    case T::DaysOfWeek:  return _DaysOfWeekDescription(x.DaysOfWeek);
+    case T::DaysOfYear:  return _DaysOfYearDescription(x.DaysOfYear);
     case T::DayInterval: return _DayIntervalDescription(x.DayInterval);
     default:             abort();
     }
-}
-
-static std::string _StringFromFloat(float x, int maxDecimalPlaces=1) {
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(maxDecimalPlaces) << x;
-    // Erase trailing zeroes
-    std::string str = ss.str();
-    for (auto it=str.end()-1; it!=str.begin(); it--) {
-        if (std::isdigit(*it)) {
-            if (*it == '0') {
-                it = str.erase(it);
-            } else {
-                break;
-            }
-        } else {
-            // Assume this is the (localized) decimal point
-            it = str.erase(it);
-            break;
-        }
-    }
-    return str;
-}
-
-static float _FloatFromString(std::string_view x) {
-    return Toastbox::FloatForStr<float>(x);
 }
 
 static std::string _CaptureDescription(const Capture& x) {
     std::stringstream ss;
     ss << "capture " << x.count << " image" << (x.count!=1 ? "s" : "");
     if (x.count>1 && x.interval.value>0) {
-        ss << " (" << _StringFromFloat(x.interval.value);
+        ss << " (" << StringFromFloat(x.interval.value);
         ss << _SuffixForDurationUnit(x.interval.unit) << " interval)";
     }
     return ss.str();
@@ -947,14 +898,14 @@ template<bool T_Forward>
 static void _Copy(DeviceSettings::Duration& x, NSTextField* field, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        [field setStringValue:@(_StringFromFloat(x.value).c_str())];
-        [menu selectItemWithTitle:@(StringFromUnit(x.unit).c_str())];
+        [field setStringValue:@(StringFromFloat(x.value).c_str())];
+        [menu selectItemWithTitle:@(DeviceSettings::Duration::StringFromUnit(x.unit).c_str())];
     } else {
         const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
         try {
-            x.value = std::max(0.f, _FloatFromString([[field stringValue] UTF8String]));
+            x.value = std::max(0.f, FloatFromString([[field stringValue] UTF8String]));
         } catch (...) {}
-        x.unit = UnitFromString([[menu titleOfSelectedItem] UTF8String]);
+        x.unit = DeviceSettings::Duration::UnitFromString([[menu titleOfSelectedItem] UTF8String]);
     }
 }
 
@@ -1207,7 +1158,6 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     self->_actionViewChangedUnderway = true;
     Defer( self->_actionViewChangedUnderway = false );
     
-    NSLog(@"_actionViewChanged");
     ListItem* it = [self _selectedItem];
     if (it) {
         Trigger& trigger = it->trigger;

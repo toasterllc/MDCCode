@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "Toastbox/Mac/Util.h"
+#import <forward_list>
 
 namespace MDCStudio {
 
@@ -11,23 +12,33 @@ private:
 public:
     using Observer = std::function<bool()>;
     
-//    Prefs() : _defaults([NSUserDefaults new]) {
-//        assert([NSThread isMainThread]);
-//        _Init(_defaults, _sortNewestFirst);
-//    }
-//    
-//    ~Prefs() {
-//        assert([NSThread isMainThread]);
-//    }
-//    
-//    struct SortNewestFirst {
-//        static constexpr const char* Key = "SortNewestFirst";
-//        bool                         value = true;
-//    };
+    template<typename T>
+    T get(std::string_view key, const T& uninit) {
+        // Numeric types
+        if constexpr (std::is_arithmetic_v<T>) {
+            return _getArithmetic(key, uninit);
+        } else if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, std::string>) {
+            return _getString(key, uninit);
+        } else {
+            static_assert(_AlwaysFalse<T>);
+        }
+        return uninit;
+    }
     
-    bool _sortNewestFirst           = _get("SortNewestFirst", true);
-    bool sortNewestFirst() const    { return _sortNewestFirst; }
-    void sortNewestFirst(bool x)    { _set("SortNewestFirst", _sortNewestFirst, x); }
+    template<typename T>
+    void set(std::string_view key, const T& x) {
+        if constexpr (std::is_arithmetic_v<T>) {
+            [_defaults setObject:@(x) forKey:@(std::string(key).c_str())];
+        } else if constexpr (std::is_same_v<T, const char*>) {
+            [_defaults setObject:@(x) forKey:@(std::string(key).c_str())];
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            [_defaults setObject:@(x.c_str()) forKey:@(std::string(key).c_str())];
+        } else {
+            static_assert(_AlwaysFalse<T>);
+        }
+        
+        _notify();
+    }
     
     void observerAdd(Observer&& observer) {
         _observers.push_front(std::move(observer));
@@ -37,15 +48,23 @@ private:
     template <class...> static constexpr std::false_type _AlwaysFalse;
     
     template<typename T>
-    static T _Load(NSUserDefaults* defaults, const char* key) {
-        return Toastbox::CastOrNull<T>([defaults objectForKey:@(key)]);
+    static T _Load(NSUserDefaults* defaults, std::string_view key) {
+        return Toastbox::CastOrNull<T>([defaults objectForKey:@(std::string(key).c_str())]);
     }
     
     template<typename T>
-    T _get(const char* key, const T& uninit) {
+    T _getArithmetic(std::string_view key, const T& uninit) {
         if (auto x = _Load<NSNumber*>(_defaults, key)) {
             if constexpr (std::is_same_v<T, bool>) {
                 return [x boolValue];
+            } else if constexpr (std::is_unsigned_v<T>) {
+                return [x unsignedLongLongValue];
+            } else if constexpr (std::is_signed_v<T>) {
+                return [x longLongValue];
+            } else if constexpr (std::is_same_v<T, float>) {
+                return [x floatValue];
+            } else if constexpr (std::is_same_v<T, double>) {
+                return [x doubleValue];
             } else {
                 static_assert(_AlwaysFalse<T>);
             }
@@ -54,10 +73,17 @@ private:
     }
     
     template<typename T>
-    void _set(const char* key, T& t, const T& x) {
-        t = x;
-        [_defaults setObject:@(t) forKey:@(key)];
-        _notify();
+    T _getString(std::string_view key, const T& uninit) {
+        if (auto x = _Load<NSString*>(_defaults, key)) {
+            if constexpr (std::is_same_v<T, const char*>) {
+                return [x UTF8String];
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                return std::string([x UTF8String]);
+            } else {
+                static_assert(_AlwaysFalse<T>);
+            }
+        }
+        return uninit;
     }
     
     // notify(): notifies each observer that we changed

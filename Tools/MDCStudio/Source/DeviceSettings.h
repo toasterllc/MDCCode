@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <chrono>
+#include <iomanip>
 #include "date/date.h"
 #include "date/tz.h"
 #include "Calendar.h"
@@ -39,23 +40,67 @@ struct [[gnu::packed]] Duration {
         Days,
     };
     
+    static std::string StringFromUnit(const Unit& x) {
+        switch (x) {
+        case Unit::Seconds: return "seconds";
+        case Unit::Minutes: return "minutes";
+        case Unit::Hours:   return "hours";
+        case Unit::Days:    return "days";
+        default:            throw Toastbox::RuntimeError("invalid unit: %ju", (uintmax_t)x);
+        }
+    }
+
+    static Unit UnitFromString(std::string x) {
+        for (auto& c : x) c = std::tolower(c);
+             if (x == "seconds") return Unit::Seconds;
+        else if (x == "minutes") return Unit::Minutes;
+        else if (x == "hours")   return Unit::Hours;
+        else if (x == "days")    return Unit::Days;
+        else                     throw Toastbox::RuntimeError("invalid unit: %s", x.c_str());
+    }
+    
     float value;
     Unit unit;
 };
 
-inline Ticks TicksForDuration(const Duration& x) {
+inline std::chrono::seconds SecondsForDuration(const Duration& x) {
     #warning TODO: how does this handle overflow? how do we want to handle overflow -- throw?
     switch (x.unit) {
-    case Duration::Unit::Seconds: return std::chrono::seconds((long)x.value);
-    case Duration::Unit::Minutes: return std::chrono::minutes((long)x.value);
-    case Duration::Unit::Hours:   return std::chrono::hours((long)x.value);
-    case Duration::Unit::Days:    return date::days((long)x.value);
+    case Duration::Unit::Seconds: return std::chrono::seconds((int64_t)x.value);
+    case Duration::Unit::Minutes: return std::chrono::minutes((int64_t)x.value);
+    case Duration::Unit::Hours:   return std::chrono::hours((int64_t)x.value);
+    case Duration::Unit::Days:    return date::days((int64_t)x.value);
     default:                      abort();
     }
-    
-//    #warning TODO: how does this handle overflow? do we want to clamp or throw?
-//    return std::chrono::seconds((long)_MsForDuration(x));
-//    return std::clamp(_MsForDuration(x), 0.f, (float)UINT32_MAX);
+}
+
+inline Ticks TicksForDuration(const Duration& x) {
+    return SecondsForDuration(x);
+}
+
+static std::string StringFromFloat(float x, int maxDecimalPlaces=1) {
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(maxDecimalPlaces) << x;
+    // Erase trailing zeroes
+    std::string str = ss.str();
+    for (auto it=str.end()-1; it!=str.begin(); it--) {
+        if (std::isdigit(*it)) {
+            if (*it == '0') {
+                it = str.erase(it);
+            } else {
+                break;
+            }
+        } else {
+            // Assume this is the (localized) decimal point
+            it = str.erase(it);
+            break;
+        }
+    }
+    return str;
+}
+
+static float FloatFromString(std::string_view x) {
+    return Toastbox::FloatForStr<float>(x);
 }
 
 struct [[gnu::packed]] Capture {

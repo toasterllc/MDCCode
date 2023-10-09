@@ -110,9 +110,9 @@ static void _SetView(T& x, NSView* y) {
     if ([item action] == @selector(saveDocument:)) {
         return false;
     } else if ([item action] == @selector(_sortNewestFirst:)) {
-        [item setState:(PrefsGlobal().sortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        [item setState:(_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     } else if ([item action] == @selector(_sortOldestFirst:)) {
-        [item setState:(!PrefsGlobal().sortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        [item setState:(!_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     }
     return [super validateMenuItem:item];
 }
@@ -238,7 +238,7 @@ static void _SetView(T& x, NSView* y) {
 //}
 
 static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* view) {
-    [view setSortNewestFirst:prefs.sortNewestFirst()];
+    [view setSortNewestFirst:_SortNewestFirst()];
 }
 
 //static constexpr MDCTools::CFADesc _CFADesc = {
@@ -380,13 +380,15 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 
 - (void)_prefsChanged {
     NSLog(@"prefs changed");
-    auto v = Toastbox::Cast<ImageGridView*>([_imageGridScrollView document]);
-    _UpdateImageGridViewFromPrefs(PrefsGlobal(), v);
+    if (_imageGridScrollView) {
+        auto v = Toastbox::Cast<ImageGridView*>([_imageGridScrollView document]);
+        _UpdateImageGridViewFromPrefs(PrefsGlobal(), v);
+    }
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id
 - (bool)_openImage:(ImageRecordPtr)rec delta:(ssize_t)delta {
-    const bool sortNewestFirst = PrefsGlobal().sortNewestFirst();
+    const bool sortNewestFirst = _SortNewestFirst();
     
     ImageSourcePtr imageSource = [_sourceListView selection];
     if (!imageSource) return false;
@@ -512,14 +514,22 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 }
 
 // MARK: - Menu Actions
+static bool _SortNewestFirst() {
+    return PrefsGlobal().get("SortNewestFirst", true);
+}
+
+static void _SortNewestFirst(bool x) {
+    return PrefsGlobal().set("SortNewestFirst", x);
+}
+
 - (IBAction)_sortNewestFirst:(id)sender {
     NSLog(@"_sortNewestFirst");
-    PrefsGlobal().sortNewestFirst(true);
+    _SortNewestFirst(true);
 }
 
 - (IBAction)_sortOldestFirst:(id)sender {
     NSLog(@"_sortOldestFirst");
-    PrefsGlobal().sortNewestFirst(false);
+    _SortNewestFirst(false);
 }
 
 // MARK: - Device Settings

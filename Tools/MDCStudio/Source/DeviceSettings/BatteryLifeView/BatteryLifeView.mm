@@ -1,36 +1,67 @@
 #import "BatteryLifeView.h"
 #import "BatteryLifeEstimate.h"
+#import "Prefs.h"
 using namespace MDCStudio;
 using namespace BatteryLifeViewTypes;
 
 namespace T = BatteryLifeViewTypes;
+namespace DS = DeviceSettings;
 
 @implementation BatteryLifeView {
 @public
     __weak id<BatteryLifeViewDelegate> _delegate;
     
     IBOutlet NSView* _nibView;
-    IBOutlet NSPopUpButton* _motionIntervalButton;
-    IBOutlet NSPopUpButton* _buttonIntervalButton;
+    IBOutlet NSTextField* _motionIntervalField;
+    IBOutlet NSPopUpButton* _motionIntervalMenu;
+    IBOutlet NSTextField* _buttonIntervalField;
+    IBOutlet NSPopUpButton* _buttonIntervalMenu;
     
     MSP::Triggers _triggers;
-    std::optional<T::BatteryLifeEstimate> _batteryLifeEstimate;
+    std::optional<T::BatteryLifeEstimate> _estimate;
 }
 
-static void _PopulateIntervalMenu(NSMenu* menu) {
-    [menu removeAllItems];
-    15 seconds
-    30 seconds
-    1 minute
-    3 minutes
-    5 minutes
-    10 minutes
-    15 minutes
-    30 minutes
-    1 hour
+static DS::Duration _StimulusInterval(std::string key) {
+    namespace DS = DeviceSettings;
+    using U = DS::Duration::Unit;
+    
+    const float value = PrefsGlobal().get(key+".value", 30.f);
+    const auto unit =
+        PrefsGlobal().get(key+".unit", DS::Duration::StringFromUnit(U::Seconds));
+    
+    return DS::Duration{
+        .value = std::max(1.f, value),
+        .unit = DS::Duration::UnitFromString(unit),
+    };
 }
 
-static void _Init(BatteryLifeView* self) {
+static void _StimulusInterval(std::string key, const DS::Duration& dur) {
+    namespace DS = DeviceSettings;
+    PrefsGlobal().set(key+".value", dur.value);
+    PrefsGlobal().set(key+".unit", DS::Duration::StringFromUnit(dur.unit));
+}
+
+static DS::Duration _MotionStimulusInterval() {
+    return _StimulusInterval("MotionStimulusInterval");
+}
+
+static void _MotionStimulusInterval(const DS::Duration& x) {
+    _StimulusInterval("MotionStimulusInterval", x);
+}
+
+static DS::Duration _ButtonStimulusInterval() {
+    return _StimulusInterval("ButtonStimulusInterval");
+}
+
+static void _ButtonStimulusInterval(const DS::Duration& x) {
+    _StimulusInterval("ButtonStimulusInterval", x);
+}
+
+// MARK: - Creation
+
+- (instancetype)initWithFrame:(NSRect)frame {
+    if (!(self = [super initWithFrame:frame])) return nil;
+    
     // Load view from nib
     {
         [self setTranslatesAutoresizingMaskIntoConstraints:false];
@@ -45,26 +76,76 @@ static void _Init(BatteryLifeView* self) {
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
-    [[self->_motionIntervalButton menu] removeAllItems];
+    __weak auto selfWeak = self;
+    PrefsGlobal().observerAdd([=] () {
+        auto selfStrong = selfWeak;
+        if (!selfStrong) return false;
+        [selfStrong _prefsChanged];
+        return true;
+    });
     
-}
-
-// MARK: - Creation
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    _Init(self);
+    _Load(self);
     return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
-    _Init(self);
-    return self;
+template<bool T_Forward>
+static void _Copy(DS::Duration& x, NSTextField* field, NSPopUpButton* menu) {
+    using X = std::remove_reference_t<decltype(x)>;
+    if constexpr (T_Forward) {
+        [field setStringValue:@(DS::StringFromFloat(x.value).c_str())];
+        [menu selectItemWithTitle:@(DS::Duration::StringFromUnit(x.unit).c_str())];
+    } else {
+        const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
+        try {
+            x.value = std::max(0.f, DS::FloatFromString([[field stringValue] UTF8String]));
+        } catch (...) {}
+        x.unit = DS::Duration::UnitFromString([[menu titleOfSelectedItem] UTF8String]);
+    }
+}
+
+static void _Store(BatteryLifeView* self) {
+    {
+        DS::Duration x;
+        _Copy<false>(x, self->_motionIntervalField, self->_motionIntervalMenu);
+        _MotionStimulusInterval(x);
+    }
+    
+    {
+        DS::Duration x;
+        _Copy<false>(x, self->_buttonIntervalField, self->_buttonIntervalMenu);
+        _ButtonStimulusInterval(x);
+    }
+}
+
+static void _Load(BatteryLifeView* self) {
+    {
+        DS::Duration x = _MotionStimulusInterval();
+        _Copy<true>(x, self->_motionIntervalField, self->_motionIntervalMenu);
+    }
+    {
+        DS::Duration x = _ButtonStimulusInterval();
+        _Copy<true>(x, self->_buttonIntervalField, self->_buttonIntervalMenu);
+    }
+}
+
+static void _StoreLoad(BatteryLifeView* self) {
+//    // Prevent re-entry, because our committing logic can trigger multiple calls
+//    if (self->_actionViewChangedUnderway) return;
+//    self->_actionViewChangedUnderway = true;
+//    Defer( self->_actionViewChangedUnderway = false );
+    
+    _Store(self);
+    _Load(self);
 }
 
 - (BOOL)acceptsFirstResponder {
     return true;
+}
+
+- (IBAction)_actionViewChanged:(id)sender {
+    _StoreLoad(self);
+    [self _update];
+    [_delegate batteryLifeViewChanged:self];
 }
 
 - (void)cancelOperation:(id)sender {
@@ -77,35 +158,25 @@ static void _Init(BatteryLifeView* self) {
 
 - (void)setTriggers:(const MSP::Triggers&)triggers {
     _triggers = triggers;
-    _batteryLifeEstimate = std::nullopt;
+    [self _update];
     [_delegate batteryLifeViewChanged:self];
 }
 
 - (T::BatteryLifeEstimate)batteryLifeEstimate {
-    [self _updateBatteryLifeEstimateIfNeeded];
-    return *_batteryLifeEstimate;
+    [self _updateIfNeeded];
+    return *_estimate;
 }
 
-- (std::chrono::seconds)_motionStimulusInterval {
-    return std::chrono::seconds(0);
+- (void)_prefsChanged {
+    NSLog(@"prefs changed");
+    [self _update];
+    [_delegate batteryLifeViewChanged:self];
 }
 
-- (std::chrono::seconds)_buttonStimulusInterval {
-    return std::chrono::seconds(0);
-}
-
-- (void)_updateBatteryLifeEstimateIfNeeded {
-    if (_batteryLifeEstimate) return;
-//    Estimator(const Constants& consts,
-//        const Parameters& params,
-//        const MSP::Triggers& triggers) : _consts(consts), _params(params), _triggers(triggers) {
-//    
-//    const std::chrono::seconds motionStimulusInterval = std::chrono::seconds(0);
-//    const std::chrono::seconds buttonStimulusInterval = std::chrono::seconds(0);
-    
+- (void)_update {
     const MDCStudio::BatteryLifeEstimate::Parameters parameters = {
-        .motionStimulusInterval = [self _motionStimulusInterval],
-        .buttonStimulusInterval = [self _buttonStimulusInterval],
+        .motionStimulusInterval = SecondsForDuration(_MotionStimulusInterval()),
+        .buttonStimulusInterval = SecondsForDuration(_ButtonStimulusInterval()),
     };
     MDCStudio::BatteryLifeEstimate::Estimator estimatorMin(
         MDCStudio::BatteryLifeEstimate::WorstCase, parameters, _triggers);
@@ -114,6 +185,11 @@ static void _Init(BatteryLifeView* self) {
     
     estimatorMin.estimate();
     estimatorMax.estimate();
+}
+
+- (void)_updateIfNeeded {
+    if (_estimate) return;
+    [self _update];
 }
 
 @end
