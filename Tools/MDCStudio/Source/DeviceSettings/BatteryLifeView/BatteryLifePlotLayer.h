@@ -1,7 +1,6 @@
-#import <Cocoa/Cocoa.h>
-#import <chrono>
+#import <QuartzCore/QuartzCore.h>
 #import "BatteryLifeEstimate.h"
 
-@interface BatteryLifePlotView : NSView
+@interface BatteryLifePlotLayer : CAShapeLayer
 - (void)setPoints:(std::vector<MDCStudio::BatteryLifeEstimate::Point>)points;
 @end

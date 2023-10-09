@@ -65,13 +65,22 @@ struct Estimator {
         for (;;) {
             _Triggers::Event* ev = _Triggers::EventFront();
             assert(ev);
-            if (ev->time > _time) break;
+            if (ev->time >= _time) break;
             _Triggers::EventPop();
             _eventHandle(*ev);
         }
         
         printf("===== LIVE =====\n");
         _live = true;
+        
+        // Confirm that fast-forwarding through the events didn't affect the battery level
+        assert(_batteryLevel == 1);
+        
+        // Insert the initial point where the battery is fully charged
+        points.push_back({
+            .time = _duration(timeStart),
+            .batteryLevel = _batteryLevel,
+        });
         
         uint64_t i;
         for (i=0;; i++) {
@@ -87,9 +96,8 @@ struct Estimator {
             // Handle the event
             _eventHandle(ev);
             
-            const auto tp = Time::Clock::TimePointFromTimeInstant(_time);
-            const std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(tp-timeStart);
-            if (points.empty() || duration!=points.back().time) {
+            const std::chrono::seconds duration = _duration(timeStart);
+            if (duration != points.back().time) {
                 points.push_back({
                     .time = duration,
                     .batteryLevel = _batteryLevel,
@@ -128,6 +136,11 @@ struct Estimator {
     _Triggers::Event _batteryDailySelfDischargeEvent = {};
     _Triggers::Event _motionStimulusEvent = {};
     _Triggers::Event _buttonStimulusEvent = {};
+    
+    std::chrono::seconds _duration(Time::Clock::time_point timeStart) {
+        const auto tp = Time::Clock::TimePointFromTimeInstant(_time);
+        return std::chrono::duration_cast<std::chrono::seconds>(tp-timeStart);
+    }
     
     void _eventInsert(_Triggers::Event& ev, const Time::Instant& time) {
         _Triggers::EventInsert(ev, time);

@@ -1,6 +1,7 @@
 #import "BatteryLifeView.h"
 #import "BatteryLifeEstimate.h"
 #import "Prefs.h"
+#import "BatteryLifePlotLayer.h"
 using namespace MDCStudio;
 using namespace BatteryLifeViewTypes;
 
@@ -12,11 +13,13 @@ namespace DS = DeviceSettings;
     __weak id<BatteryLifeViewDelegate> _delegate;
     
     IBOutlet NSView* _nibView;
+    IBOutlet NSView* _plotView;
     IBOutlet NSTextField* _motionIntervalField;
     IBOutlet NSPopUpButton* _motionIntervalMenu;
     IBOutlet NSTextField* _buttonIntervalField;
     IBOutlet NSPopUpButton* _buttonIntervalMenu;
     
+    BatteryLifePlotLayer* _plotLayer;
     MSP::Triggers _triggers;
     std::optional<T::BatteryLifeEstimate> _estimate;
 }
@@ -75,6 +78,10 @@ static void _ButtonStimulusInterval(const DS::Duration& x) {
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
+    
+    _plotLayer = [BatteryLifePlotLayer new];
+    [_plotView setLayer:_plotLayer];
+    [_plotView setWantsLayer:true];
     
     __weak auto selfWeak = self;
     PrefsGlobal().observerAdd([=] () {
@@ -183,8 +190,16 @@ static void _StoreLoad(BatteryLifeView* self) {
     MDCStudio::BatteryLifeEstimate::Estimator estimatorMax(
         MDCStudio::BatteryLifeEstimate::BestCase, parameters, _triggers);
     
-    estimatorMin.estimate();
-    estimatorMax.estimate();
+    const auto pointsMin = estimatorMin.estimate();
+    const auto pointsMax = estimatorMax.estimate();
+    assert(!pointsMin.empty());
+    assert(!pointsMax.empty());
+    
+    _estimate = {
+        .min = pointsMin.back().time,
+        .max = pointsMax.back().time,
+    };
+    [_plotLayer setPoints:pointsMin];
 }
 
 - (void)_updateIfNeeded {

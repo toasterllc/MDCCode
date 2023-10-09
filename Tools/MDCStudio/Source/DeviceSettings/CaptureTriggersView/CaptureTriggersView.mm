@@ -484,7 +484,7 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
 #define ContainerSubview CaptureTriggersView_ContainerSubview
 
 
-@interface CaptureTriggersView () <NSPopoverDelegate>
+@interface CaptureTriggersView () <NSPopoverDelegate, BatteryLifeViewDelegate>
 @end
 
 @implementation CaptureTriggersView {
@@ -551,6 +551,7 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     std::vector<ListItem*> _items;
     bool _actionViewChangedUnderway;
     
+    BatteryLifeView* _batteryLifeView;
     NSPopover* _batteryLifePopover;
 }
 
@@ -698,6 +699,8 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         printf("[CaptureTriggersView] Failed to deserailize triggers: %s\n", e.what());
     }
     
+    _batteryLifeView = [[BatteryLifeView alloc] initWithFrame:{}];
+    [_batteryLifeView setDelegate:self];
     [self _updateBatteryLife];
     return self;
 }
@@ -729,79 +732,26 @@ static std::string _RangeString(std::chrono::seconds xmin, std::chrono::seconds 
 }
 
 - (void)_updateBatteryLife {
-    const MSP::Triggers mspTriggers = [self triggers];
-    
-    const BatteryLifeEstimate::Parameters params = {
-        .motionStimulusInterval = std::chrono::seconds(60),
-        .buttonStimulusInterval = std::chrono::seconds(6*60*60),
-    };
-    
-    // Worst case
-    std::chrono::seconds batteryLifeMin(0);
-    {
-        BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::WorstCase, params, mspTriggers);
-        auto points = estimator.estimate();
-        batteryLifeMin = points.back().time;
-    }
-    
-    // Best case
-    std::chrono::seconds batteryLifeMax(0);
-    {
-        BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::BestCase, params, mspTriggers);
-        auto points = estimator.estimate();
-        batteryLifeMax = points.back().time;
-    }
-    
+    [_batteryLifeView setTriggers:[self triggers]];
+    [self _updateBatteryLifeTitle];
+}
+
+- (void)_updateBatteryLifeTitle {
+    const auto estimate = [_batteryLifeView batteryLifeEstimate];
     constexpr std::chrono::seconds Year = date::days(365);
     constexpr std::chrono::seconds Month = date::days(30);
     std::string title;
-    if (batteryLifeMin>Year && batteryLifeMax>Year) {
-        title = _RangeString<date::years>(batteryLifeMin, batteryLifeMax, "year").c_str();
+    if (estimate.min>Year && estimate.max>Year) {
+        title = _RangeString<date::years>(estimate.min, estimate.max, "year").c_str();
     
-    } else if (batteryLifeMin>2*Month && batteryLifeMax>2*Month) {
-        title = _RangeString<date::months>(batteryLifeMin, batteryLifeMax, "month").c_str();
-        
-//        const date::months monthsMin = date::floor<date::months>(batteryLifeMin);
-//        const date::months monthsMax = date::floor<date::months>(batteryLifeMax);
-//        if (monthsMin == monthsMax) {
-//            title = [NSString stringWithFormat:@"  %ju months",
-//                (uintmax_t)monthsMin.count()];
-//        } else {
-//            title = [NSString stringWithFormat:@"  %ju – %ju months",
-//                (uintmax_t)monthsMin.count(), (uintmax_t)monthsMax.count()];
-//        }
-        
-//        const float monthsMin = std::floor((float)batteryLifeMin.count() / Month.count());
-//        const float monthsMax = std::floor((float)batteryLifeMax.count() / Month.count());
-//        if (monthsMin == monthsMax) {
-//            title = [NSString stringWithFormat:@"  %ju months",
-//                (uintmax_t)monthsMin];
-//        } else {
-//            title = [NSString stringWithFormat:@"  %ju – %ju months",
-//                (uintmax_t)monthsMin, (uintmax_t)monthsMax];
-//        }
+    } else if (estimate.min>2*Month && estimate.max>2*Month) {
+        title = _RangeString<date::months>(estimate.min, estimate.max, "month").c_str();
     
     } else {
-        title = _RangeString<date::days>(batteryLifeMin, batteryLifeMax, "day").c_str();
-        
-//        const date::days daysMin = date::floor<date::days>(batteryLifeMin);
-//        const date::days daysMax = date::floor<date::days>(batteryLifeMax);
-//        if (daysMin == daysMax) {
-//            title = [NSString stringWithFormat:@"  %ju days",
-//                (uintmax_t)daysMin.count()];
-//        } else {
-//            title = [NSString stringWithFormat:@"  %ju – %ju days",
-//                (uintmax_t)daysMin.count(), (uintmax_t)daysMax.count()];
-//        }
+        title = _RangeString<date::days>(estimate.min, estimate.max, "day").c_str();
     }
     
     [_batteryLifeButton setTitle:[NSString stringWithFormat:@"  %@", @(title.c_str())]];
-    
-//    const std::string minStr = Toastbox::DurationString(false, batteryLifeMin);
-//    const std::string maxStr = Toastbox::DurationString(false, batteryLifeMax);
-//    [_batteryLifeButton setTitle:[NSString stringWithFormat:@"  %s – %s", minStr.c_str(), maxStr.c_str()]];
-    
-//    [_batteryLifeButton setStringValue:@"hello"];
 }
 
 - (const MSP::Triggers&)triggers {
@@ -1221,11 +1171,10 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 }
 
 - (IBAction)_actionBatteryLife:(id)sender {
-    BatteryLifeView* view = [[BatteryLifeView alloc] initWithFrame:{}];
-    NSViewController* vc = [NSViewController new];
-    [vc setView:view];
-    
     if (!_batteryLifePopover) {
+        NSViewController* vc = [NSViewController new];
+        [vc setView:_batteryLifeView];
+        
         _batteryLifePopover = [NSPopover new];
         [_batteryLifePopover setDelegate:self];
         [_batteryLifePopover setBehavior:NSPopoverBehaviorTransient];
@@ -1237,6 +1186,10 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 - (BOOL)popoverShouldClose:(NSPopover*)popover {
     NSLog(@"popoverShouldClose");
     return true;
+}
+
+- (void)batteryLifeViewChanged:(BatteryLifeView*)view {
+    [self _updateBatteryLifeTitle];
 }
 
 // MARK: - Table View Data Source / Delegate
