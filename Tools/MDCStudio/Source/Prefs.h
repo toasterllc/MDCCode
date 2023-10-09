@@ -57,14 +57,14 @@ private:
         if (auto x = _Load<NSNumber*>(_defaults, key)) {
             if constexpr (std::is_same_v<T, bool>) {
                 return [x boolValue];
-            } else if constexpr (std::is_unsigned_v<T>) {
-                return [x unsignedLongLongValue];
-            } else if constexpr (std::is_signed_v<T>) {
-                return [x longLongValue];
             } else if constexpr (std::is_same_v<T, float>) {
                 return [x floatValue];
             } else if constexpr (std::is_same_v<T, double>) {
                 return [x doubleValue];
+            } else if constexpr (std::is_unsigned_v<T>) {
+                return [x unsignedLongLongValue];
+            } else if constexpr (std::is_signed_v<T>) {
+                return [x longLongValue];
             } else {
                 static_assert(_AlwaysFalse<T>);
             }
