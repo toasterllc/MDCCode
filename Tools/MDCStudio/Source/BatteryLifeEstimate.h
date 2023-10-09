@@ -67,6 +67,10 @@ struct Estimator {
         
         uint64_t i;
         for (i=0;; i++) {
+            _batteryDailySelfDischargeSchedule();
+            _motionStimulusSchedule();
+            _buttonStimulusSchedule();
+            
             _Triggers::Event& ev = *_Triggers::EventFront();
             _Triggers::EventPop();
             
@@ -95,17 +99,14 @@ struct Estimator {
             }
             
             // Bail once the battery level is below our threshold
-            if (_batteryLevel < _BatteryEmptyLevel) {
-                auto debugTimeEnd = std::chrono::steady_clock::now();
-                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(debugTimeEnd-debugTimeStart);
-                printf("%ju ITERATIONS TOOK %ju ms (%ju points)\n", (uintmax_t)i, (uintmax_t)durationMs.count(), (uintmax_t)points.size());
-                return points;
-            }
-            
-            _batteryDailySelfDischargeSchedule();
-            _motionStimulusSchedule();
-            _buttonStimulusSchedule();
+            if (_batteryLevel < _BatteryEmptyLevel) break;
         }
+        
+        // Bail once the battery level is below our threshold
+        auto debugTimeEnd = std::chrono::steady_clock::now();
+        auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(debugTimeEnd-debugTimeStart);
+        printf("%ju ITERATIONS TOOK %ju ms (%ju points)\n", (uintmax_t)i, (uintmax_t)durationMs.count(), (uintmax_t)points.size());
+        return points;
         
         // Print the current time + battery level
 //        _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
