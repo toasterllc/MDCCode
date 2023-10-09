@@ -31,6 +31,11 @@ constexpr Constants BestCase = {
     .batteryDailySelfDischarge = 0.0006731968785,  // 2% per month == 1-(1-.02)^(1/30) per day
 };
 
+struct Point {
+    std::chrono::seconds time = std::chrono::seconds(0);
+    float batteryLevel = 0;
+};
+
 struct Estimator {
     Estimator(const Constants& consts,
         const Parameters& params,
@@ -39,11 +44,6 @@ struct Estimator {
         assert(params.motionStimulusInterval.count() > 0);
         assert(params.buttonStimulusInterval.count() > 0);
     }
-    
-    struct Point {
-        std::chrono::seconds time = std::chrono::seconds(0);
-        float batteryLevel = 0;
-    };
     
     std::vector<Point> estimate() {
         // Since _MSPState is static, require that we're called from a single thread (the main thread) only.

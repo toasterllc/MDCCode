@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <chrono>
+#include <optional>
 #include "date/date.h"
 #include "Toastbox/RuntimeError.h"
 #include "Toastbox/NumForStr.h"

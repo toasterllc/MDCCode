@@ -7,6 +7,7 @@
 #include "Calendar.h"
 #include "Code/Shared/Time.h"
 #include "Code/Shared/Clock.h"
+#include "Code/Shared/MSP.h"
 #include "Toastbox/Cast.h"
 
 namespace MDCStudio {
