@@ -740,14 +740,16 @@ static std::string _RangeString(std::chrono::seconds xmin, std::chrono::seconds 
     std::chrono::seconds batteryLifeMin(0);
     {
         BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::WorstCase, params, mspTriggers);
-        batteryLifeMin = estimator.estimate();
+        auto points = estimator.estimate();
+        batteryLifeMin = points.back().time;
     }
     
     // Best case
     std::chrono::seconds batteryLifeMax(0);
     {
         BatteryLifeEstimate::Estimator estimator(BatteryLifeEstimate::BestCase, params, mspTriggers);
-        batteryLifeMax = estimator.estimate();
+        auto points = estimator.estimate();
+        batteryLifeMax = points.back().time;
     }
     
     constexpr std::chrono::seconds Year = date::days(365);

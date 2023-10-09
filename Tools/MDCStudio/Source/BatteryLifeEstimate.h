@@ -40,14 +40,21 @@ struct Estimator {
         assert(params.buttonStimulusInterval.count() > 0);
     }
     
-    std::chrono::seconds estimate() {
+    struct Point {
+        std::chrono::seconds time = std::chrono::seconds(0);
+        float batteryLevel = 0;
+    };
+    
+    std::vector<Point> estimate() {
         // Since _MSPState is static, require that we're called from a single thread (the main thread) only.
         // In the future we'd like to remove this requirement; see comment about _MSPState.
         assert([NSThread isMainThread]);
+        auto debugTimeStart = std::chrono::steady_clock::now();
         
         _batteryLevel = 1;
         _MSPState.settings.triggers = _triggers;
         
+        std::vector<Point> points;
         const auto timeStart = Time::Clock::now();
         _time = Time::Clock::TimeInstantFromTimePoint(timeStart);
         _Triggers::Init(_time);
@@ -80,26 +87,36 @@ struct Estimator {
             // Handle the event
             _eventHandle(ev);
             
+            const auto tp = Time::Clock::TimePointFromTimeInstant(_time);
+            const std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(tp-timeStart);
+            if (points.empty() || duration!=points.back().time) {
+                points.push_back({
+                    .time = duration,
+                    .batteryLevel = _batteryLevel,
+                });
+            }
+            
             // Bail once the battery level is below our threshold
-            if (_batteryLevel < _BatteryEmptyLevel) break;
+            if (_batteryLevel < _BatteryEmptyLevel) {
+                auto debugTimeEnd = std::chrono::steady_clock::now();
+                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(debugTimeEnd-debugTimeStart);
+                printf("%ju ITERATIONS TOOK %ju ms (%ju points)\n", (uintmax_t)i, (uintmax_t)durationMs.count(), (uintmax_t)points.size());
+                return points;
+            }
             
             _motionStimulusSchedule();
             _buttonStimulusSchedule();
         }
         
-        printf("ITERATIONS: %ju\n", (uintmax_t)i);
-        
         // Print the current time + battery level
 //        _printTime(); printf("Battery level: %.1f%%\n", _batteryLevel*100);
         
-        const auto timeEnd = Time::Clock::TimePointFromTimeInstant(_time);
-        const std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(timeEnd-timeStart);
-        const date::days durationDays = std::chrono::duration_cast<date::days>(timeEnd-timeStart);
-        printf("Battery lasted %ju days (%ju seconds)\n", (uintmax_t)durationDays.count(), (uintmax_t)duration.count());
-        
-        if (duration < _BatteryLifeMin) return _BatteryLifeMin;
-        if (duration > _BatteryLifeMax) return _BatteryLifeMax;
-        return duration;
+//        const auto timeEnd = Time::Clock::TimePointFromTimeInstant(_time);
+//        const std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(timeEnd-timeStart);
+//        const date::days durationDays = std::chrono::duration_cast<date::days>(timeEnd-timeStart);
+//        printf("Battery lasted %ju days (%ju seconds)\n", (uintmax_t)durationDays.count(), (uintmax_t)duration.count());
+//        
+//        return points;
     }
     
     // TODO: for now MSP::State is static which is gross and means we're not thread safe.
@@ -341,8 +358,8 @@ struct Estimator {
         return 1.f / _consts.batteryImageCaptureCapacity;
     }
     
-    static constexpr date::days _BatteryLifeMin = date::days(1);
-    static constexpr date::days _BatteryLifeMax = date::days(365*3);
+//    static constexpr date::days _BatteryLifeDurationMin = date::days(1);
+//    static constexpr date::days _BatteryLifeDurationMax = date::days(365*3);
     
     // BatteryEmptyLevel: consider battery dead at 2%
     // This needs to match MSP's battery trap level
