@@ -2,6 +2,9 @@
 #import "BatteryLifeEstimate.h"
 #import "Prefs.h"
 #import "BatteryLifePlotLayer.h"
+#import "Code/Lib/Toastbox/Defer.h"
+#import "Code/Lib/Toastbox/String.h"
+#import "Code/Lib/Toastbox/NumForStr.h"
 using namespace MDCStudio;
 using namespace BatteryLifeViewTypes;
 
@@ -19,45 +22,53 @@ namespace DS = DeviceSettings;
     IBOutlet NSTextField* _buttonIntervalField;
     IBOutlet NSPopUpButton* _buttonIntervalMenu;
     
+    bool _storeLoadUnderway;
     BatteryLifePlotLayer* _plotLayer;
     MSP::Triggers _triggers;
     std::optional<T::BatteryLifeEstimate> _estimate;
 }
 
-static DS::Duration _StimulusInterval(std::string key) {
+static DS::Duration _StimulusIntervalGet(std::string key, const DS::Duration& uninit) {
     namespace DS = DeviceSettings;
-    using U = DS::Duration::Unit;
+    using D = DS::Duration;
+    using U = D::Unit;
     
-    const float value = PrefsGlobal().get(key+".value", 30.f);
-    const auto unit =
-        PrefsGlobal().get(key+".unit", DS::Duration::StringFromUnit(U::Seconds));
+//    constexpr DS::Duration Default = { 30, U::Seconds };
     
-    return DS::Duration{
-        .value = std::max(1.f, value),
-        .unit = DS::Duration::UnitFromString(unit),
-    };
+    DS::Duration dur = uninit;
+    try {
+        const auto str = PrefsGlobal().get(key, "");
+        const auto parts = Toastbox::String::Split(str, " ");
+        if (parts.size() != 2) throw Toastbox::RuntimeError("invalid duration: %s", str);
+        
+        dur.value = std::max(1.f, Toastbox::FloatForStr<float>(parts[0]));
+        dur.unit = D::UnitFromString(parts[1]);
+    } catch (std::exception& e) {
+//        printf("failed to parse duration: %s\n", e.what());
+        return uninit;
+    }
+    return dur;
 }
 
-static void _StimulusInterval(std::string key, const DS::Duration& dur) {
+static void _StimulusIntervalSet(std::string key, const DS::Duration& dur) {
     namespace DS = DeviceSettings;
-    PrefsGlobal().set(key+".value", dur.value);
-    PrefsGlobal().set(key+".unit", DS::Duration::StringFromUnit(dur.unit));
+    PrefsGlobal().set(key, std::to_string(dur.value) + " " + DS::Duration::StringFromUnit(dur.unit));
 }
 
 static DS::Duration _MotionStimulusInterval() {
-    return _StimulusInterval("MotionStimulusInterval");
+    return _StimulusIntervalGet("MotionStimulusInterval", { 30, DeviceSettings::Duration::Unit::Seconds });
 }
 
 static void _MotionStimulusInterval(const DS::Duration& x) {
-    _StimulusInterval("MotionStimulusInterval", x);
+    _StimulusIntervalSet("MotionStimulusInterval", x);
 }
 
 static DS::Duration _ButtonStimulusInterval() {
-    return _StimulusInterval("ButtonStimulusInterval");
+    return _StimulusIntervalGet("ButtonStimulusInterval", { 6, DeviceSettings::Duration::Unit::Hours });
 }
 
 static void _ButtonStimulusInterval(const DS::Duration& x) {
-    _StimulusInterval("ButtonStimulusInterval", x);
+    _StimulusIntervalSet("ButtonStimulusInterval", x);
 }
 
 // MARK: - Creation
@@ -92,6 +103,11 @@ static void _ButtonStimulusInterval(const DS::Duration& x) {
     });
     
     _Load(self);
+    
+//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
+//        NSLog(@"first responder: %@", [[self window] firstResponder]);
+//    }];
+    
     return self;
 }
 
@@ -141,13 +157,18 @@ static void _StoreLoad(BatteryLifeView* self) {
 //    self->_actionViewChangedUnderway = true;
 //    Defer( self->_actionViewChangedUnderway = false );
     
+    // Prevent re-entry, because our committing logic can trigger multiple calls
+    if (self->_storeLoadUnderway) return;
+    self->_storeLoadUnderway = true;
+    Defer( self->_storeLoadUnderway = false );
+    
     _Store(self);
     _Load(self);
 }
 
-- (BOOL)acceptsFirstResponder {
-    return true;
-}
+//- (BOOL)acceptsFirstResponder {
+//    return true;
+//}
 
 - (IBAction)_actionViewChanged:(id)sender {
     _StoreLoad(self);
@@ -155,9 +176,9 @@ static void _StoreLoad(BatteryLifeView* self) {
     [_delegate batteryLifeViewChanged:self];
 }
 
-- (void)cancelOperation:(id)sender {
-    [[self window] performClose:nil];
-}
+//- (void)cancelOperation:(id)sender {
+//    [[self window] performClose:nil];
+//}
 
 - (void)setDelegate:(id<BatteryLifeViewDelegate>)delegate {
     _delegate = delegate;
@@ -175,6 +196,7 @@ static void _StoreLoad(BatteryLifeView* self) {
 }
 
 - (void)_prefsChanged {
+    if (_storeLoadUnderway) return;
     NSLog(@"prefs changed");
     [self _update];
     [_delegate batteryLifeViewChanged:self];

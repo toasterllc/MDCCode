@@ -13,7 +13,7 @@ public:
     using Observer = std::function<bool()>;
     
     template<typename T>
-    T get(std::string_view key, const T& uninit) {
+    T get(std::string_view key, T uninit) {
         // Numeric types
         if constexpr (std::is_arithmetic_v<T>) {
             return _getArithmetic(key, uninit);
@@ -53,7 +53,7 @@ private:
     }
     
     template<typename T>
-    T _getArithmetic(std::string_view key, const T& uninit) {
+    T _getArithmetic(std::string_view key, T uninit) {
         if (auto x = _Load<NSNumber*>(_defaults, key)) {
             if constexpr (std::is_same_v<T, bool>) {
                 return [x boolValue];
@@ -73,7 +73,7 @@ private:
     }
     
     template<typename T>
-    T _getString(std::string_view key, const T& uninit) {
+    T _getString(std::string_view key, T uninit) {
         if (auto x = _Load<NSString*>(_defaults, key)) {
             if constexpr (std::is_same_v<T, const char*>) {
                 return [x UTF8String];

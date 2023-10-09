@@ -549,7 +549,7 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     
     MSP::Triggers _triggers;
     std::vector<ListItem*> _items;
-    bool _actionViewChangedUnderway;
+    bool _storeLoadUnderway;
     
     BatteryLifeView* _batteryLifeView;
     NSPopover* _batteryLifePopover;
@@ -1106,9 +1106,9 @@ static void _Load(CaptureTriggersView* self, Trigger& trigger) {
 
 static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     // Prevent re-entry, because our committing logic can trigger multiple calls
-    if (self->_actionViewChangedUnderway) return;
-    self->_actionViewChangedUnderway = true;
-    Defer( self->_actionViewChangedUnderway = false );
+    if (self->_storeLoadUnderway) return;
+    self->_storeLoadUnderway = true;
+    Defer( self->_storeLoadUnderway = false );
     
     ListItem* it = [self _selectedItem];
     if (it) {

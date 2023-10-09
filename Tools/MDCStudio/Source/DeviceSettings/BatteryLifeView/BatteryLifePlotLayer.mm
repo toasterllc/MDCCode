@@ -19,6 +19,8 @@ using namespace MDCStudio;
 }
 
 - (void)display {
+    auto debugTimeStart = std::chrono::steady_clock::now();
+    
     const CGSize size = [self frame].size;
     id /* CGMutablePathRef */ path = CFBridgingRelease(CGPathCreateMutable());
     CGPathMoveToPoint((CGMutablePathRef)path, nullptr, 0, 0);
@@ -38,6 +40,10 @@ using namespace MDCStudio;
     CGPathCloseSubpath((CGMutablePathRef)path);
     
     [self setPath:(CGPathRef)path];
+    
+    auto debugTimeEnd = std::chrono::steady_clock::now();
+    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(debugTimeEnd-debugTimeStart);
+    printf("PLOT TIME: %ju ms\n", (uintmax_t)durationMs.count());
 }
 
 @end
