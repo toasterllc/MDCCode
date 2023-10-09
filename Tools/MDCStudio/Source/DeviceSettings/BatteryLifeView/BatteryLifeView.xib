@@ -7,6 +7,8 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="BatteryLifeView">
             <connections>
+                <outlet property="_buttonIntervalButton" destination="4oV-Ge-OsI" id="Dic-ot-7hB"/>
+                <outlet property="_motionIntervalButton" destination="uzL-84-t6M" id="2ES-w1-bPE"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
             </connections>
         </customObject>
