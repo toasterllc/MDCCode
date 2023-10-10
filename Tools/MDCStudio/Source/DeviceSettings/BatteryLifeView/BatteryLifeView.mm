@@ -24,8 +24,10 @@ namespace DS = DeviceSettings;
     IBOutlet NSPopUpButton* _motionIntervalMenu;
     IBOutlet NSTextField* _buttonIntervalField;
     IBOutlet NSPopUpButton* _buttonIntervalMenu;
-    IBOutlet NSTextField* _batteryLifeMinLabel;
-    IBOutlet NSTextField* _batteryLifeMaxLabel;
+    IBOutlet NSTextField* _batteryLifeMinDurationLabel;
+    IBOutlet NSTextField* _batteryLifeMaxDurationLabel;
+    IBOutlet NSTextField* _batteryLifeMinDateLabel;
+    IBOutlet NSTextField* _batteryLifeMaxDateLabel;
     
     bool _storeLoadUnderway;
     MSP::Triggers _triggers;
@@ -229,9 +231,61 @@ static void _StoreLoad(BatteryLifeView* self) {
         pointsMax.back().time.count();
     [_minPlotViewWidth setConstant:factor*[_maxPlotViewWidth constant]];
     
-    // Update labels
-    [_batteryLifeMinLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->min).c_str())];
-    [_batteryLifeMaxLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->max).c_str())];
+    // Update duration labels
+    [_batteryLifeMinDurationLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->min).c_str())];
+    [_batteryLifeMaxDurationLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->max).c_str())];
+    
+    // Update date labels
+    {
+        using namespace std::chrono;
+//        const date::time_zone& tz = *date::current_zone();
+//        const auto tpNow = tz.to_local(system_clock::now());
+//        const auto tpMin = tpNow+_estimate->min;
+//        const auto tpMax = tpNow+_estimate->max;
+//        
+////        const auto days = date::floor<date::days>(tp);
+////        const auto ymdNow = date::year_month_day(date::floor<date::days>(tpNow));
+////        const auto ymdMin = date::year_month_day(date::floor<date::days>(tpMin));
+////        const auto ymdMax = date::year_month_day(date::floor<date::days>(tpMax));
+////        const auto hhmmss = date::make_time(tp-days);
+//        
+//        
+//        const seconds secMin = duration_cast<seconds>(tpMin.time_since_epoch());
+//        const seconds secMax = duration_cast<seconds>(tpMax.time_since_epoch());
+        
+        #warning TODO: cache the NSDateFormatters!
+        NSCalendar* cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+        NSDateFormatter* monthDayFormatter = [[NSDateFormatter alloc] init];
+        [monthDayFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [monthDayFormatter setCalendar:cal];
+        [monthDayFormatter setTimeZone:[cal timeZone]];
+        [monthDayFormatter setLocalizedDateFormatFromTemplate:@"MMMd"];
+        
+        NSDateFormatter* monthYearFormatter = [[NSDateFormatter alloc] init];
+        [monthYearFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [monthYearFormatter setCalendar:cal];
+        [monthYearFormatter setTimeZone:[cal timeZone]];
+        [monthYearFormatter setLocalizedDateFormatFromTemplate:@"MMMYYYY"];
+        
+        NSDate* dateNow = [NSDate date];
+        NSDate* dateMin = [NSDate dateWithTimeIntervalSinceNow:_estimate->min.count()];
+        NSDate* dateMax = [NSDate dateWithTimeIntervalSinceNow:_estimate->max.count()];
+        
+//        NSDateFormatter* monthFormatter = [[NSDateFormatter alloc] init];
+//        [monthFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+//        [monthFormatter setCalendar:cal];
+//        [monthFormatter setTimeZone:[cal timeZone]];
+//        [monthFormatter setLocalizedDateFormatFromTemplate:@"MMM"];
+//        [monthFormatter setLenient:true];
+        
+        const NSInteger yearNow = [cal component:NSCalendarUnitYear fromDate:dateNow];
+        const NSInteger yearMin = [cal component:NSCalendarUnitYear fromDate:dateMin];
+        const NSInteger yearMax = [cal component:NSCalendarUnitYear fromDate:dateMax];
+        
+        NSDateFormatter* fmt = (yearMin==yearNow && yearMax==yearNow ? monthDayFormatter : monthYearFormatter);
+        [_batteryLifeMinDateLabel setStringValue:[fmt stringFromDate:dateMin]];
+        [_batteryLifeMaxDateLabel setStringValue:[fmt stringFromDate:dateMax]];
+    }
 }
 
 - (void)_updateIfNeeded {

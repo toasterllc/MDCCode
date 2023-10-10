@@ -78,6 +78,7 @@ static auto _LastLoaded(ImageLibrary& imgLib) {
 
 
 static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
+    #warning TODO: cache the NSDateFormatter instead of allocating every time!
     using namespace std::chrono;
     NSCalendar* cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     NSDateFormatter* monthYearFormatter = [[NSDateFormatter alloc] init];

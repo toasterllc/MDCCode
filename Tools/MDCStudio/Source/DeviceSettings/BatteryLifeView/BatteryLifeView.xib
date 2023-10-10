@@ -7,8 +7,10 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="BatteryLifeView">
             <connections>
-                <outlet property="_batteryLifeMaxLabel" destination="KIx-a7-ba8" id="Y4J-lq-QaQ"/>
-                <outlet property="_batteryLifeMinLabel" destination="Sya-dj-nhC" id="VKe-Nc-bE2"/>
+                <outlet property="_batteryLifeMaxDateLabel" destination="O1Z-qC-HI6" id="B1g-jn-6s0"/>
+                <outlet property="_batteryLifeMaxDurationLabel" destination="KIx-a7-ba8" id="jDp-Uo-Zfb"/>
+                <outlet property="_batteryLifeMinDateLabel" destination="VI1-Gl-ydn" id="yUt-rp-nPp"/>
+                <outlet property="_batteryLifeMinDurationLabel" destination="Sya-dj-nhC" id="Y4U-9D-aNH"/>
                 <outlet property="_buttonIntervalField" destination="fSJ-Mp-4fa" id="c4X-qU-NTe"/>
                 <outlet property="_buttonIntervalMenu" destination="4oV-Ge-OsI" id="vk9-vT-OaE"/>
                 <outlet property="_maxPlotView" destination="I7z-Sb-hvG" id="gDk-p3-n6j"/>
@@ -18,7 +20,6 @@
                 <outlet property="_motionIntervalField" destination="08r-GI-OgG" id="bK1-BZ-FS7"/>
                 <outlet property="_motionIntervalMenu" destination="uzL-84-t6M" id="Mat-lg-NIh"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
-                <outlet property="_plotView" destination="I7z-Sb-hvG" id="gph-OS-Vyv"/>
             </connections>
         </customObject>
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
@@ -207,7 +208,7 @@
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Kuv-np-FZp">
                     <rect key="frame" x="8" y="274" width="35" height="15"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="100%" id="Hcr-cb-KCC">
-                        <font key="font" metaFont="system" size="12"/>
+                        <font key="font" metaFont="label" size="12"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -215,7 +216,7 @@
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="M6h-Wq-RKe">
                     <rect key="frame" x="21" y="189" width="22" height="15"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="0%" id="AmM-Ke-CK5">
-                        <font key="font" metaFont="system" size="12"/>
+                        <font key="font" metaFont="label" size="12"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
