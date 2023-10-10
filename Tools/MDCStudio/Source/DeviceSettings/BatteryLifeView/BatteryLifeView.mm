@@ -194,7 +194,7 @@ static void _StoreLoad(BatteryLifeView* self) {
 
 - (void)_prefsChanged {
     if (_storeLoadUnderway) return;
-    NSLog(@"prefs changed");
+    _Load(self);
     [self _update];
     [_delegate batteryLifeViewChanged:self];
 }

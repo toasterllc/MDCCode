@@ -1154,7 +1154,8 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 //        [_batteryLifePopover setBehavior:NSPopoverBehaviorTransient];
         [_batteryLifePopover setContentViewController:vc];
     }
-    [_batteryLifePopover showRelativeToRect:{} ofView:_batteryLifeButton preferredEdge:NSRectEdgeMaxY];
+    [_batteryLifePopover showRelativeToRect:{}
+        ofView:_batteryLifeButton preferredEdge:NSRectEdgeMaxY];
 }
 
 - (BOOL)popoverShouldClose:(NSPopover*)popover {
