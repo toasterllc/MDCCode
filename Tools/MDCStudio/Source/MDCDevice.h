@@ -156,13 +156,13 @@ public:
     }
     
     void settings(const MSP::Settings& x) {
-//        _mspSettings = x;
-//        {
-//            auto hostMode = _hostMode();
-//            MSP::State mspState = _device.device.mspStateRead();
-//            mspState.settings = _mspSettings;
-//            _device.device.mspStateWrite(mspState);
-//        }
+        _mspSettings = x;
+        {
+            auto hostMode = _hostMode();
+            MSP::State mspState = _device.device.mspStateRead();
+            mspState.settings = _mspSettings;
+            _device.device.mspStateWrite(mspState);
+        }
     }
     
     void sync() {

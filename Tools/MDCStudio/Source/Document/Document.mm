@@ -100,9 +100,9 @@ static void _SetView(T& x, NSView* y) {
         return true;
     });
     
-    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer*) {
-        [self _showDeviceSettings:nullptr];
-    }];
+//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer*) {
+//        [self _showDeviceSettings:nullptr];
+//    }];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
@@ -540,7 +540,7 @@ static void _SortNewestFirst(bool x) {
     
     _deviceSettings = {
         .device = device,
-        .view = [[DeviceSettingsView alloc] initWithSettings:{} delegate:self],
+        .view = [[DeviceSettingsView alloc] initWithSettings:device->settings() delegate:self],
     };
     
     NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
@@ -577,8 +577,8 @@ static void _SortNewestFirst(bool x) {
         }
     }
     
-//    [_window endSheet:[_deviceSettings.view window]];
-//    _deviceSettings = {};
+    [_window endSheet:[_deviceSettings.view window]];
+    _deviceSettings = {};
 }
 
 // MARK: - DeviceImageGridHeaderViewDelegate
