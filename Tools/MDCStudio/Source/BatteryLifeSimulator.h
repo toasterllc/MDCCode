@@ -45,6 +45,12 @@ struct Simulator {
         assert(params.buttonStimulusInterval.count() > 0);
     }
     
+    // _BatteryLevelNormalize(): adjust the battery level `x` so that it spans [0,1].
+    // This is so that 1 maps to 1 and _BatteryEmptyLevel maps to 0.
+    static float _BatteryLevelNormalize(float x) {
+        return (x-_BatteryEmptyLevel) / (1-_BatteryEmptyLevel);
+    }
+    
     std::vector<Point> estimate() {
         // Since _MSPState is static, require that we're called from a single thread (the main thread) only.
         // In the future we'd like to remove this requirement; see comment about _MSPState.
@@ -62,7 +68,7 @@ struct Simulator {
         // Insert the initial point where the battery is fully charged
         std::vector<Point> points = {{
             .time = _duration(timeStart),
-            .batteryLevel = _batteryLevel,
+            .batteryLevel = _BatteryLevelNormalize(_batteryLevel),
         }};
         
         uint64_t i;
@@ -94,7 +100,7 @@ struct Simulator {
             if (duration != points.back().time) {
                 points.push_back({
                     .time = duration,
-                    .batteryLevel = _batteryLevel,
+                    .batteryLevel = std::max(0.f, _BatteryLevelNormalize(_batteryLevel)),
                 });
             }
             

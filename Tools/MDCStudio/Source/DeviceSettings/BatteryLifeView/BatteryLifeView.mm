@@ -1,7 +1,7 @@
 #import "BatteryLifeView.h"
 #import "BatteryLifeSimulator.h"
 #import "Prefs.h"
-#import "BatteryLifePlotLayer.h"
+#import "BatteryLifePlotView.h"
 #import "Code/Lib/Toastbox/Defer.h"
 #import "Code/Lib/Toastbox/String.h"
 #import "Code/Lib/Toastbox/NumForStr.h"
@@ -16,7 +16,7 @@ namespace DS = DeviceSettings;
     __weak id<BatteryLifeViewDelegate> _delegate;
     
     IBOutlet NSView* _nibView;
-    IBOutlet NSView* _plotView;
+    IBOutlet BatteryLifePlotView* _plotView;
     IBOutlet NSTextField* _motionIntervalField;
     IBOutlet NSPopUpButton* _motionIntervalMenu;
     IBOutlet NSTextField* _buttonIntervalField;
@@ -25,7 +25,6 @@ namespace DS = DeviceSettings;
     IBOutlet NSTextField* _batteryLifeMaxLabel;
     
     bool _storeLoadUnderway;
-    BatteryLifePlotLayer* _plotLayer;
     MSP::Triggers _triggers;
     std::optional<T::BatteryLifeEstimate> _estimate;
 }
@@ -91,10 +90,6 @@ static void _ButtonStimulusInterval(const DS::Duration& x) {
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
-    
-    _plotLayer = [BatteryLifePlotLayer new];
-    [_plotView setLayer:_plotLayer];
-    [_plotView setWantsLayer:true];
     
     __weak auto selfWeak = self;
     PrefsGlobal().observerAdd([=] () {
@@ -230,7 +225,8 @@ static void _StoreLoad(BatteryLifeView* self) {
     };
     
     // Update plot
-    [_plotLayer setPoints:pointsMin];
+    [_plotView setPointsMin:pointsMin];
+    [_plotView setPointsMax:pointsMax];
     
     // Update labels
     [_batteryLifeMinLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->min).c_str())];

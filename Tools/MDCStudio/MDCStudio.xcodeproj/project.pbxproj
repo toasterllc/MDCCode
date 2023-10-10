@@ -15,7 +15,7 @@
 		5530DC3D29DCDA50005FEC0A /* DeviceSettingsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */; };
 		553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */; };
 		553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */; };
-		553EF5562AD4953400157484 /* BatteryLifePlotLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5542AD4953400157484 /* BatteryLifePlotLayer.mm */; };
+		553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5542AD4953400157484 /* BatteryLifePlotView.mm */; };
 		55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B2229A02F7D00F25D57 /* InspectorView.mm */; };
 		55425B2629A0752300F25D57 /* InspectorView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55425B2529A0752300F25D57 /* InspectorView.xib */; };
 		55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B5C29A2B8C900F25D57 /* ImageCornerButton.mm */; };
@@ -135,8 +135,8 @@
 		5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceSettingsView.xib; sourceTree = "<group>"; };
 		553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-BestIcon.pdf"; sourceTree = "<group>"; };
 		553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-WorstIcon.pdf"; sourceTree = "<group>"; };
-		553EF5542AD4953400157484 /* BatteryLifePlotLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifePlotLayer.mm; sourceTree = "<group>"; };
-		553EF5552AD4953400157484 /* BatteryLifePlotLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BatteryLifePlotLayer.h; sourceTree = "<group>"; };
+		553EF5542AD4953400157484 /* BatteryLifePlotView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifePlotView.mm; sourceTree = "<group>"; };
+		553EF5552AD4953400157484 /* BatteryLifePlotView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BatteryLifePlotView.h; sourceTree = "<group>"; };
 		55425B1929A01BE000F25D57 /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		55425B2229A02F7D00F25D57 /* InspectorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorView.mm; sourceTree = "<group>"; };
 		55425B2329A02F7D00F25D57 /* InspectorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorView.h; sourceTree = "<group>"; };
@@ -685,8 +685,8 @@
 			children = (
 				557ABCEF29DD24230032619E /* BatteryLifeView.h */,
 				557ABCED29DD24230032619E /* BatteryLifeView.mm */,
-				553EF5552AD4953400157484 /* BatteryLifePlotLayer.h */,
-				553EF5542AD4953400157484 /* BatteryLifePlotLayer.mm */,
+				553EF5552AD4953400157484 /* BatteryLifePlotView.h */,
+				553EF5542AD4953400157484 /* BatteryLifePlotView.mm */,
 				557ABCEE29DD24230032619E /* BatteryLifeView.xib */,
 				553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */,
 				553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */,
@@ -989,7 +989,7 @@
 				55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */,
 				55E43F9E28C00D6B00FCCEA0 /* DebayerBilinear.metal in Sources */,
 				5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */,
-				553EF5562AD4953400157484 /* BatteryLifePlotLayer.mm in Sources */,
+				553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */,
 				55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */,
 				5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */,
 				55F8D01427BEF3E500757165 /* ImageView.mm in Sources */,

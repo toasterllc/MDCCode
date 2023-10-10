@@ -20,7 +20,7 @@
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="8kh-WA-1UA" userLabel="View">
             <rect key="frame" x="0.0" y="0.0" width="427" height="323"/>
             <subviews>
-                <customView translatesAutoresizingMaskIntoConstraints="NO" id="I7z-Sb-hvG">
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="I7z-Sb-hvG" customClass="BatteryLifePlotView">
                     <rect key="frame" x="47" y="189" width="360" height="100"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="360" id="8B8-QZ-B9e"/>
