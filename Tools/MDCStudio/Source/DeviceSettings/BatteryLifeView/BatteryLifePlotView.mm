@@ -11,7 +11,7 @@ using namespace MDCStudio;
 
 @implementation BatteryLifePlotLayer {
     std::vector<BatteryLifeSimulator::Point> _points;
-    float _widthFactor;
+    CGFloat _widthFactor;
 }
 
 - (instancetype)init {
@@ -29,6 +29,10 @@ using namespace MDCStudio;
 - (void)setPoints:(std::vector<BatteryLifeSimulator::Point>)points {
     _points = std::move(points);
     [self setNeedsDisplay];
+}
+
+- (CGFloat)widthFactor {
+    return _widthFactor;
 }
 
 - (void)setWidthFactor:(float)x {
@@ -121,8 +125,12 @@ static void _Init(BatteryLifePlotView* self) {
 
 - (void)_updateWidthFactor {
     if ([_minLayer points].empty() || [_maxLayer points].empty()) return;
-    float x = (float)[_minLayer points].back().time.count() / [_maxLayer points].back().time.count();
+    const CGFloat x = (CGFloat)[_minLayer points].back().time.count() / [_maxLayer points].back().time.count();
     [_minLayer setWidthFactor:x];
+}
+
+- (CGFloat)minEndX {
+    return [_minLayer widthFactor] * [self frame].size.width;
 }
 
 @end
