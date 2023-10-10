@@ -11,6 +11,10 @@
                 <outlet property="_batteryLifeMinLabel" destination="Sya-dj-nhC" id="VKe-Nc-bE2"/>
                 <outlet property="_buttonIntervalField" destination="fSJ-Mp-4fa" id="c4X-qU-NTe"/>
                 <outlet property="_buttonIntervalMenu" destination="4oV-Ge-OsI" id="vk9-vT-OaE"/>
+                <outlet property="_maxPlotView" destination="I7z-Sb-hvG" id="gDk-p3-n6j"/>
+                <outlet property="_maxPlotViewWidth" destination="8B8-QZ-B9e" id="QiN-1y-2dZ"/>
+                <outlet property="_minPlotView" destination="qI5-iw-65y" id="YkP-xL-TjM"/>
+                <outlet property="_minPlotViewWidth" destination="mWK-bx-uOZ" id="60g-9b-OLo"/>
                 <outlet property="_motionIntervalField" destination="08r-GI-OgG" id="bK1-BZ-FS7"/>
                 <outlet property="_motionIntervalMenu" destination="uzL-84-t6M" id="Mat-lg-NIh"/>
                 <outlet property="_nibView" destination="8kh-WA-1UA" id="RcL-kJ-IKP"/>
@@ -25,6 +29,13 @@
                     <constraints>
                         <constraint firstAttribute="width" constant="360" id="8B8-QZ-B9e"/>
                         <constraint firstAttribute="height" constant="100" id="Nar-4F-yUd"/>
+                    </constraints>
+                </customView>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="qI5-iw-65y" customClass="BatteryLifePlotView">
+                    <rect key="frame" x="47" y="189" width="300" height="100"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="100" id="SgJ-IC-Gee"/>
+                        <constraint firstAttribute="width" constant="300" id="mWK-bx-uOZ"/>
                     </constraints>
                 </customView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="PEs-MT-54M" userLabel="Legend">
@@ -218,7 +229,7 @@
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="VI1-Gl-ydn">
-                    <rect key="frame" x="127" y="167" width="41" height="16"/>
+                    <rect key="frame" x="327" y="167" width="41" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="July 4" id="7hO-x8-e2R">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -248,7 +259,7 @@
                     <rect key="frame" x="45" y="183" width="5" height="6"/>
                 </box>
                 <box horizontalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="tbu-Qf-A7h">
-                    <rect key="frame" x="145" y="183" width="5" height="6"/>
+                    <rect key="frame" x="345" y="183" width="5" height="6"/>
                 </box>
                 <box horizontalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="MHu-PN-JHa">
                     <rect key="frame" x="405" y="183" width="5" height="6"/>
@@ -265,7 +276,7 @@
                 <constraint firstItem="4EL-ez-3i9" firstAttribute="centerX" secondItem="I7z-Sb-hvG" secondAttribute="leading" id="MFr-pb-whC"/>
                 <constraint firstItem="M6h-Wq-RKe" firstAttribute="trailing" secondItem="Kuv-np-FZp" secondAttribute="trailing" id="MKZ-8l-VOO"/>
                 <constraint firstItem="I7z-Sb-hvG" firstAttribute="bottom" secondItem="MHu-PN-JHa" secondAttribute="top" id="RoQ-of-zcJ"/>
-                <constraint firstItem="VI1-Gl-ydn" firstAttribute="centerX" secondItem="I7z-Sb-hvG" secondAttribute="leading" constant="100" id="Ru9-wD-FdH"/>
+                <constraint firstItem="VI1-Gl-ydn" firstAttribute="centerX" secondItem="qI5-iw-65y" secondAttribute="trailing" id="Ru9-wD-FdH"/>
                 <constraint firstAttribute="trailing" secondItem="O1Z-qC-HI6" secondAttribute="trailing" constant="10" id="U1U-4a-D3e"/>
                 <constraint firstItem="I7z-Sb-hvG" firstAttribute="top" secondItem="Kuv-np-FZp" secondAttribute="top" id="Vmc-BH-3wL"/>
                 <constraint firstItem="VI1-Gl-ydn" firstAttribute="top" secondItem="I7z-Sb-hvG" secondAttribute="bottom" constant="6" id="WG0-ro-0ri"/>
@@ -273,6 +284,7 @@
                 <constraint firstItem="KR8-B3-UHO" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="Wci-gE-dgd"/>
                 <constraint firstItem="sfn-YC-uEa" firstAttribute="top" secondItem="I7z-Sb-hvG" secondAttribute="bottom" id="Wju-Pw-lGj"/>
                 <constraint firstAttribute="bottom" secondItem="5Jx-wg-Rs9" secondAttribute="bottom" constant="20" id="Xx6-I2-usO"/>
+                <constraint firstItem="qI5-iw-65y" firstAttribute="height" secondItem="I7z-Sb-hvG" secondAttribute="height" id="Zii-bD-xtt"/>
                 <constraint firstItem="MHu-PN-JHa" firstAttribute="bottom" secondItem="O1Z-qC-HI6" secondAttribute="top" id="a9l-TF-K5M"/>
                 <constraint firstItem="MHu-PN-JHa" firstAttribute="centerX" secondItem="O1Z-qC-HI6" secondAttribute="centerX" id="aPR-eN-B7F"/>
                 <constraint firstItem="M6h-Wq-RKe" firstAttribute="bottom" secondItem="I7z-Sb-hvG" secondAttribute="bottom" id="cvH-WP-BST"/>
@@ -285,7 +297,9 @@
                 <constraint firstItem="O1Z-qC-HI6" firstAttribute="centerX" secondItem="I7z-Sb-hvG" secondAttribute="trailing" id="mgH-1q-j4K"/>
                 <constraint firstItem="Kuv-np-FZp" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="10" id="o0U-sR-aWG"/>
                 <constraint firstAttribute="trailing" secondItem="PEs-MT-54M" secondAttribute="trailing" id="thZ-1U-pPd"/>
+                <constraint firstItem="qI5-iw-65y" firstAttribute="top" secondItem="I7z-Sb-hvG" secondAttribute="top" id="v3L-4Q-s8d"/>
                 <constraint firstItem="olf-dc-ZVA" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" constant="10" id="vlN-X0-Ofb"/>
+                <constraint firstItem="qI5-iw-65y" firstAttribute="leading" secondItem="I7z-Sb-hvG" secondAttribute="leading" id="xsR-bQ-u1U"/>
                 <constraint firstItem="sfn-YC-uEa" firstAttribute="centerX" secondItem="4EL-ez-3i9" secondAttribute="centerX" id="y3W-MO-LA2"/>
                 <constraint firstItem="KR8-B3-UHO" firstAttribute="top" secondItem="I7z-Sb-hvG" secondAttribute="bottom" id="zUq-Vv-NDq"/>
             </constraints>

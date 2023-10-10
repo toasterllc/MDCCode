@@ -16,7 +16,10 @@ namespace DS = DeviceSettings;
     __weak id<BatteryLifeViewDelegate> _delegate;
     
     IBOutlet NSView* _nibView;
-    IBOutlet BatteryLifePlotView* _plotView;
+    IBOutlet BatteryLifePlotView* _minPlotView;
+    IBOutlet BatteryLifePlotView* _maxPlotView;
+    IBOutlet NSLayoutConstraint* _minPlotViewWidth;
+    IBOutlet NSLayoutConstraint* _maxPlotViewWidth;
     IBOutlet NSTextField* _motionIntervalField;
     IBOutlet NSPopUpButton* _motionIntervalMenu;
     IBOutlet NSTextField* _buttonIntervalField;
@@ -90,6 +93,9 @@ static void _ButtonStimulusInterval(const DS::Duration& x) {
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
+    
+    [[_maxPlotView plotLayer] setFillColor:[[NSColor colorWithSRGBRed:.184 green:.510 blue:.922 alpha:1] CGColor]];
+    [[_minPlotView plotLayer] setFillColor:[[[NSColor blackColor] colorWithAlphaComponent:.4] CGColor]];
     
     __weak auto selfWeak = self;
     PrefsGlobal().observerAdd([=] () {
@@ -225,8 +231,13 @@ static void _StoreLoad(BatteryLifeView* self) {
     };
     
     // Update plot
-    [_plotView setPointsMin:pointsMin];
-    [_plotView setPointsMax:pointsMax];
+    [_minPlotView setPoints:pointsMin];
+    [_maxPlotView setPoints:pointsMax];
+    
+    // Set min plot view width
+    const CGFloat factor = (CGFloat)pointsMin.back().time.count() /
+        pointsMax.back().time.count();
+    [_minPlotViewWidth setConstant:factor*[_maxPlotViewWidth constant]];
     
     // Update labels
     [_batteryLifeMinLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->min).c_str())];
