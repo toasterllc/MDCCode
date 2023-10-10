@@ -12,21 +12,23 @@
 namespace MDCStudio::BatteryLifeSimulator {
 
 struct Constants {
+    static constexpr std::chrono::seconds BatteryLifeMin = date::days(1);
+    static constexpr std::chrono::seconds BatteryLifeMax = date::years(3);
+    std::chrono::seconds motionStimulusInterval = std::chrono::seconds(30);
+    std::chrono::seconds buttonStimulusInterval = std::chrono::hours(6);
+};
+
+struct Parameters {
     uint32_t batteryImageCaptureCapacity = 0;
     float batteryDailySelfDischarge = 0;
 };
 
-struct Parameters {
-    std::chrono::seconds motionStimulusInterval = std::chrono::seconds(0);
-    std::chrono::seconds buttonStimulusInterval = std::chrono::seconds(0);
-};
-
-constexpr Constants WorstCase = {
+constexpr Parameters WorstCase = {
     .batteryImageCaptureCapacity = 50000,
     .batteryDailySelfDischarge = 0.0017083156,     // 5% per month == 1-(1-.05)^(1/30) per day
 };
 
-constexpr Constants BestCase = {
+constexpr Parameters BestCase = {
     .batteryImageCaptureCapacity = 80000,
     .batteryDailySelfDischarge = 0.0006731968785,  // 2% per month == 1-(1-.02)^(1/30) per day
 };
@@ -41,8 +43,8 @@ struct Simulator {
         const Parameters& params,
         const MSP::Triggers& triggers) : _consts(consts), _params(params), _triggers(triggers) {
         
-        assert(params.motionStimulusInterval.count() > 0);
-        assert(params.buttonStimulusInterval.count() > 0);
+        assert(consts.motionStimulusInterval.count() > 0);
+        assert(consts.buttonStimulusInterval.count() > 0);
     }
     
     // _BatteryLevelNormalize(): adjust the battery level `x` so that it spans [0,1].
@@ -154,7 +156,7 @@ struct Simulator {
     void _batteryDailySelfDischarge() {
         if (_live) {
 //            _printTime(); printf("Battery self-discharge\n");
-            _batteryLevel *= 1-_consts.batteryDailySelfDischarge;
+            _batteryLevel *= 1-_params.batteryDailySelfDischarge;
         }
         _batteryDailySelfDischargeSchedule();
     }
@@ -249,7 +251,7 @@ struct Simulator {
     
     void _motionStimulusSchedule() {
         if (_motionStimulusScheduleNeeded()) {
-            _eventInsert(_motionStimulusEvent, _NextInterval(_time, _params.motionStimulusInterval));
+            _eventInsert(_motionStimulusEvent, _NextInterval(_time, _consts.motionStimulusInterval));
         }
     }
     
@@ -277,7 +279,7 @@ struct Simulator {
     
     void _buttonStimulusSchedule() {
         if (_buttonStimulusScheduleNeeded()) {
-            _eventInsert(_buttonStimulusEvent, _NextInterval(_time, _params.buttonStimulusInterval));
+            _eventInsert(_buttonStimulusEvent, _NextInterval(_time, _consts.buttonStimulusInterval));
         }
     }
     
@@ -375,7 +377,7 @@ struct Simulator {
     }
     
     float _imageCaptureCost() const {
-        return 1.f / _consts.batteryImageCaptureCapacity;
+        return 1.f / _params.batteryImageCaptureCapacity;
     }
     
 //    static constexpr date::days _BatteryLifeDurationMin = date::days(1);

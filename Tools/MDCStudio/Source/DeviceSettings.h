@@ -64,7 +64,20 @@ struct [[gnu::packed]] Duration {
     Unit unit;
 };
 
-inline std::chrono::seconds SecondsForDuration(const Duration& x) {
+inline Duration DurationFromString(std::string_view x) {
+    const auto parts = Toastbox::String::Split(x, " ");
+    if (parts.size() != 2) throw Toastbox::RuntimeError("invalid duration: %s", std::string(x).c_str());
+    return {
+        .value = std::max(0.f, Toastbox::FloatForStr<float>(parts[0])),
+        .unit = Duration::UnitFromString(parts[1]),
+    };
+}
+
+inline std::string StringFromDuration(const Duration& x) {
+    return std::to_string(x.value) + " " + Duration::StringFromUnit(x.unit);
+}
+
+inline std::chrono::seconds SecondsFromDuration(const Duration& x) {
     #warning TODO: how does this handle overflow? how do we want to handle overflow -- throw?
     switch (x.unit) {
     case Duration::Unit::Seconds: return std::chrono::seconds((int64_t)x.value);
@@ -75,8 +88,19 @@ inline std::chrono::seconds SecondsForDuration(const Duration& x) {
     }
 }
 
+inline Duration DurationFromSeconds(std::chrono::seconds x) {
+    constexpr std::chrono::seconds Day    = date::days(1);
+    constexpr std::chrono::seconds Hour   = std::chrono::hours(1);
+    constexpr std::chrono::seconds Minute = std::chrono::minutes(1);
+    constexpr std::chrono::seconds Second = std::chrono::seconds(1);
+    if (x >= Day)    return { (float)x.count() / Day.count(),    Duration::Unit::Days };
+    if (x >= Hour)   return { (float)x.count() / Hour.count(),   Duration::Unit::Hours };
+    if (x >= Minute) return { (float)x.count() / Minute.count(), Duration::Unit::Minutes };
+                     return { (float)x.count() / Second.count(), Duration::Unit::Seconds };
+}
+
 inline Ticks TicksForDuration(const Duration& x) {
-    return SecondsForDuration(x);
+    return SecondsFromDuration(x);
 }
 
 inline std::string StringFromFloat(float x, int maxDecimalPlaces=1) {

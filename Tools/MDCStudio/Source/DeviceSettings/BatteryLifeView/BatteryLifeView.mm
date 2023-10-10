@@ -34,24 +34,13 @@ namespace DS = DeviceSettings;
 
 static DS::Duration _StimulusIntervalGet(std::string key, const DS::Duration& uninit) {
     namespace DS = DeviceSettings;
-    using D = DS::Duration;
-    using U = D::Unit;
-    
-//    constexpr DS::Duration Default = { 30, U::Seconds };
-    
-    DS::Duration dur = uninit;
     try {
-        const auto str = PrefsGlobal().get(key, "");
-        const auto parts = Toastbox::String::Split(str, " ");
-        if (parts.size() != 2) throw Toastbox::RuntimeError("invalid duration: %s", str);
-        
-        dur.value = std::max(1.f, Toastbox::FloatForStr<float>(parts[0]));
-        dur.unit = D::UnitFromString(parts[1]);
+        DS::Duration dur = DS::DurationFromString(PrefsGlobal().get(key, ""));
+        dur.value = std::max(1.f, dur.value);
+        return dur;
     } catch (std::exception& e) {
-//        printf("failed to parse duration: %s\n", e.what());
         return uninit;
     }
-    return dur;
 }
 
 static void _StimulusIntervalSet(std::string key, const DS::Duration& dur) {
@@ -60,7 +49,9 @@ static void _StimulusIntervalSet(std::string key, const DS::Duration& dur) {
 }
 
 static DS::Duration _MotionStimulusInterval() {
-    return _StimulusIntervalGet("MotionStimulusInterval", { 30, DeviceSettings::Duration::Unit::Seconds });
+    MDCStudio::BatteryLifeSimulator::Constants consts;
+    return _StimulusIntervalGet("MotionStimulusInterval",
+        DS::DurationFromSeconds(consts.motionStimulusInterval));
 }
 
 static void _MotionStimulusInterval(const DS::Duration& x) {
@@ -68,7 +59,9 @@ static void _MotionStimulusInterval(const DS::Duration& x) {
 }
 
 static DS::Duration _ButtonStimulusInterval() {
-    return _StimulusIntervalGet("ButtonStimulusInterval", { 6, DeviceSettings::Duration::Unit::Hours });
+    MDCStudio::BatteryLifeSimulator::Constants consts;
+    return _StimulusIntervalGet("ButtonStimulusInterval",
+        DS::DurationFromSeconds(consts.buttonStimulusInterval));
 }
 
 static void _ButtonStimulusInterval(const DS::Duration& x) {
@@ -206,28 +199,25 @@ static void _StoreLoad(BatteryLifeView* self) {
 }
 
 - (void)_update {
-    constexpr std::chrono::seconds BatteryLifeMin = date::days(1);
-    constexpr std::chrono::seconds BatteryLifeMax = date::years(3);
-    
-    const MDCStudio::BatteryLifeSimulator::Parameters parameters = {
-        .motionStimulusInterval = SecondsForDuration(_MotionStimulusInterval()),
-        .buttonStimulusInterval = SecondsForDuration(_ButtonStimulusInterval()),
+    const MDCStudio::BatteryLifeSimulator::Constants constants = {
+        .motionStimulusInterval = SecondsFromDuration(_MotionStimulusInterval()),
+        .buttonStimulusInterval = SecondsFromDuration(_ButtonStimulusInterval()),
     };
     
-    MDCStudio::BatteryLifeSimulator::Simulator simulatorMin(
-        MDCStudio::BatteryLifeSimulator::WorstCase, parameters, _triggers);
-    MDCStudio::BatteryLifeSimulator::Simulator simulatorMax(
-        MDCStudio::BatteryLifeSimulator::BestCase, parameters, _triggers);
+    MDCStudio::BatteryLifeSimulator::Simulator simMin(
+        constants, MDCStudio::BatteryLifeSimulator::WorstCase, _triggers);
+    MDCStudio::BatteryLifeSimulator::Simulator simMax(
+        constants, MDCStudio::BatteryLifeSimulator::BestCase, _triggers);
     
-    const auto pointsMin = simulatorMin.estimate();
-    const auto pointsMax = simulatorMax.estimate();
+    const auto pointsMin = simMin.estimate();
+    const auto pointsMax = simMax.estimate();
     assert(!pointsMin.empty());
     assert(!pointsMax.empty());
     
     // Update battery life estimate
     _estimate = {
-        .min = std::clamp(pointsMin.back().time, BatteryLifeMin, BatteryLifeMax),
-        .max = std::clamp(pointsMax.back().time, BatteryLifeMin, BatteryLifeMax),
+        .min = pointsMin.back().time,
+        .max = pointsMax.back().time,
     };
     
     // Update plot
