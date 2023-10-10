@@ -123,7 +123,7 @@ inline std::string StringForDurationRange(std::chrono::seconds min, std::chrono:
     constexpr std::chrono::seconds Year = date::days(365);
     constexpr std::chrono::seconds Month = date::days(30);
     std::string title;
-    if (min>Year && max>Year) {
+    if (min>2*Year && max>2*Year) {
         return _StringForDurationRange<date::years>(min, max, "year");
     } else if (min>2*Month && max>2*Month) {
         return _StringForDurationRange<date::months>(min, max, "month");
@@ -141,7 +141,7 @@ inline std::string _StringForDuration(std::chrono::seconds sec, std::string_view
 inline std::string StringForDuration(std::chrono::seconds x) {
     constexpr std::chrono::seconds Year = date::days(365);
     constexpr std::chrono::seconds Month = date::days(30);
-    if (x > Year) {
+    if (x > 2*Year) {
         return _StringForDuration<date::years>(x, "year").c_str();
     } else if (x > 2*Month) {
         return _StringForDuration<date::months>(x, "month").c_str();
