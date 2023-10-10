@@ -3,7 +3,7 @@
 using namespace MDCStudio;
 
 @implementation BatteryLifePlotLayer {
-    std::vector<BatteryLifeEstimate::Point> _points;
+    std::vector<BatteryLifeSimulator::Point> _points;
 }
 
 - (instancetype)init {
@@ -13,7 +13,7 @@ using namespace MDCStudio;
     return self;
 }
 
-- (void)setPoints:(std::vector<BatteryLifeEstimate::Point>)points {
+- (void)setPoints:(std::vector<BatteryLifeSimulator::Point>)points {
     _points = std::move(points);
     [self setNeedsDisplay];
 }
@@ -29,7 +29,7 @@ using namespace MDCStudio;
     if (!_points.empty()) {
         const CGFloat duration = (_points.back().time - _points.front().time).count();
         CGPoint p = {};
-        for (const BatteryLifeEstimate::Point& pt : _points) {
+        for (const BatteryLifeSimulator::Point& pt : _points) {
             const CGFloat xnorm = (pt.time - _points.front().time).count() / duration;
             p.x = xnorm * size.width;
             p.y = pt.batteryLevel * size.height;

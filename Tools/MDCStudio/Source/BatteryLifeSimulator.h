@@ -9,7 +9,7 @@
 #include "Code/Shared/MSPTriggers.h"
 #include "date/date.h"
 
-namespace MDCStudio::BatteryLifeEstimate {
+namespace MDCStudio::BatteryLifeSimulator {
 
 struct Constants {
     uint32_t batteryImageCaptureCapacity = 0;
@@ -36,8 +36,8 @@ struct Point {
     float batteryLevel = 0;
 };
 
-struct Estimator {
-    Estimator(const Constants& consts,
+struct Simulator {
+    Simulator(const Constants& consts,
         const Parameters& params,
         const MSP::Triggers& triggers) : _consts(consts), _params(params), _triggers(triggers) {
         
@@ -388,4 +388,4 @@ struct Estimator {
     float _batteryLevel = 0;
 };
 
-} // namespace MDCStudio::BatteryLifeEstimate
+} // namespace MDCStudio::BatteryLifeSimulator

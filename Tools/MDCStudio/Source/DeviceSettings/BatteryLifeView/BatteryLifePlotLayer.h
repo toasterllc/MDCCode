@@ -1,6 +1,6 @@
 #import <QuartzCore/QuartzCore.h>
-#import "BatteryLifeEstimate.h"
+#import "BatteryLifeSimulator.h"
 
 @interface BatteryLifePlotLayer : CAShapeLayer
-- (void)setPoints:(std::vector<MDCStudio::BatteryLifeEstimate::Point>)points;
+- (void)setPoints:(std::vector<MDCStudio::BatteryLifeSimulator::Point>)points;
 @end

@@ -15,7 +15,7 @@
 #import "DeviceSettings.h"
 #import "Calendar.h"
 #import "Code/Shared/Clock.h"
-#import "BatteryLifeEstimate.h"
+#import "BatteryLifeSimulator.h"
 #import "DeviceSettings/BatteryLifeView/BatteryLifeView.h"
 using namespace MDCStudio;
 using namespace DeviceSettings;

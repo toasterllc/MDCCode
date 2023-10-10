@@ -1,5 +1,5 @@
 #import "BatteryLifeView.h"
-#import "BatteryLifeEstimate.h"
+#import "BatteryLifeSimulator.h"
 #import "Prefs.h"
 #import "BatteryLifePlotLayer.h"
 #import "Code/Lib/Toastbox/Defer.h"
@@ -203,23 +203,26 @@ static void _StoreLoad(BatteryLifeView* self) {
 }
 
 - (void)_update {
-    const MDCStudio::BatteryLifeEstimate::Parameters parameters = {
+    constexpr std::chrono::seconds BatteryLifeMin = date::days(1);
+    constexpr std::chrono::seconds BatteryLifeMax = date::years(3);
+    
+    const MDCStudio::BatteryLifeSimulator::Parameters parameters = {
         .motionStimulusInterval = SecondsForDuration(_MotionStimulusInterval()),
         .buttonStimulusInterval = SecondsForDuration(_ButtonStimulusInterval()),
     };
-    MDCStudio::BatteryLifeEstimate::Estimator estimatorMin(
-        MDCStudio::BatteryLifeEstimate::WorstCase, parameters, _triggers);
-    MDCStudio::BatteryLifeEstimate::Estimator estimatorMax(
-        MDCStudio::BatteryLifeEstimate::BestCase, parameters, _triggers);
+    MDCStudio::BatteryLifeSimulator::Simulator simulatorMin(
+        MDCStudio::BatteryLifeSimulator::WorstCase, parameters, _triggers);
+    MDCStudio::BatteryLifeSimulator::Simulator simulatorMax(
+        MDCStudio::BatteryLifeSimulator::BestCase, parameters, _triggers);
     
-    const auto pointsMin = estimatorMin.estimate();
-    const auto pointsMax = estimatorMax.estimate();
+    const auto pointsMin = simulatorMin.estimate();
+    const auto pointsMax = simulatorMax.estimate();
     assert(!pointsMin.empty());
     assert(!pointsMax.empty());
     
     _estimate = {
-        .min = pointsMin.back().time,
-        .max = pointsMax.back().time,
+        .min = std::clamp(pointsMin.back().time, BatteryLifeMin, BatteryLifeMax),
+        .max = std::clamp(pointsMax.back().time, BatteryLifeMin, BatteryLifeMax),
     };
     [_plotLayer setPoints:pointsMin];
 }

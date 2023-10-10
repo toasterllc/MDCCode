@@ -217,7 +217,7 @@
 		557ABD8929E7E90B0032619E /* DeviceSettings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeviceSettings.h; sourceTree = "<group>"; };
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
-		55838C7E2ACF4B3A00D4B024 /* BatteryLifeEstimate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BatteryLifeEstimate.h; sourceTree = "<group>"; };
+		55838C7E2ACF4B3A00D4B024 /* BatteryLifeSimulator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BatteryLifeSimulator.h; sourceTree = "<group>"; };
 		55838C7F2AD0903000D4B024 /* TimeConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeConstants.h; sourceTree = "<group>"; };
 		55838C822AD0BE7100D4B024 /* SourceList-Gear.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Gear.pdf"; sourceTree = "<group>"; };
 		55838C842AD0BE7100D4B024 /* SourceList-Battery-Charging-50.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-50.pdf"; sourceTree = "<group>"; };
@@ -658,7 +658,7 @@
 				5562353A27B5086E0008074C /* Util.h */,
 				557ABD8829E7E90B0032619E /* Calendar.h */,
 				557ABD8929E7E90B0032619E /* DeviceSettings.h */,
-				55838C7E2ACF4B3A00D4B024 /* BatteryLifeEstimate.h */,
+				55838C7E2ACF4B3A00D4B024 /* BatteryLifeSimulator.h */,
 				55496F46278CFC0400BCA739 /* AppDelegate.mm */,
 				55496F4E278CFC0600BCA739 /* main.mm */,
 			);
