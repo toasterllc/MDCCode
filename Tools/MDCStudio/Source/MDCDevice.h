@@ -1146,41 +1146,8 @@ private:
         MDCUSBDevice device;
     } _device;
     
-//    struct _HostMode {
-//        _HostMode(MDCUSBDevice& device) : _device(device) {
-//            
-//        }
-//        
-//        virtual ~_HostMode() {
-//            
-//        }
-//        
-//        MDCUSBDevice& _device;
-//    };
-//    
-//    struct _SDMode : _HostMode {
-//        _SDMode(MDCUSBDevice& device) : _HostMode(device) {
-//            
-//        }
-//        
-//        virtual ~_SDMode() {
-//            
-//        }
-//    };
-//    
-//    struct {
-//        std::unique_lock<std::mutex> deviceLock;
-//        std::mutex lock; // Host mode lock
-//    } _hostMode;
-//    
-//    struct {
-//        std::unique_lock<std::mutex> hostModeLock;
-//        std::mutex lock; // SD mode lock
-//    } _sdMode;
-    
     const _Path _dir;
     ImageLibrary _imageLibrary;
-//    ImageCache _imageCache;
     MSP::SDState _mspSDState = {};
     MSP::Settings _mspSettings = {};
     
