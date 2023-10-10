@@ -7,6 +7,8 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="BatteryLifeView">
             <connections>
+                <outlet property="_batteryLifeMaxLabel" destination="KIx-a7-ba8" id="Y4J-lq-QaQ"/>
+                <outlet property="_batteryLifeMinLabel" destination="Sya-dj-nhC" id="VKe-Nc-bE2"/>
                 <outlet property="_buttonIntervalField" destination="fSJ-Mp-4fa" id="c4X-qU-NTe"/>
                 <outlet property="_buttonIntervalMenu" destination="4oV-Ge-OsI" id="vk9-vT-OaE"/>
                 <outlet property="_motionIntervalField" destination="08r-GI-OgG" id="bK1-BZ-FS7"/>

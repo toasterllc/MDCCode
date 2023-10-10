@@ -716,21 +716,6 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     return triggers;
 }
 
-template<typename T>
-static std::string _RangeString(std::chrono::seconds xmin, std::chrono::seconds xmax, std::string_view unit) {
-    const T min = date::floor<T>(xmin);
-    const T max = date::floor<T>(xmax);
-    std::stringstream ss;
-    if (min == max) {
-        ss << min.count() << " " << unit;
-        if (min.count() != 1) ss << "s";
-    } else {
-        ss << min.count() << " – " << max.count() << " " << unit;
-        if (max.count() != 1) ss << "s";
-    }
-    return ss.str();
-}
-
 - (void)_updateBatteryLife {
     [_batteryLifeView setTriggers:[self triggers]];
     [self _updateBatteryLifeTitle];
@@ -738,20 +723,8 @@ static std::string _RangeString(std::chrono::seconds xmin, std::chrono::seconds 
 
 - (void)_updateBatteryLifeTitle {
     const auto estimate = [_batteryLifeView batteryLifeEstimate];
-    constexpr std::chrono::seconds Year = date::days(365);
-    constexpr std::chrono::seconds Month = date::days(30);
-    std::string title;
-    if (estimate.min>Year && estimate.max>Year) {
-        title = _RangeString<date::years>(estimate.min, estimate.max, "year").c_str();
-    
-    } else if (estimate.min>2*Month && estimate.max>2*Month) {
-        title = _RangeString<date::months>(estimate.min, estimate.max, "month").c_str();
-    
-    } else {
-        title = _RangeString<date::days>(estimate.min, estimate.max, "day").c_str();
-    }
-    
-    [_batteryLifeButton setTitle:[NSString stringWithFormat:@"  %@", @(title.c_str())]];
+    [_batteryLifeButton setTitle:[NSString stringWithFormat:@"  %@",
+        @(StringForDurationRange(estimate.min, estimate.max).c_str())]];
 }
 
 - (const MSP::Triggers&)triggers {

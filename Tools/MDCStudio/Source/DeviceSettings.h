@@ -79,7 +79,7 @@ inline Ticks TicksForDuration(const Duration& x) {
     return SecondsForDuration(x);
 }
 
-static std::string StringFromFloat(float x, int maxDecimalPlaces=1) {
+inline std::string StringFromFloat(float x, int maxDecimalPlaces=1) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(maxDecimalPlaces) << x;
     // Erase trailing zeroes
@@ -100,8 +100,54 @@ static std::string StringFromFloat(float x, int maxDecimalPlaces=1) {
     return str;
 }
 
-static float FloatFromString(std::string_view x) {
+inline float FloatFromString(std::string_view x) {
     return Toastbox::FloatForStr<float>(x);
+}
+
+template<typename T>
+inline std::string _StringForDurationRange(std::chrono::seconds xmin, std::chrono::seconds xmax, std::string_view unit) {
+    const T min = date::floor<T>(xmin);
+    const T max = date::floor<T>(xmax);
+    std::stringstream ss;
+    if (min == max) {
+        ss << min.count() << " " << unit;
+        if (min.count() != 1) ss << "s";
+    } else {
+        ss << min.count() << " – " << max.count() << " " << unit;
+        if (max.count() != 1) ss << "s";
+    }
+    return ss.str();
+}
+
+inline std::string StringForDurationRange(std::chrono::seconds min, std::chrono::seconds max) {
+    constexpr std::chrono::seconds Year = date::days(365);
+    constexpr std::chrono::seconds Month = date::days(30);
+    std::string title;
+    if (min>Year && max>Year) {
+        return _StringForDurationRange<date::years>(min, max, "year");
+    } else if (min>2*Month && max>2*Month) {
+        return _StringForDurationRange<date::months>(min, max, "month");
+    } else {
+        return _StringForDurationRange<date::days>(min, max, "day");
+    }
+}
+
+template<typename T>
+inline std::string _StringForDuration(std::chrono::seconds sec, std::string_view unit) {
+    const T x = date::floor<T>(sec);
+    return std::to_string(x.count()) + " " + std::string(unit) + (x.count() != 1 ? "s" : "");
+}
+
+inline std::string StringForDuration(std::chrono::seconds x) {
+    constexpr std::chrono::seconds Year = date::days(365);
+    constexpr std::chrono::seconds Month = date::days(30);
+    if (x > Year) {
+        return _StringForDuration<date::years>(x, "year").c_str();
+    } else if (x > 2*Month) {
+        return _StringForDuration<date::months>(x, "month").c_str();
+    } else {
+        return _StringForDuration<date::days>(x, "day").c_str();
+    }
 }
 
 struct [[gnu::packed]] Capture {

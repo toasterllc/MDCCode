@@ -21,6 +21,8 @@ namespace DS = DeviceSettings;
     IBOutlet NSPopUpButton* _motionIntervalMenu;
     IBOutlet NSTextField* _buttonIntervalField;
     IBOutlet NSPopUpButton* _buttonIntervalMenu;
+    IBOutlet NSTextField* _batteryLifeMinLabel;
+    IBOutlet NSTextField* _batteryLifeMaxLabel;
     
     bool _storeLoadUnderway;
     BatteryLifePlotLayer* _plotLayer;
@@ -210,6 +212,7 @@ static void _StoreLoad(BatteryLifeView* self) {
         .motionStimulusInterval = SecondsForDuration(_MotionStimulusInterval()),
         .buttonStimulusInterval = SecondsForDuration(_ButtonStimulusInterval()),
     };
+    
     MDCStudio::BatteryLifeSimulator::Simulator simulatorMin(
         MDCStudio::BatteryLifeSimulator::WorstCase, parameters, _triggers);
     MDCStudio::BatteryLifeSimulator::Simulator simulatorMax(
@@ -220,11 +223,18 @@ static void _StoreLoad(BatteryLifeView* self) {
     assert(!pointsMin.empty());
     assert(!pointsMax.empty());
     
+    // Update battery life estimate
     _estimate = {
         .min = std::clamp(pointsMin.back().time, BatteryLifeMin, BatteryLifeMax),
         .max = std::clamp(pointsMax.back().time, BatteryLifeMin, BatteryLifeMax),
     };
+    
+    // Update plot
     [_plotLayer setPoints:pointsMin];
+    
+    // Update labels
+    [_batteryLifeMinLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->min).c_str())];
+    [_batteryLifeMaxLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->max).c_str())];
 }
 
 - (void)_updateIfNeeded {
