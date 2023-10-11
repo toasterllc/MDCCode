@@ -5,6 +5,7 @@
 
 @protocol FullSizeImageViewDelegate
 @required
+- (void)fullSizeImageViewBack:(FullSizeImageContainerView*)imageView;
 - (void)fullSizeImageViewPreviousImage:(FullSizeImageContainerView*)imageView;
 - (void)fullSizeImageViewNextImage:(FullSizeImageContainerView*)imageView;
 @end

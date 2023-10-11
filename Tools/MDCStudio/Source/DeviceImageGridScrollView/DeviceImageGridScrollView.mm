@@ -17,12 +17,4 @@
     return self;
 }
 
-- (ImageGridView*)imageGridView {
-    return _imageGridView;
-}
-
-- (DeviceImageGridHeaderView*)headerView {
-    return _headerView;
-}
-
 @end

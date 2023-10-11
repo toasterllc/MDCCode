@@ -492,6 +492,20 @@ struct SelectionDelta {
     int y = 0;
 };
 
+- (CGRect)rectForImageIndex:(size_t)idx {
+    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
+}
+
+- (CGRect)rectForImageRecord:(ImageRecordPtr)rec {
+    auto lock = std::unique_lock(*_imageLibrary);
+    auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+    auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
+    const auto it = ImageLibrary::Find(begin, end, rec);
+    if (it == end) return CGRectNull;
+    const size_t idx = it-begin;
+    return [self rectForImageIndex:idx];
+}
+
 - (std::optional<CGRect>)moveSelection:(SelectionDelta)delta extend:(bool)extend {
     ssize_t newIdx = 0;
     ImageRecordPtr newImg;
@@ -564,7 +578,7 @@ struct SelectionDelta {
     if (!extend) selection.clear();
     selection.insert(newImg);
     [self setSelection:std::move(selection)];
-    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)newIdx), [self contentsScale]);
+    return [self rectForImageIndex:newIdx];
 }
 
 // MARK: - FixedScrollViewDocument
@@ -881,19 +895,43 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     return [_imageGridLayer selection];
 }
 
+- (void)setSelection:(MDCStudio::ImageSet)selection {
+    [self _setSelection:std::move(selection) notify:false];
+}
+
+- (void)_setSelection:(ImageSet)selection notify:(bool)notify {
+    [_imageGridLayer setSelection:std::move(selection)];
+    if (notify) [_delegate imageGridViewSelectionChanged:self];
+}
+
 - (void)setSortNewestFirst:(bool)x {
     [_imageGridLayer setSortNewestFirst:x];
 }
 
-- (void)_setSelection:(ImageSet)selection {
-    [_imageGridLayer setSelection:std::move(selection)];
-    [_delegate imageGridViewSelectionChanged:self];
+- (CGRect)rectForImageIndex:(size_t)idx {
+    return [_imageGridLayer rectForImageIndex:idx];
+}
+
+- (CGRect)rectForImageRecord:(ImageRecordPtr)rec {
+    return [_imageGridLayer rectForImageRecord:rec];
+}
+
+- (void)scrollToImageRect:(CGRect)rect center:(bool)center {
+    if (center) {
+        const CGFloat frameHeight = [self frame].size.height;
+        const CGFloat delta = frameHeight - rect.size.height;
+        rect.origin.y -= delta/2;
+        rect.size.height = frameHeight;
+        [self scrollRectToVisible:[self convertRect:rect fromView:[self superview]]];
+    } else {
+        [self scrollRectToVisible:[self convertRect:rect fromView:[self superview]]];
+    }
 }
 
 - (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
     std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
     if (!rect) return;
-    [self scrollRectToVisible:[self convertRect:*rect fromView:[self superview]]];
+    [self scrollToImageRect:*rect center:false];
     [_delegate imageGridViewSelectionChanged:self];
 }
 
@@ -934,9 +972,9 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
         if (extend) {
-            [self _setSelection:ImageSetsXOR(oldSelection, newSelection)];
+            [self _setSelection:ImageSetsXOR(oldSelection, newSelection) notify:true];
         } else {
-            [self _setSelection:std::move(newSelection)];
+            [self _setSelection:std::move(newSelection) notify:true];
         }
         [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
         
@@ -981,7 +1019,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
             selection.insert(*it);
         }
     }
-    [self _setSelection:selection];
+    [self _setSelection:selection notify:true];
 }
 
 - (void)fixedCreateConstraintsForContainer:(NSView*)container {
@@ -1017,6 +1055,10 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     // So disable that behavior.
     [self setAnchorDuringResize:false];
     return self;
+}
+
+- (NSView*)headerView {
+    return _headerView;
 }
 
 - (void)setHeaderView:(NSView*)x {

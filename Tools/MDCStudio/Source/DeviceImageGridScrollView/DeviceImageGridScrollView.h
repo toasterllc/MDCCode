@@ -5,6 +5,4 @@
 
 @interface DeviceImageGridScrollView : ImageGridScrollView
 - (instancetype)initWithDevice:(MDCStudio::MDCDevicePtr)device;
-- (ImageGridView*)imageGridView;
-- (DeviceImageGridHeaderView*)headerView;
 @end

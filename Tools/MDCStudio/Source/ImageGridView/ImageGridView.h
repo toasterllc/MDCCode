@@ -17,7 +17,13 @@
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate;
 
 - (MDCStudio::ImageSourcePtr)imageSource;
+
 - (const MDCStudio::ImageSet&)selection;
+- (void)setSelection:(MDCStudio::ImageSet)selection;
+
+- (CGRect)rectForImageIndex:(size_t)idx;
+- (CGRect)rectForImageRecord:(MDCStudio::ImageRecordPtr)rec;
+- (void)scrollToImageRect:(CGRect)rect center:(bool)center;
 
 - (void)setSortNewestFirst:(bool)x;
 
@@ -26,5 +32,6 @@
 @end
 
 @interface ImageGridScrollView : FixedScrollView
+- (NSView*)headerView;
 - (void)setHeaderView:(NSView*)x;
 @end

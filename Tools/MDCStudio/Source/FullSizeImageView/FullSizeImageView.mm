@@ -605,6 +605,9 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
+@interface FullSizeImageContainerView () <FullSizeImageHeaderViewDelegate>
+@end
+
 @implementation FullSizeImageContainerView {
     FixedScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
@@ -630,6 +633,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     
     {
         _headerView = [[FullSizeImageHeaderView alloc] initWithFrame:{}];
+        [_headerView setDelegate:self];
         [self addSubview:_headerView];
         
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
@@ -672,6 +676,12 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 - (BOOL)acceptsFirstResponder {
     return true;
+}
+
+// MARK: - FullSizeImageHeaderViewDelegate
+
+- (void)imageHeaderViewBack:(FullSizeImageHeaderView*)x {
+    [_delegate fullSizeImageViewBack:self];
 }
 
 @end

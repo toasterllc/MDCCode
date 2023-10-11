@@ -82,9 +82,13 @@ public:
     int32_t containerHeight()   CONSTANT { assert(_computed.valid); return _computed.containerHeight; }
     int32_t extraBorderX()      CONSTANT { assert(_computed.valid); return _computed.extraBorderX; }
     
+    void recomputeIfNeeded() {
+        if (!_computed.valid) {
+            recompute();
+        }
+    }
+    
     void recompute() {
-        if (_computed.valid) return;
-        
         // Compute .columnCount
         {
             const int32_t usableWidth = std::max((int32_t)0, _containerWidth-_borderSize.left-_borderSize.right);
@@ -121,6 +125,23 @@ public:
         
         _computed.valid = true;
     }
+    
+#ifndef __METAL_VERSION__
+    Rect rectForCellIndex(int32_t cellIndex) {
+        recomputeIfNeeded();
+        return static_cast<const Grid*>(this)->rectForCellIndex(cellIndex);
+    }
+    
+    IndexRect indexRectForRect(Rect rect) {
+        recomputeIfNeeded();
+        return static_cast<const Grid*>(this)->indexRectForRect(rect);
+    }
+    
+    IndexRange indexRangeForIndexRect(const IndexRect& indexRect) {
+        recomputeIfNeeded();
+        return static_cast<const Grid*>(this)->indexRangeForIndexRect(indexRect);
+    }
+#endif
     
     Rect rectForCellIndex(int32_t cellIndex) CONSTANT {
         assert(_computed.valid);

@@ -41,6 +41,7 @@ using namespace MDCStudio;
     
     SourceListView* _sourceListView;
     FullSizeImageContainerView* _fullSizeImageView;
+    ImageGridView* _imageGridView;
     ImageGridScrollView* _imageGridScrollView;
     InspectorView* _inspectorView;
     
@@ -444,14 +445,14 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>([_sourceListView selection]);
     if (device) {
         {
-            DeviceImageGridScrollView* imageGridScrollView =
-                [[DeviceImageGridScrollView alloc] initWithDevice:device];
-            [[imageGridScrollView headerView] setDelegate:self];
+            _imageGridScrollView = [[DeviceImageGridScrollView alloc] initWithDevice:device];
+            _imageGridView = Toastbox::Cast<ImageGridView*>([_imageGridScrollView document]);
+            auto headerView = Toastbox::Cast<DeviceImageGridHeaderView*>([_imageGridScrollView headerView]);
             
-            ImageGridView* imageGridView = [imageGridScrollView imageGridView];
-            [imageGridView setDelegate:self];
-            _UpdateImageGridViewFromPrefs(PrefsGlobal(), imageGridView);
-            _imageGridScrollView = imageGridScrollView;
+            [headerView setDelegate:self];
+            [_imageGridView setDelegate:self];
+            
+            _UpdateImageGridViewFromPrefs(PrefsGlobal(), _imageGridView);
         }
         
         {
@@ -466,7 +467,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         _SetView(_center, _imageGridScrollView);
         _SetView(_right, _inspectorView);
         
-        [_window makeFirstResponder:[_imageGridScrollView document]];
+        [_window makeFirstResponder:_imageGridView];
 //        [_mainView setContentView:sv animation:MainViewAnimation::None];
     
     } else {
@@ -493,6 +494,24 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 }
 
 // MARK: - Full Size Image View
+
+- (void)fullSizeImageViewBack:(FullSizeImageContainerView*)x {
+    assert(x == _fullSizeImageView);
+    _SetView(_center, _imageGridScrollView);
+    ImageRecordPtr rec = [_fullSizeImageView imageRecord];
+    [_imageGridView setSelection:{ rec }];
+    [_window makeFirstResponder:_imageGridView];
+    [NSTimer scheduledTimerWithTimeInterval:0 repeats:false block:^(NSTimer* timer) {
+        [_imageGridView scrollToImageRect:[_imageGridView rectForImageRecord:rec] center:true];
+    }];
+//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer* timer) {
+//        [_imageGridView scrollToImageRect:[_imageGridView rectForImageRecord:[_fullSizeImageView imageRecord]]];
+//    }];
+    
+//    ImageGridView* imageGridView = Toastbox::Cast<ImageGridView*>([imageGridScrollView document]);
+//    
+//    [_imageGridScrollView imageGridView];
+}
 
 - (void)fullSizeImageViewPreviousImage:(FullSizeImageContainerView*)x {
     assert(x == _fullSizeImageView);
