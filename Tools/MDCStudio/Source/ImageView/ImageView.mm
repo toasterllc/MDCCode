@@ -8,6 +8,7 @@
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "FixedMetalDocumentLayer.h"
 #import "ImageViewTypes.h"
+#import "ImageHeaderView/ImageHeaderView.h"
 using namespace MDCStudio;
 using namespace MDCStudio::ImageViewTypes;
 using namespace MDCTools;
@@ -607,10 +608,25 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
-@implementation ImageScrollView
+@implementation ImageScrollView {
+    ImageHeaderView* _headerView;
+}
 
-//- (NSView*)initialFirstResponder {
-//    return [self document];
-//}
+- (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
+    if (!(self = [super initWithFixedDocument:doc])) return nil;
+    _headerView = [[ImageHeaderView alloc] initWithFrame:{}];
+    
+    [self addSubview:_headerView];
+    
+//    [self addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
+    
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
+    
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_headerView]"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
+    
+    return self;
+}
 
 @end

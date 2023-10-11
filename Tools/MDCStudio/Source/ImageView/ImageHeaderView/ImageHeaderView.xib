@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="ImageHeaderView">
+            <connections>
+                <outlet property="_heightConstraint" destination="3zV-F0-Xdo" id="tUs-J5-Oqa"/>
+                <outlet property="_nibView" destination="MCr-up-gtv" id="CnK-7N-xtN"/>
+            </connections>
+        </customObject>
+        <visualEffectView wantsLayer="YES" blendingMode="withinWindow" material="fullScreenUI" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
+            <rect key="frame" x="0.0" y="0.0" width="830" height="50"/>
+            <subviews>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dpY-R3-nlv">
+                    <rect key="frame" x="14" y="8" width="85" height="32"/>
+                    <buttonCell key="cell" type="push" title="Back" bezelStyle="rounded" image="NSGoBackTemplate" imagePosition="left" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Ock-mg-sFM">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="actionBack:" target="-2" id="Mth-Jt-TCl"/>
+                    </connections>
+                </button>
+            </subviews>
+            <constraints>
+                <constraint firstItem="dpY-R3-nlv" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="20" id="2sc-R9-B5b"/>
+                <constraint firstItem="dpY-R3-nlv" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" id="2tC-4O-Ez2"/>
+                <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
+            </constraints>
+            <point key="canvasLocation" x="696" y="-337"/>
+        </visualEffectView>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+    </objects>
+    <resources>
+        <image name="NSGoBackTemplate" width="9" height="12"/>
+    </resources>
+</document>
