@@ -53,7 +53,7 @@ struct Simulator {
         return (x-_BatteryEmptyLevel) / (1-_BatteryEmptyLevel);
     }
     
-    std::vector<Point> estimate() {
+    std::vector<Point> simulate() {
         // Since _MSPState is static, require that we're called from a single thread (the main thread) only.
         // In the future we'd like to remove this requirement; see comment about _MSPState.
         assert([NSThread isMainThread]);
@@ -114,6 +114,20 @@ struct Simulator {
         auto debugTimeEnd = std::chrono::steady_clock::now();
         auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(debugTimeEnd-debugTimeStart);
         printf("%ju ITERATIONS TOOK %ju ms (%ju points)\n", (uintmax_t)i, (uintmax_t)durationMs.count(), (uintmax_t)points.size());
+        
+        // Extend battery life to Constants::BatteryLifeMin
+        if (points.back().time < Constants::BatteryLifeMin) {
+            points.push_back({
+                .time = Constants::BatteryLifeMin,
+                .batteryLevel = points.back().batteryLevel,
+            });
+        }
+        
+        // Trim battery life to Constants::BatteryLifeMax
+        while (points.back().time > Constants::BatteryLifeMax) {
+            points.pop_back();
+        }
+        
         return points;
         
         // Print the current time + battery level

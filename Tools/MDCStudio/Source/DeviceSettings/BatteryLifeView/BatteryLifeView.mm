@@ -211,8 +211,8 @@ static void _StoreLoad(BatteryLifeView* self) {
     MDCStudio::BatteryLifeSimulator::Simulator simMax(
         constants, MDCStudio::BatteryLifeSimulator::BestCase, _triggers);
     
-    const auto pointsMin = simMin.estimate();
-    const auto pointsMax = simMax.estimate();
+    const auto pointsMin = simMin.simulate();
+    const auto pointsMax = simMax.simulate();
     assert(!pointsMin.empty());
     assert(!pointsMax.empty());
     
