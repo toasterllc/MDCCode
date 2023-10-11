@@ -109,7 +109,7 @@ static void _Init(BatteryLifePlotView* self) {
 
 - (void)displayLayer:(CALayer*)layer {
     // YMin: minimum y value when plotting
-    constexpr CGFloat YMin = 1;
+    constexpr CGFloat YMin = 0.5;
     
     assert(layer == _layer);
     
