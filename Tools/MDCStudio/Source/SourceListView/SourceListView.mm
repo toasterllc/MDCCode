@@ -3,6 +3,7 @@
 #import "Util.h"
 #import "MDCDevicesManager.h"
 #import "Toastbox/Mac/Util.h"
+#import "ImageLibraryStatus.h"
 @class SourceListView;
 using namespace MDCStudio;
 
@@ -45,6 +46,7 @@ using namespace MDCStudio;
 @implementation SourceListView_Device {
 @public
     IBOutlet NSImageView* _batteryImageView;
+    IBOutlet NSTextField* _descriptionLabel;
     MDCDevicePtr device;
 }
 
@@ -55,6 +57,13 @@ using namespace MDCStudio;
     device = dev;
     __weak auto selfWeak = self;
     device->observerAdd([=] {
+        auto selfStrong = selfWeak;
+        if (!selfStrong) return false;
+        dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong update]; });
+        return true;
+    });
+    
+    device->imageLibrary().observerAdd([=](const ImageLibrary::Event& ev) {
         auto selfStrong = selfWeak;
         if (!selfStrong) return false;
         dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong update]; });
@@ -76,6 +85,7 @@ static NSString* _BatteryLevelImage(float level) {
 - (void)update {
     [super update];
     [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage(device->status().batteryLevel)]];
+    [_descriptionLabel setStringValue:@(ImageLibraryStatus(device->imageLibrary()).c_str())];
 }
 
 - (IBAction)textFieldAction:(id)sender {

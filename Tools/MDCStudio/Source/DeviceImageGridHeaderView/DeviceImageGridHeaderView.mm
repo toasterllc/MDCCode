@@ -2,6 +2,7 @@
 #import "date/date.h"
 #import "date/tz.h"
 #import "Calendar.h"
+#import "ImageLibraryStatus.h"
 using namespace MDCStudio;
 
 @implementation DeviceImageGridHeaderView {
@@ -63,44 +64,6 @@ using namespace MDCStudio;
     _delegate = x;
 }
 
-static auto _FirstLoaded(ImageLibrary& imgLib) {
-    for (auto it=imgLib.begin(); it!=imgLib.end(); it++) {
-        if ((*it)->status.loadCount) return it;
-    }
-    return imgLib.end();
-}
-
-static auto _LastLoaded(ImageLibrary& imgLib) {
-    for (auto it=imgLib.rbegin(); it!=imgLib.rend(); it++) {
-        if ((*it)->status.loadCount) return it;
-    }
-    return imgLib.rend();
-}
-
-
-static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
-    using namespace std::chrono;
-    
-    auto lock = std::unique_lock(imgLib);
-    if (imgLib.empty()) return @"No photos";
-    
-    // itFirst: first loaded record
-    auto itFirst = _FirstLoaded(imgLib);
-    // No loaded photos yet
-    if (itFirst == imgLib.end()) return @"No photos";
-    
-    // itLast: last loaded record
-    auto itLast = _LastLoaded(imgLib);
-    
-    const auto tFirst = Time::Clock::TimePointFromTimeInstant((*itFirst)->info.timestamp);
-    const auto tLast = Time::Clock::TimePointFromTimeInstant((*itLast)->info.timestamp);
-    
-    const std::string strFirst = Calendar::MonthYearString(tFirst);
-    const std::string strLast = Calendar::MonthYearString(tLast);
-    const std::string dateDesc = strFirst + (strFirst == strLast ? "" : " – " + strLast);
-    return [NSString stringWithFormat:@"%ju photos from %s", (uintmax_t)imgLib.recordCount(), dateDesc.c_str()];
-}
-
 static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibrary& imgLib) {
     // Short-circut if syncing is in progress.
     // In that case, we don't want to show the 'Load' button in the header
@@ -132,7 +95,7 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     
     // Update status
     {
-        [_statusLabel setStringValue:_ImageLibraryStatus(*_imageLibrary)];
+        [_statusLabel setStringValue:@(ImageLibraryStatus(*_imageLibrary, "No photos").c_str())];
     }
     
     // Update unloaded photo count
@@ -152,24 +115,6 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
         [_progressIndicator setDoubleValue:progress];
     }
 }
-
-//- (void)_updateStatus {
-//    [_statusLabel setStringValue:_ImageLibraryStatus(*_imageLibrary)];
-//}
-//
-//- (void)_updateLoadCount {
-//    const std::optional<size_t> loadCount = _LoadCount(_device);
-//    if (loadCount && *loadCount) {
-//        [_loadPhotosCountLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)*loadCount]];
-//        [_loadPhotosContainerView setHidden:false];
-//    } else {
-//        [_loadPhotosContainerView setHidden:true];
-//    }
-//}
-//
-//- (void)_updateLoadProgress {
-//    [_progressIndicator setDoubleValue:];
-//}
 
 - (IBAction)load:(id)sender {
     [_delegate deviceImageGridHeaderViewLoad:self];

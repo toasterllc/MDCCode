@@ -41,7 +41,7 @@
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                     </tableCellView>
                                     <tableCellView identifier="SourceListView_Device" translatesAutoresizingMaskIntoConstraints="NO" id="08g-eg-N7V" customClass="SourceListView_Device">
-                                        <rect key="frame" x="0.0" y="0.0" width="247" height="74"/>
+                                        <rect key="frame" x="1" y="20" width="247" height="74"/>
                                         <subviews>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY" userLabel="Icon Image">
                                                 <rect key="frame" x="-17" y="12" width="63" height="50"/>
@@ -107,6 +107,7 @@
                                         </constraints>
                                         <connections>
                                             <outlet property="_batteryImageView" destination="YYE-UM-oso" id="Whg-Rx-g6c"/>
+                                            <outlet property="_descriptionLabel" destination="cuS-aa-uKX" id="yyR-nl-GXR"/>
                                             <outlet property="_height" destination="T60-bh-CJV" id="ei5-Uc-7np"/>
                                             <outlet property="imageView" destination="7cJ-fN-hbY" id="U5o-92-vYm"/>
                                             <outlet property="textField" destination="MZn-BH-IiQ" id="mUE-hG-002"/>
