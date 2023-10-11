@@ -4,7 +4,7 @@
 #import "SourceListView/SourceListView.h"
 #import "InspectorView/InspectorView.h"
 #import "ImageGridView/ImageGridView.h"
-#import "ImageView/ImageView.h"
+#import "FullSizeImageView/FullSizeImageView.h"
 #import "FixedScrollView.h"
 #import "MockImageSource.h"
 #import "Prefs.h"
@@ -14,7 +14,7 @@
 
 using namespace MDCStudio;
 
-@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate, DeviceSettingsViewDelegate, DeviceImageGridHeaderViewDelegate>
+@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, FullSizeImageViewDelegate, DeviceSettingsViewDelegate, DeviceImageGridHeaderViewDelegate>
 @end
 
 @implementation Document {
@@ -40,7 +40,7 @@ using namespace MDCStudio;
     NSView* _rightView;
     
     SourceListView* _sourceListView;
-    ImageScrollView* _imageScrollView;
+    FullSizeImageContainerView* _fullSizeImageView;
     ImageGridScrollView* _imageGridScrollView;
     InspectorView* _inspectorView;
     
@@ -412,10 +412,9 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
             imageRecord = *(find+delta);
         }
         
-        _SetView(_center, _imageScrollView);
-        ImageView* imageView = Toastbox::Cast<ImageView*>([_imageScrollView document]);
-        [imageView setImageRecord:imageRecord];
-        [_window makeFirstResponder:imageView];
+        [_fullSizeImageView setImageRecord:imageRecord];
+        _SetView(_center, _fullSizeImageView);
+        [_window makeFirstResponder:_fullSizeImageView];
         
         ImageSet selection;
         selection.insert(imageRecord);
@@ -456,10 +455,8 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         }
         
         {
-            ImageView* imageView = [[ImageView alloc] initWithImageSource:device];
-            [imageView setDelegate:self];
-            _imageScrollView = [[ImageScrollView alloc] initWithFixedDocument:imageView];
-            [_imageScrollView setMagnifyToFit:true animate:false];
+            _fullSizeImageView = [[FullSizeImageContainerView alloc] initWithImageSource:device];
+            [_fullSizeImageView setDelegate:self];
         }
         
         {
@@ -495,15 +492,17 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     [self _openImage:rec delta:0];
 }
 
-// MARK: - Image View
+// MARK: - Full Size Image View
 
-- (void)imageViewPreviousImage:(ImageView*)imageView {
-    const bool ok = [self _openImage:[imageView imageRecord] delta:-1];
+- (void)fullSizeImageViewPreviousImage:(FullSizeImageContainerView*)x {
+    assert(x == _fullSizeImageView);
+    const bool ok = [self _openImage:[_fullSizeImageView imageRecord] delta:-1];
     if (!ok) NSBeep();
 }
 
-- (void)imageViewNextImage:(ImageView*)imageView {
-    const bool ok = [self _openImage:[imageView imageRecord] delta:1];
+- (void)fullSizeImageViewNextImage:(FullSizeImageContainerView*)x {
+    assert(x == _fullSizeImageView);
+    const bool ok = [self _openImage:[_fullSizeImageView imageRecord] delta:1];
     if (!ok) NSBeep();
 }
 

@@ -1,14 +1,15 @@
-#import "ImageView.h"
+#import "FullSizeImageView.h"
 #import <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import <thread>
 #import "Util.h"
+#import "Code/Lib/Toastbox/Mac/Util.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "FixedMetalDocumentLayer.h"
-#import "ImageViewTypes.h"
-#import "ImageHeaderView/ImageHeaderView.h"
+#import "FullSizeImageViewTypes.h"
+#import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
 using namespace MDCStudio;
 using namespace MDCStudio::ImageViewTypes;
 using namespace MDCTools;
@@ -27,10 +28,10 @@ struct _ImageLoadThreadState {
     std::function<void(ImageRecordPtr, Image&&)> callback;
 };
 
-@interface ImageLayer : FixedMetalDocumentLayer
+@interface FullSizeImageLayer : FixedMetalDocumentLayer
 @end
 
-@implementation ImageLayer {
+@implementation FullSizeImageLayer {
     NSLayoutConstraint* _width;
     NSLayoutConstraint* _height;
     
@@ -102,7 +103,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 }
 
 - (void)dealloc {
-    printf("~ImageLayer\n");
+    printf("~FullSizeImageLayer\n");
 }
 
 - (ImageRecordPtr)imageRecord {
@@ -448,15 +449,15 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 //constexpr CGFloat ShadowCenterOffset = 45;
 //
-//@interface ImageScrollView : LayerScrollView
+//@interface FullSizeImageScrollView : LayerScrollView
 //@end
 //
-//@implementation ImageScrollView {
+//@implementation FullSizeImageScrollView {
 //    NSView* _shadowView;
 //    CALayer* _shadowLayer;
 //}
 //
-//static void _InitCommon(ImageScrollView* self) {
+//static void _InitCommon(FullSizeImageScrollView* self) {
 //    [self setBackgroundColor:[NSColor colorWithSRGBRed:WindowBackgroundColor.srgb[0]
 //        green:WindowBackgroundColor.srgb[1] blue:WindowBackgroundColor.srgb[2] alpha:1]];
 //}
@@ -528,22 +529,16 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 
 
+@interface FullSizeImageDocumentView : FixedDocumentView
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
+@end
 
-
-@implementation ImageView {
-    ImageLayer* _imageLayer;
-    __weak id<ImageViewDelegate> _delegate;
-}
+@implementation FullSizeImageDocumentView
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
-    
-    ImageLayer* imageLayer = [[ImageLayer alloc] initWithImageSource:imageSource];
-    
+    FullSizeImageLayer* imageLayer = [[FullSizeImageLayer alloc] initWithImageSource:imageSource];
     if (!(self = [super initWithFixedLayer:imageLayer])) return nil;
-    
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
-    
-    _imageLayer = imageLayer;
     
 //    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer* timer) {
 //        NSLog(@"[self bounds]: %@", NSStringFromRect([self bounds]));
@@ -559,27 +554,29 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     printf("~ImageView\n");
 }
 
-- (ImageRecordPtr)imageRecord {
-    return [_imageLayer imageRecord];
-}
 
-- (void)setImageRecord:(ImageRecordPtr)rec {
-    [_imageLayer setImageRecord:rec];
-}
 
-- (void)setDelegate:(id<ImageViewDelegate>)delegate {
-    _delegate = delegate;
-}
+//- (ImageRecordPtr)imageRecord {
+//    return [_imageLayer imageRecord];
+//}
+//
+//- (void)setImageRecord:(ImageRecordPtr)rec {
+//    [_imageLayer setImageRecord:rec];
+//}
 
-// MARK: - Event Handling
+//- (void)setDelegate:(id<FullSizeImageViewDelegate>)delegate {
+//    _delegate = delegate;
+//}
 
-- (void)moveLeft:(id)sender {
-    [_delegate imageViewPreviousImage:self];
-}
-
-- (void)moveRight:(id)sender {
-    [_delegate imageViewNextImage:self];
-}
+//// MARK: - Event Handling
+//
+//- (void)moveLeft:(id)sender {
+//    [_delegate fullSizeImageViewPreviousImage:self];
+//}
+//
+//- (void)moveRight:(id)sender {
+//    [_delegate fullSizeImageViewNextImage:self];
+//}
 
 //- (void)viewWillStartLiveResize {
 //    // MainView sends this message explicitly when resizing using the divider; forward it to _scrollView
@@ -602,31 +599,71 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
 }
 
-- (void)mouseDown:(NSEvent*)mouseDownEvent {
-    [[self window] makeFirstResponder:self];
-}
+//- (void)mouseDown:(NSEvent*)mouseDownEvent {
+//    [[self window] makeFirstResponder:self];
+//}
 
 @end
 
-@implementation ImageScrollView {
-    ImageHeaderView* _headerView;
+@implementation FullSizeImageContainerView {
+    FixedScrollView* _scrollView;
+    FullSizeImageHeaderView* _headerView;
+    __weak id<FullSizeImageViewDelegate> _delegate;
 }
 
-- (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
-    if (!(self = [super initWithFixedDocument:doc])) return nil;
-    _headerView = [[ImageHeaderView alloc] initWithFrame:{}];
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
+    if (!(self = [super initWithFrame:{}])) return nil;
+    [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
-    [self addSubview:_headerView];
+    {
+        FullSizeImageDocumentView* doc = [[FullSizeImageDocumentView alloc] initWithImageSource:imageSource];
+        _scrollView = [[FixedScrollView alloc] initWithFixedDocument:doc];
+        [_scrollView setMagnifyToFit:true animate:false];
+        [self addSubview:_scrollView];
+        
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_scrollView]|"
+            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
+        
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_scrollView]|"
+            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
+    }
     
-//    [self addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
-    
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
-    
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_headerView]"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
+    {
+        _headerView = [[FullSizeImageHeaderView alloc] initWithFrame:{}];
+        [self addSubview:_headerView];
+        
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
+            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
+        
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_headerView]"
+            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
+    }
     
     return self;
+}
+
+- (MDCStudio::ImageRecordPtr)imageRecord {
+    FullSizeImageLayer* layer = Toastbox::Cast<FullSizeImageLayer*>([[_scrollView document] layer]);
+    return [layer imageRecord];
+}
+
+- (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec {
+    FullSizeImageLayer* layer = Toastbox::Cast<FullSizeImageLayer*>([[_scrollView document] layer]);
+    [layer setImageRecord:rec];
+}
+
+- (void)setDelegate:(id<FullSizeImageViewDelegate>)delegate {
+    _delegate = delegate;
+}
+
+// MARK: - Event Handling
+
+- (void)moveLeft:(id)sender {
+    [_delegate fullSizeImageViewPreviousImage:self];
+}
+
+- (void)moveRight:(id)sender {
+    [_delegate fullSizeImageViewNextImage:self];
 }
 
 @end

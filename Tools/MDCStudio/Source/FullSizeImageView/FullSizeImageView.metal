@@ -1,5 +1,5 @@
 #import <metal_stdlib>
-#import "ImageViewTypes.h"
+#import "FullSizeImageViewTypes.h"
 #import "Tools/Shared/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools::MetalUtil;

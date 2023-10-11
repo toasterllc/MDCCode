@@ -16,8 +16,8 @@
 		553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */; };
 		553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */; };
 		553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5542AD4953400157484 /* BatteryLifePlotView.mm */; };
-		553EF5612AD7174800157484 /* ImageHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 553EF55F2AD7174800157484 /* ImageHeaderView.xib */; };
-		553EF5622AD7174800157484 /* ImageHeaderView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5602AD7174800157484 /* ImageHeaderView.mm */; };
+		553EF5612AD7174800157484 /* FullSizeImageHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 553EF55F2AD7174800157484 /* FullSizeImageHeaderView.xib */; };
+		553EF5622AD7174800157484 /* FullSizeImageHeaderView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5602AD7174800157484 /* FullSizeImageHeaderView.mm */; };
 		55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B2229A02F7D00F25D57 /* InspectorView.mm */; };
 		55425B2629A0752300F25D57 /* InspectorView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55425B2529A0752300F25D57 /* InspectorView.xib */; };
 		55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B5C29A2B8C900F25D57 /* ImageCornerButton.mm */; };
@@ -108,8 +108,8 @@
 		55F8883A29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Small.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F8883429D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Small.pdf */; };
 		55F8883B29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F8883529D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf */; };
 		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
-		55F8D01427BEF3E500757165 /* ImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* ImageView.mm */; };
-		55F8D01927BEF97200757165 /* ImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageView.metal */; };
+		55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* FullSizeImageView.mm */; };
+		55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* FullSizeImageView.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -140,9 +140,9 @@
 		553EF5542AD4953400157484 /* BatteryLifePlotView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifePlotView.mm; sourceTree = "<group>"; };
 		553EF5552AD4953400157484 /* BatteryLifePlotView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BatteryLifePlotView.h; sourceTree = "<group>"; };
 		553EF5572AD7088A00157484 /* ImageLibraryStatus.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibraryStatus.h; sourceTree = "<group>"; };
-		553EF55E2AD7174700157484 /* ImageHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageHeaderView.h; sourceTree = "<group>"; };
-		553EF55F2AD7174800157484 /* ImageHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageHeaderView.xib; sourceTree = "<group>"; };
-		553EF5602AD7174800157484 /* ImageHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageHeaderView.mm; sourceTree = "<group>"; };
+		553EF55E2AD7174700157484 /* FullSizeImageHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FullSizeImageHeaderView.h; sourceTree = "<group>"; };
+		553EF55F2AD7174800157484 /* FullSizeImageHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FullSizeImageHeaderView.xib; sourceTree = "<group>"; };
+		553EF5602AD7174800157484 /* FullSizeImageHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FullSizeImageHeaderView.mm; sourceTree = "<group>"; };
 		55425B1929A01BE000F25D57 /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		55425B2229A02F7D00F25D57 /* InspectorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorView.mm; sourceTree = "<group>"; };
 		55425B2329A02F7D00F25D57 /* InspectorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorView.h; sourceTree = "<group>"; };
@@ -343,10 +343,10 @@
 		55F8883429D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Small.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "CaptureTriggers-Icon-Motion-Small.pdf"; sourceTree = "<group>"; };
 		55F8883529D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "CaptureTriggers-Icon-Motion-Large.pdf"; sourceTree = "<group>"; };
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
-		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
-		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
-		55F8D01627BEF97200757165 /* ImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageView.metal; sourceTree = "<group>"; };
-		55F8D01827BEF97200757165 /* ImageViewTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageViewTypes.h; sourceTree = "<group>"; };
+		55F8D01227BEF3E500757165 /* FullSizeImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FullSizeImageView.h; sourceTree = "<group>"; };
+		55F8D01327BEF3E500757165 /* FullSizeImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FullSizeImageView.mm; sourceTree = "<group>"; };
+		55F8D01627BEF97200757165 /* FullSizeImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FullSizeImageView.metal; sourceTree = "<group>"; };
+		55F8D01827BEF97200757165 /* FullSizeImageViewTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FullSizeImageViewTypes.h; sourceTree = "<group>"; };
 		55F8D05827C0E07900757165 /* Lockable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lockable.h; sourceTree = "<group>"; };
 		55F8D09227C2EE9D00757165 /* ImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSource.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -399,14 +399,14 @@
 			path = CaptureTriggersView;
 			sourceTree = "<group>";
 		};
-		553EF5582AD7173000157484 /* ImageHeaderView */ = {
+		553EF5582AD7173000157484 /* FullSizeImageHeaderView */ = {
 			isa = PBXGroup;
 			children = (
-				553EF55E2AD7174700157484 /* ImageHeaderView.h */,
-				553EF5602AD7174800157484 /* ImageHeaderView.mm */,
-				553EF55F2AD7174800157484 /* ImageHeaderView.xib */,
+				553EF55E2AD7174700157484 /* FullSizeImageHeaderView.h */,
+				553EF5602AD7174800157484 /* FullSizeImageHeaderView.mm */,
+				553EF55F2AD7174800157484 /* FullSizeImageHeaderView.xib */,
 			);
-			path = ImageHeaderView;
+			path = FullSizeImageHeaderView;
 			sourceTree = "<group>";
 		};
 		55425B1729A01BE000F25D57 /* Mac */ = {
@@ -643,7 +643,7 @@
 				551328BA27B45E6200CD823B /* ImageGridView */,
 				558E20182AC8F977001E743A /* DeviceImageGridScrollView */,
 				558E20042AC4B608001E743A /* DeviceImageGridHeaderView */,
-				55F8D01127BEF3E500757165 /* ImageView */,
+				55F8D01127BEF3E500757165 /* FullSizeImageView */,
 				5544A7E927B5E011006AB473 /* SourceListView */,
 				55425B1C29A02F6500F25D57 /* InspectorView */,
 				5544AE5927B6EE04006AB473 /* Document */,
@@ -824,17 +824,17 @@
 			path = DeviceSettings;
 			sourceTree = "<group>";
 		};
-		55F8D01127BEF3E500757165 /* ImageView */ = {
+		55F8D01127BEF3E500757165 /* FullSizeImageView */ = {
 			isa = PBXGroup;
 			children = (
-				553EF5582AD7173000157484 /* ImageHeaderView */,
-				55F8D01827BEF97200757165 /* ImageViewTypes.h */,
-				55F8D01627BEF97200757165 /* ImageView.metal */,
-				55F8D01227BEF3E500757165 /* ImageView.h */,
-				55F8D01327BEF3E500757165 /* ImageView.mm */,
+				553EF5582AD7173000157484 /* FullSizeImageHeaderView */,
+				55F8D01827BEF97200757165 /* FullSizeImageViewTypes.h */,
+				55F8D01627BEF97200757165 /* FullSizeImageView.metal */,
+				55F8D01227BEF3E500757165 /* FullSizeImageView.h */,
+				55F8D01327BEF3E500757165 /* FullSizeImageView.mm */,
 				55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */,
 			);
-			path = ImageView;
+			path = FullSizeImageView;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -946,7 +946,7 @@
 				55838C9D2AD0BE7200D4B024 /* SourceList-Photon-Icon.pdf in Resources */,
 				55D30A4029A96D670080BCBD /* ImageCornerButton-4.pdf in Resources */,
 				55F8883B29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf in Resources */,
-				553EF5612AD7174800157484 /* ImageHeaderView.xib in Resources */,
+				553EF5612AD7174800157484 /* FullSizeImageHeaderView.xib in Resources */,
 				55D30A3F29A96D670080BCBD /* ImageCornerButton-3.pdf in Resources */,
 				55838C9C2AD0BE7200D4B024 /* SourceList-Battery-Charging-20.pdf in Resources */,
 				55838C942AD0BE7200D4B024 /* SourceList-Battery-Charging-40.pdf in Resources */,
@@ -1000,19 +1000,19 @@
 				55F8882729D8DADD0075593F /* TokenField.mm in Sources */,
 				55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */,
 				558E201B2AC8F977001E743A /* DeviceImageGridScrollView.mm in Sources */,
-				553EF5622AD7174800157484 /* ImageHeaderView.mm in Sources */,
+				553EF5622AD7174800157484 /* FullSizeImageHeaderView.mm in Sources */,
 				55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */,
 				558FFC5829C8F26F0022E840 /* EstimateIlluminant.mm in Sources */,
 				55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
-				55F8D01927BEF97200757165 /* ImageView.metal in Sources */,
+				55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */,
 				55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */,
 				55E43F9E28C00D6B00FCCEA0 /* DebayerBilinear.metal in Sources */,
 				5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */,
 				553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */,
 				55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */,
 				5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */,
-				55F8D01427BEF3E500757165 /* ImageView.mm in Sources */,
+				55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */,
 				55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

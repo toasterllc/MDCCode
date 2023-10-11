@@ -1,10 +1,10 @@
-#import "ImageHeaderView.h"
+#import "FullSizeImageHeaderView.h"
 using namespace MDCStudio;
 
-@implementation ImageHeaderView {
+@implementation FullSizeImageHeaderView {
     IBOutlet NSView* _nibView;
     IBOutlet NSLayoutConstraint* _heightConstraint;
-    __weak id<ImageHeaderViewDelegate> _delegate;
+    __weak id<FullSizeImageHeaderViewDelegate> _delegate;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
@@ -30,7 +30,7 @@ using namespace MDCStudio;
     return { NSViewNoIntrinsicMetric, [_heightConstraint constant] };
 }
 
-- (void)setDelegate:(id<ImageHeaderViewDelegate>)x {
+- (void)setDelegate:(id<FullSizeImageHeaderViewDelegate>)x {
     _delegate = x;
 }
 

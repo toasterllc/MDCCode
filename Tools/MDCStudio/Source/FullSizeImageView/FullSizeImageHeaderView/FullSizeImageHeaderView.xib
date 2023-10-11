@@ -5,7 +5,7 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="ImageHeaderView">
+        <customObject id="-2" userLabel="File's Owner" customClass="FullSizeImageHeaderView">
             <connections>
                 <outlet property="_heightConstraint" destination="3zV-F0-Xdo" id="tUs-J5-Oqa"/>
                 <outlet property="_nibView" destination="MCr-up-gtv" id="CnK-7N-xtN"/>
