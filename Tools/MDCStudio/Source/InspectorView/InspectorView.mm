@@ -1058,34 +1058,6 @@ static ImageCornerButtonTypes::Corner _Convert(ImageOptions::Corner x) {
     }
 }
 
-struct _DateFormatterState {
-    NSCalendar* cal = nil;
-    NSDateFormatter* fmt = nil;
-};
-
-static _DateFormatterState _DateFormatterStateCreate() {
-    _DateFormatterState x;
-    x.cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    
-    {
-        x.fmt = [[NSDateFormatter alloc] init];
-        [x.fmt setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.fmt setCalendar:x.cal];
-        [x.fmt setTimeZone:[x.cal timeZone]];
-        [x.fmt setDateStyle:NSDateFormatterMediumStyle];
-        [x.fmt setTimeStyle:NSDateFormatterMediumStyle];
-        // Update date format to show milliseconds
-        [x.fmt setDateFormat:[[x.fmt dateFormat] stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
-    }
-    
-    return x;
-}
-
-static _DateFormatterState& _DateFormatterStateGet() {
-    static _DateFormatterState x = _DateFormatterStateCreate();
-    return x;
-}
-
 static id _Get_id(const ImageRecord& rec) {
     return @(rec.info.id);
 }
@@ -1094,26 +1066,9 @@ static id _Get_timestamp(const ImageRecord& rec) {
     using namespace std::chrono;
     const Time::Instant t = rec.info.timestamp;
     if (Time::Absolute(t)) {
-        auto timestampDevice = Time::Clock::TimePointFromTimeInstant(rec.info.timestamp);
-        auto timestamp = date::clock_cast<system_clock>(timestampDevice);
-        const milliseconds ms = duration_cast<milliseconds>(timestamp.time_since_epoch());
-        NSDate* date = [NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.];
-        return [_DateFormatterStateGet().fmt stringFromDate:date];
-        
-//        const auto days = std::chrono::floor<date::days>(timestamp);
-//        const auto sec = std::chrono::floor<std::chrono::seconds>(timestamp-days);
-//        const date::year_month_day ymd(days);
-//        const date::hh_mm_ss hms(sec);
-//        
-//        NSDateComponents* comp = [NSDateComponents new];
-//        [comp setYear:(int)ymd.year()];
-//        [comp setMonth:(unsigned)ymd.month()];
-//        [comp setDay:(unsigned)ymd.day()];
-//        [comp setHour:hms.hours().count()];
-//        [comp setMinute:hms.minutes().count()];
-//        [comp setSecond:hms.seconds().count()];
-//        NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
-//        return [_DateFormatterStateGet().fmt stringFromDate:date];
+        const std::string str =
+            Calendar::TimestampString(Time::Clock::TimePointFromTimeInstant(rec.info.timestamp));
+        return @(str.c_str());
     
     } else {
         const auto dur = Time::Clock::DurationFromTimeInstant(rec.info.timestamp);

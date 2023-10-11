@@ -378,7 +378,8 @@ struct Simulator {
     
     void _printTime() {
         const date::time_zone& tz = *date::current_zone();
-        const auto tp = tz.to_local(Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(_time)));
+        const auto tp = tz.to_local(date::clock_cast<std::chrono::system_clock>(
+            Time::Clock::TimePointFromTimeInstant(_time)));
         const auto days = date::floor<date::days>(tp);
         const auto ymd = date::year_month_day(days);
         const auto hhmmss = date::make_time(tp-days);

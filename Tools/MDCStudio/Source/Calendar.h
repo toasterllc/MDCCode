@@ -6,6 +6,7 @@
 #include "Toastbox/RuntimeError.h"
 #include "Toastbox/NumForStr.h"
 #include "Toastbox/String.h"
+#include "Code/Shared/Clock.h"
 
 namespace MDCStudio {
 namespace Calendar {
@@ -187,7 +188,9 @@ struct _DateFormatterState {
     NSDateFormatter* timeFormatterHH = nil;
     NSDateFormatter* timeFormatterHHMM = nil;
     NSDateFormatter* timeFormatterHHMMSS = nil;
-    NSDateFormatter* dayOfYearFormatter = nil;
+    NSDateFormatter* timestampFormatter = nil;
+    NSDateFormatter* monthDayFormatter = nil;
+    NSDateFormatter* monthYearFormatter = nil;
     bool showsAMPM = false;
     char timeSeparator = 0;
 };
@@ -224,12 +227,33 @@ static _DateFormatterState _DateFormatterStateCreate() {
     }
     
     {
-        x.dayOfYearFormatter = [[NSDateFormatter alloc] init];
-        [x.dayOfYearFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
-        [x.dayOfYearFormatter setCalendar:x.cal];
-        [x.dayOfYearFormatter setTimeZone:[x.cal timeZone]];
-        [x.dayOfYearFormatter setLocalizedDateFormatFromTemplate:@"MMMd"];
-        [x.dayOfYearFormatter setLenient:true];
+        x.timestampFormatter = [[NSDateFormatter alloc] init];
+        [x.timestampFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.timestampFormatter setCalendar:x.cal];
+        [x.timestampFormatter setTimeZone:[x.cal timeZone]];
+        [x.timestampFormatter setDateStyle:NSDateFormatterMediumStyle];
+        [x.timestampFormatter setTimeStyle:NSDateFormatterMediumStyle];
+        // Update date format to show milliseconds
+        [x.timestampFormatter setDateFormat:[[x.timestampFormatter dateFormat]
+            stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
+    }
+    
+    {
+        x.monthDayFormatter = [[NSDateFormatter alloc] init];
+        [x.monthDayFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.monthDayFormatter setCalendar:x.cal];
+        [x.monthDayFormatter setTimeZone:[x.cal timeZone]];
+        [x.monthDayFormatter setLocalizedDateFormatFromTemplate:@"MMMd"];
+        [x.monthDayFormatter setLenient:true];
+    }
+    
+    {
+        x.monthYearFormatter = [[NSDateFormatter alloc] init];
+        [x.monthYearFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.monthYearFormatter setCalendar:x.cal];
+        [x.monthYearFormatter setTimeZone:[x.cal timeZone]];
+        [x.monthYearFormatter setLocalizedDateFormatFromTemplate:@"MMMYYYY"];
+        [x.monthYearFormatter setLenient:true];
     }
     
     NSString* dateFormat = [x.timeFormatterHHMMSS dateFormat];
@@ -316,7 +340,7 @@ inline TimeOfDay TimeOfDayFromString(std::string x, bool assumeAM=true) {
 }
 
 inline std::optional<DayOfYear> DayOfYearFromString(std::string_view x) {
-    NSDate* date = [_DateFormatterStateGet().dayOfYearFormatter dateFromString:@(std::string(x).c_str())];
+    NSDate* date = [_DateFormatterStateGet().monthDayFormatter dateFromString:@(std::string(x).c_str())];
     if (!date) return std::nullopt;
     
     NSDateComponents* comp = [_DateFormatterStateGet().cal
@@ -336,12 +360,44 @@ inline std::string StringFromDayOfYear(DayOfYear x) {
     [comp setMonth:(unsigned)x.month()];
     [comp setDay:(unsigned)x.day()];
     NSDate* date = [_DateFormatterStateGet().cal dateFromComponents:comp];
-    return [[_DateFormatterStateGet().dayOfYearFormatter stringFromDate:date] UTF8String];
+    return [[_DateFormatterStateGet().monthDayFormatter stringFromDate:date] UTF8String];
 }
 
 inline std::string DayOfYearPlaceholderString() {
     static std::string X = StringFromDayOfYear(DayOfYear(MonthOfYear(10), DayOfMonth(31)));
     return X;
+}
+
+template<typename T>
+inline NSDate* Date(const T& tp) {
+    using namespace std::chrono;
+    auto tpSys = date::clock_cast<system_clock>(tp);
+    const milliseconds ms = duration_cast<milliseconds>(tpSys.time_since_epoch());
+    return [NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.];
+}
+
+inline NSDate* Date(const date::year_month_day& ymd) {
+    NSDateComponents* comp = [NSDateComponents new];
+    [comp setYear:(int)ymd.year()];
+    [comp setMonth:(unsigned)ymd.month()];
+    [comp setDay:(unsigned)ymd.day()];
+    return [_DateFormatterStateGet().cal dateFromComponents:comp];
+}
+
+template<typename T>
+inline std::string TimestampString(const T& t) {
+    return [[_DateFormatterStateGet().timestampFormatter stringFromDate:Date(t)] UTF8String];
+}
+
+template<typename T>
+inline std::string MonthDayString(const T& t) {
+    using namespace std::chrono;
+    return [[_DateFormatterStateGet().monthDayFormatter stringFromDate:Date(t)] UTF8String];
+}
+
+template<typename T>
+inline std::string MonthYearString(const T& t) {
+    return [[_DateFormatterStateGet().monthYearFormatter stringFromDate:Date(t)] UTF8String];
 }
 
 } // namespace Calendar

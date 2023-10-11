@@ -1,6 +1,7 @@
 #import "DeviceImageGridHeaderView.h"
 #import "date/date.h"
 #import "date/tz.h"
+#import "Calendar.h"
 using namespace MDCStudio;
 
 @implementation DeviceImageGridHeaderView {
@@ -78,15 +79,7 @@ static auto _LastLoaded(ImageLibrary& imgLib) {
 
 
 static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
-    #warning TODO: cache the NSDateFormatter instead of allocating every time!
     using namespace std::chrono;
-    NSCalendar* cal = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    NSDateFormatter* monthYearFormatter = [[NSDateFormatter alloc] init];
-    [monthYearFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
-    [monthYearFormatter setCalendar:cal];
-    [monthYearFormatter setTimeZone:[cal timeZone]];
-    [monthYearFormatter setLocalizedDateFormatFromTemplate:@"MMMYYYY"];
-    [monthYearFormatter setLenient:true];
     
     auto lock = std::unique_lock(imgLib);
     if (imgLib.empty()) return @"No photos";
@@ -102,29 +95,23 @@ static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
     auto refFirst = *itFirst;
     auto refLast = *itLast;
     
-    auto tFirst = date::clock_cast<system_clock>(Time::Clock::TimePointFromTimeInstant(refFirst->info.timestamp));
-    auto tLast = date::clock_cast<system_clock>(Time::Clock::TimePointFromTimeInstant(refLast->info.timestamp));
+    const auto tFirst = Time::Clock::TimePointFromTimeInstant(refFirst->info.timestamp);
+    const auto tLast = Time::Clock::TimePointFromTimeInstant(refLast->info.timestamp);
     
-    const milliseconds msFirst = duration_cast<milliseconds>(tFirst.time_since_epoch());
-    const milliseconds msLast = duration_cast<milliseconds>(tLast.time_since_epoch());
+    const std::string strFirst = Calendar::MonthYearString(tFirst);
+    const std::string strLast = Calendar::MonthYearString(tLast);
     
-    NSDate* dateFirst = [NSDate dateWithTimeIntervalSince1970:(double)msFirst.count()/1000.];
-    NSDate* dateLast = [NSDate dateWithTimeIntervalSince1970:(double)msLast.count()/1000.];
+    std::string dateDesc;
     
-    NSString* strFirst = [monthYearFormatter stringFromDate:dateFirst];
-    NSString* strLast = [monthYearFormatter stringFromDate:dateLast];
-    
-    NSString* dateDesc = nil;
-    
-    if ([strFirst isEqualToString:strLast]) {
+    if (strFirst == strLast) {
         // Same month and year
         dateDesc = strFirst;
     } else {
         // Different month/year
-        dateDesc = [NSString stringWithFormat:@"%@ – %@", strFirst, strLast];
+        dateDesc = strFirst + " – " + strLast;
     }
     
-    return [NSString stringWithFormat:@"%ju photos from %@", (uintmax_t)imgLib.recordCount(), dateDesc];
+    return [NSString stringWithFormat:@"%ju photos from %s", (uintmax_t)imgLib.recordCount(), dateDesc.c_str()];
 }
 
 static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibrary& imgLib) {
