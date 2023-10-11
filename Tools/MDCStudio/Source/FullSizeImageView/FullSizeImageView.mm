@@ -658,12 +658,20 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 // MARK: - Event Handling
 
+- (void)mouseDown:(NSEvent*)mouseDownEvent {
+    [[self window] makeFirstResponder:self];
+}
+
 - (void)moveLeft:(id)sender {
     [_delegate fullSizeImageViewPreviousImage:self];
 }
 
 - (void)moveRight:(id)sender {
     [_delegate fullSizeImageViewNextImage:self];
+}
+
+- (BOOL)acceptsFirstResponder {
+    return true;
 }
 
 @end
