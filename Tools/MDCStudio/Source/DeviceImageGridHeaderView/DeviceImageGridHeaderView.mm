@@ -92,25 +92,12 @@ static NSString* _ImageLibraryStatus(ImageLibrary& imgLib) {
     // itLast: last loaded record
     auto itLast = _LastLoaded(imgLib);
     
-    auto refFirst = *itFirst;
-    auto refLast = *itLast;
-    
-    const auto tFirst = Time::Clock::TimePointFromTimeInstant(refFirst->info.timestamp);
-    const auto tLast = Time::Clock::TimePointFromTimeInstant(refLast->info.timestamp);
+    const auto tFirst = Time::Clock::TimePointFromTimeInstant((*itFirst)->info.timestamp);
+    const auto tLast = Time::Clock::TimePointFromTimeInstant((*itLast)->info.timestamp);
     
     const std::string strFirst = Calendar::MonthYearString(tFirst);
     const std::string strLast = Calendar::MonthYearString(tLast);
-    
-    std::string dateDesc;
-    
-    if (strFirst == strLast) {
-        // Same month and year
-        dateDesc = strFirst;
-    } else {
-        // Different month/year
-        dateDesc = strFirst + " – " + strLast;
-    }
-    
+    const std::string dateDesc = strFirst + (strFirst == strLast ? "" : " – " + strLast);
     return [NSString stringWithFormat:@"%ju photos from %s", (uintmax_t)imgLib.recordCount(), dateDesc.c_str()];
 }
 
