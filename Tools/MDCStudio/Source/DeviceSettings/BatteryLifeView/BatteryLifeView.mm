@@ -26,8 +26,11 @@ namespace DS = DeviceSettings;
     IBOutlet NSPopUpButton* _buttonIntervalMenu;
     IBOutlet NSTextField* _batteryLifeMinDurationLabel;
     IBOutlet NSTextField* _batteryLifeMaxDurationLabel;
+    IBOutlet NSTextField* _batteryLifeSingularDurationLabel;
     IBOutlet NSTextField* _batteryLifeMinDateLabel;
     IBOutlet NSTextField* _batteryLifeMaxDateLabel;
+    IBOutlet NSView* _legendMinMaxView;
+    IBOutlet NSView* _legendSingularView;
     
     bool _storeLoadUnderway;
     MSP::Triggers _triggers;
@@ -234,6 +237,7 @@ static void _StoreLoad(BatteryLifeView* self) {
     // Update duration labels
     [_batteryLifeMinDurationLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->min).c_str())];
     [_batteryLifeMaxDurationLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->max).c_str())];
+    [_batteryLifeSingularDurationLabel setStringValue:@(DeviceSettings::StringForDuration(_estimate->max).c_str())];
     
     // Update date labels
     {
@@ -286,6 +290,12 @@ static void _StoreLoad(BatteryLifeView* self) {
         [_batteryLifeMinDateLabel setStringValue:[fmt stringFromDate:dateMin]];
         [_batteryLifeMaxDateLabel setStringValue:[fmt stringFromDate:dateMax]];
     }
+    
+    const bool singular = (_estimate->min == _estimate->max);
+    [_minPlotView setHidden:singular];
+    [_legendMinMaxView setHidden:singular];
+    [_legendSingularView setHidden:!singular];
+    [_batteryLifeMinDateLabel setHidden:singular];
 }
 
 - (void)_updateIfNeeded {

@@ -702,6 +702,19 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     _batteryLifeView = [[BatteryLifeView alloc] initWithFrame:{}];
     [_batteryLifeView setDelegate:self];
     [self _updateBatteryLife];
+    
+    // Create _batteryLifePopover
+    {
+        NSViewController* vc = [NSViewController new];
+        [vc setView:_batteryLifeView];
+        
+        _batteryLifePopover = [NSPopover new];
+        [_batteryLifePopover setDelegate:self];
+        [_batteryLifePopover setBehavior:NSPopoverBehaviorSemitransient];
+//        [_batteryLifePopover setBehavior:NSPopoverBehaviorTransient];
+        [_batteryLifePopover setContentViewController:vc];
+    }
+    
     return self;
 }
 
@@ -1144,16 +1157,6 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 }
 
 - (IBAction)_actionBatteryLife:(id)sender {
-    if (!_batteryLifePopover) {
-        NSViewController* vc = [NSViewController new];
-        [vc setView:_batteryLifeView];
-        
-        _batteryLifePopover = [NSPopover new];
-        [_batteryLifePopover setDelegate:self];
-        [_batteryLifePopover setBehavior:NSPopoverBehaviorSemitransient];
-//        [_batteryLifePopover setBehavior:NSPopoverBehaviorTransient];
-        [_batteryLifePopover setContentViewController:vc];
-    }
     [_batteryLifePopover showRelativeToRect:{}
         ofView:_batteryLifeButton preferredEdge:NSRectEdgeMaxY];
 }

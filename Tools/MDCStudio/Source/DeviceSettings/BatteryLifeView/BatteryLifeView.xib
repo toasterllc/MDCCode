@@ -11,8 +11,11 @@
                 <outlet property="_batteryLifeMaxDurationLabel" destination="KIx-a7-ba8" id="jDp-Uo-Zfb"/>
                 <outlet property="_batteryLifeMinDateLabel" destination="VI1-Gl-ydn" id="yUt-rp-nPp"/>
                 <outlet property="_batteryLifeMinDurationLabel" destination="Sya-dj-nhC" id="Y4U-9D-aNH"/>
+                <outlet property="_batteryLifeSingularDurationLabel" destination="dp0-Gl-EiG" id="bmH-OK-571"/>
                 <outlet property="_buttonIntervalField" destination="fSJ-Mp-4fa" id="c4X-qU-NTe"/>
                 <outlet property="_buttonIntervalMenu" destination="4oV-Ge-OsI" id="vk9-vT-OaE"/>
+                <outlet property="_legendMinMaxView" destination="PEs-MT-54M" id="ERG-Oz-7Ij"/>
+                <outlet property="_legendSingularView" destination="XCo-B4-a0z" id="QYD-hw-SbK"/>
                 <outlet property="_maxPlotView" destination="I7z-Sb-hvG" id="gDk-p3-n6j"/>
                 <outlet property="_maxPlotViewWidth" destination="8B8-QZ-B9e" id="QiN-1y-2dZ"/>
                 <outlet property="_minPlotView" destination="qI5-iw-65y" id="YkP-xL-TjM"/>
@@ -97,6 +100,40 @@
                         <constraint firstItem="Fhm-Pr-2fc" firstAttribute="leading" secondItem="Cft-sI-XBB" secondAttribute="trailing" constant="4" id="kSc-eg-24Z"/>
                         <constraint firstItem="KIx-a7-ba8" firstAttribute="top" secondItem="Fhm-Pr-2fc" secondAttribute="bottom" constant="5" id="n9n-5B-NdM"/>
                         <constraint firstItem="Za5-tj-nDo" firstAttribute="leading" secondItem="PEs-MT-54M" secondAttribute="leading" constant="40" id="yeD-oP-aAu"/>
+                    </constraints>
+                </customView>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="XCo-B4-a0z" userLabel="Legend">
+                    <rect key="frame" x="0.0" y="100" width="437" height="37"/>
+                    <subviews>
+                        <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TrA-ky-Z3a">
+                            <rect key="frame" x="130" y="20" width="18" height="18"/>
+                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="BatteryLifeView-BestIcon" id="h0k-wi-rSL"/>
+                        </imageView>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6ub-M1-L9K">
+                            <rect key="frame" x="150" y="21" width="137" height="16"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="Estimated battery life:" id="3IH-Ua-AiR">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dp0-Gl-EiG">
+                            <rect key="frame" x="150" y="0.0" width="56" height="16"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="30 days" id="Hnf-RR-mWJ">
+                                <font key="font" metaFont="systemBold"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                    </subviews>
+                    <constraints>
+                        <constraint firstItem="6ub-M1-L9K" firstAttribute="leading" secondItem="TrA-ky-Z3a" secondAttribute="trailing" constant="4" id="5tA-te-ktQ"/>
+                        <constraint firstItem="6ub-M1-L9K" firstAttribute="top" secondItem="XCo-B4-a0z" secondAttribute="top" id="Bdp-Pb-7Ug"/>
+                        <constraint firstItem="6ub-M1-L9K" firstAttribute="centerY" secondItem="TrA-ky-Z3a" secondAttribute="centerY" id="BeE-CY-35o"/>
+                        <constraint firstItem="dp0-Gl-EiG" firstAttribute="top" secondItem="6ub-M1-L9K" secondAttribute="bottom" constant="5" id="Mfg-xD-Yft"/>
+                        <constraint firstItem="dp0-Gl-EiG" firstAttribute="leading" secondItem="6ub-M1-L9K" secondAttribute="leading" id="YaN-n2-ctP"/>
+                        <constraint firstAttribute="bottom" secondItem="dp0-Gl-EiG" secondAttribute="bottom" id="gGG-vi-rn7"/>
+                        <constraint firstItem="6ub-M1-L9K" firstAttribute="centerX" secondItem="XCo-B4-a0z" secondAttribute="centerX" id="keh-7T-ywU"/>
                     </constraints>
                 </customView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="5Jx-wg-Rs9" userLabel="Parameters">
@@ -280,6 +317,7 @@
                 <constraint firstItem="VI1-Gl-ydn" firstAttribute="centerX" secondItem="qI5-iw-65y" secondAttribute="trailing" id="Ru9-wD-FdH"/>
                 <constraint firstAttribute="trailing" secondItem="O1Z-qC-HI6" secondAttribute="trailing" constant="10" id="U1U-4a-D3e"/>
                 <constraint firstItem="I7z-Sb-hvG" firstAttribute="top" secondItem="Kuv-np-FZp" secondAttribute="top" id="Vmc-BH-3wL"/>
+                <constraint firstItem="XCo-B4-a0z" firstAttribute="top" secondItem="PEs-MT-54M" secondAttribute="top" id="W1o-E7-eY4"/>
                 <constraint firstItem="VI1-Gl-ydn" firstAttribute="top" secondItem="I7z-Sb-hvG" secondAttribute="bottom" constant="6" id="WG0-ro-0ri"/>
                 <constraint firstItem="5Jx-wg-Rs9" firstAttribute="top" secondItem="PEs-MT-54M" secondAttribute="bottom" constant="30" id="WLt-eH-Sch"/>
                 <constraint firstItem="KR8-B3-UHO" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="Wci-gE-dgd"/>
@@ -296,7 +334,9 @@
                 <constraint firstItem="I7z-Sb-hvG" firstAttribute="top" secondItem="olf-dc-ZVA" secondAttribute="bottom" constant="8" id="jf3-ZC-fG9"/>
                 <constraint firstItem="VI1-Gl-ydn" firstAttribute="top" secondItem="tbu-Qf-A7h" secondAttribute="bottom" id="lOQ-vx-QC6"/>
                 <constraint firstItem="O1Z-qC-HI6" firstAttribute="centerX" secondItem="I7z-Sb-hvG" secondAttribute="trailing" id="mgH-1q-j4K"/>
+                <constraint firstItem="XCo-B4-a0z" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="nQQ-J3-PgR"/>
                 <constraint firstItem="Kuv-np-FZp" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" constant="10" id="o0U-sR-aWG"/>
+                <constraint firstAttribute="trailing" secondItem="XCo-B4-a0z" secondAttribute="trailing" id="ogn-6F-xYt"/>
                 <constraint firstAttribute="trailing" secondItem="PEs-MT-54M" secondAttribute="trailing" id="thZ-1U-pPd"/>
                 <constraint firstItem="qI5-iw-65y" firstAttribute="top" secondItem="I7z-Sb-hvG" secondAttribute="top" id="v3L-4Q-s8d"/>
                 <constraint firstItem="olf-dc-ZVA" firstAttribute="top" secondItem="8kh-WA-1UA" secondAttribute="top" constant="10" id="vlN-X0-Ofb"/>

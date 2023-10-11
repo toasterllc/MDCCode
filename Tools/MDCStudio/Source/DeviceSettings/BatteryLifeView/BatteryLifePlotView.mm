@@ -108,6 +108,9 @@ static void _Init(BatteryLifePlotView* self) {
 }
 
 - (void)displayLayer:(CALayer*)layer {
+    // YMin: minimum y value when plotting
+    constexpr CGFloat YMin = 1;
+    
     assert(layer == _layer);
     
     auto debugTimeStart = std::chrono::steady_clock::now();
@@ -123,7 +126,7 @@ static void _Init(BatteryLifePlotView* self) {
         for (const BatteryLifeSimulator::Point& pt : _points) {
             const CGFloat xnorm = (pt.time - _points.front().time).count() / duration;
             p.x = xnorm * size.width;
-            p.y = pt.batteryLevel * size.height;
+            p.y = std::max(YMin, pt.batteryLevel * size.height);
             CGPathAddLineToPoint((CGMutablePathRef)path, nullptr, p.x, p.y);
         }
         CGPathAddLineToPoint((CGMutablePathRef)path, nullptr, p.x, 0);

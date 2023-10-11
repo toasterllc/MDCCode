@@ -128,17 +128,17 @@ inline float FloatFromString(std::string_view x) {
     return Toastbox::FloatForStr<float>(x);
 }
 
-template<typename T>
-inline std::string _StringForDurationRange(std::chrono::seconds xmin, std::chrono::seconds xmax, std::string_view unit) {
-    const T min = date::floor<T>(xmin);
-    const T max = date::floor<T>(xmax);
+inline std::string _StringForDurationRange(std::chrono::seconds xmin, std::chrono::seconds xmax,
+    std::chrono::seconds unit, std::string_view unitName) {
+    const uint64_t min = xmin.count() / unit.count();
+    const uint64_t max = xmax.count() / unit.count();
     std::stringstream ss;
     if (min == max) {
-        ss << min.count() << " " << unit;
-        if (min.count() != 1) ss << "s";
+        ss << min << " " << unitName;
+        if (min != 1) ss << "s";
     } else {
-        ss << min.count() << " – " << max.count() << " " << unit;
-        if (max.count() != 1) ss << "s";
+        ss << min << " – " << max << " " << unitName;
+        if (max != 1) ss << "s";
     }
     return ss.str();
 }
@@ -146,31 +146,33 @@ inline std::string _StringForDurationRange(std::chrono::seconds xmin, std::chron
 inline std::string StringForDurationRange(std::chrono::seconds min, std::chrono::seconds max) {
     constexpr std::chrono::seconds Year = date::days(365);
     constexpr std::chrono::seconds Month = date::days(30);
+    constexpr std::chrono::seconds Day = date::days(1);
     std::string title;
     if (min>2*Year && max>2*Year) {
-        return _StringForDurationRange<date::years>(min, max, "year");
+        return _StringForDurationRange(min, max, Year, "year");
     } else if (min>2*Month && max>2*Month) {
-        return _StringForDurationRange<date::months>(min, max, "month");
+        return _StringForDurationRange(min, max, Month, "month");
     } else {
-        return _StringForDurationRange<date::days>(min, max, "day");
+        return _StringForDurationRange(min, max, Day, "day");
     }
 }
 
-template<typename T>
-inline std::string _StringForDuration(std::chrono::seconds sec, std::string_view unit) {
-    const T x = date::floor<T>(sec);
-    return std::to_string(x.count()) + " " + std::string(unit) + (x.count() != 1 ? "s" : "");
+inline std::string _StringForDuration(std::chrono::seconds sec,
+    std::chrono::seconds unit, std::string_view unitName) {
+    const uint64_t x = sec.count() / unit.count();
+    return std::to_string(x) + " " + std::string(unitName) + (x != 1 ? "s" : "");
 }
 
 inline std::string StringForDuration(std::chrono::seconds x) {
     constexpr std::chrono::seconds Year = date::days(365);
     constexpr std::chrono::seconds Month = date::days(30);
+    constexpr std::chrono::seconds Day = date::days(1);
     if (x > 2*Year) {
-        return _StringForDuration<date::years>(x, "year").c_str();
+        return _StringForDuration(x, Year, "year").c_str();
     } else if (x > 2*Month) {
-        return _StringForDuration<date::months>(x, "month").c_str();
+        return _StringForDuration(x, Month, "month").c_str();
     } else {
-        return _StringForDuration<date::days>(x, "day").c_str();
+        return _StringForDuration(x, Day, "day").c_str();
     }
 }
 
