@@ -29,6 +29,7 @@ namespace DS = DeviceSettings;
     IBOutlet NSTextField* _batteryLifeSingularDurationLabel;
     IBOutlet NSTextField* _batteryLifeMinDateLabel;
     IBOutlet NSTextField* _batteryLifeMaxDateLabel;
+    IBOutlet NSBox* _batteryLifeMinDateLine;
     IBOutlet NSView* _legendMinMaxView;
     IBOutlet NSView* _legendSingularView;
     
@@ -263,6 +264,7 @@ static void _StoreLoad(BatteryLifeView* self) {
     [_minPlotView setHidden:singular];
     [_legendMinMaxView setHidden:singular];
     [_legendSingularView setHidden:!singular];
+    [_batteryLifeMinDateLine setHidden:singular];
     [_batteryLifeMinDateLabel setHidden:singular];
 }
 

@@ -10,6 +10,7 @@
                 <outlet property="_batteryLifeMaxDateLabel" destination="O1Z-qC-HI6" id="B1g-jn-6s0"/>
                 <outlet property="_batteryLifeMaxDurationLabel" destination="KIx-a7-ba8" id="jDp-Uo-Zfb"/>
                 <outlet property="_batteryLifeMinDateLabel" destination="VI1-Gl-ydn" id="yUt-rp-nPp"/>
+                <outlet property="_batteryLifeMinDateLine" destination="tbu-Qf-A7h" id="opX-5M-tMI"/>
                 <outlet property="_batteryLifeMinDurationLabel" destination="Sya-dj-nhC" id="Y4U-9D-aNH"/>
                 <outlet property="_batteryLifeSingularDurationLabel" destination="dp0-Gl-EiG" id="bmH-OK-571"/>
                 <outlet property="_buttonIntervalField" destination="fSJ-Mp-4fa" id="c4X-qU-NTe"/>
@@ -308,10 +309,9 @@
                 <constraint firstItem="olf-dc-ZVA" firstAttribute="centerX" secondItem="8kh-WA-1UA" secondAttribute="centerX" id="1YQ-HQ-kpv"/>
                 <constraint firstItem="O1Z-qC-HI6" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="VI1-Gl-ydn" secondAttribute="trailing" constant="6" id="30f-A8-ddK"/>
                 <constraint firstItem="4EL-ez-3i9" firstAttribute="top" secondItem="I7z-Sb-hvG" secondAttribute="bottom" constant="6" id="Bll-Ri-hQ3"/>
-                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="I7z-Sb-hvG" secondAttribute="trailing" id="EQ6-hH-tPy"/>
                 <constraint firstItem="O1Z-qC-HI6" firstAttribute="top" secondItem="I7z-Sb-hvG" secondAttribute="bottom" constant="6" id="GiH-GQ-hYo"/>
                 <constraint firstAttribute="trailing" secondItem="KR8-B3-UHO" secondAttribute="trailing" id="I5w-Fx-3dw"/>
-                <constraint firstItem="tbu-Qf-A7h" firstAttribute="centerX" secondItem="VI1-Gl-ydn" secondAttribute="centerX" priority="500" id="KmY-NT-hgA"/>
+                <constraint firstItem="tbu-Qf-A7h" firstAttribute="centerX" secondItem="VI1-Gl-ydn" secondAttribute="centerX" id="KmY-NT-hgA"/>
                 <constraint firstItem="PEs-MT-54M" firstAttribute="top" secondItem="VI1-Gl-ydn" secondAttribute="bottom" constant="30" id="KzI-Fy-HG0"/>
                 <constraint firstItem="4EL-ez-3i9" firstAttribute="centerX" secondItem="I7z-Sb-hvG" secondAttribute="leading" id="MFr-pb-whC"/>
                 <constraint firstItem="M6h-Wq-RKe" firstAttribute="trailing" secondItem="Kuv-np-FZp" secondAttribute="trailing" id="MKZ-8l-VOO"/>

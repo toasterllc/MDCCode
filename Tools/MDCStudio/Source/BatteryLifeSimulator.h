@@ -124,8 +124,14 @@ struct Simulator {
         }
         
         // Trim battery life to Constants::BatteryLifeMax
-        while (points.back().time > Constants::BatteryLifeMax) {
-            points.pop_back();
+        if (points.back().time > Constants::BatteryLifeMax) {
+            while (points.back().time > Constants::BatteryLifeMax) {
+                points.pop_back();
+            }
+            points.push_back({
+                .time = Constants::BatteryLifeMax,
+                .batteryLevel = points.back().batteryLevel,
+            });
         }
         
         return points;
