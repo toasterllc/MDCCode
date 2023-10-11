@@ -605,10 +605,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
-@interface FullSizeImageContainerView () <FullSizeImageHeaderViewDelegate>
+@interface FullSizeImageView () <FullSizeImageHeaderViewDelegate>
 @end
 
-@implementation FullSizeImageContainerView {
+@implementation FullSizeImageView {
     FixedScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
     __weak id<FullSizeImageViewDelegate> _delegate;
@@ -621,7 +621,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     {
         FullSizeImageDocumentView* doc = [[FullSizeImageDocumentView alloc] initWithImageSource:imageSource];
         _scrollView = [[FixedScrollView alloc] initWithFixedDocument:doc];
-        [_scrollView setMagnifyToFit:true animate:false];
         [self addSubview:_scrollView];
         
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_scrollView]|"
@@ -643,6 +642,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
     }
     
+    [self magnifyToFit];
     return self;
 }
 
@@ -658,6 +658,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 - (void)setDelegate:(id<FullSizeImageViewDelegate>)delegate {
     _delegate = delegate;
+}
+
+- (void)magnifyToFit {
+    [_scrollView setMagnifyToFit:true animate:false];
 }
 
 // MARK: - Event Handling

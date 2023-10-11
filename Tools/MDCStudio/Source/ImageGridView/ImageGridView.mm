@@ -918,10 +918,10 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 - (void)scrollToImageRect:(CGRect)rect center:(bool)center {
     if (center) {
-        const CGFloat frameHeight = [self frame].size.height;
-        const CGFloat delta = frameHeight - rect.size.height;
+        const CGFloat height = [self bounds].size.height;
+        const CGFloat delta = height - rect.size.height;
         rect.origin.y -= delta/2;
-        rect.size.height = frameHeight;
+        rect.size.height = height;
         [self scrollRectToVisible:[self convertRect:rect fromView:[self superview]]];
     } else {
         [self scrollRectToVisible:[self convertRect:rect fromView:[self superview]]];

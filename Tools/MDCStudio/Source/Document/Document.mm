@@ -40,7 +40,7 @@ using namespace MDCStudio;
     NSView* _rightView;
     
     SourceListView* _sourceListView;
-    FullSizeImageContainerView* _fullSizeImageView;
+    FullSizeImageView* _fullSizeImageView;
     ImageGridView* _imageGridView;
     ImageGridScrollView* _imageGridScrollView;
     InspectorView* _inspectorView;
@@ -64,6 +64,7 @@ static void _SetView(T& x, NSView* y) {
         options:0 metrics:nil views:@{@"v":x.view}]];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|"
         options:0 metrics:nil views:@{@"v":x.view}]];
+    [[x.containerView window] layoutIfNeeded];
 }
 
 - (void)awakeFromNib {
@@ -414,8 +415,12 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         }
         
         [_fullSizeImageView setImageRecord:imageRecord];
-        _SetView(_center, _fullSizeImageView);
-        [_window makeFirstResponder:_fullSizeImageView];
+        
+        if (_center.view != _fullSizeImageView) {
+            _SetView(_center, _fullSizeImageView);
+            [_fullSizeImageView magnifyToFit];
+            [_window makeFirstResponder:_fullSizeImageView];
+        }
         
         ImageSet selection;
         selection.insert(imageRecord);
@@ -456,7 +461,7 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         }
         
         {
-            _fullSizeImageView = [[FullSizeImageContainerView alloc] initWithImageSource:device];
+            _fullSizeImageView = [[FullSizeImageView alloc] initWithImageSource:device];
             [_fullSizeImageView setDelegate:self];
         }
         
@@ -495,15 +500,16 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 
 // MARK: - Full Size Image View
 
-- (void)fullSizeImageViewBack:(FullSizeImageContainerView*)x {
+- (void)fullSizeImageViewBack:(FullSizeImageView*)x {
     assert(x == _fullSizeImageView);
     _SetView(_center, _imageGridScrollView);
     ImageRecordPtr rec = [_fullSizeImageView imageRecord];
     [_imageGridView setSelection:{ rec }];
     [_window makeFirstResponder:_imageGridView];
-    [NSTimer scheduledTimerWithTimeInterval:0 repeats:false block:^(NSTimer* timer) {
-        [_imageGridView scrollToImageRect:[_imageGridView rectForImageRecord:rec] center:true];
-    }];
+    [_imageGridView scrollToImageRect:[_imageGridView rectForImageRecord:rec] center:true];
+//    [NSTimer scheduledTimerWithTimeInterval:0 repeats:false block:^(NSTimer* timer) {
+//        [_imageGridView scrollToImageRect:[_imageGridView rectForImageRecord:rec] center:true];
+//    }];
 //    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer* timer) {
 //        [_imageGridView scrollToImageRect:[_imageGridView rectForImageRecord:[_fullSizeImageView imageRecord]]];
 //    }];
@@ -513,13 +519,13 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 //    [_imageGridScrollView imageGridView];
 }
 
-- (void)fullSizeImageViewPreviousImage:(FullSizeImageContainerView*)x {
+- (void)fullSizeImageViewPreviousImage:(FullSizeImageView*)x {
     assert(x == _fullSizeImageView);
     const bool ok = [self _openImage:[_fullSizeImageView imageRecord] delta:-1];
     if (!ok) NSBeep();
 }
 
-- (void)fullSizeImageViewNextImage:(FullSizeImageContainerView*)x {
+- (void)fullSizeImageViewNextImage:(FullSizeImageView*)x {
     assert(x == _fullSizeImageView);
     const bool ok = [self _openImage:[_fullSizeImageView imageRecord] delta:1];
     if (!ok) NSBeep();
