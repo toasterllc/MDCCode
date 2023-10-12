@@ -8,8 +8,10 @@ namespace std = metal;
 
 #ifdef __METAL_VERSION__
 #define CONSTANT constant const
+#define CONSTANT_IF_METAL constant const
 #else
 #define CONSTANT const
+#define CONSTANT_IF_METAL
 #endif
 
 #warning TODO: migrate int32_t to uint32_t where it makes sense (eg: containerWidth, elementCount). currently everything is int32_t.
@@ -77,18 +79,17 @@ public:
         _computed.valid = false;
     }
     
-    int32_t columnCount()       CONSTANT { assert(_computed.valid); return _computed.columnCount; }
-    int32_t rowCount()          CONSTANT { assert(_computed.valid); return _computed.rowCount; }
-    int32_t containerHeight()   CONSTANT { assert(_computed.valid); return _computed.containerHeight; }
-    int32_t extraBorderX()      CONSTANT { assert(_computed.valid); return _computed.extraBorderX; }
+    int32_t columnCount()     CONSTANT_IF_METAL { recompute(); return _computed.columnCount; }
+    int32_t rowCount()        CONSTANT_IF_METAL { recompute(); return _computed.rowCount; }
+    int32_t containerHeight() CONSTANT_IF_METAL { recompute(); return _computed.containerHeight; }
+    int32_t extraBorderX()    CONSTANT_IF_METAL { recompute(); return _computed.extraBorderX; }
     
-    void recomputeIfNeeded() {
-        if (!_computed.valid) {
-            recompute();
-        }
-    }
-    
-    void recompute() {
+    void recompute() CONSTANT_IF_METAL {
+#ifdef __METAL_VERSION__
+        assert(_computed.valid);
+#else
+        if (_computed.valid) return;
+        
         // Compute .columnCount
         {
             const int32_t usableWidth = std::max((int32_t)0, _containerWidth-_borderSize.left-_borderSize.right);
@@ -124,27 +125,11 @@ public:
         }
         
         _computed.valid = true;
-    }
-    
-#ifndef __METAL_VERSION__
-    Rect rectForCellIndex(int32_t cellIndex) {
-        recomputeIfNeeded();
-        return static_cast<const Grid*>(this)->rectForCellIndex(cellIndex);
-    }
-    
-    IndexRect indexRectForRect(Rect rect) {
-        recomputeIfNeeded();
-        return static_cast<const Grid*>(this)->indexRectForRect(rect);
-    }
-    
-    IndexRange indexRangeForIndexRect(const IndexRect& indexRect) {
-        recomputeIfNeeded();
-        return static_cast<const Grid*>(this)->indexRangeForIndexRect(indexRect);
-    }
 #endif
+    }
     
-    Rect rectForCellIndex(int32_t cellIndex) CONSTANT {
-        assert(_computed.valid);
+    Rect rectForCellIndex(int32_t cellIndex) CONSTANT_IF_METAL {
+        recompute();
         
         const int32_t xIndex = cellIndex % _computed.columnCount;
         const int32_t yIndex = cellIndex / _computed.columnCount;
@@ -158,8 +143,8 @@ public:
     }
     
     // indexRectForRect(): returns the row/column range for the given rect
-    IndexRect indexRectForRect(Rect rect) CONSTANT {
-        assert(_computed.valid);
+    IndexRect indexRectForRect(Rect rect) CONSTANT_IF_METAL {
+        recompute();
         
         const int32_t combinedCellWidth = (_cellSize.x + _cellSpacing.x);
         const int32_t combinedCellHeight = (_cellSize.y + _cellSpacing.y);
@@ -208,8 +193,8 @@ public:
     
     // indexRangeForIndexRect(): converts an IndexRect to a range of indexes
     // The returned range is clamped to the current valid range of indexes, based on _elementCount.
-    IndexRange indexRangeForIndexRect(CONSTANT IndexRect& indexRect) CONSTANT {
-        assert(_computed.valid);
+    IndexRange indexRangeForIndexRect(CONSTANT IndexRect& indexRect) CONSTANT_IF_METAL {
+        recompute();
         
         if (!_elementCount) return IndexRange{};
         if (!indexRect.x.count) return IndexRange{};
