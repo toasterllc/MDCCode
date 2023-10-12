@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "MDCDevice.h"
+#import "ImageGridHeaderView/ImageGridHeaderView.h"
 @class DeviceImageGridHeaderView;
 
 @protocol DeviceImageGridHeaderViewDelegate
@@ -7,7 +8,7 @@
 - (void)deviceImageGridHeaderViewLoad:(DeviceImageGridHeaderView*)x;
 @end
 
-@interface DeviceImageGridHeaderView : NSView
+@interface DeviceImageGridHeaderView : ImageGridHeaderView
 - (instancetype)initWithDevice:(MDCStudio::MDCDevicePtr)device;
 - (void)setDelegate:(id<DeviceImageGridHeaderViewDelegate>)x;
 @end

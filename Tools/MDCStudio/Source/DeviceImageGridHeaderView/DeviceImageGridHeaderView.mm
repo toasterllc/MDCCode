@@ -9,8 +9,6 @@ using namespace MDCStudio;
     MDCStudio::MDCDevicePtr _device;
     ImageLibrary* _imageLibrary;
     __weak id<DeviceImageGridHeaderViewDelegate> _delegate;
-    IBOutlet NSView* _nibView;
-    IBOutlet NSLayoutConstraint* _heightConstraint;
     IBOutlet NSLayoutConstraint* _hideLoadPhotosConstraint;
     IBOutlet NSTextField* _statusLabel;
     IBOutlet NSTextField* _loadPhotosCountLabel;
@@ -40,28 +38,16 @@ using namespace MDCStudio;
         });
     }
     
-    [self setTranslatesAutoresizingMaskIntoConstraints:false];
-    
-    bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
-    assert(br);
-    
-    [_nibView setTranslatesAutoresizingMaskIntoConstraints:false];
-    [self addSubview:_nibView];
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-    
     [self _update];
     return self;
 }
 
-- (NSSize)intrinsicContentSize {
-    return { NSViewNoIntrinsicMetric, [_heightConstraint constant] };
-}
-
 - (void)setDelegate:(id<DeviceImageGridHeaderViewDelegate>)x {
     _delegate = x;
+}
+
+- (void)setSelection:(MDCStudio::ImageSet)selection {
+    
 }
 
 static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibrary& imgLib) {
