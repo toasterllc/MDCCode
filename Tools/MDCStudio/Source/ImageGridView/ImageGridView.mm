@@ -17,11 +17,11 @@ using namespace MDCStudio;
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
 static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 
-// _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
-// To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
-// and we opt-in to color matching by setting the colorspace on our CAMetalLayer via -setColorspace:.
+// _PixelFormat == _sRGB with -setColorspace:SRGB appears to be the correct combination
+// such that we supply color data in the linear SRGB colorspace and the system handles
+// conversion into SRGB.
 // (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 @interface ImageGridLayer : FixedMetalDocumentLayer
 
@@ -81,8 +81,8 @@ struct _ThumbRenderThreadState {
     } _selection;
 }
 
-static CGColorSpaceRef _LSRGBColorSpace() {
-    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+static CGColorSpaceRef _SRGBColorSpace() {
+    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     return cs;
 }
 
@@ -110,7 +110,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     assert(_device);
     [self setDevice:_device];
     [self setPixelFormat:_PixelFormat];
-    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
+    [self setColorspace:_SRGBColorSpace()]; // See comment for _PixelFormat
     
     MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:_device];
     // TODO: supply scaleFactor properly

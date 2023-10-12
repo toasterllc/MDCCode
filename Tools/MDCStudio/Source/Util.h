@@ -4,7 +4,7 @@
 namespace MDCStudio {
 
 inline struct {
-    MDCTools::Color<MDCTools::ColorSpace::SRGB> srgb    = {.118, .122, .129};
+    MDCTools::Color<MDCTools::ColorSpace::SRGB> srgb    = {.114, .125, .133};
     MDCTools::Color<MDCTools::ColorSpace::LSRGB> lsrgb  = srgb;
 } WindowBackgroundColor;
 

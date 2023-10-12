@@ -14,11 +14,11 @@ using namespace MDCStudio;
 using namespace MDCStudio::ImageViewTypes;
 using namespace MDCTools;
 
-// _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
-// To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
-// and we opt-in to color matching by setting the colorspace on our CAMetalLayer via -setColorspace:.
+// _PixelFormat == _sRGB with -setColorspace:SRGB appears to be the correct combination
+// such that we supply color data in the linear SRGB colorspace and the system handles
+// conversion into SRGB.
 // (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 struct _ImageLoadThreadState {
     Toastbox::Signal signal; // Protects this struct
@@ -54,8 +54,8 @@ struct _ImageLoadThreadState {
     std::shared_ptr<_ImageLoadThreadState> _imageLoad;
 }
 
-static CGColorSpaceRef _LSRGBColorSpace() {
-    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+static CGColorSpaceRef _SRGBColorSpace() {
+    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     return cs;
 }
 
@@ -70,7 +70,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     [self setDevice:device];
     [self setPixelFormat:_PixelFormat];
-    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
+    [self setColorspace:_SRGBColorSpace()]; // See comment for _PixelFormat
     
     // Add ourself as an observer of the image library
     {
