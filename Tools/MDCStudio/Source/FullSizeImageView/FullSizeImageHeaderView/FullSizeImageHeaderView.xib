@@ -12,16 +12,16 @@
             </connections>
         </customObject>
         <visualEffectView wantsLayer="YES" blendingMode="withinWindow" material="fullScreenUI" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
-            <rect key="frame" x="0.0" y="0.0" width="830" height="40"/>
+            <rect key="frame" x="0.0" y="0.0" width="830" height="50"/>
             <subviews>
                 <button verticalHuggingPriority="750" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dpY-R3-nlv">
-                    <rect key="frame" x="0.0" y="0.0" width="80" height="40"/>
+                    <rect key="frame" x="0.0" y="0.0" width="80" height="50"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="80" id="tEQ-PY-DQ7"/>
                     </constraints>
-                    <buttonCell key="cell" type="bevel" title="Back" bezelStyle="regularSquare" image="NSGoBackTemplate" imagePosition="left" alignment="center" imageScaling="proportionallyDown" inset="2" id="Ock-mg-sFM">
+                    <buttonCell key="cell" type="bevel" title=" Back" bezelStyle="regularSquare" image="NSGoBackTemplate" imagePosition="left" alignment="center" imageScaling="proportionallyDown" inset="2" id="Ock-mg-sFM">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="systemThin" size="18"/>
                     </buttonCell>
                     <connections>
                         <action selector="actionBack:" target="-2" id="Mth-Jt-TCl"/>
@@ -31,7 +31,7 @@
             <constraints>
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" id="2sc-R9-B5b"/>
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" id="2tC-4O-Ez2"/>
-                <constraint firstAttribute="height" constant="40" id="3zV-F0-Xdo"/>
+                <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
                 <constraint firstAttribute="bottom" secondItem="dpY-R3-nlv" secondAttribute="bottom" id="eC7-MN-qC0"/>
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" id="vY7-aF-HAI"/>
             </constraints>
