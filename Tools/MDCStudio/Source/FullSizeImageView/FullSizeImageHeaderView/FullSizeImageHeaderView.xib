@@ -14,6 +14,9 @@
         <visualEffectView wantsLayer="YES" blendingMode="withinWindow" material="fullScreenUI" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
             <rect key="frame" x="0.0" y="0.0" width="830" height="50"/>
             <subviews>
+                <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="o4K-MR-L5v">
+                    <rect key="frame" x="0.0" y="-2" width="830" height="5"/>
+                </box>
                 <button verticalHuggingPriority="750" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dpY-R3-nlv">
                     <rect key="frame" x="0.0" y="0.0" width="80" height="50"/>
                     <constraints>
@@ -32,7 +35,10 @@
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" id="2sc-R9-B5b"/>
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" id="2tC-4O-Ez2"/>
                 <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
+                <constraint firstAttribute="trailing" secondItem="o4K-MR-L5v" secondAttribute="trailing" id="BRN-9t-ibi"/>
+                <constraint firstAttribute="bottom" secondItem="o4K-MR-L5v" secondAttribute="bottom" id="VpQ-zs-SN6"/>
                 <constraint firstAttribute="bottom" secondItem="dpY-R3-nlv" secondAttribute="bottom" id="eC7-MN-qC0"/>
+                <constraint firstItem="o4K-MR-L5v" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" id="pIE-cK-rUd"/>
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" id="vY7-aF-HAI"/>
             </constraints>
             <point key="canvasLocation" x="696" y="-337"/>

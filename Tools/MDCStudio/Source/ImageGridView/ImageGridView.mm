@@ -30,7 +30,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 - (void)setContainerWidth:(CGFloat)width;
 - (CGFloat)containerHeight;
 - (size_t)columnCount;
-- (void)recomputeGrid;
+- (void)updateGridElementCount;
 
 - (ImageSet)imagesForRect:(CGRect)rect;
 //- (CGRect)rectForImageAtIndex:(size_t)idx;
@@ -214,10 +214,9 @@ static CGColorSpaceRef _SRGBColorSpace() {
     });
 }
 
-- (void)recomputeGrid {
+- (void)updateGridElementCount {
     auto lock = std::unique_lock(*_imageLibrary);
     _grid.setElementCount((int32_t)_imageLibrary->recordCount());
-    _grid.recompute();
 }
 
 static Grid::Rect _GridRectFromCGRect(CGRect rect, CGFloat scale) {
@@ -622,7 +621,7 @@ struct SelectionDelta {
 
 using _IterRange = std::pair<ImageRecordIterAny,ImageRecordIterAny>;
 
-static Grid::IndexRange _VisibleIndexRange(const Grid& grid, CGRect frame, CGFloat scale) {
+static Grid::IndexRange _VisibleIndexRange(Grid& grid, CGRect frame, CGFloat scale) {
     return grid.indexRangeForIndexRect(grid.indexRectForRect(_GridRectFromCGRect(frame, scale)));
 }
 
@@ -936,8 +935,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 - (void)_updateDocumentHeight {
-    [_imageGridLayer setContainerWidth:[self bounds].size.width];
-    [_imageGridLayer recomputeGrid];
+    [_imageGridLayer setContainerWidth:[[self enclosingScrollView] bounds].size.width];
+    [_imageGridLayer updateGridElementCount];
     [_docHeight setConstant:[_imageGridLayer containerHeight]];
 }
 

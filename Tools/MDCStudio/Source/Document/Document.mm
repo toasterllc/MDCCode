@@ -64,6 +64,12 @@ static void _SetView(T& x, NSView* y) {
         options:0 metrics:nil views:@{@"v":x.view}]];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|"
         options:0 metrics:nil views:@{@"v":x.view}]];
+    // setNeedsLayout: is necessary to ensure the grid view is sized properly,
+    // when showing the grid view.
+    [y setNeedsLayout:true];
+    // -layoutIfNeeded is necessary on the window so that we can scroll the grid
+    // view to a particular spot immediately, instead of having to wait until
+    // the next layout pass (eg using NSTimer).
     [[x.containerView window] layoutIfNeeded];
 }
 
