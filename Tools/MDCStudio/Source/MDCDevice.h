@@ -32,8 +32,6 @@ private:
     using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
     
 public:
-    using Observer = std::function<bool()>;
-    
     struct Status {
         struct Sync {
             float progress = 0;
@@ -120,7 +118,7 @@ public:
         assert([NSThread isMainThread]);
         _name = name;
         write();
-        _notifyObservers();
+        _observersNotify();
     }
     
     Status status() {
@@ -132,10 +130,58 @@ public:
         return _device.device.dev().service();
     }
     
-    void observerAdd(Observer&& observer) {
-        assert([NSThread isMainThread]);
-        _observers.push_front(std::move(observer));
+    // MARK: - Observation
+    using Observer    = std::function<void()>;
+    using ObserverPtr = std::shared_ptr<Observer>;
+    
+    static ObserverPtr ObserverCreate(Observer&& fn) {
+        return std::make_shared<Observer>(std::move(fn));
     }
+    
+    ObserverPtr observerAdd(Observer&& fn) {
+        ObserverPtr ob = ObserverCreate(std::move(fn));
+        observerAdd(ob);
+        return ob;
+    }
+    
+    bool observerAdd(ObserverPtr ob) {
+        // Don't allow ourself to modify _observers within a _observersNotify() callout
+        assert(!_observersBusy);
+        _observersPrune();
+        auto [_,inserted] = _observers.insert(ob);
+        return inserted;
+    }
+    
+    void _observersNotify() {
+        #warning TODO: if this ever triggers, switch to a counter
+        assert(!_observersBusy);
+        
+        _observersBusy = true;
+        for (auto obWeak : _observers) {
+            ObserverPtr ob = obWeak.lock();
+            if (ob) (*ob)(self(), ev);
+        }
+        _observersBusy = false;
+    }
+    
+    void _observersPrune() {
+        // Prune observers
+        auto it = _observers.begin();
+        while (it != _observers.end()) {
+            ObserverPtr ob = (*it).lock();
+            if (!ob) {
+                // Null -> prune
+                it = _observers.erase(it);
+            } else {
+                it++;
+            }
+        }
+    }
+    
+    std::set<ObserverPtr::weak_type,std::owner_less<>> _observers;
+    bool _observersBusy = false;
+    
+    // MARK: - Serialization
     
     void write() {
         assert([NSThread isMainThread]);
@@ -151,6 +197,8 @@ public:
         _SerializedStateWrite(_dir, state);
     }
     
+    // MARK: - Read/Write Device Settings
+    
     const MSP::Settings& settings() {
         return _mspSettings;
     }
@@ -165,6 +213,8 @@ public:
         }
     }
     
+    // MARK: - Image Syncing
+    
     void sync() {
         {
             auto lock = _status.signal.lock();
@@ -177,7 +227,7 @@ public:
         _sync.thread = std::thread([&] { _sync_thread(); });
         
         // Notify observers that syncing started
-        _notifyObservers();
+        _observersNotify();
     }
     
     // MARK: - ImageSource
@@ -491,20 +541,6 @@ private:
         };
     }
     
-    void _notifyObservers() {
-        auto prev = _observers.before_begin();
-        for (auto it=_observers.begin(); it!=_observers.end();) {
-            // Notify the observer; it returns whether it's still valid
-            // If it's not valid (it returned false), remove it from the list
-            if (!(*it)()) {
-                it = _observers.erase_after(prev);
-            } else {
-                prev = it;
-                it++;
-            }
-        }
-    }
-    
     void _readCompleteCallback(_LoadState& state, _SDReadWork&& work, bool initial) {
         _ThumbBufferReserved& buf = *work.buf.thumb();
         
@@ -791,7 +827,7 @@ private:
                             auto lock = _status.signal.lock();
                             _status.status.sync->progress = progress;
                         }
-                        _notifyObservers();
+                        _observersNotify();
                     });
                 }
             }
@@ -810,7 +846,7 @@ private:
         }
         
         // Notify observers that syncing is complete
-        _notifyObservers();
+        _observersNotify();
     }
     
     // MARK: - SD Read
@@ -1066,7 +1102,7 @@ private:
                     _status_update(_device.device.batteryStatusGet(), _device.device.mspStateRead());
                 }
                 
-                _notifyObservers();
+                _observersNotify();
                 
                 // Sleep for 30 seconds
                 _status.signal.wait_for(UpdateInterval, [] { return false; });
@@ -1152,7 +1188,6 @@ private:
     MSP::Settings _mspSettings = {};
     
     std::string _name;
-    std::forward_list<Observer> _observers;
     Toastbox::Signal _imageForAddrSignal;
     _ThumbCache _thumbCache;
     _ImageCache _imageCache;

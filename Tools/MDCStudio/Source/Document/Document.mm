@@ -42,6 +42,7 @@ using namespace MDCStudio;
     SourceListView* _sourceListView;
     FullSizeImageView* _fullSizeImageView;
     ImageGridView* _imageGridView;
+    ImageGridHeaderView* _imageGridHeaderView;
     ImageGridScrollView* _imageGridScrollView;
     InspectorView* _inspectorView;
     
@@ -456,14 +457,15 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>([_sourceListView selection]);
     if (device) {
         {
-            _imageGridScrollView = [[DeviceImageGridScrollView alloc] initWithDevice:device];
-            _imageGridView = Toastbox::Cast<ImageGridView*>([_imageGridScrollView document]);
-            auto headerView = Toastbox::Cast<DeviceImageGridHeaderView*>([_imageGridScrollView headerView]);
-            
-            [headerView setDelegate:self];
+            _imageGridView = [[ImageGridView alloc] initWithImageSource:device];
             [_imageGridView setDelegate:self];
-            
             _UpdateImageGridViewFromPrefs(PrefsGlobal(), _imageGridView);
+            
+            _imageGridHeaderView = [[DeviceImageGridHeaderView alloc] initWithFrame:{}];
+            [_imageGridHeaderView setDelegate:self];
+            
+            _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:_imageGridView]
+            [_imageGridScrollView setHeaderView:_imageGridHeaderView];
         }
         
         {
@@ -477,8 +479,27 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         
         _SetView(_center, _imageGridScrollView);
         _SetView(_right, _inspectorView);
-        
         [_window makeFirstResponder:_imageGridView];
+        
+        
+        __weak auto selfWeak = self;
+        {
+            _device->observerAdd([=] {
+                dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _update]; });
+                return true;
+            });
+        }
+        
+        // Add ourself as an observer of the image library
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            _imageLibrary->observerAdd([=](const ImageLibrary::Event& ev) {
+                dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _update]; });
+                return true;
+            });
+        }
+        
+        
 //        [_mainView setContentView:sv animation:MainViewAnimation::None];
     
     } else {

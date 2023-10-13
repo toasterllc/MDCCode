@@ -11,7 +11,7 @@
     
     if (!(self = [super initWithFixedDocument:_imageGridView])) return nil;
     
-    _headerView = [[DeviceImageGridHeaderView alloc] initWithDevice:device];
+    _headerView = [[DeviceImageGridHeaderView alloc] initWithFrame:{}];
     [self setHeaderView:_headerView];
     
     return self;
