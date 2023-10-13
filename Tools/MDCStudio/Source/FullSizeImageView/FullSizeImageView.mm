@@ -36,6 +36,7 @@ struct _ImageLoadThreadState {
     NSLayoutConstraint* _height;
     
     ImageSourcePtr _imageSource;
+    Object::ObserverPtr _imageLibraryOb;
     Renderer _renderer;
     
     ImageRecordPtr _imageRecord;
@@ -74,13 +75,9 @@ static CGColorSpaceRef _SRGBColorSpace() {
     
     // Add ourself as an observer of the image library
     {
-        auto lock = std::unique_lock(_imageSource->imageLibrary());
         __weak auto selfWeak = self;
-        _imageSource->imageLibrary().observerAdd([=](const ImageLibrary::Event& ev) {
-            auto selfStrong = selfWeak;
-            if (!selfStrong) return false;
-            [selfStrong _handleImageLibraryEvent:ev];
-            return true;
+        _imageLibraryOb = _imageSource->imageLibrary()->observerAdd([=] (auto, const Object::Event& ev) {
+            [selfWeak _handleImageLibraryEvent:dynamic_cast<const ImageLibrary::Event&>(ev)];
         });
     }
     
@@ -304,21 +301,21 @@ static CGColorSpaceRef _SRGBColorSpace() {
 //    return {(CGFloat)_imageRecord->info.imageWidth*2, (CGFloat)_imageRecord->info.imageHeight*2};
 //}
 
-static ImageSet _NeighborsGet(ImageLibrary& lib, ImageRecordPtr rec, size_t count) {
+static ImageSet _NeighborsGet(ImageLibraryPtr lib, ImageRecordPtr rec, size_t count) {
     // Collect the neighboring image ids in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
-    auto lock = std::unique_lock(lib);
-    auto find = lib.find(rec);
+    auto lock = std::unique_lock(*lib);
+    auto find = lib->find(rec);
     auto it = find;
     auto rit = std::make_reverse_iterator(find); // Points to element before `find`
     ImageSet images;
     for (size_t i=0; i<count/2; i++) {
-        if (it != lib.end()) it++;
-        if (it != lib.end()) images.insert(*it);
-        if (rit != lib.rend()) images.insert(*rit);
+        if (it != lib->end()) it++;
+        if (it != lib->end()) images.insert(*it);
+        if (rit != lib->rend()) images.insert(*rit);
         // make_reverse_iterator() returns an iterator that points to the element _before_ the
         // forward iterator (`find`), so we increment `rit` at the end of the loop, instead of
         // at the beginning (where we increment the forward iterator `it`)
-        if (rit != lib.rend()) rit++;
+        if (rit != lib->rend()) rit++;
     }
     return images;
 }
@@ -326,8 +323,8 @@ static ImageSet _NeighborsGet(ImageLibrary& lib, ImageRecordPtr rec, size_t coun
 static void _ImageLoadThread(_ImageLoadThreadState& state) {
     printf("[_ImageLoadThread] Starting\n");
     try {
-        ImageSource& is = *state.imageSource;
-        ImageLibrary& il = is.imageLibrary();
+        ImageSourcePtr is = state.imageSource;
+        ImageLibraryPtr il = is->imageLibrary();
         
         for (;;) {
             ImageRecordPtr work;
@@ -341,7 +338,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
             if (work) {
                 printf("[_ImageLoadThread] Load image start\n");
                 {
-                    Image image = state.imageSource->loadImage(ImageSource::Priority::High, work);
+                    Image image = is->loadImage(ImageSource::Priority::High, work);
                     state.callback(work, std::move(image));
                 }
                 printf("[_ImageLoadThread] Load image end\n");
@@ -358,8 +355,8 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
                             if (state.work || state.workNeighbors) break;
                         }
                         
-                        if (!state.imageSource->getCachedImage(rec)) {
-                            state.imageSource->loadImage(ImageSource::Priority::Low, rec);
+                        if (!is->getCachedImage(rec)) {
+                            is->loadImage(ImageSource::Priority::Low, rec);
                         }
                     }
                 }

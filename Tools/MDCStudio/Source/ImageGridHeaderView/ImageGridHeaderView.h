@@ -2,5 +2,5 @@
 #import "ImageLibrary.h"
 
 @interface ImageGridHeaderView : NSView
-- (void)setSelection:(MDCStudio::ImageSet)selection;
+- (void)setStatus:(NSString*)x;
 @end

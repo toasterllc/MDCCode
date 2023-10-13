@@ -4,6 +4,7 @@ using namespace MDCStudio;
 @implementation ImageGridHeaderView {
     IBOutlet NSView* _nibView;
     IBOutlet NSLayoutConstraint* _heightConstraint;
+    IBOutlet NSTextField* _statusLabel;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
@@ -28,7 +29,8 @@ using namespace MDCStudio;
     return { NSViewNoIntrinsicMetric, [_heightConstraint constant] };
 }
 
-- (void)setSelection:(MDCStudio::ImageSet)selection {
+- (void)setStatus:(NSString*)x {
+    [_statusLabel setStringValue:x];
 }
 
 @end

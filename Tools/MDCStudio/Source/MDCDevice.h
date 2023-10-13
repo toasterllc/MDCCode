@@ -24,14 +24,13 @@
 #import "ImageSource.h"
 #import "BufferPool.h"
 #import "Cache.h"
+#import "Object.h"
 
 namespace MDCStudio {
 
-class MDCDevice : public ImageSource {
-private:
+struct MDCDevice : Object, ImageSource {
     using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
     
-public:
     struct Status {
         struct Sync {
             float progress = 0;
@@ -43,15 +42,17 @@ public:
         std::optional<Sync> sync;
     };
     
-    MDCDevice(MDCUSBDevice&& dev) :
-    _device(decltype(_device){ .device = std::move(dev) }),
-    _dir(_DirForSerial(_device.device.serial())),
-    _imageLibrary(_dir / "ImageLibrary") {
-        printf("MDCDevice()\n");
+    void init(MDCUSBDevice&& dev) {
+        printf("MDCDevice::init()\n");
+        Object::init(); // Call super
+        
+        _device.device = std::make_unique<MDCUSBDevice>(std::move(dev));
+        _dir = _DirForSerial(_device.device->serial());
+        _imageLibrary = Object::Create<ImageLibrary>();
         
         // Give device a default name
         char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", _device.device.serial().c_str());
+        snprintf(name, sizeof(name), "MDC Device %s", _device.device->serial().c_str());
         _name = std::string(name);
         
         // Read state from disk
@@ -62,8 +63,8 @@ public:
         
         // Load the library
         {
-            auto lock = std::unique_lock(_imageLibrary);
-            _imageLibrary.read();
+            auto lock = std::unique_lock(*_imageLibrary);
+            _imageLibrary->read(_dir / "ImageLibrary");
         }
         
         {
@@ -71,16 +72,16 @@ public:
             auto hostMode = _hostMode();
             
             // Update our mspState from the device
-            const MSP::State mspState = _device.device.mspStateRead();
+            const MSP::State mspState = _device.device->mspStateRead();
             _mspSDState = mspState.sd;
             _mspSettings = mspState.settings;
             
             // Update our _status struct
-            _status_update(_device.device.batteryStatusGet(), mspState);
+            _status_update(_device.device->batteryStatusGet(), mspState);
             
             // Adjust the device's time to correct it for crystal innaccuracy
             std::cout << "Adjusting device time:\n";
-            _device.device.mspTimeAdjust();
+            _device.device->mspTimeAdjust();
         }
         
         // Start threads
@@ -109,16 +110,12 @@ public:
         _status.thread.join();
     }
     
-    const std::string& name() {
-        assert([NSThread isMainThread]);
-        return _name;
-    }
+    PropertyValue(std::string, name);
     
-    void name(const std::string_view& name) {
-        assert([NSThread isMainThread]);
-        _name = name;
-        write();
-        _observersNotify();
+    void changed(const Event& ev) override {
+        if (ev.prop == &_name) {
+            write();
+        }
     }
     
     Status status() {
@@ -127,72 +124,19 @@ public:
     }
     
     const Toastbox::SendRight& service() const {
-        return _device.device.dev().service();
+        return _device.device->dev().service();
     }
-    
-    // MARK: - Observation
-    using Observer    = std::function<void()>;
-    using ObserverPtr = std::shared_ptr<Observer>;
-    
-    static ObserverPtr ObserverCreate(Observer&& fn) {
-        return std::make_shared<Observer>(std::move(fn));
-    }
-    
-    ObserverPtr observerAdd(Observer&& fn) {
-        ObserverPtr ob = ObserverCreate(std::move(fn));
-        observerAdd(ob);
-        return ob;
-    }
-    
-    bool observerAdd(ObserverPtr ob) {
-        // Don't allow ourself to modify _observers within a _observersNotify() callout
-        assert(!_observersBusy);
-        _observersPrune();
-        auto [_,inserted] = _observers.insert(ob);
-        return inserted;
-    }
-    
-    void _observersNotify() {
-        #warning TODO: if this ever triggers, switch to a counter
-        assert(!_observersBusy);
-        
-        _observersBusy = true;
-        for (auto obWeak : _observers) {
-            ObserverPtr ob = obWeak.lock();
-            if (ob) (*ob)(self(), ev);
-        }
-        _observersBusy = false;
-    }
-    
-    void _observersPrune() {
-        // Prune observers
-        auto it = _observers.begin();
-        while (it != _observers.end()) {
-            ObserverPtr ob = (*it).lock();
-            if (!ob) {
-                // Null -> prune
-                it = _observers.erase(it);
-            } else {
-                it++;
-            }
-        }
-    }
-    
-    std::set<ObserverPtr::weak_type,std::owner_less<>> _observers;
-    bool _observersBusy = false;
     
     // MARK: - Serialization
     
     void write() {
-        assert([NSThread isMainThread]);
-        
         _SerializedState state;
         state.version = _Version;
         // Copy UTF8 device name into state.name
         // state.name is initialized with zeroes, so we don't need to explicitly set a
         // null byte, but we do need to limit the number of copied bytes to
         // `sizeof(state.name)-1` to ensure that the null byte isn't overwritten
-        _name.copy(state.name, sizeof(state.name)-1);
+        name().copy(state.name, sizeof(state.name)-1);
         
         _SerializedStateWrite(_dir, state);
     }
@@ -207,9 +151,9 @@ public:
         _mspSettings = x;
         {
             auto hostMode = _hostMode();
-            MSP::State mspState = _device.device.mspStateRead();
+            MSP::State mspState = _device.device->mspStateRead();
             mspState.settings = _mspSettings;
-            _device.device.mspStateWrite(mspState);
+            _device.device->mspStateWrite(mspState);
         }
     }
     
@@ -227,12 +171,12 @@ public:
         _sync.thread = std::thread([&] { _sync_thread(); });
         
         // Notify observers that syncing started
-        _observersNotify();
+        observersNotify({});
     }
     
     // MARK: - ImageSource
     
-    ImageLibrary& imageLibrary() override { return _imageLibrary; }
+    ImageLibraryPtr imageLibrary() override { return _imageLibrary; }
     
     void renderThumbs(Priority priority, std::set<ImageRecordPtr> recs) override {
         _loadImages(priority, false, recs);
@@ -249,7 +193,6 @@ public:
         return _loadImage(priority, rec);
     }
     
-private:
     // MARK: - Private
     
     using _Path = std::filesystem::path;
@@ -575,8 +518,8 @@ private:
         }
         
         if (!notify.empty()) {
-            auto lock = std::unique_lock(_imageLibrary);
-            _imageLibrary.notify(ImageLibrary::Event::Type::ChangeThumbnail, notify);
+            auto lock = std::unique_lock(*_imageLibrary);
+            _imageLibrary->observersNotify(ImageLibrary::Event::Type::ChangeThumbnail, notify);
         }
         
         if (!count || !notify.empty()) state.signal.signalAll();
@@ -734,7 +677,7 @@ private:
         try {
             // Enter SD mode for the entire duration of our sync
             auto lock = _deviceLock();
-                const MSP::State mspState = _device.device.mspStateRead();
+                const MSP::State mspState = _device.device->mspStateRead();
             lock.unlock();
             
             // Update our status
@@ -753,25 +696,25 @@ private:
                 // since the last time we sync'd
                 uint32_t addCount = 0;
                 {
-                    auto lock = std::unique_lock(_imageLibrary);
+                    auto lock = std::unique_lock(*_imageLibrary);
                     
                     // Remove images from beginning of library: lib has, device doesn't
                     {
-                        const auto removeBegin = _imageLibrary.begin();
+                        const auto removeBegin = _imageLibrary->begin();
                         
                         // Find the first image >= `deviceImgIdBegin`
-                        const auto removeEnd = std::lower_bound(_imageLibrary.begin(), _imageLibrary.end(), 0,
+                        const auto removeEnd = std::lower_bound(_imageLibrary->begin(), _imageLibrary->end(), 0,
                             [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
                                 return sample->info.id < deviceImgIdBegin;
                             });
                         
                         printf("[_sync_thread] Removing %ju stale images\n", (uintmax_t)(removeEnd-removeBegin));
-                        _imageLibrary.remove(removeBegin, removeEnd);
+                        _imageLibrary->remove(removeBegin, removeEnd);
                     }
                     
                     // Calculate how many images to add to the end of the library: device has, lib doesn't
                     {
-                        const Img::Id libImgIdEnd = (!_imageLibrary.empty() ? _imageLibrary.back()->info.id+1 : 0);
+                        const Img::Id libImgIdEnd = (!_imageLibrary->empty() ? _imageLibrary->back()->info.id+1 : 0);
                         if (libImgIdEnd > deviceImgIdEnd) {
                             #warning TODO: how do we properly handle this situation?
                             throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
@@ -783,12 +726,12 @@ private:
                         addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
 //                        addCount = 100;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
-                        _imageLibrary.add(addCount);
+                        _imageLibrary->add(addCount);
                     }
                     
                     // Populate .id / .addr for the ImageRecords that we're adding
                     {
-                        auto it = _imageLibrary.end();
+                        auto it = _imageLibrary->end();
                         Img::Id id = deviceImgIdEnd;
                         uint32_t idx = imgRingBuf.buf.idx;
                         while (addCount) {
@@ -807,7 +750,7 @@ private:
                     }
                     
                     // Write library now that we've added our new images and populated their .id / .addr
-                    _imageLibrary.write();
+                    _imageLibrary->write();
                 }
                 
                 // Load all unloaded images from the SD card
@@ -815,7 +758,7 @@ private:
                 // been killed or crashed before we finished loading all images.
                 {
                     std::set<ImageRecordPtr> recs;
-                    for (const ImageLibrary::RecordRef& rec : _imageLibrary) {
+                    for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
                         if (!rec->status.loadCount) {
                             recs.insert(rec);
                         }
@@ -827,7 +770,7 @@ private:
                             auto lock = _status.signal.lock();
                             _status.status.sync->progress = progress;
                         }
-                        _observersNotify();
+                        observersNotify({});
                     });
                 }
             }
@@ -846,7 +789,7 @@ private:
         }
         
         // Notify observers that syncing is complete
-        _observersNotify();
+        observersNotify({});
     }
     
     // MARK: - SD Read
@@ -919,17 +862,17 @@ private:
                                 printf("[_deviceSDRead] Starting readout at %ju\n", (uintmax_t)block);
                                 // If readout was in progress at a different address, reset the device
                                 if (sdReadEnd) {
-                                    _device.device.reset();
+                                    _device.device->reset();
                                 }
                                 
                                 // Verify that blockBegin can be safely cast to SD::Block
                                 assert(std::numeric_limits<SD::Block>::max() >= block);
-                                _device.device.sdRead((SD::Block)block);
-                                _device.device.readout(dst, len);
+                                _device.device->sdRead((SD::Block)block);
+                                _device.device->readout(dst, len);
                             
                             } else {
 //                                printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
-                                _device.device.readout(dst, len);
+                                _device.device->readout(dst, len);
                             }
                             sdReadEnd = _SDBlockEnd(block, len);
                         }
@@ -1054,7 +997,7 @@ private:
 //        auto lock = std::unique_lock(_device.lock);
 //        if (_device.sdReadEnd) {
 //            // Readout is in progress; stop it by resetting the device
-//            _device.device.reset();
+//            _device.device->reset();
 //            // Clear sdReadEnd to indicate that readout is no longer underway
 //            _device.sdReadEnd = std::nullopt;
 //        }
@@ -1099,10 +1042,10 @@ private:
             for (;;) {
                 {
                     auto deviceLock = _deviceLock();
-                    _status_update(_device.device.batteryStatusGet(), _device.device.mspStateRead());
+                    _status_update(_device.device->batteryStatusGet(), _device.device->mspStateRead());
                 }
                 
-                _observersNotify();
+                observersNotify({});
                 
                 // Sleep for 30 seconds
                 _status.signal.wait_for(UpdateInterval, [] { return false; });
@@ -1116,11 +1059,14 @@ private:
         }
     }
     
+    // Host mode: acquires the device lock, and tells the device to enter host mode
     _Cleanup _hostMode() {
         _hostModeSet(true);
         return std::make_unique<__Cleanup>([=] { _hostModeSet(false); });
     }
     
+    // SD mode: acquires the device lock, tells the device to enter host mode,
+    // loads ICEAppSDReadoutSTM onto the ICE40, and initializes the SD card.
     _Cleanup _sdMode() {
         _sdModeSet(true);
         return std::make_unique<__Cleanup>([=] { _sdModeSet(false); });
@@ -1130,11 +1076,11 @@ private:
         if (en) {
             printf("_hostModeSet(1)\n");
             _device.lock.lock();
-            _device.device.hostModeSet(true);
+            _device.device->hostModeSet(true);
         
         } else {
             printf("_hostModeSet(0)\n");
-            _device.device.hostModeSet(false);
+            _device.device->hostModeSet(false);
             _device.lock.unlock();
         }
     }
@@ -1148,10 +1094,10 @@ private:
             _hostModeSet(true);
             
             // Load ICE40 with our app
-            _ICEConfigure(_device.device);
+            _ICEConfigure(*_device.device);
             
             // Init SD card
-            const STM::SDCardInfo sdCardInfo = _device.device.sdInit();
+            const STM::SDCardInfo sdCardInfo = _device.device->sdInit();
             
             // If _mspSDState is valid, verify that the current SD card id matches MSP's card id
             if (_mspSDState.valid) {
@@ -1169,7 +1115,7 @@ private:
         
         } else {
             // Assume that we were in the middle of readout; reset the device to exit readout.
-            _device.device.reset();
+            _device.device->reset();
             // Exit host mode
             _hostModeSet(false);
         }
@@ -1179,15 +1125,14 @@ private:
     
     struct {
         std::mutex lock; // Protects this struct
-        MDCUSBDevice device;
+        std::unique_ptr<MDCUSBDevice> device;
     } _device;
     
-    const _Path _dir;
-    ImageLibrary _imageLibrary;
+    _Path _dir;
+    ImageLibraryPtr _imageLibrary;
     MSP::SDState _mspSDState = {};
     MSP::Settings _mspSettings = {};
     
-    std::string _name;
     Toastbox::Signal _imageForAddrSignal;
     _ThumbCache _thumbCache;
     _ImageCache _imageCache;
@@ -1216,7 +1161,6 @@ private:
         Status status;
     } _status;
 };
-
-using MDCDevicePtr = std::shared_ptr<MDCDevice>;
+using MDCDevicePtr = SharedPtr<MDCDevice>;
 
 } // namespace MDCStudio

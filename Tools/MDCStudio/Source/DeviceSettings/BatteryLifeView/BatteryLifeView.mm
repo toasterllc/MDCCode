@@ -33,6 +33,7 @@ namespace DS = DeviceSettings;
     IBOutlet NSView* _legendMinMaxView;
     IBOutlet NSView* _legendSingularView;
     
+    Object::ObserverPtr _prefsOb;
     bool _storeLoadUnderway;
     MSP::Triggers _triggers;
     std::optional<T::BatteryLifeEstimate> _estimate;
@@ -41,7 +42,7 @@ namespace DS = DeviceSettings;
 static DS::Duration _StimulusIntervalGet(std::string key, const DS::Duration& uninit) {
     namespace DS = DeviceSettings;
     try {
-        DS::Duration dur = DS::DurationFromString(PrefsGlobal().get(key, ""));
+        DS::Duration dur = DS::DurationFromString(PrefsGlobal()->get(key, ""));
         dur.value = std::max(1.f, dur.value);
         return dur;
     } catch (std::exception& e) {
@@ -51,7 +52,7 @@ static DS::Duration _StimulusIntervalGet(std::string key, const DS::Duration& un
 
 static void _StimulusIntervalSet(std::string key, const DS::Duration& dur) {
     namespace DS = DeviceSettings;
-    PrefsGlobal().set(key, std::to_string(dur.value) + " " + DS::Duration::StringFromUnit(dur.unit));
+    PrefsGlobal()->set(key, std::to_string(dur.value) + " " + DS::Duration::StringFromUnit(dur.unit));
 }
 
 static DS::Duration _MotionStimulusInterval() {
@@ -96,13 +97,11 @@ static void _ButtonStimulusInterval(const DS::Duration& x) {
     [[_maxPlotView plotLayer] setFillColor:[[NSColor colorWithSRGBRed:.184 green:.510 blue:.922 alpha:1] CGColor]];
     [[_minPlotView plotLayer] setFillColor:[[[NSColor blackColor] colorWithAlphaComponent:.4] CGColor]];
     
-    __weak auto selfWeak = self;
-    PrefsGlobal().observerAdd([=] () {
-        auto selfStrong = selfWeak;
-        if (!selfStrong) return false;
-        [selfStrong _prefsChanged];
-        return true;
-    });
+    // Observe preferences
+    {
+        __weak auto selfWeak = self;
+        _prefsOb = PrefsGlobal()->observerAdd([=] (auto, auto) { [selfWeak _prefsChanged]; });
+    }
     
     _Load(self);
     

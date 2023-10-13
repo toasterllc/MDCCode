@@ -8,6 +8,7 @@
 #import "FixedScrollView.h"
 #import "MockImageSource.h"
 #import "Prefs.h"
+#import "ImageLibraryStatus.h"
 #import "DeviceSettings/DeviceSettingsView.h"
 #import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
 #import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
@@ -20,6 +21,7 @@ using namespace MDCStudio;
 @implementation Document {
     IBOutlet NSSplitView* _splitView;
     NSWindow* _window;
+    Object::ObserverPtr _prefsOb;
     
     struct {
         NSView* containerView;
@@ -40,11 +42,17 @@ using namespace MDCStudio;
     NSView* _rightView;
     
     SourceListView* _sourceListView;
-    FullSizeImageView* _fullSizeImageView;
+    
+    ImageGridScrollView* _imageGridScrollView;
     ImageGridView* _imageGridView;
     ImageGridHeaderView* _imageGridHeaderView;
-    ImageGridScrollView* _imageGridScrollView;
+    
+    FullSizeImageView* _fullSizeImageView;
+    
     InspectorView* _inspectorView;
+    
+    Object::ObserverPtr _deviceOb;
+    Object::ObserverPtr _imageLibraryOb;
     
     struct {
         MDCDevicePtr device;
@@ -101,17 +109,10 @@ static void _SetView(T& x, NSView* y) {
     // Handle whatever is first selected
     [self sourceListViewSelectionChanged:_sourceListView];
     
-    __weak auto selfWeak = self;
-    PrefsGlobal().observerAdd([=] () {
-        auto selfStrong = selfWeak;
-        if (!selfStrong) return false;
-        [selfStrong _prefsChanged];
-        return true;
-    });
-    
-//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer*) {
-//        [self _showDeviceSettings:nullptr];
-//    }];
+    {
+        __weak auto selfWeak = self;
+        _prefsOb = PrefsGlobal()->observerAdd([=] (auto, auto) { [selfWeak _prefsChanged]; });
+    }
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
@@ -134,258 +135,9 @@ static void _SetView(T& x, NSView* y) {
     return @"MDCStudio";
 }
 
-
-
-
-//static void _addImages(ImageLibraryPtr imgLib, MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::Block block) {
-//    using namespace MDCTools;
-//    using namespace MDCTools::ImagePipeline;
-//    
-//    ImageId imageId = 0;
-//    {
-//        auto lock = std::unique_lock(*imgLib);
-//        
-//        // Reserve space for `imgCount` additional images
-//        imgLib->reserve(imgCount);
-//        
-//        // Load `imageId` by looking at the last record's image id +1, and reserve space
-//        if (imgLib->recordCount()) {
-//            imageId = imgLib->recordGet(imgLib->back())->ref.id+1;
-//        }
-//    }
-//    
-//    Img::Id deviceImgIdLast = 0;
-//    for (size_t idx=0; idx<imgCount; idx++) {
-//        const uint8_t* imgData = data+idx*ImgSD::ImagePaddedLen;
-//        const Img::Header& imgHeader = *(const Img::Header*)imgData;
-//        // Accessing `imgLib` without a lock because we're the only entity using the image library's reserved space
-//        const auto recordRefIter = imgLib->reservedBegin()+idx;
-//        ImageThumb& imageThumb = *imgLib->recordGet(recordRefIter);
-//        ImageRef& imageRef = imageThumb.ref; // Safe without a lock because we're the only entity using the image library's reserved space
-//        
-//        // Validate checksum
-//        const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::ChecksumOffset);
-//        uint32_t checksumGot = 0;
-//        memcpy(&checksumGot, imgData+Img::ChecksumOffset, Img::ChecksumLen);
-//        if (checksumGot != checksumExpected) {
-//            throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
-//        } else {
-//            printf("Checksum OK\n");
-//        }
-//        
-//        // Populate ImageRef fields
-//        {
-//            imageRef.id = imageId;
-//            
-//            // If the image has an absolute time, use it
-//            // If the image has a relative time (ie time since device boot), drop it
-//            if (imgHeader.timestamp & MSP::TimeAbsoluteBase) {
-//                imageRef.timestamp = MSP::UnixTimeFromTime(imgHeader.timestamp);
-//            }
-//            
-//            imageRef.addr           = block;
-//            
-//            imageRef.imageWidth     = imgHeader.imageWidth;
-//            imageRef.imageHeight    = imgHeader.imageHeight;
-//            
-//            imageRef.coarseIntTime  = imgHeader.coarseIntTime;
-//            imageRef.analogGain     = imgHeader.analogGain;
-//            
-//            imageId++;
-//            block += ImgSD::Full::ImageBlockCount;
-//        }
-//        
-//        // Render the thumbnail into imageRef.thumbData
-//        {
-//            constexpr CFADesc _CFADesc = {
-//                CFAColor::Green, CFAColor::Red,
-//                CFAColor::Blue, CFAColor::Green,
-//            };
-//            
-//            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
-//            
-//            Pipeline::RawImage rawImage = {
-//                .cfaDesc = _CFADesc,
-//                .width = Img::PixelWidth,
-//                .height = Img::PixelHeight,
-//                .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
-//            };
-//            
-//            const Pipeline::Options pipelineOpts = {
-//                .reconstructHighlights  = { .en = true, },
-//                .debayerLMMSE           = { .applyGamma = true, },
-//            };
-//            
-//            Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
-//            const size_t thumbDataOff = (uintptr_t)&imageThumb.thumb - (uintptr_t)chunk.mmap.data();
-//            
-//            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-//            id<MTLBuffer> buf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:chunk.mmap.len() options:BufOpts deallocator:nil];
-//            
-//            const RenderThumb::Options thumbOpts = {
-//                .thumbWidth = ImageThumb::ThumbWidth,
-//                .thumbHeight = ImageThumb::ThumbHeight,
-//                .dataOff = thumbDataOff,
-//            };
-//            
-//            RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
-//        }
-//        
-//        deviceImgIdLast = imgHeader.id;
-//    }
-//    
-//    // Make sure all rendering is complete before adding the images to the library
-//    renderer.commitAndWait();
-//    
-//    {
-//        auto lock = std::unique_lock(*imgLib);
-//        // Add the records that we previously reserved
-//        imgLib->add();
-//        // Update the device's image id 'end' == last image id that we've observed from the device +1
-//        imgLib->deviceImgIdEnd(deviceImgIdLast+1);
-//    }
-//}
-
-static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* view) {
+static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     [view setSortNewestFirst:_SortNewestFirst()];
 }
-
-//static constexpr MDCTools::CFADesc _CFADesc = {
-//    MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
-//    MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
-//};
-//
-//static bool _ChecksumValid(const void* data, Img::Size size) {
-//    const size_t ChecksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
-//    // Validate thumbnail checksum
-//    const uint32_t checksumExpected = ChecksumFletcher32(data, ChecksumOffset);
-//    uint32_t checksumGot = 0;
-//    memcpy(&checksumGot, (uint8_t*)data+ChecksumOffset, Img::ChecksumLen);
-//    if (checksumGot != checksumExpected) {
-//        printf("Checksum invalid (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
-//        return false;
-//    }
-//    return true;
-//}
-//
-//
-//
-//static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
-//    return {
-//        simd::float3{(float)m[0], (float)m[1], (float)m[2]},
-//    };
-//}
-//
-//static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
-//    return {
-//        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
-//        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
-//        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
-//    };
-//}
-//
-//
-//- (void)_addFakeImages:(ImageLibraryPtr)imgLib {
-//    using namespace MDCTools;
-//    using namespace MDCTools::ImagePipeline;
-//    using namespace Toastbox;
-//    
-//    Mmap mmap("/Users/dave/Desktop/images.bin");
-//    const uint8_t* data = mmap.data();
-//    const size_t imgCount = 31;
-//    
-//    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-//    if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
-//    Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-//    
-//    // Reserve space for `imgCount` additional images
-//    {
-//        auto lock = std::unique_lock(*imgLib);
-//        imgLib->reserve(imgCount);
-//    }
-//    
-//    Img::Id deviceImgIdLast = 0;
-//    std::vector<Renderer::Buf> bufs;
-//    id<MTLBuffer> chunkBuf = nil;
-//    
-//    for (size_t idx=0; idx<imgCount; idx++) {
-//        const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
-//        const Img::Header& imgHeader = *(const Img::Header*)imgData;
-//        // Accessing `imgLib` without a lock because we're the only entity using the image library's reserved space
-//        const auto recordRefIter = imgLib->reservedBegin()+idx;
-//        ImageRecord& rec = **recordRefIter;
-//        
-//        rec.info.id = imgHeader.id;
-//        
-//        // Render the thumbnail into rec.thumb
-//        {
-//            const ImagePixel* rawImagePixels = (ImagePixel*)(imgData+Img::PixelsOffset);
-//            
-////            Renderer::Buf rawImagePixelsBuf = renderer.bufferCreate(rawImagePixels, Img::Thumb::PixelLen);
-//            
-////        const size_t w = [txt width];
-////        const size_t h = [txt height];
-////        const size_t len = w*h*samplesPerPixel*sizeof(T);
-////        Renderer::Buf buf = bufferCreate(len);
-////        memcpy([buf contents], samples, len);
-////        textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
-////            
-////            
-////            [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-//            
-//            Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
-////            renderer.textureWrite(rgb, rawImagePixelsBuf, 1, sizeof(*rawImagePixels), ImagePixelMax);
-//            
-//            renderer.textureWrite(rgb, rawImagePixels, 1, sizeof(*rawImagePixels), ImagePixelMax);
-//            
-//            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
-//            const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
-//            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-//            
-//            if (!chunkBuf) {
-//                chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-//            }
-//            
-//            renderer.render(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "RenderThumb::RGB3FromTexture",
-//                    // Buffer args
-//                    (uint32_t)thumbDataOff,
-//                    (uint32_t)ImageThumb::ThumbWidth,
-//                    chunkBuf,
-//                    // Texture args
-//                    rgb
-//                )
-//            );
-//            
-////            NSLog(@"%@", @([renderer.cmdBuf() retainedReferences]));
-////            [renderer.cmdBuf() enqueue];
-////            renderer.commit();
-////            txts.push_back(std::move(raw));
-////            bufs.push_back(std::move(rawImagePixelsBuf));
-//            
-//            // Add non-determinism
-//            usleep(arc4random_uniform(1000));
-//        }
-//        
-//        deviceImgIdLast = imgHeader.id;
-//    }
-//    
-//    // Make sure all rendering is complete before adding the images to the library
-//    renderer.commitAndWait();
-//    
-//    {
-//        auto lock = std::unique_lock(*imgLib);
-//        // Add the records that we previously reserved
-//        imgLib->add();
-//    }
-//}
-
-
-
-
-
-
-
 
 - (void)_prefsChanged {
     NSLog(@"prefs changed");
@@ -402,15 +154,15 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
     ImageSourcePtr imageSource = [_sourceListView selection];
     if (!imageSource) return false;
     
-    ImageLibrary& imageLibrary = imageSource->imageLibrary();
+    ImageLibraryPtr imageLibrary = imageSource->imageLibrary();
     {
         ImageRecordPtr imageRecord;
         {
-            auto lock = std::unique_lock(imageLibrary);
-            if (imageLibrary.empty()) return false;
+            auto lock = std::unique_lock(*imageLibrary);
+            if (imageLibrary->empty()) return false;
             
-            const auto begin = ImageLibrary::BeginSorted(imageLibrary, sortNewestFirst);
-            const auto end = ImageLibrary::EndSorted(imageLibrary, sortNewestFirst);
+            const auto begin = ImageLibrary::BeginSorted(*imageLibrary, sortNewestFirst);
+            const auto end = ImageLibrary::EndSorted(*imageLibrary, sortNewestFirst);
             const auto find = ImageLibrary::Find(begin, end, rec);
             if (find == end) return false;
             
@@ -461,10 +213,11 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
             [_imageGridView setDelegate:self];
             _UpdateImageGridViewFromPrefs(PrefsGlobal(), _imageGridView);
             
-            _imageGridHeaderView = [[DeviceImageGridHeaderView alloc] initWithFrame:{}];
-            [_imageGridHeaderView setDelegate:self];
+            DeviceImageGridHeaderView* headerView = [[DeviceImageGridHeaderView alloc] initWithFrame:{}];
+            [headerView setDelegate:self];
+            _imageGridHeaderView = headerView;
             
-            _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:_imageGridView]
+            _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:_imageGridView];
             [_imageGridScrollView setHeaderView:_imageGridHeaderView];
         }
         
@@ -481,24 +234,18 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
         _SetView(_right, _inspectorView);
         [_window makeFirstResponder:_imageGridView];
         
-        
         __weak auto selfWeak = self;
-        {
-            _device->observerAdd([=] {
-                dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _update]; });
-                return true;
-            });
-        }
+        // Observe device
+        _deviceOb = device->observerAdd([=] (auto, auto) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _deviceChanged]; });
+        });
         
-        // Add ourself as an observer of the image library
-        {
-            auto lock = std::unique_lock(*_imageLibrary);
-            _imageLibrary->observerAdd([=](const ImageLibrary::Event& ev) {
-                dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _update]; });
-                return true;
-            });
-        }
+        // Observe image library
+        _imageLibraryOb = device->imageLibrary()->observerAdd([=] (auto, auto) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _imageLibraryChanged]; });
+        });
         
+        [self _updateImageGridHeader];
         
 //        [_mainView setContentView:sv animation:MainViewAnimation::None];
     
@@ -510,6 +257,60 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 - (void)sourceListView:(SourceListView*)sourceListView showDeviceSettings:(MDCDevicePtr)device {
     assert(sourceListView == _sourceListView);
     [self _showDeviceSettings:device];
+}
+
+static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibraryPtr imageLibrary) {
+    // Short-circut if syncing is in progress.
+    // In that case, we don't want to show the 'Load' button in the header
+    if (status.sync) return std::nullopt;
+    
+    {
+        auto lock = std::unique_lock(*imageLibrary);
+        const Img::Id libImgIdEnd = (!imageLibrary->empty() ? imageLibrary->back()->info.id+1 : 0);
+        
+        // Calculate how many images to add to the end of the library: device has, lib doesn't
+        if (libImgIdEnd > status.imgIdEnd) {
+            #warning TODO: how do we properly handle this situation?
+            throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, status.imgIdEnd: %ju)",
+                (uintmax_t)libImgIdEnd,
+                (uintmax_t)status.imgIdEnd
+            );
+        }
+        
+        return status.imgIdEnd - std::max(status.imgIdBegin, libImgIdEnd);
+    }
+}
+
+- (void)_updateImageGridHeader {
+    MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>([_sourceListView selection]);
+    if (!device) return;
+    
+    ImageLibraryPtr imageLibrary = device->imageLibrary();
+    DeviceImageGridHeaderView* deviceHeader = Toastbox::Cast<DeviceImageGridHeaderView*>(_imageGridHeaderView);
+    const MDCDevice::Status status = device->status();
+    
+    // Update status
+    [_imageGridHeaderView setStatus:@(ImageLibraryStatus(imageLibrary, "No photos").c_str())];
+    
+    // Update unloaded photo count
+    {
+        const std::optional<size_t> loadCount = _LoadCount(status, imageLibrary);
+        [deviceHeader setLoadCount:loadCount.value_or(0)];
+    }
+    
+    // Upload load progress
+    {
+        const float progress = (status.sync ? status.sync->progress : 0);
+        [deviceHeader setProgress:progress];
+    }
+}
+
+- (void)_deviceChanged {
+    [self _updateImageGridHeader];
+}
+
+- (void)_imageLibraryChanged {
+    [self _updateImageGridHeader];
 }
 
 // MARK: - Image Grid
@@ -566,11 +367,11 @@ static void _UpdateImageGridViewFromPrefs(const Prefs& prefs, ImageGridView* vie
 
 // MARK: - Menu Actions
 static bool _SortNewestFirst() {
-    return PrefsGlobal().get("SortNewestFirst", true);
+    return PrefsGlobal()->get("SortNewestFirst", true);
 }
 
 static void _SortNewestFirst(bool x) {
-    return PrefsGlobal().set("SortNewestFirst", x);
+    return PrefsGlobal()->set("SortNewestFirst", x);
 }
 
 - (IBAction)_sortNewestFirst:(id)sender {

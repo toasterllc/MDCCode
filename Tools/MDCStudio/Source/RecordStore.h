@@ -17,19 +17,17 @@
 //               threading: data can be written from one thread and read from another thread in parallel
 
 template <
-    typename T_Record,
-    size_t T_ChunkRecordCap // Max number of records per chunk
+typename T_Record,      // The type of the records
+size_t T_ChunkRecordCap // Max number of records per chunk
 >
-class RecordStore {
-public:
+struct RecordStore {
     static constexpr uint32_t Version = T_Record::Version;
     static constexpr uint32_t ChunkRecordCap = T_ChunkRecordCap;
     
     using Path = std::filesystem::path;
     using Record = T_Record;
     
-    class Chunk {
-    public:
+    struct Chunk {
         Chunk(size_t order, Toastbox::Mmap&& mmap) : order(order), mmap(std::move(mmap)) {}
         size_t order = 0;                       // Order of the chunk, so that RecordRefs can order themselves
         size_t recordCount = 0;                 // Count of records currently stored in chunk
@@ -44,8 +42,7 @@ public:
     // ChunkRef may be invalidated after the store is written (via write()) because
     // the Chunk may have been deleted (if it no longer contained records).
     // Use ChunkStrongRef if you need a ChunkRef to stay valid across store writes.
-    class ChunkRef {
-    public:
+    struct ChunkRef {
         Chunk* chunk = nullptr;
         
         bool operator<(const ChunkRef& x) const {
@@ -71,8 +68,7 @@ public:
     // across store writes (via write()).
     // This is useful if multiple threads access the store (with appropriate locking), and one thread needs
     // to ensure that the chunk that it references stays alive while other threads modify the store.
-    class ChunkStrongRef : public ChunkRef {
-    public:
+    struct ChunkStrongRef : ChunkRef {
         ChunkStrongRef() {}
         ChunkStrongRef(ChunkRef ref) { _set(ref); }
         
@@ -84,7 +80,6 @@ public:
         ChunkStrongRef& operator=(ChunkStrongRef&& x) { _swap(x); return *this; }
         ~ChunkStrongRef() { _set({}); }
         
-    private:
         void _set(const ChunkRef& ref) {
             if (ref.chunk) ref.chunk->strongCount++;
             if (ChunkRef::chunk) ChunkRef::chunk->strongCount--;
@@ -97,8 +92,7 @@ public:
     };
     
     template <typename T_ChunkRef>
-    class _RecordRef : public T_ChunkRef {
-    public:
+    struct _RecordRef : public T_ChunkRef {
         size_t idx = 0;
         
         _RecordRef() {}
@@ -135,8 +129,7 @@ public:
     // RecordRefs may be invalidated after the store is written (via write()) because
     // the Chunk may have been compacted or deleted entirely (if it no longer contained records).
     // Use RecordStrongRef if you need a RecordRef to stay valid across store writes.
-    class RecordRef : public _RecordRef<ChunkRef> {
-    public:
+    struct RecordRef : _RecordRef<ChunkRef> {
         using _RecordRef<ChunkRef>::_RecordRef;
     };
     
@@ -144,183 +137,17 @@ public:
     // across record removals (via remove()) and store writes (via write()). This is useful if
     // multiple threads access the store (with appropriate locking), and one thread needs to ensure
     // that the data that it references stays alive while other threads modify the store.
-    class RecordStrongRef : public _RecordRef<ChunkStrongRef> {
-    public:
+    struct RecordStrongRef : _RecordRef<ChunkStrongRef> {
         RecordStrongRef() {}
         RecordStrongRef(const RecordRef& ref) : _RecordRef<ChunkStrongRef>(ref, ref.idx) {}
-        
-//        using _RecordRef<ChunkStrongRef>::_RecordRef;
-        
         operator const RecordRef() const {
             return RecordRef(*this, this->idx);
-//            static_cast<ChunkRef&>(ref) = *this;
-//            ref.idx = _RecordRef<ChunkStrongRef>::idx;
-//            return ref;
         }
     };
-    
-    
-    
-    
-    
-    
-    
-    
-//    template <typename T_ChunkRef>
-//    class T_RecordRef : public T_ChunkRef {
-//    public:
-//        using T_ChunkRef::T_ChunkRef;
-//        size_t idx = 0;
-//        
-//        const T_ChunkRef& chunkRef() const { return *this; }
-//        
-//        template <typename T>
-//        bool operator<(const T& x) const {
-//            if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
-//            if (idx != x.idx)               return idx < x.idx;
-//            return false;
-//        }
-//        
-//        template <typename T>
-//        bool operator==(const T& x) const {
-//            if (chunkRef() != x.chunkRef()) return false;
-//            if (idx != x.idx)               return false;
-//            return true;
-//        }
-//        
-//        operator bool() const { return (bool)chunkRef(); }
-//        T_Record* operator->() const { return &record(); }
-//        T_Record& operator*() const { return record(); }
-//        T_Record& record() const {
-//            return *(T_Record*)chunkRef().chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
-//        }
-//    };
-    
-    
-//    template <typename T_ChunkRef>
-//    class T_RecordRef : public T_ChunkRef {
-//    public:
-//        using T_ChunkRef::T_ChunkRef;
-//        size_t idx = 0;
-//        
-//        const T_ChunkRef& chunkRef() const { return *this; }
-//        
-//        template <typename T>
-//        bool operator<(const T& x) const {
-//            if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
-//            if (idx != x.idx)               return idx < x.idx;
-//            return false;
-//        }
-//        
-//        template <typename T>
-//        bool operator==(const T& x) const {
-//            if (chunkRef() != x.chunkRef()) return false;
-//            if (idx != x.idx)               return false;
-//            return true;
-//        }
-//        
-//        operator bool() const { return (bool)chunkRef(); }
-//        T_Record* operator->() const { return &record(); }
-//        T_Record& operator*() const { return record(); }
-//        T_Record& record() const {
-//            return *(T_Record*)chunkRef().chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
-//        }
-//    };
-    
-//    // RecordRef: a reference to a record
-//    // RecordRefs may be invalidated after the store is written (via write()) because
-//    // the Chunk may have been compacted or deleted entirely (if it no longer contained records).
-//    // Use RecordStrongRef if you need a RecordRef to stay valid across store writes.
-//    class RecordRef : public T_RecordRef<ChunkRef> {};
-//    
-//    // RecordStrongRef: a strong reference to a record, which keeps the record's backing data alive
-//    // across record removals (via remove()) and store writes (via write()). This is useful if
-//    // multiple threads access the store (with appropriate locking), and one thread needs to ensure
-//    // that the data that it references stays alive while other threads modify the store.
-//    class RecordStrongRef : public T_RecordRef<ChunkStrongRef> {
-//        using T_RecordRef<ChunkStrongRef>::T_RecordRef;
-////        RecordStrongRef(RecordRef ref) : ChunkStrongRef
-//    };
-    
-//    using RecordStrongRef = T_RecordRef<ChunkStrongRef>;
-    
-//    // RecordStrongRef: a strong reference to a record, which keeps the record's backing data alive
-//    // across record removals (via remove()) and store writes (via write()). This is useful if
-//    // multiple threads access the store (with appropriate locking), and one thread needs to ensure
-//    // that the data that it references stays alive.
-//    class RecordStrongRef : public ChunkStrongRef {
-//    public:
-//        RecordStrongRef() {}
-//        RecordStrongRef(RecordRef ref) { _set(ref); }
-//        
-//        // Copy
-//        RecordStrongRef(const RecordStrongRef& x) { _set(x); }
-//        RecordStrongRef& operator=(const RecordStrongRef& x) { _set(x); return *this; }
-//        // Move
-//        RecordStrongRef(RecordStrongRef&& x) { _swap(x); }
-//        RecordStrongRef& operator=(RecordStrongRef&& x) { _swap(x); return *this; }
-//        ~RecordStrongRef() { _set({}); }
-//        
-//    private:
-//        void _set(const RecordRef& ref) {
-//            if (ref.chunk) ref.chunk->strongCount++;
-//            if (RecordRef::chunk) RecordRef::chunk->strongCount--;
-//            static_cast<RecordRef&>(*this) = ref;
-//        }
-//        
-//        void _swap(RecordStrongRef& ref) {
-//            std::swap(static_cast<RecordRef&>(*this), static_cast<RecordRef&>(ref));
-//        }
-//    };
-    
-    
-//    class RecordStrongRef {
-//    public:
-//        RecordStrongRef() {}
-//        RecordStrongRef(RecordRef ref) { _set(ref); }
-//        
-//        // Copy
-//        RecordStrongRef(const RecordStrongRef& x) { _set(x._ref); }
-//        RecordStrongRef& operator=(const RecordStrongRef& x) { _set(x._ref); return *this; }
-//        // Move
-//        RecordStrongRef(RecordStrongRef&& x) { _swap(x._ref); }
-//        RecordStrongRef& operator=(RecordStrongRef&& x) { _swap(x._ref); return *this; }
-//        ~RecordStrongRef() { _set({}); }
-//        
-//        operator bool() const { return _ref; }
-//        T_Record* operator->() const { return &_ref.record(); }
-//        T_Record& operator*() const { return _ref.record(); }
-//        T_Record& record() const { _ref.record(); }
-//        
-//    private:
-//        void _set(const RecordRef& ref) {
-//            if (ref.chunk) ref.chunk->strongCount++;
-//            if (_ref.chunk) _ref.chunk->strongCount--;
-//            _ref = ref;
-//        }
-//        
-//        void _swap(RecordRef& ref) {
-//            std::swap(_ref, ref);
-//        }
-//        
-//        RecordRef _ref;
-//    };
     
     using RecordRefs = std::vector<RecordRef>;
     using RecordRefConstIter = typename RecordRefs::const_iterator;
     using RecordRefConstReverseIter = typename RecordRefs::const_reverse_iterator;
-    
-//    template<typename T>
-//    static T Find(T begin, T end, const RecordRef& ref) {
-//        const T it = std::lower_bound(begin, end, 0,
-//            [&](const RecordRef& sample, auto) -> bool {
-//                return sample < ref;
-//            });
-//        
-//        if (it == end) return end;
-//        if (*it != ref) return end;
-//        return it;
-//    }
     
     // Find(): find `ref` between [begin,end)
     // T_Ascending=false must be specified when reverse iterators are given.
@@ -358,15 +185,15 @@ public:
             });
     }
     
-    RecordStore(const Path& path) : _path(path) {}
-    
-    std::ifstream read() {
+    std::ifstream read(Path path) {
         // Reset ourself in case an exception occurs later
-        _state = {};
+        _state = {
+            .path = std::move(path),
+        };
         
-        std::filesystem::create_directories(_ChunksPath(_path));
+        std::filesystem::create_directories(_ChunksPath(_state.path));
         
-        auto [recordRefs, chunks, f] = _IndexRead(_path);
+        auto [recordRefs, chunks, f] = _IndexRead(_state.path);
         // If we get here, everything succeeded so we can use the on-disk database
         _state.recordRefs = recordRefs;
         _state.chunks = std::move(chunks);
@@ -415,7 +242,7 @@ public:
         }
         
         // Delete unreferenced chunk files
-        for (const fs::path& p : fs::directory_iterator(_ChunksPath(_path))) {
+        for (const fs::path& p : fs::directory_iterator(_ChunksPath(_state.path))) {
             // Delete the chunk file if it's beyond the new count of chunks (therefore
             // it's an old chunk file that's no longer needed).
             std::optional<size_t> deleteName;
@@ -433,7 +260,7 @@ public:
             }
         }
         
-        return _IndexWrite(_path, _state.recordRefs, _state.chunks);
+        return _IndexWrite(_state.path, _state.recordRefs, _state.chunks);
     }
     
     // add(): adds records to the end
@@ -459,17 +286,6 @@ public:
     }
     
     bool empty() const { return _state.recordRefs.empty(); }
-    
-//    RecordRefConstIter find(const RecordRef& ref) const {
-//        RecordRefConstIter it = std::lower_bound(begin(), end(), 0,
-//            [&](const RecordRef& sample, auto) -> bool {
-//                return sample < ref;
-//            });
-//        
-//        if (it == end()) return end();
-//        if (*it != ref) return end();
-//        return it;
-//    }
     
     const RecordRef& front() const              { return _state.recordRefs.front(); }
     const RecordRef& back() const               { return _state.recordRefs.back(); }
@@ -610,7 +426,7 @@ private:
     }
     
     Path _chunkPath(size_t idx) const {
-        return _ChunkPath(_path, idx);
+        return _ChunkPath(_state.path, idx);
     }
     
     static Chunk& _ChunkPush(std::list<Chunk>& chunks, Toastbox::Mmap&& mmap) {
@@ -661,9 +477,8 @@ private:
         return *chunk;
     }
     
-    const Path _path;
-    
     struct {
+        Path path;
         RecordRefs recordRefs;
         Chunks chunks;
     } _state;

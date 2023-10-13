@@ -10,7 +10,6 @@
 
 @interface DeviceImageGridHeaderView : ImageGridHeaderView
 - (void)setDelegate:(id<DeviceImageGridHeaderViewDelegate>)x;
-- (void)setStatus:(NSString*)x;
 - (void)setLoadCount:(size_t)x;
 - (void)setProgress:(float)x;
 @end

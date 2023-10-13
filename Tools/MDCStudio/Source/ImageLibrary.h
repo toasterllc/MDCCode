@@ -8,6 +8,7 @@
 #include "ImageOptions.h"
 #include "ImageThumb.h"
 #include "ImageUtil.h"
+#include "Object.h"
 
 namespace MDCStudio {
 
@@ -65,12 +66,11 @@ struct [[gnu::packed]] ImageRecord {
 static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageRecord is a multiple of 8 bytes
 //static_assert(!(offsetof(ImageRecord, thumb) % (ImageThumb::ThumbWidth*4)); // Ensure that the thumbnail is aligned to a 4-pixel boImageLibrarymension
 
-class ImageLibrary : public RecordStore<ImageRecord, 128>, public std::mutex {
-public:
+struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
     using RecordStore::RecordStore;
     using IterAny = Toastbox::IterAny<RecordRefConstIter>;
     
-    struct Event {
+    struct Event : Object::Event {
         enum class Type {
             Add,
             Remove,
@@ -82,8 +82,6 @@ public:
         std::set<RecordStrongRef> records;
     };
     
-    using Observer = std::function<bool(const Event& ev)>;
-    
     static IterAny BeginSorted(const ImageLibrary& lib, bool sortNewestFirst) {
         if (sortNewestFirst) return lib.rbegin();
         else                 return lib.begin();
@@ -94,12 +92,9 @@ public:
         else                 return lib.end();
     }
     
-    void read() {
-        // Reset our state, as RecordStore::read() does
-        _state = {};
-        
+    void read(RecordStore::Path path) {
         try {
-            std::ifstream f = RecordStore::read();
+            std::ifstream f = RecordStore::read(path);
             
             _SerializedState state;
             f.read((char*)&state, sizeof(state));
@@ -128,22 +123,24 @@ public:
         RecordStore::add(count);
         // Notify observers that we changed
         
-        Event ev = { .type = Event::Type::Add };
+        Event ev;
+        ev.type = Event::Type::Add;
         for (auto i=end()-count; i!=end(); i++) {
             ev.records.insert(*i);
         }
-        notify(ev);
+        Object::observersNotify(ev);
     }
     
     void remove(RecordRefConstIter begin, RecordRefConstIter end) {
-        Event ev = { .type = Event::Type::Remove };
+        Event ev;
+        ev.type = Event::Type::Remove;
         for (auto i=begin; i!=end; i++) {
             ev.records.insert(*i);
         }
         
         RecordStore::remove(begin, end);
         // Notify observers that we changed
-        notify(ev);
+        Object::observersNotify(ev);
     }
     
     RecordRefConstIter find(const RecordRef& ref) {
@@ -158,80 +155,20 @@ public:
         }
     }
     
-//    bool sortNewest() const {
-//        return _sortNewest;
-//    }
-//    
-//    void sortNewest(bool x) {
-//        _sortNewest = x;
-//        notifyChange({});
-//    }
-//    
-//    Toastbox::IterAny<RecordRefConstIter> beginSorted() const {
-//        if (_sortNewest) return rbegin();
-//        else             return begin();
-//    }
-//    
-//    Toastbox::IterAny<RecordRefConstIter> endSorted() const {
-//        if (_sortNewest) return rbegin();
-//        else             return begin();
-//    }
-    
-//    RecordRefConstIter find(Img::Id id) {
-//        RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,
-//            [&](const RecordRef& sample, auto) -> bool {
-//                return sample->info.id < id;
-//            });
-//        
-//        if (iter == end()) return end();
-//        if ((*iter)->info.id != id) return end();
-//        return iter;
-//    }
-//    
-//    RecordStrongRef findStrong(Img::Id id) {
-//        auto it = find(id);
-//        if (it == end()) return {};
-//        return *it;
-//    }
-    
-    void observerAdd(Observer&& observer) {
-        _state.observers.push_front(std::move(observer));
-    }
-    
-    // notify(): notifies each observer of an event.
-    // The notifications are delivered synchronously on the calling thread.
-    // The ImageLibrary lock will therefore be held when events are delivered!
-    void notify(const Event& ev) {
-        auto prev = _state.observers.before_begin();
-        for (auto it=_state.observers.begin(); it!=_state.observers.end();) {
-            // Notify the observer; it returns whether it's still valid
-            // If it's not valid (it returned false), remove it from the list
-            if (!(*it)(ev)) {
-                it = _state.observers.erase_after(prev);
-            } else {
-                prev = it;
-                it++;
-            }
-        }
-    }
-    
-    void notify(Event::Type type, std::set<RecordStrongRef> records) {
-        Event ev = { .type = type };
+    void observersNotify(Event::Type type, std::set<RecordStrongRef> records) {
+        Event ev;
+        ev.type = type;
         ev.records = std::move(records);
-        notify(ev);
+        Object::observersNotify(ev);
     }
     
-private:
     static constexpr uint32_t _Version = 0;
     
     struct [[gnu::packed]] _SerializedState {
         uint32_t version = 0;
     };
-    
-    struct {
-        std::forward_list<Observer> observers;
-    } _state;
 };
+using ImageLibraryPtr = SharedPtr<ImageLibrary>;
 
 using ImageRecordIter = ImageLibrary::RecordRefConstIter;
 using ImageRecordIterAny = Toastbox::IterAny<ImageRecordIter>;

@@ -8,17 +8,18 @@ using namespace MDCStudio;
 @implementation DeviceImageGridHeaderView {
     __weak id<DeviceImageGridHeaderViewDelegate> _delegate;
     IBOutlet NSLayoutConstraint* _hideLoadPhotosConstraint;
-    IBOutlet NSTextField* _statusLabel;
     IBOutlet NSTextField* _loadPhotosCountLabel;
     IBOutlet NSProgressIndicator* _progressIndicator;
 }
 
-- (void)setDelegate:(id<DeviceImageGridHeaderViewDelegate>)x {
-    _delegate = x;
+- (instancetype)initWithFrame:(NSRect)frame {
+    if (!(self = [super initWithFrame:frame])) return nil;
+    [self setLoadCount:0];
+    return self;
 }
 
-- (void)setSelection:(MDCStudio::ImageSet)selection {
-    
+- (void)setDelegate:(id<DeviceImageGridHeaderViewDelegate>)x {
+    _delegate = x;
 }
 
 //__weak auto selfWeak = self;
@@ -63,10 +64,6 @@ using namespace MDCStudio;
 //static std::optional<size_t> _LoadCount(const MDCDevice::Status& status MDCDevicePtr device) {
 //    return _LoadCount(device->status(), device->imageLibrary());
 //}
-
-- (void)setStatus:(NSString*)x {
-    [_statusLabel setStringValue:x];
-}
 
 - (void)setLoadCount:(size_t)x {
     if (x) {

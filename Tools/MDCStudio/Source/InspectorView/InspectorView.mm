@@ -650,8 +650,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 @end
 
 @implementation InspectorView {
-    ImageSourcePtr _imageSource;
-    ImageLibrary* _imageLibrary;
+    ImageLibraryPtr _imageLibrary;
+    Object::ObserverPtr _imageLibraryOb;
     Item_Section* _rootItem;
     ImageSet _selection;
     bool _notifying;
@@ -671,18 +671,13 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     
     if (!(self = [super initWithFrame:{}])) return nil;
     
-    _imageSource = imageSource;
-    _imageLibrary = &_imageSource->imageLibrary();
+    _imageLibrary = imageSource->imageLibrary();
     
     // Add ourself as an observer of the image library
     {
-        auto lock = std::unique_lock(*_imageLibrary);
         __weak auto selfWeak = self;
-        _imageLibrary->observerAdd([=] (const ImageLibrary::Event& ev) {
-            auto selfStrong = selfWeak;
-            if (!selfStrong) return false;
-            [selfStrong _handleImageLibraryEvent:ev];
-            return true;
+        _imageLibraryOb = _imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
+            [selfWeak _handleImageLibraryEvent:dynamic_cast<const ImageLibrary::Event&>(ev)];
         });
     }
     
@@ -1327,12 +1322,12 @@ static void _Update(Item* it) {
     }
     
     _notifying = true;
+    std::set<ImageRecordPtr> records;
     {
         auto lock = std::unique_lock(*_imageLibrary);
-        std::set<ImageRecordPtr> records;
         for (const ImageRecordPtr& x : _selection) records.insert(x);
-        _imageLibrary->notify(ImageLibrary::Event::Type::ChangeProperty, std::move(records));
     }
+    _imageLibrary->observersNotify(ImageLibrary::Event::Type::ChangeProperty, std::move(records));
     _notifying = false;
 }
 

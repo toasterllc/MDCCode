@@ -48,6 +48,8 @@ using namespace MDCStudio;
     IBOutlet NSImageView* _batteryImageView;
     IBOutlet NSTextField* _descriptionLabel;
     MDCDevicePtr device;
+    Object::ObserverPtr _deviceOb;
+    Object::ObserverPtr _imageLibraryOb;
 }
 
 - (NSString*)name { return @(device->name().c_str()); }
@@ -56,18 +58,12 @@ using namespace MDCStudio;
     assert(!device); // We're one-time use since MDCDevice observers can't be removed
     device = dev;
     __weak auto selfWeak = self;
-    device->observerAdd([=] {
-        auto selfStrong = selfWeak;
-        if (!selfStrong) return false;
-        dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong update]; });
-        return true;
+    _deviceOb = device->observerAdd([=] (auto, auto) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
     });
     
-    device->imageLibrary().observerAdd([=](const ImageLibrary::Event& ev) {
-        auto selfStrong = selfWeak;
-        if (!selfStrong) return false;
-        dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong update]; });
-        return true;
+    _imageLibraryOb = device->imageLibrary()->observerAdd([=] (auto, auto) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
     });
 }
 

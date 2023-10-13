@@ -14,10 +14,9 @@ class MockImageSource : public ImageSource {
 public:
     using ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
     
-    MockImageSource(const std::filesystem::path& path) :
-    _path(path),
-    _imageLibrary(_path) {
-        _imageLibrary.read();
+    MockImageSource(const std::filesystem::path& path) {
+        _imageLibrary = Object::Create<ImageLibrary>();
+        _imageLibrary->read(path);
         _renderThumbs.thread = std::thread([&] { _threadRenderThumbs(); });
     }
     
@@ -31,7 +30,7 @@ public:
         _renderThumbs.thread.join();
     }
     
-    ImageLibrary& imageLibrary() override {
+    ImageLibraryPtr imageLibrary() override {
         return _imageLibrary;
     }
     
@@ -175,8 +174,7 @@ public:
             
             // Notify image library that the image changed
             {
-                auto lock = std::unique_lock(_imageLibrary);
-                _imageLibrary.notify(ImageLibrary::Event::Type::ChangeProperty, { rec });
+                _imageLibrary->observersNotify(ImageLibrary::Event::Type::ChangeProperty, { rec });
             }
         }
     }
@@ -186,8 +184,7 @@ private:
         return path / "Thumb";
     }
     
-    std::filesystem::path _path;
-    ImageLibrary _imageLibrary;
+    ImageLibraryPtr _imageLibrary;
 //    ImageCache _imageCache;
     
     struct {

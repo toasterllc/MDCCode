@@ -123,7 +123,7 @@ private:
                             state = _DeviceState::STMLoaderInvoke; // Start over if this device appears again
                             
                             // Create our final MDCDevice instance
-                            MDCDevicePtr mdc = std::make_shared<MDCDevice>(std::move(*dev));
+                            MDCDevicePtr mdc = Object::Create<MDCDevice>(std::move(*dev));
                             
                             // Watch the service so we know when it goes away
                             io_object_t ioObj = MACH_PORT_NULL;

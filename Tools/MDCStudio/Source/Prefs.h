@@ -1,16 +1,13 @@
 #import <Foundation/Foundation.h>
-#import "Toastbox/Mac/Util.h"
 #import <forward_list>
+#import "Toastbox/Mac/Util.h"
+#import "Object.h"
 
 namespace MDCStudio {
 
-class Prefs {
-private:
+struct Prefs : Object {
     // _defaults: needs to be initialized before all other members, so put it at the top
     NSUserDefaults* _defaults = [NSUserDefaults new];
-    
-public:
-    using Observer = std::function<bool()>;
     
     template<typename T>
     T get(std::string_view key, T uninit) {
@@ -37,15 +34,10 @@ public:
             static_assert(_AlwaysFalse<T>);
         }
         
-        _notify();
+        observersNotify({});
     }
     
-    void observerAdd(Observer&& observer) {
-        _observers.push_front(std::move(observer));
-    }
-    
-private:
-    template <class...> static constexpr std::false_type _AlwaysFalse;
+    template<class...> static constexpr std::false_type _AlwaysFalse;
     
     template<typename T>
     static T _Load(NSUserDefaults* defaults, std::string_view key) {
@@ -85,27 +77,11 @@ private:
         }
         return uninit;
     }
-    
-    // notify(): notifies each observer that we changed
-    void _notify() {
-        auto prev = _observers.before_begin();
-        for (auto it=_observers.begin(); it!=_observers.end();) {
-            // Notify the observer; it returns whether it's still valid
-            // If it's not valid (it returned false), remove it from the list
-            if (!(*it)()) {
-                it = _observers.erase_after(prev);
-            } else {
-                prev = it;
-                it++;
-            }
-        }
-    }
-    
-    std::forward_list<Observer> _observers;
 };
+using PrefsPtr = SharedPtr<Prefs>;
 
-inline Prefs& PrefsGlobal() {
-    static Prefs x;
+inline PrefsPtr PrefsGlobal() {
+    static PrefsPtr x = Object::Create<Prefs>();
     return x;
 }
 

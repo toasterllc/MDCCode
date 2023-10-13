@@ -146,6 +146,7 @@
 		553EF5602AD7174800157484 /* FullSizeImageHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FullSizeImageHeaderView.mm; sourceTree = "<group>"; };
 		553EF5692AD889E500157484 /* ImageGridHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridHeaderView.h; sourceTree = "<group>"; };
 		553EF56A2AD889E500157484 /* ImageGridHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridHeaderView.mm; sourceTree = "<group>"; };
+		553EF56C2AD8E4DF00157484 /* Object.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Object.h; sourceTree = "<group>"; };
 		55425B1929A01BE000F25D57 /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		55425B2229A02F7D00F25D57 /* InspectorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorView.mm; sourceTree = "<group>"; };
 		55425B2329A02F7D00F25D57 /* InspectorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorView.h; sourceTree = "<group>"; };
@@ -672,6 +673,7 @@
 				55F8882629D8DADD0075593F /* TokenField.mm */,
 				55B1658129CB9A50008D53E5 /* Cache.h */,
 				558FFC8D29CAB3AF0022E840 /* BufferPool.h */,
+				553EF56C2AD8E4DF00157484 /* Object.h */,
 				55A36A8E27A2951900FD0181 /* MDCDevice.h */,
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
 				55C90B9229B58283007CC97E /* ImageThumb.h */,

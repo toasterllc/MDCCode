@@ -57,7 +57,8 @@ struct _ThumbRenderThreadState {
 
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
-    ImageLibrary* _imageLibrary;
+    ImageLibraryPtr _imageLibrary;
+    Object::ObserverPtr _imageLibraryOb;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
     Grid _grid;
@@ -92,7 +93,14 @@ static CGColorSpaceRef _SRGBColorSpace() {
     if (!(self = [super init])) return nil;
     
     _imageSource = imageSource;
-    _imageLibrary = &imageSource->imageLibrary();
+    _imageLibrary = imageSource->imageLibrary();
+    // Add ourself as an observer of the image library
+    {
+        __weak auto selfWeak = self;
+        _imageLibraryOb = _imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
+            [selfWeak _handleImageLibraryEvent:dynamic_cast<const ImageLibrary::Event&>(ev)];
+        });
+    }
     
     _cellWidth = _ThumbWidth;
     _cellHeight = _ThumbHeight;
@@ -149,18 +157,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
     
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
     assert(_pipelineState);
-    
-    // Add ourself as an observer of the image library
-    {
-        auto lock = std::unique_lock(*_imageLibrary);
-        __weak auto selfWeak = self;
-        _imageLibrary->observerAdd([=](const ImageLibrary::Event& ev) {
-            auto selfStrong = selfWeak;
-            if (!selfStrong) return false;
-            [selfStrong _handleImageLibraryEvent:ev];
-            return true;
-        });
-    }
     
     // Start our _ThumbRenderThread
     auto thumbRender = std::make_shared<_ThumbRenderThreadState>();
@@ -585,38 +581,6 @@ struct SelectionDelta {
     return true;
 }
 
-
-
-//// MARK: - ImageLibrary Observer
-//// _handleImageLibraryEvent: called on whatever thread where the modification happened,
-//// and with the ImageLibraryPtr lock held!
-//- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
-//    // Trampoline the event to our main thread, if we're not on the main thread
-//    if ([NSThread isMainThread]) {
-//        ImageLibrary::Event evCopy = ev;
-//        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
-//            [self _handleImageLibraryEvent:evCopy];
-//        });
-//        return;
-//    }
-//    
-//    if (ev.type == ImageLibrary::Event::Type::Change) {
-//        // Erase textures for any of the changed records
-//        for (const ImageRecordPtr& rec : ev.records) {
-//            auto it = _chunkTxts.get(rec);
-//            if (it == _chunkTxts.end()) continue;
-//            id<MTLTexture> txt = it->val;
-//            _ChunkTextureUpdateSlice(txt, rec);
-//        }
-//    }
-//    
-//    dispatch_async(dispatch_get_main_queue(), ^{
-//        [self setNeedsDisplay];
-//    });
-//}
-
-
-
 // MARK: - Thumb Render
 
 using _IterRange = std::pair<ImageRecordIterAny,ImageRecordIterAny>;
@@ -722,66 +686,10 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         ImageLibrary::Event evCopy = ev;
         dispatch_async(dispatch_get_main_queue(), ^{
             auto lock = std::unique_lock(*self->_imageLibrary);
-            [self __handleImageLibraryEvent:evCopy];
+            [self _handleImageLibraryEvent:evCopy];
         });
         return;
     }
-    
-    [self __handleImageLibraryEvent:ev];
-    
-    
-//    switch (ev.type) {
-//    
-//    }
-//    
-//    if (ev.type == ImageLibrary::Event::Type::Add) {
-//        [self setNeedsDisplay];
-//    
-//    } else if (ev.type == ImageLibrary::Event::Type::ChangeProperty) {
-////        // Re-render the visible thumbnails that are marked dirty
-////        _imageSource->visibleThumbs(visibleBegin, visibleEnd);
-//    } else {
-//        
-//    }
-    
-//    // If we added records or changed records, we need to update the relevent textures
-//    if (ev.type==ImageLibrary::Event::Type::Add || ev.type==ImageLibrary::Event::Type::Change) {
-//        for (const ImageRecordPtr& rec : ev.records) {
-//            if (auto find=_chunkTxts.find(rec); find!=_chunkTxts.end()) {
-////                printf("Update slice\n");
-////                _chunkTxts.erase(find);
-//                _ChunkTexture& ct = find->val;
-//                _ChunkTextureUpdateSlice(ct, rec);
-//            }
-//        }
-//    }
-//    
-//    [self setNeedsDisplay];
-}
-
-
-// _imageLibrary must be locked!
-- (bool)_recordsIntersectVisibleRange:(const std::set<ImageRecordPtr>&)changed {
-    if (changed.empty()) return false;
-    const auto visibleRange = _VisibleRange(_VisibleIndexRange(_grid, [self frame], [self contentsScale]), *_imageLibrary, _sortNewestFirst);
-    if (visibleRange.first == visibleRange.second) return false;
-    
-    ImageRecordPtr vl = *visibleRange.first;
-    ImageRecordPtr vr = *std::prev(visibleRange.second);
-    ImageRecordPtr cl = *changed.begin();
-    ImageRecordPtr cr = *std::prev(changed.end());
-    
-    if (vr < vl) std::swap(vl, vr);
-    if (cr < cl) std::swap(cl, cr);
-    if (vr < cl) return false;
-    if (cr < vl) return false;
-    return true;
-}
-
-
-// _imageLibrary must be locked!
-- (void)__handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
-    assert([NSThread isMainThread]);
     
     switch (ev.type) {
     case ImageLibrary::Event::Type::Add:
@@ -804,6 +712,26 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         }
         break;
     }
+}
+
+
+// _imageLibrary must be locked!
+- (bool)_recordsIntersectVisibleRange:(const std::set<ImageRecordPtr>&)changed {
+    if (changed.empty()) return false;
+    const auto visibleRange = _VisibleRange(_VisibleIndexRange(_grid, [self frame], [self contentsScale]),
+        *_imageLibrary, _sortNewestFirst);
+    if (visibleRange.first == visibleRange.second) return false;
+    
+    ImageRecordPtr vl = *visibleRange.first;
+    ImageRecordPtr vr = *std::prev(visibleRange.second);
+    ImageRecordPtr cl = *changed.begin();
+    ImageRecordPtr cr = *std::prev(changed.end());
+    
+    if (vr < vl) std::swap(vl, vr);
+    if (cr < cl) std::swap(cl, cr);
+    if (vr < cl) return false;
+    if (cr < vl) return false;
+    return true;
 }
 
 @end
@@ -832,6 +760,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     ImageGridLayer* _imageGridLayer;
     CALayer* _selectionRectLayer;
     ImageSourcePtr _imageSource;
+    Object::ObserverPtr _imageLibraryOb;
     __weak id<ImageGridViewDelegate> _delegate;
     NSLayoutConstraint* _docHeight;
 //    id _widthChangedObserver;
@@ -865,13 +794,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     // Observe image library changes so that we update the image grid
     {
         __weak auto selfWeak = self;
-        ImageLibrary& imageLibrary = _imageSource->imageLibrary();
-        auto lock = std::unique_lock(imageLibrary);
-        imageLibrary.observerAdd([=] (const ImageLibrary::Event& ev) {
-            auto selfStrong = selfWeak;
-            if (!selfStrong) return false;
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong _handleImageLibraryChanged]; });
-            return true;
+        _imageLibraryOb = _imageSource->imageLibrary()->observerAdd([=] (auto, const Object::Event& ev) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryChanged]; });
         });
     }
     
@@ -1012,9 +936,9 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 - (void)selectAll:(id)sender {
     ImageSet selection;
     {
-        ImageLibrary& imgLib = _imageSource->imageLibrary();
-        auto lock = std::unique_lock(imgLib);
-        for (auto it=imgLib.begin(); it!=imgLib.end(); it++) {
+        ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
+        auto lock = std::unique_lock(*imageLibrary);
+        for (auto it=imageLibrary->begin(); it!=imageLibrary->end(); it++) {
             selection.insert(*it);
         }
     }
