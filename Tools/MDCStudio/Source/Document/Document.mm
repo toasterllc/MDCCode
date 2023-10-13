@@ -282,15 +282,26 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
 }
 
 - (void)_updateImageGridHeader {
+    
     MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>([_sourceListView selection]);
     if (!device) return;
     
     ImageLibraryPtr imageLibrary = device->imageLibrary();
     DeviceImageGridHeaderView* deviceHeader = Toastbox::Cast<DeviceImageGridHeaderView*>(_imageGridHeaderView);
     const MDCDevice::Status status = device->status();
+    const ImageSet& selection = [_imageGridView selection];
     
     // Update status
-    [_imageGridHeaderView setStatus:@(ImageLibraryStatus(imageLibrary, "No photos").c_str())];
+    if (selection.empty()) {
+        [_imageGridHeaderView setStatus:@(ImageLibraryStatus(imageLibrary, "No photos").c_str())];
+    
+    } else {
+        const Time::Instant first = (*selection.begin())->info.timestamp;
+        const Time::Instant last = (*std::prev(selection.end()))->info.timestamp;
+        const std::string status = ImageLibraryStatus(selection.size(), first, last,
+            "photo selected", "photos selected");
+        [_imageGridHeaderView setStatus:@(status.c_str())];
+    }
     
     // Update unloaded photo count
     {
@@ -316,11 +327,14 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
 // MARK: - Image Grid
 
 - (void)imageGridViewSelectionChanged:(ImageGridView*)imageGridView {
-    [_inspectorView setSelection:[imageGridView selection]];
+    assert(imageGridView == _imageGridView);
+    [_inspectorView setSelection:[_imageGridView selection]];
+    [self _updateImageGridHeader];
 }
 
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
-    const ImageSet selection = [imageGridView selection];
+    assert(imageGridView == _imageGridView);
+    const ImageSet selection = [_imageGridView selection];
     if (selection.empty()) return;
     const ImageRecordPtr rec = *selection.begin();
     [self _openImage:rec delta:0];

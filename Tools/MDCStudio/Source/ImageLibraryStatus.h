@@ -17,9 +17,23 @@ inline auto _LastLoaded(ImageLibraryPtr x) {
     return x->rend();
 }
 
-inline std::string ImageLibraryStatus(ImageLibraryPtr lib, std::string noPhotos="no photos") {
-    using namespace std::chrono;
+inline std::string ImageLibraryStatus(size_t count, Time::Instant first, Time::Instant last,
+    std::string_view singular, std::string_view plural) {
     
+    using namespace std::chrono;
+    const auto tFirst = Time::Clock::TimePointFromTimeInstant(first);
+    const auto tLast = Time::Clock::TimePointFromTimeInstant(last);
+    const std::string strFirst = Calendar::MonthYearString(tFirst);
+    const std::string strLast = Calendar::MonthYearString(tLast);
+    const std::string dateDesc = strFirst + (strFirst == strLast ? "" : " – " + strLast);
+    if (count == 1) {
+        return std::to_string(count) + " " + std::string(singular) + " from " + dateDesc;
+    } else {
+        return std::to_string(count) + " " + std::string(plural) + " from " + dateDesc;
+    }
+}
+
+inline std::string ImageLibraryStatus(ImageLibraryPtr lib, std::string noPhotos="no photos") {
     auto lock = std::unique_lock(*lib);
     if (lib->empty()) return noPhotos;
     
@@ -29,13 +43,9 @@ inline std::string ImageLibraryStatus(ImageLibraryPtr lib, std::string noPhotos=
     if (itFirst == lib->end()) return noPhotos;
     // itLast: last loaded record
     auto itLast = _LastLoaded(lib);
-    
-    const auto tFirst = Time::Clock::TimePointFromTimeInstant((*itFirst)->info.timestamp);
-    const auto tLast = Time::Clock::TimePointFromTimeInstant((*itLast)->info.timestamp);
-    const std::string strFirst = Calendar::MonthYearString(tFirst);
-    const std::string strLast = Calendar::MonthYearString(tLast);
-    const std::string dateDesc = strFirst + (strFirst == strLast ? "" : " – " + strLast);
-    return std::to_string(lib->recordCount()) + " photos from " + dateDesc;
+    return ImageLibraryStatus(lib->recordCount(),
+        (*itFirst)->info.timestamp, (*itLast)->info.timestamp,
+        "photo", "photos");
 }
 
 } // namespace MDCStudio
