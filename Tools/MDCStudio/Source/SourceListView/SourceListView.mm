@@ -119,30 +119,20 @@ static NSString* _BatteryLevelImage(float level) {
 
 // MARK: - Creation
 
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
-    [self initCommon];
-    return self;
-}
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    [self initCommon];
-    return self;
-}
-
-- (void)initCommon {
+static void _Init(SourceListView* self) {
     // Load view from nib
     {
         [self setTranslatesAutoresizingMaskIntoConstraints:false];
         
-        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
+        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil]
+            instantiateWithOwner:self topLevelObjects:nil];
         assert(br);
         
-        [_nibView setTranslatesAutoresizingMaskIntoConstraints:false];
-        [self addSubview:_nibView];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
+        NSView* nibView = self->_nibView;
+        [nibView setTranslatesAutoresizingMaskIntoConstraints:false];
+        [self addSubview:nibView];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
     // Observe devices connecting/disconnecting
@@ -161,21 +151,34 @@ static NSString* _BatteryLevelImage(float level) {
     
     // Populate NSOutlineView
     {
-        _items = {};
+        self->_items = {};
         
         [self _updateDevices];
-        [_outlineView reloadData];
+        [self->_outlineView reloadData];
         
-        for (auto item : _items) {
-            [_outlineView expandItem:item];
+        for (auto item : self->_items) {
+            [self->_outlineView expandItem:item];
         }
         
         // Select first device by default
-        const NSInteger selectedRow = [_outlineView selectedRow];
-        if (selectedRow<0 && !_items.empty()) {
-            [_outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:[_outlineView rowForItem:_items.at(0)]] byExtendingSelection:false];
+        const NSInteger selectedRow = [self->_outlineView selectedRow];
+        if (selectedRow<0 && !self->_items.empty()) {
+            [self->_outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:
+                [self->_outlineView rowForItem:self->_items.at(0)]] byExtendingSelection:false];
         }
     }
+}
+
+- (instancetype)initWithCoder:(NSCoder*)coder {
+    if (!(self = [super initWithCoder:coder])) return nil;
+    _Init(self);
+    return self;
+}
+
+- (instancetype)initWithFrame:(NSRect)frame {
+    if (!(self = [super initWithFrame:frame])) return nil;
+    _Init(self);
+    return self;
 }
 
 // MARK: - Methods

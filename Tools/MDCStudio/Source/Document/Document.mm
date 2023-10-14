@@ -20,6 +20,7 @@ using namespace MDCStudio;
 
 @implementation Document {
     IBOutlet NSSplitView* _splitView;
+    IBOutlet NSView* _noDevicesView;
     NSWindow* _window;
     Object::ObserverPtr _prefsOb;
     

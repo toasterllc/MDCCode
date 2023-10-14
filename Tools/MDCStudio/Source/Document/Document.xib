@@ -7,6 +7,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="Document">
             <connections>
+                <outlet property="_noDevicesView" destination="WfS-w1-Plf" id="3W8-Wv-AAL"/>
                 <outlet property="_splitView" destination="wmp-X4-4cT" id="zYd-My-Ma5"/>
                 <outlet property="window" destination="xOd-HO-29H" id="JIz-fz-R2o"/>
             </connections>
@@ -22,6 +23,32 @@
                 <rect key="frame" x="0.0" y="0.0" width="1000" height="600"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
+                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="WfS-w1-Plf" userLabel="No Devices View">
+                        <rect key="frame" x="303" y="230" width="395" height="140"/>
+                        <subviews>
+                            <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="bk8-K4-AVv">
+                                <rect key="frame" x="20" y="20" width="126" height="100"/>
+                                <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Photon-Icon" id="vFY-Fq-eNT"/>
+                            </imageView>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="S2M-ej-Rco">
+                                <rect key="frame" x="164" y="56" width="213" height="28"/>
+                                <textFieldCell key="cell" lineBreakMode="clipping" title="Connect your Photon" id="GGq-Cu-6D2">
+                                    <font key="font" metaFont="systemThin" size="24"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </subviews>
+                        <constraints>
+                            <constraint firstItem="S2M-ej-Rco" firstAttribute="leading" secondItem="bk8-K4-AVv" secondAttribute="trailing" constant="20" id="FSH-7J-56l"/>
+                            <constraint firstItem="bk8-K4-AVv" firstAttribute="top" secondItem="WfS-w1-Plf" secondAttribute="top" constant="20" id="IbZ-jg-L7S"/>
+                            <constraint firstAttribute="trailing" secondItem="S2M-ej-Rco" secondAttribute="trailing" constant="20" id="K53-qq-acQ"/>
+                            <constraint firstItem="bk8-K4-AVv" firstAttribute="leading" secondItem="WfS-w1-Plf" secondAttribute="leading" constant="20" id="KMB-jg-0fu"/>
+                            <constraint firstItem="S2M-ej-Rco" firstAttribute="centerY" secondItem="bk8-K4-AVv" secondAttribute="centerY" id="PYx-cT-3OD"/>
+                            <constraint firstItem="S2M-ej-Rco" firstAttribute="centerY" secondItem="WfS-w1-Plf" secondAttribute="centerY" id="RyR-09-091"/>
+                            <constraint firstAttribute="bottom" secondItem="bk8-K4-AVv" secondAttribute="bottom" constant="20" id="ndT-p3-Rtn"/>
+                        </constraints>
+                    </customView>
                     <splitView arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wmp-X4-4cT">
                         <rect key="frame" x="0.0" y="0.0" width="1000" height="600"/>
                         <connections>
@@ -31,9 +58,11 @@
                 </subviews>
                 <constraints>
                     <constraint firstItem="wmp-X4-4cT" firstAttribute="top" secondItem="gIp-Ho-8D9" secondAttribute="top" id="BId-h8-ipU"/>
+                    <constraint firstItem="WfS-w1-Plf" firstAttribute="centerY" secondItem="gIp-Ho-8D9" secondAttribute="centerY" id="Ml5-Yr-cI8"/>
                     <constraint firstItem="wmp-X4-4cT" firstAttribute="leading" secondItem="gIp-Ho-8D9" secondAttribute="leading" id="cff-kE-j1I"/>
                     <constraint firstAttribute="bottom" secondItem="wmp-X4-4cT" secondAttribute="bottom" id="lMK-Vb-YnC"/>
                     <constraint firstAttribute="trailing" secondItem="wmp-X4-4cT" secondAttribute="trailing" id="qG7-K9-N8b"/>
+                    <constraint firstItem="WfS-w1-Plf" firstAttribute="centerX" secondItem="gIp-Ho-8D9" secondAttribute="centerX" id="zUq-bZ-Jsk"/>
                 </constraints>
             </view>
             <connections>
@@ -42,4 +71,7 @@
             <point key="canvasLocation" x="139" y="148"/>
         </window>
     </objects>
+    <resources>
+        <image name="Photon-Icon" width="126" height="100"/>
+    </resources>
 </document>

@@ -49,7 +49,7 @@
                                                     <constraint firstAttribute="width" constant="63" id="eSu-j3-Hou"/>
                                                     <constraint firstAttribute="height" constant="50" id="u3f-gJ-ek7"/>
                                                 </constraints>
-                                                <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="SourceList-Photon-Icon" id="KoV-V9-mVz"/>
+                                                <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="Photon-Icon" id="KoV-V9-mVz"/>
                                             </imageView>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
                                                 <rect key="frame" x="49" y="36" width="152" height="21"/>
@@ -141,8 +141,8 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
     </objects>
     <resources>
+        <image name="Photon-Icon" width="126" height="100"/>
         <image name="SourceList-Battery-Charging-50" width="30" height="14"/>
         <image name="SourceList-Gear" width="17" height="17"/>
-        <image name="SourceList-Photon-Icon" width="126" height="100"/>
     </resources>
 </document>
