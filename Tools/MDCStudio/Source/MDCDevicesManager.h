@@ -18,24 +18,30 @@ struct MDCDevicesManager : Object {
     void init() {
         Object::init();
         
-        _thread.thread = std::thread([&] { _threadHandleDevices(); });
-        // Wait for _thread.runLoop to be populated
-        _thread.signal.wait([&] { return (bool)_thread.runLoop; });
+        _state.thread = std::thread([&] { _threadHandleDevices(); });
+        // Wait for _state.runLoop to be populated
+        _state.signal.wait([&] { return (bool)_state.runLoop; });
     }
     
     ~MDCDevicesManager() {
         printf("[MDCDevicesManager] ~MDCDevicesManager()\n");
-        for (;;) {
-            auto lock = std::unique_lock(_state.lock);
-            if (!_thread.runLoop) break;
-            CFRunLoopStop((CFRunLoopRef)_thread.runLoop);
-        }
-        assert(_thread.thread.joinable());
-        _thread.thread.join();
+        try {
+            for (;;) {
+                // Keep telling the run loop to stop.
+                // This is necessary because CFRunLoopStop() doesn't have an effect unless the thread is
+                // executing within CFRunLoopRunInMode().
+                // We'll bail when _state.signal.lock() throws because the thread exited.
+                auto lock = _state.signal.lock();
+                CFRunLoopStop((CFRunLoopRef)_state.runLoop);
+            }
+        } catch (...) {}
+        
+        assert(_state.thread.joinable());
+        _state.thread.join();
     }
     
     std::vector<MDCDevicePtr> devices() {
-        auto lock = std::unique_lock(_state.lock);
+        auto lock = _state.signal.lock();
         std::vector<MDCDevicePtr> devs;
         for (const _Device& dev : _state.devices) {
             devs.push_back(dev.dev);
@@ -58,16 +64,10 @@ struct MDCDevicesManager : Object {
         };
         
         {
-            auto lock = _thread.signal.lock();
-            _thread.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
-            _thread.signal.signalAll();
+            auto lock = _state.signal.lock();
+            _state.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
+            _state.signal.signalAll();
         }
-        
-        // Signal that we've exited by clearing the runloop
-        Defer(
-            auto lock = _thread.signal.lock();
-            _thread.runLoop = nil;
-        );
         
         IONotificationPortRef notePort = IONotificationPortCreate(kIOMasterPortDefault);
         if (!notePort) throw Toastbox::RuntimeError("IONotificationPortCreate returned null");
@@ -88,123 +88,121 @@ struct MDCDevicesManager : Object {
         std::map<std::string,_DeviceState> deviceStates;
         for (;;) @autoreleasepool {
             bool changed = false;
-            {
-                auto lock = _thread.signal.lock();
+            
+            // Handle connected devices
+            for (;;) {
+                _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
+                if (!service) break;
                 
-                // Handle connected devices
-                for (;;) {
-                    _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
-                    if (!service) break;
-                    
-                    std::unique_ptr<MDCUSBDevice> dev;
-                    try {
-                        _USBDevice usbDev(service);
-                        if (!MDCUSBDevice::USBDeviceMatches(usbDev)) continue;
-                        dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
-                    
-                    } catch (const std::exception& e) {
-                        // Ignore failures to create USBDevice
-                        printf("Ignoring USB device: %s\n", e.what());
-                        continue;
+                std::unique_ptr<MDCUSBDevice> dev;
+                try {
+                    _USBDevice usbDev(service);
+                    if (!MDCUSBDevice::USBDeviceMatches(usbDev)) continue;
+                    dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
+                
+                } catch (const std::exception& e) {
+                    // Ignore failures to create USBDevice
+                    printf("Ignoring USB device: %s\n", e.what());
+                    continue;
+                }
+                
+                try {
+                    for (;;) {
+                        _DeviceState& state = deviceStates[dev->serial()];
+                        switch (state) {
+                        case _DeviceState::STMLoaderInvoke: {
+                            dev->bootloaderInvoke();
+                            state = _DeviceState::STMLoaderCheck;
+                            break; // Device will re-enumerate; continue to the next device
+                        }
+                        
+                        case _DeviceState::STMLoaderCheck: {
+                            if (dev->statusGet().mode == STM::Status::Mode::STMLoader) {
+                                state = _DeviceState::STMAppWrite;
+                            } else {
+                                state = _DeviceState::STMLoaderInvoke; // Start over
+                            }
+                            continue;
+                        }
+                        
+                        case _DeviceState::STMAppWrite: {
+                            _deviceBootload(*dev);
+                            state = _DeviceState::STMAppCheck;
+                            break; // Device will re-enumerate; continue to the next device
+                        }
+                        
+                        case _DeviceState::STMAppCheck: {
+                            if (dev->statusGet().mode == STM::Status::Mode::STMApp) {
+                                state = _DeviceState::Finish;
+                            } else {
+                                state = _DeviceState::STMLoaderInvoke; // Start over
+                            }
+                            continue;
+                        }
+                        
+                        case _DeviceState::Finish: {
+                            state = _DeviceState::STMLoaderInvoke; // Start over if this device appears again
+                            
+                            // Create our final MDCDevice instance
+                            MDCDevicePtr mdc = Object::Create<MDCDevice>(std::move(*dev));
+                            
+                            // Watch the service so we know when it goes away
+                            io_object_t ioObj = MACH_PORT_NULL;
+                            kern_return_t kr = IOServiceAddInterestNotification(notePort, service,
+                                kIOGeneralInterest, _ServiceInterestCallback, this, &ioObj);
+                            if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddInterestNotification failed: 0x%x", kr);
+                            
+                            // Add the device to our _state.devices
+                            {
+                                auto lock = _state.signal.lock();
+                                _state.devices.push_back(_Device{
+                                    .dev = mdc,
+                                    .note = _SendRight(_SendRight::NoRetain, ioObj),
+                                });
+                            }
+                            
+                            printf("Device connected\n");
+                            changed = true;
+                            break; // Device is fully configured
+                        }}
+                        
+                        break;
                     }
-                    
-                    try {
-                        for (;;) {
-                            _DeviceState& state = deviceStates[dev->serial()];
-                            switch (state) {
-                            case _DeviceState::STMLoaderInvoke: {
-                                dev->bootloaderInvoke();
-                                state = _DeviceState::STMLoaderCheck;
-                                break; // Device will re-enumerate; continue to the next device
-                            }
-                            
-                            case _DeviceState::STMLoaderCheck: {
-                                if (dev->statusGet().mode == STM::Status::Mode::STMLoader) {
-                                    state = _DeviceState::STMAppWrite;
-                                } else {
-                                    state = _DeviceState::STMLoaderInvoke; // Start over
-                                }
-                                continue;
-                            }
-                            
-                            case _DeviceState::STMAppWrite: {
-                                _deviceBootload(*dev);
-                                state = _DeviceState::STMAppCheck;
-                                break; // Device will re-enumerate; continue to the next device
-                            }
-                            
-                            case _DeviceState::STMAppCheck: {
-                                if (dev->statusGet().mode == STM::Status::Mode::STMApp) {
-                                    state = _DeviceState::Finish;
-                                } else {
-                                    state = _DeviceState::STMLoaderInvoke; // Start over
-                                }
-                                continue;
-                            }
-                            
-                            case _DeviceState::Finish: {
-                                state = _DeviceState::STMLoaderInvoke; // Start over if this device appears again
-                                
-                                // Create our final MDCDevice instance
-                                MDCDevicePtr mdc = Object::Create<MDCDevice>(std::move(*dev));
-                                
-                                // Watch the service so we know when it goes away
-                                io_object_t ioObj = MACH_PORT_NULL;
-                                kern_return_t kr = IOServiceAddInterestNotification(notePort, service,
-                                    kIOGeneralInterest, _ServiceInterestCallback, this, &ioObj);
-                                if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddInterestNotification failed: 0x%x", kr);
-                                
-                                // Add the device to our _state.devices
-                                {
-                                    auto lock = std::unique_lock(_state.lock);
-                                    _state.devices.push_back(_Device{
-                                        .dev = mdc,
-                                        .note = _SendRight(_SendRight::NoRetain, ioObj),
-                                    });
-                                }
-                                
-                                printf("Device connected\n");
-                                changed = true;
-                                break; // Device is fully configured
-                            }}
-                            
+                
+                } catch (const std::exception& e) {
+                    // Ignore failures to create USBDevice
+                    printf("Configure MDCDevice failed: %s\n", e.what());
+                }
+            }
+            
+            // Handle disconnected devices
+            {
+                for (const _SendRight& service : _state.terminatedServices) {
+                    auto lock = _state.signal.lock();
+                    for (auto it=_state.devices.begin(); it!=_state.devices.end(); it++) {
+                        if (it->dev->service() == service) {
+                            _state.devices.erase(it);
+                            changed = true;
+                            printf("Device disconnected\n");
                             break;
                         }
-                    
-                    } catch (const std::exception& e) {
-                        // Ignore failures to create USBDevice
-                        printf("Configure MDCDevice failed: %s\n", e.what());
                     }
                 }
                 
-                // Handle disconnected devices
-                {
-                    for (const _SendRight& service : _thread.terminatedServices) {
-                        auto lock = std::unique_lock(_state.lock);
-                        for (auto it=_state.devices.begin(); it!=_state.devices.end(); it++) {
-                            if (it->dev->service() == service) {
-                                _state.devices.erase(it);
-                                changed = true;
-                                printf("Device disconnected\n");
-                                break;
-                            }
-                        }
-                    }
-                    
-                    _thread.terminatedServices.clear();
-                }
+                _state.terminatedServices.clear();
             }
             
             // Notify observers that something changed
             if (changed) observersNotify({});
-            
-            sleep(5);
             
             // Wait for matching services to appear
             CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
             if (r == kCFRunLoopRunStopped) break; // Signalled to stop
             assert(r == kCFRunLoopRunHandledSource);
         }
+        
+        // Signal that we've stopped
+        _state.signal.stop();
         
         printf("[MDCDevicesManager : _threadHandleDevices] Returning\n");
     }
@@ -228,7 +226,7 @@ struct MDCDevicesManager : Object {
     
     void _serviceInterestCallback(io_service_t service, uint32_t msgType, void* msgArg) {
         if (msgType == kIOMessageServiceIsTerminated) {
-            _thread.terminatedServices.emplace_back(_SendRight::Retain, service);
+            _state.terminatedServices.emplace_back(_SendRight::Retain, service);
         }
     }
     
@@ -244,12 +242,8 @@ struct MDCDevicesManager : Object {
         std::thread thread;
         id /* CFRunLoopRef */ runLoop;
         std::vector<_SendRight> terminatedServices;
-    } _thread;
-    
-    struct {
-        std::mutex lock; // Protects this struct
         std::vector<_Device> devices;
-    } _state = {};
+    } _state;
 };
 
 using MDCDevicesManagerPtr = SharedPtr<MDCDevicesManager>;

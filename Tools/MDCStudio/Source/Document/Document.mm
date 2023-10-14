@@ -119,18 +119,13 @@ static void _SetView(T& x, NSView* y) {
     
     // Observe devices connecting/disconnecting
     {
-//        __weak auto selfWeak = self;
-//        _devicesOb = MDCDevicesManagerGlobal()->observerAdd([=] (auto, auto) {
-//            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _devicesChanged]; });
-//        });
+        __weak auto selfWeak = self;
+        _devicesOb = MDCDevicesManagerGlobal()->observerAdd([=] (auto, auto) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _updatesDevices]; });
+        });
     }
     
-    auto t = std::thread([&] {
-        MDCDevicesManagerPtr x = Object::Create<MDCDevicesManager>();
-        sleep(3);
-        printf("THREAD BAILING\n");
-    });
-    t.detach();
+    [self _updatesDevices];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
@@ -333,7 +328,7 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     }
 }
 
-- (void)_devicesChanged {
+- (void)_updatesDevices {
     std::set<ImageSourcePtr> imageSources;
     std::vector<MDCDevicePtr> devices = MDCDevicesManagerGlobal()->devices();
     for (MDCDevicePtr device : devices) {

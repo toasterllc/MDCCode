@@ -333,6 +333,7 @@ struct MDCDevice : Object, ImageSource {
     using _Cleanup = std::unique_ptr<__Cleanup>;
     
     static int _CPUCount() {
+        return 1;
         static int CPUCount = std::max(1, (int)std::thread::hardware_concurrency());
         return CPUCount;
     }
