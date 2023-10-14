@@ -84,14 +84,13 @@ fragment float4 FragmentShader(
     if (!loadCounts[in.idx]) return placeholderTxt.sample({}, in.posNorm);
     const uint2 txtSize = { txt.get_width(), txt.get_height() };
     
+    constexpr float4 SelectionBorderColor1 = float4(0,0.523,1,1);
+    constexpr float4 SelectionBorderColor2 = float4(1,1,1,.175);
     constexpr uint SelectionBorderSize = 10;
     float3 c = txt.read(pos, in.idx).rgb;
     if (in.selected && (metal::any(pos < SelectionBorderSize) || metal::any(pos > (txtSize-SelectionBorderSize)))) {
-        return blendColorDodge(float4(0,0.523,1,1), blendOver(float4(1,1,1,.175), float4(c,1)));
-//        return blendColorDodge(float4(ctx.selectionColor, 1), blendOver(float4(1,1,1,.25), float4(c,1)));
-//        return blendColorDodge(float4(0,0.341,0.671,1), blendOver(float4(1,1,1,.25), float4(c,1)));
+        return blendColorDodge(SelectionBorderColor1, blendOver(SelectionBorderColor2, float4(c,1)));
     }
-//    if (in.selected) c /= 32;
     return float4(c, 1);
     
 //    
