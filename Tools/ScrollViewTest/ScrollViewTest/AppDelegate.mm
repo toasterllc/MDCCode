@@ -31,6 +31,11 @@ inline NSDictionary* LayerNullActions = @{
 @interface MyDocLayer : FixedMetalDocumentLayer
 @end
 
+static CGColorSpaceRef _SRGBColorSpace() {
+    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    return cs;
+}
+
 @implementation MyDocLayer {
 @private
     id<MTLDevice> _device;
@@ -49,6 +54,7 @@ inline NSDictionary* LayerNullActions = @{
     
     [self setDevice:[self preferredDevice]];
     [self setPixelFormat:_PixelFormat];
+    [self setColorspace:_SRGBColorSpace()]; // See comment for _PixelFormat
     
     _library = [_device newDefaultLibrary];
     _commandQueue = [_device newCommandQueue];

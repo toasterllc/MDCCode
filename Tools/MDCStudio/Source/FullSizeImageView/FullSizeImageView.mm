@@ -134,26 +134,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
     [self setNeedsDisplay];
 }
 
-//static id<MTLTexture> _ThumbRender(Renderer& renderer, const ImageRecord& thumb) {
-//    using namespace MDCTools;
-//    using namespace MDCTools::ImagePipeline;
-//    
-//    #warning TODO: try removing the Write usage flag
-//    id<MTLTexture> txt = renderer.textureCreate(MTLPixelFormatBGRA8Unorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
-//        MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
-//    
-//    constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
-//    id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytes:thumb.thumb length:sizeof(thumb.thumb) options:BufOpts];
-//    const RenderThumb::Options thumbOpts = {
-//        .thumbWidth = ImageThumb::ThumbWidth,
-//        .thumbHeight = ImageThumb::ThumbHeight,
-//        .dataOff = 0,
-//    };
-//    RenderThumb::TextureFromRGB3(renderer, thumbOpts, thumbBuf, txt);
-//    
-//    return txt;
-//}
-
 - (void)display {
     using namespace MDCTools;
     using namespace MDCTools::ImagePipeline;
@@ -296,11 +276,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
     [_height setActive:true];
 }
 
-//- (CGSize)preferredFrameSize {
-//    if (!_imageRecord) return {};
-//    return {(CGFloat)_imageRecord->info.imageWidth*2, (CGFloat)_imageRecord->info.imageHeight*2};
-//}
-
 static ImageSet _NeighborsGet(ImageLibraryPtr lib, ImageRecordPtr rec, size_t count) {
     // Collect the neighboring image ids in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
     auto lock = std::unique_lock(*lib);
@@ -371,161 +346,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
-
-
-
-
-
-
-
-
-//@interface ImageDocumentView : NSView
-//@end
-//
-//@implementation ImageDocumentView
-//
-//- (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
-//    const bool fit = [(LayerScrollView*)[self enclosingScrollView] magnifyToFit];
-//    return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
-//}
-//
-//- (BOOL)isFlipped {
-//    return true;
-//}
-//
-//@end
-
-
-
-//@interface ImageClipView : NSClipView
-//@end
-//
-//@implementation ImageClipView
-//
-//// -constrainBoundsRect override:
-//// Center the document view when it's smaller than the scroll view's bounds
-//- (NSRect)constrainBoundsRect:(NSRect)bounds {
-//    bounds = [super constrainBoundsRect:bounds];
-//    
-//    const CGSize docSize = [[self documentView] frame].size;
-//    if (bounds.size.width >= docSize.width) {
-//        bounds.origin.x = (docSize.width-bounds.size.width)/2;
-//    }
-//    if (bounds.size.height >= docSize.height) {
-//        bounds.origin.y = (docSize.height-bounds.size.height)/2;
-//    }
-//    return bounds;
-//}
-//
-//@end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//constexpr CGFloat ShadowCenterOffset = 45;
-//
-//@interface FullSizeImageScrollView : LayerScrollView
-//@end
-//
-//@implementation FullSizeImageScrollView {
-//    NSView* _shadowView;
-//    CALayer* _shadowLayer;
-//}
-//
-//static void _InitCommon(FullSizeImageScrollView* self) {
-//    [self setBackgroundColor:[NSColor colorWithSRGBRed:WindowBackgroundColor.srgb[0]
-//        green:WindowBackgroundColor.srgb[1] blue:WindowBackgroundColor.srgb[2] alpha:1]];
-//}
-//
-//- (instancetype)initWithCoder:(NSCoder*)coder {
-//    if (!(self = [super initWithCoder:coder])) return nil;
-//    _InitCommon(self);
-//    return self;
-//}
-//
-//- (instancetype)initWithFrame:(NSRect)frame {
-//    if (!(self = [super initWithFrame:frame])) return nil;
-//    _InitCommon(self);
-//    return self;
-//}
-//
-//- (void)tile {
-//    [super tile];
-//    if (!_shadowView) {
-//        _shadowLayer = [CALayer new];
-//        [_shadowLayer setActions:LayerNullActions];
-//        NSImage* shadow = [NSImage imageNamed:@"ImageView-Shadow"];
-//        assert(shadow);
-//        [_shadowLayer setContents:shadow];
-//        [_shadowLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-//        
-//        CGSize shadowSize = [shadow size];
-//        CGRect center = { ShadowCenterOffset, ShadowCenterOffset, shadowSize.width-2*ShadowCenterOffset, shadowSize.height-2*ShadowCenterOffset };
-//        center.origin.x /= shadowSize.width;
-//        center.origin.y /= shadowSize.height;
-//        center.size.width /= shadowSize.width;
-//        center.size.height /= shadowSize.height;
-//        [_shadowLayer setContentsCenter:center];
-//        
-//        _shadowView = [[NSView alloc] initWithFrame:{}];
-//        [_shadowView setTranslatesAutoresizingMaskIntoConstraints:false];
-//        [_shadowView setLayer:_shadowLayer];
-//        [_shadowView setWantsLayer:true];
-//        [self addSubview:_shadowView positioned:NSWindowBelow relativeTo:[self contentView]];
-//    }
-//    
-//    [self _updateShadowFrame];
-//}
-//
-//- (void)_updateShadowFrame {
-//    NSView* docView = [self documentView];
-//    CGRect shadowFrame = [self convertRect:[docView visibleRect] fromView:docView];
-//    shadowFrame = CGRectInset(shadowFrame, -ShadowCenterOffset/[_shadowLayer contentsScale], -ShadowCenterOffset/[_shadowLayer contentsScale]);
-//    [_shadowView setFrame:shadowFrame];
-//}
-//
-//- (void)reflectScrolledClipView:(NSClipView*)clipView {
-//    [super reflectScrolledClipView:clipView];
-//    [self _updateShadowFrame];
-//}
-//
-//- (void)viewDidChangeBackingProperties {
-//    [super viewDidChangeBackingProperties];
-//    [_shadowLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-//}
-//
-//@end
-
-
-
-
-
-
-
-
-
 @interface FullSizeImageDocumentView : FixedDocumentView
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
 @end
@@ -537,13 +357,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     if (!(self = [super initWithFixedLayer:imageLayer])) return nil;
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
-//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer* timer) {
-//        NSLog(@"[self bounds]: %@", NSStringFromRect([self bounds]));
-//        NSLog(@"[_scrollView bounds]: %@", NSStringFromRect([_scrollView bounds]));
-//        NSLog(@"[_scrollView contentView]: %@", NSStringFromRect([[_scrollView contentView] bounds]));
-//        
-//    }];
-    
     return self;
 }
 
@@ -551,54 +364,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     printf("~ImageView\n");
 }
 
-
-
-//- (ImageRecordPtr)imageRecord {
-//    return [_imageLayer imageRecord];
-//}
-//
-//- (void)setImageRecord:(ImageRecordPtr)rec {
-//    [_imageLayer setImageRecord:rec];
-//}
-
-//- (void)setDelegate:(id<FullSizeImageViewDelegate>)delegate {
-//    _delegate = delegate;
-//}
-
-//// MARK: - Event Handling
-//
-//- (void)moveLeft:(id)sender {
-//    [_delegate fullSizeImageViewPreviousImage:self];
-//}
-//
-//- (void)moveRight:(id)sender {
-//    [_delegate fullSizeImageViewNextImage:self];
-//}
-
-//- (void)viewWillStartLiveResize {
-//    // MainView sends this message explicitly when resizing using the divider; forward it to _scrollView
-//    [super viewWillStartLiveResize];
-//    [_scrollView viewWillStartLiveResize];
-//}
-//
-//- (void)viewDidEndLiveResize {
-//    // MainView sends this message explicitly when resizing using the divider; forward it to _scrollView
-//    [super viewDidEndLiveResize];
-//    [_scrollView viewDidEndLiveResize];
-//}
-
-//- (NSView*)initialFirstResponder {
-//    return [_scrollView documentView];
-//}
-
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
     const bool fit = [(FixedScrollView*)[self enclosingScrollView] magnifyToFit];
     return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
 }
-
-//- (void)mouseDown:(NSEvent*)mouseDownEvent {
-//    [[self window] makeFirstResponder:self];
-//}
 
 @end
 

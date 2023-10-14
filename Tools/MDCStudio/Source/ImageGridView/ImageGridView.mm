@@ -164,6 +164,9 @@ static CGColorSpaceRef _SRGBColorSpace() {
     std::thread([=] { _ThumbRenderThread(*thumbRender); }).detach();
     _thumbRender = thumbRender;
     
+    // Make our layer transparent against the layer's background
+    [self setOpaque:false];
+    
 //    NSColorPanel* colorPanel = [NSColorPanel sharedColorPanel];
 //    [colorPanel makeKeyAndOrderFront:nil];
 //    [NSTimer scheduledTimerWithTimeInterval:.1 repeats:true block:^(NSTimer * _Nonnull timer) {
@@ -425,8 +428,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawableTxt];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0, 0, 0, 1}];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{WindowBackgroundColor.lsrgb[0], WindowBackgroundColor.lsrgb[1], WindowBackgroundColor.lsrgb[2], 1}];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
@@ -813,6 +815,13 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryChanged]; });
         });
     }
+    
+//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
+//        NSColor* c = [[self enclosingScrollView] backgroundColor];
+////        NSColor* c = [[self window] backgroundColor];
+//        NSColor* c2 = [c colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+//        NSLog(@"backgroundColor: %f %f %f", [c2 redComponent], [c2 greenComponent], [c2 blueComponent]);
+//    }];
     
     return self;
 }
