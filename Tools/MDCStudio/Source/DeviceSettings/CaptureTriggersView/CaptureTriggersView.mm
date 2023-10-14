@@ -337,7 +337,7 @@ static std::string _RepeatDescription(const Repeat& x) {
 
 static std::string _CaptureDescription(const Capture& x) {
     std::stringstream ss;
-    ss << "capture " << x.count << " image" << (x.count!=1 ? "s" : "");
+    ss << "capture " << x.count << " photo" << (x.count!=1 ? "s" : "");
     if (x.count>1 && x.interval.value>0) {
         ss << " (" << StringFromFloat(x.interval.value);
         ss << _SuffixForDurationUnit(x.interval.unit) << " interval)";

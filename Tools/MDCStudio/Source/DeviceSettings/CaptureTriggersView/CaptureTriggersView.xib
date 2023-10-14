@@ -91,15 +91,15 @@
                                                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" id="w44-RA-Kh1"/>
                                                     </imageView>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="n8U-Uc-9fw">
-                                                        <rect key="frame" x="67" y="28" width="64" height="15"/>
-                                                        <textFieldCell key="cell" lineBreakMode="clipping" title="Title Prefix" id="vwX-Nl-AIs">
+                                                        <rect key="frame" x="67" y="28" width="36" height="15"/>
+                                                        <textFieldCell key="cell" lineBreakMode="clipping" title="Prefix" id="vwX-Nl-AIs">
                                                             <font key="font" metaFont="systemLight" size="12"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QhX-Pl-rlK">
-                                                        <rect key="frame" x="131" y="28" width="31" height="15"/>
+                                                        <rect key="frame" x="103" y="28" width="31" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Title" id="qQv-Q5-INr">
                                                             <font key="font" metaFont="systemSemibold" size="12"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -115,7 +115,7 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="Suo-7y-kvg">
-                                                        <rect key="frame" x="162" y="28" width="69" height="15"/>
+                                                        <rect key="frame" x="134" y="28" width="69" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Description" id="GIs-LG-n68">
                                                             <font key="font" metaFont="systemLight" size="12"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -407,16 +407,16 @@ CA
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="uDa-XG-QN2">
-                    <rect key="frame" x="147" y="192" width="143" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="images when triggered" id="I4u-vb-OAa">
+                    <rect key="frame" x="147" y="192" width="142" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="photos when triggered" id="I4u-vb-OAa">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="uyQ-Us-DO2">
-                    <rect key="frame" x="240" y="159" width="129" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="between each image" id="hij-CQ-5gb">
+                    <rect key="frame" x="240" y="159" width="128" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="between each photo" id="hij-CQ-5gb">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -431,8 +431,8 @@ CA
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="EA3-4n-azB">
-                    <rect key="frame" x="38" y="128" width="238" height="18"/>
-                    <buttonCell key="cell" type="check" title="Flash LED when capturing an image" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Oun-GC-tCR">
+                    <rect key="frame" x="38" y="128" width="229" height="18"/>
+                    <buttonCell key="cell" type="check" title="Flash LED when capturing a photo" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Oun-GC-tCR">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -710,7 +710,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZhD-fg-EKZ">
                     <rect key="frame" x="38" y="118" width="514" height="28"/>
                     <textFieldCell key="cell" title="After this number of triggers, your Photon ignores motion until the next day to prolong its battery life." id="77K-Wk-abH">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="label" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -718,7 +718,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="icX-od-xa4">
                     <rect key="frame" x="38" y="30" width="514" height="28"/>
                     <textFieldCell key="cell" id="Org-0X-drC">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="label" size="11"/>
                         <string key="title">After motion occurs, your Photon will ignore further motion for this amount of time. This can help limit the number of triggers during long periods of continuous motion, prolonging battery life.</string>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -727,7 +727,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
                     <rect key="frame" x="38" y="394" width="425" height="14"/>
                     <textFieldCell key="cell" title="You can restrict when your Photon responds to motion to prolong its battery life." id="Oar-aS-K64">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="label" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -850,7 +850,7 @@ CA
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
                     <rect key="frame" x="-2" y="-2" width="301" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="label" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>
