@@ -105,9 +105,9 @@ struct MDCDevice : Object, ImageSource {
         
         // Wait for threads to stop
         if (_sync.thread.joinable()) _sync.thread.join();
-        _sdRead.thread.join();
+        if (_sdRead.thread.joinable()) _sdRead.thread.join();
         for (std::thread& t : _thumbRender.threads) t.join();
-        _status.thread.join();
+        if (_status.thread.joinable()) _status.thread.join();
     }
     
     PropertyValue(std::string, name);
