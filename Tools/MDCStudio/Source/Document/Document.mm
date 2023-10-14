@@ -228,12 +228,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
             
             _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:_imageGridView];
             [_imageGridScrollView setHeaderView:_imageGridHeaderView];
-            
-            [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
-                NSLog(@"[_imageGridView frame]: %@", NSStringFromRect([_imageGridView frame]));
-                NSLog(@"[[_imageGridView superview] frame]: %@", NSStringFromRect([[_imageGridView superview] frame]));
-                NSLog(@"[[[_imageGridView superview] superview] frame]: %@", NSStringFromRect([[[_imageGridView superview] superview] frame]));
-            }];
         }
         
         {

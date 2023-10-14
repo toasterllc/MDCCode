@@ -888,7 +888,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     [_imageGridLayer setContainerWidth:[[self enclosingScrollView] bounds].size.width];
     [_imageGridLayer updateGridElementCount];
     [_docHeight setConstant:[_imageGridLayer containerHeight]];
-    printf("_updateDocumentHeight: %f %f\n", [[self enclosingScrollView] bounds].size.width, [_docHeight constant]);
 }
 
 - (void)_handleImageLibraryChanged {
@@ -988,7 +987,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
         multiplier:1 constant:0];
     [_docHeight setActive:true];
-    printf("fixedCreateConstraintsForContainer\n");
 }
 
 @end
