@@ -20,18 +20,28 @@ using namespace MDCStudio;
 @public
     NSString* name;
     __weak SourceListView* sourceListView;
-@protected
-//    IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
+    ImageSourcePtr _imageSource;
+    Object::ObserverPtr _imageLibraryOb;
 }
 
 - (NSString*)name { return name; }
 - (bool)selectable { return true; }
 - (CGFloat)height { return 74; }
-//- (CGFloat)indent { return 0; }
+
+- (ImageSourcePtr)imageSource {
+    return _imageSource;
+}
+
+- (void)setImageSource:(ImageSourcePtr)x {
+    _imageSource = x;
+    __weak auto selfWeak = self;
+    _imageLibraryOb = _imageSource->imageLibrary()->observerAdd([=] (auto, auto) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
+    });
+}
 
 - (void)update {
-//    [_indent setConstant:[self indent]];
     [_height setConstant:[self height]];
     if (![[self textField] currentEditor]) {
         [[self textField] setStringValue:[self name]];
@@ -40,6 +50,24 @@ using namespace MDCStudio;
 
 @end
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @interface SourceListView_Device : SourceListView_Item
 @end
 
@@ -47,22 +75,20 @@ using namespace MDCStudio;
 @public
     IBOutlet NSImageView* _batteryImageView;
     IBOutlet NSTextField* _descriptionLabel;
-    MDCDevicePtr device;
     Object::ObserverPtr _deviceOb;
-    Object::ObserverPtr _imageLibraryOb;
 }
 
-- (NSString*)name { return @(device->name().c_str()); }
+- (MDCDevicePtr)device {
+    return Toastbox::Cast<MDCDevicePtr>(_imageSource);
+}
 
-- (void)setDevice:(MDCDevicePtr)dev {
-    assert(!device); // We're one-time use since MDCDevice observers can't be removed
-    device = dev;
-    __weak auto selfWeak = self;
-    _deviceOb = device->observerAdd([=] (auto, auto) {
-        dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
-    });
+- (NSString*)name { return @([self device]->name().c_str()); }
+
+- (void)setImageSource:(ImageSourcePtr)x {
+    [super setImageSource:x];
     
-    _imageLibraryOb = device->imageLibrary()->observerAdd([=] (auto, auto) {
+    __weak auto selfWeak = self;
+    _deviceOb = [self device]->observerAdd([=] (auto, auto) {
         dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
     });
 }
@@ -80,16 +106,16 @@ static NSString* _BatteryLevelImage(float level) {
 
 - (void)update {
     [super update];
-    [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage(device->status().batteryLevel)]];
-    [_descriptionLabel setStringValue:@(ImageLibraryStatus(device->imageLibrary()).c_str())];
+    [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage([self device]->status().batteryLevel)]];
+    [_descriptionLabel setStringValue:@(ImageLibraryStatus([self device]->imageLibrary()).c_str())];
 }
 
 - (IBAction)textFieldAction:(id)sender {
-    device->name([[[self textField] stringValue] UTF8String]);
+    [self device]->name([[[self textField] stringValue] UTF8String]);
 }
 
 - (IBAction)settingsAction:(id)sender {
-    [sourceListView _showDeviceSettings:device];
+    [sourceListView _showDeviceSettings:[self device]];
 }
 
 @end
@@ -101,8 +127,8 @@ static NSString* _BatteryLevelImage(float level) {
 - (BOOL)isEmphasized { return false; }
 @end
 
-#define Device          SourceListView_Device
 #define Item            SourceListView_Item
+#define Device          SourceListView_Device
 #define RowView         SourceListView_RowView
 
 // MARK: - SourceListView
@@ -135,38 +161,24 @@ static void _Init(SourceListView* self) {
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
     }
     
-    // Observe devices connecting/disconnecting
-    {
-        __weak auto selfWeak = self;
-        MDCDevicesManager::AddObserver([=] {
-            auto selfStrong = selfWeak;
-            if (!selfStrong) return false;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [selfStrong _updateDevices];
-                [selfStrong->_outlineView reloadData];
-            });
-            return true;
-        });
-    }
-    
-    // Populate NSOutlineView
-    {
-        self->_items = {};
-        
-        [self _updateDevices];
-        [self->_outlineView reloadData];
-        
-        for (auto item : self->_items) {
-            [self->_outlineView expandItem:item];
-        }
-        
-        // Select first device by default
-        const NSInteger selectedRow = [self->_outlineView selectedRow];
-        if (selectedRow<0 && !self->_items.empty()) {
-            [self->_outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:
-                [self->_outlineView rowForItem:self->_items.at(0)]] byExtendingSelection:false];
-        }
-    }
+//    // Populate NSOutlineView
+//    {
+//        self->_items = {};
+//        
+//        [self _updateDevices];
+//        [self->_outlineView reloadData];
+//        
+//        for (auto item : self->_items) {
+//            [self->_outlineView expandItem:item];
+//        }
+//        
+//        // Select first device by default
+//        const NSInteger selectedRow = [self->_outlineView selectedRow];
+//        if (selectedRow<0 && !self->_items.empty()) {
+//            [self->_outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:
+//                [self->_outlineView rowForItem:self->_items.at(0)]] byExtendingSelection:false];
+//        }
+//    }
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
@@ -183,66 +195,136 @@ static void _Init(SourceListView* self) {
 
 // MARK: - Methods
 
+- (void)setImageSources:(const std::set<ImageSourcePtr>&)x {
+    ImageSourcePtr selectedImageSource;
+    Item* selectedItem = nil;
+    const NSInteger selectedRow = [_outlineView selectedRow];
+    if (selectedRow >= 0) {
+        selectedImageSource = [Toastbox::Cast<Item*>([_outlineView itemAtRow:selectedRow]) imageSource];
+    }
+    
+    _items.clear();
+    for (ImageSourcePtr imageSource : x) {
+        Item* it = [self _createItemForImageSource:imageSource];
+        _items.push_back(it);
+        if (imageSource == selectedImageSource) {
+            selectedItem = it;
+        }
+    }
+    
+    // Sort items
+    std::sort(_items.begin(), _items.end(), [](Item* a, Item* b) {
+        return [Toastbox::Cast<Item*>(a)->name compare:Toastbox::Cast<Item*>(b)->name] == NSOrderedDescending;
+    });
+    
+    [_outlineView reloadData];
+    for (auto item : _items) {
+        [_outlineView expandItem:item];
+    }
+    
+    // Restore selection
+    if (selectedItem) {
+        [_outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:[_outlineView rowForItem:selectedItem]]
+            byExtendingSelection:false];
+    }
+    
+//    // Collect the old and new device sets
+//    std::set<MDCDevicePtr> oldDevices;
+//    std::set<MDCDevicePtr> newDevices;
+//    {
+//        for (Item* it : _items) {
+//            oldDevices.insert(Toastbox::Cast<Device*>(it)->device);
+//        }
+//        
+//        std::vector<MDCDevicePtr> newDevicesVec = MDCDevicesManager::Devices();
+//        newDevices.insert(newDevicesVec.begin(), newDevicesVec.end());
+//    }
+//    
+//    // Remove disconnected devices
+//    for (auto it=_items.begin(); it!=_items.end();) {
+//        MDCDevicePtr dev = Toastbox::Cast<Device*>(*it)->device;
+//        if (newDevices.find(dev) == newDevices.end()) {
+//            it = _items.erase(it);
+//        } else {
+//            it++;
+//        }
+//    }
+//    
+//    // Add connected devices
+//    for (const MDCDevicePtr& dev : newDevices) {
+//        if (oldDevices.find(dev) == oldDevices.end()) {
+//            Device* item = [self _createItemWithClass:[Device class]];
+//            [item setDevice:dev];
+//            _items.push_back(item);
+//        }
+//    }
+//    
+//    // Sort devices
+//    std::sort(_items.begin(), _items.end(), [](Item* a, Item* b) {
+//        return [Toastbox::Cast<Device*>(a)->name compare:Toastbox::Cast<Device*>(b)->name] == NSOrderedDescending;
+//    });
+}
+
 - (void)setDelegate:(id<SourceListViewDelegate>)delegate {
     _delegate = delegate;
 }
 
 - (ImageSourcePtr)selection {
     const NSInteger selectedRow = [_outlineView selectedRow];
-    if (selectedRow < 0) return {};
-    
-    if (Device* dev = Toastbox::CastOrNull<Device*>([_outlineView itemAtRow:selectedRow])) {
-        return dev->device;
-    }
-    
-    return {};
+    if (selectedRow < 0) return nullptr;
+    return [Toastbox::Cast<Item*>([_outlineView itemAtRow:selectedRow]) imageSource];
 }
 
-- (id)_createItemWithClass:(Class)itemClass {
-    NSParameterAssert(itemClass);
-    Item* view = Toastbox::Cast<Item*>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
-    assert(view);
+- (Item*)_createItemForImageSource:(ImageSourcePtr)imageSource {
+    NSParameterAssert(imageSource);
+    Item* view = nil;
+    if (auto it = Toastbox::CastOrNull<MDCDevicePtr>(imageSource)) {
+        view = Toastbox::Cast<Device*>([_outlineView makeViewWithIdentifier:NSStringFromClass([Device class]) owner:nil]);
+        assert(view);
+    }
+    
     view->sourceListView = self;
+    [view setImageSource:imageSource];
     return view;
 }
 
-- (void)_updateDevices {
-    // Collect the old and new device sets
-    std::set<MDCDevicePtr> oldDevices;
-    std::set<MDCDevicePtr> newDevices;
-    {
-        for (Item* it : _items) {
-            oldDevices.insert(Toastbox::Cast<Device*>(it)->device);
-        }
-        
-        std::vector<MDCDevicePtr> newDevicesVec = MDCDevicesManager::Devices();
-        newDevices.insert(newDevicesVec.begin(), newDevicesVec.end());
-    }
-    
-    // Remove disconnected devices
-    for (auto it=_items.begin(); it!=_items.end();) {
-        MDCDevicePtr dev = Toastbox::Cast<Device*>(*it)->device;
-        if (newDevices.find(dev) == newDevices.end()) {
-            it = _items.erase(it);
-        } else {
-            it++;
-        }
-    }
-    
-    // Add connected devices
-    for (const MDCDevicePtr& dev : newDevices) {
-        if (oldDevices.find(dev) == oldDevices.end()) {
-            Device* item = [self _createItemWithClass:[Device class]];
-            [item setDevice:dev];
-            _items.push_back(item);
-        }
-    }
-    
-    // Sort devices
-    std::sort(_items.begin(), _items.end(), [](Item* a, Item* b) {
-        return [Toastbox::Cast<Device*>(a)->name compare:Toastbox::Cast<Device*>(b)->name] == NSOrderedDescending;
-    });
-}
+//- (void)_updateDevices {
+//    // Collect the old and new device sets
+//    std::set<MDCDevicePtr> oldDevices;
+//    std::set<MDCDevicePtr> newDevices;
+//    {
+//        for (Item* it : _items) {
+//            oldDevices.insert(Toastbox::Cast<Device*>(it)->device);
+//        }
+//        
+//        std::vector<MDCDevicePtr> newDevicesVec = MDCDevicesManager::Devices();
+//        newDevices.insert(newDevicesVec.begin(), newDevicesVec.end());
+//    }
+//    
+//    // Remove disconnected devices
+//    for (auto it=_items.begin(); it!=_items.end();) {
+//        MDCDevicePtr dev = Toastbox::Cast<Device*>(*it)->device;
+//        if (newDevices.find(dev) == newDevices.end()) {
+//            it = _items.erase(it);
+//        } else {
+//            it++;
+//        }
+//    }
+//    
+//    // Add connected devices
+//    for (const MDCDevicePtr& dev : newDevices) {
+//        if (oldDevices.find(dev) == oldDevices.end()) {
+//            Device* item = [self _createItemWithClass:[Device class]];
+//            [item setDevice:dev];
+//            _items.push_back(item);
+//        }
+//    }
+//    
+//    // Sort devices
+//    std::sort(_items.begin(), _items.end(), [](Item* a, Item* b) {
+//        return [Toastbox::Cast<Device*>(a)->name compare:Toastbox::Cast<Device*>(b)->name] == NSOrderedDescending;
+//    });
+//}
 
 - (void)setFrameSize:(NSSize)size {
     [super setFrameSize:size];
@@ -298,9 +380,6 @@ static void _Init(SourceListView* self) {
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
     Item* it = Toastbox::Cast<Item*>(item);
-    // Clear identifier to prevent SourceListView_Item from being reused,
-    // because SourceListView_Device doesn't support reuse. See -setDevice:.
-    [it setIdentifier:nil];
     [it update];
     return item;
 }

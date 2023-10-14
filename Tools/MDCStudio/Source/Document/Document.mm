@@ -12,6 +12,7 @@
 #import "DeviceSettings/DeviceSettingsView.h"
 #import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
 #import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
+#import "MDCDevicesManager.h"
 
 using namespace MDCStudio;
 
@@ -22,6 +23,7 @@ using namespace MDCStudio;
     IBOutlet NSSplitView* _splitView;
     IBOutlet NSView* _noDevicesView;
     NSWindow* _window;
+    Object::ObserverPtr _devicesOb;
     Object::ObserverPtr _prefsOb;
     
     struct {
@@ -114,6 +116,21 @@ static void _SetView(T& x, NSView* y) {
         __weak auto selfWeak = self;
         _prefsOb = PrefsGlobal()->observerAdd([=] (auto, auto) { [selfWeak _prefsChanged]; });
     }
+    
+    // Observe devices connecting/disconnecting
+    {
+//        __weak auto selfWeak = self;
+//        _devicesOb = MDCDevicesManagerGlobal()->observerAdd([=] (auto, auto) {
+//            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _devicesChanged]; });
+//        });
+    }
+    
+    auto t = std::thread([&] {
+        MDCDevicesManagerPtr x = Object::Create<MDCDevicesManager>();
+        sleep(3);
+        printf("THREAD BAILING\n");
+    });
+    t.detach();
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
@@ -283,7 +300,6 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
 }
 
 - (void)_updateImageGridHeader {
-    
     MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>([_sourceListView selection]);
     if (!device) return;
     
@@ -315,6 +331,15 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
         const float progress = (status.sync ? status.sync->progress : 0);
         [deviceHeader setProgress:progress];
     }
+}
+
+- (void)_devicesChanged {
+    std::set<ImageSourcePtr> imageSources;
+    std::vector<MDCDevicePtr> devices = MDCDevicesManagerGlobal()->devices();
+    for (MDCDevicePtr device : devices) {
+        imageSources.insert(device);
+    }
+    [_sourceListView setImageSources:imageSources];
 }
 
 - (void)_deviceChanged {

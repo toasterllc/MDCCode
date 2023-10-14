@@ -18,9 +18,4 @@ static std::vector<id> _Images;
 @end
 
 @implementation AppDelegate
-
-- (void)applicationDidFinishLaunching:(NSNotification*)note {
-    MDCDevicesManager::Start();
-}
-
 @end

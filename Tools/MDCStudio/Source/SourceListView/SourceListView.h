@@ -10,6 +10,7 @@
 @end
 
 @interface SourceListView : NSView
-- (void)setDelegate:(id<SourceListViewDelegate>)delegate;
+- (void)setImageSources:(const std::set<MDCStudio::ImageSourcePtr>&)x;
+- (void)setDelegate:(id<SourceListViewDelegate>)x;
 - (MDCStudio::ImageSourcePtr)selection;
 @end
