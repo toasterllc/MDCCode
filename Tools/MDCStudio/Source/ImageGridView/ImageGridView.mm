@@ -55,6 +55,8 @@ struct _ThumbRenderThreadState {
     std::set<ImageRecordPtr> recs;
 };
 
+// MARK: - ImageGridLayer
+
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
     ImageLibraryPtr _imageLibrary;
@@ -772,7 +774,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 
 
-
+// MARK: - ImageGridView
 @implementation ImageGridView {
     ImageGridLayer* _imageGridLayer;
     CALayer* _selectionRectLayer;
@@ -886,6 +888,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     [_imageGridLayer setContainerWidth:[[self enclosingScrollView] bounds].size.width];
     [_imageGridLayer updateGridElementCount];
     [_docHeight setConstant:[_imageGridLayer containerHeight]];
+    printf("_updateDocumentHeight: %f %f\n", [[self enclosingScrollView] bounds].size.width, [_docHeight constant]);
 }
 
 - (void)_handleImageLibraryChanged {
@@ -985,10 +988,13 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
         multiplier:1 constant:0];
     [_docHeight setActive:true];
+    printf("fixedCreateConstraintsForContainer\n");
 }
 
 @end
 
+
+// MARK: - ImageGridScrollView
 
 @implementation ImageGridScrollView {
     NSView* _headerView;
@@ -1020,35 +1026,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
 }
-
-//- (void)setLoadPhotoCount:(NSUInteger)count {
-////    const NSEdgeInsets inset = [self contentInsets];
-////    printf("AAA %p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
-//    
-//    [_headerView setLoadCount:count];
-//    
-//    
-//    if (count) {
-//        [_headerView setLoadCount:count];
-//        ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
-//        [layer setContentInsets:{[_headerView height]+10,0,0,0}];
-//        
-//        [self addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
-////        [self setContentInsets:{100,0,0,0}];
-//        
-//        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
-//            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
-//    
-//    } else {
-////        [self setContentInsets:{0,0,0,0}];
-//        [_headerView removeFromSuperview];
-//    }
-//    
-////    {
-////        const NSEdgeInsets inset = [self contentInsets];
-////        printf("BBB %p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
-////    }
-//}
 
 - (void)tile {
     [super tile];

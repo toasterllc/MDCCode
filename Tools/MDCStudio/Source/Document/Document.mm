@@ -78,11 +78,7 @@ static void _SetView(T& x, NSView* y) {
         options:0 metrics:nil views:@{@"v":x.view}]];
     // setNeedsLayout: is necessary to ensure the grid view is sized properly,
     // when showing the grid view.
-    [y setNeedsLayout:true];
-    // -layoutIfNeeded is necessary on the window so that we can scroll the grid
-    // view to a particular spot immediately, instead of having to wait until
-    // the next layout pass (eg using NSTimer).
-    [[x.containerView window] layoutIfNeeded];
+//    [y setNeedsLayout:true];
 }
 
 - (void)awakeFromNib {
@@ -121,11 +117,11 @@ static void _SetView(T& x, NSView* y) {
     {
         __weak auto selfWeak = self;
         _devicesOb = MDCDevicesManagerGlobal()->observerAdd([=] (auto, auto) {
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _updatesDevices]; });
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _updateDevices]; });
         });
     }
     
-    [self _updatesDevices];
+    [self _updateDevices];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
@@ -232,6 +228,12 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
             
             _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:_imageGridView];
             [_imageGridScrollView setHeaderView:_imageGridHeaderView];
+            
+            [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
+                NSLog(@"[_imageGridView frame]: %@", NSStringFromRect([_imageGridView frame]));
+                NSLog(@"[[_imageGridView superview] frame]: %@", NSStringFromRect([[_imageGridView superview] frame]));
+                NSLog(@"[[[_imageGridView superview] superview] frame]: %@", NSStringFromRect([[[_imageGridView superview] superview] frame]));
+            }];
         }
         
         {
@@ -328,13 +330,17 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     }
 }
 
-- (void)_updatesDevices {
+- (void)_updateDevices {
     std::set<ImageSourcePtr> imageSources;
     std::vector<MDCDevicePtr> devices = MDCDevicesManagerGlobal()->devices();
     for (MDCDevicePtr device : devices) {
         imageSources.insert(device);
     }
     [_sourceListView setImageSources:imageSources];
+    
+    const bool haveDevices = !imageSources.empty();
+    [_splitView setHidden:!haveDevices];
+    [_noDevicesView setHidden:haveDevices];
 }
 
 - (void)_deviceChanged {
@@ -366,6 +372,12 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
 - (void)fullSizeImageViewBack:(FullSizeImageView*)x {
     assert(x == _fullSizeImageView);
     _SetView(_center, _imageGridScrollView);
+    
+    // -layoutIfNeeded is necessary on the window so that we can scroll the grid
+    // view to a particular spot immediately, instead of having to wait until
+    // the next layout pass (eg using NSTimer).
+    [_window layoutIfNeeded];
+    
     ImageRecordPtr rec = [_fullSizeImageView imageRecord];
     [_imageGridView setSelection:{ rec }];
     [_window makeFirstResponder:_imageGridView];
