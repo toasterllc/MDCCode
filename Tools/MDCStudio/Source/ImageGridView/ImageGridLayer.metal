@@ -44,7 +44,7 @@ vertex VertexOutput VertexShader(
     const float2 vnorm = float2(vabs) / ctx.viewSize;
     
     const bool selected = (
-        !ctx.selection.count || (
+        ctx.selection.count && (
             idxRec>=ctx.selection.base &&
             idxRec<ctx.selection.base+ctx.selection.count &&
             selectedImages[idxRec-ctx.selection.base]
@@ -60,7 +60,18 @@ vertex VertexOutput VertexShader(
     };
 }
 
+static float4 blendColorDodge(float4 a, float4 b) {
+    if (a.a == 0) return b;
+    const float3 oc = min(float3(1), b.rgb / (float3(1)-a.rgb)); // min to prevent nan/infinity
+    return float4(oc, a.a);
+}
 
+static float4 blendOver(float4 a, float4 b) {
+    const float oa = a.a + b.a*(1-a.a);
+    if (oa == 0) return 0;
+    const float3 oc = (a.rgb*a.a + b.rgb*b.a*(1-a.a)) / oa;
+    return float4(oc, oa);
+}
 
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
@@ -71,9 +82,16 @@ fragment float4 FragmentShader(
 ) {
     const uint2 pos = uint2(in.posPx);
     if (!loadCounts[in.idx]) return placeholderTxt.sample({}, in.posNorm);
+    const uint2 txtSize = { txt.get_width(), txt.get_height() };
     
+    constexpr uint SelectionBorderSize = 10;
     float3 c = txt.read(pos, in.idx).rgb;
-    if (!in.selected) c /= 32;
+    if (in.selected && (metal::any(pos < SelectionBorderSize) || metal::any(pos > (txtSize-SelectionBorderSize)))) {
+        return blendColorDodge(float4(0,0.523,1,1), blendOver(float4(1,1,1,.175), float4(c,1)));
+//        return blendColorDodge(float4(ctx.selectionColor, 1), blendOver(float4(1,1,1,.25), float4(c,1)));
+//        return blendColorDodge(float4(0,0.341,0.671,1), blendOver(float4(1,1,1,.25), float4(c,1)));
+    }
+//    if (in.selected) c /= 32;
     return float4(c, 1);
     
 //    

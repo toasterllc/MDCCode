@@ -164,6 +164,11 @@ static CGColorSpaceRef _SRGBColorSpace() {
     std::thread([=] { _ThumbRenderThread(*thumbRender); }).detach();
     _thumbRender = thumbRender;
     
+//    NSColorPanel* colorPanel = [NSColorPanel sharedColorPanel];
+//    [colorPanel makeKeyAndOrderFront:nil];
+//    [NSTimer scheduledTimerWithTimeInterval:.1 repeats:true block:^(NSTimer * _Nonnull timer) {
+//        [self setNeedsDisplay];
+//    }];
     return self;
 }
 
@@ -342,6 +347,16 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     
     const auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
     const auto [visibleBegin, visibleEnd] = _VisibleRange(visibleIndexRange, *_imageLibrary, _sortNewestFirst);
+    
+//    NSColor* color = [[NSColorPanel sharedColorPanel] color];
+//    simd::float3 selectionColor;
+//    if ([color numberOfComponents] >= 3) {
+//        selectionColor = {
+//            (float)[color redComponent],
+//            (float)[color greenComponent],
+//            (float)[color blueComponent],
+//        };
+//    }
     
     for (auto it=visibleBegin; it!=visibleEnd;) {
         // Update stale _ChunkTexture slices from the ImageRecord's thumbnail data, if needed. (We know whether a

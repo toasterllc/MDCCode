@@ -22,8 +22,8 @@ struct RenderContext {
     Grid grid;
     uint32_t idx = 0;
     bool sortNewestFirst = false;
-    vector_float2 viewSize = {};
-    matrix_float4x4 transform = {};
+    simd::float2 viewSize = {};
+    simd::float4x4 transform = {};
     struct {
         uint32_t base = 0;
         uint32_t count = 0;
