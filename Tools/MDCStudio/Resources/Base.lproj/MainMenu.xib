@@ -661,12 +661,18 @@
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="u1Q-F0-yZc"/>
-                            <menuItem title="Show Sidebar" keyEquivalent="s" id="kIP-vf-haE">
-                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                            <menuItem title="Hide Devices" keyEquivalent="D" id="kIP-vf-haE">
                                 <connections>
-                                    <action selector="toggleSidebar:" target="-1" id="iwa-gc-5KM"/>
+                                    <action selector="_toggleDevices:" target="-1" id="T3I-oa-Ish"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Hide Inspector" keyEquivalent="i" id="0xU-y1-8qV">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="_toggleInspector:" target="-1" id="bOr-9I-qq2"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="jXw-UC-hHE"/>
                             <menuItem title="Enter Full Screen" keyEquivalent="f" id="4J7-dP-txa">
                                 <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                 <connections>
@@ -714,7 +720,7 @@
                     </menu>
                 </menuItem>
             </items>
-            <point key="canvasLocation" x="128" y="53"/>
+            <point key="canvasLocation" x="166" y="-69"/>
         </menu>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="hF9-ie-DpS">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>

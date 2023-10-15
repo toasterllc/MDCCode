@@ -366,7 +366,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
     const bool fit = [(FixedScrollView*)[self enclosingScrollView] magnifyToFit];
-    return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
+    return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [[self superview] bounds]);
 }
 
 @end

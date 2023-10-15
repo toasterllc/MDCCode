@@ -425,6 +425,24 @@ static void _SortNewestFirst(bool x) {
     _SortNewestFirst(false);
 }
 
+- (IBAction)_toggleDevices:(id)sender {
+    NSView* view = [_splitView arrangedSubviews][0];
+    const bool shown = [view isHidden];
+    [[_splitView arrangedSubviews][0] setHidden:!shown];
+    
+    NSMenuItem* menu = Toastbox::Cast<NSMenuItem*>(sender);
+    [menu setTitle:(shown ? @"Hide Devices" : @"Show Devices")];
+}
+
+- (IBAction)_toggleInspector:(id)sender {
+    NSView* view = [_splitView arrangedSubviews][2];
+    const bool shown = [view isHidden];
+    [view setHidden:!shown];
+    
+    NSMenuItem* menu = Toastbox::Cast<NSMenuItem*>(sender);
+    [menu setTitle:(shown ? @"Hide Inspector" : @"Show Inspector")];
+}
+
 // MARK: - Device Settings
 - (void)_showDeviceSettings:(MDCDevicePtr)device {
 //    ImageSourcePtr source = [_sourceListView selection];
