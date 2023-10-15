@@ -971,6 +971,23 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     [self _setSelection:selection notify:true];
 }
 
+- (void)insertNewline:(id)sender {
+    if ([self selection].size() == 1) {
+        [_delegate imageGridViewOpenSelectedImage:self];
+    }
+}
+
+- (void)keyDown:(NSEvent*)event {
+    NSString* lf = @"\n";
+    NSString* cr = @"\r";
+    // -[NSResponder insertNewline:] doesn't get called when pressing return, so we manually trigger it
+    if ([[event charactersIgnoringModifiers] isEqualToString:lf] ||
+        [[event charactersIgnoringModifiers] isEqualToString:cr]) {
+        return [self insertNewline:nil];
+    }
+    return [super keyDown:event];
+}
+
 - (void)fixedCreateConstraintsForContainer:(NSView*)container {
     NSView*const containerSuperview = [container superview];
     if (!containerSuperview) return;
