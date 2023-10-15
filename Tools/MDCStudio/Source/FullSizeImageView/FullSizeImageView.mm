@@ -444,9 +444,21 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     [_delegate fullSizeImageViewNextImage:self];
 }
 
-- (BOOL)acceptsFirstResponder {
-    return true;
+- (void)magnifyIncrease:(id)sender {
+    [_scrollView magnifyIncrease:sender];
 }
+
+- (void)magnifyDecrease:(id)sender {
+    [_scrollView magnifyDecrease:sender];
+}
+
+- (void)magnifyToFit:(id)sender {
+    [_scrollView magnifyToFit:sender];
+}
+
+//- (BOOL)acceptsFirstResponder {
+//    return true;
+//}
 
 // MARK: - FullSizeImageHeaderViewDelegate
 

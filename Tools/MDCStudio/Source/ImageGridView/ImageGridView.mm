@@ -1048,6 +1048,21 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     [gridView _updateDocumentHeight];
 }
 
+- (BOOL)validateMenuItem:(NSMenuItem*)item {
+    if ([item action] == @selector(magnifyIncrease:)) {
+        return false;
+    } else if ([item action] == @selector(magnifyDecrease:)) {
+        return false;
+    } else if ([item action] == @selector(magnifyToFit:)) {
+        return false;
+    }
+    return [super validateMenuItem:item];
+}
+
+//- (BOOL)acceptsFirstResponder {
+//    return true;
+//}
+
 //- (NSView*)initialFirstResponder {
 //    return [self document];
 //}
