@@ -939,39 +939,41 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             [_rootItem addItem:section];
         }
         
-        {
-            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
-            section->name = @"Rotation";
-            
-            {
-                Item_Rotation* it = [self _createItemWithClass:[Item_Rotation class]];
-                it->getter = _GetterCreate(self, _Get_rotation);
-                it->setter = _SetterCreate(self, _Set_rotation);
-                it->section = section;
-                [section addItem:it];
-            }
-            
-            {
-                Item_Spacer* it = [self _createItemWithClass:[Item_Spacer class]];
-                it->height = 16;
-                [section addItem:it];
-            }
-            
-            [_rootItem addItem:section];
-        }
+        // TODO: bring back the image rotation button once we actually implement it
+//        {
+//            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
+//            section->name = @"Rotation";
+//            
+//            {
+//                Item_Rotation* it = [self _createItemWithClass:[Item_Rotation class]];
+//                it->getter = _GetterCreate(self, _Get_rotation);
+//                it->setter = _SetterCreate(self, _Set_rotation);
+//                it->section = section;
+//                [section addItem:it];
+//            }
+//            
+//            {
+//                Item_Spacer* it = [self _createItemWithClass:[Item_Spacer class]];
+//                it->height = 16;
+//                [section addItem:it];
+//            }
+//            
+//            [_rootItem addItem:section];
+//        }
         
         {
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Other";
             
-            {
-                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
-                it->name = @"Defringe";
-                it->getter = _GetterCreate(self, _Get_defringe);
-                it->setter = _SetterCreate(self, _Set_defringe);
-                it->section = section;
-                [section addItem:it];
-            }
+            // TODO: bring back defringe in the future?
+//            {
+//                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
+//                it->name = @"Defringe";
+//                it->getter = _GetterCreate(self, _Get_defringe);
+//                it->setter = _SetterCreate(self, _Set_defringe);
+//                it->section = section;
+//                [section addItem:it];
+//            }
             
             {
                 Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
