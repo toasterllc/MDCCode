@@ -191,6 +191,33 @@ static CGColorSpaceRef _SRGBColorSpace() {
         };
         
         Pipeline::Run(_renderer, popts, rawTxt, _image.txt);
+        
+        // Draw the timestamp if requested
+        if (opts.timestamp.show) {
+            if (!_timestampTxt) {
+                _timestampTxt = _TimestampTextureCreate(_renderer, @"hello", 2);
+            }
+            
+            const simd::float2 timestampSize = {
+                (_timestampTxt ? (float)[_timestampTxt width] : 0.f) / [_image.txt width],
+                (_timestampTxt ? (float)[_timestampTxt height] : 0.f) / [_image.txt height],
+            };
+            
+            const RenderContext ctx = {
+                .transform = [self fixedTransform],
+                .timestampSize = timestampSize,
+            };
+            
+            // Render the timestamp if requested
+            if (opts.timestamp.show) {
+                _renderer.render(_image.txt, Renderer::BlendType::None,
+                    _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::TimestampVertexShader", ctx),
+                    _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", _timestampTxt)
+                );
+            }
+        }
+        
+        
         _image.txtValid = true;
     }
     
@@ -214,32 +241,14 @@ static CGColorSpaceRef _SRGBColorSpace() {
         
         _renderer.clear(drawableTxt, {0,0,0,0});
         
-        if (opts.timestamp.show && !_timestampTxt) {
-            _timestampTxt = _TimestampTextureCreate(_renderer, @"hello", 2);
-        }
-        
-        const simd::float2 timestampSize = {
-            (_timestampTxt ? (float)[_timestampTxt width] : 0.f) / [drawableTxt width],
-            (_timestampTxt ? (float)[_timestampTxt height] : 0.f) / [drawableTxt height],
-        };
-        
         const RenderContext ctx = {
             .transform = [self fixedTransform],
-            .timestampSize = timestampSize,
         };
         
         _renderer.render(drawableTxt, Renderer::BlendType::None,
             _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::ImageVertexShader", ctx),
             _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", srcTxt)
         );
-        
-        // Render the timestamp if requested
-        if (opts.timestamp.show) {
-            _renderer.render(drawableTxt, Renderer::BlendType::None,
-                _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::TimestampVertexShader", ctx),
-                _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", _timestampTxt)
-            );
-        }
         
         _renderer.commitAndWait();
         [drawable present];
@@ -255,7 +264,7 @@ static CGColorSpaceRef _SRGBColorSpace() {
 
 static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, NSString* str, CGFloat contentsScale) {
     NSAttributedString* astr = [[NSAttributedString alloc] initWithString:str attributes:@{
-        NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue" size:24],
+        NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:32],
         NSForegroundColorAttributeName: [NSColor whiteColor],
     }];
     
@@ -272,10 +281,11 @@ static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, NSString* str, 
         bytesPerRow, (CGColorSpaceRef)cs, kCGImageAlphaPremultipliedLast));
     
     const CGRect bounds = {{}, {(CGFloat)w,(CGFloat)h}};
+    CGContextScaleCTM((CGContextRef)ctx, contentsScale, contentsScale);
     CGContextSetRGBFillColor((CGContextRef)ctx, 0, 0, 0, 1);
     CGContextFillRect((CGContextRef)ctx, bounds);
     
-    NSGraphicsContext* nsctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)ctx flipped:false];
+    NSGraphicsContext* nsctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)ctx flipped:true];
     [NSGraphicsContext setCurrentContext:nsctx];
     [astr drawAtPoint:{0,0}];
     

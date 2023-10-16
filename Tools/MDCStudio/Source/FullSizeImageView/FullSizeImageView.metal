@@ -37,13 +37,9 @@ vertex VertexOutput TimestampVertexShader(
     constant RenderContext& ctx [[buffer(0)]],
     uint vidx [[vertex_id]]
 ) {
-//    const float2 A = {1,1};
-//    const float2 B = {2,1};
-//    const float2 C = A*B;
-    float4 v = ctx.transform * float4(_Verts[vidx], 0, 1);
-//    float2 v2 = {v.x * ctx.timestampSize.x, v.y * ctx.timestampSize.y};
+    const float2 v = ((_Verts[vidx] * ctx.timestampSize) * 2) - 1;
     VertexOutput r = {
-        .pos = {v.x * ctx.timestampSize.x, v.y * ctx.timestampSize.y, v.z, v.w},
+        .pos = float4(v, 0, 1),
         .posUnit = _Verts[vidx],
     };
     return r;
