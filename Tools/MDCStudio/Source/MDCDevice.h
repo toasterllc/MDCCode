@@ -127,6 +127,26 @@ struct MDCDevice : Object, ImageSource {
         return _device.device->dev().service();
     }
     
+    std::unique_lock<std::mutex> deviceLock(bool interrupt=false) {
+        // Pause the SD thread if instructed, to allow us to acquire the device lock
+        if (interrupt) {
+            auto lock = _sdRead.signal.lock();
+            _sdRead.pause++;
+            _sdRead.signal.signalAll();
+        }
+        
+        auto lock = std::unique_lock(_device.lock);
+        
+        // Un-pause the SD thread now that we hold the device lock
+        if (interrupt) {
+            auto lock = _sdRead.signal.lock();
+            _sdRead.pause--;
+            _sdRead.signal.signalAll();
+        }
+        
+        return lock;
+    }
+    
     // MARK: - Serialization
     
     void write() {
@@ -677,15 +697,14 @@ struct MDCDevice : Object, ImageSource {
     void _sync_thread() {
         try {
             // Enter SD mode for the entire duration of our sync
-            auto lock = _deviceLock();
+            auto lock = deviceLock();
                 const MSP::State mspState = _device.device->mspStateRead();
             lock.unlock();
             
             // Update our status
             // This is necessary so that the status struct's imgIdBegin/imgIdEnd is always >= _imageLibrary
             {
-                auto lock = _status.signal.lock();
-                _status_update(lock, mspState);
+                _status_update(_status.signal.lock(), mspState);
             }
             
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
@@ -826,7 +845,7 @@ struct MDCDevice : Object, ImageSource {
             for (;;) {
                 // Wait for work
                 printf("[_sdRead_thread] Waiting for work...\n");
-                _sdRead.signal.wait([&] { return _sdRead_nextQueue(); });
+                _sdRead.signal.wait([&] { return _sdRead_nextQueue() && !_sdRead.pause; });
                 
                 // Initiate SD mode
                 printf("[_sdRead_thread] Entering SD mode...\n");
@@ -839,10 +858,14 @@ struct MDCDevice : Object, ImageSource {
                     {
                         // Wait for work
                         _SDReadWorkQueue* queue = nullptr;
-                        auto lock = _sdRead.signal.wait_for(SDModeTimeout,
-                            [&] { return (queue = _sdRead_nextQueue()); });
+                        bool pause = false;
+                        auto lock = _sdRead.signal.wait_for(SDModeTimeout, [&] {
+                            queue = _sdRead_nextQueue();
+                            pause = _sdRead.pause;
+                            return queue || pause;
+                        });
                         // Check if we timed out waiting for work
-                        if (!queue) break;
+                        if (!queue || pause) break;
                         work = std::move(queue->front());
                         queue->pop();
                     }
@@ -882,7 +905,7 @@ struct MDCDevice : Object, ImageSource {
                     }
                 }
                 
-                printf("[_sdRead_thread] No more work; exiting SD mode\n");
+                printf("[_sdRead_thread] Exiting SD mode\n");
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -992,21 +1015,8 @@ struct MDCDevice : Object, ImageSource {
         }
     }
     
-    std::unique_lock<std::mutex> _deviceLock() {
-        printf("_deviceLock()\n");
-        return std::unique_lock(_device.lock);
-//        auto lock = std::unique_lock(_device.lock);
-//        if (_device.sdReadEnd) {
-//            // Readout is in progress; stop it by resetting the device
-//            _device.device->reset();
-//            // Clear sdReadEnd to indicate that readout is no longer underway
-//            _device.sdReadEnd = std::nullopt;
-//        }
-//        return lock;
-    }
-    
     // MARK: - Device Status
-    void _status_update(std::unique_lock<std::mutex>& lock, const STM::BatteryStatus& batteryStatus) {
+    void _status_update(const std::unique_lock<std::mutex>& lock, const STM::BatteryStatus& batteryStatus) {
         // Update _status.status.batteryLevel
         if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
             _status.status.batteryLevel = 1;
@@ -1019,7 +1029,7 @@ struct MDCDevice : Object, ImageSource {
         }
     }
     
-    void _status_update(std::unique_lock<std::mutex>& lock, const MSP::State& mspState) {
+    void _status_update(const std::unique_lock<std::mutex>& lock, const MSP::State& mspState) {
         // Update _status.status.imgIdBegin/imgIdEnd
         try {
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
@@ -1042,7 +1052,7 @@ struct MDCDevice : Object, ImageSource {
         try {
             for (;;) {
                 {
-                    auto deviceLock = _deviceLock();
+                    auto deviceLock = deviceLock();
                     _status_update(_device.device->batteryStatusGet(), _device.device->mspStateRead());
                 }
                 
@@ -1075,6 +1085,8 @@ struct MDCDevice : Object, ImageSource {
     
     void _hostModeSet(bool en) {
         if (en) {
+            [[NSProcessInfo processInfo] disableSuddenTermination];
+            
             printf("_hostModeSet(1)\n");
             _device.lock.lock();
             _device.device->hostModeSet(true);
@@ -1083,6 +1095,8 @@ struct MDCDevice : Object, ImageSource {
             printf("_hostModeSet(0)\n");
             _device.device->hostModeSet(false);
             _device.lock.unlock();
+            
+            [[NSProcessInfo processInfo] enableSuddenTermination];
         }
     }
     
@@ -1148,6 +1162,7 @@ struct MDCDevice : Object, ImageSource {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
         _SDReadWorkQueue queues[(size_t)Priority::Last+1];
+        uint32_t pause = 0;
     } _sdRead;
     
     struct {
