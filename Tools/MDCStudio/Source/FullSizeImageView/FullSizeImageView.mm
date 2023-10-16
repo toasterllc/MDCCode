@@ -191,33 +191,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
         };
         
         Pipeline::Run(_renderer, popts, rawTxt, _image.txt);
-        
-        // Draw the timestamp if requested
-        if (opts.timestamp.show) {
-            if (!_timestampTxt) {
-                _timestampTxt = _TimestampTextureCreate(_renderer, @"hello", 2);
-            }
-            
-            const simd::float2 timestampSize = {
-                (_timestampTxt ? (float)[_timestampTxt width] : 0.f) / [_image.txt width],
-                (_timestampTxt ? (float)[_timestampTxt height] : 0.f) / [_image.txt height],
-            };
-            
-            const RenderContext ctx = {
-                .transform = [self fixedTransform],
-                .timestampSize = timestampSize,
-            };
-            
-            // Render the timestamp if requested
-            if (opts.timestamp.show) {
-                _renderer.render(_image.txt, Renderer::BlendType::None,
-                    _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::TimestampVertexShader", ctx),
-                    _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", _timestampTxt)
-                );
-            }
-        }
-        
-        
         _image.txtValid = true;
     }
     
@@ -239,16 +212,34 @@ static CGColorSpaceRef _SRGBColorSpace() {
     {
         id<MTLTexture> srcTxt = (_image.txtValid ? _image.txt : _thumb.txt);
         
+        if (opts.timestamp.show && !_timestampTxt) {
+            _timestampTxt = _TimestampTextureCreate(_renderer, @"hello", 2);
+        }
+        
         _renderer.clear(drawableTxt, {0,0,0,0});
+        
+        const simd::float2 timestampSize = {
+            (_timestampTxt ? (float)[_timestampTxt width] : 0.f) / std::max([_image.txt width], [drawableTxt width]),
+            (_timestampTxt ? (float)[_timestampTxt height] : 0.f) / std::max([_image.txt height], [drawableTxt height]),
+        };
         
         const RenderContext ctx = {
             .transform = [self fixedTransform],
+            .timestampSize = timestampSize,
         };
         
         _renderer.render(drawableTxt, Renderer::BlendType::None,
             _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::ImageVertexShader", ctx),
             _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", srcTxt)
         );
+        
+        // Render the timestamp if requested
+        if (opts.timestamp.show) {
+            _renderer.render(drawableTxt, Renderer::BlendType::None,
+                _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::TimestampVertexShader", ctx),
+                _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", _timestampTxt)
+            );
+        }
         
         _renderer.commitAndWait();
         [drawable present];
