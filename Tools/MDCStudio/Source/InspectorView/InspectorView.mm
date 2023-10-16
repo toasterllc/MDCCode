@@ -1324,12 +1324,7 @@ static void _Update(Item* it) {
     }
     
     _notifying = true;
-    std::set<ImageRecordPtr> records;
-    {
-        auto lock = std::unique_lock(*_imageLibrary);
-        for (const ImageRecordPtr& x : _selection) records.insert(x);
-    }
-    _imageLibrary->observersNotify(ImageLibrary::Event::Type::ChangeProperty, std::move(records));
+    _imageLibrary->observersNotify(ImageLibrary::Event::Type::ChangeProperty, _selection);
     _notifying = false;
 }
 

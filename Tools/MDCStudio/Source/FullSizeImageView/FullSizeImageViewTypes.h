@@ -2,11 +2,12 @@
 #import <simd/simd.h>
 
 namespace MDCStudio {
-namespace ImageViewTypes {
+namespace FullSizeImageViewTypes {
 
 struct RenderContext {
-    matrix_float4x4 viewMatrix = {};
+    simd::float4x4 transform = {};
+    simd::float2 timestampSize;
 };
 
-} // namespace ImageViewTypes
+} // namespace FullSizeImageViewTypes
 } // namespace MDCStudio

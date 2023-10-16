@@ -3,10 +3,10 @@
 #import "Tools/Shared/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools::MetalUtil;
-using namespace MDCStudio::ImageViewTypes;
+using namespace MDCStudio::FullSizeImageViewTypes;
 
 namespace MDCStudio {
-namespace ImageViewShader {
+namespace FullSizeImageViewShader {
 
 static constexpr constant float2 _Verts[6] = {
     {0, 0},
@@ -22,12 +22,28 @@ struct VertexOutput {
     float2 posUnit;
 };
 
-vertex VertexOutput VertexShader(
-    constant float4x4& transform [[buffer(0)]],
+vertex VertexOutput ImageVertexShader(
+    constant RenderContext& ctx [[buffer(0)]],
     uint vidx [[vertex_id]]
 ) {
     VertexOutput r = {
-        .pos = transform * float4(_Verts[vidx], 0, 1),
+        .pos = ctx.transform * float4(_Verts[vidx], 0, 1),
+        .posUnit = _Verts[vidx],
+    };
+    return r;
+}
+
+vertex VertexOutput TimestampVertexShader(
+    constant RenderContext& ctx [[buffer(0)]],
+    uint vidx [[vertex_id]]
+) {
+//    const float2 A = {1,1};
+//    const float2 B = {2,1};
+//    const float2 C = A*B;
+    float4 v = ctx.transform * float4(_Verts[vidx], 0, 1);
+//    float2 v2 = {v.x * ctx.timestampSize.x, v.y * ctx.timestampSize.y};
+    VertexOutput r = {
+        .pos = {v.x * ctx.timestampSize.x, v.y * ctx.timestampSize.y, v.z, v.w},
         .posUnit = _Verts[vidx],
     };
     return r;
@@ -40,5 +56,5 @@ fragment float4 FragmentShader(
     return txt.sample({}, in.posUnit);
 }
 
-} // namespace ImageViewShader
+} // namespace FullSizeImageViewShader
 } // namespace MDCStudio

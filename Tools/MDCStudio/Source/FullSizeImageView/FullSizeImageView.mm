@@ -10,8 +10,9 @@
 #import "FixedMetalDocumentLayer.h"
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
+#import "Tools/Shared/Renderer.h"
 using namespace MDCStudio;
-using namespace MDCStudio::ImageViewTypes;
+using namespace MDCStudio::FullSizeImageViewTypes;
 using namespace MDCTools;
 
 // _PixelFormat == _sRGB with -setColorspace:SRGB appears to be the correct combination
@@ -51,6 +52,8 @@ struct _ImageLoadThreadState {
         Renderer::Txt txt;
         bool txtValid = false;
     } _image;
+    
+    Renderer::Txt _timestampTxt;
     
     std::shared_ptr<_ImageLoadThreadState> _imageLoad;
 }
@@ -111,8 +114,9 @@ static CGColorSpaceRef _SRGBColorSpace() {
     NSParameterAssert(rec);
     
     _imageRecord = rec;
-    _image.txtValid = false;
     _thumb.txtValid = false;
+    _image.txtValid = false;
+    _timestampTxt = {};
     
     // Fetch the image from the cache
     _image.image = _imageSource->getCachedImage(_imageRecord);
@@ -149,10 +153,10 @@ static CGColorSpaceRef _SRGBColorSpace() {
     id<MTLTexture> drawableTxt = [drawable texture];
     assert(drawableTxt);
     
+    const ImageOptions& opts = _imageRecord->options;
+    
     // Create _image.txt if it doesn't exist yet and we have the image
     if (_image.image && !_image.txtValid) {
-        const ImageOptions& opts = _imageRecord->options;
-        
         if (!_image.txt) {
             // _image.txt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
             // representation of the pipeline result without clipping to 8-bit components, so we can
@@ -210,11 +214,32 @@ static CGColorSpaceRef _SRGBColorSpace() {
         
         _renderer.clear(drawableTxt, {0,0,0,0});
         
-        const simd_float4x4 transform = [self fixedTransform];
+        if (opts.timestamp.show && !_timestampTxt) {
+            _timestampTxt = _TimestampTextureCreate(_renderer, @"hello", 2);
+        }
+        
+        const simd::float2 timestampSize = {
+            (_timestampTxt ? (float)[_timestampTxt width] : 0.f) / [drawableTxt width],
+            (_timestampTxt ? (float)[_timestampTxt height] : 0.f) / [drawableTxt height],
+        };
+        
+        const RenderContext ctx = {
+            .transform = [self fixedTransform],
+            .timestampSize = timestampSize,
+        };
+        
         _renderer.render(drawableTxt, Renderer::BlendType::None,
-            _renderer.VertexShader("MDCStudio::ImageViewShader::VertexShader", transform),
-            _renderer.FragmentShader("MDCStudio::ImageViewShader::FragmentShader", srcTxt)
+            _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::ImageVertexShader", ctx),
+            _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", srcTxt)
         );
+        
+        // Render the timestamp if requested
+        if (opts.timestamp.show) {
+            _renderer.render(drawableTxt, Renderer::BlendType::None,
+                _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::TimestampVertexShader", ctx),
+                _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", _timestampTxt)
+            );
+        }
         
         _renderer.commitAndWait();
         [drawable present];
@@ -226,6 +251,38 @@ static CGColorSpaceRef _SRGBColorSpace() {
     _image.image = std::move(image);
     _image.txtValid = false;
     [self setNeedsDisplay];
+}
+
+static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, NSString* str, CGFloat contentsScale) {
+    NSAttributedString* astr = [[NSAttributedString alloc] initWithString:str attributes:@{
+        NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue" size:24],
+        NSForegroundColorAttributeName: [NSColor whiteColor],
+    }];
+    
+    const CGSize astrSize = [astr size];
+    const size_t w = std::lround(astrSize.width * contentsScale);
+    const size_t h = std::lround(astrSize.height * contentsScale);
+    constexpr size_t SamplesPerPixel = 4;
+    constexpr size_t BytesPerSample = 1;
+    const size_t bytesPerRow = SamplesPerPixel*BytesPerSample*w;
+    
+    id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateWithName(kCGColorSpaceSRGB));
+    
+    const id /* CGContextRef */ ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, BytesPerSample*8,
+        bytesPerRow, (CGColorSpaceRef)cs, kCGImageAlphaPremultipliedLast));
+    
+    const CGRect bounds = {{}, {(CGFloat)w,(CGFloat)h}};
+    CGContextSetRGBFillColor((CGContextRef)ctx, 0, 0, 0, 1);
+    CGContextFillRect((CGContextRef)ctx, bounds);
+    
+    NSGraphicsContext* nsctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)ctx flipped:false];
+    [NSGraphicsContext setCurrentContext:nsctx];
+    [astr drawAtPoint:{0,0}];
+    
+    const uint8_t* samples = (const uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
+    Renderer::Txt txt = renderer.textureCreate(_PixelFormat, w, h);
+    renderer.textureWrite(txt, samples, SamplesPerPixel);
+    return txt;
 }
 
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
