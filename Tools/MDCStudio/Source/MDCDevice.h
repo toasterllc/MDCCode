@@ -69,7 +69,7 @@ struct MDCDevice : Object, ImageSource {
         
         {
             // Enter host mode to adjust the device time
-            auto hostMode = _hostMode();
+            auto hostMode = _hostModeEnter();
             
             // Update our mspState from the device
             const MSP::State mspState = _device.device->mspStateRead();
@@ -128,7 +128,7 @@ struct MDCDevice : Object, ImageSource {
     }
     
     std::unique_lock<std::mutex> deviceLock(bool interrupt=false) {
-        // Pause the SD thread if instructed, to allow us to acquire the device lock
+        // Pause the SD thread (if interrupt==true) to allow us to acquire the device lock ASAP
         if (interrupt) {
             auto lock = _sdRead.signal.lock();
             _sdRead.pause++;
@@ -137,7 +137,7 @@ struct MDCDevice : Object, ImageSource {
         
         auto lock = std::unique_lock(_device.lock);
         
-        // Un-pause the SD thread now that we hold the device lock
+        // Un-pause the SD thread
         if (interrupt) {
             auto lock = _sdRead.signal.lock();
             _sdRead.pause--;
@@ -170,7 +170,7 @@ struct MDCDevice : Object, ImageSource {
     void settings(const MSP::Settings& x) {
         _mspSettings = x;
         {
-            auto hostMode = _hostMode();
+            auto hostMode = _hostModeEnter();
             MSP::State mspState = _device.device->mspStateRead();
             mspState.settings = _mspSettings;
             _device.device->mspStateWrite(mspState);
@@ -849,7 +849,7 @@ struct MDCDevice : Object, ImageSource {
                 
                 // Initiate SD mode
                 printf("[_sdRead_thread] Entering SD mode...\n");
-                auto sdMode = _sdMode();
+                auto sdMode = _sdModeEnter();
                 printf("[_sdRead_thread] Entered SD mode\n");
                 
                 std::optional<_SDBlock> sdReadEnd;
@@ -1052,7 +1052,7 @@ struct MDCDevice : Object, ImageSource {
         try {
             for (;;) {
                 {
-                    auto deviceLock = deviceLock();
+                    auto lock = deviceLock();
                     _status_update(_device.device->batteryStatusGet(), _device.device->mspStateRead());
                 }
                 
@@ -1071,30 +1071,30 @@ struct MDCDevice : Object, ImageSource {
     }
     
     // Host mode: acquires the device lock, and tells the device to enter host mode
-    _Cleanup _hostMode() {
-        _hostModeSet(true);
+    _Cleanup _hostModeEnter(bool interrupt=false) {
+        _hostModeSet(true, interrupt);
         return std::make_unique<__Cleanup>([=] { _hostModeSet(false); });
     }
     
     // SD mode: acquires the device lock, tells the device to enter host mode,
     // loads ICEAppSDReadoutSTM onto the ICE40, and initializes the SD card.
-    _Cleanup _sdMode() {
+    _Cleanup _sdModeEnter() {
         _sdModeSet(true);
         return std::make_unique<__Cleanup>([=] { _sdModeSet(false); });
     }
     
-    void _hostModeSet(bool en) {
+    void _hostModeSet(bool en, bool interrupt=false) {
         if (en) {
             [[NSProcessInfo processInfo] disableSuddenTermination];
             
             printf("_hostModeSet(1)\n");
-            _device.lock.lock();
+            _hostMode.deviceLock = deviceLock(interrupt);
             _device.device->hostModeSet(true);
         
         } else {
             printf("_hostModeSet(0)\n");
             _device.device->hostModeSet(false);
-            _device.lock.unlock();
+            _hostMode.deviceLock = {};
             
             [[NSProcessInfo processInfo] enableSuddenTermination];
         }
@@ -1152,6 +1152,10 @@ struct MDCDevice : Object, ImageSource {
     _ThumbCache _thumbCache;
     _ImageCache _imageCache;
     _LoadStatePool _loadStates;
+    
+    struct {
+        std::unique_lock<std::mutex> deviceLock;
+    } _hostMode;
     
     struct {
         std::thread thread;
