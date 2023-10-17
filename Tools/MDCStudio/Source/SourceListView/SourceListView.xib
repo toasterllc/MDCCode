@@ -62,7 +62,7 @@
                                                     <action selector="textFieldAction:" target="08g-eg-N7V" id="rvh-zP-hHo"/>
                                                 </connections>
                                             </textField>
-                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="cuS-aa-uKX" userLabel="Text Field">
+                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="cuS-aa-uKX" userLabel="Text Field">
                                                 <rect key="frame" x="49" y="17" width="98" height="15"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" sendsActionOnEndEditing="YES" alignment="left" title="7 days of photos" id="Eij-ik-9WJ">
                                                     <font key="font" metaFont="label" size="12"/>
@@ -94,6 +94,7 @@
                                         <constraints>
                                             <constraint firstItem="MZn-BH-IiQ" firstAttribute="leading" secondItem="7cJ-fN-hbY" secondAttribute="trailing" constant="5" id="1zf-B5-EyI"/>
                                             <constraint firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="10" id="4IY-c9-aI9"/>
+                                            <constraint firstItem="g8q-te-9OC" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="cuS-aa-uKX" secondAttribute="trailing" constant="8" id="6ti-sS-P4B"/>
                                             <constraint firstItem="g8q-te-9OC" firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="-3" id="Hsj-yQ-x0d"/>
                                             <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" constant="-17" id="Kje-qB-Fxx"/>
                                             <constraint firstItem="cuS-aa-uKX" firstAttribute="leading" secondItem="MZn-BH-IiQ" secondAttribute="leading" id="NdT-qC-bXN"/>
