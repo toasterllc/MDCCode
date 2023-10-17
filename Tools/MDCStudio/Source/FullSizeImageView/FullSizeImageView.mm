@@ -11,6 +11,7 @@
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
 #import "Tools/Shared/Renderer.h"
+#import "Calendar.h"
 using namespace MDCStudio;
 using namespace MDCStudio::FullSizeImageViewTypes;
 using namespace MDCTools;
@@ -132,8 +133,8 @@ static CGColorSpaceRef _SRGBColorSpace() {
     
     assert(_width);
     assert(_height);
-    [_width setConstant:_imageRecord->info.imageWidth*2];
-    [_height setConstant:_imageRecord->info.imageHeight*2];
+    [_width setConstant:_imageRecord->info.imageWidth];
+    [_height setConstant:_imageRecord->info.imageHeight];
     
     [self setNeedsDisplay];
 }
@@ -148,12 +149,15 @@ static CGColorSpaceRef _SRGBColorSpace() {
     // Nothing to do if we haven't been given an ImageRecord yet
     if (!_imageRecord) return;
     
+    const ImageInfo& info = _imageRecord->info;
+    const ImageOptions& opts = _imageRecord->options;
+    const uint16_t w = _imageRecord->info.imageWidth;
+    const uint16_t h = _imageRecord->info.imageHeight;
+    
     id<CAMetalDrawable> drawable = [self nextDrawable];
     assert(drawable);
     id<MTLTexture> drawableTxt = [drawable texture];
     assert(drawableTxt);
-    
-    const ImageOptions& opts = _imageRecord->options;
     
     // Create _image.txt if it doesn't exist yet and we have the image
     if (_image.image && !_image.txtValid) {
@@ -213,14 +217,15 @@ static CGColorSpaceRef _SRGBColorSpace() {
         id<MTLTexture> srcTxt = (_image.txtValid ? _image.txt : _thumb.txt);
         
         if (opts.timestamp.show && !_timestampTxt) {
-            _timestampTxt = _TimestampTextureCreate(_renderer, @"hello", 2);
+            const std::string timestampStr = Calendar::TimestampString(Time::Clock::TimePointFromTimeInstant(info.timestamp));
+            _timestampTxt = _TimestampTextureCreate(_renderer, @(timestampStr.c_str()), 1);
         }
         
         _renderer.clear(drawableTxt, {0,0,0,0});
         
         const simd::float2 timestampSize = {
-            (_timestampTxt ? (float)[_timestampTxt width] : 0.f) / std::max([_image.txt width], [drawableTxt width]),
-            (_timestampTxt ? (float)[_timestampTxt height] : 0.f) / std::max([_image.txt height], [drawableTxt height]),
+            (_timestampTxt ? (float)[_timestampTxt width] : 0.f) / w,
+            (_timestampTxt ? (float)[_timestampTxt height] : 0.f) / h,
         };
         
         const RenderContext ctx = {
@@ -255,7 +260,7 @@ static CGColorSpaceRef _SRGBColorSpace() {
 
 static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, NSString* str, CGFloat contentsScale) {
     NSAttributedString* astr = [[NSAttributedString alloc] initWithString:str attributes:@{
-        NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:32],
+        NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:48],
         NSForegroundColorAttributeName: [NSColor whiteColor],
     }];
     
@@ -276,7 +281,7 @@ static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, NSString* str, 
     CGContextSetRGBFillColor((CGContextRef)ctx, 0, 0, 0, 1);
     CGContextFillRect((CGContextRef)ctx, bounds);
     
-    NSGraphicsContext* nsctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)ctx flipped:true];
+    NSGraphicsContext* nsctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)ctx flipped:false];
     [NSGraphicsContext setCurrentContext:nsctx];
     [astr drawAtPoint:{0,0}];
     
@@ -414,7 +419,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     FullSizeImageLayer* imageLayer = [[FullSizeImageLayer alloc] initWithImageSource:imageSource];
     if (!(self = [super initWithFixedLayer:imageLayer])) return nil;
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
-    
     return self;
 }
 
@@ -464,6 +468,13 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
         
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_headerView]"
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
+        
+//        _headerView = [[FullSizeImageHeaderView alloc] initWithFrame:{}];
+//        [_headerView setDelegate:self];
+//        [_scrollView addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
+//        
+//        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
+//            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
     }
     
     [self magnifyToFit];

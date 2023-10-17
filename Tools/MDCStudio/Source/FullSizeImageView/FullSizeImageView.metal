@@ -37,9 +37,8 @@ vertex VertexOutput TimestampVertexShader(
     constant RenderContext& ctx [[buffer(0)]],
     uint vidx [[vertex_id]]
 ) {
-    const float2 v = ((_Verts[vidx] * ctx.timestampSize) * 2) - 1;
     VertexOutput r = {
-        .pos = float4(v, 0, 1),
+        .pos = ctx.transform * float4(_Verts[vidx] * ctx.timestampSize, 0, 1),
         .posUnit = _Verts[vidx],
     };
     return r;

@@ -78,7 +78,7 @@ static void _SetView(T& x, NSView* y) {
         options:0 metrics:nil views:@{@"v":x.view}]];
     // setNeedsLayout: is necessary to ensure the grid view is sized properly,
     // when showing the grid view.
-//    [y setNeedsLayout:true];
+    [y setNeedsLayout:true];
 }
 
 - (void)awakeFromNib {
