@@ -38,7 +38,7 @@ vertex VertexOutput TimestampVertexShader(
     uint vidx [[vertex_id]]
 ) {
     VertexOutput r = {
-        .pos = ctx.transform * float4(_Verts[vidx] * ctx.timestampSize, 0, 1),
+        .pos = ctx.transform * float4(ctx.timestampOffset + (_Verts[vidx] * ctx.timestampSize), 0, 1),
         .posUnit = _Verts[vidx],
     };
     return r;

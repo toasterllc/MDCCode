@@ -139,6 +139,17 @@ static CGColorSpaceRef _SRGBColorSpace() {
     [self setNeedsDisplay];
 }
 
+static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 size) {
+    using X = ImageOptions::Corner;
+    switch (corner) {
+    case X::BottomRight: return { 1.f-size.x, 1.f-size.y };
+    case X::BottomLeft:  return {          0, 1.f-size.y };
+    case X::TopLeft:     return {          0, 0 };
+    case X::TopRight:    return { 1.f-size.x, 0 };
+    }
+    abort();
+}
+
 - (void)display {
     using namespace MDCTools;
     using namespace MDCTools::ImagePipeline;
@@ -228,9 +239,12 @@ static CGColorSpaceRef _SRGBColorSpace() {
             (_timestampTxt ? (float)[_timestampTxt height] : 0.f) / h,
         };
         
+        const simd::float2 timestampOffset = _TimestampOffset(opts.timestamp.corner, timestampSize);
+        
         const RenderContext ctx = {
-            .transform = [self fixedTransform],
-            .timestampSize = timestampSize,
+            .transform       = [self fixedTransform],
+            .timestampOffset = timestampOffset,
+            .timestampSize   = timestampSize,
         };
         
         _renderer.render(drawableTxt, Renderer::BlendType::None,
