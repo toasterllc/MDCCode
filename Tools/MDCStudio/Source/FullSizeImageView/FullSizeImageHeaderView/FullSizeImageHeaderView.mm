@@ -16,7 +16,6 @@ using namespace MDCStudio;
         instantiateWithOwner:self topLevelObjects:nil];
     assert(br);
     
-    [_nibView setTranslatesAutoresizingMaskIntoConstraints:false];
     [self addSubview:_nibView];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];

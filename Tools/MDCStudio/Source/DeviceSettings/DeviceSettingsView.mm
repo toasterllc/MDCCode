@@ -32,7 +32,6 @@
         assert(br);
         
         NSView* nibView = self->_nibView;
-        [nibView setTranslatesAutoresizingMaskIntoConstraints:false];
         [self addSubview:nibView];
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
