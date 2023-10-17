@@ -144,8 +144,8 @@ static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 s
     switch (corner) {
     case X::BottomRight: return { 1.f-size.x, 1.f-size.y };
     case X::BottomLeft:  return {          0, 1.f-size.y };
-    case X::TopLeft:     return {          0, 0 };
-    case X::TopRight:    return { 1.f-size.x, 0 };
+    case X::TopLeft:     return {          0,          0 };
+    case X::TopRight:    return { 1.f-size.x,          0 };
     }
     abort();
 }
