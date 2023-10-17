@@ -83,6 +83,7 @@ static void _SetView(T& x, NSView* y) {
 
 - (void)awakeFromNib {
     _window = [_splitView window];
+//    [_window setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameDarkAqua]];
     
     _left.containerView = [[NSView alloc] initWithFrame:{}];
     [_left.containerView setTranslatesAutoresizingMaskIntoConstraints:false];
