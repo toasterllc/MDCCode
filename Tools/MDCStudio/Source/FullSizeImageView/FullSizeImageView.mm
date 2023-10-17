@@ -229,7 +229,7 @@ static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 s
         
         if (opts.timestamp.show && !_timestampTxt) {
             const std::string timestampStr = Calendar::TimestampString(Time::Clock::TimePointFromTimeInstant(info.timestamp));
-            _timestampTxt = _TimestampTextureCreate(_renderer, @(timestampStr.c_str()), 1);
+            _timestampTxt = _TimestampTextureCreate(_renderer, @(timestampStr.c_str()));
         }
         
         _renderer.clear(drawableTxt, {0,0,0,0});
@@ -272,32 +272,32 @@ static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 s
     [self setNeedsDisplay];
 }
 
-static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, NSString* str, CGFloat contentsScale) {
+static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, NSString* str) {
     NSAttributedString* astr = [[NSAttributedString alloc] initWithString:str attributes:@{
         NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:48],
         NSForegroundColorAttributeName: [NSColor whiteColor],
     }];
     
-    const CGSize astrSize = [astr size];
-    const size_t w = std::lround(astrSize.width * contentsScale);
-    const size_t h = std::lround(astrSize.height * contentsScale);
+    constexpr CGFloat PaddingX = 20;
+    constexpr CGFloat PaddingY = 2;
     constexpr size_t SamplesPerPixel = 4;
     constexpr size_t BytesPerSample = 1;
+    const CGSize astrSize = [astr size];
+    const size_t w = std::lround(astrSize.width+2*PaddingX);
+    const size_t h = std::lround(astrSize.height+2*PaddingY);
     const size_t bytesPerRow = SamplesPerPixel*BytesPerSample*w;
-    
     id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateWithName(kCGColorSpaceSRGB));
-    
     const id /* CGContextRef */ ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, BytesPerSample*8,
         bytesPerRow, (CGColorSpaceRef)cs, kCGImageAlphaPremultipliedLast));
     
-    const CGRect bounds = {{}, {(CGFloat)w,(CGFloat)h}};
-    CGContextScaleCTM((CGContextRef)ctx, contentsScale, contentsScale);
+    const CGRect bounds = {{}, { (CGFloat)w, (CGFloat)h }};
+//    CGContextScaleCTM((CGContextRef)ctx, contentsScale, contentsScale);
     CGContextSetRGBFillColor((CGContextRef)ctx, 0, 0, 0, 1);
     CGContextFillRect((CGContextRef)ctx, bounds);
     
     NSGraphicsContext* nsctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)ctx flipped:false];
     [NSGraphicsContext setCurrentContext:nsctx];
-    [astr drawAtPoint:{0,0}];
+    [astr drawAtPoint:{ PaddingX, PaddingY }];
     
     const uint8_t* samples = (const uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
     Renderer::Txt txt = renderer.textureCreate(_PixelFormat, w, h);
@@ -483,13 +483,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
         
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_headerView]"
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
-        
-//        _headerView = [[FullSizeImageHeaderView alloc] initWithFrame:{}];
-//        [_headerView setDelegate:self];
-//        [_scrollView addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
-//        
-//        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
-//            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
     }
     
     [self magnifyToFit];
