@@ -194,12 +194,9 @@ constexpr CGFloat ShadowCenterOffset = 45;
     assert(image);
     [self setBackgroundColor:[NSColor colorWithPatternImage:[[NSImage alloc] initWithCGImage:(__bridge CGImageRef)image size:{BackgroundTileSize/2, BackgroundTileSize/2}]]];
     
-//    [self setContentInsets:{100,0,100,0}];
+//    [self setContentInsets:{100,0,50,0}];
     
     return self;
-    
-    
-//    [self setBackgroundColor:[NSColor colorWithSRGBRed:.118 green:.122 blue:.129 alpha:1]];
 }
 
 

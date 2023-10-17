@@ -542,14 +542,11 @@ static bool _EventPhaseBegan(NSEventPhase x) {
     const NSEdgeInsets contentInsets = [self contentInsets];
     const CGFloat xinset = contentInsets.left + contentInsets.right;
     const CGFloat yinset = contentInsets.top + contentInsets.bottom;
+    const CGFloat xexcess = (bounds.size.width-xinset) - docSize.width;
+    const CGFloat yexcess = (bounds.size.height-yinset) - docSize.height;
     
-    if (bounds.size.width-xinset >= docSize.width) {
-        bounds.origin.x = (docSize.width-bounds.size.width-xinset)/2;
-    }
-    
-    if (bounds.size.height-yinset >= docSize.height) {
-        bounds.origin.y = (docSize.height-bounds.size.height-yinset)/2;
-    }
+    if (xexcess > 0) bounds.origin.x = -(contentInsets.left + xexcess/2);
+    if (yexcess > 0) bounds.origin.y = -(contentInsets.top + yexcess/2);
     
     return bounds;
 }
