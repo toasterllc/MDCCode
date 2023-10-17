@@ -39,12 +39,23 @@
         AssertionCounter::Assertion magnifyUnderway;
     } _interactionUnderway;
     
+    NSView* _floatingSubviewContainer;
+    
     struct {
         NSTimer* magnifyToFitTimer = nil;
         bool magnify = false;
         bool pan = false;
     } _scrollWheel;
     id _docViewFrameChangedObserver;
+}
+
+static NSScroller* _FirstScroller(NSView* view) {
+    for (NSView* view : [view subviews]) {
+        if ([view isKindOfClass:[NSScroller class]]) {
+            return (NSScroller*)view;
+        }
+    }
+    abort();
 }
 
 - (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
@@ -58,6 +69,7 @@
         name:NSScrollViewDidEndLiveMagnifyNotification object:nil];
     
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
+    [self setAutomaticallyAdjustsContentInsets:false];
     
     _doc = doc;
     
@@ -95,6 +107,9 @@
     [self setMinMagnification:1./(1<<16)];
     [self setMaxMagnification:1<<16];
     [self setUsesPredominantAxisScrolling:false];
+    
+    _floatingSubviewContainer = [[NSView alloc] initWithFrame:{}];
+    [self addSubview:_floatingSubviewContainer positioned:NSWindowBelow relativeTo:_FirstScroller(self)];
     
     return self;
 }
@@ -247,7 +262,10 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
 
 - (CGFloat)_fitMagnification {
     const CGSize contentSize = [[self documentView] frame].size;
-    const CGSize containerSize = [self bounds].size;
+    CGSize containerSize = [self bounds].size;
+    const NSEdgeInsets contentInsets = [self contentInsets];
+    containerSize.width -= contentInsets.left + contentInsets.right;
+    containerSize.height -= contentInsets.top + contentInsets.bottom;
     
     const CGFloat contentAspect = contentSize.width/contentSize.height;
     const CGFloat containerAspect = containerSize.width/containerSize.height;
@@ -473,11 +491,6 @@ static bool _EventPhaseBegan(NSEventPhase x) {
         docFrame.size.height += heightExtra;
     }
     
-//    const NSEdgeInsets inset = {100,0,0,0};
-//    const NSEdgeInsets inset = [self contentInsets];
-//    docFrame = _CGRectInset(docFrame, inset);
-//    printf("%p %f %f %f %f\n", self, inset.top, inset.left, inset.bottom, inset.right);
-    
     if (!CGRectEqualToRect(docFrame, _docFrame) || mag!=_docMagnification) {
         _docFrame = docFrame;
         _docMagnification = mag;
@@ -486,12 +499,30 @@ static bool _EventPhaseBegan(NSEventPhase x) {
     }
 }
 
+- (void)setContentInsets:(NSEdgeInsets)x {
+    [super setContentInsets:x];
+    [super setScrollerInsets:{-x.top, -x.left, -x.bottom, -x.right}];
+}
+
 // _magnificationInflectionPoints: private NSScrollView method that controls
 // the magnifications points where increased resistance occurs, such that
 // crossing these points requires more effort.
 // We don't like the feel of it so we disable this resistance here.
 - (NSArray*)_magnificationInflectionPoints {
     return @[];
+}
+
+// MARK: - Floating Subviews
+
+- (NSView*)floatingSubviewContainer {
+    return _floatingSubviewContainer;
+}
+
+- (void)tile {
+    [super tile];
+    // NSScrollView apparently inhibits autolayout on its direct subviews, so we have
+    // to set _floatingSubviewContainer's frame directly.
+    [_floatingSubviewContainer setFrame:[self bounds]];
 }
 
 @end
@@ -508,12 +539,18 @@ static bool _EventPhaseBegan(NSEventPhase x) {
     bounds = [super constrainBoundsRect:bounds];
     
     const CGSize docSize = [[self documentView] frame].size;
-    if (bounds.size.width >= docSize.width) {
-        bounds.origin.x = (docSize.width-bounds.size.width)/2;
+    const NSEdgeInsets contentInsets = [self contentInsets];
+    const CGFloat xinset = contentInsets.left + contentInsets.right;
+    const CGFloat yinset = contentInsets.top + contentInsets.bottom;
+    
+    if (bounds.size.width-xinset >= docSize.width) {
+        bounds.origin.x = (docSize.width-bounds.size.width-xinset)/2;
     }
-    if (bounds.size.height >= docSize.height) {
-        bounds.origin.y = (docSize.height-bounds.size.height)/2;
+    
+    if (bounds.size.height-yinset >= docSize.height) {
+        bounds.origin.y = (docSize.height-bounds.size.height-yinset)/2;
     }
+    
     return bounds;
 }
 

@@ -1034,9 +1034,13 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     _headerView = x;
     
     // Add header view
+    [[self floatingSubviewContainer] addSubview:_headerView];
+    
     ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
     [layer setContentInsets:{[_headerView intrinsicContentSize].height+10,0,0,0}];
-    [self addFloatingSubview:_headerView forAxis:NSEventGestureAxisVertical];
+    
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_headerView]"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
     
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];

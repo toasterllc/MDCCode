@@ -48,4 +48,7 @@
 - (void)magnifyDecrease:(id)sender;
 - (void)magnifyToFit:(id)sender;
 
+// Floating subviews (that work with content insets)
+- (NSView*)floatingSubviewContainer;
+
 @end

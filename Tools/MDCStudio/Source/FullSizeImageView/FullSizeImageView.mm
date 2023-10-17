@@ -461,7 +461,8 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     {
         _headerView = [[FullSizeImageHeaderView alloc] initWithFrame:{}];
         [_headerView setDelegate:self];
-        [self addSubview:_headerView];
+        [[_scrollView floatingSubviewContainer] addSubview:_headerView];
+        [_scrollView setContentInsets:{[_headerView intrinsicContentSize].height+10,0,10,0}];
         
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_headerView]|"
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
