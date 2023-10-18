@@ -113,7 +113,7 @@
                             <menuItem title="Export…" id="nei-2I-dha">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
-                                    <action selector="performClose:" target="-1" id="AOR-7i-tAU"/>
+                                    <action selector="_export:" target="-1" id="cwQ-Xk-dKT"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="YCV-Pu-axB"/>

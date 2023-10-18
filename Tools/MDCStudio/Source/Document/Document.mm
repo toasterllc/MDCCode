@@ -138,6 +138,8 @@ static void _SetView(T& x, NSView* y) {
     
     if ([item action] == @selector(saveDocument:)) {
         return false;
+    } else if ([item action] == @selector(saveDocumentAs:)) {
+        return false;
     
     } else if ([item action] == @selector(_sortNewestFirst:)) {
         [item setState:(_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
@@ -148,6 +150,15 @@ static void _SetView(T& x, NSView* y) {
         [item setTitle:([[self _devicesContainerView] isHidden] ? @"Show Devices" : @"Hide Devices")];
     } else if ([item action] == @selector(_toggleInspector:)) {
         [item setTitle:([[self _inspectorContainerView] isHidden] ? @"Show Inspector" : @"Hide Inspector")];
+    
+    } else if ([item action] == @selector(_export:)) {
+        if (_center.view == _fullSizeImageView) {
+            return true;
+        } else if (_center.view == _imageGridScrollView) {
+            return ![_imageGridView selection].empty();
+        } else {
+            abort();
+        }
     }
     
     return [super validateMenuItem:item];
@@ -452,6 +463,10 @@ static void _SortNewestFirst(bool x) {
     NSView* view = [self _inspectorContainerView];
     const bool shown = [view isHidden];
     [view setHidden:!shown];
+}
+
+- (IBAction)_export:(id)sender {
+    printf("_export\n");
 }
 
 // MARK: - Device Settings
