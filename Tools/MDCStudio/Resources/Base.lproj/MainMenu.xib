@@ -110,6 +110,13 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="aJh-i4-bef"/>
+                            <menuItem title="Export…" id="nei-2I-dha">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="performClose:" target="-1" id="AOR-7i-tAU"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="YCV-Pu-axB"/>
                             <menuItem title="Page Setup…" keyEquivalent="p" id="qIS-W8-SiK">
                                 <modifierMask key="keyEquivalentModifierMask" control="YES" option="YES" command="YES"/>
                                 <connections>

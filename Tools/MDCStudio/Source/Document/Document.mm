@@ -125,15 +125,31 @@ static void _SetView(T& x, NSView* y) {
     [self _updateDevices];
 }
 
+- (NSView*)_devicesContainerView {
+    return [_splitView arrangedSubviews][0];
+}
+
+- (NSView*)_inspectorContainerView {
+    return [_splitView arrangedSubviews][2];
+}
+
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
     NSLog(@"[Document] validateMenuItem: %@\n", [item title]);
+    
     if ([item action] == @selector(saveDocument:)) {
         return false;
+    
     } else if ([item action] == @selector(_sortNewestFirst:)) {
         [item setState:(_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     } else if ([item action] == @selector(_sortOldestFirst:)) {
         [item setState:(!_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+    
+    } else if ([item action] == @selector(_toggleDevices:)) {
+        [item setTitle:([[self _devicesContainerView] isHidden] ? @"Show Devices" : @"Hide Devices")];
+    } else if ([item action] == @selector(_toggleInspector:)) {
+        [item setTitle:([[self _inspectorContainerView] isHidden] ? @"Show Inspector" : @"Hide Inspector")];
     }
+    
     return [super validateMenuItem:item];
 }
 
@@ -427,21 +443,15 @@ static void _SortNewestFirst(bool x) {
 }
 
 - (IBAction)_toggleDevices:(id)sender {
-    NSView* view = [_splitView arrangedSubviews][0];
+    NSView* view = [self _devicesContainerView];
     const bool shown = [view isHidden];
-    [[_splitView arrangedSubviews][0] setHidden:!shown];
-    
-    NSMenuItem* menu = Toastbox::Cast<NSMenuItem*>(sender);
-    [menu setTitle:(shown ? @"Hide Devices" : @"Show Devices")];
+    [view setHidden:!shown];
 }
 
 - (IBAction)_toggleInspector:(id)sender {
-    NSView* view = [_splitView arrangedSubviews][2];
+    NSView* view = [self _inspectorContainerView];
     const bool shown = [view isHidden];
     [view setHidden:!shown];
-    
-    NSMenuItem* menu = Toastbox::Cast<NSMenuItem*>(sender);
-    [menu setTitle:(shown ? @"Hide Inspector" : @"Show Inspector")];
 }
 
 // MARK: - Device Settings
