@@ -9,6 +9,7 @@
 #import "Toastbox/Mac/Util.h"
 #import "ImageUtil.h"
 #import "Calendar.h"
+#import "NibViewInit.h"
 using namespace MDCStudio;
 
 struct _ModelData {
@@ -682,16 +683,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     }
     
     // Load view from nib
-    {
-        [self setTranslatesAutoresizingMaskIntoConstraints:false];
-        
-        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
-        assert(br);
-        
-        [self addSubview:_nibView];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-    }
+    NibViewInit(self, _nibView);
     
     // Create NSOutlineView items
     {

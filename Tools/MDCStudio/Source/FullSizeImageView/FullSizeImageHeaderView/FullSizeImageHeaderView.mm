@@ -1,4 +1,5 @@
 #import "FullSizeImageHeaderView.h"
+#import "NibViewInit.h"
 using namespace MDCStudio;
 
 @implementation FullSizeImageHeaderView {
@@ -9,19 +10,7 @@ using namespace MDCStudio;
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
-    
-    [self setTranslatesAutoresizingMaskIntoConstraints:false];
-    
-    bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil]
-        instantiateWithOwner:self topLevelObjects:nil];
-    assert(br);
-    
-    [self addSubview:_nibView];
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|"
-        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-    
+    NibViewInit(self, _nibView);
     return self;
 }
 

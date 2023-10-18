@@ -1,6 +1,8 @@
 #import "DeviceSettingsView.h"
 #import "Toastbox/Mac/Util.h"
 #import "CaptureTriggersView/CaptureTriggersView.h"
+#import "NibViewInit.h"
+using namespace MDCStudio;
 
 @implementation DeviceSettingsView {
 @public
@@ -25,17 +27,7 @@
     _delegate = delegate;
     
     // Load view from nib
-    {
-        [self setTranslatesAutoresizingMaskIntoConstraints:false];
-        
-        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
-        assert(br);
-        
-        NSView* nibView = self->_nibView;
-        [self addSubview:nibView];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-    }
+    NibViewInit(self, _nibView);
     
     _captureTriggersView = [[CaptureTriggersView alloc] initWithTriggers:_settings.triggers];
     [_containerView addSubview:_captureTriggersView];

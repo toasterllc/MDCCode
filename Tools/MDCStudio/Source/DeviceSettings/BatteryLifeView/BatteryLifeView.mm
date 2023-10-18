@@ -2,6 +2,7 @@
 #import "BatteryLifeSimulator.h"
 #import "Prefs.h"
 #import "BatteryLifePlotView.h"
+#import "NibViewInit.h"
 #import "Code/Lib/Toastbox/Defer.h"
 #import "Code/Lib/Toastbox/String.h"
 #import "Code/Lib/Toastbox/NumForStr.h"
@@ -81,17 +82,7 @@ static void _ButtonStimulusInterval(const DS::Duration& x) {
     if (!(self = [super initWithFrame:frame])) return nil;
     
     // Load view from nib
-    {
-        [self setTranslatesAutoresizingMaskIntoConstraints:false];
-        
-        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
-        assert(br);
-        
-        NSView* nibView = self->_nibView;
-        [self addSubview:nibView];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-    }
+    NibViewInit(self, _nibView);
     
     [[_maxPlotView plotLayer] setFillColor:[[NSColor colorWithSRGBRed:.184 green:.510 blue:.922 alpha:1] CGColor]];
     [[_minPlotView plotLayer] setFillColor:[[[NSColor blackColor] colorWithAlphaComponent:.4] CGColor]];

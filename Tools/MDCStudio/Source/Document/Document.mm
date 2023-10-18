@@ -465,8 +465,24 @@ static void _SortNewestFirst(bool x) {
     [view setHidden:!shown];
 }
 
+- (void)_exportToPath:(NSString*)path {
+    printf("_exportToPath: %s\n", [path UTF8String]);
+}
+
 - (IBAction)_export:(id)sender {
     printf("_export\n");
+    
+    
+    NSSavePanel* panel = [NSSavePanel savePanel];
+    [panel setAllowedFileTypes:@[@"jpg", @"png"]];
+    
+    __weak auto selfWeak = self;
+    [panel beginSheetModalForWindow:_window completionHandler:^(NSInteger result) {
+        if (result != NSModalResponseOK) return;
+        [selfWeak _exportToPath:[[panel URL] path]];
+    }];
+    
+    
 }
 
 // MARK: - Device Settings

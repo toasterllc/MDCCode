@@ -4,6 +4,7 @@
 #import "MDCDevicesManager.h"
 #import "Toastbox/Mac/Util.h"
 #import "ImageLibraryStatus.h"
+#import "NibViewInit.h"
 @class SourceListView;
 using namespace MDCStudio;
 
@@ -145,50 +146,15 @@ static NSString* _BatteryLevelImage(float level) {
 
 // MARK: - Creation
 
-static void _Init(SourceListView* self) {
-    // Load view from nib
-    {
-        [self setTranslatesAutoresizingMaskIntoConstraints:false];
-        
-        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil]
-            instantiateWithOwner:self topLevelObjects:nil];
-        assert(br);
-        
-        NSView* nibView = self->_nibView;
-        [self addSubview:nibView];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-    }
-    
-//    // Populate NSOutlineView
-//    {
-//        self->_items = {};
-//        
-//        [self _updateDevices];
-//        [self->_outlineView reloadData];
-//        
-//        for (auto item : self->_items) {
-//            [self->_outlineView expandItem:item];
-//        }
-//        
-//        // Select first device by default
-//        const NSInteger selectedRow = [self->_outlineView selectedRow];
-//        if (selectedRow<0 && !self->_items.empty()) {
-//            [self->_outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:
-//                [self->_outlineView rowForItem:self->_items.at(0)]] byExtendingSelection:false];
-//        }
-//    }
-}
-
 - (instancetype)initWithCoder:(NSCoder*)coder {
     if (!(self = [super initWithCoder:coder])) return nil;
-    _Init(self);
+    NibViewInit(self, _nibView);
     return self;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
-    _Init(self);
+    NibViewInit(self, _nibView);
     return self;
 }
 

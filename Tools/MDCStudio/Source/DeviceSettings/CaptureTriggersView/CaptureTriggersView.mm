@@ -17,6 +17,7 @@
 #import "Code/Shared/Clock.h"
 #import "BatteryLifeSimulator.h"
 #import "DeviceSettings/BatteryLifeView/BatteryLifeView.h"
+#import "NibViewInit.h"
 using namespace MDCStudio;
 using namespace DeviceSettings;
 
@@ -662,17 +663,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     if (!(self = [super initWithFrame:{}])) return nil;
     
     // Load view from nib
-    {
-        [self setTranslatesAutoresizingMaskIntoConstraints:false];
-        
-        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
-        assert(br);
-        
-        NSView* nibView = self->_nibView;
-        [self addSubview:nibView];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(nibView)]];
-    }
+    NibViewInit(self, _nibView);
     
     [_tableView registerForDraggedTypes:@[_PboardDragItemsType]];
     [_tableView reloadData];
