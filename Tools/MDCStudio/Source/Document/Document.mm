@@ -13,6 +13,7 @@
 #import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
 #import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
 #import "MDCDevicesManager.h"
+#import "ImageExportDialog/ImageExportDialog.h"
 
 using namespace MDCStudio;
 
@@ -473,16 +474,8 @@ static void _SortNewestFirst(bool x) {
     printf("_export\n");
     
     
-    NSSavePanel* panel = [NSSavePanel savePanel];
-    [panel setAllowedFileTypes:@[@"jpg", @"png"]];
-    
-    __weak auto selfWeak = self;
-    [panel beginSheetModalForWindow:_window completionHandler:^(NSInteger result) {
-        if (result != NSModalResponseOK) return;
-        [selfWeak _exportToPath:[[panel URL] path]];
-    }];
-    
-    
+    ImageExportDialog* dialog = [ImageExportDialog new];
+    [dialog show:_window];
 }
 
 // MARK: - Device Settings
