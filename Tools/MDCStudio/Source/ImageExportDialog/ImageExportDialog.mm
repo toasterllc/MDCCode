@@ -34,7 +34,9 @@ static const char* ImageExportFormatKey = "ImageExportFormat";
 }
 
 - (void)_updateFormat {
-    [_panel setAllowedFileTypes:@[@([self _format]->extension)]];
+    if (![_panel isKindOfClass:[NSOpenPanel class]]) {
+        [_panel setAllowedFileTypes:@[@([self _format]->extension)]];
+    }
 }
 
 - (IBAction)_formatChanged:(id)sender {
@@ -104,7 +106,7 @@ static const char* ImageExportFormatKey = "ImageExportFormat";
 
 namespace MDCStudio::ImageExportDialog {
 
-void Show(NSWindow* window, bool batch, Handler handler) {
+std::optional<Result> Run(NSWindow* window, bool batch, NSString* filename) {
     NSSavePanel* panel = nil;
     if (batch) {
         panel = [NSOpenPanel new];
@@ -116,17 +118,30 @@ void Show(NSWindow* window, bool batch, Handler handler) {
     formatsView->_panel = panel;
     [formatsView _updateFormat];
     [panel setAccessoryView:formatsView];
+    [panel setCanCreateDirectories:true];
     
-    __weak auto panelWeak = panel;
-    [panel beginSheetModalForWindow:window completionHandler:^(NSInteger result) {
-        if (result != NSModalResponseOK) {
-            return handler(nullptr, nil);
-        }
-        handler([formatsView _format], [[panelWeak URL] path]);
+    if (batch) {
+        NSOpenPanel* openPanel = (NSOpenPanel*)panel;
+        [openPanel setAccessoryViewDisclosed:true];
+        [openPanel setCanChooseDirectories:true];
+        [openPanel setCanChooseFiles:false];
+        [openPanel setPrompt:@"Choose"];
+        [openPanel setMessage:@"Choose the directory to contain the exported images."];
+    } else {
+        [panel setNameFieldStringValue:filename];
+    }
+    
+//    __weak auto panelWeak = panel;
+    [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse result) {
+        [NSApp stopModalWithCode:result];
     }];
     
-    [panel runModal];
-    
+    const NSModalResponse response = [panel runModal];
+    if (response != NSModalResponseOK) return std::nullopt;
+    return Result{
+        .format = [formatsView _format],
+        .path = [[panel URL] path],
+    };
 }
 
 

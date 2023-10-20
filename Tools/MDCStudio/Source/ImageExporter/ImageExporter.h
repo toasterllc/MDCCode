@@ -26,39 +26,34 @@ inline void Export(ImageSourcePtr imageSource, const Format* fmt,
 
 // Batch export to directory `dirPath`
 inline void Export(ImageSourcePtr imageSource, const Format* fmt, const ImageSet& recs,
-    const std::filesystem::path& dirPath) {
+    const std::filesystem::path& dirPath, const std::string filenamePrefix) {
     
     for (ImageRecordPtr rec : recs) {
-        const std::filesystem::path filePath = dirPath / (std::to_string(rec->info.id) + "." + fmt->extension);
+        const std::filesystem::path filePath = dirPath / (filenamePrefix + std::to_string(rec->info.id) + "." + fmt->extension);
         Export(imageSource, fmt, rec, filePath);
     }
 }
 
 inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet& recs) {
+    constexpr const char* FilenamePrefix = "Image-";
     assert(!recs.empty());
     const bool batch = recs.size()>1;
+    ImageRecordPtr firstImage = *recs.begin();
     
-    __block const Format* fmt = nullptr;
-    __block NSString* nspath;
-    __block bool done = false;
-    ImageExportDialog::Show(window, batch, ^(const Format* f, NSString *p) {
-        fmt = f;
-        nspath = p;
-        done = true;
-    });
-    
-    while (!done) {
-        [[NSRunLoop currentRunLoop] runMode:NSModalPanelRunLoopMode beforeDate:[NSDate distantFuture]];
+    NSString* filename = nil;
+    if (!batch) {
+        filename = [NSString stringWithFormat:@"%s%@", FilenamePrefix, @(firstImage->info.id)];
     }
     
+    auto res = ImageExportDialog::Run(window, batch, filename);
     // Bail if user cancelled the NSSavePanel
-    if (!fmt) return;
+    if (!res) return;
     
-    const std::filesystem::path path = [nspath UTF8String];
+    const std::filesystem::path path = [res->path UTF8String];
     if (batch) {
-        Export(imageSource, fmt, recs, path);
+        Export(imageSource, res->format, recs, path, FilenamePrefix);
     } else {
-        Export(imageSource, fmt, *recs.begin(), path);
+        Export(imageSource, res->format, firstImage, path);
     }
 }
 

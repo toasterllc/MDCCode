@@ -1,10 +1,15 @@
 #import <Cocoa/Cocoa.h>
+#import <optional>
 #import "ImageExporter/ImageExporterTypes.h"
 
 namespace MDCStudio::ImageExportDialog {
 
-using Handler = void(^)(const ImageExporter::Format* fmt, NSString* path);
-void Show(NSWindow* window, bool batch, Handler handler);
+struct Result {
+    const ImageExporter::Format* format;
+    NSString* path;
+};
+
+std::optional<Result> Run(NSWindow* window, bool batch, NSString* filename);
 
 } // namespace MDCStudio::ImageExportDialog
 
