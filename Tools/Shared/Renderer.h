@@ -84,13 +84,18 @@ public:
         Over,
     };
     
-    static CGColorSpaceRef GrayColorSpace() {
-        static CGColorSpaceRef cs = CGColorSpaceCreateDeviceGray();
+    static id /* CGColorSpaceRef */ GrayColorSpace() {
+        static id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateDeviceGray());
         return cs;
     }
     
-    static CGColorSpaceRef LSRGBColorSpace() {
-        static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+    static id /* CGColorSpaceRef */ SRGBColorSpace() {
+        static id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateWithName(kCGColorSpaceSRGB));
+        return cs;
+    }
+    
+    static id /* CGColorSpaceRef */ LSRGBColorSpace() {
+        static id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB));
         return cs;
     }
     
@@ -606,7 +611,7 @@ public:
     }
     
     // Create a CGImage from a texture
-    id /* CGImageRef */ imageCreate(id<MTLTexture> txt, id /* CGColorSpaceRef */ colorSpace=nil) {
+    id /* CGImageRef */ imageCreate(id<MTLTexture> txt) {
         const size_t w = [txt width];
         const size_t h = [txt height];
         const MTLPixelFormat fmt = [txt pixelFormat];
@@ -618,6 +623,7 @@ public:
         
         // Add support for more pixel formats as needed...
         bool premulAlpha = false;
+        bool srgbGammaApplied = false;
         switch (fmt) {
         // Gray
         case MTLPixelFormatR8Unorm:
@@ -637,6 +643,11 @@ public:
         case MTLPixelFormatRGBA8Unorm:
             opts = kCGImageAlphaPremultipliedLast;
             premulAlpha = true;
+            break;
+        case MTLPixelFormatRGBA8Unorm_sRGB:
+            opts = kCGImageAlphaPremultipliedLast;
+            premulAlpha = true;
+            srgbGammaApplied = true;
             break;
         case MTLPixelFormatRGBA16Unorm:
             opts = kCGImageAlphaPremultipliedLast|kCGBitmapByteOrder16Host;
@@ -670,14 +681,17 @@ public:
         }
         
         // Choose a colorspace if one wasn't supplied
-        if (!colorSpace) {
-            if (samplesPerPixel == 1) {
-                colorSpace = (__bridge id)GrayColorSpace();
-            } else if (samplesPerPixel == 4) {
-                colorSpace = (__bridge id)LSRGBColorSpace();
+        id /* CGColorSpaceRef */ colorSpace = nil;
+        if (samplesPerPixel == 1) {
+            colorSpace = GrayColorSpace();
+        } else if (samplesPerPixel == 4) {
+            if (srgbGammaApplied) {
+                colorSpace = SRGBColorSpace();
             } else {
-                throw std::runtime_error("invalid texture format");
+                colorSpace = LSRGBColorSpace();
             }
+        } else {
+            throw std::runtime_error("invalid texture format");
         }
         
         id ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, bytesPerSample*8,
@@ -693,13 +707,13 @@ public:
         return CFBridgingRelease(CGBitmapContextCreateImage((CGContextRef)ctx));
     }
     
-    void debugShowTexture(id<MTLTexture> txt, id /* CGColorSpaceRef */ colorSpace=nil) {
+    void debugShowTexture(id<MTLTexture> txt) {
         const char* outputPath = "/tmp/tempimage.png";
         
         sync(txt);
         commitAndWait();
         
-        id img = imageCreate(txt, colorSpace);
+        id img = imageCreate(txt);
         assert(img);
         NSURL* outputURL = [NSURL fileURLWithPath:@(outputPath)];
         CGImageDestinationRef imageDest = CGImageDestinationCreateWithURL((CFURLRef)outputURL, kUTTypePNG, 1, nullptr);
