@@ -44,9 +44,10 @@
 - (void)magnifySnapToFit;
 
 // Menu actions
-- (void)magnifyIncrease:(id)sender;
-- (void)magnifyDecrease:(id)sender;
-- (void)magnifyToFit:(id)sender;
+- (IBAction)magnifyToActualSize:(id)sender;
+- (IBAction)magnifyToFit:(id)sender;
+- (IBAction)magnifyIncrease:(id)sender;
+- (IBAction)magnifyDecrease:(id)sender;
 
 // Floating subviews (that work with content insets)
 - (NSView*)floatingSubviewContainer;

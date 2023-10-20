@@ -1,5 +1,5 @@
 #pragma once
-#include "ColorMatrix.h"
+#import "ColorMatrix.h"
 
 namespace MDCStudio {
 

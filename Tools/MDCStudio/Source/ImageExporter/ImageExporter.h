@@ -4,33 +4,49 @@
 #import "ImageLibrary.h"
 #import "ImageExportDialog/ImageExportDialog.h"
 #import "ImageExporterTypes.h"
+#import "Tools/Shared/Renderer.h"
+#import "ImagePipelineUtil.h"
 
 namespace MDCStudio::ImageExporter {
 
 // Single image export to file `filePath`
-inline void Export(const Format* fmt, const ImageRecord& rec, const Image& image,
+inline void __Export(MDCTools::Renderer& renderer, const Format* fmt, const ImageRecord& rec, const Image& image,
     const std::filesystem::path& filePath) {
     printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
+    using namespace MDCTools;
+    using namespace MDCTools::ImagePipeline;
+    
+    Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+        image.width, image.height, (ImagePixel*)(image.data.get()));
+    
+    Renderer::Txt rgbTxt = renderer.textureCreate(MTLPixelFormatRGBA16Float,
+        image.width, image.height);
+    
+    const Pipeline::Options popts = PipelineOptionsForImage(rec.options, image);
+    Pipeline::Run(renderer, popts, rawTxt, rgbTxt);
+    
+    
+    renderer.debugShowTexture(rgbTxt);
 }
 
 // Single image export to file `filePath`
-inline void Export(ImageSourcePtr imageSource, const Format* fmt,
+inline void _Export(MDCTools::Renderer& renderer, ImageSourcePtr imageSource, const Format* fmt,
     const ImageRecordPtr& rec, const std::filesystem::path& filePath) {
     
     Image image = imageSource->getCachedImage(rec);
     if (!image) {
         image = imageSource->loadImage(ImageSource::Priority::High, rec);
     }
-    Export(fmt, *rec, image, filePath);
+    __Export(renderer, fmt, *rec, image, filePath);
 }
 
 // Batch export to directory `dirPath`
-inline void Export(ImageSourcePtr imageSource, const Format* fmt, const ImageSet& recs,
+inline void _Export(MDCTools::Renderer& renderer, ImageSourcePtr imageSource, const Format* fmt, const ImageSet& recs,
     const std::filesystem::path& dirPath, const std::string filenamePrefix) {
     
     for (ImageRecordPtr rec : recs) {
         const std::filesystem::path filePath = dirPath / (filenamePrefix + std::to_string(rec->info.id) + "." + fmt->extension);
-        Export(imageSource, fmt, rec, filePath);
+        _Export(renderer, imageSource, fmt, rec, filePath);
     }
 }
 
@@ -40,6 +56,9 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     const bool batch = recs.size()>1;
     ImageRecordPtr firstImage = *recs.begin();
     
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    
     NSString* filename = [NSString stringWithFormat:@"%s%@", FilenamePrefix, @(firstImage->info.id)];
     auto res = ImageExportDialog::Run(window, batch, filename);
     // Bail if user cancelled the NSSavePanel
@@ -47,9 +66,9 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     
     const std::filesystem::path path = [res->path UTF8String];
     if (batch) {
-        Export(imageSource, res->format, recs, path, FilenamePrefix);
+        _Export(renderer, imageSource, res->format, recs, path, FilenamePrefix);
     } else {
-        Export(imageSource, res->format, firstImage, path);
+        _Export(renderer, imageSource, res->format, firstImage, path);
     }
 }
 

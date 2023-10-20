@@ -5,13 +5,14 @@
 #import <thread>
 #import "Util.h"
 #import "Code/Lib/Toastbox/Mac/Util.h"
+#import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "FixedMetalDocumentLayer.h"
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
-#import "Tools/Shared/Renderer.h"
 #import "Calendar.h"
+#import "ImagePipelineUtil.h"
 using namespace MDCStudio;
 using namespace MDCStudio::FullSizeImageViewTypes;
 using namespace MDCTools;
@@ -183,28 +184,7 @@ static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 s
         Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
             _image.image.width, _image.image.height, (ImagePixel*)(_image.image.data.get()));
         
-        const Pipeline::Options popts = {
-            .cfaDesc                = _image.image.cfaDesc,
-            
-            .illum                  = ColorRaw(opts.whiteBalance.illum),
-            .colorMatrix            = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
-            
-            .defringe               = { .en = false, },
-            .reconstructHighlights  = { .en = opts.reconstructHighlights, },
-            .debayerLMMSE           = { .applyGamma = true, },
-            
-            .exposure               = (float)opts.exposure,
-            .saturation             = (float)opts.saturation,
-            .brightness             = (float)opts.brightness,
-            .contrast               = (float)opts.contrast,
-            
-            .localContrast = {
-                .en                 = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
-                .amount             = (float)opts.localContrast.amount,
-                .radius             = (float)opts.localContrast.radius,
-            },
-        };
-        
+        Pipeline::Options popts = PipelineOptionsForImage(opts, _image.image);
         Pipeline::Run(_renderer, popts, rawTxt, _image.txt);
         _image.txtValid = true;
     }
@@ -521,16 +501,20 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     [_delegate fullSizeImageViewNextImage:self];
 }
 
+- (void)magnifyToActualSize:(id)sender {
+    [_scrollView magnifyToActualSize:sender];
+}
+
+- (void)magnifyToFit:(id)sender {
+    [_scrollView magnifyToFit:sender];
+}
+
 - (void)magnifyIncrease:(id)sender {
     [_scrollView magnifyIncrease:sender];
 }
 
 - (void)magnifyDecrease:(id)sender {
     [_scrollView magnifyDecrease:sender];
-}
-
-- (void)magnifyToFit:(id)sender {
-    [_scrollView magnifyToFit:sender];
 }
 
 //- (BOOL)acceptsFirstResponder {

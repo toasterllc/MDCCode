@@ -129,7 +129,6 @@
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
 		551328B827B45D7C00CD823B /* ImageGridView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridView.mm; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
-		552F4BB429AD7ECE000CEAB2 /* ImageRender.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageRender.h; sourceTree = "<group>"; };
 		552F4BF529B28543000CEAB2 /* ImageUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageUtil.h; sourceTree = "<group>"; };
 		552F4BF629B306DB000CEAB2 /* ImageOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageOptions.h; sourceTree = "<group>"; };
 		553031F827BC45A100BEFFEA /* Selection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Selection.png; sourceTree = "<group>"; };
@@ -283,6 +282,7 @@
 		55C456842955A1AE00A20363 /* FixedScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FixedScrollView.h; sourceTree = "<group>"; };
 		55C456852955A1AE00A20363 /* FixedDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FixedDocumentView.mm; sourceTree = "<group>"; };
 		55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageExporterTypes.h; sourceTree = "<group>"; };
+		55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineUtil.h; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
 		55C90B9229B58283007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageThumb.h; sourceTree = "<group>"; };
@@ -690,10 +690,10 @@
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				553EF5572AD7088A00157484 /* ImageLibraryStatus.h */,
 				55F8D09227C2EE9D00757165 /* ImageSource.h */,
-				552F4BB429AD7ECE000CEAB2 /* ImageRender.h */,
 				556F313E2AE069830028BF9C /* NibViewInit.h */,
 				558FFC6029CA1E520022E840 /* Prefs.h */,
 				552F4BF529B28543000CEAB2 /* ImageUtil.h */,
+				55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55F7556C29BC21B500241672 /* ColorMatrix.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,

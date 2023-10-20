@@ -191,6 +191,20 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     [self setMagnifyToFit:_ShouldSnapToFitMagnification(mag, fitMag) animate:true];
 }
 
+- (IBAction)magnifyToActualSize:(id)sender {
+    if (![self allowsMagnification]) return;
+    [self _scrollWheelReset]; // Prevent further momentum scrolls from affecting us (until the start of the next scroll)
+    
+    [self _setAnimatedMagnification:1 snapToFit:false];
+}
+
+- (IBAction)magnifyToFit:(id)sender {
+    if (![self allowsMagnification]) return;
+    [self _scrollWheelReset]; // Prevent further momentum scrolls from affecting us (until the start of the next scroll)
+    
+    [self setMagnifyToFit:true animate:true];
+}
+
 - (IBAction)magnifyIncrease:(id)sender {
     if (![self allowsMagnification]) return;
     [self _scrollWheelReset]; // Prevent further momentum scrolls from affecting us (until the start of the next scroll)
@@ -209,13 +223,6 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     const CGFloat curMag = [self _modelMagnification];
     const CGFloat nextMag = _NextMagnification(curMag, fitMag, [self minMagnification], [self maxMagnification], -1);
     [self _setAnimatedMagnification:nextMag snapToFit:true];
-}
-
-- (IBAction)magnifyToFit:(id)sender {
-    if (![self allowsMagnification]) return;
-    [self _scrollWheelReset]; // Prevent further momentum scrolls from affecting us (until the start of the next scroll)
-    
-    [self setMagnifyToFit:true animate:true];
 }
 
 - (void)_setAnimatedMagnification:(CGFloat)mag snapToFit:(bool)snapToFit {

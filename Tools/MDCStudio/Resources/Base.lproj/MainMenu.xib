@@ -632,6 +632,16 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="hB3-LF-h0Y"/>
+                            <menuItem title="Actual Size" keyEquivalent="0" id="fQh-2t-qzh">
+                                <connections>
+                                    <action selector="magnifyToActualSize:" target="-1" id="Rcc-vp-cPl"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom to Fit" keyEquivalent="9" id="vxK-Kk-aDt">
+                                <connections>
+                                    <action selector="magnifyToFit:" target="-1" id="li5-zI-bEl"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Zoom In" keyEquivalent="+" id="kWG-ZS-fSb">
                                 <connections>
                                     <action selector="magnifyIncrease:" target="-1" id="qWU-kG-Z73"/>
@@ -640,11 +650,6 @@
                             <menuItem title="Zoom Out" keyEquivalent="-" id="snF-hZ-Qp1">
                                 <connections>
                                     <action selector="magnifyDecrease:" target="-1" id="H6E-PE-deJ"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Zoom to Fit" keyEquivalent="0" id="fQh-2t-qzh">
-                                <connections>
-                                    <action selector="magnifyToFit:" target="-1" id="Tqg-dk-BM4"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="r2t-gp-ECe"/>

@@ -1053,11 +1053,13 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
-    if ([item action] == @selector(magnifyIncrease:)) {
-        return false;
-    } else if ([item action] == @selector(magnifyDecrease:)) {
+    if ([item action] == @selector(magnifyToActualSize:)) {
         return false;
     } else if ([item action] == @selector(magnifyToFit:)) {
+        return false;
+    } else if ([item action] == @selector(magnifyIncrease:)) {
+        return false;
+    } else if ([item action] == @selector(magnifyDecrease:)) {
         return false;
     }
     return [super validateMenuItem:item];
