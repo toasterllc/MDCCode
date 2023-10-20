@@ -472,10 +472,7 @@ static void _SortNewestFirst(bool x) {
 
 - (IBAction)_export:(id)sender {
     printf("_export\n");
-    
-    
-    ImageExportDialog* dialog = [ImageExportDialog new];
-    [dialog show:_window];
+    ImageExportDialog::Show(_window, false, nil);
 }
 
 // MARK: - Device Settings

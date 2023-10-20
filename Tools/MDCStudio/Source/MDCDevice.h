@@ -199,7 +199,7 @@ struct MDCDevice : Object, ImageSource {
     ImageLibraryPtr imageLibrary() override { return _imageLibrary; }
     
     void renderThumbs(Priority priority, std::set<ImageRecordPtr> recs) override {
-        _loadImages(priority, false, recs);
+        _loadThumbs(priority, false, recs);
     }
     
     Image getCachedImage(const ImageRecordPtr& rec) override {
@@ -353,7 +353,6 @@ struct MDCDevice : Object, ImageSource {
     using _Cleanup = std::unique_ptr<__Cleanup>;
     
     static int _CPUCount() {
-        return 1;
         static int CPUCount = std::max(1, (int)std::thread::hardware_concurrency());
         return CPUCount;
     }
@@ -571,7 +570,7 @@ struct MDCDevice : Object, ImageSource {
         };
     }
     
-    void _loadImages(Priority priority, bool initial,
+    void _loadThumbs(Priority priority, bool initial,
         std::set<ImageRecordPtr> recs, std::function<void(float)> progressCallback=nullptr) {
         
         const size_t imageCount = recs.size();
@@ -657,9 +656,15 @@ struct MDCDevice : Object, ImageSource {
         {
             using namespace std::chrono;
             const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
-            printf("[_loadImages:p%ju] _loadImages() took %ju ms for %ju images (avg %f ms / img)\n",
+            const double msPerImage = ((double)duration.count()/imageCount);
+            const double mibPerSec = ((imageCount * ImgSD::Thumb::ImagePaddedLen) /
+                (duration.count() / 1000.)) / (1024*1024);
+            printf("[_loadImages:p%ju] _loadThumbs() took %ju ms for %ju images (avg = %.1f ms/img; throughput = %.1f MiB/sec)\n",
                 (uintmax_t)priority,
-                (uintmax_t)duration.count(), (uintmax_t)imageCount, ((double)duration.count()/imageCount));
+                (uintmax_t)duration.count(),
+                (uintmax_t)imageCount,
+                msPerImage,
+                mibPerSec);
         }
     }
     
@@ -744,7 +749,7 @@ struct MDCDevice : Object, ImageSource {
                         }
                         
                         addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
-//                        addCount = 100;
+//                        addCount = 1000;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary->add(addCount);
                     }
@@ -785,7 +790,7 @@ struct MDCDevice : Object, ImageSource {
                     }
                     
                     printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
-                    _loadImages(Priority::Low, true, recs, [=] (float progress) {
+                    _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
                         {
                             auto lock = _status.signal.lock();
                             _status.status.sync->progress = progress;

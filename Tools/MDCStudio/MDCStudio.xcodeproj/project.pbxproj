@@ -269,6 +269,7 @@
 		558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminant.mm; sourceTree = "<group>"; };
 		558FFC6029CA1E520022E840 /* Prefs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Prefs.h; sourceTree = "<group>"; };
 		558FFC8D29CAB3AF0022E840 /* BufferPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BufferPool.h; sourceTree = "<group>"; };
+		559704ED2AE0E481006CD617 /* ImageExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageExporter.h; sourceTree = "<group>"; };
 		55A36A8E27A2951900FD0181 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		55A36AB727A35ABD00FD0181 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -281,6 +282,7 @@
 		55C456832955A1AE00A20363 /* FixedMetalDocumentLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FixedMetalDocumentLayer.mm; sourceTree = "<group>"; };
 		55C456842955A1AE00A20363 /* FixedScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FixedScrollView.h; sourceTree = "<group>"; };
 		55C456852955A1AE00A20363 /* FixedDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FixedDocumentView.mm; sourceTree = "<group>"; };
+		55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageExporterTypes.h; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
 		55C90B9229B58283007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageThumb.h; sourceTree = "<group>"; };
@@ -666,6 +668,7 @@
 				5544A7E927B5E011006AB473 /* SourceListView */,
 				55425B1C29A02F6500F25D57 /* InspectorView */,
 				5544AE5927B6EE04006AB473 /* Document */,
+				559704E52AE0E46B006CD617 /* ImageExporter */,
 				556F31382AE067E00028BF9C /* ImageExportDialog */,
 				55425B5A29A2B8C900F25D57 /* ImageCornerButton */,
 				55F8877C29D3A6E30075593F /* DeviceSettings */,
@@ -759,6 +762,15 @@
 				558E20192AC8F977001E743A /* DeviceImageGridScrollView.mm */,
 			);
 			path = DeviceImageGridScrollView;
+			sourceTree = "<group>";
+		};
+		559704E52AE0E46B006CD617 /* ImageExporter */ = {
+			isa = PBXGroup;
+			children = (
+				55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */,
+				559704ED2AE0E481006CD617 /* ImageExporter.h */,
+			);
+			path = ImageExporter;
 			sourceTree = "<group>";
 		};
 		55C90C6A29B795A4007CC97E /* Products */ = {
@@ -1105,7 +1117,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"HAS_REMOTE_API=0",
 					"USE_OS_TZDB=1",
