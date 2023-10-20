@@ -40,11 +40,7 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     const bool batch = recs.size()>1;
     ImageRecordPtr firstImage = *recs.begin();
     
-    NSString* filename = nil;
-    if (!batch) {
-        filename = [NSString stringWithFormat:@"%s%@", FilenamePrefix, @(firstImage->info.id)];
-    }
-    
+    NSString* filename = [NSString stringWithFormat:@"%s%@", FilenamePrefix, @(firstImage->info.id)];
     auto res = ImageExportDialog::Run(window, batch, filename);
     // Bail if user cancelled the NSSavePanel
     if (!res) return;
