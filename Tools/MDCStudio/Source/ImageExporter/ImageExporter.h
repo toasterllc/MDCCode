@@ -25,7 +25,7 @@ inline void Export(ImageSourcePtr imageSource, const Format* fmt,
 }
 
 // Batch export to directory `dirPath`
-inline void Export(ImageSourcePtr imageSource, const Format* fmt, const std::set<ImageRecordPtr>& recs,
+inline void Export(ImageSourcePtr imageSource, const Format* fmt, const ImageSet& recs,
     const std::filesystem::path& dirPath) {
     
     for (ImageRecordPtr rec : recs) {
@@ -34,7 +34,7 @@ inline void Export(ImageSourcePtr imageSource, const Format* fmt, const std::set
     }
 }
 
-inline void Export(NSWindow* window, ImageSourcePtr imageSource, const std::set<ImageRecordPtr>& recs) {
+inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet& recs) {
     assert(!recs.empty());
     const bool batch = recs.size()>1;
     

@@ -125,6 +125,8 @@ void Show(NSWindow* window, bool batch, Handler handler) {
         handler([formatsView _format], [[panelWeak URL] path]);
     }];
     
+    [panel runModal];
+    
 }
 
 

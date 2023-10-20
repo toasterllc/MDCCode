@@ -13,7 +13,7 @@
 #import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
 #import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
 #import "MDCDevicesManager.h"
-#import "ImageExportDialog/ImageExportDialog.h"
+#import "ImageExporter/ImageExporter.h"
 
 using namespace MDCStudio;
 
@@ -153,10 +153,10 @@ static void _SetView(T& x, NSView* y) {
         [item setTitle:([[self _inspectorContainerView] isHidden] ? @"Show Inspector" : @"Hide Inspector")];
     
     } else if ([item action] == @selector(_export:)) {
-        if (_center.view == _fullSizeImageView) {
-            return true;
-        } else if (_center.view == _imageGridScrollView) {
+        if (_center.view == _imageGridScrollView) {
             return ![_imageGridView selection].empty();
+        } else if (_center.view == _fullSizeImageView) {
+            return true;
         } else {
             abort();
         }
@@ -472,7 +472,20 @@ static void _SortNewestFirst(bool x) {
 
 - (IBAction)_export:(id)sender {
     printf("_export\n");
-    ImageExportDialog::Show(_window, false, nil);
+    
+    MDCStudio::ImageSourcePtr imageSource = [_sourceListView selection];
+    assert(imageSource);
+    
+    ImageSet recs;
+    if (_center.view == _imageGridScrollView) {
+        recs = [_imageGridView selection];
+    } else if (_center.view == _fullSizeImageView) {
+        recs = { [_fullSizeImageView imageRecord] };
+    } else {
+        abort();
+    }
+    
+    ImageExporter::Export(_window, imageSource, recs);
 }
 
 // MARK: - Device Settings
