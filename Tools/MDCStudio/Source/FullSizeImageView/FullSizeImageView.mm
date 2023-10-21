@@ -544,19 +544,13 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 // MARK: - Menu Actions
 
-//- (BOOL)validateMenuItem:(NSMenuItem*)item {
-//    if ([item action] == @selector(_export:)) {
-//        return true;
-//    }
-//    return [super validateMenuItem:item];
-//}
-
-- (BOOL)validateMenuItem:(NSMenuItem*)item {
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
+    NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
     if ([item action] == @selector(_export:)) {
-        [item setTitle:@"Export…"];
+        [mitem setTitle:@"Export…"];
         return true;
     }
-    return [super validateMenuItem:item];
+    return true;
 }
 
 - (IBAction)_export:(id)sender {

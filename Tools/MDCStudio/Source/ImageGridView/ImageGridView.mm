@@ -1033,7 +1033,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 // MARK: - Menu Actions
 
-- (BOOL)validateMenuItem:(NSMenuItem*)item {
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
+    NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
     if ([item action] == @selector(_export:)) {
         const size_t selectionCount = [self selection].size();
         NSString* title = nil;
@@ -1044,10 +1045,10 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         } else {
             title = @"Export…";
         }
-        [item setTitle:title];
+        [mitem setTitle:title];
         return (bool)selectionCount;
     }
-    return [super validateMenuItem:item];
+    return true;
 }
 
 - (IBAction)_export:(id)sender {
@@ -1101,7 +1102,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     [gridView _updateDocumentHeight];
 }
 
-- (BOOL)validateMenuItem:(NSMenuItem*)item {
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
     if ([item action] == @selector(magnifyToActualSize:)) {
         return false;
     } else if ([item action] == @selector(magnifyToFit:)) {
@@ -1111,7 +1112,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     } else if ([item action] == @selector(magnifyDecrease:)) {
         return false;
     }
-    return [super validateMenuItem:item];
+    return true;
 }
 
 //- (BOOL)acceptsFirstResponder {

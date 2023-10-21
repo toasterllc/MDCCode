@@ -133,26 +133,27 @@ static void _SetView(T& x, NSView* y) {
     return [_splitView arrangedSubviews][2];
 }
 
-- (BOOL)validateMenuItem:(NSMenuItem*)item {
-    NSLog(@"[Document] validateMenuItem: %@\n", [item title]);
-    
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
+    NSLog(@"[Document] validateUserInterfaceItem: %@\n", item);
+    NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
     if ([item action] == @selector(saveDocument:)) {
         return false;
     } else if ([item action] == @selector(saveDocumentAs:)) {
         return false;
     
     } else if ([item action] == @selector(_sortNewestFirst:)) {
-        [item setState:(_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        [mitem setState:(_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     } else if ([item action] == @selector(_sortOldestFirst:)) {
-        [item setState:(!_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        [mitem setState:(!_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     
     } else if ([item action] == @selector(_toggleDevices:)) {
-        [item setTitle:([[self _devicesContainerView] isHidden] ? @"Show Devices" : @"Hide Devices")];
+        [mitem setTitle:([[self _devicesContainerView] isHidden] ? @"Show Devices" : @"Hide Devices")];
     } else if ([item action] == @selector(_toggleInspector:)) {
-        [item setTitle:([[self _inspectorContainerView] isHidden] ? @"Show Inspector" : @"Hide Inspector")];
+        [mitem setTitle:([[self _inspectorContainerView] isHidden] ? @"Show Inspector" : @"Hide Inspector")];
     }
     
-    return [super validateMenuItem:item];
+    return true;
+//    return [super validateMenuItem:item];
 }
 
 - (NSString*)windowNibName {

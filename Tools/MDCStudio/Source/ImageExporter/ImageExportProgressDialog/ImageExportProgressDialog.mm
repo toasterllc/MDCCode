@@ -15,6 +15,8 @@ using namespace MDCStudio;
         instantiateWithOwner:self topLevelObjects:nil];
     assert(br);
     
+    [self setProgress:0];
+    
     return self;
 }
 

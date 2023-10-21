@@ -2,7 +2,7 @@
 
 @implementation DocumentController
 
-- (BOOL)validateMenuItem:(NSMenuItem*)item {
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
 //    NSLog(@"[DocumentController] validateMenuItem: %@\n", [item title]);
     if ([item action] == @selector(openDocument:)) {
         return false;

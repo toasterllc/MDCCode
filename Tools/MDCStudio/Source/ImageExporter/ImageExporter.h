@@ -88,47 +88,87 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     // Bail if user cancelled the NSSavePanel
     if (!res) return;
     
-    ImageExportProgressDialog* progress = [ImageExportProgressDialog new];
+    // Only show progress dialog if we're exporting a significant number of images
+    ImageExportProgressDialog* progress = (recs.size()>3 ? [ImageExportProgressDialog new] : nil);
+    [progress setImageCount:recs.size()];
     
-//    struct {
-//        Toastbox::Signal signal;
-//        size_t completed = 0;
-//    } status;
+    struct {
+        Toastbox::Signal signal;
+        size_t completed = 0;
+    } status;
     
     std::thread exportThread([&] {
-        const std::filesystem::path path = [res->path UTF8String];
-        if (batch) {
-            size_t completed = 0;
-            _Export(renderer, imageSource, res->format, recs, path, FilenamePrefix, [&] {
-                completed++;
-                const float progress = (float)completed / recs.size();
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [progress setProgress:progress];
+        try {
+            const std::filesystem::path path = [res->path UTF8String];
+            if (batch) {
+                _Export(renderer, imageSource, res->format, recs, path, FilenamePrefix, [&] {
+                    // Signal main thread to update progress bar
+                    if (progress) {
+                        {
+                            auto lock = status.signal.lock();
+                            status.completed++;
+                        }
+                        
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [NSApp stopModalWithCode:NSModalResponseContinue];
+                        });
+                    }
                 });
-            });
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [NSApp stopModalWithCode:NSModalResponseStop];
-            });
-        } else {
-            _Export(renderer, imageSource, res->format, firstImage, path);
+                
+                // Signal main thread that we're complete
+                if (progress) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [NSApp stopModalWithCode:NSModalResponseStop];
+                    });
+                }
+            } else {
+                _Export(renderer, imageSource, res->format, firstImage, path);
+            }
+        } catch (const Toastbox::Signal::Stop&) {
+            printf("[exportThread] Stopping\n");
         }
     });
     
     // Show the modal progress dialog
-    {
+    if (progress) {
         NSWindow* progressWindow = [progress window];
-        [window beginSheet:progressWindow completionHandler:nil];
+        [window beginSheet:progressWindow completionHandler:^(NSModalResponse){}];
         
-        NSModalSession session = [NSApp beginModalSessionForWindow:progressWindow];
         for (;;) {
-            if ([NSApp runModalSession:session] != NSModalResponseContinue) break;
-            
-            [self doSomeWork];
+            if ([NSApp runModalForWindow:progressWindow] != NSModalResponseContinue) break;
+            // Update progress
+            {
+                auto lock = status.signal.lock();
+                [progress setProgress:(float)status.completed / recs.size()];
+                if (status.completed == recs.size()) break;
+            }
         }
-        [NSApp endModalSession:session];
+        
+//        for (;;) {
+////            [progressWindow 
+//            [[NSRunLoop currentRunLoop] runMode:NSModalPanelRunLoopMode beforeDate:[NSDate distantFuture]];
+//        }
+        
+//        NSModalSession session = [NSApp beginModalSessionForWindow:progressWindow];
+//        for (;;) {
+//            printf("runModalSession:\n");
+//            if ([NSApp runModalSession:session] != NSModalResponseContinue) break;
+//            // Update progress
+//            {
+//                auto lock = status.signal.lock();
+//                [progress setProgress:(float)status.completed / recs.size()];
+//                if (status.completed == recs.size()) break;
+//            }
+//        }
+//        [NSApp endModalSession:session];
         
         [window endSheet:progressWindow];
+        
+        // Kill thread if it's still going
+        // We only do this if we're showing the progress dialog! Otherwise we want to wait
+        // until the thread exits, since we don't give the option to cancel if we're not
+        // showing the progress dialog.
+        status.signal.stop();
     }
     
     exportThread.join();
