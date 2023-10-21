@@ -68,7 +68,7 @@ struct MDCDevice : Object, ImageSource {
         }
         
         // Update our device status
-        _status_update();
+        _deviceStatus_update();
         
         // Update the device's time
         {
@@ -88,7 +88,7 @@ struct MDCDevice : Object, ImageSource {
                 _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
             }
             
-            _status.thread = std::thread([&] { _status_thread(); });
+            _device.statusThread = std::thread([&] { _deviceStatus_thread(); });
             
             sync();
         }
@@ -97,13 +97,13 @@ struct MDCDevice : Object, ImageSource {
     ~MDCDevice() {
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
-        _status.signal.stop();
+        _device.signal.stop();
         
         // Wait for threads to stop
         if (_sync.thread.joinable()) _sync.thread.join();
         if (_sdRead.thread.joinable()) _sdRead.thread.join();
         for (std::thread& t : _thumbRender.threads) t.join();
-        if (_status.thread.joinable()) _status.thread.join();
+        if (_device.statusThread.joinable()) _device.statusThread.join();
     }
     
     PropertyValue(std::string, name);
@@ -115,18 +115,20 @@ struct MDCDevice : Object, ImageSource {
     }
     
     Status status() {
-        auto lock = _status.signal.lock();
-        return {
-            .batteryLevel = _status.batteryLevel,
-            .imageRange = _GetImageRange(_GetImgRingBuf(_status.sd), _status.sd.imgCap),
-            .syncProgress = _status.syncProgress,
-        };
+        Status status;
+        {
+            auto lock = _device.signal.lock();
+            status.batteryLevel = _device.batteryLevel;
+            status.imageRange = _GetImageRange(_GetImgRingBuf(_device.state.sd), _device.state.sd.imgCap);
+        }
+        {
+            auto lock = std::unique_lock(_sync.lock);
+            status.syncProgress = _sync.progress;
+        }
+        return status;
     }
     
     void factoryReset() {
-    MSP::SDState _mspSDState = {};
-    MSP::Settings _mspSettings = {};
-        
         // Reset the device
         {
             auto hostMode = _hostModeEnter();
@@ -155,7 +157,7 @@ struct MDCDevice : Object, ImageSource {
             _sdRead.signal.signalAll();
         }
         
-        auto lock = std::unique_lock(_device.lock);
+        auto lock = _device.signal.lock();
         
         // Un-pause the SD thread
         if (interrupt) {
@@ -184,32 +186,29 @@ struct MDCDevice : Object, ImageSource {
     // MARK: - Read/Write Device Settings
     
     const MSP::Settings& settings() {
-        auto lock = _status.signal.lock();
-        return _status.settings;
+        auto lock = _device.signal.lock();
+        return _device.state.settings;
     }
     
     void settings(const MSP::Settings& x) {
-        _status.settings = x;
-        {
-            auto hostMode = _hostModeEnter();
-            MSP::State mspState = _device.device->mspStateRead();
-            mspState.settings = _mspSettings;
-            _device.device->mspStateWrite(mspState);
-        }
+        auto hostMode = _hostModeEnter();
+        _device.state.settings = x;
+        _device.device->mspStateWrite(_device.state);
     }
     
     // MARK: - Image Syncing
     
     void sync() {
         {
-            auto lock = _status.signal.lock();
+            auto lock = std::unique_lock(_sync.lock);
+            
             // Bail if syncing is already underway
-            if (_status.status.sync) return;
-            _status.status.sync = Status::Sync{};
+            if (_sync.progress) return;
+            _sync.progress = 0;
+            
+            if (_sync.thread.joinable()) _sync.thread.join();
+            _sync.thread = std::thread([&] { _sync_thread(); });
         }
-        
-        if (_sync.thread.joinable()) _sync.thread.join();
-        _sync.thread = std::thread([&] { _sync_thread(); });
         
         // Notify observers that syncing started
         observersNotify({});
@@ -374,6 +373,7 @@ struct MDCDevice : Object, ImageSource {
     using _Cleanup = std::unique_ptr<__Cleanup>;
     
     static int _CPUCount() {
+        return 1;
         static int CPUCount = std::max(1, (int)std::thread::hardware_concurrency());
         return CPUCount;
     }
@@ -738,8 +738,8 @@ struct MDCDevice : Object, ImageSource {
 //            // This is necessary so that the status struct's imgIdBegin/imgIdEnd is always >= _imageLibrary
 //            _status_update();
             
-            auto lock = _status.signal.lock();
-                const MSP::SDState sd = _status.sd;
+            auto lock = _device.signal.lock();
+                const MSP::SDState sd = _device.state.sd;
             lock.unlock();
             
             const MSP::ImgRingBuf imgRingBuf = _GetImgRingBuf(sd);
@@ -822,8 +822,8 @@ struct MDCDevice : Object, ImageSource {
                     printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
                     _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
                         {
-                            auto lock = _status.signal.lock();
-                            _status.syncProgress = progress;
+                            auto lock = std::unique_lock(_sync.lock);
+                            _sync.progress = progress;
                         }
                         observersNotify({});
                     });
@@ -839,8 +839,8 @@ struct MDCDevice : Object, ImageSource {
         
         // Update syncing status
         {
-            auto lock = _status.signal.lock();
-            _status.syncProgress = std::nullopt;
+            auto lock = std::unique_lock(_sync.lock);
+            _sync.progress = std::nullopt;
         }
         
         // Notify observers that syncing is complete
@@ -1051,51 +1051,42 @@ struct MDCDevice : Object, ImageSource {
     }
     
     // MARK: - Device Status
-    void _status_update(const std::unique_lock<std::mutex>& lock, const STM::BatteryStatus& batteryStatus) {
-        // Update _status.status.batteryLevel
+    void _deviceStatus_updateBattery(const STM::BatteryStatus& batteryStatus) {
+        // Update _device.status.batteryLevel
         if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
-            _status.batteryLevel = 1;
+            _device.batteryLevel = 1;
         
         } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
-            _status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
+            _device.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
         
         } else {
-            _status.batteryLevel = 0;
+            _device.batteryLevel = 0;
         }
     }
     
-    void _status_update(const std::unique_lock<std::mutex>& lock, const MSP::State& mspState) {
-        _status.sd = mspState.sd;
-        _status.settings = mspState.settings;
+    void _deviceStatus_update() {
+        auto lock = _device.signal.lock();
+        _deviceStatus_updateBattery(_device.device->batteryStatusGet());
+        _device.state = _device.device->mspStateRead();
     }
     
-    void _status_update(const STM::BatteryStatus& batteryStatus, const MSP::State& mspState) {
-        auto lock = _status.signal.lock();
-        _status_update(lock, batteryStatus);
-        _status_update(lock, mspState);
-    }
-    
-    void _status_update() {
-        auto lock = deviceLock();
-        _status_update(_device.device->batteryStatusGet(), _device.device->mspStateRead());
-    }
-    
-    void _status_thread() {
+    void _deviceStatus_thread() {
         constexpr auto UpdateInterval = std::chrono::seconds(2);
         try {
             for (;;) {
-                _status_update();
+                _deviceStatus_update();
+                
                 observersNotify({});
                 
                 // Sleep for 30 seconds
-                _status.signal.wait_for(UpdateInterval, [] { return false; });
+                _device.signal.wait_for(UpdateInterval, [] { return false; });
             }
         
         } catch (const Toastbox::Signal::Stop&) {
-            printf("[_status_thread] Stopping\n");
+            printf("[_deviceStatus_thread] Stopping\n");
         
         } catch (const std::exception& e) {
-            printf("[_status_thread] Error: %s\n", e.what());
+            printf("[_deviceStatus_thread] Error: %s\n", e.what());
         }
     }
     
@@ -1143,13 +1134,10 @@ struct MDCDevice : Object, ImageSource {
             // Init SD card
             const STM::SDCardInfo sdCardInfo = _device.device->sdInit();
             
-            // If _status.sd is valid, verify that the current SD card id matches MSP's card id
-            {
-                auto lock = _status.signal.lock();
-                if (_status.sd.valid) {
-                    if (memcmp(&sdCardInfo.cardId, &_status.sd.cardId, sizeof(_status.sd.cardId))) {
-                        throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
-                    }
+            // If _device.state.sd is valid, verify that the current SD card id matches MSP's card id
+            if (_device.state.sd.valid) {
+                if (memcmp(&sdCardInfo.cardId, &_device.state.sd.cardId, sizeof(_device.state.sd.cardId))) {
+                    throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
                 }
             }
             
@@ -1171,8 +1159,11 @@ struct MDCDevice : Object, ImageSource {
     // MARK: - Members
     
     struct {
-        std::mutex lock; // Protects this struct
+        Toastbox::Signal signal; // Protects this struct
         std::unique_ptr<MDCUSBDevice> device;
+        std::thread statusThread;
+        MSP::State state = {};
+        float batteryLevel = 0;
     } _device;
     
     _Path _dir;
@@ -1194,8 +1185,9 @@ struct MDCDevice : Object, ImageSource {
     } _hostMode;
     
     struct {
+        std::mutex lock;
         std::thread thread;
-        std::atomic<bool> running;
+        std::optional<bool> progress;
     } _sync;
     
     struct {
@@ -1210,15 +1202,6 @@ struct MDCDevice : Object, ImageSource {
         std::vector<std::thread> threads;
         _RenderWorkQueue queue;
     } _thumbRender;
-    
-    struct {
-        Toastbox::Signal signal; // Protects this struct
-        std::thread thread;
-        MSP::SDState sd = {};
-        MSP::Settings settings = {};
-        float batteryLevel = 0;
-        std::optional<float> syncProgress;
-    } _status;
 };
 using MDCDevicePtr = SharedPtr<MDCDevice>;
 

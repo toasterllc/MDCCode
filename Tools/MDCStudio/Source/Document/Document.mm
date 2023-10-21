@@ -296,22 +296,22 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibraryPtr imageLibrary) {
     // Short-circut if syncing is in progress.
     // In that case, we don't want to show the 'Load' button in the header
-    if (status.sync) return std::nullopt;
+    if (status.syncProgress) return std::nullopt;
     
     {
         auto lock = std::unique_lock(*imageLibrary);
         const Img::Id libImgIdEnd = (!imageLibrary->empty() ? imageLibrary->back()->info.id+1 : 0);
         
         // Calculate how many images to add to the end of the library: device has, lib doesn't
-        if (libImgIdEnd > status.imgIdEnd) {
+        if (libImgIdEnd > status.imageRange.end) {
             #warning TODO: how do we properly handle this situation?
             throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, status.imgIdEnd: %ju)",
                 (uintmax_t)libImgIdEnd,
-                (uintmax_t)status.imgIdEnd
+                (uintmax_t)status.imageRange.end
             );
         }
         
-        return status.imgIdEnd - std::max(status.imgIdBegin, libImgIdEnd);
+        return status.imageRange.end - std::max(status.imageRange.begin, libImgIdEnd);
     }
 }
 
@@ -344,7 +344,7 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     
     // Upload load progress
     {
-        const float progress = (status.sync ? status.sync->progress : 0);
+        const float progress = status.syncProgress.value_or(0);
         [deviceHeader setProgress:progress];
     }
 }
