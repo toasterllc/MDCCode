@@ -1,8 +1,10 @@
 #pragma once
 #import <filesystem>
+#import <thread>
 #import "ImageSource.h"
 #import "ImageLibrary.h"
 #import "ImageExportSaveDialog/ImageExportSaveDialog.h"
+#import "ImageExportProgressDialog/ImageExportProgressDialog.h"
 #import "ImageExporterTypes.h"
 #import "ImagePipelineUtil.h"
 #import "Calendar.h"
@@ -85,12 +87,54 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     // Bail if user cancelled the NSSavePanel
     if (!res) return;
     
-    const std::filesystem::path path = [res->path UTF8String];
-    if (batch) {
-        _Export(renderer, imageSource, res->format, recs, path, FilenamePrefix);
-    } else {
-        _Export(renderer, imageSource, res->format, firstImage, path);
+    std::thread exportThread([&] {
+        const std::filesystem::path path = [res->path UTF8String];
+        if (batch) {
+            _Export(renderer, imageSource, res->format, recs, path, FilenamePrefix);
+        } else {
+            _Export(renderer, imageSource, res->format, firstImage, path);
+        }
+    });
+    
+    ImageExportProgressDialog* progress = [ImageExportProgressDialog new];
+    NSWindow* progressWindow = [progress window];
+    
+    __weak auto progressWeak = progress;
+    [progress setCancelHandler:^(ImageExportProgressDialog*) {
+        [NSApp stopModal];
+    }];
+    
+    [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse result) {
+        [NSApp stopModalWithCode:result];
+    }];
+    
+    const NSModalResponse response = [panel runModal];
+    if (response != NSModalResponseOK) return std::nullopt;
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    [window beginSheet:progressWindow completionHandler:^(NSModalResponse returnCode) {
+        
+    }];
+    
+    NSModalSession session = [NSApp beginModalSessionForWindow:progressWindow];
+    for (;;) {
+        if ([NSApp runModalSession:session] != NSModalResponseContinue) break;
+        [self doSomeWork];
     }
+    [NSApp endModalSession:session];
+    
+    [window endSheet:progressWindow];
+    
+    
+    
+    exportThread.join();
 }
 
 } // namespace MDCStudio::ImageExporter

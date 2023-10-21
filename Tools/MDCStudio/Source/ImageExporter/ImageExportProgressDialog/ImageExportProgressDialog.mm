@@ -3,31 +3,40 @@
 using namespace MDCStudio;
 
 @implementation ImageExportProgressDialog {
-    IBOutlet NSView* _nibView;
+    IBOutlet NSWindow* _window;
+    IBOutlet NSTextField* _message;
     IBOutlet NSProgressIndicator* _progressBar;
-    __weak id<ImageExportProgressDialogDelegate> _delegate;
+    ImageExportProgressDialogHandler _cancelHandler;
 }
 
 - (instancetype)init {
-    if (!(self = [super initWithContentRect:{} styleMask:0 backing:NSBackingStoreBuffered defer:true])) return nil;
+    if (!(self = [super init])) return nil;
     
     bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil]
         instantiateWithOwner:self topLevelObjects:nil];
     assert(br);
-    [self setContentView:_nibView];
+    
     return self;
 }
 
+- (NSWindow*)window {
+    return _window;
+}
+
+- (void)setImageCount:(size_t)x {
+    [_message setStringValue:[NSString stringWithFormat:@"Exporting %ju photos…", (uintmax_t)x]];
+}
+
 - (void)setProgress:(float)x {
-    
+    [_progressBar setDoubleValue:x];
 }
 
-- (void)setDelegate:(id<ImageExportProgressDialogDelegate>)x {
-    _delegate = x;
+- (void)setCancelHandler:(ImageExportProgressDialogHandler)x {
+    _cancelHandler = x;
 }
-
 
 - (IBAction)_cancel:(id)sender {
-    
+    _cancelHandler(self);
 }
+
 @end

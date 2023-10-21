@@ -1,12 +1,11 @@
 #import <Cocoa/Cocoa.h>
 @class ImageExportProgressDialog;
 
-@protocol ImageExportProgressDialogDelegate
-@required
-- (void)imageExportProgressDialogCancelled:(ImageExportProgressDialog*)x;
-@end
+using ImageExportProgressDialogHandler = void(^)(ImageExportProgressDialog*);
 
-@interface ImageExportProgressDialog : NSWindow
+@interface ImageExportProgressDialog : NSObject
+- (NSWindow*)window;
+- (void)setImageCount:(size_t)x;
 - (void)setProgress:(float)x;
-- (void)setDelegate:(id<ImageExportProgressDialogDelegate>)x;
+- (void)setCancelHandler:(ImageExportProgressDialogHandler)x;
 @end
