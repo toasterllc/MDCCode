@@ -1009,6 +1009,13 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 // MARK: - Menu Actions
 
+- (BOOL)validateMenuItem:(NSMenuItem*)item {
+    if ([item action] == @selector(_export:)) {
+        return ![self selection].empty();
+    }
+    return [super validateMenuItem:item];
+}
+
 - (IBAction)_export:(id)sender {
     printf("_export\n");
     ImageExporter::Export([self window], _imageSource, [self selection]);

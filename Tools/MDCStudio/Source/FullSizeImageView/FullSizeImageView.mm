@@ -109,10 +109,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
     printf("~FullSizeImageLayer\n");
 }
 
-- (ImageSourcePtr)imageSource {
-    return _imageSource;
-}
-
 - (ImageRecordPtr)imageRecord {
     return _imageRecord;
 }
@@ -143,6 +139,11 @@ static CGColorSpaceRef _SRGBColorSpace() {
     [_height setConstant:_imageRecord->info.imageHeight];
     
     [self setNeedsDisplay];
+}
+
+- (void)export:(NSWindow*)window {
+    printf("_export\n");
+    ImageExporter::Export(window, _imageSource, { _imageRecord });
 }
 
 static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 size) {
@@ -436,9 +437,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 @end
 
 @implementation FullSizeImageView {
-    ImageSourcePtr _imageSource;
-    ImageRecordPtr _imageRecord;
-    
     FixedScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
     __weak id<FullSizeImageViewDelegate> _delegate;
@@ -448,10 +446,8 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     if (!(self = [super initWithFrame:{}])) return nil;
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
-    _imageSource = imageSource;
-    
     {
-        FullSizeImageDocumentView* doc = [[FullSizeImageDocumentView alloc] initWithImageSource:_imageSource];
+        FullSizeImageDocumentView* doc = [[FullSizeImageDocumentView alloc] initWithImageSource:imageSource];
         _scrollView = [[FixedScrollView alloc] initWithFixedDocument:doc];
         [self addSubview:_scrollView];
         
@@ -479,15 +475,16 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     return self;
 }
 
+- (FullSizeImageLayer*)_fullSizeImageLayer {
+    return Toastbox::Cast<FullSizeImageLayer*>([[_scrollView document] layer]);
+}
+
 - (MDCStudio::ImageRecordPtr)imageRecord {
-    return _imageRecord;
+    return [[self _fullSizeImageLayer] imageRecord];
 }
 
 - (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec {
-    _imageRecord = rec;
-    
-    FullSizeImageLayer* layer = Toastbox::Cast<FullSizeImageLayer*>([[_scrollView document] layer]);
-    [layer setImageRecord:rec];
+    [[self _fullSizeImageLayer] setImageRecord:rec];
 }
 
 - (void)setDelegate:(id<FullSizeImageViewDelegate>)delegate {
@@ -540,9 +537,16 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 // MARK: - Menu Actions
 
+//- (BOOL)validateMenuItem:(NSMenuItem*)item {
+//    if ([item action] == @selector(_export:)) {
+//        return true;
+//    }
+//    return [super validateMenuItem:item];
+//}
+
 - (IBAction)_export:(id)sender {
     printf("_export\n");
-    ImageExporter::Export([self window], _imageSource, { _imageRecord });
+    [[self _fullSizeImageLayer] export:[self window]];
 }
 
 @end
