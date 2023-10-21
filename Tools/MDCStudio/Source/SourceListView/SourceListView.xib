@@ -17,7 +17,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="250" height="400"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" selectionHighlightStyle="sourceList" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="74" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa">
+                    <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" selectionHighlightStyle="sourceList" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" rowHeight="74" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa">
                         <rect key="frame" x="0.0" y="0.0" width="250" height="400"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <size key="intercellSpacing" width="3" height="2"/>
@@ -41,7 +41,7 @@
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                     </tableCellView>
                                     <tableCellView identifier="SourceListView_Device" translatesAutoresizingMaskIntoConstraints="NO" id="08g-eg-N7V" customClass="SourceListView_Device">
-                                        <rect key="frame" x="0.0" y="0.0" width="247" height="74"/>
+                                        <rect key="frame" x="1" y="20" width="247" height="74"/>
                                         <subviews>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY" userLabel="Icon Image">
                                                 <rect key="frame" x="-17" y="12" width="63" height="50"/>
@@ -54,23 +54,23 @@
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
                                                 <rect key="frame" x="49" y="36" width="152" height="21"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="aUI-KD-Hqx">
-                                                    <font key="font" metaFont="system" size="18"/>
+                                                    <font key="font" metaFont="label" size="18"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                                 <connections>
-                                                    <action selector="textFieldAction:" target="08g-eg-N7V" id="rvh-zP-hHo"/>
+                                                    <action selector="_textFieldChanged:" target="08g-eg-N7V" id="rvh-zP-hHo"/>
                                                 </connections>
                                             </textField>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="cuS-aa-uKX" userLabel="Text Field">
                                                 <rect key="frame" x="49" y="17" width="98" height="15"/>
-                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" sendsActionOnEndEditing="YES" alignment="left" title="7 days of photos" id="Eij-ik-9WJ">
+                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="7 days of photos" id="Eij-ik-9WJ">
                                                     <font key="font" metaFont="label" size="12"/>
                                                     <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                                 <connections>
-                                                    <action selector="textFieldAction:" target="08g-eg-N7V" id="QU1-iG-d6K"/>
+                                                    <action selector="_textFieldChanged:" target="08g-eg-N7V" id="QU1-iG-d6K"/>
                                                 </connections>
                                             </textField>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g8q-te-9OC" userLabel="Settings Button">
@@ -80,7 +80,7 @@
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
                                                 <connections>
-                                                    <action selector="settingsAction:" target="08g-eg-N7V" id="JTf-kd-HlT"/>
+                                                    <action selector="_settings:" target="08g-eg-N7V" id="JTf-kd-HlT"/>
                                                 </connections>
                                             </button>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="YYE-UM-oso" userLabel="Battery Image">

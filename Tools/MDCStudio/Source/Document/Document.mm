@@ -283,9 +283,13 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     }
 }
 
-- (void)sourceListView:(SourceListView*)sourceListView showDeviceSettings:(MDCDevicePtr)device {
+- (void)sourceListView:(SourceListView*)sourceListView showSettingsForDevice:(MDCDevicePtr)device {
     assert(sourceListView == _sourceListView);
-    [self _showDeviceSettings:device];
+    [self _showSettingsForDevice:device];
+}
+
+- (void)sourceListView:(SourceListView*)sourceListView factoryResetDevice:(MDCStudio::MDCDevicePtr)device {
+    
 }
 
 static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibraryPtr imageLibrary) {
@@ -476,7 +480,7 @@ static void _SortNewestFirst(bool x) {
 //}
 
 // MARK: - Device Settings
-- (void)_showDeviceSettings:(MDCDevicePtr)device {
+- (void)_showSettingsForDevice:(MDCDevicePtr)device {
 //    ImageSourcePtr source = [_sourceListView selection];
 //    MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>(source);
 //    if (!device) return;
@@ -499,6 +503,10 @@ static void _SortNewestFirst(bool x) {
     [_window beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {
         NSLog(@"sheet complete");
     }];
+}
+
+- (void)_factoryResetDevice:(MDCDevicePtr)device {
+    NSLog(@"Factory reset device");
 }
 
 - (void)deviceSettingsView:(DeviceSettingsView*)view dismiss:(bool)save {

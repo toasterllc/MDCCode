@@ -8,8 +8,15 @@
 @class SourceListView;
 using namespace MDCStudio;
 
+//static NSMenu* _DeviceContextMenuCreate() {
+//    NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
+//    [menu addItemWithTitle:@"Settings…" action:@selector(_settings:) keyEquivalent:@""];
+//    [menu addItemWithTitle:@"Factory Reset…" action:@selector(_factoryReset:) keyEquivalent:@""];
+//    return menu;
+//}
+
 @interface SourceListView ()
-- (void)_showDeviceSettings:(MDCDevicePtr)device;
+- (void)_showSettingsForDevice:(MDCDevicePtr)device;
 @end
 
 // MARK: - Outline View Items
@@ -111,12 +118,12 @@ static NSString* _BatteryLevelImage(float level) {
     [_descriptionLabel setStringValue:@(ImageLibraryStatus([self device]->imageLibrary()).c_str())];
 }
 
-- (IBAction)textFieldAction:(id)sender {
+- (IBAction)_textFieldChanged:(id)sender {
     [self device]->name([[[self textField] stringValue] UTF8String]);
 }
 
-- (IBAction)settingsAction:(id)sender {
-    [sourceListView _showDeviceSettings:[self device]];
+- (IBAction)_settings:(id)sender {
+    [sourceListView _showSettingsForDevice:[self device]];
 }
 
 @end
@@ -146,15 +153,25 @@ static NSString* _BatteryLevelImage(float level) {
 
 // MARK: - Creation
 
+static void _Init(SourceListView* self) {
+    NibViewInit(self, self->_nibView);
+    {
+        NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
+        [menu addItemWithTitle:@"Settings…" action:@selector(_settings:) keyEquivalent:@""];
+        [menu addItemWithTitle:@"Factory Reset…" action:@selector(_factoryReset:) keyEquivalent:@""];
+        [self->_outlineView setMenu:menu];
+    }
+}
+
 - (instancetype)initWithCoder:(NSCoder*)coder {
     if (!(self = [super initWithCoder:coder])) return nil;
-    NibViewInit(self, _nibView);
+    _Init(self);
     return self;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
-    NibViewInit(self, _nibView);
+    _Init(self);
     return self;
 }
 
@@ -165,7 +182,7 @@ static NSString* _BatteryLevelImage(float level) {
     Item* selectedItem = nil;
     const NSInteger selectedRow = [_outlineView selectedRow];
     if (selectedRow >= 0) {
-        selectedImageSource = [Toastbox::Cast<Item*>([_outlineView itemAtRow:selectedRow]) imageSource];
+        selectedImageSource = [Toastbox::Cast<Item*>(_items.at(selectedRow)) imageSource];
     }
     
     _items.clear();
@@ -237,7 +254,7 @@ static NSString* _BatteryLevelImage(float level) {
 - (ImageSourcePtr)selection {
     const NSInteger selectedRow = [_outlineView selectedRow];
     if (selectedRow < 0) return nullptr;
-    return [Toastbox::Cast<Item*>([_outlineView itemAtRow:selectedRow]) imageSource];
+    return [Toastbox::Cast<Item*>(_items.at(selectedRow)) imageSource];
 }
 
 - (Item*)_createItemForImageSource:(ImageSourcePtr)imageSource {
@@ -300,8 +317,42 @@ static NSString* _BatteryLevelImage(float level) {
     [[_outlineView tableColumns][0] setWidth:usableWidth];
 }
 
-- (void)_showDeviceSettings:(MDCDevicePtr)device {
-    [_delegate sourceListView:self showDeviceSettings:device];
+// MARK: - Menu Actions
+
+- (MDCDevicePtr)_clickedDevice {
+    const NSInteger clickedRow = [_outlineView clickedRow];
+    if (clickedRow < 0) return nullptr;
+    return [Toastbox::Cast<Device*>(_items.at(clickedRow)) device];
+}
+
+- (IBAction)_settings:(id)sender {
+    if (MDCDevicePtr device = [self _clickedDevice]) {
+        [_delegate sourceListView:self showSettingsForDevice:device];
+    }
+}
+
+- (IBAction)_factoryReset:(id)sender {
+    if (MDCDevicePtr device = [self _clickedDevice]) {
+        [_delegate sourceListView:self factoryResetDevice:device];
+    }
+}
+
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
+    MDCDevicePtr clickedDevice = [self _clickedDevice];
+    if ([item action] == @selector(_settings:)) {
+        return (bool)clickedDevice;
+    } else if ([item action] == @selector(_factoryReset:)) {
+        return (bool)clickedDevice;
+    }
+    return true;
+}
+
+- (void)_showSettingsForDevice:(MDCDevicePtr)device {
+    [_delegate sourceListView:self showSettingsForDevice:device];
+}
+
+- (void)_factoryResetDevice:(MDCDevicePtr)device {
+    [_delegate sourceListView:self factoryResetDevice:device];
 }
 
 // MARK: - Outline View Data Source / Delegate
