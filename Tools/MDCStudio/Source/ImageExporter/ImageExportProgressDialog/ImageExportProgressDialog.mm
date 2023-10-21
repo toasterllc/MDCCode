@@ -6,7 +6,6 @@ using namespace MDCStudio;
     IBOutlet NSWindow* _window;
     IBOutlet NSTextField* _message;
     IBOutlet NSProgressIndicator* _progressBar;
-    ImageExportProgressDialogHandler _cancelHandler;
 }
 
 - (instancetype)init {
@@ -31,12 +30,8 @@ using namespace MDCStudio;
     [_progressBar setDoubleValue:x];
 }
 
-- (void)setCancelHandler:(ImageExportProgressDialogHandler)x {
-    _cancelHandler = x;
-}
-
 - (IBAction)_cancel:(id)sender {
-    _cancelHandler(self);
+    [NSApp stopModalWithCode:NSModalResponseAbort];
 }
 
 @end

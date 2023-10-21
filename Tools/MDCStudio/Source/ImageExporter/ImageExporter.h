@@ -9,6 +9,7 @@
 #import "ImagePipelineUtil.h"
 #import "Calendar.h"
 #import "Tools/Shared/Renderer.h"
+#import "Code/Lib/Toastbox/Signal.h"
 
 namespace MDCStudio::ImageExporter {
 
@@ -65,11 +66,11 @@ inline void _Export(MDCTools::Renderer& renderer, ImageSourcePtr imageSource, co
 
 // Batch export to directory `dirPath`
 inline void _Export(MDCTools::Renderer& renderer, ImageSourcePtr imageSource, const Format* fmt, const ImageSet& recs,
-    const std::filesystem::path& dirPath, const std::string filenamePrefix) {
-    
+    const std::filesystem::path& dirPath, const std::string filenamePrefix, std::function<void()> progress) {
     for (ImageRecordPtr rec : recs) @autoreleasepool {
         const std::filesystem::path filePath = dirPath / (filenamePrefix + std::to_string(rec->info.id) + "." + fmt->extension);
         _Export(renderer, imageSource, fmt, rec, filePath);
+        progress();
     }
 }
 
@@ -87,54 +88,58 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     // Bail if user cancelled the NSSavePanel
     if (!res) return;
     
+    ImageExportProgressDialog* progress = [ImageExportProgressDialog new];
+    
+//    struct {
+//        Toastbox::Signal signal;
+//        size_t completed = 0;
+//    } status;
+    
     std::thread exportThread([&] {
         const std::filesystem::path path = [res->path UTF8String];
         if (batch) {
-            _Export(renderer, imageSource, res->format, recs, path, FilenamePrefix);
+            size_t completed = 0;
+            _Export(renderer, imageSource, res->format, recs, path, FilenamePrefix, [&] {
+                completed++;
+                const float progress = (float)completed / recs.size();
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [progress setProgress:progress];
+                });
+            });
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [NSApp stopModalWithCode:NSModalResponseStop];
+            });
         } else {
             _Export(renderer, imageSource, res->format, firstImage, path);
         }
     });
     
-    ImageExportProgressDialog* progress = [ImageExportProgressDialog new];
-    NSWindow* progressWindow = [progress window];
-    
-    __weak auto progressWeak = progress;
-    [progress setCancelHandler:^(ImageExportProgressDialog*) {
-        [NSApp stopModal];
-    }];
-    
-    [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse result) {
-        [NSApp stopModalWithCode:result];
-    }];
-    
-    const NSModalResponse response = [panel runModal];
-    if (response != NSModalResponseOK) return std::nullopt;
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    [window beginSheet:progressWindow completionHandler:^(NSModalResponse returnCode) {
+    // Show the modal progress dialog
+    {
+        NSWindow* progressWindow = [progress window];
+        [window beginSheet:progressWindow completionHandler:nil];
         
-    }];
-    
-    NSModalSession session = [NSApp beginModalSessionForWindow:progressWindow];
-    for (;;) {
-        if ([NSApp runModalSession:session] != NSModalResponseContinue) break;
-        [self doSomeWork];
+        NSModalSession session = [NSApp beginModalSessionForWindow:progressWindow];
+        for (;;) {
+            if ([NSApp runModalSession:session] != NSModalResponseContinue) break;
+            
+            [self doSomeWork];
+        }
+        [NSApp endModalSession:session];
+        
+        [window endSheet:progressWindow];
     }
-    [NSApp endModalSession:session];
-    
-    [window endSheet:progressWindow];
-    
-    
     
     exportThread.join();
+    
+    
+//    [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse result) {
+//        [NSApp stopModalWithCode:result];
+//    }];
+//    
+//    const NSModalResponse response = [panel runModal];
+//    if (response != NSModalResponseOK) return std::nullopt;
 }
 
 } // namespace MDCStudio::ImageExporter
