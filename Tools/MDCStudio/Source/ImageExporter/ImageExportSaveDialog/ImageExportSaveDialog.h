@@ -9,7 +9,8 @@ struct Result {
     NSString* path;
 };
 
-std::optional<Result> Run(NSWindow* window, bool batch, NSString* filename);
+using Handler = std::function<void(const Result&)>;
+void Show(NSWindow* window, bool batch, NSString* filename, Handler handler);
 
 } // namespace MDCStudio::ImageExportSaveDialog
 

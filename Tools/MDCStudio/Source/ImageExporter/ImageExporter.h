@@ -109,38 +109,36 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     ImageRecordPtr firstImage = *recs.begin();
     
     NSString* filename = [NSString stringWithFormat:@"%s%@", FilenamePrefix, @(firstImage->info.id)];
-    auto res = ImageExportSaveDialog::Run(window, batch, filename);
-    // Bail if user cancelled the NSSavePanel
-    if (!res) return;
-    
-    // Only show progress dialog if we're exporting a significant number of images
-    ImageExportProgressDialog* progress = nil;
-    if (recs.size() > 3) {
-        progress = [ImageExportProgressDialog new];
-        [progress setImageCount:recs.size()];
-        [window beginSheet:[progress window] completionHandler:nil];
-    }
-    
-    std::thread exportThread([=] {
-        size_t completed = 0;
-        _Export(imageSource, res->format, [res->path UTF8String], recs, [&] {
-            if (!progress) return true;
-            // Signal main thread to update progress bar
-            completed++;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [progress setProgress:(float)completed / recs.size()];
-            });
-            return ![progress canceled];
-        });
-        
-        // Close the sheet
-        if (progress) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [window endSheet:[progress window] returnCode:NSModalResponseOK];
-            });
+    ImageExportSaveDialog::Show(window, batch, filename, [=] (auto res) {
+        // Only show progress dialog if we're exporting a significant number of images
+        ImageExportProgressDialog* progress = nil;
+        if (recs.size() > 3) {
+            progress = [ImageExportProgressDialog new];
+            [progress setImageCount:recs.size()];
+            [window beginSheet:[progress window] completionHandler:nil];
         }
+        
+        std::thread exportThread([=] {
+            size_t completed = 0;
+            _Export(imageSource, res.format, [res.path UTF8String], recs, [&] {
+                if (!progress) return true;
+                // Signal main thread to update progress bar
+                completed++;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [progress setProgress:(float)completed / recs.size()];
+                });
+                return ![progress canceled];
+            });
+            
+            // Close the sheet
+            if (progress) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [window endSheet:[progress window] returnCode:NSModalResponseOK];
+                });
+            }
+        });
+        exportThread.detach();
     });
-    exportThread.detach();
     
 //    // Show the modal progress dialog
 //    if (progress) {

@@ -48,7 +48,7 @@ static const char* ImageExportFormatKey = "ImageExportFormat";
 
 namespace MDCStudio::ImageExportSaveDialog {
 
-std::optional<Result> Run(NSWindow* window, bool batch, NSString* filename) {
+void Show(NSWindow* window, bool batch, NSString* filename, Handler handler) {
     NSSavePanel* panel = nil;
     if (batch) {
         panel = [NSOpenPanel new];
@@ -75,15 +75,12 @@ std::optional<Result> Run(NSWindow* window, bool batch, NSString* filename) {
     
 //    __weak auto panelWeak = panel;
     [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse result) {
-        [NSApp stopModalWithCode:result];
+        if (result != NSModalResponseOK) return;
+        handler({
+            .format = [formatsView _format],
+            .path = [[panel URL] path],
+        });
     }];
-    
-    const NSModalResponse response = [panel runModal];
-    if (response != NSModalResponseOK) return std::nullopt;
-    return Result{
-        .format = [formatsView _format],
-        .path = [[panel URL] path],
-    };
 }
 
 
