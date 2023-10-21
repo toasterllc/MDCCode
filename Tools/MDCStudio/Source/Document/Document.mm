@@ -466,10 +466,6 @@ static void _SortNewestFirst(bool x) {
     [view setHidden:!shown];
 }
 
-- (void)_exportToPath:(NSString*)path {
-    printf("_exportToPath: %s\n", [path UTF8String]);
-}
-
 - (IBAction)_export:(id)sender {
     printf("_export\n");
     

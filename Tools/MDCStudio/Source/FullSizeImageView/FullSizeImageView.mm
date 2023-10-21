@@ -13,6 +13,7 @@
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
 #import "Calendar.h"
 #import "ImagePipelineUtil.h"
+#import "ImageExporter/ImageExporter.h"
 using namespace MDCStudio;
 using namespace MDCStudio::FullSizeImageViewTypes;
 using namespace MDCTools;
@@ -106,6 +107,10 @@ static CGColorSpaceRef _SRGBColorSpace() {
 
 - (void)dealloc {
     printf("~FullSizeImageLayer\n");
+}
+
+- (ImageSourcePtr)imageSource {
+    return _imageSource;
 }
 
 - (ImageRecordPtr)imageRecord {
@@ -431,6 +436,9 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 @end
 
 @implementation FullSizeImageView {
+    ImageSourcePtr _imageSource;
+    ImageRecordPtr _imageRecord;
+    
     FixedScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
     __weak id<FullSizeImageViewDelegate> _delegate;
@@ -440,8 +448,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     if (!(self = [super initWithFrame:{}])) return nil;
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
+    _imageSource = imageSource;
+    
     {
-        FullSizeImageDocumentView* doc = [[FullSizeImageDocumentView alloc] initWithImageSource:imageSource];
+        FullSizeImageDocumentView* doc = [[FullSizeImageDocumentView alloc] initWithImageSource:_imageSource];
         _scrollView = [[FixedScrollView alloc] initWithFixedDocument:doc];
         [self addSubview:_scrollView];
         
@@ -470,11 +480,12 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 }
 
 - (MDCStudio::ImageRecordPtr)imageRecord {
-    FullSizeImageLayer* layer = Toastbox::Cast<FullSizeImageLayer*>([[_scrollView document] layer]);
-    return [layer imageRecord];
+    return _imageRecord;
 }
 
 - (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec {
+    _imageRecord = rec;
+    
     FullSizeImageLayer* layer = Toastbox::Cast<FullSizeImageLayer*>([[_scrollView document] layer]);
     [layer setImageRecord:rec];
 }
@@ -525,6 +536,13 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 - (void)imageHeaderViewBack:(FullSizeImageHeaderView*)x {
     [_delegate fullSizeImageViewBack:self];
+}
+
+// MARK: - Menu Actions
+
+- (IBAction)_export:(id)sender {
+    printf("_export\n");
+    ImageExporter::Export([self window], _imageSource, { _imageRecord });
 }
 
 @end

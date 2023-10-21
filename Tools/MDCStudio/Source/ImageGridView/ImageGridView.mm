@@ -8,6 +8,7 @@
 #import "Grid.h"
 #import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
 #import "Code/Shared/Img.h"
+#import "ImageExporter/ImageExporter.h"
 #import "Toastbox/LRU.h"
 #import "Toastbox/IterAny.h"
 #import "Toastbox/Signal.h"
@@ -1004,6 +1005,13 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
         multiplier:1 constant:0];
     [_docHeight setActive:true];
+}
+
+// MARK: - Menu Actions
+
+- (IBAction)_export:(id)sender {
+    printf("_export\n");
+    ImageExporter::Export([self window], _imageSource, [self selection]);
 }
 
 @end
