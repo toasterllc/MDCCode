@@ -74,6 +74,7 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
         enum class Type {
             Add,
             Remove,
+            Clear,
             ChangeProperty,
             ChangeThumbnail,
         };
@@ -139,6 +140,14 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
         }
         
         RecordStore::remove(begin, end);
+        // Notify observers that we changed
+        Object::observersNotify(ev);
+    }
+    
+    void clear() {
+        Event ev;
+        ev.type = Event::Type::Clear;
+        RecordStore::clear();
         // Notify observers that we changed
         Object::observersNotify(ev);
     }

@@ -1227,8 +1227,8 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
 - (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
     switch (ev.type) {
     case ImageLibrary::Event::Type::Add:
-        break;
     case ImageLibrary::Event::Type::Remove:
+    case ImageLibrary::Event::Type::Clear:
         break;
     case ImageLibrary::Event::Type::ChangeProperty:
         if ([NSThread isMainThread]) {

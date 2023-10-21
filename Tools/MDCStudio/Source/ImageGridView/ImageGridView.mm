@@ -713,9 +713,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     
     switch (ev.type) {
     case ImageLibrary::Event::Type::Add:
-        [self setNeedsDisplay];
-        break;
     case ImageLibrary::Event::Type::Remove:
+    case ImageLibrary::Event::Type::Clear:
         [self setNeedsDisplay];
         break;
     case ImageLibrary::Event::Type::ChangeProperty:

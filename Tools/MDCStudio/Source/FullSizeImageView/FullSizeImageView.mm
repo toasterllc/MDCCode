@@ -308,8 +308,8 @@ static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, NSString* str) 
     
     switch (ev.type) {
     case ImageLibrary::Event::Type::Add:
-        break;
     case ImageLibrary::Event::Type::Remove:
+    case ImageLibrary::Event::Type::Clear:
         break;
     case ImageLibrary::Event::Type::ChangeProperty:
         if (ev.records.count(_imageRecord)) {

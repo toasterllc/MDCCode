@@ -285,6 +285,11 @@ struct RecordStore {
         _state.recordRefs.erase(begin, end);
     }
     
+    void clear() {
+        _state.recordRefs.clear();
+        _state.chunks.clear();
+    }
+    
     bool empty() const { return _state.recordRefs.empty(); }
     
     const RecordRef& front() const              { return _state.recordRefs.front(); }

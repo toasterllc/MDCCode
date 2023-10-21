@@ -31,15 +31,15 @@ namespace MDCStudio {
 struct MDCDevice : Object, ImageSource {
     using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
     
+    struct ImageRange {
+        Img::Id begin = 0;
+        Img::Id end = 0;
+    };
+    
     struct Status {
-        struct Sync {
-            float progress = 0;
-        };
-        
         float batteryLevel = 0;
-        Img::Id imgIdBegin = 0;
-        Img::Id imgIdEnd = 0;
-        std::optional<Sync> sync;
+        ImageRange imageRange;
+        std::optional<float> syncProgress;
     };
     
     void init(MDCUSBDevice&& dev) {
@@ -67,17 +67,13 @@ struct MDCDevice : Object, ImageSource {
             _imageLibrary->read(_dir / "ImageLibrary");
         }
         
+        // Update our device status
+        _status_update();
+        
+        // Update the device's time
         {
             // Enter host mode to adjust the device time
             auto hostMode = _hostModeEnter();
-            
-            // Update our mspState from the device
-            const MSP::State mspState = _device.device->mspStateRead();
-            _mspSDState = mspState.sd;
-            _mspSettings = mspState.settings;
-            
-            // Update our _status struct
-            _status_update(_device.device->batteryStatusGet(), mspState);
             
             // Adjust the device's time to correct it for crystal innaccuracy
             std::cout << "Adjusting device time:\n";
@@ -120,7 +116,31 @@ struct MDCDevice : Object, ImageSource {
     
     Status status() {
         auto lock = _status.signal.lock();
-        return _status.status;
+        return {
+            .batteryLevel = _status.batteryLevel,
+            .imageRange = _GetImageRange(_GetImgRingBuf(_status.sd), _status.sd.imgCap),
+            .syncProgress = _status.syncProgress,
+        };
+    }
+    
+    void factoryReset() {
+    MSP::SDState _mspSDState = {};
+    MSP::Settings _mspSettings = {};
+        
+        // Reset the device
+        {
+            auto hostMode = _hostModeEnter();
+            MSP::State mspState = _device.device->mspStateRead();
+            mspState.sd = {};
+            mspState.settings = {};
+            _device.device->mspStateWrite(mspState);
+        }
+        
+        // Clear the image library
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            _imageLibrary->clear();
+        }
     }
     
     const Toastbox::SendRight& service() const {
@@ -164,11 +184,12 @@ struct MDCDevice : Object, ImageSource {
     // MARK: - Read/Write Device Settings
     
     const MSP::Settings& settings() {
-        return _mspSettings;
+        auto lock = _status.signal.lock();
+        return _status.settings;
     }
     
     void settings(const MSP::Settings& x) {
-        _mspSettings = x;
+        _status.settings = x;
         {
             auto hostMode = _hostModeEnter();
             MSP::State mspState = _device.device->mspStateRead();
@@ -400,13 +421,25 @@ struct MDCDevice : Object, ImageSource {
         f.write((char*)&state, sizeof(state));
     }
     
-    static const MSP::ImgRingBuf& _GetImgRingBuf(const MSP::State& state) {
-        const MSP::ImgRingBuf& imgRingBuf0 = state.sd.imgRingBufs[0];
-        const MSP::ImgRingBuf& imgRingBuf1 = state.sd.imgRingBufs[1];
+    static MSP::ImgRingBuf _GetImgRingBuf(const MSP::SDState& sd) {
+        const MSP::ImgRingBuf& imgRingBuf0 = sd.imgRingBufs[0];
+        const MSP::ImgRingBuf& imgRingBuf1 = sd.imgRingBufs[1];
         const std::optional<int> comp = MSP::ImgRingBuf::Compare(imgRingBuf0, imgRingBuf1);
-        if (!comp) throw Toastbox::RuntimeError("both image ring buffers are invalid");
+        if (!comp) return {};
         return *comp>=0 ? imgRingBuf0 : imgRingBuf1;
     }
+    
+    static ImageRange _GetImageRange(const MSP::ImgRingBuf& imgRingBuf, uint32_t imageCap) {
+        if (!imgRingBuf.valid) return {};
+        return {
+            .begin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)imageCap),
+            .end = imgRingBuf.buf.id,
+        };
+    }
+    
+//    static ImageRange _GetImageRange(const MSP::SDState& sd) {
+//        return _GetImageRange(_GetImgRingBuf(sd), sd.imgCap);
+//    }
     
     static void _ICEConfigure(MDCUSBDevice& dev) {
         const char* ICEBinPath = "/Users/dave/repos/MDCCode/Code/ICE40/ICEAppSDReadoutSTM/Synth/Top.bin";
@@ -701,20 +734,17 @@ struct MDCDevice : Object, ImageSource {
     
     void _sync_thread() {
         try {
-            // Enter SD mode for the entire duration of our sync
-            auto lock = deviceLock();
-                const MSP::State mspState = _device.device->mspStateRead();
+//            // Update our device status
+//            // This is necessary so that the status struct's imgIdBegin/imgIdEnd is always >= _imageLibrary
+//            _status_update();
+            
+            auto lock = _status.signal.lock();
+                const MSP::SDState sd = _status.sd;
             lock.unlock();
             
-            // Update our status
-            // This is necessary so that the status struct's imgIdBegin/imgIdEnd is always >= _imageLibrary
-            {
-                _status_update(_status.signal.lock(), mspState);
-            }
-            
-            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
-            const Img::Id deviceImgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
-            const Img::Id deviceImgIdEnd = imgRingBuf.buf.id;
+            const MSP::ImgRingBuf imgRingBuf = _GetImgRingBuf(sd);
+            if (!imgRingBuf.valid) throw Toastbox::RuntimeError("image ring buf invalid");
+            const ImageRange deviceImageRange = _GetImageRange(imgRingBuf, sd.imgCap);
             
             {
                 // Modify the image library to reflect the images that have been added and removed
@@ -727,10 +757,10 @@ struct MDCDevice : Object, ImageSource {
                     {
                         const auto removeBegin = _imageLibrary->begin();
                         
-                        // Find the first image >= `deviceImgIdBegin`
+                        // Find the first image >= `deviceImageRange.begin`
                         const auto removeEnd = std::lower_bound(_imageLibrary->begin(), _imageLibrary->end(), 0,
                             [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                                return sample->info.id < deviceImgIdBegin;
+                                return sample->info.id < deviceImageRange.begin;
                             });
                         
                         printf("[_sync_thread] Removing %ju stale images\n", (uintmax_t)(removeEnd-removeBegin));
@@ -740,15 +770,15 @@ struct MDCDevice : Object, ImageSource {
                     // Calculate how many images to add to the end of the library: device has, lib doesn't
                     {
                         const Img::Id libImgIdEnd = (!_imageLibrary->empty() ? _imageLibrary->back()->info.id+1 : 0);
-                        if (libImgIdEnd > deviceImgIdEnd) {
+                        if (libImgIdEnd > deviceImageRange.end) {
                             #warning TODO: how do we properly handle this situation?
-                            throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
+                            throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImageRange.end: %ju)",
                                 (uintmax_t)libImgIdEnd,
-                                (uintmax_t)deviceImgIdEnd
+                                (uintmax_t)deviceImageRange.end
                             );
                         }
                         
-                        addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = (uint32_t)(deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd));
 //                        addCount = 10;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary->add(addCount);
@@ -757,18 +787,18 @@ struct MDCDevice : Object, ImageSource {
                     // Populate .id / .addr for the ImageRecords that we're adding
                     {
                         auto it = _imageLibrary->end();
-                        Img::Id id = deviceImgIdEnd;
+                        Img::Id id = deviceImageRange.end;
                         uint32_t idx = imgRingBuf.buf.idx;
                         while (addCount) {
                             it--;
                             id--;
-                            idx = (idx ? idx-1 : mspState.sd.imgCap-1);
+                            idx = (idx ? idx-1 : sd.imgCap-1);
                             addCount--;
                             
                             ImageRecordPtr rec = *it;
                             rec->info.id = id;
-                            rec->info.addrFull = MSP::SDBlockFull(mspState.sd.baseFull, idx);
-                            rec->info.addrThumb = MSP::SDBlockThumb(mspState.sd.baseThumb, idx);
+                            rec->info.addrFull = MSP::SDBlockFull(sd.baseFull, idx);
+                            rec->info.addrThumb = MSP::SDBlockThumb(sd.baseThumb, idx);
                             
                             rec->status.loadCount = 0;
                         }
@@ -793,7 +823,7 @@ struct MDCDevice : Object, ImageSource {
                     _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
                         {
                             auto lock = _status.signal.lock();
-                            _status.status.sync->progress = progress;
+                            _status.syncProgress = progress;
                         }
                         observersNotify({});
                     });
@@ -810,7 +840,7 @@ struct MDCDevice : Object, ImageSource {
         // Update syncing status
         {
             auto lock = _status.signal.lock();
-            _status.status.sync = std::nullopt;
+            _status.syncProgress = std::nullopt;
         }
         
         // Notify observers that syncing is complete
@@ -1024,26 +1054,19 @@ struct MDCDevice : Object, ImageSource {
     void _status_update(const std::unique_lock<std::mutex>& lock, const STM::BatteryStatus& batteryStatus) {
         // Update _status.status.batteryLevel
         if (batteryStatus.chargeStatus == MSP::ChargeStatus::Complete) {
-            _status.status.batteryLevel = 1;
+            _status.batteryLevel = 1;
         
         } else if (batteryStatus.chargeStatus == MSP::ChargeStatus::Underway) {
-            _status.status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
+            _status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
         
         } else {
-            _status.status.batteryLevel = 0;
+            _status.batteryLevel = 0;
         }
     }
     
     void _status_update(const std::unique_lock<std::mutex>& lock, const MSP::State& mspState) {
-        // Update _status.status.imgIdBegin/imgIdEnd
-        try {
-            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(mspState);
-            _status.status.imgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)mspState.sd.imgCap);
-            _status.status.imgIdEnd = imgRingBuf.buf.id;
-        
-        } catch (const std::exception& e) {
-            printf("[_status_update] Error: %s\n", e.what());
-        }
+        _status.sd = mspState.sd;
+        _status.settings = mspState.settings;
     }
     
     void _status_update(const STM::BatteryStatus& batteryStatus, const MSP::State& mspState) {
@@ -1052,15 +1075,16 @@ struct MDCDevice : Object, ImageSource {
         _status_update(lock, mspState);
     }
     
+    void _status_update() {
+        auto lock = deviceLock();
+        _status_update(_device.device->batteryStatusGet(), _device.device->mspStateRead());
+    }
+    
     void _status_thread() {
         constexpr auto UpdateInterval = std::chrono::seconds(2);
         try {
             for (;;) {
-                {
-                    auto lock = deviceLock();
-                    _status_update(_device.device->batteryStatusGet(), _device.device->mspStateRead());
-                }
-                
+                _status_update();
                 observersNotify({});
                 
                 // Sleep for 30 seconds
@@ -1119,10 +1143,13 @@ struct MDCDevice : Object, ImageSource {
             // Init SD card
             const STM::SDCardInfo sdCardInfo = _device.device->sdInit();
             
-            // If _mspSDState is valid, verify that the current SD card id matches MSP's card id
-            if (_mspSDState.valid) {
-                if (memcmp(&sdCardInfo.cardId, &_mspSDState.cardId, sizeof(_mspSDState.cardId))) {
-                    throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
+            // If _status.sd is valid, verify that the current SD card id matches MSP's card id
+            {
+                auto lock = _status.signal.lock();
+                if (_status.sd.valid) {
+                    if (memcmp(&sdCardInfo.cardId, &_status.sd.cardId, sizeof(_status.sd.cardId))) {
+                        throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
+                    }
                 }
             }
             
@@ -1150,8 +1177,12 @@ struct MDCDevice : Object, ImageSource {
     
     _Path _dir;
     ImageLibraryPtr _imageLibrary;
-    MSP::SDState _mspSDState = {};
-    MSP::Settings _mspSettings = {};
+    
+//    struct {
+//        std::mutex lock; // Protects this struct
+//        MSP::SDState sd = {};
+//        MSP::Settings settings = {};
+//    } _mspState;
     
     Toastbox::Signal _imageForAddrSignal;
     _ThumbCache _thumbCache;
@@ -1183,7 +1214,10 @@ struct MDCDevice : Object, ImageSource {
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        Status status;
+        MSP::SDState sd = {};
+        MSP::Settings settings = {};
+        float batteryLevel = 0;
+        std::optional<float> syncProgress;
     } _status;
 };
 using MDCDevicePtr = SharedPtr<MDCDevice>;
