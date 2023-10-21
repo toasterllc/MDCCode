@@ -1055,7 +1055,7 @@ static id _Get_timestamp(const ImageRecord& rec) {
     const Time::Instant t = rec.info.timestamp;
     if (Time::Absolute(t)) {
         const std::string str =
-            Calendar::TimestampString(Time::Clock::TimePointFromTimeInstant(rec.info.timestamp));
+            Calendar::TimestampString(rec.info.timestamp);
         return @(str.c_str());
     
     } else {

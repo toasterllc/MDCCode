@@ -163,7 +163,7 @@ struct Simulator {
         return std::chrono::duration_cast<std::chrono::seconds>(t2-t1);
     }
     
-    void _eventInsert(_Triggers::Event& ev, const Time::Instant& time) {
+    void _eventInsert(_Triggers::Event& ev, Time::Instant time) {
         _Triggers::EventInsert(ev, time);
     }
     
@@ -193,7 +193,7 @@ struct Simulator {
         return true;
     }
     
-    bool _captureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
+    bool _captureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) {
         // Bail if the CaptureImageEvent is already underway
         if (ev.countRem) return false;
         

@@ -189,6 +189,8 @@ struct _DateFormatterState {
     NSDateFormatter* timeFormatterHHMM = nil;
     NSDateFormatter* timeFormatterHHMMSS = nil;
     NSDateFormatter* timestampFormatter = nil;
+    NSDateFormatter* timestampEXIFFormatter = nil;
+    NSDateFormatter* timestampOffsetEXIFFormatter = nil;
     NSDateFormatter* monthDayFormatter = nil;
     NSDateFormatter* monthYearFormatter = nil;
     bool showsAMPM = false;
@@ -236,6 +238,24 @@ static _DateFormatterState _DateFormatterStateCreate() {
         // Update date format to show milliseconds
         [x.timestampFormatter setDateFormat:[[x.timestampFormatter dateFormat]
             stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
+    }
+    
+    {
+        x.timestampEXIFFormatter = [[NSDateFormatter alloc] init];
+        [x.timestampEXIFFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.timestampEXIFFormatter setCalendar:x.cal];
+        [x.timestampEXIFFormatter setTimeZone:[x.cal timeZone]];
+        [x.timestampEXIFFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss"];
+        [x.timestampEXIFFormatter setLenient:true];
+    }
+    
+    {
+        x.timestampOffsetEXIFFormatter = [[NSDateFormatter alloc] init];
+        [x.timestampOffsetEXIFFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
+        [x.timestampOffsetEXIFFormatter setCalendar:x.cal];
+        [x.timestampOffsetEXIFFormatter setTimeZone:[x.cal timeZone]];
+        [x.timestampOffsetEXIFFormatter setDateFormat:@"ZZZZZ"];
+        [x.timestampOffsetEXIFFormatter setLenient:true];
     }
     
     {
@@ -376,6 +396,10 @@ inline NSDate* Date(const T& tp) {
     return [NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.];
 }
 
+inline NSDate* Date(Time::Instant t) {
+    return Date(Time::Clock::TimePointFromTimeInstant(t));
+}
+
 inline NSDate* Date(const date::year_month_day& ymd) {
     NSDateComponents* comp = [NSDateComponents new];
     [comp setYear:(int)ymd.year()];
@@ -387,6 +411,16 @@ inline NSDate* Date(const date::year_month_day& ymd) {
 template<typename T>
 inline std::string TimestampString(const T& t) {
     return [[_DateFormatterStateGet().timestampFormatter stringFromDate:Date(t)] UTF8String];
+}
+
+template<typename T>
+inline std::string TimestampEXIFString(const T& t) {
+    return [[_DateFormatterStateGet().timestampEXIFFormatter stringFromDate:Date(t)] UTF8String];
+}
+
+template<typename T>
+inline std::string TimestampOffsetEXIFString(const T& t) {
+    return [[_DateFormatterStateGet().timestampOffsetEXIFFormatter stringFromDate:Date(t)] UTF8String];
 }
 
 template<typename T>

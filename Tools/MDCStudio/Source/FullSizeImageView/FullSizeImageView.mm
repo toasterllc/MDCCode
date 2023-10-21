@@ -208,7 +208,7 @@ static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 s
         id<MTLTexture> srcTxt = (_image.txtValid ? _image.txt : _thumb.txt);
         
         if (opts.timestamp.show && !_timestampTxt) {
-            const std::string timestampStr = Calendar::TimestampString(Time::Clock::TimePointFromTimeInstant(info.timestamp));
+            const std::string timestampStr = Calendar::TimestampString(info.timestamp);
             _timestampTxt = _TimestampTextureCreate(_renderer, @(timestampStr.c_str()));
         }
         
