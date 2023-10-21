@@ -6,6 +6,7 @@ using namespace MDCStudio;
     IBOutlet NSWindow* _window;
     IBOutlet NSTextField* _message;
     IBOutlet NSProgressIndicator* _progressBar;
+    std::atomic<bool> _canceled;
 }
 
 - (instancetype)init {
@@ -33,7 +34,12 @@ using namespace MDCStudio;
 }
 
 - (IBAction)_cancel:(id)sender {
-    [NSApp stopModalWithCode:NSModalResponseAbort];
+    [[_window sheetParent] endSheet:_window returnCode:NSModalResponseCancel];
+    _canceled = true;
+}
+
+- (const std::atomic<bool>&)canceled {
+    return _canceled;
 }
 
 @end
