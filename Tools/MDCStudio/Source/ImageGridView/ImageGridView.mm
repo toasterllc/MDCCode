@@ -826,6 +826,13 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 //        NSLog(@"backgroundColor: %f %f %f", [c2 redComponent], [c2 greenComponent], [c2 blueComponent]);
 //    }];
     
+    // Create our context menu
+    {
+        NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
+        [menu addItemWithTitle:@"Export…" action:@selector(_export:) keyEquivalent:@""];
+        [self setMenu:menu];
+    }
+    
     return self;
 }
 
@@ -1011,7 +1018,17 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
     if ([item action] == @selector(_export:)) {
-        return ![self selection].empty();
+        const size_t selectionCount = [self selection].size();
+        NSString* title = nil;
+        if (selectionCount > 1) {
+            title = [NSString stringWithFormat:@"Export %ju Photos…", (uintmax_t)selectionCount];
+        } else if (selectionCount == 1) {
+            title = @"Export 1 Photo…";
+        } else {
+            title = @"Export…";
+        }
+        [item setTitle:title];
+        return (bool)selectionCount;
     }
     return [super validateMenuItem:item];
 }

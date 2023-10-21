@@ -471,6 +471,13 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
     }
     
+    // Create our context menu
+    {
+        NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
+        [menu addItemWithTitle:@"Export…" action:@selector(_export:) keyEquivalent:@""];
+        [self setMenu:menu];
+    }
+    
     [self magnifyToFit];
     return self;
 }
@@ -543,6 +550,14 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 //    }
 //    return [super validateMenuItem:item];
 //}
+
+- (BOOL)validateMenuItem:(NSMenuItem*)item {
+    if ([item action] == @selector(_export:)) {
+        [item setTitle:@"Export…"];
+        return true;
+    }
+    return [super validateMenuItem:item];
+}
 
 - (IBAction)_export:(id)sender {
     printf("_export\n");
