@@ -45,36 +45,6 @@ inline void __Export(MDCTools::Renderer& renderer, const Format* fmt, const Imag
         kCGImagePropertyExifDictionary, kCGImagePropertyExifOffsetTimeOriginal,
         (CFTypeRef)@(Calendar::TimestampOffsetEXIFString(rec.info.timestamp).c_str()));
     
-//    CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-//        kCGImagePropertyExifDictionary, kCGImagePropertyExifOffsetTimeOriginal,
-//        CFSTR("-07:00"));
-    
-//    CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-//        kCGImagePropertyExifDictionary, kCGImagePropertyExifDateTimeDigitized,
-//        CFSTR("2023:09:09 09:34:40"));
-//    
-//    CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-//        kCGImagePropertyExifDictionary, kCGImagePropertyExifOffsetTime,
-//        CFSTR("-07:00"));
-//    
-//    CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-//        kCGImagePropertyExifDictionary, kCGImagePropertyExifOffsetTimeOriginal,
-//        CFSTR("-07:00"));
-//    
-//    CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-//        kCGImagePropertyExifDictionary, kCGImagePropertyExifOffsetTimeDigitized,
-//        CFSTR("-07:00"));
-    
-//    CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-//        kCGImagePropertyExifDictionary, kCGImagePropertyExifDateTimeOriginal,
-//        (CFTypeRef)@(timestampStr.c_str()));
-    
-    
-//    CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-//        kCGImagePropertyTIFFDictionary, kCGImagePropertyTIFFDateTime,
-//        (CFTypeRef)@(timestampStr.c_str()));
-    
-    
     CGImageDestinationAddImageAndMetadata((CGImageDestinationRef)imageDest, (CGImageRef)cgimage,
         (CGImageMetadataRef)metadata, nullptr);
     CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
