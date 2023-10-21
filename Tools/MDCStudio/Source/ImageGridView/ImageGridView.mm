@@ -947,6 +947,23 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     }
 }
 
+- (void)rightMouseDown:(NSEvent*)event {
+    NSView* superview = [self superview];
+    const CGRect rect = {
+        [superview convertPoint:[event locationInWindow] fromView:nil],
+        {1,1},
+    };
+    
+    const ImageSet selection = [_imageGridLayer selection];
+    const ImageSet clickedImages = [_imageGridLayer imagesForRect:rect];
+    const bool clickedImageWasAlreadySelected =
+        clickedImages.size()==1 && selection.find(*clickedImages.begin())!=selection.end();
+    if (!clickedImages.empty() && !clickedImageWasAlreadySelected) {
+        [self _setSelection:clickedImages notify:true];
+    }
+    [super rightMouseDown:event];
+}
+
 - (void)moveDown:(id)sender {
     const bool extend = false;//[[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
     [self _moveSelection:{0,1} extend:extend];
