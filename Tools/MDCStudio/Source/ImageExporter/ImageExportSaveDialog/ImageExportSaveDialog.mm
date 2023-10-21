@@ -1,15 +1,15 @@
-#import "ImageExportDialog.h"
+#import "ImageExportSaveDialog.h"
 #import "NibViewInit.h"
 #import "Prefs.h"
 #import "ImageExporter/ImageExporter.h"
 using namespace MDCStudio;
 
-@interface ImageExportDialogFileTypesView : NSView
+@interface ImageExportSaveDialogFileTypesView : NSView
 @end
 
 using _FormatChangedHandler = void(^)();
 
-@implementation ImageExportDialogFileTypesView {
+@implementation ImageExportSaveDialogFileTypesView {
 @public
     IBOutlet NSView* _nibView;
     IBOutlet NSPopUpButton* _formatMenu;
@@ -46,65 +46,7 @@ static const char* ImageExportFormatKey = "ImageExportFormat";
 
 @end
 
-//@implementation ImageExportDialog {
-//    NSSavePanel* _panel;
-//    ImageExportDialogFileTypesView* _formatsView;
-//}
-//
-////- (instancetype)init {
-////    if (!(self = [super init])) return nil;
-////    _panel = [NSSavePanel new];
-////    
-////    _formatsView = [[ImageExportDialogFileTypesView alloc] initWithFrame:{}];
-////    _formatsView->_dialog = self;
-////    [_panel setAccessoryView:_formatsView];
-////    [_panel _updateFormat];
-////    
-////    return self;
-////}
-//
-//- (void)show:(NSWindow*)window batch:(bool)batch handler:(ImageExportDialogHandler)handler {
-//    
-//    _panel = [NSSavePanel new];
-//    
-//    _formatsView = [[ImageExportDialogFileTypesView alloc] initWithFrame:{}];
-//    _formatsView->_formatChangedHandler = {
-//        
-//    };
-//    
-//    
-//    _formatsView->_dialog = self;
-//    [_panel setAccessoryView:_formatsView];
-//    [_panel _updateFormat];
-//    
-//    
-//    [self setAllowedFileTypes:@[]];
-//    __weak auto selfWeak = self;
-//    [self beginSheetModalForWindow:window completionHandler:^(NSInteger result) {
-//        if (result != NSModalResponseOK) return;
-//        [selfWeak _export];
-//    }];
-//    
-//    
-//}
-//
-//- (void)_export {
-//    NSString* path = [[self URL] path];
-//    
-//}
-//
-//- (void)_updateFormat {
-//    const _Format& format = _Formats[[_formatsView formatIndex]];
-//    [self setAllowedFileTypes:@[@(format.extension)]];
-//}
-//
-//- (IBAction)_formatChanged:(id)sender {
-//    [self _updateFormat];
-//}
-//
-//@end
-
-namespace MDCStudio::ImageExportDialog {
+namespace MDCStudio::ImageExportSaveDialog {
 
 std::optional<Result> Run(NSWindow* window, bool batch, NSString* filename) {
     NSSavePanel* panel = nil;
@@ -114,7 +56,7 @@ std::optional<Result> Run(NSWindow* window, bool batch, NSString* filename) {
         panel = [NSSavePanel new];
     }
     
-    ImageExportDialogFileTypesView* formatsView = [[ImageExportDialogFileTypesView alloc] initWithFrame:{}];
+    ImageExportSaveDialogFileTypesView* formatsView = [[ImageExportSaveDialogFileTypesView alloc] initWithFrame:{}];
     formatsView->_panel = panel;
     [formatsView _updateFormat];
     [panel setAccessoryView:formatsView];
@@ -145,4 +87,4 @@ std::optional<Result> Run(NSWindow* window, bool batch, NSString* filename) {
 }
 
 
-} // namespace MDCStudio::ImageExportDialog
+} // namespace MDCStudio::ImageExportSaveDialog

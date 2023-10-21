@@ -2,7 +2,7 @@
 #import <optional>
 #import "ImageExporter/ImageExporterTypes.h"
 
-namespace MDCStudio::ImageExportDialog {
+namespace MDCStudio::ImageExportSaveDialog {
 
 struct Result {
     const ImageExporter::Format* format;
@@ -11,5 +11,5 @@ struct Result {
 
 std::optional<Result> Run(NSWindow* window, bool batch, NSString* filename);
 
-} // namespace MDCStudio::ImageExportDialog
+} // namespace MDCStudio::ImageExportSaveDialog
 

@@ -2,7 +2,7 @@
 #import <filesystem>
 #import "ImageSource.h"
 #import "ImageLibrary.h"
-#import "ImageExportDialog/ImageExportDialog.h"
+#import "ImageExportSaveDialog/ImageExportSaveDialog.h"
 #import "ImageExporterTypes.h"
 #import "ImagePipelineUtil.h"
 #import "Calendar.h"
@@ -81,7 +81,7 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     NSString* filename = [NSString stringWithFormat:@"%s%@", FilenamePrefix, @(firstImage->info.id)];
-    auto res = ImageExportDialog::Run(window, batch, filename);
+    auto res = ImageExportSaveDialog::Run(window, batch, filename);
     // Bail if user cancelled the NSSavePanel
     if (!res) return;
     

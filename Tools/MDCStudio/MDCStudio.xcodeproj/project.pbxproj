@@ -37,8 +37,6 @@
 		55496F61278E88B800BCA739 /* Grid.h in Sources */ = {isa = PBXBuildFile; fileRef = 55496F60278E88B800BCA739 /* Grid.h */; };
 		55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F62278FCDD000BCA739 /* MetalKit.framework */; };
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
-		556F313C2AE067E00028BF9C /* ImageExportDialogFileTypesView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 556F31392AE067E00028BF9C /* ImageExportDialogFileTypesView.xib */; };
-		556F313D2AE067E00028BF9C /* ImageExportDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 556F313B2AE067E00028BF9C /* ImageExportDialog.mm */; };
 		557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557ABCED29DD24230032619E /* BatteryLifeView.mm */; };
 		557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 557ABCEE29DD24230032619E /* BatteryLifeView.xib */; };
 		55838C912AD0BE7200D4B024 /* SourceList-Gear.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55838C822AD0BE7100D4B024 /* SourceList-Gear.pdf */; };
@@ -75,6 +73,10 @@
 		55C456862955A1AE00A20363 /* FixedScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456822955A1AE00A20363 /* FixedScrollView.mm */; };
 		55C456872955A1AE00A20363 /* FixedMetalDocumentLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456832955A1AE00A20363 /* FixedMetalDocumentLayer.mm */; };
 		55C456882955A1AE00A20363 /* FixedDocumentView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456852955A1AE00A20363 /* FixedDocumentView.mm */; };
+		55C6A26E2AE44559008149AF /* ImageExportSaveDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */; };
+		55C6A26F2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A26D2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib */; };
+		55C6A27A2AE44599008149AF /* ImageExportProgressDialog.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2772AE44599008149AF /* ImageExportProgressDialog.xib */; };
+		55C6A27B2AE44599008149AF /* ImageExportProgressDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A2782AE44599008149AF /* ImageExportProgressDialog.mm */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C846279001CA005ABD39 /* ImageGridLayer.metal */; };
 		55C90C7129B795B3007CC97E /* libbc7enc_rdo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */; };
@@ -218,9 +220,6 @@
 		55496F60278E88B800BCA739 /* Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Grid.h; sourceTree = "<group>"; };
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		556F31392AE067E00028BF9C /* ImageExportDialogFileTypesView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageExportDialogFileTypesView.xib; sourceTree = "<group>"; };
-		556F313A2AE067E00028BF9C /* ImageExportDialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageExportDialog.h; sourceTree = "<group>"; };
-		556F313B2AE067E00028BF9C /* ImageExportDialog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExportDialog.mm; sourceTree = "<group>"; };
 		556F313E2AE069830028BF9C /* NibViewInit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NibViewInit.h; sourceTree = "<group>"; };
 		557ABCED29DD24230032619E /* BatteryLifeView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifeView.mm; sourceTree = "<group>"; };
 		557ABCEE29DD24230032619E /* BatteryLifeView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BatteryLifeView.xib; sourceTree = "<group>"; };
@@ -283,6 +282,12 @@
 		55C456852955A1AE00A20363 /* FixedDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FixedDocumentView.mm; sourceTree = "<group>"; };
 		55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageExporterTypes.h; sourceTree = "<group>"; };
 		55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineUtil.h; sourceTree = "<group>"; };
+		55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExportSaveDialog.mm; sourceTree = "<group>"; };
+		55C6A26C2AE44559008149AF /* ImageExportSaveDialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageExportSaveDialog.h; sourceTree = "<group>"; };
+		55C6A26D2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageExportSaveDialogFileTypesView.xib; sourceTree = "<group>"; };
+		55C6A2772AE44599008149AF /* ImageExportProgressDialog.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageExportProgressDialog.xib; sourceTree = "<group>"; };
+		55C6A2782AE44599008149AF /* ImageExportProgressDialog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExportProgressDialog.mm; sourceTree = "<group>"; };
+		55C6A2792AE44599008149AF /* ImageExportProgressDialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageExportProgressDialog.h; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
 		55C90B9229B58283007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageThumb.h; sourceTree = "<group>"; };
@@ -669,7 +674,6 @@
 				55425B1C29A02F6500F25D57 /* InspectorView */,
 				5544AE5927B6EE04006AB473 /* Document */,
 				559704E52AE0E46B006CD617 /* ImageExporter */,
-				556F31382AE067E00028BF9C /* ImageExportDialog */,
 				55425B5A29A2B8C900F25D57 /* ImageCornerButton */,
 				55F8877C29D3A6E30075593F /* DeviceSettings */,
 				55C456802955A1AE00A20363 /* FixedDocumentView.h */,
@@ -721,16 +725,6 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		556F31382AE067E00028BF9C /* ImageExportDialog */ = {
-			isa = PBXGroup;
-			children = (
-				556F313A2AE067E00028BF9C /* ImageExportDialog.h */,
-				556F313B2AE067E00028BF9C /* ImageExportDialog.mm */,
-				556F31392AE067E00028BF9C /* ImageExportDialogFileTypesView.xib */,
-			);
-			path = ImageExportDialog;
-			sourceTree = "<group>";
-		};
 		557ABCEC29DD24230032619E /* BatteryLifeView */ = {
 			isa = PBXGroup;
 			children = (
@@ -769,8 +763,30 @@
 			children = (
 				55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */,
 				559704ED2AE0E481006CD617 /* ImageExporter.h */,
+				55C6A26A2AE44559008149AF /* ImageExportSaveDialog */,
+				55C6A2762AE44599008149AF /* ImageExportProgressDialog */,
 			);
 			path = ImageExporter;
+			sourceTree = "<group>";
+		};
+		55C6A26A2AE44559008149AF /* ImageExportSaveDialog */ = {
+			isa = PBXGroup;
+			children = (
+				55C6A26C2AE44559008149AF /* ImageExportSaveDialog.h */,
+				55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */,
+				55C6A26D2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib */,
+			);
+			path = ImageExportSaveDialog;
+			sourceTree = "<group>";
+		};
+		55C6A2762AE44599008149AF /* ImageExportProgressDialog */ = {
+			isa = PBXGroup;
+			children = (
+				55C6A2792AE44599008149AF /* ImageExportProgressDialog.h */,
+				55C6A2782AE44599008149AF /* ImageExportProgressDialog.mm */,
+				55C6A2772AE44599008149AF /* ImageExportProgressDialog.xib */,
+			);
+			path = ImageExportProgressDialog;
 			sourceTree = "<group>";
 		};
 		55C90C6A29B795A4007CC97E /* Products */ = {
@@ -954,6 +970,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				55F8877F29D3A7110075593F /* CaptureTriggersView.xib in Resources */,
+				55C6A26F2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib in Resources */,
 				553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */,
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
 				557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */,
@@ -980,7 +997,6 @@
 				55F8883929D9EF1C0075593F /* CaptureTriggers-Icon-Time-Large.pdf in Resources */,
 				55838C9E2AD0BE7200D4B024 /* SourceList-Battery-Charging-60.pdf in Resources */,
 				55838CC02AD0BEAA00D4B024 /* Inspector-WhiteBalance-Max.pdf in Resources */,
-				556F313C2AE067E00028BF9C /* ImageExportDialogFileTypesView.xib in Resources */,
 				55838C9B2AD0BE7200D4B024 /* SourceList-Battery-Charging-90.pdf in Resources */,
 				55838C992AD0BE7200D4B024 /* SourceList-Battery-Charging-30.pdf in Resources */,
 				55D30A4329A96D670080BCBD /* ImageCornerButton-1.pdf in Resources */,
@@ -1006,6 +1022,7 @@
 				55838CC22AD0BEAA00D4B024 /* Inspector-Saturation-Min.pdf in Resources */,
 				55838C922AD0BE7200D4B024 /* SourceList-Battery-Charging-50.pdf in Resources */,
 				55F8883A29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Small.pdf in Resources */,
+				55C6A27A2AE44599008149AF /* ImageExportProgressDialog.xib in Resources */,
 				55838CC12AD0BEAA00D4B024 /* Inspector-WhiteBalance-Min.pdf in Resources */,
 				55838C982AD0BE7200D4B024 /* SourceList-Battery-Charging-80.pdf in Resources */,
 				55F8D01027BDF26400757165 /* Shadow.png in Resources */,
@@ -1025,8 +1042,8 @@
 				55C456862955A1AE00A20363 /* FixedScrollView.mm in Sources */,
 				551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */,
 				55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */,
+				55C6A26E2AE44559008149AF /* ImageExportSaveDialog.mm in Sources */,
 				557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */,
-				556F313D2AE067E00028BF9C /* ImageExportDialog.mm in Sources */,
 				55D30A2E29A828E60080BCBD /* tz.cpp in Sources */,
 				55C456872955A1AE00A20363 /* FixedMetalDocumentLayer.mm in Sources */,
 				55C456882955A1AE00A20363 /* FixedDocumentView.mm in Sources */,
@@ -1052,6 +1069,7 @@
 				553EF56B2AD889E500157484 /* ImageGridHeaderView.mm in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
 				55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */,
+				55C6A27B2AE44599008149AF /* ImageExportProgressDialog.mm in Sources */,
 				55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */,
 				55E43F9E28C00D6B00FCCEA0 /* DebayerBilinear.metal in Sources */,
 				5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */,
