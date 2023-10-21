@@ -89,7 +89,8 @@ inline void _Export(ImageSourcePtr imageSource, const ImageExporter::Format* fmt
     MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     if (recs.size() > 1) {
-        for (ImageRecordPtr rec : recs) @autoreleasepool {
+        for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
+            ImageRecordPtr rec = *it;
             const std::filesystem::path filePath = path /
                 (FilenamePrefix + std::to_string(rec->info.id) + "." + fmt->extension);
             
