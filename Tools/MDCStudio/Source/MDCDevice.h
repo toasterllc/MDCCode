@@ -792,7 +792,7 @@ struct MDCDevice : Object, ImageSource {
                         }
                         
                         addCount = (uint32_t)(deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd));
-                        addCount = 1000;
+//                        addCount = 1000;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary->add(addCount);
                     }
