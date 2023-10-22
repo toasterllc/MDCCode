@@ -748,10 +748,6 @@ struct MDCDevice : Object, ImageSource {
     
     void _sync_thread() {
         try {
-//            // Update our device status
-//            // This is necessary so that the status struct's imgIdBegin/imgIdEnd is always >= _imageLibrary
-//            _status_update();
-            
             auto lock = _status.signal.lock();
                 const MSP::SDState sd = _status.state.sd;
             lock.unlock();
@@ -1084,10 +1080,13 @@ struct MDCDevice : Object, ImageSource {
     
     void _status_update() {
         auto lock = deviceLock();
+        const auto bat = _device.device->batteryStatusGet();
+        const auto msp = _device.device->mspStateRead();
+        
         {
             auto lock = _status.signal.lock();
-            _status_updateBattery(_device.device->batteryStatusGet());
-            _status.state = _device.device->mspStateRead();
+            _status_updateBattery(bat);
+            _status.state = msp;
         }
     }
     
