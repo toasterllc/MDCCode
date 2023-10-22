@@ -326,7 +326,7 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     
     // Update status
     if (selection.empty()) {
-        [_imageGridHeaderView setStatus:@(ImageLibraryStatus(imageLibrary, "No photos").c_str())];
+        [_imageGridHeaderView setStatus:@(ImageLibraryStatus(imageLibrary).c_str())];
     
     } else {
         const Time::Instant first = (*selection.begin())->info.timestamp;

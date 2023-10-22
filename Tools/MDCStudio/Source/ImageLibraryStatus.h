@@ -33,7 +33,7 @@ inline std::string ImageLibraryStatus(size_t count, Time::Instant first, Time::I
     }
 }
 
-inline std::string ImageLibraryStatus(ImageLibraryPtr lib, std::string noPhotos="no photos") {
+inline std::string ImageLibraryStatus(ImageLibraryPtr lib, std::string noPhotos="No photos") {
     auto lock = std::unique_lock(*lib);
     if (lib->empty()) return noPhotos;
     
