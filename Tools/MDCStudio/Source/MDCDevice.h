@@ -1123,12 +1123,14 @@ struct MDCDevice : Object, ImageSource {
         if (en) {
             [[NSProcessInfo processInfo] disableSuddenTermination];
             
-            printf("_hostModeSet(1)\n");
             _hostMode.deviceLock = deviceLock(interrupt);
             _device.device->hostModeSet(true);
+            
+            printf("_hostModeSet(1)\n");
         
         } else {
             printf("_hostModeSet(0)\n");
+            
             _device.device->hostModeSet(false);
             _hostMode.deviceLock = {};
             
