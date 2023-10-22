@@ -959,6 +959,8 @@ struct MDCDevice : Object, ImageSource {
         
         } catch (const Toastbox::Signal::Stop&) {
             printf("[_sdRead_thread] Stopping\n");
+        } catch (const std::exception& e) {
+            printf("[_sdRead_thread] Error: %s\n", e.what());
         }
     }
     
