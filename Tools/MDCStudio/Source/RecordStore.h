@@ -286,8 +286,11 @@ struct RecordStore {
     }
     
     void clear() {
+        for (Chunk& chunk : _state.chunks) {
+            chunk.recordCount = 0;
+        }
+        
         _state.recordRefs.clear();
-        _state.chunks.clear();
     }
     
     bool empty() const { return _state.recordRefs.empty(); }
