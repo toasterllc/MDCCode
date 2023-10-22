@@ -107,6 +107,8 @@ static CGColorSpaceRef _SRGBColorSpace() {
 
 - (void)dealloc {
     printf("~FullSizeImageLayer\n");
+    // Tell our thread to bail
+    _imageLoad->signal.stop();
 }
 
 - (ImageRecordPtr)imageRecord {
@@ -423,7 +425,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 }
 
 - (void)dealloc {
-    printf("~ImageView\n");
+    printf("~FullSizeImageDocumentView\n");
 }
 
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
@@ -480,6 +482,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     
     [self magnifyToFit];
     return self;
+}
+
+- (void)dealloc {
+    printf("~FullSizeImageView\n");
 }
 
 - (FullSizeImageLayer*)_fullSizeImageLayer {

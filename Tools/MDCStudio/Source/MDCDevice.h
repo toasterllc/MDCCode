@@ -95,6 +95,7 @@ struct MDCDevice : Object, ImageSource {
     }
     
     ~MDCDevice() {
+        printf("~MDCDevice()\n");
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
         _device.signal.stop();
@@ -1073,6 +1074,8 @@ struct MDCDevice : Object, ImageSource {
             _status.batteryLevel = std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
         
         } else {
+            #warning Debug to catch invalid battery state, remove!
+            abort();
             _status.batteryLevel = 0;
         }
     }
@@ -1094,7 +1097,7 @@ struct MDCDevice : Object, ImageSource {
                 
                 observersNotify({});
                 
-                // Sleep for 30 seconds
+                // Sleep
                 _device.signal.wait_for(UpdateInterval, [] { return false; });
             }
         

@@ -73,14 +73,16 @@ template<typename T>
 static void _SetView(T& x, NSView* y) {
     if (x.view) [x.view removeFromSuperview];
     x.view = y;
-    [x.containerView addSubview:x.view];
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|"
-        options:0 metrics:nil views:@{@"v":x.view}]];
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|"
-        options:0 metrics:nil views:@{@"v":x.view}]];
-    // setNeedsLayout: is necessary to ensure the grid view is sized properly,
-    // when showing the grid view.
-    [y setNeedsLayout:true];
+    if (x.view) {
+        [x.containerView addSubview:x.view];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|"
+            options:0 metrics:nil views:@{@"v":x.view}]];
+        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|"
+            options:0 metrics:nil views:@{@"v":x.view}]];
+        // setNeedsLayout: is necessary to ensure the grid view is sized properly,
+        // when showing the grid view.
+        [y setNeedsLayout:true];
+    }
 }
 
 - (void)awakeFromNib {
@@ -219,12 +221,15 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     return true;
 }
 
-// MARK: - Source List
-- (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
-    assert(sourceListView == _sourceListView);
-    ImageSourcePtr imageSource = [_sourceListView selection];
+- (void)_setActiveImageSource:(ImageSourcePtr)imageSource {
+    // Short-circuit if nothing changed
+    if (_active.imageSource == imageSource) return;
     
+    // First reset our state
     _active = {};
+    _SetView(_center, nil);
+    _SetView(_right, nil);
+    [_window makeFirstResponder:_sourceListView];
     
     // Short-circuit (after resetting _active) if there's no selection
     if (!imageSource) return;
@@ -271,6 +276,12 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     [self _updateImageGridHeader];
     
     [_window makeFirstResponder:_active.imageGridView];
+}
+
+// MARK: - Source List
+- (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
+    assert(sourceListView == _sourceListView);
+    [self _setActiveImageSource:[_sourceListView selection]];
 }
 
 - (void)sourceListView:(SourceListView*)sourceListView showSettingsForDevice:(MDCDevicePtr)device {
@@ -340,12 +351,13 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
 }
 
 - (void)_updateDevices {
-    std::set<ImageSourcePtr> imageSources;
     std::vector<MDCDevicePtr> devices = MDCDevicesManagerGlobal()->devices();
+    std::set<ImageSourcePtr> imageSources;
     for (MDCDevicePtr device : devices) {
         imageSources.insert(device);
     }
     [_sourceListView setImageSources:imageSources];
+    [self sourceListViewSelectionChanged:_sourceListView];
     
     const bool haveDevices = !imageSources.empty();
     [_splitView setHidden:!haveDevices];

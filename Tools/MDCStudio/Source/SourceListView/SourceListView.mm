@@ -8,13 +8,6 @@
 @class SourceListView;
 using namespace MDCStudio;
 
-//static NSMenu* _DeviceContextMenuCreate() {
-//    NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
-//    [menu addItemWithTitle:@"Settings…" action:@selector(_settings:) keyEquivalent:@""];
-//    [menu addItemWithTitle:@"Factory Reset…" action:@selector(_factoryReset:) keyEquivalent:@""];
-//    return menu;
-//}
-
 @interface SourceListView ()
 - (void)_showSettingsForDevice:(MDCDevicePtr)device;
 @end
@@ -29,7 +22,10 @@ using namespace MDCStudio;
     NSString* name;
     __weak SourceListView* sourceListView;
     IBOutlet NSLayoutConstraint* _height;
-    ImageSourcePtr _imageSource;
+    // We keep a weak reference to the ImageSourcePtr because the NSTableView likes
+    // to keep/reuse its NSTableCellView, which otherwise would cause our MDCDevice
+    // objects to leak when unplugging the device.
+    ImageSourcePtr::weak_type _imageSource;
     Object::ObserverPtr _imageLibraryOb;
 }
 
@@ -38,13 +34,13 @@ using namespace MDCStudio;
 - (CGFloat)height { return 74; }
 
 - (ImageSourcePtr)imageSource {
-    return _imageSource;
+    return _imageSource.lock();
 }
 
 - (void)setImageSource:(ImageSourcePtr)x {
     _imageSource = x;
     __weak auto selfWeak = self;
-    _imageLibraryOb = _imageSource->imageLibrary()->observerAdd([=] (auto, auto) {
+    _imageLibraryOb = x->imageLibrary()->observerAdd([=] (auto, auto) {
         dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
     });
 }
@@ -87,7 +83,7 @@ using namespace MDCStudio;
 }
 
 - (MDCDevicePtr)device {
-    return Toastbox::Cast<MDCDevicePtr>(_imageSource);
+    return Toastbox::Cast<MDCDevicePtr>(_imageSource.lock());
 }
 
 - (NSString*)name { return @([self device]->name().c_str()); }
@@ -397,6 +393,7 @@ static void _Init(SourceListView* self) {
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
     Item* it = Toastbox::Cast<Item*>(item);
     [it update];
+//    [it setIdentifier:nil];
     return item;
 }
 
