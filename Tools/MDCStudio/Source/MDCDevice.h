@@ -161,7 +161,7 @@ struct MDCDevice : Object, ImageSource {
     }
     
     void settings(const MSP::Settings& x) {
-        auto hostMode = _hostModeEnter();
+        auto hostMode = _hostModeEnter(true);
         
         {
             auto lock = _status.signal.lock();
@@ -174,7 +174,7 @@ struct MDCDevice : Object, ImageSource {
     void factoryReset() {
         // Reset the device
         {
-            auto hostMode = _hostModeEnter();
+            auto hostMode = _hostModeEnter(true);
             
             auto lock = _status.signal.lock();
                 _status.state.sd = {};
@@ -669,28 +669,35 @@ struct MDCDevice : Object, ImageSource {
         // The remaining recs aren't in our cache, so kick off SD reading + rendering
         for (auto it=recs.rbegin(); it!=recs.rend(); it++) {
             const ImageRecordPtr& rec = *it;
-            const _SDRegion region = _SDRegionForThumb(rec);
             
-            _ThumbBufferReserved buf = _thumbCache.pop((uint8_t)priority);
+            // Only load the record if it's still needed
+            if (rec.alive()) {
+                const _SDRegion region = _SDRegionForThumb(rec);
+                
+                _ThumbBufferReserved buf = _thumbCache.pop((uint8_t)priority);
+                
+    //                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
+                
+                _SDReadWork work = {
+                    .region = region,
+                    .buf = std::move(buf),
+                    .rec = rec,
+                    .callback = [&] (_SDReadWork&& work) {
+                        _readCompleteCallback(*state, std::move(work), initial);
+                    },
+                };
+                
+                printf("[_loadImages:p%ju] Enqueuing _SDReadWork\n", (uintmax_t)priority);
+                {
+                    auto lock = _sdRead.signal.lock();
+                    _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
+                    queue.push(std::move(work));
+                }
+                _sdRead.signal.signalOne();
             
-//                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
-            
-            _SDReadWork work = {
-                .region = region,
-                .buf = std::move(buf),
-                .rec = rec,
-                .callback = [&] (_SDReadWork&& work) {
-                    _readCompleteCallback(*state, std::move(work), initial);
-                },
-            };
-            
-//            printf("[_loadImages:p%ju] Enqueuing %ju ops\n", (uintmax_t)priority, (uintmax_t)work.ops.size());
-            {
-                auto lock = _sdRead.signal.lock();
-                _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
-                queue.push(std::move(work));
+            } else {
+                state->underway--;
             }
-            _sdRead.signal.signalOne();
         }
         
         // Wait until everything's done
@@ -789,7 +796,7 @@ struct MDCDevice : Object, ImageSource {
                         }
                         
                         addCount = (uint32_t)(deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd));
-//                        addCount = 1000;
+                        addCount = 20000;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary->add(addCount);
                     }

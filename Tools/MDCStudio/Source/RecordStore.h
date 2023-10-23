@@ -33,6 +33,7 @@ struct RecordStore {
         size_t recordCount = 0;                 // Count of records currently stored in chunk
         size_t recordIdx = 0;                   // Index of next record
         std::atomic<size_t> strongCount = 0;    // Count of RecordStrongRef's that currently refer to this chunk
+        std::atomic<bool> alive = true;         // Whether the chunk is still alive
         Toastbox::Mmap mmap;
     };
     
@@ -92,7 +93,7 @@ struct RecordStore {
     };
     
     template <typename T_ChunkRef>
-    struct _RecordRef : public T_ChunkRef {
+    struct _RecordRef : T_ChunkRef {
         size_t idx = 0;
         
         _RecordRef() {}
@@ -100,6 +101,9 @@ struct RecordStore {
         
 //        using T_ChunkRef::T_ChunkRef;
         const T_ChunkRef& chunkRef() const { return *this; }
+        
+        // alive(): whether the RecordRef is part of a chunk that's still alive.
+        bool alive() const { return chunkRef().chunk->alive; }
         
         template <typename T>
         bool operator<(const T& x) const {
@@ -288,9 +292,17 @@ struct RecordStore {
     void clear() {
         for (Chunk& chunk : _state.chunks) {
             chunk.recordCount = 0;
+            chunk.alive = false;
         }
         
         _state.recordRefs.clear();
+        
+        // Create a new chunk at the end so that new records are added to it, so that
+        // all existing strong references are killed (see RecordRef::alive()).
+        // If we didn't create a new chunk, and new records were added to the
+        // pre-existing last chunk, existing strong references for the last
+        // chunk wouldn't be killed.
+        _chunkCreate();
     }
     
     bool empty() const { return _state.recordRefs.empty(); }
@@ -306,7 +318,6 @@ struct RecordStore {
         return _state.recordRefs.size();
     }
     
-private:
     struct [[gnu::packed]] _SerializedHeader {
         uint32_t version     = 0; // Version
         uint32_t recordSize  = 0; // sizeof(T_Record)
@@ -464,13 +475,17 @@ private:
         return Toastbox::Mmap(std::move(fd), cap, MAP_SHARED);
     }
     
+    Chunk& _chunkCreate() {
+        return _ChunkPush(_state.chunks, _ChunkFileCreate(_chunkPath(_state.chunks.size())));
+    }
+    
     Chunk& _chunkGetWritable() {
         Chunk* chunk = nullptr;
         auto last = std::prev(_state.chunks.end());
         if (last==_state.chunks.end() || last->recordIdx>=T_ChunkRecordCap) {
-            // We don't have any chunks, or the last chunk is full
-            // Create a new chunk
-            chunk = &_ChunkPush(_state.chunks, _ChunkFileCreate(_chunkPath(_state.chunks.size())));
+            // We don't have any chunks, or the last chunk is full;
+            // create a new chunk
+            chunk = &_chunkCreate();
         
         } else {
             // The last chunk can fit more records
