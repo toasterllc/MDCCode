@@ -77,6 +77,8 @@
 		55C6A26F2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A26D2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib */; };
 		55C6A27A2AE44599008149AF /* ImageExportProgressDialog.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2772AE44599008149AF /* ImageExportProgressDialog.xib */; };
 		55C6A27B2AE44599008149AF /* ImageExportProgressDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A2782AE44599008149AF /* ImageExportProgressDialog.mm */; };
+		55C6A27F2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A27D2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm */; };
+		55C6A2852AE6F74E008149AF /* FactoryResetConfirmationAlert.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2842AE6F74E008149AF /* FactoryResetConfirmationAlert.xib */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C846279001CA005ABD39 /* ImageGridLayer.metal */; };
 		55C90C7129B795B3007CC97E /* libbc7enc_rdo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */; };
@@ -288,6 +290,9 @@
 		55C6A2772AE44599008149AF /* ImageExportProgressDialog.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageExportProgressDialog.xib; sourceTree = "<group>"; };
 		55C6A2782AE44599008149AF /* ImageExportProgressDialog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExportProgressDialog.mm; sourceTree = "<group>"; };
 		55C6A2792AE44599008149AF /* ImageExportProgressDialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageExportProgressDialog.h; sourceTree = "<group>"; };
+		55C6A27D2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FactoryResetConfirmationAlert.mm; sourceTree = "<group>"; };
+		55C6A27E2AE6EFC9008149AF /* FactoryResetConfirmationAlert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FactoryResetConfirmationAlert.h; sourceTree = "<group>"; };
+		55C6A2842AE6F74E008149AF /* FactoryResetConfirmationAlert.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FactoryResetConfirmationAlert.xib; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
 		55C90B9229B58283007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageThumb.h; sourceTree = "<group>"; };
@@ -673,6 +678,7 @@
 				5544A7E927B5E011006AB473 /* SourceListView */,
 				55425B1C29A02F6500F25D57 /* InspectorView */,
 				5544AE5927B6EE04006AB473 /* Document */,
+				55C6A27C2AE6EFAD008149AF /* FactoryResetConfirmationAlert */,
 				559704E52AE0E46B006CD617 /* ImageExporter */,
 				55425B5A29A2B8C900F25D57 /* ImageCornerButton */,
 				55F8877C29D3A6E30075593F /* DeviceSettings */,
@@ -787,6 +793,16 @@
 				55C6A2772AE44599008149AF /* ImageExportProgressDialog.xib */,
 			);
 			path = ImageExportProgressDialog;
+			sourceTree = "<group>";
+		};
+		55C6A27C2AE6EFAD008149AF /* FactoryResetConfirmationAlert */ = {
+			isa = PBXGroup;
+			children = (
+				55C6A27E2AE6EFC9008149AF /* FactoryResetConfirmationAlert.h */,
+				55C6A27D2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm */,
+				55C6A2842AE6F74E008149AF /* FactoryResetConfirmationAlert.xib */,
+			);
+			path = FactoryResetConfirmationAlert;
 			sourceTree = "<group>";
 		};
 		55C90C6A29B795A4007CC97E /* Products */ = {
@@ -992,6 +1008,7 @@
 				55838C9A2AD0BE7200D4B024 /* SourceList-Battery-Charging-70.pdf in Resources */,
 				55F8883629D9EF1C0075593F /* CaptureTriggers-Icon-Button-Large.pdf in Resources */,
 				55D30A4129A96D670080BCBD /* ImageCornerButton-0.pdf in Resources */,
+				55C6A2852AE6F74E008149AF /* FactoryResetConfirmationAlert.xib in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
 				55838CC72AD0BEAA00D4B024 /* Inspector-Clear.pdf in Resources */,
 				55F8883929D9EF1C0075593F /* CaptureTriggers-Icon-Time-Large.pdf in Resources */,
@@ -1040,6 +1057,7 @@
 				55E43F9B28C00D6B00FCCEA0 /* ImagePipeline.metal in Sources */,
 				55E43F9928C00D6B00FCCEA0 /* DebayerLMMSE.metal in Sources */,
 				55C456862955A1AE00A20363 /* FixedScrollView.mm in Sources */,
+				55C6A27F2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm in Sources */,
 				551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */,
 				55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */,
 				55C6A26E2AE44559008149AF /* ImageExportSaveDialog.mm in Sources */,

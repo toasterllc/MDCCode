@@ -12,6 +12,7 @@
 #import "DeviceSettings/DeviceSettingsView.h"
 #import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
 #import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
+#import "FactoryResetConfirmationAlert/FactoryResetConfirmationAlert.h"
 #import "MDCDevicesManager.h"
 
 using namespace MDCStudio;
@@ -290,8 +291,14 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 }
 
 - (void)sourceListView:(SourceListView*)sourceListView factoryResetDevice:(MDCStudio::MDCDevicePtr)device {
-    device->factoryReset();
     NSLog(@"sourceListView:factoryResetDevice:");
+    
+    FactoryResetConfirmationAlert* alert = [FactoryResetConfirmationAlert new];
+    [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse r) {
+        if (r != NSModalResponseOK) return;
+        NSLog(@"FACTORY RESET");
+        device->factoryReset();
+    }];
 }
 
 static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibraryPtr imageLibrary) {
