@@ -98,7 +98,11 @@ struct MDCDevice : Object, ImageSource {
         printf("~MDCDevice()\n");
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
-        _device.signal.stop();
+        _status.signal.stop();
+        
+        for (_LoadState& loadState : _loadStates.mem()) {
+            loadState.signal.stop();
+        }
         
         // Wait for threads to stop
         if (_sync.thread.joinable()) _sync.thread.join();
@@ -127,7 +131,7 @@ struct MDCDevice : Object, ImageSource {
             _sdRead.signal.signalAll();
         }
         
-        auto lock = _device.signal.lock();
+        auto lock = std::unique_lock(_device.lock);
         
         // Un-pause the SD thread
         if (interrupt) {
@@ -380,8 +384,19 @@ struct MDCDevice : Object, ImageSource {
     
     struct __Cleanup {
         __Cleanup(std::function<void()> fn) : _fn(fn) {}
-        ~__Cleanup() { _fn(); }
+        ~__Cleanup() noexcept(false) {
+            const bool throwAllowed = (_exceptionCount == std::uncaught_exceptions());
+            try {
+                _fn();
+            } catch (...) {
+                if (throwAllowed) {
+                    printf("THROWING EXCEPTION\n");
+                    throw;
+                }
+            }
+        }
         std::function<void()> _fn;
+        int _exceptionCount = std::uncaught_exceptions();
     };
     
     using _Cleanup = std::unique_ptr<__Cleanup>;
@@ -630,11 +645,15 @@ struct MDCDevice : Object, ImageSource {
         std::thread progressThread;
         if (progressCallback && imageCount) {
             progressThread = std::thread([&] {
-                state->signal.wait([&] {
-                    const float progress = (float)(imageCount - state->underway) / imageCount;
-                    progressCallback(progress);
-                    return !state->underway;
-                });
+                try {
+                    state->signal.wait([&] {
+                        const float progress = (float)(imageCount - state->underway) / imageCount;
+                        progressCallback(progress);
+                        return !state->underway;
+                    });
+                } catch (const Toastbox::Signal::Stop&) {
+                    printf("[_loadThumbs:progressThread] Stopping\n");
+                }
             });
         }
         
@@ -1113,7 +1132,7 @@ struct MDCDevice : Object, ImageSource {
                 observersNotify({});
                 
                 // Sleep
-                _device.signal.wait_for(UpdateInterval, [] { return false; });
+                _status.signal.wait_for(UpdateInterval, [] { return false; });
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -1141,16 +1160,19 @@ struct MDCDevice : Object, ImageSource {
         if (en) {
             [[NSProcessInfo processInfo] disableSuddenTermination];
             
-            _hostMode.deviceLock = deviceLock(interrupt);
+            auto lock = deviceLock(interrupt);
             _device.device->hostModeSet(true);
+            // Only stash the lock in our ivar if hostModeSet() didn't throw
+            _hostMode.deviceLock = std::move(lock);
             
             printf("_hostModeSet(1)\n");
         
         } else {
             printf("_hostModeSet(0)\n");
             
+            // Move the lock to the stack to ensure that it's destroyed if hostModeSet() throws
+            auto lock = std::move(_hostMode.deviceLock);
             _device.device->hostModeSet(false);
-            _hostMode.deviceLock = {};
             
             [[NSProcessInfo processInfo] enableSuddenTermination];
         }
@@ -1198,18 +1220,12 @@ struct MDCDevice : Object, ImageSource {
     // MARK: - Members
     
     struct {
-        Toastbox::Signal signal; // Protects this struct
+        std::mutex lock; // Protects this struct
         std::unique_ptr<MDCUSBDevice> device;
     } _device;
     
     _Path _dir;
     ImageLibraryPtr _imageLibrary;
-    
-//    struct {
-//        std::mutex lock; // Protects this struct
-//        MSP::SDState sd = {};
-//        MSP::Settings settings = {};
-//    } _mspState;
     
     Toastbox::Signal _imageForAddrSignal;
     _ThumbCache _thumbCache;

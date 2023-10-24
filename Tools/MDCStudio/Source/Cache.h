@@ -194,6 +194,10 @@ public:
         return sizeFree(l, priority);
     }
     
+    auto& mem() {
+        return _mem;
+    }
+    
     void _destroy(const _Entry& x) {
         {
             auto lock = _free.signal.lock();
@@ -223,7 +227,7 @@ public:
     
     // _free: needs to be declared before _cache, so that upon destruction, _free persists longer
     // than _cache, since the Vals that are destroyed as a part of _cache.lru being destroyed
-    // need _free to exist for _recycle() to work properly.
+    // need _free to exist for _destroy() to work properly.
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::vector<size_t> list;
