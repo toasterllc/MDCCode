@@ -59,6 +59,7 @@ struct _ThumbRenderThreadState {
     ImageSourcePtr _imageSource;
     Object::ObserverPtr _imageSourceOb;
     ImageLibraryPtr _imageLibrary;
+    Object::ObserverPtr _imageLibraryOb;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
     Grid _grid;
@@ -101,6 +102,12 @@ static CGColorSpaceRef _SRGBColorSpace() {
     }
     
     _imageLibrary = imageSource->imageLibrary();
+    {
+        __weak auto selfWeak = self;
+        _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
+            [selfWeak _handleImageLibraryEvent:dynamic_cast<const ImageLibrary::Event&>(ev)];
+        });
+    }
     
     _cellWidth = _ThumbWidth;
     _cellHeight = _ThumbHeight;
@@ -579,11 +586,46 @@ struct SelectionDelta {
     return [self rectForImageIndex:newIdx];
 }
 
+// MARK: - ImageSource Observer
+
 - (void)_handleImageSourceEvent:(const Object::Event&)ev {
     if (ev.prop == &_imageSource->_selection) {
         // Selection changes must only occur on the main thread!
         assert([NSThread isMainThread]);
         [self _selectionUpdate];
+    }
+}
+
+// MARK: - ImageLibrary Observer
+// _handleImageLibraryEvent: called on whatever thread where the modification happened,
+// and with the ImageLibrary lock held!
+- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
+    // Trampoline the event to our main thread, if we're not on the main thread
+    if (![NSThread isMainThread]) {
+        ImageLibrary::Event evCopy = ev;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            auto lock = std::unique_lock(*self->_imageLibrary);
+            [self _handleImageLibraryEvent:evCopy];
+        });
+        return;
+    }
+    
+    switch (ev.type) {
+    case ImageLibrary::Event::Type::ChangeProperty:
+        if ([self _recordsIntersectVisibleRange:ev.records]) {
+            // Re-render visible thumbs that are dirty
+            // We don't check if any of `ev` intersect the visible range, because _thumbRenderVisibleIfNeeded
+            // should be cheap and reduces to a no-op if none of the visible thumbs are dirty.
+            [self _thumbRenderVisibleIfNeeded];
+        }
+        break;
+    case ImageLibrary::Event::Type::ChangeThumbnail:
+        if ([self _recordsIntersectVisibleRange:ev.records]) {
+            [self setNeedsDisplay];
+        }
+        break;
+    default:
+        break;
     }
 }
 
@@ -673,21 +715,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     return true;
 }
 
-- (void)propertyChanged:(const ImageSet&)images {
-    if ([self _recordsIntersectVisibleRange:images]) {
-        // Re-render visible thumbs that are dirty
-        // We don't check if any of `ev` intersect the visible range, because _thumbRenderVisibleIfNeeded
-        // should be cheap and reduces to a no-op if none of the visible thumbs are dirty.
-        [self _thumbRenderVisibleIfNeeded];
-    }
-}
-
-- (void)thumbnailChanged:(const ImageSet&)images {
-    if ([self _recordsIntersectVisibleRange:images]) {
-        [self setNeedsDisplay];
-    }
-}
-
 @end
 
 
@@ -751,7 +778,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     {
         __weak auto selfWeak = self;
         _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
-            [selfWeak _handleImageLibraryEvent:dynamic_cast<const ImageLibrary::Event&>(ev)];
+            const ImageLibrary::Event::Type type = static_cast<const ImageLibrary::Event&>(ev).type;
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
         });
     }
     
@@ -826,31 +854,15 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 //}
 
 // MARK: - ImageLibrary Observer
-// _handleImageLibraryEvent: called on whatever thread where the modification happened,
-// and with the ImageLibrary lock held!
-- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
-    // Trampoline the event to our main thread, if we're not on the main thread
-    if (![NSThread isMainThread]) {
-        ImageLibrary::Event evCopy = ev;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            auto lock = std::unique_lock(*self->_imageLibrary);
-            [self _handleImageLibraryEvent:evCopy];
-        });
-        return;
-    }
-    
-    switch (ev.type) {
+- (void)_handleImageLibraryEventType:(ImageLibrary::Event::Type)type {
+    switch (type) {
     case ImageLibrary::Event::Type::Add:
     case ImageLibrary::Event::Type::Remove:
     case ImageLibrary::Event::Type::Clear:
-        [[self enclosingScrollView] setNeedsLayout:true];
         [_imageGridLayer setNeedsDisplay];
+        [[self enclosingScrollView] setNeedsLayout:true];
         break;
-    case ImageLibrary::Event::Type::ChangeProperty:
-        [_imageGridLayer propertyChanged:ev.records];
-        break;
-    case ImageLibrary::Event::Type::ChangeThumbnail:
-        [_imageGridLayer thumbnailChanged:ev.records];
+    default:
         break;
     }
 }
