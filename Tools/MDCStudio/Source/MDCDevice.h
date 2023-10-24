@@ -1198,41 +1198,47 @@ struct MDCDevice : Object, ImageSource {
     }
     
     void _sdModeSet(bool en) {
-        if (en) {
-            auto timeStart = std::chrono::steady_clock::now();
-            
-            // Enter host mode while we're in SD mode, since MSP can't talk to
-            // ICE40 or SD card while we're using it.
-            _hostModeSet(true);
-            
-            // Load ICE40 with our app
-            _ICEConfigure(*_device.device);
-            
-            // Init SD card
-            const STM::SDCardInfo sdCardInfo = _device.device->sdInit();
-            
-            // If _device.state.sd is valid, verify that the current SD card id matches MSP's card id
-            {
-                auto lock = _status.signal.lock();
-                if (_status.state.sd.valid) {
-                    if (memcmp(&sdCardInfo.cardId, &_status.state.sd.cardId, sizeof(_status.state.sd.cardId))) {
-                        throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
+        try {
+            if (en) {
+                auto timeStart = std::chrono::steady_clock::now();
+                
+                // Enter host mode while we're in SD mode, since MSP can't talk to
+                // ICE40 or SD card while we're using it.
+                _sdMode.hostMode = _hostModeEnter();
+                
+                // Load ICE40 with our app
+                _ICEConfigure(*_device.device);
+                
+                // Init SD card
+                const STM::SDCardInfo sdCardInfo = _device.device->sdInit();
+                
+                // If _device.state.sd is valid, verify that the current SD card id matches MSP's card id
+                {
+                    auto lock = _status.signal.lock();
+                    if (_status.state.sd.valid) {
+                        if (memcmp(&sdCardInfo.cardId, &_status.state.sd.cardId, sizeof(_status.state.sd.cardId))) {
+                            throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
+                        }
                     }
                 }
-            }
+                
+                // Print timing
+                {
+                    using namespace std::chrono;
+                    const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+                    printf("[_sync_thread] SD init took %ju ms\n", (uintmax_t)duration.count());
+                }
             
-            // Print timing
-            {
-                using namespace std::chrono;
-                const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
-                printf("[_sync_thread] SD init took %ju ms\n", (uintmax_t)duration.count());
+            } else {
+                // Assume that we were in the middle of readout; reset the device to exit readout.
+                _device.device->reset();
+                // Exit host mode
+                _sdMode.hostMode = {};
             }
-        
-        } else {
-            // Assume that we were in the middle of readout; reset the device to exit readout.
-            _device.device->reset();
-            // Exit host mode
-            _hostModeSet(false);
+        } catch (...) {
+            // If device IO fails (ie via _hostModeEnter()), clean up our state and rethrow the exception
+            _sdMode.hostMode = {};
+            throw;
         }
     }
     
@@ -1255,6 +1261,10 @@ struct MDCDevice : Object, ImageSource {
         std::unique_lock<std::mutex> deviceLock;
         _Cleanup suddenTermination;
     } _hostMode;
+    
+    struct {
+        _Cleanup hostMode;
+    } _sdMode;
     
     struct {
         std::mutex lock;
