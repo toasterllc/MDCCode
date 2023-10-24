@@ -751,7 +751,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     // Observe image library changes so that we update the image grid
     {
         __weak auto selfWeak = self;
-        _imageLibraryOb = _imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
+        _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
             [selfWeak _handleImageLibraryEvent:dynamic_cast<const ImageLibrary::Event&>(ev)];
         });
     }

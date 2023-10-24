@@ -75,7 +75,7 @@ struct SharedPtr : std::shared_ptr<T> {
 
 
 struct Object; using ObjectPtr = SharedPtr<Object>;
-struct Object : std::enable_shared_from_this<Object> {
+struct Object {
     // MARK: - Creation
     template<typename T, typename... T_Args>
     static SharedPtr<T> Create(T_Args&&... args) {
@@ -89,20 +89,6 @@ struct Object : std::enable_shared_from_this<Object> {
     void init() { _initDebug = true; }
     bool _initDebug = false;
     
-    // MARK: - self
-    
-    template<typename T=Object>
-    SharedPtr<T> self() { return shared_from_this(); }
-    
-    template<typename T=Object>
-    SharedPtr<T> self() const { return const_cast<Object*>(this)->self<T>(); }
-    
-    template<typename T=Object>
-    typename std::weak_ptr<T> selfWeak() { return self<T>(); }
-    
-    template<typename T=Object>
-    typename std::weak_ptr<T> selfWeak() const { return const_cast<Object*>(this)->selfWeak<T>(); }
-    
     // MARK: - Observation
     
     struct Event {
@@ -111,7 +97,7 @@ struct Object : std::enable_shared_from_this<Object> {
         const void* prop = nullptr;
     };
     
-    using Observer    = std::function<void(ObjectPtr, const Event&)>;
+    using Observer    = std::function<void(const Event&)>;
     using ObserverPtr = SharedPtr<Observer>;
     
     static ObserverPtr ObserverCreate(Observer&& fn) {
@@ -146,7 +132,7 @@ struct Object : std::enable_shared_from_this<Object> {
         
         for (auto obWeak : _observe.observers) {
             ObserverPtr ob = obWeak.lock();
-            if (ob) (*ob)(self(), ev);
+            if (ob) (*ob)(ev);
         }
     }
     

@@ -40,7 +40,7 @@ using namespace MDCStudio;
 - (void)setImageSource:(ImageSourcePtr)x {
     _imageSource = x;
     __weak auto selfWeak = self;
-    _imageLibraryOb = x->imageLibrary()->observerAdd([=] (auto, auto) {
+    _imageLibraryOb = x->imageLibrary()->observerAdd([=] (auto) {
         dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
     });
 }
@@ -83,16 +83,23 @@ using namespace MDCStudio;
 }
 
 - (MDCDevicePtr)device {
-    return Toastbox::Cast<MDCDevicePtr>(_imageSource.lock());
+    auto x = _imageSource.lock();
+    if (!x) return nullptr;
+    return Toastbox::Cast<MDCDevicePtr>(x);
 }
 
-- (NSString*)name { return @([self device]->name().c_str()); }
+- (NSString*)name {
+    MDCDevicePtr device = [self device];
+    if (!device) return @"";
+    return @(device->name().c_str());
+}
 
 - (void)setImageSource:(ImageSourcePtr)x {
+    assert(x);
     [super setImageSource:x];
     
     __weak auto selfWeak = self;
-    _deviceOb = [self device]->observerAdd([=] (auto, auto) {
+    _deviceOb = [self device]->observerAdd([=] (auto) {
         dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
     });
 }
@@ -110,8 +117,10 @@ static NSString* _BatteryLevelImage(float level) {
 
 - (void)update {
     [super update];
-    [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage([self device]->status().batteryLevel)]];
-    [_descriptionLabel setStringValue:@(ImageLibraryStatus([self device]->imageLibrary()).c_str())];
+    MDCDevicePtr device = [self device];
+    if (!device) return;
+    [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage(device->status().batteryLevel)]];
+    [_descriptionLabel setStringValue:@(ImageLibraryStatus(device->imageLibrary()).c_str())];
 }
 
 - (IBAction)_textFieldChanged:(id)sender {
