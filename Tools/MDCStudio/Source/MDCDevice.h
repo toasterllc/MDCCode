@@ -24,11 +24,10 @@
 #import "ImageSource.h"
 #import "BufferPool.h"
 #import "Cache.h"
-#import "Object.h"
 
 namespace MDCStudio {
 
-struct MDCDevice : Object, ImageSource {
+struct MDCDevice : ImageSource {
     using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
     
     struct ImageRange {
@@ -124,7 +123,7 @@ struct MDCDevice : Object, ImageSource {
         }
     }
     
-    PropertyValue(std::string, name);
+    ObjectPropertyValue(std::string, name);
     
     void changed(const Event& ev) override {
         if (ev.prop == &_name) {

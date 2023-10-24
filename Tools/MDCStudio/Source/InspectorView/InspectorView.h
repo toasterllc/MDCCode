@@ -4,5 +4,4 @@
 
 @interface InspectorView : NSView
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
-- (void)setSelection:(MDCStudio::ImageSet)selection;
 @end

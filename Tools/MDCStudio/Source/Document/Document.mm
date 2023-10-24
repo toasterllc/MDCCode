@@ -213,10 +213,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
         [_window makeFirstResponder:_active.fullSizeImageView];
     }
     
-    ImageSet selection;
-    selection.insert(imageRecord);
-    [_active.inspectorView setSelection:selection];
-    
+    _active.imageSource->selection({ imageRecord });
     printf("Showing image id %ju\n", (uintmax_t)imageRecord->info.id);
     
     return true;
@@ -330,7 +327,7 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     ImageLibraryPtr imageLibrary = device->imageLibrary();
     DeviceImageGridHeaderView* deviceHeader = Toastbox::Cast<DeviceImageGridHeaderView*>(_active.imageGridHeaderView);
     const MDCDevice::Status status = device->status();
-    const ImageSet& selection = [_active.imageGridView selection];
+    const ImageSet& selection = _active.imageSource->selection();
     
     // Update status
     if (selection.empty()) {
@@ -386,8 +383,7 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     case ImageLibrary::Event::Type::Clear:
         // When the image library is cleared, return to the grid view
         _SetView(_center, _active.imageGridScrollView);
-        [_active.imageGridView setSelection:{}];
-        [_active.inspectorView setSelection:{}];
+        _active.imageSource->selection({});
         break;
     }
     
@@ -396,16 +392,10 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
 
 // MARK: - Image Grid
 
-- (void)imageGridViewSelectionChanged:(ImageGridView*)imageGridView {
-    assert(imageGridView == _active.imageGridView);
-    [_active.inspectorView setSelection:[_active.imageGridView selection]];
-    [self _updateImageGridHeader];
-}
-
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
     assert(imageGridView == _active.imageGridView);
-    const ImageSet selection = [_active.imageGridView selection];
-    if (selection.empty()) return;
+    const ImageSet selection = _active.imageSource->selection();
+    assert(selection.size() == 1);
     const ImageRecordPtr rec = *selection.begin();
     [self _openImage:rec delta:0];
 }
@@ -422,7 +412,7 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     [_window layoutIfNeeded];
     
     ImageRecordPtr rec = [_active.fullSizeImageView imageRecord];
-    [_active.imageGridView setSelection:{ rec }];
+    _active.imageSource->selection({ rec });
     [_window makeFirstResponder:_active.imageGridView];
     [_active.imageGridView scrollToImageRect:[_active.imageGridView rectForImageRecord:rec] center:true];
 //    [NSTimer scheduledTimerWithTimeInterval:0 repeats:false block:^(NSTimer* timer) {

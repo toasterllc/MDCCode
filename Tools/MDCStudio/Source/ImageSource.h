@@ -3,6 +3,7 @@
 #include "ImageLibrary.h"
 #include "Toastbox/Signal.h"
 #include "Toastbox/Atomic.h"
+#include "Object.h"
 
 namespace MDCStudio {
 
@@ -16,14 +17,17 @@ struct Image {
 
 // ImageSource: abstract interface for an entity that contains an ImageLibrary + ImageCache
 // Concrete implementations: MDCDevice, and 'LocalImageLibrary' (not implemented yet)
-class ImageSource {
-public:
+struct ImageSource : Object {
     enum class Priority : uint8_t { High, Low, Last=Low };
     
     virtual ImageLibraryPtr imageLibrary() = 0;
-    virtual void renderThumbs(Priority priority, std::set<ImageRecordPtr> recs) = 0;
+    virtual void renderThumbs(Priority priority, ImageSet recs) = 0;
     virtual Image getCachedImage(const ImageRecordPtr& rec) = 0;
     virtual Image loadImage(Priority priority, const ImageRecordPtr& rec) = 0;
+    
+    // MARK: - Selection
+    // Thread-unsafe; main thread only!
+    ObjectPropertyReference(ImageSet, selection);
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;

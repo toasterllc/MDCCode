@@ -36,9 +36,6 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 - (ImageSet)imagesForRect:(CGRect)rect;
 //- (CGRect)rectForImageAtIndex:(size_t)idx;
 
-- (const ImageSet&)selection;
-- (void)setSelection:(ImageSet)selection;
-
 @end
 
 struct _ChunkTexture {
@@ -60,6 +57,7 @@ struct _ThumbRenderThreadState {
 
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
+    Object::ObserverPtr _imageSourceOb;
     ImageLibraryPtr _imageLibrary;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
@@ -95,6 +93,13 @@ static CGColorSpaceRef _SRGBColorSpace() {
     if (!(self = [super init])) return nil;
     
     _imageSource = imageSource;
+    {
+        __weak auto selfWeak = self;
+        _imageSourceOb = _imageSource->observerAdd([=] (const Object::Event& ev) {
+            [selfWeak _handleImageSourceEvent:ev];
+        });
+    }
+    
     _imageLibrary = imageSource->imageLibrary();
     
     _cellWidth = _ThumbWidth;
@@ -456,42 +461,28 @@ done:
     return images;
 }
 
-//- (CGRect)rectForImages:(ImageSet)images {
-//    CGRect rect = {};
-//    for (const ImageRecordPtr& rec : images) {
-//        
-//    }
-//    return rect;
-//}
-
-//- (CGRect)rectForImageAtIndex:(size_t)idx {
-//    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
-//}
-
-- (const ImageSet&)selection {
-    return _selection.images;
-}
-
-- (void)setSelection:(ImageSet)images {
+- (void)_selectionUpdate {
+    ImageSet selection = _imageSource->selection();
+    
     // Remove images that aren't loaded
     // Ie, don't allow placeholder images to be selected
-    for (auto it=images.begin(); it!=images.end();) {
+    for (auto it=selection.begin(); it!=selection.end();) {
         if (!(*it)->status.loadCount) {
-            it = images.erase(it);
+            it = selection.erase(it);
         } else {
             it++;
         }
     }
     
     // Set the entire _selection struct so that _display recreates the buffer
-    _selection = { .images = std::move(images) };
+    _selection = { .images = std::move(selection) };
     [self setNeedsDisplay];
 }
 
 - (void)setSortNewestFirst:(bool)x {
     _sortNewestFirst = x;
     // Trigger selection update (_selection buffer needs to be cleared)
-    [self setSelection:std::move(_selection.images)];
+    [self _selectionUpdate];
 }
 
 struct SelectionDelta {
@@ -584,8 +575,16 @@ struct SelectionDelta {
     
     if (!extend) selection.clear();
     selection.insert(newImg);
-    [self setSelection:std::move(selection)];
+    _imageSource->selection(std::move(selection));
     return [self rectForImageIndex:newIdx];
+}
+
+- (void)_handleImageSourceEvent:(const Object::Event&)ev {
+    if (ev.prop == &_imageSource->_selection) {
+        // Selection changes must only occur on the main thread!
+        assert([NSThread isMainThread]);
+        [self _selectionUpdate];
+    }
 }
 
 // MARK: - FixedScrollViewDocument
@@ -786,19 +785,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     return _imageSource;
 }
 
-- (const ImageSet&)selection {
-    return [_imageGridLayer selection];
-}
-
-- (void)setSelection:(MDCStudio::ImageSet)selection {
-    [self _setSelection:std::move(selection) notify:false];
-}
-
-- (void)_setSelection:(ImageSet)selection notify:(bool)notify {
-    [_imageGridLayer setSelection:std::move(selection)];
-    if (notify) [_delegate imageGridViewSelectionChanged:self];
-}
-
 - (void)setSortNewestFirst:(bool)x {
     [_imageGridLayer setSortNewestFirst:x];
 }
@@ -827,7 +813,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
     if (!rect) return;
     [self scrollToImageRect:*rect center:false];
-    [_delegate imageGridViewSelectionChanged:self];
 }
 
 - (void)_updateDocumentHeight {
@@ -897,16 +882,16 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
-    const ImageSet oldSelection = [_imageGridLayer selection];
+    const ImageSet oldSelection = _imageSource->selection();
     Toastbox::TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
 //        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
         const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
         if (extend) {
-            [self _setSelection:ImageSetsXOR(oldSelection, newSelection) notify:true];
+            _imageSource->selection(ImageSetsXOR(oldSelection, newSelection));
         } else {
-            [self _setSelection:std::move(newSelection) notify:true];
+            _imageSource->selection(std::move(newSelection));
         }
         [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
         
@@ -929,12 +914,12 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         {1,1},
     };
     
-    const ImageSet selection = [_imageGridLayer selection];
+    const ImageSet& selection = _imageSource->selection();
     const ImageSet clickedImages = [_imageGridLayer imagesForRect:rect];
     const bool clickedImageWasAlreadySelected =
         clickedImages.size()==1 && selection.find(*clickedImages.begin())!=selection.end();
     if (!clickedImages.empty() && !clickedImageWasAlreadySelected) {
-        [self _setSelection:clickedImages notify:true];
+        _imageSource->selection(clickedImages);
     }
     [super rightMouseDown:event];
 }
@@ -968,11 +953,11 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
             selection.insert(*it);
         }
     }
-    [self _setSelection:selection notify:true];
+    _imageSource->selection(selection);
 }
 
 - (void)insertNewline:(id)sender {
-    if ([self selection].size() == 1) {
+    if (_imageSource->selection().size() == 1) {
         [_delegate imageGridViewOpenSelectedImage:self];
     }
 }
@@ -1011,7 +996,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
     NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
     if ([item action] == @selector(_export:)) {
-        const size_t selectionCount = [self selection].size();
+        const size_t selectionCount = _imageSource->selection().size();
         NSString* title = nil;
         if (selectionCount > 1) {
             title = [NSString stringWithFormat:@"Export %ju Photos…", (uintmax_t)selectionCount];
@@ -1028,7 +1013,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 - (IBAction)_export:(id)sender {
     printf("_export\n");
-    ImageExporter::Export([self window], _imageSource, [self selection]);
+    ImageExporter::Export([self window], _imageSource, _imageSource->selection());
 }
 
 @end
