@@ -376,8 +376,6 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
 }
 
 // MARK: - ImageLibrary Observer
-// _handleImageLibraryEvent: called on whatever thread where the modification happened,
-// and with the ImageLibrary lock held!
 - (void)_handleImageLibraryEvent:(ImageLibrary::Event::Type)type {
     switch (type) {
     case ImageLibrary::Event::Type::Add:
@@ -386,6 +384,7 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     case ImageLibrary::Event::Type::ChangeThumbnail:
         break;
     case ImageLibrary::Event::Type::Clear:
+        // When the image library is cleared, return to the grid view
         _SetView(_center, _active.imageGridScrollView);
         [_active.imageGridView setSelection:{}];
         [_active.inspectorView setSelection:{}];

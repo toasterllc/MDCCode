@@ -79,6 +79,7 @@
 		55C6A27B2AE44599008149AF /* ImageExportProgressDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A2782AE44599008149AF /* ImageExportProgressDialog.mm */; };
 		55C6A27F2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A27D2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm */; };
 		55C6A2852AE6F74E008149AF /* FactoryResetConfirmationAlert.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2842AE6F74E008149AF /* FactoryResetConfirmationAlert.xib */; };
+		55C6A2A22AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2A12AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C846279001CA005ABD39 /* ImageGridLayer.metal */; };
 		55C90C7129B795B3007CC97E /* libbc7enc_rdo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */; };
@@ -293,6 +294,7 @@
 		55C6A27D2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FactoryResetConfirmationAlert.mm; sourceTree = "<group>"; };
 		55C6A27E2AE6EFC9008149AF /* FactoryResetConfirmationAlert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FactoryResetConfirmationAlert.h; sourceTree = "<group>"; };
 		55C6A2842AE6F74E008149AF /* FactoryResetConfirmationAlert.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FactoryResetConfirmationAlert.xib; sourceTree = "<group>"; };
+		55C6A2A12AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceImageGridNoPhotosView.xib; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
 		55C90B9229B58283007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageThumb.h; sourceTree = "<group>"; };
@@ -760,6 +762,7 @@
 			children = (
 				558E201A2AC8F977001E743A /* DeviceImageGridScrollView.h */,
 				558E20192AC8F977001E743A /* DeviceImageGridScrollView.mm */,
+				55C6A2A12AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib */,
 			);
 			path = DeviceImageGridScrollView;
 			sourceTree = "<group>";
@@ -994,6 +997,7 @@
 				55838C932AD0BE7200D4B024 /* SourceList-Battery-Error.pdf in Resources */,
 				553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */,
 				55838C962AD0BE7200D4B024 /* SourceList-Battery-Charging-0.pdf in Resources */,
+				55C6A2A22AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
 				55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */,
 				55838CCA2AD0BEAA00D4B024 /* Inspector-Contrast-Min.pdf in Resources */,
