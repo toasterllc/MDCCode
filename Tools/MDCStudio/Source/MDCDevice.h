@@ -42,6 +42,25 @@ struct MDCDevice : Object, ImageSource {
         std::optional<float> syncProgress;
     };
     
+    // _Thread: convenience to automatically join() the thread upon instance destruction
+    struct _Thread : std::thread {
+        using std::thread::thread;
+        
+        // Move constructor
+        _Thread(_Thread&& x) { set(std::move(x)); }
+        // Move assignment operator
+        _Thread& operator=(_Thread&& x) { set(std::move(x)); return *this; }
+        
+        ~_Thread() {
+            if (joinable()) join();
+        }
+        
+        void set(_Thread&& x) {
+            if (joinable()) join();
+            std::thread::operator=(std::move(x));
+        }
+    };
+    
     void init(MDCUSBDevice&& dev) {
         printf("MDCDevice::init()\n");
         Object::init(); // Call super
@@ -82,13 +101,13 @@ struct MDCDevice : Object, ImageSource {
         
         // Start threads
         {
-            _sdRead.thread = std::thread([&] { _sdRead_thread(); });
+            _sdRead.thread = _Thread([&] { _sdRead_thread(); });
             
             for (int i=0; i<_CPUCount(); i++) {
                 _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
             }
             
-            _status.thread = std::thread([&] { _status_thread(); });
+            _status.thread = _Thread([&] { _status_thread(); });
             
             sync();
         }
@@ -103,12 +122,6 @@ struct MDCDevice : Object, ImageSource {
         for (_LoadState& loadState : _loadStates.mem()) {
             loadState.signal.stop();
         }
-        
-        // Wait for threads to stop
-        if (_sync.thread.joinable()) _sync.thread.join();
-        if (_sdRead.thread.joinable()) _sdRead.thread.join();
-        for (std::thread& t : _thumbRender.threads) t.join();
-        if (_status.thread.joinable()) _status.thread.join();
     }
     
     PropertyValue(std::string, name);
@@ -205,9 +218,7 @@ struct MDCDevice : Object, ImageSource {
             // Bail if syncing is already underway
             if (_sync.progress) return;
             _sync.progress = 0;
-            
-            if (_sync.thread.joinable()) _sync.thread.join();
-            _sync.thread = std::thread([&] { _sync_thread(); });
+            _sync.thread = _Thread([&] { _sync_thread(); });
         }
         
         // Notify observers that syncing started
@@ -642,9 +653,9 @@ struct MDCDevice : Object, ImageSource {
         assert(!state->underway);
         state->underway += imageCount;
         
-        std::thread progressThread;
+        _Thread progressThread;
         if (progressCallback && imageCount) {
-            progressThread = std::thread([&] {
+            progressThread = _Thread([&] {
                 try {
                     state->signal.wait([&] {
                         const float progress = (float)(imageCount - state->underway) / imageCount;
@@ -721,9 +732,6 @@ struct MDCDevice : Object, ImageSource {
         
         // Wait until everything's done
         state->signal.wait([&] { return !state->underway; });
-        
-        // Wait for progress thread to exit
-        if (progressThread.joinable()) progressThread.join();
         
         // Print profile stats
         {
@@ -1156,25 +1164,36 @@ struct MDCDevice : Object, ImageSource {
         return std::make_unique<__Cleanup>([=] { _sdModeSet(false); });
     }
     
-    void _hostModeSet(bool en, bool interrupt=false) {
-        if (en) {
-            [[NSProcessInfo processInfo] disableSuddenTermination];
-            
-            auto lock = deviceLock(interrupt);
-            _device.device->hostModeSet(true);
-            // Only stash the lock in our ivar if hostModeSet() didn't throw
-            _hostMode.deviceLock = std::move(lock);
-            
-            printf("_hostModeSet(1)\n");
-        
-        } else {
-            printf("_hostModeSet(0)\n");
-            
-            // Move the lock to the stack to ensure that it's destroyed if hostModeSet() throws
-            auto lock = std::move(_hostMode.deviceLock);
-            _device.device->hostModeSet(false);
-            
+    _Cleanup _suddenTerminationDisable() {
+        [[NSProcessInfo processInfo] disableSuddenTermination];
+        return std::make_unique<__Cleanup>([=] {
             [[NSProcessInfo processInfo] enableSuddenTermination];
+        });
+    }
+    
+    void _hostModeSet(bool en, bool interrupt=false) {
+        try {
+            if (en) {
+                _hostMode.suddenTermination = _suddenTerminationDisable();
+                _hostMode.deviceLock = deviceLock(interrupt);
+                _device.device->hostModeSet(true);
+                // Only stash the lock in our ivar if hostModeSet() didn't throw
+                
+                printf("_hostModeSet(1)\n");
+            
+            } else {
+                printf("_hostModeSet(0)\n");
+                
+                // Move the lock to the stack to ensure that it's destroyed if hostModeSet() throws
+                _device.device->hostModeSet(false);
+                _hostMode.deviceLock = {};
+                _hostMode.suddenTermination = {};
+            }
+        } catch (...) {
+            // If device IO fails (ie hostModeSet()), clean up our state and rethrow the exception
+            _hostMode.deviceLock = {};
+            _hostMode.suddenTermination = {};
+            throw;
         }
     }
     
@@ -1234,30 +1253,31 @@ struct MDCDevice : Object, ImageSource {
     
     struct {
         std::unique_lock<std::mutex> deviceLock;
+        _Cleanup suddenTermination;
     } _hostMode;
     
     struct {
         std::mutex lock;
-        std::thread thread;
+        _Thread thread;
         std::optional<float> progress;
     } _sync;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
-        std::thread thread;
+        _Thread thread;
         _SDReadWorkQueue queues[(size_t)Priority::Last+1];
         uint32_t pause = 0;
     } _sdRead;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
-        std::vector<std::thread> threads;
+        std::vector<_Thread> threads;
         _RenderWorkQueue queue;
     } _thumbRender;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
-        std::thread thread;
+        _Thread thread;
         MSP::State state = {};
         float batteryLevel = 0;
     } _status;
