@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <list>
+#include <map>
 #include <sys/stat.h>
 #include "Toastbox/FileDescriptor.h"
 #include "Toastbox/RuntimeError.h"
@@ -27,9 +28,11 @@ struct RecordStore {
     using Path = std::filesystem::path;
     using Record = T_Record;
     
+    using ChunkId = uint64_t;
+    
     struct Chunk {
-        Chunk(size_t order, Toastbox::Mmap&& mmap) : order(order), mmap(std::move(mmap)) {}
-        size_t order = 0;                       // Order of the chunk, so that RecordRefs can order themselves
+        Chunk(ChunkId id, Toastbox::Mmap&& mmap) : id(id), mmap(std::move(mmap)) {}
+        ChunkId id = 0;                         // Id of the chunk
         size_t recordCount = 0;                 // Count of records currently stored in chunk
         size_t recordIdx = 0;                   // Index of next record
         std::atomic<size_t> strongCount = 0;    // Count of RecordStrongRef's that currently refer to this chunk
@@ -47,7 +50,7 @@ struct RecordStore {
         Chunk* chunk = nullptr;
         
         bool operator<(const ChunkRef& x) const {
-            if (chunk != x.chunk) return chunk->order < x.chunk->order;
+            if (chunk != x.chunk) return chunk->id < x.chunk->id;
             return false;
         }
         
@@ -153,6 +156,12 @@ struct RecordStore {
     using RecordRefConstIter = typename RecordRefs::const_iterator;
     using RecordRefConstReverseIter = typename RecordRefs::const_reverse_iterator;
     
+    struct _State {
+        ChunkId chunkId = 0;
+        RecordRefs recordRefs;
+        Chunks chunks;
+    };
+    
     // Find(): find `ref` between [begin,end)
     // T_Ascending=false must be specified when reverse iterators are given.
     template<bool T_Ascending=true, typename T>
@@ -190,18 +199,15 @@ struct RecordStore {
     }
     
     std::ifstream read(Path path) {
-        // Reset ourself in case an exception occurs later
-        _state = {
-            .path = std::move(path),
-        };
-        
-        std::filesystem::create_directories(_ChunksPath(_state.path));
-        
-        auto [recordRefs, chunks, f] = _IndexRead(_state.path);
-        // If we get here, everything succeeded so we can use the on-disk database
-        _state.recordRefs = recordRefs;
-        _state.chunks = std::move(chunks);
-        return std::move(f);
+        _path = path;
+        std::filesystem::create_directories(_ChunksPath(_path));
+        try {
+            _state = {};
+            return _StateRead(_path, _state);
+        } catch (...) {
+            _state = {};
+            throw;
+        }
     }
     
     std::ofstream write() {
@@ -211,24 +217,7 @@ struct RecordStore {
         
         // Ensure that all chunks are written to disk
         for (const Chunk& chunk : _state.chunks) {
-            chunk.mmap.sync();
-        }
-        
-        // Rename chunk filenames to be in the range [0,chunkCount)
-        // This needs to happen before we prune empty chunks! Otherwise we won't know the `oldName`,
-        // since it depends on a chunk's index in `_state.chunks`
-        {
-            size_t oldName = 0;
-            size_t newName = 0;
-            for (const Chunk& chunk : _state.chunks) {
-                if (chunk.recordCount) {
-                    if (newName != oldName) {
-                        fs::rename(_chunkPath(oldName), _chunkPath(newName));
-                    }
-                    newName++;
-                }
-                oldName++;
-            }
+            if (chunk.alive) chunk.mmap.sync();
         }
         
         // Prune chunks (in memory) that have 0 records and 0 strong references
@@ -245,26 +234,34 @@ struct RecordStore {
             }
         }
         
-        // Delete unreferenced chunk files
-        for (const fs::path& p : fs::directory_iterator(_ChunksPath(_state.path))) {
-            // Delete the chunk file if it's beyond the new count of chunks (therefore
-            // it's an old chunk file that's no longer needed).
-            std::optional<size_t> deleteName;
-            try {
-                deleteName = Toastbox::IntForStr<size_t>(p.filename().string());
-                if (*deleteName < _state.chunks.size()) {
-                    deleteName = std::nullopt; // Chunk file is in-range; don't delete it
-                }
-            // Don't do anything if we can't convert the filename to an integer;
-            // assume the file is supposed to be there.
-            } catch (...) {}
+        // Delete unused chunk files
+        {
+            std::set<ChunkId> aliveChunks;
+            for (Chunk& chunk : _state.chunks) {
+                if (chunk.alive) aliveChunks.insert(chunk.id);
+            }
             
-            if (deleteName) {
-                fs::remove(_chunkPath(*deleteName));
+            for (const fs::path& p : fs::directory_iterator(_ChunksPath(_path))) {
+                // Delete the chunk file if it's beyond the new count of chunks (therefore
+                // it's an old chunk file that's no longer needed).
+                std::optional<ChunkId> deleteName;
+                try {
+                    deleteName = Toastbox::IntForStr<ChunkId>(p.filename().string());
+                    if (aliveChunks.find(*deleteName) != aliveChunks.end()) {
+                        deleteName = std::nullopt; // Chunk file is in use; don't delete it
+                    }
+                // Don't do anything if we can't convert the filename to an integer;
+                // assume the file is supposed to be there.
+                } catch (...) {}
+                
+                if (deleteName) {
+                    printf("[RecordStore::write()] deleting chunk file %ju\n", (uintmax_t)*deleteName);
+                    fs::remove(_chunkPath(*deleteName));
+                }
             }
         }
         
-        return _IndexWrite(_state.path, _state.recordRefs, _state.chunks);
+        return _StateWrite(_path, _state);
     }
     
     // add(): adds records to the end
@@ -296,13 +293,6 @@ struct RecordStore {
         }
         
         _state.recordRefs.clear();
-        
-        // Create a new chunk at the end so that new records are added to it, so that
-        // all existing strong references are killed (see RecordRef::alive()).
-        // If we didn't create a new chunk, and new records were added to the
-        // pre-existing last chunk, existing strong references for the last
-        // chunk wouldn't be killed.
-        _chunkCreate();
     }
     
     bool empty() const { return _state.recordRefs.empty(); }
@@ -322,17 +312,16 @@ struct RecordStore {
         uint32_t version     = 0; // Version
         uint32_t recordSize  = 0; // sizeof(T_Record)
         uint32_t recordCount = 0; // Count of RecordRef structs in Index file
-        uint32_t chunkCount  = 0; // Count of _Chunk structs in Index file
     };
     
     struct [[gnu::packed]] _SerializedRecordRef {
-        uint32_t chunkIdx = 0;
+        uint64_t chunkId = 0;
         uint32_t idx = 0;
     };
     
     static constexpr size_t _ChunkLen = sizeof(T_Record)*T_ChunkRecordCap;
     
-    static std::tuple<RecordRefs,Chunks,std::ifstream> _IndexRead(const Path& path) {
+    static std::ifstream _StateRead(const Path& path, _State& state) {
         std::ifstream f;
         f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
         f.open(_IndexPath(path));
@@ -352,55 +341,64 @@ struct RecordStore {
                 (uintmax_t)sizeof(T_Record), (uintmax_t)header.recordSize);
         }
         
-        // Create and map in each chunk
-        std::list<Chunk> chunks;
-        std::vector<Chunk*> chunksVec;
-        for (size_t i=0; i<header.chunkCount; i++) {
-            Chunk& chunk = _ChunkPush(chunks, _ChunkFileOpen(_ChunkPath(path, i)));
-            chunksVec.push_back(&chunk);
-        }
-        
         // Create RecordRefs
-        RecordRefs recordRefs;
-        recordRefs.resize(header.recordCount);
+        state.recordRefs.resize(header.recordCount);
         
-        std::optional<size_t> chunkIdxPrev;
+        std::map<ChunkId,Chunk*> chunksMap;
+        std::optional<ChunkId> chunkIdPrev;
         std::optional<size_t> idxPrev;
         for (size_t i=0; i<header.recordCount; i++) {
             _SerializedRecordRef ref;
             f.read((char*)&ref, sizeof(ref));
             
-            const size_t chunkIdx = ref.chunkIdx;
-            Chunk& chunk = *chunksVec.at(chunkIdx);
+            const ChunkId chunkId = ref.chunkId;
             
-            if (sizeof(T_Record)*(ref.idx+1) > chunk.mmap.len()) {
+            // Verify that chunkId's are monotonically increasing
+            
+            if (chunkIdPrev) {
+                if (!(chunkId >= *chunkIdPrev)) {
+                    throw Toastbox::RuntimeError("chunk ids aren't monotonically increasing (previous id: %ju, current id: %ju)",
+                        (uintmax_t)(*chunkIdPrev),
+                        (uintmax_t)(chunkId)
+                    );
+                }
+            }
+            
+            if (chunkIdPrev && idxPrev && chunkId==*chunkIdPrev) {
+                if (!(ref.idx > *idxPrev)) {
+                    throw Toastbox::RuntimeError("record indexes aren't monotonically increasing (previous index: %ju, current index: %ju)",
+                        (uintmax_t)(*idxPrev),
+                        (uintmax_t)(ref.idx)
+                    );
+                }
+            }
+            
+            Chunk*& chunk = chunksMap[chunkId];
+            if (!chunk) chunk = &state.chunks.emplace_back(chunkId, _ChunkFileOpen(_ChunkPath(path, chunkId)));
+            
+            if (sizeof(T_Record)*(ref.idx+1) > chunk->mmap.len()) {
                 throw Toastbox::RuntimeError("RecordRef extends beyond chunk (RecordRef end: 0x%jx, chunk end: 0x%jx)",
-                    (uintmax_t)(sizeof(T_Record)*ref.idx),
-                    (uintmax_t)chunk.mmap.len()
+                    (uintmax_t)(sizeof(T_Record)*(ref.idx+1)),
+                    (uintmax_t)chunk->mmap.len()
                 );
             }
             
-            if ((chunkIdxPrev && idxPrev) && (chunkIdx==*chunkIdxPrev && ref.idx<=*idxPrev)) {
-                throw Toastbox::RuntimeError("record indexes aren't monotonically increasing (previous index: %ju, current index: %ju)",
-                    (uintmax_t)(*idxPrev),
-                    (uintmax_t)(ref.idx)
-                );
-            }
+            state.recordRefs[i].chunk = chunk;
+            state.recordRefs[i].idx = ref.idx;
             
-            recordRefs[i].chunk = chunksVec.at(ref.chunkIdx);
-            recordRefs[i].idx = ref.idx;
+            chunk->recordCount++;
+            chunk->recordIdx = ref.idx+1;
             
-            chunk.recordCount++;
-            chunk.recordIdx = ref.idx+1;
-            
-            chunkIdxPrev = chunkIdx;
+            chunkIdPrev = chunkId;
             idxPrev = ref.idx;
         }
         
-        return std::make_tuple(recordRefs, std::move(chunks), std::move(f));
+        // Set state.chunkId to the last chunkId we encountered + 1
+        state.chunkId = (chunkIdPrev ? *chunkIdPrev+1 : 0);
+        return f;
     }
     
-    static std::ofstream _IndexWrite(const Path& path, const RecordRefs& recordRefs, const Chunks& chunks) {
+    static std::ofstream _StateWrite(const Path& path, const _State& state) {
         std::ofstream f;
         f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
         f.open(_IndexPath(path));
@@ -409,24 +407,17 @@ struct RecordStore {
         const _SerializedHeader header = {
             .version     = Version,
             .recordSize  = (uint32_t)sizeof(T_Record),
-            .recordCount = (uint32_t)recordRefs.size(),
-            .chunkCount  = (uint32_t)chunks.size(),
+            .recordCount = (uint32_t)state.recordRefs.size(),
         };
         f.write((char*)&header, sizeof(header));
         
         // Write RecordRefs
-        Chunk* chunkPrev = nullptr;
-        uint32_t chunkIdx = 0;
-        for (const RecordRef& ref : recordRefs) {
-            if (chunkPrev && ref.chunk!=chunkPrev) chunkIdx++;
-            
+        for (const RecordRef& ref : state.recordRefs) {
             const _SerializedRecordRef sref = {
-                .chunkIdx = chunkIdx,
+                .chunkId = ref.chunk->id,
                 .idx = (uint32_t)ref.idx,
             };
             f.write((const char*)&sref, sizeof(sref));
-            
-            chunkPrev = ref.chunk;
         }
         
         return f;
@@ -440,17 +431,8 @@ struct RecordStore {
         return path / "Chunks";
     }
     
-    static Path _ChunkPath(const Path& path, size_t idx) {
-        return _ChunksPath(path) / std::to_string(idx);
-    }
-    
-    Path _chunkPath(size_t idx) const {
-        return _ChunkPath(_state.path, idx);
-    }
-    
-    static Chunk& _ChunkPush(std::list<Chunk>& chunks, Toastbox::Mmap&& mmap) {
-        const size_t order = (chunks.empty() ? 0 : chunks.back().order+1);
-        return chunks.emplace_back(order, std::move(mmap));
+    static Path _ChunkPath(const Path& path, ChunkId id) {
+        return _ChunksPath(path) / std::to_string(id);
     }
     
     static Toastbox::Mmap _ChunkFileCreate(const Path& path) {
@@ -475,15 +457,20 @@ struct RecordStore {
         return Toastbox::Mmap(std::move(fd), cap, MAP_SHARED);
     }
     
+    Path _chunkPath(ChunkId id) const {
+        return _ChunkPath(_path, id);
+    }
+    
     Chunk& _chunkCreate() {
-        return _ChunkPush(_state.chunks, _ChunkFileCreate(_chunkPath(_state.chunks.size())));
+        const ChunkId chunkId = _state.chunkId++;
+        return _state.chunks.emplace_back(chunkId, _ChunkFileCreate(_chunkPath(chunkId)));
     }
     
     Chunk& _chunkGetWritable() {
         Chunk* chunk = nullptr;
         auto last = std::prev(_state.chunks.end());
-        if (last==_state.chunks.end() || last->recordIdx>=T_ChunkRecordCap) {
-            // We don't have any chunks, or the last chunk is full;
+        if (last==_state.chunks.end() || (last->recordIdx>=T_ChunkRecordCap || !last->alive)) {
+            // We don't have any chunks, the last chunk is full, or the last chunk is dead;
             // create a new chunk
             chunk = &_chunkCreate();
         
@@ -500,9 +487,6 @@ struct RecordStore {
         return *chunk;
     }
     
-    struct {
-        Path path;
-        RecordRefs recordRefs;
-        Chunks chunks;
-    } _state;
+    Path _path;
+    _State _state;
 };

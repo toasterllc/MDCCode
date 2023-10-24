@@ -687,7 +687,7 @@ struct MDCDevice : Object, ImageSource {
                     },
                 };
                 
-                printf("[_loadImages:p%ju] Enqueuing _SDReadWork\n", (uintmax_t)priority);
+//                printf("[_loadImages:p%ju] Enqueuing _SDReadWork\n", (uintmax_t)priority);
                 {
                     auto lock = _sdRead.signal.lock();
                     _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
@@ -786,16 +786,17 @@ struct MDCDevice : Object, ImageSource {
                     
                     // Calculate how many images to add to the end of the library: device has, lib doesn't
                     {
-                        const Img::Id libImgIdEnd = (!_imageLibrary->empty() ? _imageLibrary->back()->info.id+1 : 0);
+                        Img::Id libImgIdEnd = (!_imageLibrary->empty() ? _imageLibrary->back()->info.id+1 : 0);
+                        // If our image library claims to have newer images than the device, clear the image library
                         if (libImgIdEnd > deviceImageRange.end) {
-                            #warning TODO: how do we properly handle this situation?
-                            throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImageRange.end: %ju)",
-                                (uintmax_t)libImgIdEnd,
-                                (uintmax_t)deviceImageRange.end
-                            );
+                            printf("[_sync_thread] Image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImageRange.end: %ju)\n", (uintmax_t)libImgIdEnd, (uintmax_t)deviceImageRange.end);
+                            printf("[_sync_thread] Clearing image library\n");
+                            _imageLibrary->clear();
+                            libImgIdEnd = 0;
                         }
                         
                         addCount = (uint32_t)(deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd));
+//                        addCount = 1000;
                         addCount = 20000;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary->add(addCount);
@@ -844,6 +845,12 @@ struct MDCDevice : Object, ImageSource {
                         }
                         observersNotify({});
                     });
+                }
+                
+                // Write the image library now that we're done syncing
+                {
+                    auto lock = std::unique_lock(*_imageLibrary);
+                    _imageLibrary->write();
                 }
             }
         
