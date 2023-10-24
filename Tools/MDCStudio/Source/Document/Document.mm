@@ -47,6 +47,7 @@ using namespace MDCStudio;
         ImageSourcePtr imageSource;
         ImageLibraryPtr imageLibrary;
         
+        Object::ObserverPtr deviceOb;
         Object::ObserverPtr imageLibraryOb;
         
         ImageGridScrollView* imageGridScrollView;
@@ -239,12 +240,20 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
         __weak auto selfWeak = self;
         
         // Observe image library
+        _active.deviceOb = device->observerAdd([=] (const Object::Event& ev) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _activeDeviceChanged]; });
+        });
+        
+        // Observe image library
         _active.imageLibraryOb = _active.imageLibrary->observerAdd([=] (const Object::Event& ev) {
             const auto type = static_cast<const ImageLibrary::Event&>(ev).type;
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
         });
         
-        _active.imageGridScrollView = [[DeviceImageGridScrollView alloc] initWithDevice:device];
+        DeviceImageGridScrollView* imageGridScrollView = [[DeviceImageGridScrollView alloc] initWithDevice:device];
+        [[imageGridScrollView configureDeviceButton] setTarget:self];
+        [[imageGridScrollView configureDeviceButton] setAction:@selector(_showSettingsForActiveDevice:)];
+        _active.imageGridScrollView = imageGridScrollView;
         
         _active.imageGridView = Toastbox::Cast<ImageGridView*>([_active.imageGridScrollView document]);
         [_active.imageGridView setDelegate:self];
@@ -296,6 +305,24 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     const bool haveDevices = !imageSources.empty();
     [_splitView setHidden:!haveDevices];
     [_noDevicesView setHidden:haveDevices];
+}
+
+// MARK: - Device Observer
+- (void)_activeDeviceChanged {
+    MDCDevicePtr device = Toastbox::Cast<MDCDevicePtr>(_active.imageSource);
+    
+    bool libraryEmpty = false;
+    {
+        ImageLibraryPtr imageLibrary = device->imageLibrary();
+        auto lock = std::unique_lock(*imageLibrary);
+        libraryEmpty = imageLibrary->empty();
+    }
+    
+    // Perform an initial load the first time our image library doesn't have photos, but the device does.
+    // This is a simple UX affordance for a nicer 'out of box' experience.
+    if (libraryEmpty && device->status().loadImageCount) {
+        device->sync();
+    }
 }
 
 // MARK: - ImageLibrary Observer
@@ -385,6 +412,11 @@ static void _SortNewestFirst(bool x) {
     NSView* view = [self _inspectorContainerView];
     const bool shown = [view isHidden];
     [view setHidden:!shown];
+}
+
+- (IBAction)_showSettingsForActiveDevice:(id)sender {
+    MDCDevicePtr device = Toastbox::Cast<MDCDevicePtr>(_active.imageSource);
+    [self _showSettingsForDevice:device];
 }
 
 // MARK: - Device Settings

@@ -8,6 +8,7 @@ using namespace MDCStudio;
 
 @implementation DeviceImageGridScrollView {
     IBOutlet NSView* _noPhotosView;
+    IBOutlet NSButton* _configureDeviceButton;
     
     MDCDevicePtr _device;
     Object::ObserverPtr _deviceOb;
@@ -52,13 +53,6 @@ using namespace MDCStudio;
     return self;
 }
 
-static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibraryPtr imageLibrary) {
-    // Short-circut if syncing is in progress.
-    // In that case, we don't want to show the 'Load' button in the header
-    if (status.syncProgress) return std::nullopt;
-    return MDCDevice::LoadImageCount(std::unique_lock(*imageLibrary), imageLibrary, status.imageRange);
-}
-
 // _update is a private method used by NSScrollView!
 // We're naming this _refresh instead...
 - (void)_refresh {
@@ -79,7 +73,7 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     }
     
     // Update unloaded photo count
-    const size_t loadCount = _LoadCount(status, imageLibrary).value_or(0);
+    const size_t loadCount = (!status.syncProgress ? status.loadImageCount : 0);
     {
         [_headerView setLoadCount:loadCount];
     }
@@ -89,9 +83,10 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
         [_headerView setProgress:status.syncProgress.value_or(0)];
     }
     
+    // Update our 'no photos' state
     {
-        const bool noPhotos = _device->imageLibrary()->empty() && !loadCount;
         auto lock = std::unique_lock(*_device->imageLibrary());
+        const bool noPhotos = _device->imageLibrary()->empty();
         [_headerView setHidden:noPhotos];
         [_noPhotosView setHidden:!noPhotos];
     }
@@ -103,8 +98,8 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     _device->sync();
 }
 
-- (IBAction)_configureDevice:(id)sender {
-    
+- (NSButton*)configureDeviceButton {
+    return _configureDeviceButton;
 }
 
 @end

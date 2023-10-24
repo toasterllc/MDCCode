@@ -37,7 +37,7 @@ struct MDCDevice : ImageSource {
     
     struct Status {
         float batteryLevel = 0;
-        ImageRange imageRange;
+        size_t loadImageCount = 0;
         std::optional<float> syncProgress;
     };
     
@@ -227,19 +227,24 @@ struct MDCDevice : ImageSource {
     // MARK: - Status
     
     Status status() {
-        Status x;
-        {
-            auto lock = _status.signal.lock();
-            x.batteryLevel = _status.batteryLevel;
-            x.imageRange = _GetImageRange(_GetImgRingBuf(_status.state.sd), _status.state.sd.imgCap);
-        }
+        auto statusLock = _status.signal.lock();
+            const auto state = _status.state;
+            const auto batteryLevel = _status.batteryLevel;
+        statusLock.unlock();
         
-        {
-            auto lock = std::unique_lock(_sync.lock);
-            x.syncProgress = _sync.progress;
-        }
+        auto syncLock = std::unique_lock(_sync.lock);
+            auto syncProgress = _sync.progress;
+        syncLock.unlock();
         
-        return x;
+        const ImageRange deviceImageRange = _GetImageRange(_GetImgRingBuf(state.sd), state.sd.imgCap);
+        const std::optional<size_t> loadImageCount = LoadImageCount(std::unique_lock(*_imageLibrary),
+            _imageLibrary, deviceImageRange);
+        
+        return Status{
+            .batteryLevel = batteryLevel,
+            .loadImageCount = loadImageCount.value_or(0),
+            .syncProgress = syncProgress,
+        };
     }
     
     // MARK: - ImageSource
@@ -778,16 +783,6 @@ struct MDCDevice : ImageSource {
         }
         return deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd);
     }
-    
-    
-//    static std::optional<size_t> LoadImageCount(const ImageRange& deviceImageRange, Img::Id libImgIdEnd) {
-//        // If our image library claims to have newer images than the device, return an error
-//        if (libImgIdEnd > deviceImageRange.end) {
-//            return std::nullopt;
-//        }
-//        
-//        return deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd);
-//    }
     
     void _sync_thread() {
         try {
