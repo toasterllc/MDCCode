@@ -395,19 +395,8 @@ struct MDCDevice : Object, ImageSource {
     
     struct __Cleanup {
         __Cleanup(std::function<void()> fn) : _fn(fn) {}
-        ~__Cleanup() noexcept(false) {
-            const bool throwAllowed = (_exceptionCount == std::uncaught_exceptions());
-            try {
-                _fn();
-            } catch (...) {
-                if (throwAllowed) {
-                    printf("THROWING EXCEPTION\n");
-                    throw;
-                }
-            }
-        }
+        ~__Cleanup() { _fn(); }
         std::function<void()> _fn;
-        int _exceptionCount = std::uncaught_exceptions();
     };
     
     using _Cleanup = std::unique_ptr<__Cleanup>;
@@ -1193,7 +1182,9 @@ struct MDCDevice : Object, ImageSource {
             // If device IO fails (ie hostModeSet()), clean up our state and rethrow the exception
             _hostMode.deviceLock = {};
             _hostMode.suddenTermination = {};
-            throw;
+            // Only throw when enabling; when disabling we're executing within a destructor,
+            // so we don't want to throw in that case.
+            if (en) throw;
         }
     }
     
@@ -1238,7 +1229,9 @@ struct MDCDevice : Object, ImageSource {
         } catch (...) {
             // If device IO fails (ie via _hostModeEnter()), clean up our state and rethrow the exception
             _sdMode.hostMode = {};
-            throw;
+            // Only throw when enabling; when disabling we're executing within a destructor,
+            // so we don't want to throw in that case.
+            if (en) throw;
         }
     }
     
