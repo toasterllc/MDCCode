@@ -687,7 +687,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     {
         __weak auto selfWeak = self;
         _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
-            [selfWeak _handleImageLibraryEvent:dynamic_cast<const ImageLibrary::Event&>(ev)];
+            [selfWeak _handleImageLibraryEvent:static_cast<const ImageLibrary::Event&>(ev)];
         });
     }
     

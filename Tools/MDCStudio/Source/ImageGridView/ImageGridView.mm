@@ -6,7 +6,6 @@
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "Grid.h"
-#import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
 #import "Code/Shared/Img.h"
 #import "ImageExporter/ImageExporter.h"
 #import "Toastbox/LRU.h"
@@ -105,7 +104,7 @@ static CGColorSpaceRef _SRGBColorSpace() {
     {
         __weak auto selfWeak = self;
         _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
-            [selfWeak _handleImageLibraryEvent:dynamic_cast<const ImageLibrary::Event&>(ev)];
+            [selfWeak _handleImageLibraryEvent:static_cast<const ImageLibrary::Event&>(ev)];
         });
     }
     

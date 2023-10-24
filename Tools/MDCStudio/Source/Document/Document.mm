@@ -11,13 +11,12 @@
 #import "ImageLibraryStatus.h"
 #import "DeviceSettings/DeviceSettingsView.h"
 #import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
-#import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
 #import "FactoryResetConfirmationAlert/FactoryResetConfirmationAlert.h"
 #import "MDCDevicesManager.h"
 
 using namespace MDCStudio;
 
-@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, FullSizeImageViewDelegate, DeviceSettingsViewDelegate, DeviceImageGridHeaderViewDelegate>
+@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, FullSizeImageViewDelegate, DeviceSettingsViewDelegate>
 @end
 
 @implementation Document {
@@ -48,13 +47,10 @@ using namespace MDCStudio;
         ImageSourcePtr imageSource;
         ImageLibraryPtr imageLibrary;
         
-        Object::ObserverPtr deviceOb;
         Object::ObserverPtr imageLibraryOb;
         
         ImageGridScrollView* imageGridScrollView;
         ImageGridView* imageGridView;
-        ImageGridHeaderView* imageGridHeaderView;
-        
         FullSizeImageView* fullSizeImageView;
         
         InspectorView* inspectorView;
@@ -241,27 +237,20 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
         _active.imageLibrary = _active.imageSource->imageLibrary();
         
         __weak auto selfWeak = self;
-        // Observe device
-        _active.deviceOb = device->observerAdd([=] (auto) {
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _deviceChanged]; });
-        });
         
         // Observe image library
         _active.imageLibraryOb = _active.imageLibrary->observerAdd([=] (const Object::Event& ev) {
-            const auto type = dynamic_cast<const ImageLibrary::Event&>(ev).type;
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEvent:type]; });
+            const auto type = static_cast<const ImageLibrary::Event&>(ev).type;
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
         });
         
-        _active.imageGridView = [[ImageGridView alloc] initWithImageSource:device];
-        [_active.imageGridView setDelegate:self];
+//        _active.imageGridView = [[ImageGridView alloc] initWithImageSource:device];
+//        [_active.imageGridView setDelegate:self];
+//        _UpdateImageGridViewFromPrefs(PrefsGlobal(), _active.imageGridView);
+        
+        _active.imageGridScrollView = [[DeviceImageGridScrollView alloc] initWithDevice:device];
+        _active.imageGridView = Toastbox::Cast<ImageGridView*>([_active.imageGridScrollView document]);
         _UpdateImageGridViewFromPrefs(PrefsGlobal(), _active.imageGridView);
-        
-        DeviceImageGridHeaderView* headerView = [[DeviceImageGridHeaderView alloc] initWithFrame:{}];
-        [headerView setDelegate:self];
-        _active.imageGridHeaderView = headerView;
-        
-        _active.imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:_active.imageGridView];
-        [_active.imageGridScrollView setHeaderView:_active.imageGridHeaderView];
         
         _active.fullSizeImageView = [[FullSizeImageView alloc] initWithImageSource:device];
         [_active.fullSizeImageView setDelegate:self];
@@ -271,7 +260,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     
     _SetView(_center, _active.imageGridScrollView);
     _SetView(_right, _active.inspectorView);
-    [self _updateImageGridHeader];
     
     [_window makeFirstResponder:_active.imageGridView];
 }
@@ -298,62 +286,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     }];
 }
 
-static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLibraryPtr imageLibrary) {
-    // Short-circut if syncing is in progress.
-    // In that case, we don't want to show the 'Load' button in the header
-    if (status.syncProgress) return std::nullopt;
-    
-    {
-        auto lock = std::unique_lock(*imageLibrary);
-        const Img::Id libImgIdEnd = (!imageLibrary->empty() ? imageLibrary->back()->info.id+1 : 0);
-        
-        // Calculate how many images to add to the end of the library: device has, lib doesn't
-        if (libImgIdEnd > status.imageRange.end) {
-            #warning TODO: how do we properly handle this situation?
-            throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, status.imgIdEnd: %ju)",
-                (uintmax_t)libImgIdEnd,
-                (uintmax_t)status.imageRange.end
-            );
-        }
-        
-        return status.imageRange.end - std::max(status.imageRange.begin, libImgIdEnd);
-    }
-}
-
-- (void)_updateImageGridHeader {
-    MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>(_active.imageSource);
-    if (!device) return;
-    
-    ImageLibraryPtr imageLibrary = device->imageLibrary();
-    DeviceImageGridHeaderView* deviceHeader = Toastbox::Cast<DeviceImageGridHeaderView*>(_active.imageGridHeaderView);
-    const MDCDevice::Status status = device->status();
-    const ImageSet& selection = _active.imageSource->selection();
-    
-    // Update status
-    if (selection.empty()) {
-        [_active.imageGridHeaderView setStatus:@(ImageLibraryStatus(imageLibrary).c_str())];
-    
-    } else {
-        const Time::Instant first = (*selection.begin())->info.timestamp;
-        const Time::Instant last = (*std::prev(selection.end()))->info.timestamp;
-        const std::string status = ImageLibraryStatus(selection.size(), first, last,
-            "photo selected", "photos selected");
-        [_active.imageGridHeaderView setStatus:@(status.c_str())];
-    }
-    
-    // Update unloaded photo count
-    {
-        const std::optional<size_t> loadCount = _LoadCount(status, imageLibrary);
-        [deviceHeader setLoadCount:loadCount.value_or(0)];
-    }
-    
-    // Upload load progress
-    {
-        const float progress = status.syncProgress.value_or(0);
-        [deviceHeader setProgress:progress];
-    }
-}
-
 - (void)_updateDevices {
     std::vector<MDCDevicePtr> devices = MDCDevicesManagerGlobal()->devices();
     std::set<ImageSourcePtr> imageSources;
@@ -368,26 +300,17 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     [_noDevicesView setHidden:haveDevices];
 }
 
-- (void)_deviceChanged {
-    [self _updateImageGridHeader];
-}
-
 // MARK: - ImageLibrary Observer
-- (void)_handleImageLibraryEvent:(ImageLibrary::Event::Type)type {
+- (void)_handleImageLibraryEventType:(ImageLibrary::Event::Type)type {
     switch (type) {
-    case ImageLibrary::Event::Type::Add:
-    case ImageLibrary::Event::Type::Remove:
-    case ImageLibrary::Event::Type::ChangeProperty:
-    case ImageLibrary::Event::Type::ChangeThumbnail:
-        break;
     case ImageLibrary::Event::Type::Clear:
         // When the image library is cleared, return to the grid view
         _SetView(_center, _active.imageGridScrollView);
         _active.imageSource->selection({});
         break;
+    default:
+        break;
     }
-    
-    [self _updateImageGridHeader];
 }
 
 // MARK: - Image Grid
@@ -415,16 +338,6 @@ static std::optional<size_t> _LoadCount(const MDCDevice::Status& status, ImageLi
     _active.imageSource->selection({ rec });
     [_window makeFirstResponder:_active.imageGridView];
     [_active.imageGridView scrollToImageRect:[_active.imageGridView rectForImageRecord:rec] center:true];
-//    [NSTimer scheduledTimerWithTimeInterval:0 repeats:false block:^(NSTimer* timer) {
-//        [_active.imageGridView scrollToImageRect:[_active.imageGridView rectForImageRecord:rec] center:true];
-//    }];
-//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer* timer) {
-//        [_active.imageGridView scrollToImageRect:[_active.imageGridView rectForImageRecord:[_active.fullSizeImageView imageRecord]]];
-//    }];
-    
-//    ImageGridView* imageGridView = Toastbox::Cast<ImageGridView*>([imageGridScrollView document]);
-//    
-//    [_active.imageGridScrollView imageGridView];
 }
 
 - (void)fullSizeImageViewPreviousImage:(FullSizeImageView*)x {
@@ -519,13 +432,6 @@ static void _SortNewestFirst(bool x) {
     
     [_window endSheet:[_deviceSettings.view window]];
     _deviceSettings = {};
-}
-
-// MARK: - DeviceImageGridHeaderViewDelegate
-
-- (void)deviceImageGridHeaderViewLoad:(DeviceImageGridHeaderView*)x {
-    MDCDevicePtr device = Toastbox::Cast<MDCDevicePtr>(_active.imageSource);
-    device->sync();
 }
 
 @end

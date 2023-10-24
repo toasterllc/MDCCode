@@ -18,7 +18,6 @@
 		553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5542AD4953400157484 /* BatteryLifePlotView.mm */; };
 		553EF5612AD7174800157484 /* FullSizeImageHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 553EF55F2AD7174800157484 /* FullSizeImageHeaderView.xib */; };
 		553EF5622AD7174800157484 /* FullSizeImageHeaderView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5602AD7174800157484 /* FullSizeImageHeaderView.mm */; };
-		553EF56B2AD889E500157484 /* ImageGridHeaderView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF56A2AD889E500157484 /* ImageGridHeaderView.mm */; };
 		55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B2229A02F7D00F25D57 /* InspectorView.mm */; };
 		55425B2629A0752300F25D57 /* InspectorView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55425B2529A0752300F25D57 /* InspectorView.xib */; };
 		55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B5C29A2B8C900F25D57 /* ImageCornerButton.mm */; };
@@ -150,8 +149,6 @@
 		553EF55E2AD7174700157484 /* FullSizeImageHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FullSizeImageHeaderView.h; sourceTree = "<group>"; };
 		553EF55F2AD7174800157484 /* FullSizeImageHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FullSizeImageHeaderView.xib; sourceTree = "<group>"; };
 		553EF5602AD7174800157484 /* FullSizeImageHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FullSizeImageHeaderView.mm; sourceTree = "<group>"; };
-		553EF5692AD889E500157484 /* ImageGridHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridHeaderView.h; sourceTree = "<group>"; };
-		553EF56A2AD889E500157484 /* ImageGridHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridHeaderView.mm; sourceTree = "<group>"; };
 		553EF56C2AD8E4DF00157484 /* Object.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Object.h; sourceTree = "<group>"; };
 		55425B1929A01BE000F25D57 /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		55425B2229A02F7D00F25D57 /* InspectorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorView.mm; sourceTree = "<group>"; };
@@ -432,15 +429,6 @@
 			path = FullSizeImageHeaderView;
 			sourceTree = "<group>";
 		};
-		553EF5632AD889D100157484 /* ImageGridHeaderView */ = {
-			isa = PBXGroup;
-			children = (
-				553EF5692AD889E500157484 /* ImageGridHeaderView.h */,
-				553EF56A2AD889E500157484 /* ImageGridHeaderView.mm */,
-			);
-			path = ImageGridHeaderView;
-			sourceTree = "<group>";
-		};
 		55425B1729A01BE000F25D57 /* Mac */ = {
 			isa = PBXGroup;
 			children = (
@@ -673,9 +661,7 @@
 			isa = PBXGroup;
 			children = (
 				551328BA27B45E6200CD823B /* ImageGridView */,
-				553EF5632AD889D100157484 /* ImageGridHeaderView */,
 				558E20182AC8F977001E743A /* DeviceImageGridScrollView */,
-				558E20042AC4B608001E743A /* DeviceImageGridHeaderView */,
 				55F8D01127BEF3E500757165 /* FullSizeImageView */,
 				5544A7E927B5E011006AB473 /* SourceListView */,
 				55425B1C29A02F6500F25D57 /* InspectorView */,
@@ -760,6 +746,7 @@
 		558E20182AC8F977001E743A /* DeviceImageGridScrollView */ = {
 			isa = PBXGroup;
 			children = (
+				558E20042AC4B608001E743A /* DeviceImageGridHeaderView */,
 				558E201A2AC8F977001E743A /* DeviceImageGridScrollView.h */,
 				558E20192AC8F977001E743A /* DeviceImageGridScrollView.mm */,
 				55C6A2A12AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib */,
@@ -1088,7 +1075,6 @@
 				55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */,
 				558FFC5829C8F26F0022E840 /* EstimateIlluminant.mm in Sources */,
 				55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */,
-				553EF56B2AD889E500157484 /* ImageGridHeaderView.mm in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
 				55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */,
 				55C6A27B2AE44599008149AF /* ImageExportProgressDialog.mm in Sources */,

@@ -83,7 +83,7 @@ static CGColorSpaceRef _SRGBColorSpace() {
     {
         __weak auto selfWeak = self;
         _imageLibraryOb = _imageSource->imageLibrary()->observerAdd([=] (const Object::Event& ev) {
-            [selfWeak _handleImageLibraryEvent:dynamic_cast<const ImageLibrary::Event&>(ev)];
+            [selfWeak _handleImageLibraryEvent:static_cast<const ImageLibrary::Event&>(ev)];
         });
     }
     
