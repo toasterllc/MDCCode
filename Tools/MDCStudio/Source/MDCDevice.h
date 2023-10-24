@@ -606,7 +606,7 @@ struct MDCDevice : ImageSource {
         if (!count || !notify.empty()) state.signal.signalAll();
     }
     
-    void _renderEnqueue(std::unique_lock<std::mutex>& lock, _LoadState& state, bool initial, bool validateChecksum, ImageRecordPtr rec, _ThumbBuffer buf) {
+    void _renderEnqueue(const std::unique_lock<std::mutex>& lock, _LoadState& state, bool initial, bool validateChecksum, ImageRecordPtr rec, _ThumbBuffer buf) {
         // Enqueue _RenderWork into _thumbRender.queue
         _thumbRender.queue.push(_RenderWork{
             .initial = initial,
@@ -768,6 +768,27 @@ struct MDCDevice : ImageSource {
     
     // MARK: - Sync
     
+    static std::optional<size_t> LoadImageCount(const std::unique_lock<ImageLibrary>& lock,
+        ImageLibraryPtr imageLibrary, const ImageRange& deviceImageRange) {
+        
+        const Img::Id libImgIdEnd = (!imageLibrary->empty() ? imageLibrary->back()->info.id+1 : 0);
+        // If our image library claims to have newer images than the device, return an error
+        if (libImgIdEnd > deviceImageRange.end) {
+            return std::nullopt;
+        }
+        return deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd);
+    }
+    
+    
+//    static std::optional<size_t> LoadImageCount(const ImageRange& deviceImageRange, Img::Id libImgIdEnd) {
+//        // If our image library claims to have newer images than the device, return an error
+//        if (libImgIdEnd > deviceImageRange.end) {
+//            return std::nullopt;
+//        }
+//        
+//        return deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd);
+//    }
+    
     void _sync_thread() {
         try {
             auto lock = _status.signal.lock();
@@ -801,16 +822,16 @@ struct MDCDevice : ImageSource {
                     
                     // Calculate how many images to add to the end of the library: device has, lib doesn't
                     {
-                        Img::Id libImgIdEnd = (!_imageLibrary->empty() ? _imageLibrary->back()->info.id+1 : 0);
-                        // If our image library claims to have newer images than the device, clear the image library
-                        if (libImgIdEnd > deviceImageRange.end) {
-                            printf("[_sync_thread] Image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImageRange.end: %ju)\n", (uintmax_t)libImgIdEnd, (uintmax_t)deviceImageRange.end);
+                        
+                        const std::optional<size_t> count = LoadImageCount(lock, _imageLibrary, deviceImageRange);
+                        if (count) {
+                            addCount = (uint32_t)*count;
+                        } else {
+                            printf("[_sync_thread] LoadImageCount failed\n");
                             printf("[_sync_thread] Clearing image library\n");
                             _imageLibrary->clear();
-                            libImgIdEnd = 0;
                         }
                         
-                        addCount = (uint32_t)(deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd));
 //                        addCount = 1000;
 //                        addCount = 20000;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);

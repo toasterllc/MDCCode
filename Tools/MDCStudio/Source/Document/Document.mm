@@ -244,12 +244,10 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
         });
         
-//        _active.imageGridView = [[ImageGridView alloc] initWithImageSource:device];
-//        [_active.imageGridView setDelegate:self];
-//        _UpdateImageGridViewFromPrefs(PrefsGlobal(), _active.imageGridView);
-        
         _active.imageGridScrollView = [[DeviceImageGridScrollView alloc] initWithDevice:device];
+        
         _active.imageGridView = Toastbox::Cast<ImageGridView*>([_active.imageGridScrollView document]);
+        [_active.imageGridView setDelegate:self];
         _UpdateImageGridViewFromPrefs(PrefsGlobal(), _active.imageGridView);
         
         _active.fullSizeImageView = [[FullSizeImageView alloc] initWithImageSource:device];

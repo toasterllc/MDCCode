@@ -9,6 +9,7 @@
             <connections>
                 <outlet property="_heightConstraint" destination="3zV-F0-Xdo" id="Wtu-KW-VjE"/>
                 <outlet property="_hideLoadPhotosConstraint" destination="LYc-fl-6F9" id="3sd-dO-kJI"/>
+                <outlet property="_loadButton" destination="DUf-K3-QmS" id="8ye-sZ-QIZ"/>
                 <outlet property="_loadPhotosCountLabel" destination="lj9-Jf-aEb" id="Qev-FI-9rx"/>
                 <outlet property="_nibView" destination="MCr-up-gtv" id="MuD-1o-jBO"/>
                 <outlet property="_progressIndicator" destination="n4F-mV-p8l" id="gSP-C6-ji7"/>
@@ -57,9 +58,6 @@
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
-                            <connections>
-                                <action selector="load:" target="-2" id="W52-bC-oHJ"/>
-                            </connections>
                         </button>
                     </subviews>
                     <constraints>
