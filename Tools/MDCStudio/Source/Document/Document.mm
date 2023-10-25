@@ -398,6 +398,16 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 // MARK: - ImageLibrary Observer
 - (void)_handleImageLibraryEventType:(ImageLibrary::Event::Type)type {
     switch (type) {
+    case ImageLibrary::Event::Type::Remove:
+        // Go back to the grid view if the currently-displayed full-size image is deleted
+        if (_center.view == _active.fullSizeImageView) {
+            auto lock = std::unique_lock(*_active.imageLibrary);
+            const bool deleted = _active.imageLibrary->find([_active.fullSizeImageView imageRecord]) == _active.imageLibrary->end();
+            if (deleted) {
+                _SetView(_center, _active.imageGridScrollView);
+            }
+        }
+        break;
     case ImageLibrary::Event::Type::Clear:
         // When the image library is cleared, return to the grid view
         _SetView(_center, _active.imageGridScrollView);
