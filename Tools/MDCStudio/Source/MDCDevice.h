@@ -839,7 +839,7 @@ struct MDCDevice : ImageSource {
                             _imageLibrary->clear();
                         }
                         
-                        addCount = 1000;
+//                        addCount = 1000;
 //                        addCount = 20000;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary->add(addCount);

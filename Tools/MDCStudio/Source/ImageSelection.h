@@ -16,7 +16,6 @@ struct ImageSelection : Object {
         });
     }
     
-    
     // Thread-unsafe; main thread only!
     ObjectProperty(ImageSet, _images);
     const ImageSet& images() { return __images; }
@@ -33,8 +32,29 @@ struct ImageSelection : Object {
         _images(x);
     }
     
+    void _handleImagesRemoved(const ImageSet& images) {
+        // Remove images from the selection that were removed from the ImageLibrary
+        bool changed = false;
+        for (ImageRecordPtr rec : images) {
+            changed |= __images.erase(rec);
+        }
+        if (changed) observersNotify({});
+    }
+    
     void _handleImageLibraryEvent(const ImageLibrary::Event& ev) {
+        // Only pay attention to removals
+        if (ev.type != ImageLibrary::Event::Type::Remove) {
+            return;
+        }
         
+        // Trampoline to the main thread
+        // We always need to do this, even if we're already on the main thread,
+        // because we don't want the ImageLibrary to be locked when we callout.
+        const auto imagesCopy = ev.records;
+        auto me = self<ImageSelection>();
+        dispatch_async(dispatch_get_main_queue(), ^{
+            me->_handleImagesRemoved(imagesCopy);
+        });
     }
     
     ImageLibraryPtr _imageLibrary;

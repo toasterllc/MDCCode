@@ -271,6 +271,7 @@ struct RecordStore {
         }
     }
     
+    // remove(): remove a range of records
     void remove(RecordRefConstIter begin, RecordRefConstIter end) {
         for (auto it=begin; it!=end; it++) {
             Chunk& chunk = const_cast<Chunk&>(*it->chunk);
@@ -278,6 +279,40 @@ struct RecordStore {
         }
         
         _state.recordRefs.erase(begin, end);
+    }
+    
+    // remove(): remove a set of records by composing iterator ranges for the set
+    template<typename T>
+    void remove(const std::set<T>& recs) {
+        // Create a vector of iterator ranges from `recs`
+        struct IterRange {
+            RecordRefConstIter first;
+            RecordRefConstIter last;
+        };
+        
+        std::vector<IterRange> iterRanges;
+        std::optional<IterRange> iterRangeCurrent;
+        for (auto it=_state.recordRefs.begin(); it!=_state.recordRefs.end(); it++) {
+            if (recs.find(*it) != recs.end()) {
+                if (!iterRangeCurrent) iterRangeCurrent = { it, it };
+                iterRangeCurrent->last = it;
+            } else {
+                if (iterRangeCurrent) {
+                    iterRanges.push_back(*iterRangeCurrent);
+                    iterRangeCurrent = std::nullopt;
+                }
+            }
+        }
+        
+        // Push final IterRange
+        if (iterRangeCurrent) iterRanges.push_back(*iterRangeCurrent);
+        
+        // Call remove() for each IterRange
+        // Iterate backwards over iterRanges, to ensure the iterators remain valid as we remove them!
+        printf("[RecordStore] Removing %ju ranges of records\n", (uintmax_t)iterRanges.size());
+        for (auto it=iterRanges.rbegin(); it!=iterRanges.rend(); it++) {
+            remove(it->first, it->last+1);
+        }
     }
     
     void clear() {

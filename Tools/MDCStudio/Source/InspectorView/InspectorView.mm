@@ -1285,10 +1285,9 @@ static void _Update(Item* it) {
 }
 
 - (void)_handleSelectionEvent:(const Object::Event&)ev {
-    assert(ev.prop == &_selection->__images);
     // Selection changes must only occur on the main thread!
     assert([NSThread isMainThread]);
-    [self _selectionChanged];
+//    [self _selectionChanged];
 }
 
 - (void)_selectionChanged {

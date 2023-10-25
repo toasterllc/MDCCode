@@ -306,6 +306,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     return ct;
 }
 
+// ImageLibrary must be locked!
 - (void)_display:(id<MTLTexture>)drawableTxt commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     const CGRect frame = [self frame];
     const CGFloat contentsScale = [self contentsScale];
@@ -602,22 +603,25 @@ struct SelectionDelta {
         assert(selectionBackIt != end);
         const size_t selectionIdx = selectionFrontIt - begin;
         
-        {
-            auto begin = _imageLibrary->begin();
-            ssize_t idxFront = &*selectionFrontIt - &*begin;
-            ssize_t idxBack = &*selectionBackIt - &*begin;
-            if (idxFront > idxBack) std::swap(idxFront, idxBack);
-            
-            // Erase backwards so the index stays valid!
-            for (ssize_t i=idxBack; i>=idxFront; i--) {
-                const auto remBegin = begin+i;
-                const auto remEnd = begin+i+1;
-                // Only erase images that are in the selection
-                if (selection.erase(*remBegin)) {
-                    _imageLibrary->remove(remBegin, remEnd);
-                }
-            }
-        }
+        // Perform the removal
+        _imageLibrary->remove(selection);
+        
+//        {
+//            auto begin = _imageLibrary->begin();
+//            ssize_t idxFront = &*selectionFrontIt - &*begin;
+//            ssize_t idxBack = &*selectionBackIt - &*begin;
+//            if (idxFront > idxBack) std::swap(idxFront, idxBack);
+//            
+//            // Erase backwards so the index stays valid!
+//            for (ssize_t i=idxBack; i>=idxFront; i--) {
+//                const auto remBegin = begin+i;
+//                const auto remEnd = begin+i+1;
+//                // Only erase images that are in the selection
+//                if (selection.erase(*remBegin)) {
+//                    _imageLibrary->remove(remBegin, remEnd);
+//                }
+//            }
+//        }
         
         // Construct `newSelection`
         {
@@ -637,7 +641,6 @@ struct SelectionDelta {
 // MARK: - ImageSelection Observer
 
 - (void)_handleSelectionEvent:(const Object::Event&)ev {
-    assert(ev.prop == &_selection->__images);
     // Selection changes must only occur on the main thread!
     assert([NSThread isMainThread]);
     [self _selectionUpdate];

@@ -109,8 +109,8 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
     
     void add(size_t count) {
         RecordStore::add(count);
-        // Notify observers that we changed
         
+        // Notify observers that we changed
         Event ev;
         ev.type = Event::Type::Add;
         for (auto i=end()-count; i!=end(); i++) {
@@ -128,6 +128,16 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
         
         RecordStore::remove(begin, end);
         // Notify observers that we changed
+        Object::observersNotify(ev);
+    }
+    
+    void remove(const std::set<RecordStrongRef>& recs) {
+        RecordStore::remove(recs);
+        
+        // Notify observers that we changed
+        Event ev;
+        ev.type = Event::Type::Remove;
+        ev.records = recs;
         Object::observersNotify(ev);
     }
     
