@@ -201,13 +201,7 @@ struct RecordStore {
     std::ifstream read(Path path) {
         _path = path;
         std::filesystem::create_directories(_ChunksPath(_path));
-        try {
-            _state = {};
-            return _StateRead(_path, _state);
-        } catch (...) {
-            _state = {};
-            throw;
-        }
+        return _StateRead(_path, _state);
     }
     
     std::ofstream write() {
@@ -317,85 +311,96 @@ struct RecordStore {
     struct [[gnu::packed]] _SerializedRecordRef {
         uint64_t chunkId = 0;
         uint32_t idx = 0;
+        
+        // Make sure the type of `chunkId` matches ChunkId
+        static_assert(std::is_same_v<decltype(chunkId), ChunkId>);
     };
     
     static constexpr size_t _ChunkLen = sizeof(T_Record)*T_ChunkRecordCap;
     
     static std::ifstream _StateRead(const Path& path, _State& state) {
-        std::ifstream f;
-        f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-        f.open(_IndexPath(path));
-        
-        _SerializedHeader header;
-        f.read((char*)&header, sizeof(header));
-        
-        if (header.version != Version) {
-            throw Toastbox::RuntimeError("invalid header version (expected: 0x%jx, got: 0x%jx)",
-                (uintmax_t)Version,
-                (uintmax_t)header.version
-            );
-        }
-        
-        if (header.recordSize != sizeof(T_Record)) {
-            throw Toastbox::RuntimeError("record size mismatch (expected: %ju, got: %ju)",
-                (uintmax_t)sizeof(T_Record), (uintmax_t)header.recordSize);
-        }
-        
-        // Create RecordRefs
-        state.recordRefs.resize(header.recordCount);
-        
-        std::map<ChunkId,Chunk*> chunksMap;
-        std::optional<ChunkId> chunkIdPrev;
-        std::optional<size_t> idxPrev;
-        for (size_t i=0; i<header.recordCount; i++) {
-            _SerializedRecordRef ref;
-            f.read((char*)&ref, sizeof(ref));
+        try {
+            state = {};
             
-            const ChunkId chunkId = ref.chunkId;
+            std::ifstream f;
+            f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+            f.open(_IndexPath(path));
             
-            // Verify that chunkId's are monotonically increasing
+            _SerializedHeader header;
+            f.read((char*)&header, sizeof(header));
             
-            if (chunkIdPrev) {
-                if (!(chunkId >= *chunkIdPrev)) {
-                    throw Toastbox::RuntimeError("chunk ids aren't monotonically increasing (previous id: %ju, current id: %ju)",
-                        (uintmax_t)(*chunkIdPrev),
-                        (uintmax_t)(chunkId)
-                    );
-                }
-            }
-            
-            if (chunkIdPrev && idxPrev && chunkId==*chunkIdPrev) {
-                if (!(ref.idx > *idxPrev)) {
-                    throw Toastbox::RuntimeError("record indexes aren't monotonically increasing (previous index: %ju, current index: %ju)",
-                        (uintmax_t)(*idxPrev),
-                        (uintmax_t)(ref.idx)
-                    );
-                }
-            }
-            
-            Chunk*& chunk = chunksMap[chunkId];
-            if (!chunk) chunk = &state.chunks.emplace_back(chunkId, _ChunkFileOpen(_ChunkPath(path, chunkId)));
-            
-            if (sizeof(T_Record)*(ref.idx+1) > chunk->mmap.len()) {
-                throw Toastbox::RuntimeError("RecordRef extends beyond chunk (RecordRef end: 0x%jx, chunk end: 0x%jx)",
-                    (uintmax_t)(sizeof(T_Record)*(ref.idx+1)),
-                    (uintmax_t)chunk->mmap.len()
+            if (header.version != Version) {
+                throw Toastbox::RuntimeError("invalid header version (expected: 0x%jx, got: 0x%jx)",
+                    (uintmax_t)Version,
+                    (uintmax_t)header.version
                 );
             }
             
-            state.recordRefs[i].chunk = chunk;
-            state.recordRefs[i].idx = ref.idx;
+            if (header.recordSize != sizeof(T_Record)) {
+                throw Toastbox::RuntimeError("record size mismatch (expected: %ju, got: %ju)",
+                    (uintmax_t)sizeof(T_Record), (uintmax_t)header.recordSize);
+            }
             
-            chunk->recordCount++;
-            chunk->recordIdx = ref.idx+1;
+            // Create RecordRefs
+            state.recordRefs.resize(header.recordCount);
             
-            chunkIdPrev = chunkId;
-            idxPrev = ref.idx;
-        }
+            std::map<ChunkId,Chunk*> chunksMap;
+            std::optional<ChunkId> chunkIdPrev;
+            std::optional<size_t> idxPrev;
+            for (size_t i=0; i<header.recordCount; i++) {
+                _SerializedRecordRef ref;
+                f.read((char*)&ref, sizeof(ref));
+                
+                const ChunkId chunkId = ref.chunkId;
+                
+                // Verify that chunkId's are monotonically increasing
+                
+                if (chunkIdPrev) {
+                    if (!(chunkId >= *chunkIdPrev)) {
+                        throw Toastbox::RuntimeError("chunk ids aren't monotonically increasing (previous id: %ju, current id: %ju)",
+                            (uintmax_t)(*chunkIdPrev),
+                            (uintmax_t)(chunkId)
+                        );
+                    }
+                }
+                
+                if (chunkIdPrev && idxPrev && chunkId==*chunkIdPrev) {
+                    if (!(ref.idx > *idxPrev)) {
+                        throw Toastbox::RuntimeError("record indexes aren't monotonically increasing (previous index: %ju, current index: %ju)",
+                            (uintmax_t)(*idxPrev),
+                            (uintmax_t)(ref.idx)
+                        );
+                    }
+                }
+                
+                Chunk*& chunk = chunksMap[chunkId];
+                if (!chunk) chunk = &state.chunks.emplace_back(chunkId, _ChunkFileOpen(_ChunkPath(path, chunkId)));
+                
+                if (sizeof(T_Record)*(ref.idx+1) > chunk->mmap.len()) {
+                    throw Toastbox::RuntimeError("RecordRef extends beyond chunk (RecordRef end: 0x%jx, chunk end: 0x%jx)",
+                        (uintmax_t)(sizeof(T_Record)*(ref.idx+1)),
+                        (uintmax_t)chunk->mmap.len()
+                    );
+                }
+                
+                state.recordRefs[i].chunk = chunk;
+                state.recordRefs[i].idx = ref.idx;
+                
+                chunk->recordCount++;
+                chunk->recordIdx = ref.idx+1;
+                
+                chunkIdPrev = chunkId;
+                idxPrev = ref.idx;
+            }
+            
+            // Set state.chunkId to the last chunkId we encountered + 1
+            state.chunkId = (chunkIdPrev ? *chunkIdPrev+1 : 0);
+            return f;
         
-        // Set state.chunkId to the last chunkId we encountered + 1
-        state.chunkId = (chunkIdPrev ? *chunkIdPrev+1 : 0);
-        return f;
+        } catch (...) {
+            state = {};
+            throw;
+        }
     }
     
     static std::ofstream _StateWrite(const Path& path, const _State& state) {

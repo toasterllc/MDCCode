@@ -96,17 +96,7 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
     void read(RecordStore::Path path) {
         try {
             std::ifstream f = RecordStore::read(path);
-            
-            _SerializedState state;
-            f.read((char*)&state, sizeof(state));
-            
-            if (state.version != _Version) {
-                throw Toastbox::RuntimeError("invalid state version (expected: 0x%jx, got: 0x%jx)",
-                    (uintmax_t)_Version,
-                    (uintmax_t)state.version
-                );
-            }
-            
+            _StateRead(f, _state);
         } catch (const std::exception& e) {
             printf("Recreating ImageLibrary; cause: %s\n", e.what());
         }
@@ -114,10 +104,7 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
     
     void write() {
         std::ofstream f = RecordStore::write();
-        const _SerializedState state {
-            .version = _Version,
-        };
-        f.write((char*)&state, sizeof(state));
+        _StateWrite(f, _state);
     }
     
     void add(size_t count) {
@@ -145,16 +132,21 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
     }
     
     void clear() {
+        RecordStore::clear();
+        _state = {};
+        
+        // Notify observers that we changed
         Event ev;
         ev.type = Event::Type::Clear;
-        RecordStore::clear();
-        // Notify observers that we changed
         Object::observersNotify(ev);
     }
     
     RecordRefConstIter find(const RecordRef& ref) {
         return RecordStore::Find(begin(), end(), ref);
     }
+    
+    void imageIdEnd(Img::Id x) { _state.imageIdEnd = x; }
+    Img::Id imageIdEnd() const { return _state.imageIdEnd; }
     
     static IterAny Find(IterAny begin, IterAny end, const RecordRef& ref) {
         if (begin.fwd()) {
@@ -175,7 +167,47 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
     
     struct [[gnu::packed]] _SerializedState {
         uint32_t version = 0;
+        uint64_t imageIdEnd = 0;
+        
+        // Make sure the type of `imageIdEnd` matches Img::Id
+        static_assert(std::is_same_v<decltype(imageIdEnd), Img::Id>);
     };
+    
+    struct _State {
+        Img::Id imageIdEnd = 0;
+    };
+    
+    static void _StateRead(std::ifstream& f, _State& state) {
+        try {
+            state = {};
+            
+            _SerializedState serialized;
+            f.read((char*)&serialized, sizeof(serialized));
+            
+            if (serialized.version != _Version) {
+                throw Toastbox::RuntimeError("invalid state version (expected: 0x%jx, got: 0x%jx)",
+                    (uintmax_t)_Version,
+                    (uintmax_t)serialized.version
+                );
+            }
+            
+            state.imageIdEnd = serialized.imageIdEnd;
+        
+        } catch (...) {
+            state = {};
+            throw;
+        }
+    }
+    
+    static void _StateWrite(std::ofstream& f, const _State& state) {
+        const _SerializedState serialized = {
+            .version = _Version,
+            .imageIdEnd = state.imageIdEnd,
+        };
+        f.write((char*)&serialized, sizeof(serialized));
+    }
+    
+    _State _state;
 };
 using ImageLibraryPtr = SharedPtr<ImageLibrary>;
 

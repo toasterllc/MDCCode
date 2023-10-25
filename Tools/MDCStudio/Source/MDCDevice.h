@@ -788,13 +788,12 @@ struct MDCDevice : ImageSource {
     
     static std::optional<size_t> LoadImageCount(const std::unique_lock<ImageLibrary>& lock,
         ImageLibraryPtr imageLibrary, const ImageRange& deviceImageRange) {
-        
-        const Img::Id libImgIdEnd = (!imageLibrary->empty() ? imageLibrary->back()->info.id+1 : 0);
+        const Img::Id libImageIdEnd = imageLibrary->imageIdEnd();
         // If our image library claims to have newer images than the device, return an error
-        if (libImgIdEnd > deviceImageRange.end) {
+        if (libImageIdEnd > deviceImageRange.end) {
             return std::nullopt;
         }
-        return deviceImageRange.end - std::max(deviceImageRange.begin, libImgIdEnd);
+        return deviceImageRange.end - std::max(deviceImageRange.begin, libImageIdEnd);
     }
     
     void _sync_thread() {
@@ -867,6 +866,7 @@ struct MDCDevice : ImageSource {
                     }
                     
                     // Write library now that we've added our new images and populated their .id / .addr
+                    _imageLibrary->imageIdEnd(deviceImageRange.end);
                     _imageLibrary->write();
                 }
                 
