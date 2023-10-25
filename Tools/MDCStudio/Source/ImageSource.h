@@ -27,7 +27,21 @@ struct ImageSource : Object {
     
     // MARK: - Selection
     // Thread-unsafe; main thread only!
-    ObjectPropertyReference(ImageSet, selection);
+    ObjectPropertyReference(ImageSet, _selection);
+    
+    auto selection() { return _selection(); }
+    void selection(ImageSet x) {
+        // Remove images that aren't loaded
+        // Ie, don't allow placeholder images to be selected
+        for (auto it=x.begin(); it!=x.end();) {
+            if (!(*it)->status.loadCount) {
+                it = x.erase(it);
+            } else {
+                it++;
+            }
+        }
+        _selection(x);
+    }
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;

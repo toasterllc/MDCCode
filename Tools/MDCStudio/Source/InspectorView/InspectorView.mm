@@ -1279,7 +1279,7 @@ static void _Update(Item* it) {
 }
 
 - (void)_handleImageSourceEvent:(const Object::Event&)ev {
-    if (ev.prop == &_imageSource->_selection) {
+    if (ev.prop == &_imageSource->__selection) {
         // Selection changes must only occur on the main thread!
         assert([NSThread isMainThread]);
         [self _selectionChanged];

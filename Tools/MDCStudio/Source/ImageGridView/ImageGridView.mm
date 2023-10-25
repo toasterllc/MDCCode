@@ -609,23 +609,16 @@ struct SelectionDelta {
     assert(selectionBackIt != end);
     const size_t selectionIdx = selectionFrontIt - begin;
     
-//    ImageSet nextSelection;
-//    {
-//        auto next = std::next(selectionBackIt);
-//        if (next != end) {
-//            nextSelection = { *next };
-//        } else if (selectionFrontIt != begin) {
-//            auto prev = std::prev(selectionFrontIt);
-//            nextSelection = { *prev };
-//        }
-//    }
-    
     {
         auto begin = _imageLibrary->begin();
-        for (auto it=selectionFrontIt; !selection.empty() && it!=end; it++) {
-            const size_t idx = &*it - &*begin;
-            const auto remBegin = begin+idx;
-            const auto remEnd = begin+idx+1;
+        ssize_t idxFront = &*selectionFrontIt - &*begin;
+        ssize_t idxBack = &*selectionBackIt - &*begin;
+        if (idxFront > idxBack) std::swap(idxFront, idxBack);
+        
+        // Erase backwards so the index stays valid!
+        for (ssize_t i=idxBack; i>=idxFront; i--) {
+            const auto remBegin = begin+i;
+            const auto remEnd = begin+i+1;
             // Only erase images that are in the selection
             if (selection.erase(*remBegin)) {
                 _imageLibrary->remove(remBegin, remEnd);
@@ -634,18 +627,21 @@ struct SelectionDelta {
     }
     
     // Update the selection
-    if (!_imageLibrary->empty()) {
-        const size_t idx = std::min(_imageLibrary->recordCount()-1, selectionIdx);
-        auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-        ImageRecordPtr selectedRec = *(begin + idx);
-        _imageSource->selection({ selectedRec });
+    {
+        ImageSet newSelection;
+        if (!_imageLibrary->empty()) {
+            const size_t idx = std::min(_imageLibrary->recordCount()-1, selectionIdx);
+            auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+            newSelection = { *(begin + idx) };
+        }
+        _imageSource->selection(newSelection);
     }
 }
 
 // MARK: - ImageSource Observer
 
 - (void)_handleImageSourceEvent:(const Object::Event&)ev {
-    if (ev.prop == &_imageSource->_selection) {
+    if (ev.prop == &_imageSource->__selection) {
         // Selection changes must only occur on the main thread!
         assert([NSThread isMainThread]);
         [self _selectionUpdate];
