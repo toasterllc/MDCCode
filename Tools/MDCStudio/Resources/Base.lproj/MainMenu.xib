@@ -115,6 +115,16 @@
                                     <action selector="_export:" target="-1" id="cwQ-Xk-dKT"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="aBH-wc-g3D"/>
+                            <menuItem title="Delete…" id="FRz-ak-5AZ">
+                                <string key="keyEquivalent" base64-UTF8="YES">
+CA
+</string>
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_delete:" target="-1" id="nJy-56-P64"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="YCV-Pu-axB"/>
                             <menuItem title="Page Setup…" keyEquivalent="p" id="qIS-W8-SiK">
                                 <modifierMask key="keyEquivalentModifierMask" control="YES" option="YES" command="YES"/>

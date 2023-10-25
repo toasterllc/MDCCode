@@ -555,12 +555,20 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     if ([item action] == @selector(_export:)) {
         [mitem setTitle:@"Export…"];
         return true;
+    } else ([item action] == @selector(_delete:)) {
+        [mitem setTitle:@"Delete…"];
+        return true;
     }
     return true;
 }
 
 - (IBAction)_export:(id)sender {
     printf("_export\n");
+    [[self _fullSizeImageLayer] export:[self window]];
+}
+
+- (IBAction)_delete:(id)sender {
+    printf("_delete\n");
     [[self _fullSizeImageLayer] export:[self window]];
 }
 

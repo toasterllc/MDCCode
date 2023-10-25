@@ -857,6 +857,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     {
         NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
         [menu addItemWithTitle:@"Export…" action:@selector(_export:) keyEquivalent:@""];
+        [menu addItem:[NSMenuItem separatorItem]];
+        [menu addItemWithTitle:@"Delete…" action:@selector(_delete:) keyEquivalent:@""];
         [self setMenu:menu];
     }
     
@@ -981,8 +983,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 - (void)mouseUp:(NSEvent*)event {
-    if ([event clickCount]==2 && _selection->images().size()==1) {
-        [_delegate imageGridViewOpenSelectedImage:self];
+    if ([event clickCount] == 2) {
+        [_delegate imageGridViewOpenSelection:self];
     }
 }
 
@@ -1036,9 +1038,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 - (void)insertNewline:(id)sender {
-    if (_selection->images().size() == 1) {
-        [_delegate imageGridViewOpenSelectedImage:self];
-    }
+    [_delegate imageGridViewOpenSelection:self];
 }
 
 - (void)keyDown:(NSEvent*)event {
@@ -1056,6 +1056,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 - (void)deleteBackward:(id)sender {
+    [_delegate imageGridViewDeleteSelection:self];
+
     NSNumber* imageCount = @(_selection->images().size());
     NSAlert* alert = [NSAlert new];
     [alert setAlertStyle:NSAlertStyleWarning];
@@ -1130,6 +1132,19 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         }
         [mitem setTitle:title];
         return (bool)selectionCount;
+    
+    } else if ([item action] == @selector(_delete:)) {
+        const size_t selectionCount = _selection->images().size();
+        NSString* title = nil;
+        if (selectionCount > 1) {
+            title = [NSString stringWithFormat:@"Delete %ju Photos…", (uintmax_t)selectionCount];
+        } else if (selectionCount == 1) {
+            title = @"Delete 1 Photo…";
+        } else {
+            title = @"Delete…";
+        }
+        [mitem setTitle:title];
+        return (bool)selectionCount;
     }
     return true;
 }
@@ -1137,6 +1152,10 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 - (IBAction)_export:(id)sender {
     printf("_export\n");
     ImageExporter::Export([self window], _imageSource, _selection->images());
+}
+
+- (IBAction)_delete:(id)sender {
+    [self deleteBackward:nil];
 }
 
 @end

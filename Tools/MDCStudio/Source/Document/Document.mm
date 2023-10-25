@@ -344,12 +344,18 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 // MARK: - Image Grid
 
-- (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
+- (void)imageGridViewOpenSelection:(ImageGridView*)imageGridView {
     assert(imageGridView == _active.imageGridView);
-    const ImageSet selection = _active.selection->images();
-    assert(selection.size() == 1);
+    const ImageSet& selection = _active.selection->images();
+    // Bail if there are multiple images selected
+    if (selection.size() != 1) return;
     const ImageRecordPtr rec = *selection.begin();
     [self _openImage:rec delta:0];
+}
+
+- (void)imageGridViewDeleteSelection:(ImageGridView*)imageGridView {
+    assert(imageGridView == _active.imageGridView);
+    
 }
 
 // MARK: - Full Size Image View

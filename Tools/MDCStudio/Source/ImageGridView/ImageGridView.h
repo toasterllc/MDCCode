@@ -7,7 +7,8 @@
 @class ImageGridView;
 
 @protocol ImageGridViewDelegate
-- (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView;
+- (void)imageGridViewOpenSelection:(ImageGridView*)imageGridView;
+- (void)imageGridViewDeleteSelection:(ImageGridView*)imageGridView;
 @end
 
 @interface ImageGridView : FixedDocumentView
