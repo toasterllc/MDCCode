@@ -641,8 +641,17 @@ static Grid::IndexRange _VisibleIndexRange(Grid& grid, CGRect frame, CGFloat sca
     return grid.indexRangeForIndexRect(grid.indexRectForRect(_GridRectFromCGRect(frame, scale)));
 }
 
-static _IterRange _VisibleRange(const Grid::IndexRange& ir, const ImageLibrary& il, bool sortNewestFirst) {
+static _IterRange _VisibleRange(Grid::IndexRange ir, const ImageLibrary& il, bool sortNewestFirst) {
     ImageRecordIterAny begin = ImageLibrary::BeginSorted(il, sortNewestFirst);
+    
+    // It's possible for the grid element count to be out of sync with the image library
+    // element count, particularly if we display before a pending layout. In that case
+    // `ir` could extend beyond the image library, so protect against that and just
+    // return an empty range.
+    if (ir.start+ir.count > il.recordCount()) {
+        return std::make_pair(begin, begin);
+    }
+    
     const auto visibleBegin = begin+ir.start;
     const auto visibleEnd = begin+ir.start+ir.count;
     return std::make_pair(visibleBegin, visibleEnd);

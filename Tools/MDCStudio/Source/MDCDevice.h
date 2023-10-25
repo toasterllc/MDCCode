@@ -207,13 +207,26 @@ struct MDCDevice : ImageSource {
             _imageLibrary->clear();
             _imageLibrary->write();
         }
+        
+        // Wait for the sync thread to exit
+        // We do this so we're sure that the caches won't have stale data
+        // placed in them when we clear them next.
+        {
+            _sync.signal.wait([&] { return !_sync.progress; });
+        }
+        
+        // Clear our caches
+        {
+            _thumbCache.clear();
+            _imageCache.clear();
+        }
     }
     
     // MARK: - Image Syncing
     
     void sync() {
         {
-            auto lock = std::unique_lock(_sync.lock);
+            auto lock = _sync.signal.lock();
             // Bail if syncing is already underway
             if (_sync.progress) return;
             _sync.progress = 0;
@@ -232,7 +245,7 @@ struct MDCDevice : ImageSource {
             const auto batteryLevel = _status.batteryLevel;
         statusLock.unlock();
         
-        auto syncLock = std::unique_lock(_sync.lock);
+        auto syncLock = _sync.signal.lock();
             auto syncProgress = _sync.progress;
         syncLock.unlock();
         
@@ -871,8 +884,9 @@ struct MDCDevice : ImageSource {
                     printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
                     _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
                         {
-                            auto lock = std::unique_lock(_sync.lock);
+                            auto lock = _sync.signal.lock();
                             _sync.progress = progress;
+                            _sync.signal.signalAll();
                         }
                         observersNotify({});
                     });
@@ -894,8 +908,9 @@ struct MDCDevice : ImageSource {
         
         // Update syncing status
         {
-            auto lock = std::unique_lock(_sync.lock);
+            auto lock = _sync.signal.lock();
             _sync.progress = std::nullopt;
+            _sync.signal.signalAll();
         }
         
         // Notify observers that syncing is complete
@@ -1275,7 +1290,7 @@ struct MDCDevice : ImageSource {
     } _sdMode;
     
     struct {
-        std::mutex lock;
+        Toastbox::Signal signal; // Protects this struct
         _Thread thread;
         std::optional<float> progress;
     } _sync;

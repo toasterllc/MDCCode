@@ -5,8 +5,7 @@
 #include "Toastbox/Signal.h"
 
 template<typename T_Key, typename T_Val, size_t T_Cap, uint8_t T_PriorityLast=0>
-class Cache {
-public:
+struct Cache {
     struct _Entry {
         _Entry(Cache& cache, size_t idx) : cache(cache), idx(idx) {}
         ~_Entry() { cache._destroy(*this); }
@@ -145,6 +144,11 @@ public:
         _cache.lru.evict();
     }
     
+    void clear(std::unique_lock<std::mutex>& lock) {
+        assert(lock);
+        _cache.lru.clear();
+    }
+    
     // size(): returns the current number of entries stored in the cache
     size_t size(std::unique_lock<std::mutex>& lock) const {
         assert(lock);
@@ -184,6 +188,11 @@ public:
         return evict(l);
     }
     
+    void clear() {
+        auto l = lock();
+        return clear(l);
+    }
+    
     size_t size() {
         auto l = lock();
         return size(l);
@@ -213,8 +222,6 @@ public:
         }
         _free.signal.signalOne();
     }
-    
-//private:
     
     // _Headroom: set the capacity of our LRU to slightly smaller than T_Cap, to ensure that
     // if the LRU is full, we still have available slots for pop() to use without blocking.
