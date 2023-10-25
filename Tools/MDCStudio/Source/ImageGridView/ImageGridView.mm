@@ -1056,7 +1056,42 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 - (void)deleteBackward:(id)sender {
-    [_imageGridLayer deleteSelection];
+    NSNumber* imageCount = @(_selection->images().size());
+    NSAlert* alert = [NSAlert new];
+    [alert setAlertStyle:NSAlertStyleWarning];
+    [alert setMessageText:[NSString stringWithFormat:@"Delete %@ Photos", imageCount]];
+    [alert setInformativeText:[NSString stringWithFormat:@"Are you sure you want to delete %@ photos?\n\nOnce deleted, these photos will be unrecoverable, and this action cannot be undone.", imageCount]];
+    
+    {
+        [alert addButtonWithTitle:@"Delete"];
+        NSButton* button = [[alert buttons] lastObject];
+        [button setTag:NSModalResponseOK];
+        [button setKeyEquivalent:@"\x7f"];
+        [button setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+    }
+    
+    {
+        [alert addButtonWithTitle:@"Cancel"];
+        NSButton* button = [[alert buttons] lastObject];
+        [button setTag:NSModalResponseCancel];
+        [button setKeyEquivalent:@"\r"];
+    }
+    
+    {
+        [alert addButtonWithTitle:@"CancelHidden"];
+        NSButton* button = [[alert buttons] lastObject];
+        [button setTag:NSModalResponseCancel];
+        [button setKeyEquivalent:@"\x1b"];
+        // Make button invisible, in case other versions of macOS break our -setFrame: technique
+        [button setAlphaValue:0];
+        [alert layout];
+        [button setFrame:{}];
+    }
+    
+    [alert beginSheetModalForWindow:[self window] completionHandler:^(NSModalResponse r) {
+        if (r != NSModalResponseOK) return;
+        [self->_imageGridLayer deleteSelection];
+    }];
 }
 
 // MARK: - FixedScrollView

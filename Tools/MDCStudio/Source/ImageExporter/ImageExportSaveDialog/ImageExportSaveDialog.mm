@@ -73,7 +73,6 @@ void Show(NSWindow* window, bool batch, NSString* filename, Handler handler) {
         [panel setNameFieldStringValue:filename];
     }
     
-//    __weak auto panelWeak = panel;
     [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse result) {
         if (result != NSModalResponseOK) return;
         handler({

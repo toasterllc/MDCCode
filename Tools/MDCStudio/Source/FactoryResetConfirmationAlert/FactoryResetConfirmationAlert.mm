@@ -33,7 +33,6 @@ NSString* ConfirmationPhrase = @"nuke it";
     [self setInformativeText:[NSString stringWithFormat:@"A factory reset will permanently erase all photos and settings from your Photon.\n\nTo continue, enter “%@” below.", ConfirmationPhrase]];
     [self addButtonWithTitle:@"OK"];
     [[[self buttons] lastObject] setTag:NSModalResponseOK];
-    
     [self addButtonWithTitle:@"Cancel"];
     [[[self buttons] lastObject] setTag:NSModalResponseCancel];
     

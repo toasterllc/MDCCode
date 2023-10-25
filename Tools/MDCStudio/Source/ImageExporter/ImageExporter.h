@@ -134,47 +134,12 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
             // Close the sheet
             if (progress) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [window endSheet:[progress window] returnCode:NSModalResponseOK];
+                    [window endSheet:[progress window]];
                 });
             }
         });
         exportThread.detach();
     });
-    
-//    // Show the modal progress dialog
-//    if (progress) {
-////        NSWindow* progressWindow = [progress window];
-////        [[progress window] beginSheet:progressWindow completionHandler:nil];
-////        
-////        for (;;) {
-////            if ([NSApp runModalForWindow:progressWindow] != NSModalResponseContinue) break;
-////            // Update progress
-////            {
-////                auto lock = status.signal.lock();
-////                [progress setProgress:(float)status.completed / recs.size()];
-////                if (status.completed == recs.size()) break;
-////            }
-////        }
-////        
-////        [window endSheet:progressWindow];
-////        
-////        // Kill thread if it's still going
-////        // We only do this if we're showing the progress dialog! Otherwise we want to wait
-////        // until the thread exits, since we don't give the option to cancel if we're not
-////        // showing the progress dialog.
-////        status.signal.stop();
-//        [window beginSheet:[progress window] completionHandler:nil];
-//    }
-    
-//    exportThread.join();
-    
-    
-//    [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse result) {
-//        [NSApp stopModalWithCode:result];
-//    }];
-//    
-//    const NSModalResponse response = [panel runModal];
-//    if (response != NSModalResponseOK) return std::nullopt;
 }
 
 } // namespace MDCStudio::ImageExporter
