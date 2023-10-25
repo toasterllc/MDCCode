@@ -65,6 +65,14 @@ using namespace MDCStudio;
     } _deviceSettings;
 }
 
+static NSMenu* _ContextMenuCreate() {
+    NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
+    [menu addItemWithTitle:@"Export…" action:@selector(_export:) keyEquivalent:@""];
+    [menu addItem:[NSMenuItem separatorItem]];
+    [menu addItemWithTitle:@"Delete…" action:@selector(_delete:) keyEquivalent:@""];
+    return menu;
+}
+
 + (BOOL)autosavesInPlace {
     return false;
 }
@@ -150,14 +158,26 @@ static void _SetView(T& x, NSView* y) {
     // Sort
     } else if ([item action] == @selector(_sortNewestFirst:)) {
         [mitem setState:(_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        return true;
+    
     } else if ([item action] == @selector(_sortOldestFirst:)) {
         [mitem setState:(!_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        return true;
     
     // Toggle panels
     } else if ([item action] == @selector(_toggleDevices:)) {
         [mitem setTitle:([[self _devicesContainerView] isHidden] ? @"Show Devices" : @"Hide Devices")];
+        return true;
+    
     } else if ([item action] == @selector(_toggleInspector:)) {
         [mitem setTitle:([[self _inspectorContainerView] isHidden] ? @"Show Inspector" : @"Hide Inspector")];
+        return true;
+    
+    // Show image
+    } else if ([item action] == @selector(_showImage:)) {
+        if (_center.view != _active.imageGridScrollView) return false;
+        if (_active.selection->images().size() != 1) return false;
+        return true;
     
     // Export
     } else if ([item action] == @selector(_export:)) {
@@ -299,9 +319,11 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
         _active.imageGridView = Toastbox::Cast<ImageGridView*>([_active.imageGridScrollView document]);
         [_active.imageGridView setDelegate:self];
         _UpdateImageGridViewFromPrefs(PrefsGlobal(), _active.imageGridView);
+        [_active.imageGridView setMenu:_ContextMenuCreate()];
         
         _active.fullSizeImageView = [[FullSizeImageView alloc] initWithImageSource:device];
         [_active.fullSizeImageView setDelegate:self];
+        [_active.fullSizeImageView setMenu:_ContextMenuCreate()];
         
         _active.inspectorView = [[InspectorView alloc] initWithImageSource:device selection:_active.selection];
     }
@@ -379,22 +401,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     }
 }
 
-// MARK: - Image Grid
-
-- (void)imageGridViewOpenSelection:(ImageGridView*)imageGridView {
-    assert(imageGridView == _active.imageGridView);
-    const ImageSet& selection = _active.selection->images();
-    // Bail if there are multiple images selected
-    if (selection.size() != 1) return;
-    const ImageRecordPtr rec = *selection.begin();
-    [self _openImage:rec delta:0];
-}
-
-- (void)imageGridViewDeleteSelection:(ImageGridView*)imageGridView {
-    assert(imageGridView == _active.imageGridView);
-    
-}
-
 // MARK: - Full Size Image View
 
 - (void)fullSizeImageViewBack:(FullSizeImageView*)x {
@@ -464,6 +470,15 @@ static void _SortNewestFirst(bool x) {
 - (IBAction)_showSettingsForActiveDevice:(id)sender {
     MDCDevicePtr device = Toastbox::Cast<MDCDevicePtr>(_active.imageSource);
     [self _showSettingsForDevice:device];
+}
+
+- (IBAction)_showImage:(id)sender {
+    printf("[Document] _showImage:\n");
+    const ImageSet& selection = _active.selection->images();
+    // Bail if there are multiple images selected
+    if (selection.size() != 1) return;
+    const ImageRecordPtr rec = *selection.begin();
+    [self _openImage:rec delta:0];
 }
 
 - (IBAction)_export:(id)sender {

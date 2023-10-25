@@ -7,8 +7,11 @@
 @class ImageGridView;
 
 @protocol ImageGridViewDelegate
-- (void)imageGridViewOpenSelection:(ImageGridView*)imageGridView;
-- (void)imageGridViewDeleteSelection:(ImageGridView*)imageGridView;
+@end
+
+@protocol ImageGridViewResponder
+@optional
+- (void)_showImage:(id)sender;
 @end
 
 @interface ImageGridView : FixedDocumentView

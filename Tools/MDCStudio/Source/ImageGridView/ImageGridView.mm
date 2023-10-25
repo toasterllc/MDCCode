@@ -790,15 +790,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 //        NSLog(@"backgroundColor: %f %f %f", [c2 redComponent], [c2 greenComponent], [c2 blueComponent]);
 //    }];
     
-    // Create our context menu
-    {
-        NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
-        [menu addItemWithTitle:@"Export…" action:@selector(_export:) keyEquivalent:@""];
-        [menu addItem:[NSMenuItem separatorItem]];
-        [menu addItemWithTitle:@"Delete…" action:@selector(_delete:) keyEquivalent:@""];
-        [self setMenu:menu];
-    }
-    
     return self;
 }
 
@@ -921,7 +912,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 - (void)mouseUp:(NSEvent*)event {
     if ([event clickCount] == 2) {
-        [_delegate imageGridViewOpenSelection:self];
+        [[self window] tryToPerform:@selector(_showImage:) with:self];
     }
 }
 
@@ -974,65 +965,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     _selection->images(selection);
 }
 
-//- (void)insertNewline:(id)sender {
-//    [_delegate imageGridViewOpenSelection:self];
-//}
-
-//- (void)keyDown:(NSEvent*)event {
-//    NSString* lf = @"\n";
-//    NSString* cr = @"\r";
-//    NSString* del = @"\x7f";
-//    // The standard NSResponder methods aren't called in the following cases (not sure why), so we emulate it.
-//    if ([[event charactersIgnoringModifiers] isEqualToString:lf] ||
-//        [[event charactersIgnoringModifiers] isEqualToString:cr]) {
-//        return [self insertNewline:nil];
-//    } else if ([[event charactersIgnoringModifiers] isEqualToString:del]) {
-//        return [self deleteBackward:nil];
-//    }
-//    return [super keyDown:event];
-//}
-
-//- (void)deleteBackward:(id)sender {
-//    [_delegate imageGridViewDeleteSelection:self];
-//
-//    NSNumber* imageCount = @(_selection->images().size());
-//    NSAlert* alert = [NSAlert new];
-//    [alert setAlertStyle:NSAlertStyleWarning];
-//    [alert setMessageText:[NSString stringWithFormat:@"Delete %@ Photos", imageCount]];
-//    [alert setInformativeText:[NSString stringWithFormat:@"Are you sure you want to delete %@ photos?\n\nOnce deleted, these photos will be unrecoverable, and this action cannot be undone.", imageCount]];
-//    
-//    {
-//        [alert addButtonWithTitle:@"Delete"];
-//        NSButton* button = [[alert buttons] lastObject];
-//        [button setTag:NSModalResponseOK];
-//        [button setKeyEquivalent:@"\x7f"];
-//        [button setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
-//    }
-//    
-//    {
-//        [alert addButtonWithTitle:@"Cancel"];
-//        NSButton* button = [[alert buttons] lastObject];
-//        [button setTag:NSModalResponseCancel];
-//        [button setKeyEquivalent:@"\r"];
-//    }
-//    
-//    {
-//        [alert addButtonWithTitle:@"CancelHidden"];
-//        NSButton* button = [[alert buttons] lastObject];
-//        [button setTag:NSModalResponseCancel];
-//        [button setKeyEquivalent:@"\x1b"];
-//        // Make button invisible, in case other versions of macOS break our -setFrame: technique
-//        [button setAlphaValue:0];
-//        [alert layout];
-//        [button setFrame:{}];
-//    }
-//    
-//    [alert beginSheetModalForWindow:[self window] completionHandler:^(NSModalResponse r) {
-//        if (r != NSModalResponseOK) return;
-//        [self->_imageGridLayer deleteSelection];
-//    }];
-//}
-
 // MARK: - FixedScrollView
 
 - (void)fixedCreateConstraintsForContainer:(NSView*)container {
@@ -1052,48 +984,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         multiplier:1 constant:0];
     [_docHeight setActive:true];
 }
-
-// MARK: - Menu Actions
-
-//- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
-//    NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
-//    if ([item action] == @selector(_export:)) {
-//        const size_t selectionCount = _selection->images().size();
-//        NSString* title = nil;
-//        if (selectionCount > 1) {
-//            title = [NSString stringWithFormat:@"Export %ju Photos…", (uintmax_t)selectionCount];
-//        } else if (selectionCount == 1) {
-//            title = @"Export 1 Photo…";
-//        } else {
-//            title = @"Export…";
-//        }
-//        [mitem setTitle:title];
-//        return (bool)selectionCount;
-//    
-//    } else if ([item action] == @selector(_delete:)) {
-//        const size_t selectionCount = _selection->images().size();
-//        NSString* title = nil;
-//        if (selectionCount > 1) {
-//            title = [NSString stringWithFormat:@"Delete %ju Photos…", (uintmax_t)selectionCount];
-//        } else if (selectionCount == 1) {
-//            title = @"Delete 1 Photo…";
-//        } else {
-//            title = @"Delete…";
-//        }
-//        [mitem setTitle:title];
-//        return (bool)selectionCount;
-//    }
-//    return true;
-//}
-
-//- (IBAction)_export:(id)sender {
-//    printf("_export\n");
-//    ImageExporter::Export([self window], _imageSource, _selection->images());
-//}
-//
-//- (IBAction)_delete:(id)sender {
-//    [self deleteBackward:nil];
-//}
 
 @end
 
@@ -1153,29 +1043,5 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     }
     return true;
 }
-
-//- (void)deleteForward:(id)sender {
-//    printf("AAA -deleteForward:\n");
-//}
-//
-//- (void)deleteBackward:(id)sender {
-//    printf("AAA -deleteBackward:\n");
-//}
-//
-//- (void)deleteBackwardByDecomposingPreviousCharacter:(id)sender {
-//    printf("AAA -deleteBackward:\n");
-//}
-//
-//- (void)deleteToMark:(id)sender {
-//    printf("AAA -deleteToMark:\n");
-//}
-
-//- (BOOL)acceptsFirstResponder {
-//    return true;
-//}
-
-//- (NSView*)initialFirstResponder {
-//    return [self document];
-//}
 
 @end

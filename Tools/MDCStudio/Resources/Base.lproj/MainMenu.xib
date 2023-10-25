@@ -110,6 +110,15 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="aJh-i4-bef"/>
+                            <menuItem title="Show Photo" id="WI2-8O-6SC">
+                                <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_showImage:" target="-1" id="LIJ-Mb-jQa"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Export…" keyEquivalent="E" id="nei-2I-dha">
                                 <connections>
                                     <action selector="_export:" target="-1" id="cwQ-Xk-dKT"/>
