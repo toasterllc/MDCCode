@@ -1287,7 +1287,7 @@ static void _Update(Item* it) {
 - (void)_handleSelectionEvent:(const Object::Event&)ev {
     // Selection changes must only occur on the main thread!
     assert([NSThread isMainThread]);
-//    [self _selectionChanged];
+    [self _selectionChanged];
 }
 
 - (void)_selectionChanged {
@@ -1308,8 +1308,6 @@ static void _Update(Item* it) {
 - (_ModelData)_get:(_ModelGetterFn)fn {
     // first: holds the first non-nil value
     id first = nil;
-    // mixed: tracks whether there are at least 2 differing values
-    bool mixed = false;
     
     for (const ImageRecordPtr& rec : _selection->images()) {
         const id obj = fn(*rec);
@@ -1317,15 +1315,13 @@ static void _Update(Item* it) {
         if (!first) {
             first = obj;
         } else {
-            mixed |= ![first isEqual:obj];
+            if (![first isEqual:obj]) {
+                return _ModelData{ .type = _ModelData::Type::Mixed };
+            }
         }
     }
     
-    if (!mixed) {
-        return _ModelData{ .data = first };
-    }
-    
-    return _ModelData{ .type = _ModelData::Type::Mixed };
+    return _ModelData{ .data = first };
 }
 
 - (void)_set:(_ModelSetterFn)fn data:(id)data {
