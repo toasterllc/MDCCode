@@ -490,12 +490,12 @@ struct SelectionDelta {
     return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
 }
 
-- (CGRect)rectForImageRecord:(ImageRecordPtr)rec {
+- (std::optional<CGRect>)rectForImageRecord:(ImageRecordPtr)rec {
     auto lock = std::unique_lock(*_imageLibrary);
     auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
     auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
     const auto it = ImageLibrary::Find(begin, end, rec);
-    if (it == end) return CGRectNull;
+    if (it == end) return std::nullopt;
     const size_t idx = it-begin;
     return [self rectForImageIndex:idx];
 }
@@ -808,7 +808,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     return [_imageGridLayer rectForImageIndex:idx];
 }
 
-- (CGRect)rectForImageRecord:(ImageRecordPtr)rec {
+- (std::optional<CGRect>)rectForImageRecord:(ImageRecordPtr)rec {
     return [_imageGridLayer rectForImageRecord:rec];
 }
 

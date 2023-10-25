@@ -441,7 +441,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 @implementation FullSizeImageView {
     FixedScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
-    __weak id<FullSizeImageViewDelegate> _delegate;
 }
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
@@ -473,13 +472,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
     }
     
-    // Create our context menu
-    {
-        NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
-        [menu addItemWithTitle:@"Export…" action:@selector(_export:) keyEquivalent:@""];
-        [self setMenu:menu];
-    }
-    
     [self magnifyToFit];
     return self;
 }
@@ -500,10 +492,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     [[self _fullSizeImageLayer] setImageRecord:rec];
 }
 
-- (void)setDelegate:(id<FullSizeImageViewDelegate>)delegate {
-    _delegate = delegate;
-}
-
 - (void)magnifyToFit {
     [_scrollView setMagnifyToFit:true animate:false];
 }
@@ -512,14 +500,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     [[self window] makeFirstResponder:self];
-}
-
-- (void)moveLeft:(id)sender {
-    [_delegate fullSizeImageViewPreviousImage:self];
-}
-
-- (void)moveRight:(id)sender {
-    [_delegate fullSizeImageViewNextImage:self];
 }
 
 - (void)magnifyToActualSize:(id)sender {
@@ -545,7 +525,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 // MARK: - FullSizeImageHeaderViewDelegate
 
 - (void)imageHeaderViewBack:(FullSizeImageHeaderView*)x {
-    [_delegate fullSizeImageViewBack:self];
+    [[self window] tryToPerform:@selector(_backToImages:) with:self];
 }
 
 // MARK: - Menu Actions

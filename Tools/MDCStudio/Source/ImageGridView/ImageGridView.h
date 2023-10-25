@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <set>
+#import <optional>
 #import "ImageSource.h"
 #import "ImageSelection.h"
 #import "Code/Shared/Img.h"
@@ -18,7 +19,7 @@
 - (MDCStudio::ImageSourcePtr)imageSource;
 
 - (CGRect)rectForImageIndex:(size_t)idx;
-- (CGRect)rectForImageRecord:(MDCStudio::ImageRecordPtr)rec;
+- (std::optional<CGRect>)rectForImageRecord:(MDCStudio::ImageRecordPtr)rec;
 - (void)scrollToImageRect:(CGRect)rect center:(bool)center;
 
 - (void)setSortNewestFirst:(bool)x;

@@ -119,12 +119,29 @@ DQ
                                     <action selector="_showImage:" target="-1" id="LIJ-Mb-jQa"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Next Photo" keyEquivalent="" id="vxk-H4-Fru">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_nextImage:" target="-1" id="YG7-P5-oRe"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Previous Photo" keyEquivalent="" id="v8R-Qr-wUI">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_previousImage:" target="-1" id="qO1-xM-mAh"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Back to Photos" keyEquivalent="" id="Z8W-2W-ndG">
+                                <connections>
+                                    <action selector="_backToImages:" target="-1" id="56Z-6n-pK3"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="aBH-wc-g3D"/>
                             <menuItem title="Export…" keyEquivalent="E" id="nei-2I-dha">
                                 <connections>
                                     <action selector="_export:" target="-1" id="cwQ-Xk-dKT"/>
                                 </connections>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="aBH-wc-g3D"/>
                             <menuItem title="Delete…" id="FRz-ak-5AZ">
                                 <string key="keyEquivalent" base64-UTF8="YES">
 CA
@@ -750,7 +767,7 @@ CA
                     </menu>
                 </menuItem>
             </items>
-            <point key="canvasLocation" x="166" y="-69"/>
+            <point key="canvasLocation" x="127" y="-290"/>
         </menu>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="hF9-ie-DpS">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
@@ -761,7 +778,7 @@ CA
                 <rect key="frame" x="0.0" y="0.0" width="672" height="531"/>
                 <autoresizingMask key="autoresizingMask"/>
             </view>
-            <point key="canvasLocation" x="233" y="473.5"/>
+            <point key="canvasLocation" x="193" y="67"/>
         </window>
     </objects>
 </document>

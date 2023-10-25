@@ -17,7 +17,7 @@
 
 using namespace MDCStudio;
 
-@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, FullSizeImageViewDelegate, DeviceSettingsViewDelegate>
+@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, DeviceSettingsViewDelegate>
 @end
 
 @implementation Document {
@@ -173,11 +173,20 @@ static void _SetView(T& x, NSView* y) {
         [mitem setTitle:([[self _inspectorContainerView] isHidden] ? @"Show Inspector" : @"Hide Inspector")];
         return true;
     
-    // Show image
+    // Navigation
     } else if ([item action] == @selector(_showImage:)) {
         if (_center.view != _active.imageGridScrollView) return false;
         if (_active.selection->images().size() != 1) return false;
         return true;
+    
+    } else if ([item action] == @selector(_nextImage:)) {
+        return _center.view == _active.fullSizeImageView;
+    
+    } else if ([item action] == @selector(_previousImage:)) {
+        return _center.view == _active.fullSizeImageView;
+    
+    } else if ([item action] == @selector(_backToImages:)) {
+        return _center.view == _active.fullSizeImageView;
     
     // Export
     } else if ([item action] == @selector(_export:)) {
@@ -321,7 +330,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
         [_active.imageGridView setMenu:_ContextMenuCreate()];
         
         _active.fullSizeImageView = [[FullSizeImageView alloc] initWithImageSource:device];
-        [_active.fullSizeImageView setDelegate:self];
         [_active.fullSizeImageView setMenu:_ContextMenuCreate()];
         
         _active.inspectorView = [[InspectorView alloc] initWithImageSource:device selection:_active.selection];
@@ -400,35 +408,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     }
 }
 
-// MARK: - Full Size Image View
-
-- (void)fullSizeImageViewBack:(FullSizeImageView*)x {
-    assert(x == _active.fullSizeImageView);
-    _SetView(_center, _active.imageGridScrollView);
-    
-    // -layoutIfNeeded is necessary on the window so that we can scroll the grid
-    // view to a particular spot immediately, instead of having to wait until
-    // the next layout pass (eg using NSTimer).
-    [_window layoutIfNeeded];
-    
-    ImageRecordPtr rec = [_active.fullSizeImageView imageRecord];
-    _active.selection->images({ rec });
-    [_window makeFirstResponder:_active.imageGridView];
-    [_active.imageGridView scrollToImageRect:[_active.imageGridView rectForImageRecord:rec] center:true];
-}
-
-- (void)fullSizeImageViewPreviousImage:(FullSizeImageView*)x {
-    assert(x == _active.fullSizeImageView);
-    const bool ok = [self _openImage:[_active.fullSizeImageView imageRecord] delta:-1];
-    if (!ok) NSBeep();
-}
-
-- (void)fullSizeImageViewNextImage:(FullSizeImageView*)x {
-    assert(x == _active.fullSizeImageView);
-    const bool ok = [self _openImage:[_active.fullSizeImageView imageRecord] delta:1];
-    if (!ok) NSBeep();
-}
-
 // MARK: - Split View
 
 - (BOOL)splitView:(NSSplitView*)splitView canCollapseSubview:(NSView*)subview {
@@ -478,6 +457,35 @@ static void _SortNewestFirst(bool x) {
     if (selection.size() != 1) return;
     const ImageRecordPtr rec = *selection.begin();
     [self _openImage:rec delta:0];
+}
+
+- (IBAction)_nextImage:(id)sender {
+    assert(_center.view == _active.fullSizeImageView);
+    const bool ok = [self _openImage:[_active.fullSizeImageView imageRecord] delta:1];
+    if (!ok) NSBeep();
+}
+
+- (IBAction)_previousImage:(id)sender {
+    assert(_center.view == _active.fullSizeImageView);
+    const bool ok = [self _openImage:[_active.fullSizeImageView imageRecord] delta:-1];
+    if (!ok) NSBeep();
+}
+
+- (IBAction)_backToImages:(id)sender {
+    assert(_center.view == _active.fullSizeImageView);
+    _SetView(_center, _active.imageGridScrollView);
+    
+    // -layoutIfNeeded is necessary on the window so that we can scroll the grid
+    // view to a particular spot immediately, instead of having to wait until
+    // the next layout pass (eg using NSTimer).
+    [_window layoutIfNeeded];
+    
+    ImageRecordPtr rec = [_active.fullSizeImageView imageRecord];
+    _active.selection->images({ rec });
+    [_window makeFirstResponder:_active.imageGridView];
+    
+    const std::optional<CGRect> rect = [_active.imageGridView rectForImageRecord:rec];
+    if (rect) [_active.imageGridView scrollToImageRect:*rect center:true];
 }
 
 - (IBAction)_export:(id)sender {
