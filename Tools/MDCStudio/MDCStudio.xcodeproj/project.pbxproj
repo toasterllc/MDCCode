@@ -292,6 +292,7 @@
 		55C6A27E2AE6EFC9008149AF /* FactoryResetConfirmationAlert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FactoryResetConfirmationAlert.h; sourceTree = "<group>"; };
 		55C6A2842AE6F74E008149AF /* FactoryResetConfirmationAlert.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FactoryResetConfirmationAlert.xib; sourceTree = "<group>"; };
 		55C6A2A12AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceImageGridNoPhotosView.xib; sourceTree = "<group>"; };
+		55C6A2A42AE9925B008149AF /* ImageSelection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSelection.h; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
 		55C90B9229B58283007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageThumb.h; sourceTree = "<group>"; };
@@ -688,6 +689,7 @@
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				553EF5572AD7088A00157484 /* ImageLibraryStatus.h */,
 				55F8D09227C2EE9D00757165 /* ImageSource.h */,
+				55C6A2A42AE9925B008149AF /* ImageSelection.h */,
 				556F313E2AE069830028BF9C /* NibViewInit.h */,
 				558FFC6029CA1E520022E840 /* Prefs.h */,
 				552F4BF529B28543000CEAB2 /* ImageUtil.h */,

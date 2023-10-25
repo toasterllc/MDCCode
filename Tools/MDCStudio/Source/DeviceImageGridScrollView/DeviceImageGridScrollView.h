@@ -4,6 +4,8 @@
 @class DeviceImageGridHeaderView;
 
 @interface DeviceImageGridScrollView : ImageGridScrollView
-- (instancetype)initWithDevice:(MDCStudio::MDCDevicePtr)device;
+- (instancetype)initWithDevice:(MDCStudio::MDCDevicePtr)device
+    selection:(MDCStudio::ImageSelectionPtr)selection;
+
 - (NSButton*)configureDeviceButton;
 @end

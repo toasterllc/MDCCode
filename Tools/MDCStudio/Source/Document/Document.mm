@@ -46,6 +46,7 @@ using namespace MDCStudio;
     struct {
         ImageSourcePtr imageSource;
         ImageLibraryPtr imageLibrary;
+        ImageSelectionPtr selection;
         
         Object::ObserverPtr deviceOb;
         Object::ObserverPtr imageLibraryOb;
@@ -210,7 +211,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
         [_window makeFirstResponder:_active.fullSizeImageView];
     }
     
-    _active.imageSource->selection({ imageRecord });
+    _active.selection->images({ imageRecord });
     printf("Showing image id %ju\n", (uintmax_t)imageRecord->info.id);
     
     return true;
@@ -236,6 +237,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     {
         _active.imageSource = imageSource;
         _active.imageLibrary = _active.imageSource->imageLibrary();
+        _active.selection = Object::Create<ImageSelection>();
         
         __weak auto selfWeak = self;
         
@@ -250,7 +252,9 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
         });
         
-        DeviceImageGridScrollView* imageGridScrollView = [[DeviceImageGridScrollView alloc] initWithDevice:device];
+        DeviceImageGridScrollView* imageGridScrollView = [[DeviceImageGridScrollView alloc] initWithDevice:device
+            selection:_active.selection];
+        
         [[imageGridScrollView configureDeviceButton] setTarget:self];
         [[imageGridScrollView configureDeviceButton] setAction:@selector(_showSettingsForActiveDevice:)];
         _active.imageGridScrollView = imageGridScrollView;
@@ -262,7 +266,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
         _active.fullSizeImageView = [[FullSizeImageView alloc] initWithImageSource:device];
         [_active.fullSizeImageView setDelegate:self];
         
-        _active.inspectorView = [[InspectorView alloc] initWithImageSource:device];
+        _active.inspectorView = [[InspectorView alloc] initWithImageSource:device selection:_active.selection];
     }
     
     _SetView(_center, _active.imageGridScrollView);
@@ -331,7 +335,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     case ImageLibrary::Event::Type::Clear:
         // When the image library is cleared, return to the grid view
         _SetView(_center, _active.imageGridScrollView);
-        _active.imageSource->selection({});
+        _active.selection->images({});
         break;
     default:
         break;
@@ -342,7 +346,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
     assert(imageGridView == _active.imageGridView);
-    const ImageSet selection = _active.imageSource->selection();
+    const ImageSet selection = _active.selection->images();
     assert(selection.size() == 1);
     const ImageRecordPtr rec = *selection.begin();
     [self _openImage:rec delta:0];
@@ -360,7 +364,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     [_window layoutIfNeeded];
     
     ImageRecordPtr rec = [_active.fullSizeImageView imageRecord];
-    _active.imageSource->selection({ rec });
+    _active.selection->images({ rec });
     [_window makeFirstResponder:_active.imageGridView];
     [_active.imageGridView scrollToImageRect:[_active.imageGridView rectForImageRecord:rec] center:true];
 }

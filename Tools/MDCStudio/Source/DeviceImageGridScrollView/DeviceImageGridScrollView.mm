@@ -11,18 +11,22 @@ using namespace MDCStudio;
     IBOutlet NSButton* _configureDeviceButton;
     
     MDCDevicePtr _device;
+    ImageSelectionPtr _selection;
+    
     Object::ObserverPtr _deviceOb;
     Object::ObserverPtr _imageLibraryOb;
+    Object::ObserverPtr _selectionOb;
     
     ImageGridView* _imageGridView;
     DeviceImageGridHeaderView* _headerView;
 }
 
-- (instancetype)initWithDevice:(MDCDevicePtr)device {
-    _imageGridView = [[ImageGridView alloc] initWithImageSource:device];
+- (instancetype)initWithDevice:(MDCDevicePtr)device selection:(ImageSelectionPtr)selection {
+    _imageGridView = [[ImageGridView alloc] initWithImageSource:device selection:selection];
     if (!(self = [super initWithFixedDocument:_imageGridView])) return nil;
     
     _device = device;
+    _selection = selection;
     
     __weak auto selfWeak = self;
     _deviceOb = _device->observerAdd([=] (const Object::Event& ev) {
@@ -31,6 +35,11 @@ using namespace MDCStudio;
     
     _imageLibraryOb = _device->imageLibrary()->observerAdd([=] (const Object::Event& ev) {
         dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _refresh]; });
+    });
+    
+    _selectionOb = _selection->observerAdd([=] (const Object::Event& ev) {
+        assert([NSThread isMainThread]);
+        [selfWeak _refresh];
     });
     
     _headerView = [[DeviceImageGridHeaderView alloc] initWithFrame:{}];
@@ -58,7 +67,7 @@ using namespace MDCStudio;
 - (void)_refresh {
     ImageLibraryPtr imageLibrary = _device->imageLibrary();
     const MDCDevice::Status status = _device->status();
-    const ImageSet& selection = _device->selection();
+    const ImageSet& selection = _selection->images();
     
     // Update status
     if (selection.empty()) {

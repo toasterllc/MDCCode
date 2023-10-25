@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import <set>
 #import "ImageSource.h"
+#import "ImageSelection.h"
 #import "Code/Shared/Img.h"
 #import "FixedDocumentView.h"
 @class ImageGridView;
@@ -11,7 +12,8 @@
 
 @interface ImageGridView : FixedDocumentView
 
-- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource
+    selection:(MDCStudio::ImageSelectionPtr)selection;
 - (MDCStudio::ImageSourcePtr)imageSource;
 
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate;

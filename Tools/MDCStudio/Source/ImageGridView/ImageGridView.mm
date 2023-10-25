@@ -25,7 +25,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 @interface ImageGridLayer : FixedMetalDocumentLayer
 
-- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource;
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
+    selection:(ImageSelectionPtr)selection;
 
 - (void)setContainerWidth:(CGFloat)width;
 - (CGFloat)containerHeight;
@@ -56,8 +57,9 @@ struct _ThumbRenderThreadState {
 
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
-    Object::ObserverPtr _imageSourceOb;
     ImageLibraryPtr _imageLibrary;
+    ImageSelectionPtr _selection;
+    Object::ObserverPtr _selectionOb;
     Object::ObserverPtr _imageLibraryOb;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
@@ -75,11 +77,10 @@ struct _ThumbRenderThreadState {
     std::shared_ptr<_ThumbRenderThreadState> _thumbRender;
     
     struct {
-        ImageSet images;
         size_t base = 0;
         size_t count = 0;
         id<MTLBuffer> buf;
-    } _selection;
+    } _selectionDraw;
 }
 
 static CGColorSpaceRef _SRGBColorSpace() {
@@ -87,26 +88,26 @@ static CGColorSpaceRef _SRGBColorSpace() {
     return cs;
 }
 
-- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
+selection:(MDCStudio::ImageSelectionPtr)selection {
+    
     NSParameterAssert(imageSource);
+    NSParameterAssert(selection);
     
     if (!(self = [super init])) return nil;
     
     _imageSource = imageSource;
-    {
-        __weak auto selfWeak = self;
-        _imageSourceOb = _imageSource->observerAdd([=] (const Object::Event& ev) {
-            [selfWeak _handleImageSourceEvent:ev];
-        });
-    }
-    
     _imageLibrary = imageSource->imageLibrary();
-    {
-        __weak auto selfWeak = self;
-        _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
-            [selfWeak _handleImageLibraryEvent:static_cast<const ImageLibrary::Event&>(ev)];
-        });
-    }
+    _selection = selection;
+    
+    __weak auto selfWeak = self;
+    _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
+        [selfWeak _handleImageLibraryEvent:static_cast<const ImageLibrary::Event&>(ev)];
+    });
+    
+    _selectionOb = _selection->observerAdd([=] (const Object::Event& ev) {
+        [selfWeak _handleSelectionEvent:ev];
+    });
     
     _cellWidth = _ThumbWidth;
     _cellHeight = _ThumbHeight;
@@ -319,34 +320,35 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
     
     // Recreate _selection properties
-    if (!_selection.buf) {
-        const auto itBegin = (!_selection.images.empty() ?
-            _imageLibrary->find(*_selection.images.begin()) : _imageLibrary->end());
-        const auto itLast = (!_selection.images.empty() ?
-            _imageLibrary->find(*std::prev(_selection.images.end())) : _imageLibrary->end());
+    if (!_selectionDraw.buf) {
+        const ImageSet& selectionImages = _selection->images();
+        const auto itBegin = (!selectionImages.empty() ?
+            _imageLibrary->find(*selectionImages.begin()) : _imageLibrary->end());
+        const auto itLast = (!selectionImages.empty() ?
+            _imageLibrary->find(*std::prev(selectionImages.end())) : _imageLibrary->end());
         const auto itEnd = (itLast!=_imageLibrary->end() ? std::next(itLast) : _imageLibrary->end());
         
         if (itBegin!=_imageLibrary->end() && itLast!=_imageLibrary->end()) {
-            _selection.base = itBegin-_imageLibrary->begin();
-            _selection.count = itEnd-itBegin;
+            _selectionDraw.base = itBegin-_imageLibrary->begin();
+            _selectionDraw.count = itEnd-itBegin;
             
             constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
-            _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
-            bool* bools = (bool*)[_selection.buf contents];
+            _selectionDraw.buf = [_device newBufferWithLength:_selectionDraw.count options:BufOpts];
+            bool* bools = (bool*)[_selectionDraw.buf contents];
             
             size_t i = 0;
             for (auto it=itBegin; it!=itEnd; it++) {
-                if (_selection.images.find(*it) != _selection.images.end()) {
+                if (selectionImages.find(*it) != selectionImages.end()) {
                     bools[i] = true;
                 }
                 i++;
             }
         
         } else {
-            _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
+            _selectionDraw.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
         }
         
-        assert(_selection.buf);
+        assert(_selectionDraw.buf);
     }
     
     const uintptr_t imageRefsBegin = (uintptr_t)&*_imageLibrary->begin();
@@ -382,8 +384,8 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
         [renderEncoder setCullMode:MTLCullModeNone];
         
-        assert(_selection.base <= UINT32_MAX);
-        assert(_selection.count <= UINT32_MAX);
+        assert(_selectionDraw.base <= UINT32_MAX);
+        assert(_selectionDraw.count <= UINT32_MAX);
         
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
@@ -392,14 +394,14 @@ static MTLTextureDescriptor* _TextureDescriptor() {
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
             .selection = {
-                .base = (uint32_t)_selection.base,
-                .count = (uint32_t)_selection.count,
+                .base = (uint32_t)_selectionDraw.base,
+                .count = (uint32_t)_selectionDraw.count,
             },
         };
         
         [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
         [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
-        [renderEncoder setVertexBuffer:_selection.buf offset:0 atIndex:2];
+        [renderEncoder setVertexBuffer:_selectionDraw.buf offset:0 atIndex:2];
         
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
         [renderEncoder setFragmentBytes:&ct.loadCounts length:sizeof(ct.loadCounts) atIndex:1];
@@ -468,20 +470,8 @@ done:
 }
 
 - (void)_selectionUpdate {
-    ImageSet selection = _imageSource->selection();
-    
-    // Remove images that aren't loaded
-    // Ie, don't allow placeholder images to be selected
-    for (auto it=selection.begin(); it!=selection.end();) {
-        if (!(*it)->status.loadCount) {
-            it = selection.erase(it);
-        } else {
-            it++;
-        }
-    }
-    
     // Set the entire _selection struct so that _display recreates the buffer
-    _selection = { .images = std::move(selection) };
+    _selectionDraw = {};
     [self setNeedsDisplay];
 }
 
@@ -513,7 +503,7 @@ struct SelectionDelta {
 - (std::optional<CGRect>)moveSelection:(SelectionDelta)delta extend:(bool)extend {
     ssize_t newIdx = 0;
     ImageRecordPtr newImg;
-    ImageSet selection = _selection.images;
+    ImageSet selection = _selection->images();
     {
         auto lock = std::unique_lock(*_imageLibrary);
         
@@ -581,71 +571,76 @@ struct SelectionDelta {
     
     if (!extend) selection.clear();
     selection.insert(newImg);
-    _imageSource->selection(std::move(selection));
+    _selection->images(std::move(selection));
     return [self rectForImageIndex:newIdx];
 }
 
 - (void)deleteSelection {
     using ImageSetIterAny = Toastbox::IterAny<ImageSet::const_iterator>;
     
-    auto lock = std::unique_lock(*_imageLibrary);
-    
-    ImageSet selection = _imageSource->selection();
+    ImageSet selection = _selection->images();
+    ImageSet newSelection;
     if (selection.empty()) {
         NSBeep();
         return;
     }
     
-    // Determine the record to select after deletion
-    auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-    auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
-    auto selectionBegin = (_sortNewestFirst ? ImageSetIterAny(selection.rbegin()) : ImageSetIterAny(selection.begin()));
-    auto selectionEnd = (_sortNewestFirst ? ImageSetIterAny(selection.rend()) : ImageSetIterAny(selection.end()));
-    ImageRecordPtr selectionFront = *selectionBegin;
-    ImageRecordPtr selectionBack = *std::prev(selectionEnd);
-    const auto selectionFrontIt = ImageLibrary::Find(begin, end, selectionFront);
-    assert(selectionFrontIt != end);
-    const auto selectionBackIt = ImageLibrary::Find(begin, end, selectionBack);
-    assert(selectionBackIt != end);
-    const size_t selectionIdx = selectionFrontIt - begin;
-    
+    // Delete the images from the library
     {
-        auto begin = _imageLibrary->begin();
-        ssize_t idxFront = &*selectionFrontIt - &*begin;
-        ssize_t idxBack = &*selectionBackIt - &*begin;
-        if (idxFront > idxBack) std::swap(idxFront, idxBack);
+        auto lock = std::unique_lock(*_imageLibrary);
         
-        // Erase backwards so the index stays valid!
-        for (ssize_t i=idxBack; i>=idxFront; i--) {
-            const auto remBegin = begin+i;
-            const auto remEnd = begin+i+1;
-            // Only erase images that are in the selection
-            if (selection.erase(*remBegin)) {
-                _imageLibrary->remove(remBegin, remEnd);
+        // Determine the record to select after deletion
+        auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+        auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
+        auto selectionBegin = (_sortNewestFirst ? ImageSetIterAny(selection.rbegin()) : ImageSetIterAny(selection.begin()));
+        auto selectionEnd = (_sortNewestFirst ? ImageSetIterAny(selection.rend()) : ImageSetIterAny(selection.end()));
+        ImageRecordPtr selectionFront = *selectionBegin;
+        ImageRecordPtr selectionBack = *std::prev(selectionEnd);
+        const auto selectionFrontIt = ImageLibrary::Find(begin, end, selectionFront);
+        assert(selectionFrontIt != end);
+        const auto selectionBackIt = ImageLibrary::Find(begin, end, selectionBack);
+        assert(selectionBackIt != end);
+        const size_t selectionIdx = selectionFrontIt - begin;
+        
+        {
+            auto begin = _imageLibrary->begin();
+            ssize_t idxFront = &*selectionFrontIt - &*begin;
+            ssize_t idxBack = &*selectionBackIt - &*begin;
+            if (idxFront > idxBack) std::swap(idxFront, idxBack);
+            
+            // Erase backwards so the index stays valid!
+            for (ssize_t i=idxBack; i>=idxFront; i--) {
+                const auto remBegin = begin+i;
+                const auto remEnd = begin+i+1;
+                // Only erase images that are in the selection
+                if (selection.erase(*remBegin)) {
+                    _imageLibrary->remove(remBegin, remEnd);
+                }
+            }
+        }
+        
+        // Construct `newSelection`
+        {
+            if (!_imageLibrary->empty()) {
+                const size_t idx = std::min(_imageLibrary->recordCount()-1, selectionIdx);
+                auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+                newSelection = { *(begin + idx) };
             }
         }
     }
     
-    // Update the selection
-    {
-        ImageSet newSelection;
-        if (!_imageLibrary->empty()) {
-            const size_t idx = std::min(_imageLibrary->recordCount()-1, selectionIdx);
-            auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-            newSelection = { *(begin + idx) };
-        }
-        _imageSource->selection(newSelection);
-    }
+    // Set the new selection
+    // Don't hold the ImageLibrary lock because this calls out!
+    _selection->images(newSelection);
 }
 
-// MARK: - ImageSource Observer
+// MARK: - ImageSelection Observer
 
-- (void)_handleImageSourceEvent:(const Object::Event&)ev {
-    if (ev.prop == &_imageSource->__selection) {
-        // Selection changes must only occur on the main thread!
-        assert([NSThread isMainThread]);
-        [self _selectionUpdate];
-    }
+- (void)_handleSelectionEvent:(const Object::Event&)ev {
+    assert(ev.prop == &_selection->__images);
+    // Selection changes must only occur on the main thread!
+    assert([NSThread isMainThread]);
+    [self _selectionUpdate];
 }
 
 // MARK: - ImageLibrary Observer
@@ -802,6 +797,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     ImageGridLayer* _imageGridLayer;
     CALayer* _selectionRectLayer;
     ImageSourcePtr _imageSource;
+    ImageSelectionPtr _selection;
     ImageLibraryPtr _imageLibrary;
     Object::ObserverPtr _imageLibraryOb;
     __weak id<ImageGridViewDelegate> _delegate;
@@ -811,15 +807,17 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 // MARK: - Creation
 
-- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource selection:(ImageSelectionPtr)selection {
     // Create ImageGridLayer
-    ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageSource:imageSource];
+    ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageSource:imageSource
+        selection:selection];
     
     if (!(self = [super initWithFixedLayer:imageGridLayer])) return nil;
     
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
     _imageSource = imageSource;
+    _selection = selection;
     _imageLibrary = _imageSource->imageLibrary();
     
     _imageGridLayer = imageGridLayer;
@@ -960,16 +958,16 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
-    const ImageSet oldSelection = _imageSource->selection();
+    const ImageSet oldSelection = _selection->images();
     Toastbox::TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
 //        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
         const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
         if (extend) {
-            _imageSource->selection(ImageSetsXOR(oldSelection, newSelection));
+            _selection->images(ImageSetsXOR(oldSelection, newSelection));
         } else {
-            _imageSource->selection(std::move(newSelection));
+            _selection->images(std::move(newSelection));
         }
         [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
         
@@ -980,7 +978,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 - (void)mouseUp:(NSEvent*)event {
-    if ([event clickCount]==2 && _imageSource->selection().size()==1) {
+    if ([event clickCount]==2 && _selection->images().size()==1) {
         [_delegate imageGridViewOpenSelectedImage:self];
     }
 }
@@ -992,12 +990,12 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         {1,1},
     };
     
-    const ImageSet& selection = _imageSource->selection();
+    const ImageSet& selection = _selection->images();
     const ImageSet clickedImages = [_imageGridLayer imagesForRect:rect];
     const bool clickedImageWasAlreadySelected =
         clickedImages.size()==1 && selection.find(*clickedImages.begin())!=selection.end();
     if (!clickedImages.empty() && !clickedImageWasAlreadySelected) {
-        _imageSource->selection(clickedImages);
+        _selection->images(clickedImages);
     }
     [super rightMouseDown:event];
 }
@@ -1031,11 +1029,11 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
             selection.insert(*it);
         }
     }
-    _imageSource->selection(selection);
+    _selection->images(selection);
 }
 
 - (void)insertNewline:(id)sender {
-    if (_imageSource->selection().size() == 1) {
+    if (_selection->images().size() == 1) {
         [_delegate imageGridViewOpenSelectedImage:self];
     }
 }
@@ -1083,7 +1081,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
     NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
     if ([item action] == @selector(_export:)) {
-        const size_t selectionCount = _imageSource->selection().size();
+        const size_t selectionCount = _selection->images().size();
         NSString* title = nil;
         if (selectionCount > 1) {
             title = [NSString stringWithFormat:@"Export %ju Photos…", (uintmax_t)selectionCount];
@@ -1100,7 +1098,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 - (IBAction)_export:(id)sender {
     printf("_export\n");
-    ImageExporter::Export([self window], _imageSource, _imageSource->selection());
+    ImageExporter::Export([self window], _imageSource, _selection->images());
 }
 
 @end

@@ -652,7 +652,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 
 @implementation InspectorView {
     ImageSourcePtr _imageSource;
-    Object::ObserverPtr _imageSourceOb;
+    ImageSelectionPtr _selection;
+    Object::ObserverPtr _selectionOb;
     ImageLibraryPtr _imageLibrary;
     Object::ObserverPtr _imageLibraryOb;
     Item_Section* _rootItem;
@@ -668,16 +669,21 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 
 // MARK: - Creation
 
-- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource
+    selection:(ImageSelectionPtr)selection {
+    
     assert(imageSource);
+    assert(selection);
     
     if (!(self = [super initWithFrame:{}])) return nil;
     
     _imageSource = imageSource;
+    
+    _selection = selection;
     {
         __weak auto selfWeak = self;
-        _imageSourceOb = _imageSource->observerAdd([=] (const Object::Event& ev) {
-            [selfWeak _handleImageSourceEvent:ev];
+        _selectionOb = _selection->observerAdd([=] (const Object::Event& ev) {
+            [selfWeak _handleSelectionEvent:ev];
         });
     }
     
@@ -1258,7 +1264,7 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
     assert([NSThread isMainThread]);
     // Short-circuit if this notification is due to our own changes
     if (_notifying) return;
-    if (ImageSetsOverlap(_imageSource->selection(), images)) {
+    if (ImageSetsOverlap(_selection->images(), images)) {
         _Update(_rootItem);
     }
 }
@@ -1278,17 +1284,16 @@ static void _Update(Item* it) {
 //    }
 }
 
-- (void)_handleImageSourceEvent:(const Object::Event&)ev {
-    if (ev.prop == &_imageSource->__selection) {
-        // Selection changes must only occur on the main thread!
-        assert([NSThread isMainThread]);
-        [self _selectionChanged];
-    }
+- (void)_handleSelectionEvent:(const Object::Event&)ev {
+    assert(ev.prop == &_selection->__images);
+    // Selection changes must only occur on the main thread!
+    assert([NSThread isMainThread]);
+    [self _selectionChanged];
 }
 
 - (void)_selectionChanged {
-    [_outlineContainerView setHidden:_imageSource->selection().empty()];
-    [_noSelectionLabel setHidden:!_imageSource->selection().empty()];
+    [_outlineContainerView setHidden:_selection->images().empty()];
+    [_noSelectionLabel setHidden:!_selection->images().empty()];
     _Update(_rootItem);
 }
 
@@ -1307,7 +1312,7 @@ static void _Update(Item* it) {
     // mixed: tracks whether there are at least 2 differing values
     bool mixed = false;
     
-    for (const ImageRecordPtr& rec : _imageSource->selection()) {
+    for (const ImageRecordPtr& rec : _selection->images()) {
         const id obj = fn(*rec);
         if (!obj) continue;
         if (!first) {
@@ -1325,13 +1330,13 @@ static void _Update(Item* it) {
 }
 
 - (void)_set:(_ModelSetterFn)fn data:(id)data {
-    for (const ImageRecordPtr& rec : _imageSource->selection()) {
+    for (const ImageRecordPtr& rec : _selection->images()) {
         fn(*rec, data);
     }
     
     _notifying = true;
     _imageSource->imageLibrary()->observersNotify(
-        ImageLibrary::Event::Type::ChangeProperty, _imageSource->selection());
+        ImageLibrary::Event::Type::ChangeProperty, _selection->images());
     _notifying = false;
 }
 

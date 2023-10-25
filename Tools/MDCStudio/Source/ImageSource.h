@@ -24,23 +24,6 @@ struct ImageSource : Object {
     virtual void renderThumbs(Priority priority, ImageSet recs) = 0;
     virtual Image getCachedImage(const ImageRecordPtr& rec) = 0;
     virtual Image loadImage(Priority priority, const ImageRecordPtr& rec) = 0;
-    
-    // MARK: - Selection
-    // Thread-unsafe; main thread only!
-    ObjectProperty(ImageSet, _selection);
-    const ImageSet& selection() { return __selection; }
-    void selection(ImageSet x) {
-        // Remove images that aren't loaded
-        // Ie, don't allow placeholder images to be selected
-        for (auto it=x.begin(); it!=x.end();) {
-            if (!(*it)->status.loadCount) {
-                it = x.erase(it);
-            } else {
-                it++;
-            }
-        }
-        _selection(x);
-    }
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;
