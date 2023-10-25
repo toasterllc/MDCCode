@@ -682,7 +682,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     _selection = selection;
     {
         __weak auto selfWeak = self;
-        _selectionOb = _selection->observerAdd([=] (const Object::Event& ev) {
+        _selectionOb = _selection->observerAdd([=] (auto, const Object::Event& ev) {
             [selfWeak _handleSelectionEvent:ev];
         });
     }
@@ -692,7 +692,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     // Add ourself as an observer of the image library
     {
         __weak auto selfWeak = self;
-        _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
+        _imageLibraryOb = _imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
             [selfWeak _handleImageLibraryEvent:static_cast<const ImageLibrary::Event&>(ev)];
         });
     }

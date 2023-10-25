@@ -77,7 +77,7 @@ struct SharedPtr : std::shared_ptr<T> {
 
 
 struct Object; using ObjectPtr = SharedPtr<Object>;
-struct Object {
+struct Object : std::enable_shared_from_this<Object> {
     // MARK: - Creation
     template<typename T, typename... T_Args>
     static SharedPtr<T> Create(T_Args&&... args) {
@@ -91,6 +91,38 @@ struct Object {
     void init() { _initDebug = true; }
     bool _initDebug = false;
     
+    // MARK: - self
+    
+    template<typename T=Object>
+    SharedPtr<T> self() { return shared_from_this(); }
+    
+    template<typename T=Object>
+    SharedPtr<T> self() const { return const_cast<Object*>(this)->self<T>(); }
+    
+    // selfOrNull(): returns null in the case that the object has already been deleted.
+    // The only case that we've found this to be useful is when an object is executing
+    // the destructor on ThreadA, and the destructor has signalled its worker thread,
+    // ThreadB, to terminate. During its termination, ThreadB might call self(),
+    // which would result in a bad_weak_ptr exception. Instead, ThreadB can use
+    // selfOrNull() to explicitly handle this case.
+    template<typename T=Object>
+    SharedPtr<T> selfOrNull() {
+        try {
+            return self();
+        } catch (const std::bad_weak_ptr&) {
+            return nullptr;
+        }
+    }
+    
+    template<typename T=Object>
+    SharedPtr<T> selfOrNull() const { return const_cast<Object*>(this)->selfOrNull<T>(); }
+    
+    template<typename T=Object>
+    typename std::weak_ptr<T> selfWeak() { return self<T>(); }
+    
+    template<typename T=Object>
+    typename std::weak_ptr<T> selfWeak() const { return const_cast<Object*>(this)->selfWeak<T>(); }
+    
     // MARK: - Observation
     
     struct Event {
@@ -99,7 +131,7 @@ struct Object {
         const void* prop = nullptr;
     };
     
-    using Observer    = std::function<void(const Event&)>;
+    using Observer    = std::function<void(ObjectPtr, const Event&)>;
     using ObserverPtr = SharedPtr<Observer>;
     
     static ObserverPtr ObserverCreate(Observer&& fn) {
@@ -123,7 +155,10 @@ struct Object {
         return _observe.observers.erase(ob);
     }
     
-    void observersNotify(const Event& ev) {
+    // observersNotify(): this version allows the caller to supply `self` for
+    // the case where the caller might use selfOrNull() instead of self().
+    // See comments for selfOrNull().
+    void observersNotify(ObjectPtr self, const Event& ev) {
         std::set<ObserverPtr::weak_type,std::owner_less<>> observers;
         {
             auto lock = std::unique_lock(_observe.lock);
@@ -134,8 +169,12 @@ struct Object {
         
         for (auto obWeak : _observe.observers) {
             ObserverPtr ob = obWeak.lock();
-            if (ob) (*ob)(ev);
+            if (ob) (*ob)(self, ev);
         }
+    }
+    
+    void observersNotify(const Event& ev) {
+        observersNotify(self(), ev);
     }
     
     // changed: allows subclasses to monitor all events, as if it's an observer

@@ -40,7 +40,7 @@ using namespace MDCStudio;
 - (void)setImageSource:(ImageSourcePtr)x {
     _imageSource = x;
     __weak auto selfWeak = self;
-    _imageLibraryOb = x->imageLibrary()->observerAdd([=] (auto) {
+    _imageLibraryOb = x->imageLibrary()->observerAdd([=] (auto, auto) {
         dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
     });
 }
@@ -99,7 +99,7 @@ using namespace MDCStudio;
     [super setImageSource:x];
     
     __weak auto selfWeak = self;
-    _deviceOb = [self device]->observerAdd([=] (auto) {
+    _deviceOb = [self device]->observerAdd([=] (auto, auto) {
         dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
     });
 }

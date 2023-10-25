@@ -839,7 +839,7 @@ struct MDCDevice : ImageSource {
                             _imageLibrary->clear();
                         }
                         
-//                        addCount = 1000;
+                        addCount = 1000;
 //                        addCount = 20000;
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary->add(addCount);
@@ -913,8 +913,11 @@ struct MDCDevice : ImageSource {
             _sync.signal.signalAll();
         }
         
-        // Notify observers that syncing is complete
-        observersNotify({});
+        // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
+        // exception if our MDCDevice is undergoing destruction on a different thread.
+        // The destructor waits for this thread to terminate, so this should be safe.
+        const auto self = selfOrNull();
+        if (self) observersNotify(self, {});
     }
     
     // MARK: - SD Read

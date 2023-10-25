@@ -29,15 +29,15 @@ using namespace MDCStudio;
     _selection = selection;
     
     __weak auto selfWeak = self;
-    _deviceOb = _device->observerAdd([=] (const Object::Event& ev) {
+    _deviceOb = _device->observerAdd([=] (auto, const Object::Event& ev) {
         dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _refresh]; });
     });
     
-    _imageLibraryOb = _device->imageLibrary()->observerAdd([=] (const Object::Event& ev) {
+    _imageLibraryOb = _device->imageLibrary()->observerAdd([=] (auto, const Object::Event& ev) {
         dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _refresh]; });
     });
     
-    _selectionOb = _selection->observerAdd([=] (const Object::Event& ev) {
+    _selectionOb = _selection->observerAdd([=] (auto, const Object::Event& ev) {
         assert([NSThread isMainThread]);
         [selfWeak _refresh];
     });

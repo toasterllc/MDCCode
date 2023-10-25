@@ -101,11 +101,11 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
     _selection = selection;
     
     __weak auto selfWeak = self;
-    _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
+    _imageLibraryOb = _imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
         [selfWeak _handleImageLibraryEvent:static_cast<const ImageLibrary::Event&>(ev)];
     });
     
-    _selectionOb = _selection->observerAdd([=] (const Object::Event& ev) {
+    _selectionOb = _selection->observerAdd([=] (auto, const Object::Event& ev) {
         [selfWeak _handleSelectionEvent:ev];
     });
     
@@ -836,7 +836,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     // Observe image library changes so that we update the image grid
     {
         __weak auto selfWeak = self;
-        _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
+        _imageLibraryOb = _imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
             const ImageLibrary::Event::Type type = static_cast<const ImageLibrary::Event&>(ev).type;
             [selfWeak _handleImageLibraryEventType:type];
         });

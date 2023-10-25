@@ -5,6 +5,18 @@
 namespace MDCStudio {
 
 struct ImageSelection : Object {
+    
+    void init(ImageLibraryPtr imageLibrary) {
+        printf("MDCDevice::init()\n");
+        Object::init(); // Call super
+        
+        _imageLibrary = imageLibrary;
+        _imageLibraryOb = _imageLibrary->observerAdd([&] (auto, const Object::Event& ev) {
+            _handleImageLibraryEvent(static_cast<const ImageLibrary::Event&>(ev));
+        });
+    }
+    
+    
     // Thread-unsafe; main thread only!
     ObjectProperty(ImageSet, _images);
     const ImageSet& images() { return __images; }
@@ -20,6 +32,13 @@ struct ImageSelection : Object {
         }
         _images(x);
     }
+    
+    void _handleImageLibraryEvent(const ImageLibrary::Event& ev) {
+        
+    }
+    
+    ImageLibraryPtr _imageLibrary;
+    Object::ObserverPtr _imageLibraryOb;
 };
 
 using ImageSelectionPtr = std::shared_ptr<ImageSelection>;

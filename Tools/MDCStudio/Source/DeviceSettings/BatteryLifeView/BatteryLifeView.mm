@@ -90,7 +90,7 @@ static void _ButtonStimulusInterval(const DS::Duration& x) {
     // Observe preferences
     {
         __weak auto selfWeak = self;
-        _prefsOb = PrefsGlobal()->observerAdd([=] (auto) { [selfWeak _prefsChanged]; });
+        _prefsOb = PrefsGlobal()->observerAdd([=] (auto, auto) { [selfWeak _prefsChanged]; });
     }
     
     _Load(self);

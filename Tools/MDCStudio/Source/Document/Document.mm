@@ -114,13 +114,13 @@ static void _SetView(T& x, NSView* y) {
     
     {
         __weak auto selfWeak = self;
-        _prefsOb = PrefsGlobal()->observerAdd([=] (auto) { [selfWeak _prefsChanged]; });
+        _prefsOb = PrefsGlobal()->observerAdd([=] (auto, auto) { [selfWeak _prefsChanged]; });
     }
     
     // Observe devices connecting/disconnecting
     {
         __weak auto selfWeak = self;
-        _devicesOb = MDCDevicesManagerGlobal()->observerAdd([=] (auto) {
+        _devicesOb = MDCDevicesManagerGlobal()->observerAdd([=] (auto, auto) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _updateDevices]; });
         });
     }
@@ -237,17 +237,17 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     {
         _active.imageSource = imageSource;
         _active.imageLibrary = _active.imageSource->imageLibrary();
-        _active.selection = Object::Create<ImageSelection>();
+        _active.selection = Object::Create<ImageSelection>(_active.imageLibrary);
         
         __weak auto selfWeak = self;
         
         // Observe image library
-        _active.deviceOb = device->observerAdd([=] (const Object::Event& ev) {
+        _active.deviceOb = device->observerAdd([=] (auto, const Object::Event& ev) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _activeDeviceChanged]; });
         });
         
         // Observe image library
-        _active.imageLibraryOb = _active.imageLibrary->observerAdd([=] (const Object::Event& ev) {
+        _active.imageLibraryOb = _active.imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
             const auto type = static_cast<const ImageLibrary::Event&>(ev).type;
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
         });
