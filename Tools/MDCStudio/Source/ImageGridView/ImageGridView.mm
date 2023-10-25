@@ -329,7 +329,6 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         if (itBegin!=_imageLibrary->end() && itLast!=_imageLibrary->end()) {
             _selection.base = itBegin-_imageLibrary->begin();
             _selection.count = itEnd-itBegin;
-            printf("_selection.base = %ju\n", (uintmax_t)_selection.base);
             
             constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
             _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
@@ -608,16 +607,18 @@ struct SelectionDelta {
     assert(selectionFrontIt != end);
     const auto selectionBackIt = ImageLibrary::Find(begin, end, selectionBack);
     assert(selectionBackIt != end);
-    ImageSet nextSelection;
-    {
-        auto next = std::next(selectionBackIt);
-        if (next != end) {
-            nextSelection = { *next };
-        } else if (selectionFrontIt != begin) {
-            auto prev = std::prev(selectionFrontIt);
-            nextSelection = { *prev };
-        }
-    }
+    const size_t selectionIdx = selectionFrontIt - begin;
+    
+//    ImageSet nextSelection;
+//    {
+//        auto next = std::next(selectionBackIt);
+//        if (next != end) {
+//            nextSelection = { *next };
+//        } else if (selectionFrontIt != begin) {
+//            auto prev = std::prev(selectionFrontIt);
+//            nextSelection = { *prev };
+//        }
+//    }
     
     {
         auto begin = _imageLibrary->begin();
@@ -632,7 +633,13 @@ struct SelectionDelta {
         }
     }
     
-    _imageSource->selection(nextSelection);
+    // Update the selection
+    if (!_imageLibrary->empty()) {
+        const size_t idx = std::min(_imageLibrary->recordCount()-1, selectionIdx);
+        auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+        ImageRecordPtr selectedRec = *(begin + idx);
+        _imageSource->selection({ selectedRec });
+    }
 }
 
 // MARK: - ImageSource Observer
@@ -977,7 +984,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 }
 
 - (void)mouseUp:(NSEvent*)event {
-    if ([event clickCount] == 2) {
+    if ([event clickCount]==2 && _imageSource->selection().size()==1) {
         [_delegate imageGridViewOpenSelectedImage:self];
     }
 }
