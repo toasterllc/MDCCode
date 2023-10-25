@@ -12,6 +12,7 @@
 #import "DeviceSettings/DeviceSettingsView.h"
 #import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
 #import "FactoryResetConfirmationAlert/FactoryResetConfirmationAlert.h"
+#import "ImageExporter/ImageExporter.h"
 #import "MDCDevicesManager.h"
 
 using namespace MDCStudio;
@@ -139,25 +140,61 @@ static void _SetView(T& x, NSView* y) {
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
     NSLog(@"[Document] validateUserInterfaceItem: %@\n", item);
     NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
+    
+    // Save
     if ([item action] == @selector(saveDocument:)) {
         return false;
     } else if ([item action] == @selector(saveDocumentAs:)) {
         return false;
     
+    // Sort
     } else if ([item action] == @selector(_sortNewestFirst:)) {
         [mitem setState:(_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     } else if ([item action] == @selector(_sortOldestFirst:)) {
         [mitem setState:(!_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
     
+    // Toggle panels
     } else if ([item action] == @selector(_toggleDevices:)) {
         [mitem setTitle:([[self _devicesContainerView] isHidden] ? @"Show Devices" : @"Hide Devices")];
     } else if ([item action] == @selector(_toggleInspector:)) {
         [mitem setTitle:([[self _inspectorContainerView] isHidden] ? @"Show Inspector" : @"Hide Inspector")];
+    
+    // Export
+    } else if ([item action] == @selector(_export:)) {
+        const size_t selectionCount = _active.selection->images().size();
+        NSString* title = nil;
+        if (selectionCount > 1) {
+            title = [NSString stringWithFormat:@"Export %ju Photos…", (uintmax_t)selectionCount];
+        } else if (selectionCount == 1) {
+            title = @"Export 1 Photo…";
+        } else {
+            title = @"Export…";
+        }
+        [mitem setTitle:title];
+        return (bool)selectionCount;
+    
+    // Delete
+    } else if ([item action] == @selector(_delete:)) {
+        const size_t selectionCount = _active.selection->images().size();
+        NSString* title = nil;
+        if (selectionCount > 1) {
+            title = [NSString stringWithFormat:@"Delete %ju Photos…", (uintmax_t)selectionCount];
+        } else if (selectionCount == 1) {
+            title = @"Delete 1 Photo…";
+        } else {
+            title = @"Delete…";
+        }
+        [mitem setTitle:title];
+        return (bool)selectionCount;
     }
     
     return true;
 //    return [super validateMenuItem:item];
 }
+
+
+
+
 
 - (NSString*)windowNibName {
     return @"Document";
@@ -427,6 +464,99 @@ static void _SortNewestFirst(bool x) {
 - (IBAction)_showSettingsForActiveDevice:(id)sender {
     MDCDevicePtr device = Toastbox::Cast<MDCDevicePtr>(_active.imageSource);
     [self _showSettingsForDevice:device];
+}
+
+- (IBAction)_export:(id)sender {
+    printf("[Document] _export:\n");
+    ImageExporter::Export(_window, _active.imageSource, _active.selection->images());
+}
+
+- (void)_deleteSelection {
+    using ImageSetIterAny = Toastbox::IterAny<ImageSet::const_iterator>;
+    
+    ImageSet selection = _active.selection->images();
+    ImageSet newSelection;
+    if (selection.empty()) {
+        NSBeep();
+        return;
+    }
+    
+    // Delete the images from the library
+    {
+        auto lock = std::unique_lock(*_active.imageLibrary);
+        
+        // Determine the record to select after deletion
+        const bool sortNewestFirst = _SortNewestFirst();
+        auto begin = ImageLibrary::BeginSorted(*_active.imageLibrary, sortNewestFirst);
+        auto end = ImageLibrary::EndSorted(*_active.imageLibrary, sortNewestFirst);
+        auto selectionBegin = (sortNewestFirst ? ImageSetIterAny(selection.rbegin()) : ImageSetIterAny(selection.begin()));
+        auto selectionEnd = (sortNewestFirst ? ImageSetIterAny(selection.rend()) : ImageSetIterAny(selection.end()));
+        ImageRecordPtr selectionFront = *selectionBegin;
+        ImageRecordPtr selectionBack = *std::prev(selectionEnd);
+        const auto selectionFrontIt = ImageLibrary::Find(begin, end, selectionFront);
+        assert(selectionFrontIt != end);
+        const auto selectionBackIt = ImageLibrary::Find(begin, end, selectionBack);
+        assert(selectionBackIt != end);
+        const size_t selectionIdx = selectionFrontIt - begin;
+        
+        // Perform the removal
+        _active.imageLibrary->remove(selection);
+        
+        // Construct `newSelection`
+        {
+            if (!_active.imageLibrary->empty()) {
+                const size_t idx = std::min(_active.imageLibrary->recordCount()-1, selectionIdx);
+                auto begin = ImageLibrary::BeginSorted(*_active.imageLibrary, sortNewestFirst);
+                newSelection = { *(begin + idx) };
+            }
+        }
+    }
+    
+    // Set the new selection
+    // Don't hold the ImageLibrary lock because this calls out!
+    _active.selection->images(newSelection);
+}
+
+- (IBAction)_delete:(id)sender {
+    const uintmax_t imageCount = _active.selection->images().size();
+    NSAlert* alert = [NSAlert new];
+    [alert setAlertStyle:NSAlertStyleWarning];
+    [alert setMessageText:[NSString stringWithFormat:@"Delete %ju %s",
+        imageCount, (imageCount>1 ? "Photos" : "Photo")]];
+    
+    [alert setInformativeText:[NSString stringWithFormat:@"Are you sure you want to delete %ju %s?\n\nOnce deleted, these photos will be unrecoverable, and this action cannot be undone.",
+        imageCount, (imageCount>1 ? "photos" : "photo")]];
+    
+    {
+        [alert addButtonWithTitle:@"Delete"];
+        NSButton* button = [[alert buttons] lastObject];
+        [button setTag:NSModalResponseOK];
+        [button setKeyEquivalent:@"\x7f"];
+        [button setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+    }
+    
+    {
+        [alert addButtonWithTitle:@"Cancel"];
+        NSButton* button = [[alert buttons] lastObject];
+        [button setTag:NSModalResponseCancel];
+        [button setKeyEquivalent:@"\r"];
+    }
+    
+    {
+        [alert addButtonWithTitle:@"CancelHidden"];
+        NSButton* button = [[alert buttons] lastObject];
+        [button setTag:NSModalResponseCancel];
+        [button setKeyEquivalent:@"\x1b"];
+        // Make button invisible, in case other versions of macOS break our -setFrame: technique
+        [button setAlphaValue:0];
+        [alert layout];
+        [button setFrame:{}];
+    }
+    
+    [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse r) {
+        if (r != NSModalResponseOK) return;
+        [self _deleteSelection];
+    }];
 }
 
 // MARK: - Device Settings

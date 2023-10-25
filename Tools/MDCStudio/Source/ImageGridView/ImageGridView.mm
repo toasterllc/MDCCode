@@ -7,7 +7,6 @@
 #import "Util.h"
 #import "Grid.h"
 #import "Code/Shared/Img.h"
-#import "ImageExporter/ImageExporter.h"
 #import "Toastbox/LRU.h"
 #import "Toastbox/IterAny.h"
 #import "Toastbox/Signal.h"
@@ -576,68 +575,6 @@ struct SelectionDelta {
     return [self rectForImageIndex:newIdx];
 }
 
-- (void)deleteSelection {
-    using ImageSetIterAny = Toastbox::IterAny<ImageSet::const_iterator>;
-    
-    ImageSet selection = _selection->images();
-    ImageSet newSelection;
-    if (selection.empty()) {
-        NSBeep();
-        return;
-    }
-    
-    // Delete the images from the library
-    {
-        auto lock = std::unique_lock(*_imageLibrary);
-        
-        // Determine the record to select after deletion
-        auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-        auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
-        auto selectionBegin = (_sortNewestFirst ? ImageSetIterAny(selection.rbegin()) : ImageSetIterAny(selection.begin()));
-        auto selectionEnd = (_sortNewestFirst ? ImageSetIterAny(selection.rend()) : ImageSetIterAny(selection.end()));
-        ImageRecordPtr selectionFront = *selectionBegin;
-        ImageRecordPtr selectionBack = *std::prev(selectionEnd);
-        const auto selectionFrontIt = ImageLibrary::Find(begin, end, selectionFront);
-        assert(selectionFrontIt != end);
-        const auto selectionBackIt = ImageLibrary::Find(begin, end, selectionBack);
-        assert(selectionBackIt != end);
-        const size_t selectionIdx = selectionFrontIt - begin;
-        
-        // Perform the removal
-        _imageLibrary->remove(selection);
-        
-//        {
-//            auto begin = _imageLibrary->begin();
-//            ssize_t idxFront = &*selectionFrontIt - &*begin;
-//            ssize_t idxBack = &*selectionBackIt - &*begin;
-//            if (idxFront > idxBack) std::swap(idxFront, idxBack);
-//            
-//            // Erase backwards so the index stays valid!
-//            for (ssize_t i=idxBack; i>=idxFront; i--) {
-//                const auto remBegin = begin+i;
-//                const auto remEnd = begin+i+1;
-//                // Only erase images that are in the selection
-//                if (selection.erase(*remBegin)) {
-//                    _imageLibrary->remove(remBegin, remEnd);
-//                }
-//            }
-//        }
-        
-        // Construct `newSelection`
-        {
-            if (!_imageLibrary->empty()) {
-                const size_t idx = std::min(_imageLibrary->recordCount()-1, selectionIdx);
-                auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-                newSelection = { *(begin + idx) };
-            }
-        }
-    }
-    
-    // Set the new selection
-    // Don't hold the ImageLibrary lock because this calls out!
-    _selection->images(newSelection);
-}
-
 // MARK: - ImageSelection Observer
 
 - (void)_handleSelectionEvent:(const Object::Event&)ev {
@@ -1037,64 +974,64 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     _selection->images(selection);
 }
 
-- (void)insertNewline:(id)sender {
-    [_delegate imageGridViewOpenSelection:self];
-}
+//- (void)insertNewline:(id)sender {
+//    [_delegate imageGridViewOpenSelection:self];
+//}
 
-- (void)keyDown:(NSEvent*)event {
-    NSString* lf = @"\n";
-    NSString* cr = @"\r";
-    NSString* del = @"\x7f";
-    // The standard NSResponder methods aren't called in the following cases (not sure why), so we emulate it.
-    if ([[event charactersIgnoringModifiers] isEqualToString:lf] ||
-        [[event charactersIgnoringModifiers] isEqualToString:cr]) {
-        return [self insertNewline:nil];
-    } else if ([[event charactersIgnoringModifiers] isEqualToString:del]) {
-        return [self deleteBackward:nil];
-    }
-    return [super keyDown:event];
-}
+//- (void)keyDown:(NSEvent*)event {
+//    NSString* lf = @"\n";
+//    NSString* cr = @"\r";
+//    NSString* del = @"\x7f";
+//    // The standard NSResponder methods aren't called in the following cases (not sure why), so we emulate it.
+//    if ([[event charactersIgnoringModifiers] isEqualToString:lf] ||
+//        [[event charactersIgnoringModifiers] isEqualToString:cr]) {
+//        return [self insertNewline:nil];
+//    } else if ([[event charactersIgnoringModifiers] isEqualToString:del]) {
+//        return [self deleteBackward:nil];
+//    }
+//    return [super keyDown:event];
+//}
 
-- (void)deleteBackward:(id)sender {
-    [_delegate imageGridViewDeleteSelection:self];
-
-    NSNumber* imageCount = @(_selection->images().size());
-    NSAlert* alert = [NSAlert new];
-    [alert setAlertStyle:NSAlertStyleWarning];
-    [alert setMessageText:[NSString stringWithFormat:@"Delete %@ Photos", imageCount]];
-    [alert setInformativeText:[NSString stringWithFormat:@"Are you sure you want to delete %@ photos?\n\nOnce deleted, these photos will be unrecoverable, and this action cannot be undone.", imageCount]];
-    
-    {
-        [alert addButtonWithTitle:@"Delete"];
-        NSButton* button = [[alert buttons] lastObject];
-        [button setTag:NSModalResponseOK];
-        [button setKeyEquivalent:@"\x7f"];
-        [button setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
-    }
-    
-    {
-        [alert addButtonWithTitle:@"Cancel"];
-        NSButton* button = [[alert buttons] lastObject];
-        [button setTag:NSModalResponseCancel];
-        [button setKeyEquivalent:@"\r"];
-    }
-    
-    {
-        [alert addButtonWithTitle:@"CancelHidden"];
-        NSButton* button = [[alert buttons] lastObject];
-        [button setTag:NSModalResponseCancel];
-        [button setKeyEquivalent:@"\x1b"];
-        // Make button invisible, in case other versions of macOS break our -setFrame: technique
-        [button setAlphaValue:0];
-        [alert layout];
-        [button setFrame:{}];
-    }
-    
-    [alert beginSheetModalForWindow:[self window] completionHandler:^(NSModalResponse r) {
-        if (r != NSModalResponseOK) return;
-        [self->_imageGridLayer deleteSelection];
-    }];
-}
+//- (void)deleteBackward:(id)sender {
+//    [_delegate imageGridViewDeleteSelection:self];
+//
+//    NSNumber* imageCount = @(_selection->images().size());
+//    NSAlert* alert = [NSAlert new];
+//    [alert setAlertStyle:NSAlertStyleWarning];
+//    [alert setMessageText:[NSString stringWithFormat:@"Delete %@ Photos", imageCount]];
+//    [alert setInformativeText:[NSString stringWithFormat:@"Are you sure you want to delete %@ photos?\n\nOnce deleted, these photos will be unrecoverable, and this action cannot be undone.", imageCount]];
+//    
+//    {
+//        [alert addButtonWithTitle:@"Delete"];
+//        NSButton* button = [[alert buttons] lastObject];
+//        [button setTag:NSModalResponseOK];
+//        [button setKeyEquivalent:@"\x7f"];
+//        [button setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+//    }
+//    
+//    {
+//        [alert addButtonWithTitle:@"Cancel"];
+//        NSButton* button = [[alert buttons] lastObject];
+//        [button setTag:NSModalResponseCancel];
+//        [button setKeyEquivalent:@"\r"];
+//    }
+//    
+//    {
+//        [alert addButtonWithTitle:@"CancelHidden"];
+//        NSButton* button = [[alert buttons] lastObject];
+//        [button setTag:NSModalResponseCancel];
+//        [button setKeyEquivalent:@"\x1b"];
+//        // Make button invisible, in case other versions of macOS break our -setFrame: technique
+//        [button setAlphaValue:0];
+//        [alert layout];
+//        [button setFrame:{}];
+//    }
+//    
+//    [alert beginSheetModalForWindow:[self window] completionHandler:^(NSModalResponse r) {
+//        if (r != NSModalResponseOK) return;
+//        [self->_imageGridLayer deleteSelection];
+//    }];
+//}
 
 // MARK: - FixedScrollView
 
@@ -1118,45 +1055,45 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 // MARK: - Menu Actions
 
-- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
-    NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
-    if ([item action] == @selector(_export:)) {
-        const size_t selectionCount = _selection->images().size();
-        NSString* title = nil;
-        if (selectionCount > 1) {
-            title = [NSString stringWithFormat:@"Export %ju Photos…", (uintmax_t)selectionCount];
-        } else if (selectionCount == 1) {
-            title = @"Export 1 Photo…";
-        } else {
-            title = @"Export…";
-        }
-        [mitem setTitle:title];
-        return (bool)selectionCount;
-    
-    } else if ([item action] == @selector(_delete:)) {
-        const size_t selectionCount = _selection->images().size();
-        NSString* title = nil;
-        if (selectionCount > 1) {
-            title = [NSString stringWithFormat:@"Delete %ju Photos…", (uintmax_t)selectionCount];
-        } else if (selectionCount == 1) {
-            title = @"Delete 1 Photo…";
-        } else {
-            title = @"Delete…";
-        }
-        [mitem setTitle:title];
-        return (bool)selectionCount;
-    }
-    return true;
-}
+//- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
+//    NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
+//    if ([item action] == @selector(_export:)) {
+//        const size_t selectionCount = _selection->images().size();
+//        NSString* title = nil;
+//        if (selectionCount > 1) {
+//            title = [NSString stringWithFormat:@"Export %ju Photos…", (uintmax_t)selectionCount];
+//        } else if (selectionCount == 1) {
+//            title = @"Export 1 Photo…";
+//        } else {
+//            title = @"Export…";
+//        }
+//        [mitem setTitle:title];
+//        return (bool)selectionCount;
+//    
+//    } else if ([item action] == @selector(_delete:)) {
+//        const size_t selectionCount = _selection->images().size();
+//        NSString* title = nil;
+//        if (selectionCount > 1) {
+//            title = [NSString stringWithFormat:@"Delete %ju Photos…", (uintmax_t)selectionCount];
+//        } else if (selectionCount == 1) {
+//            title = @"Delete 1 Photo…";
+//        } else {
+//            title = @"Delete…";
+//        }
+//        [mitem setTitle:title];
+//        return (bool)selectionCount;
+//    }
+//    return true;
+//}
 
-- (IBAction)_export:(id)sender {
-    printf("_export\n");
-    ImageExporter::Export([self window], _imageSource, _selection->images());
-}
-
-- (IBAction)_delete:(id)sender {
-    [self deleteBackward:nil];
-}
+//- (IBAction)_export:(id)sender {
+//    printf("_export\n");
+//    ImageExporter::Export([self window], _imageSource, _selection->images());
+//}
+//
+//- (IBAction)_delete:(id)sender {
+//    [self deleteBackward:nil];
+//}
 
 @end
 
