@@ -740,7 +740,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     ImageSelectionPtr _selection;
     ImageLibraryPtr _imageLibrary;
     Object::ObserverPtr _imageLibraryOb;
-    __weak id<ImageGridViewDelegate> _delegate;
     NSLayoutConstraint* _docHeight;
 //    id _widthChangedObserver;
 }
@@ -795,10 +794,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 - (void)dealloc {
     printf("~ImageGridView\n");
-}
-
-- (void)setDelegate:(id<ImageGridViewDelegate>)delegate {
-    _delegate = delegate;
 }
 
 - (ImageSourcePtr)imageSource {

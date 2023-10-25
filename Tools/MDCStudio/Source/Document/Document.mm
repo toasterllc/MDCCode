@@ -17,7 +17,7 @@
 
 using namespace MDCStudio;
 
-@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, FullSizeImageViewDelegate, DeviceSettingsViewDelegate>
+@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, FullSizeImageViewDelegate, DeviceSettingsViewDelegate>
 @end
 
 @implementation Document {
@@ -317,7 +317,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
         _active.imageGridScrollView = imageGridScrollView;
         
         _active.imageGridView = Toastbox::Cast<ImageGridView*>([_active.imageGridScrollView document]);
-        [_active.imageGridView setDelegate:self];
         _UpdateImageGridViewFromPrefs(PrefsGlobal(), _active.imageGridView);
         [_active.imageGridView setMenu:_ContextMenuCreate()];
         

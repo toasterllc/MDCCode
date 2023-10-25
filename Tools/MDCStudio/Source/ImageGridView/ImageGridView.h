@@ -6,9 +6,6 @@
 #import "FixedDocumentView.h"
 @class ImageGridView;
 
-@protocol ImageGridViewDelegate
-@end
-
 @protocol ImageGridViewResponder
 @optional
 - (void)_showImage:(id)sender;
@@ -19,8 +16,6 @@
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource
     selection:(MDCStudio::ImageSelectionPtr)selection;
 - (MDCStudio::ImageSourcePtr)imageSource;
-
-- (void)setDelegate:(id<ImageGridViewDelegate>)delegate;
 
 - (CGRect)rectForImageIndex:(size_t)idx;
 - (CGRect)rectForImageRecord:(MDCStudio::ImageRecordPtr)rec;
