@@ -329,6 +329,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         if (itBegin!=_imageLibrary->end() && itLast!=_imageLibrary->end()) {
             _selection.base = itBegin-_imageLibrary->begin();
             _selection.count = itEnd-itBegin;
+            printf("_selection.base = %ju\n", (uintmax_t)_selection.base);
             
             constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
             _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
@@ -585,6 +586,55 @@ struct SelectionDelta {
     return [self rectForImageIndex:newIdx];
 }
 
+- (void)deleteSelection {
+    using ImageSetIterAny = Toastbox::IterAny<ImageSet::const_iterator>;
+    
+    auto lock = std::unique_lock(*_imageLibrary);
+    
+    ImageSet selection = _imageSource->selection();
+    if (selection.empty()) {
+        NSBeep();
+        return;
+    }
+    
+    // Determine the record to select after deletion
+    auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+    auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
+    auto selectionBegin = (_sortNewestFirst ? ImageSetIterAny(selection.rbegin()) : ImageSetIterAny(selection.begin()));
+    auto selectionEnd = (_sortNewestFirst ? ImageSetIterAny(selection.rend()) : ImageSetIterAny(selection.end()));
+    ImageRecordPtr selectionFront = *selectionBegin;
+    ImageRecordPtr selectionBack = *std::prev(selectionEnd);
+    const auto selectionFrontIt = ImageLibrary::Find(begin, end, selectionFront);
+    assert(selectionFrontIt != end);
+    const auto selectionBackIt = ImageLibrary::Find(begin, end, selectionBack);
+    assert(selectionBackIt != end);
+    ImageSet nextSelection;
+    {
+        auto next = std::next(selectionBackIt);
+        if (next != end) {
+            nextSelection = { *next };
+        } else if (selectionFrontIt != begin) {
+            auto prev = std::prev(selectionFrontIt);
+            nextSelection = { *prev };
+        }
+    }
+    
+    {
+        auto begin = _imageLibrary->begin();
+        for (auto it=selectionFrontIt; !selection.empty() && it!=end; it++) {
+            const size_t idx = &*it - &*begin;
+            const auto remBegin = begin+idx;
+            const auto remEnd = begin+idx+1;
+            // Only erase images that are in the selection
+            if (selection.erase(*remBegin)) {
+                _imageLibrary->remove(remBegin, remEnd);
+            }
+        }
+    }
+    
+    _imageSource->selection(nextSelection);
+}
+
 // MARK: - ImageSource Observer
 
 - (void)_handleImageSourceEvent:(const Object::Event&)ev {
@@ -787,7 +837,7 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         __weak auto selfWeak = self;
         _imageLibraryOb = _imageLibrary->observerAdd([=] (const Object::Event& ev) {
             const ImageLibrary::Event::Type type = static_cast<const ImageLibrary::Event&>(ev).type;
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
+            [selfWeak _handleImageLibraryEventType:type];
         });
     }
     
@@ -863,6 +913,11 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 
 // MARK: - ImageLibrary Observer
 - (void)_handleImageLibraryEventType:(ImageLibrary::Event::Type)type {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self _handleImageLibraryEventType:type]; });
+        return;
+    }
+    
     switch (type) {
     case ImageLibrary::Event::Type::Add:
     case ImageLibrary::Event::Type::Remove:
@@ -985,13 +1040,22 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
 - (void)keyDown:(NSEvent*)event {
     NSString* lf = @"\n";
     NSString* cr = @"\r";
-    // -[NSResponder insertNewline:] doesn't get called when pressing return, so we manually trigger it
+    NSString* del = @"\x7f";
+    // The standard NSResponder methods aren't called in the following cases (not sure why), so we emulate it.
     if ([[event charactersIgnoringModifiers] isEqualToString:lf] ||
         [[event charactersIgnoringModifiers] isEqualToString:cr]) {
         return [self insertNewline:nil];
+    } else if ([[event charactersIgnoringModifiers] isEqualToString:del]) {
+        return [self deleteBackward:nil];
     }
     return [super keyDown:event];
 }
+
+- (void)deleteBackward:(id)sender {
+    [_imageGridLayer deleteSelection];
+}
+
+// MARK: - FixedScrollView
 
 - (void)fixedCreateConstraintsForContainer:(NSView*)container {
     NSView*const containerSuperview = [container superview];
@@ -1094,6 +1158,22 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     }
     return true;
 }
+
+//- (void)deleteForward:(id)sender {
+//    printf("AAA -deleteForward:\n");
+//}
+//
+//- (void)deleteBackward:(id)sender {
+//    printf("AAA -deleteBackward:\n");
+//}
+//
+//- (void)deleteBackwardByDecomposingPreviousCharacter:(id)sender {
+//    printf("AAA -deleteBackward:\n");
+//}
+//
+//- (void)deleteToMark:(id)sender {
+//    printf("AAA -deleteToMark:\n");
+//}
 
 //- (BOOL)acceptsFirstResponder {
 //    return true;
