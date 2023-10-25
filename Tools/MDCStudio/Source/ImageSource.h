@@ -27,9 +27,8 @@ struct ImageSource : Object {
     
     // MARK: - Selection
     // Thread-unsafe; main thread only!
-    ObjectPropertyReference(ImageSet, _selection);
-    
-    auto selection() { return _selection(); }
+    ObjectProperty(ImageSet, _selection);
+    const ImageSet& selection() { return __selection; }
     void selection(ImageSet x) {
         // Remove images that aren't loaded
         // Ie, don't allow placeholder images to be selected

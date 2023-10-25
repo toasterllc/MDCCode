@@ -19,19 +19,12 @@ namespace MDCStudio {
         super::init();                          \
     }
 
-// ObjectPropertyValue: property with value semantics.
+// ObjectProperty: property with value semantics.
 // Thread-safe.
-#define ObjectPropertyValue(typ, name, init...)                       \
-    typ _##name = { init };                                           \
-    virtual typ name() { return _getter<false>(_##name); }            \
-    virtual void name(typ x) { _setter<false>(_##name, std::move(x)); }
-
-// ObjectPropertyReference: property with reference semantics.
-// Not thread-safe; client responsible for thread safety.
-#define ObjectPropertyReference(typ, name, init...)                  \
-    typ _##name = { init };                                          \
-    virtual const typ& name() { return _getter<true>(_##name); }     \
-    virtual void name(typ x) { _setter<true>(_##name, std::move(x)); }
+#define ObjectProperty(typ, name, init...)                          \
+    typ _##name = { init };                                         \
+    virtual typ name() { return _getter(_##name); }                 \
+    virtual void name(typ x) { _setter(_##name, std::move(x)); }
 
 // SharedPtr: shared_ptr wrapper that adds implicit casting to remove the need for explicit casts
 template<typename T>
@@ -225,23 +218,17 @@ struct Object {
     template<typename T>
     struct _IsObjectPtr<T, std::void_t<decltype(__IsObjectPtr(std::declval<T>()))>> : std::true_type {};
     
-    template<bool T_Ref, typename T>
-    std::conditional_t<T_Ref, const T&, T> _getter(const T& prop) {
-        std::unique_lock<std::mutex> lock;
-        if constexpr (T_Ref) {
-            lock = std::unique_lock(_propLock);
-        }
+    template<typename T>
+    T _getter(const T& prop) {
+        auto lock = std::unique_lock(_propLock);
         return prop;
     }
     
-    template<bool T_Ref, typename T>
+    template<typename T>
     void _setter(T& prop, T x) {
         bool changed = false;
         {
-            std::unique_lock<std::mutex> lock;
-            if constexpr (T_Ref) {
-                lock = std::unique_lock(_propLock);
-            }
+            auto lock = std::unique_lock(_propLock);
             // Check equality if the type supports it
             if constexpr (_EqualExists<T>::value) {
                 if (!_Equal(prop, x)) {

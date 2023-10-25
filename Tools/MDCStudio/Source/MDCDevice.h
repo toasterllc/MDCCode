@@ -123,7 +123,7 @@ struct MDCDevice : ImageSource {
         }
     }
     
-    ObjectPropertyValue(std::string, name);
+    ObjectProperty(std::string, name);
     
     void changed(const Event& ev) override {
         if (ev.prop == &_name) {
