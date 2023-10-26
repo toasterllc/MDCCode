@@ -20,17 +20,21 @@ inline auto _LastLoaded(ImageLibraryPtr x) {
 inline std::string ImageLibraryStatus(size_t count, Time::Instant first, Time::Instant last,
     std::string_view singular, std::string_view plural) {
     
-    using namespace std::chrono;
-    const auto tFirst = Time::Clock::TimePointFromTimeInstant(first);
-    const auto tLast = Time::Clock::TimePointFromTimeInstant(last);
-    const std::string strFirst = Calendar::MonthYearString(tFirst);
-    const std::string strLast = Calendar::MonthYearString(tLast);
-    const std::string dateDesc = strFirst + (strFirst == strLast ? "" : " – " + strLast);
-    if (count == 1) {
-        return std::to_string(count) + " " + std::string(singular) + " from " + dateDesc;
-    } else {
-        return std::to_string(count) + " " + std::string(plural) + " from " + dateDesc;
+    std::stringstream ss;
+    ss << count << " ";
+    ss << (count==1 ? singular : plural);
+    
+    if (Time::Absolute(first) && Time::Absolute(last)) {
+        const auto tFirst = Time::Clock::TimePointFromTimeInstant(first);
+        const auto tLast = Time::Clock::TimePointFromTimeInstant(last);
+        const std::string strFirst = Calendar::MonthYearString(tFirst);
+        const std::string strLast = Calendar::MonthYearString(tLast);
+        ss << " from ";
+        ss << strFirst;
+        if (strFirst != strLast) ss << " – " << strLast;
     }
+    
+    return ss.str();
 }
 
 inline std::string ImageLibraryStatus(ImageLibraryPtr lib, std::string noPhotos="No photos") {
