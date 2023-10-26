@@ -279,6 +279,52 @@ struct MDCDevice : ImageSource {
         return _loadImage(priority, rec);
     }
     
+    struct AddrRange {
+        uint64_t begin = 0;
+        uint64_t end = 0;
+    };
+    
+    static std::vector<AddrRange> _CoalesceAddresses(const std::vector<uint64_t>& addrs, uint64_t len) {
+        std::vector<AddrRange> ranges;
+        std::optional<AddrRange> current;
+        for (uint64_t addr : addrs) {
+            if (current && current->end==addr) {
+                current->end = addr+len;
+            
+            } else {
+                if (current) ranges.push_back(*current);
+                current = {
+                    .begin = addr,
+                    .end = addr+len,
+                };
+            }
+        }
+        if (current) ranges.push_back(*current);
+        return ranges;
+    }
+    
+    void deleteImages(const ImageSet& images) override {
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            _imageLibrary->remove(images);
+        }
+        
+        {
+            std::vector<uint64_t> addrFull;
+            std::vector<uint64_t> addrThumb;
+            for (const ImageRecordPtr& rec : images) {
+                addrFull.push_back(rec->info.addrFull);
+                addrThumb.push_back(rec->info.addrThumb);
+            }
+            
+            std::sort(addrFull.begin(), addrFull.end());
+            std::sort(addrThumb.begin(), addrThumb.end());
+            
+            const std::vector<AddrRange> rangesFull = _CoalesceAddresses(addrFull, ImgSD::Full::ImagePaddedLen);
+            const std::vector<AddrRange> rangesThumb = _CoalesceAddresses(addrThumb, ImgSD::Thumb::ImagePaddedLen);
+        }
+    }
+    
     // MARK: - Private
     
     using _Path = std::filesystem::path;

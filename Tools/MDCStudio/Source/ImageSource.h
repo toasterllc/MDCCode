@@ -24,6 +24,7 @@ struct ImageSource : Object {
     virtual void renderThumbs(Priority priority, ImageSet recs) = 0;
     virtual Image getCachedImage(const ImageRecordPtr& rec) = 0;
     virtual Image loadImage(Priority priority, const ImageRecordPtr& rec) = 0;
+    virtual void deleteImages(const ImageSet& images) = 0;
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;
