@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-bool GetBit(const void* bytes, size_t len, uint8_t idx) {
+inline bool GetBit(const void* bytes, size_t len, uint8_t idx) {
     const uint8_t* b = (const uint8_t*)bytes;
     const uint8_t byteIdx = len-(idx/8)-1;
     const uint8_t bitIdx = idx%8;
@@ -9,7 +9,7 @@ bool GetBit(const void* bytes, size_t len, uint8_t idx) {
     return b[byteIdx] & bitMask;
 }
 
-uint64_t GetBits(const void* bytes, size_t len, uint8_t start, uint8_t end) {
+inline uint64_t GetBits(const void* bytes, size_t len, uint8_t start, uint8_t end) {
     const uint8_t* b = (const uint8_t*)bytes;
     const uint8_t leftByteIdx = len-(start/8)-1;
     const uint8_t leftByteMask = (1<<((start%8)+1))-1;

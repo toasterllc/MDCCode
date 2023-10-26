@@ -506,41 +506,37 @@ static void _SortNewestFirst(bool x) {
 - (void)_deleteSelection {
     using ImageSetIterAny = Toastbox::IterAny<ImageSet::const_iterator>;
     
-    ImageSet selection = _active.selection->images();
+    const bool sortNewestFirst = _SortNewestFirst();
+    const ImageSet selection = _active.selection->images();
     ImageSet newSelection;
     if (selection.empty()) {
         NSBeep();
         return;
     }
     
-    // Delete the images from the library
+    // Find the index of the selection so we can restore it after the deletion
+    size_t selectionIdx = 0;
     {
         auto lock = std::unique_lock(*_active.imageLibrary);
-        
-        // Determine the record to select after deletion
-        const bool sortNewestFirst = _SortNewestFirst();
         auto begin = ImageLibrary::BeginSorted(*_active.imageLibrary, sortNewestFirst);
         auto end = ImageLibrary::EndSorted(*_active.imageLibrary, sortNewestFirst);
         auto selectionBegin = (sortNewestFirst ? ImageSetIterAny(selection.rbegin()) : ImageSetIterAny(selection.begin()));
-        auto selectionEnd = (sortNewestFirst ? ImageSetIterAny(selection.rend()) : ImageSetIterAny(selection.end()));
         ImageRecordPtr selectionFront = *selectionBegin;
-        ImageRecordPtr selectionBack = *std::prev(selectionEnd);
         const auto selectionFrontIt = ImageLibrary::Find(begin, end, selectionFront);
         assert(selectionFrontIt != end);
-        const auto selectionBackIt = ImageLibrary::Find(begin, end, selectionBack);
-        assert(selectionBackIt != end);
-        const size_t selectionIdx = selectionFrontIt - begin;
+        selectionIdx = selectionFrontIt - begin;
+    }
+    
+    // Perform the deletion
+    _active.imageSource->deleteImages(selection);
         
-        // Perform the removal
-        _active.imageLibrary->remove(selection);
-        
-        // Construct `newSelection`
-        {
-            if (!_active.imageLibrary->empty()) {
-                const size_t idx = std::min(_active.imageLibrary->recordCount()-1, selectionIdx);
-                auto begin = ImageLibrary::BeginSorted(*_active.imageLibrary, sortNewestFirst);
-                newSelection = { *(begin + idx) };
-            }
+    // Construct `newSelection` using `selectionIdx`
+    {
+        auto lock = std::unique_lock(*_active.imageLibrary);
+        if (!_active.imageLibrary->empty()) {
+            const size_t idx = std::min(_active.imageLibrary->recordCount()-1, selectionIdx);
+            auto begin = ImageLibrary::BeginSorted(*_active.imageLibrary, sortNewestFirst);
+            newSelection = { *(begin + idx) };
         }
     }
     

@@ -50,6 +50,7 @@ const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
 const CmdStr MSPSBWEraseCmd         = "MSPSBWErase";
 const CmdStr MSPSBWDebugLogCmd      = "MSPSBWDebugLog";
 const CmdStr SDReadCmd              = "SDRead";
+const CmdStr SDEraseCmd             = "SDErase";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 
 static void printUsage() {
@@ -85,6 +86,7 @@ static void printUsage() {
     cout << "  " << MSPSBWDebugLogCmd       << "\n";
     
     cout << "  " << SDReadCmd               << " <addr> <blockcount> <output>\n";
+    cout << "  " << SDEraseCmd              << " <addr> <blockcount> <output>\n";
     cout << "  " << ImgCaptureCmd           << " <output.cfa>\n";
     
     cout << "\n";
@@ -133,6 +135,11 @@ struct Args {
         SD::Block count = 0;
         std::string filePath;
     } SDRead = {};
+    
+    struct {
+        SD::Block addr = 0;
+        SD::Block count = 0;
+    } SDErase = {};
     
     struct {
         std::string filePath;
@@ -217,6 +224,11 @@ static Args parseArgs(int argc, const char* argv[]) {
         IntForStr(args.SDRead.addr, strs[1]);
         IntForStr(args.SDRead.count, strs[2]);
         args.SDRead.filePath = strs[3];
+    
+    } else if (args.cmd == lower(SDEraseCmd)) {
+        if (strs.size() < 3) throw std::runtime_error("missing argument: address/length");
+        IntForStr(args.SDErase.addr, strs[1]);
+        IntForStr(args.SDErase.count, strs[2]);
     
     } else if (args.cmd == lower(ImgCaptureCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
@@ -810,6 +822,18 @@ static void SDRead(const Args& args, MDCUSBDevice& device) {
     printf("-> Wrote %ju blocks (%ju bytes)\n", (uintmax_t)args.SDRead.count, (uintmax_t)len);
 }
 
+static void SDErase(const Args& args, MDCUSBDevice& device) {
+    if (args.SDErase.count <= 0) throw Toastbox::RuntimeError("invalid block count: %ju", (uintmax_t)args.SDErase.count);
+    
+    printf("Sending SDInit command...\n");
+    device.sdInit();
+    printf("-> OK\n\n");
+    
+    printf("Sending SDErase command...\n");
+    device.sdErase(args.SDErase.addr, args.SDErase.addr+args.SDErase.count-1);
+    printf("-> OK\n\n");
+}
+
 static void ImgCapture(const Args& args, MDCUSBDevice& device) {
     printf("Sending ImgInit command...\n");
     device.imgInit();
@@ -905,6 +929,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPSBWEraseCmd))         MSPSBWErase(args, device);
         else if (args.cmd == lower(MSPSBWDebugLogCmd))      MSPSBWDebugLog(args, device);
         else if (args.cmd == lower(SDReadCmd))              SDRead(args, device);
+        else if (args.cmd == lower(SDEraseCmd))             SDErase(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))          ImgCapture(args, device);
     
     } catch (const std::exception& e) {

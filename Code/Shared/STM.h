@@ -59,6 +59,7 @@ enum class Op : uint8_t {
     
     SDInit,
     SDRead,
+    SDErase,
     
     ImgInit,
     ImgExposureSet,
@@ -138,6 +139,11 @@ struct [[gnu::packed]] Cmd {
         struct [[gnu::packed]] {
             SD::Block block;
         } SDRead;
+        
+        struct [[gnu::packed]] {
+            SD::Block first;
+            SD::Block last;
+        } SDErase;
         
         struct [[gnu::packed]] {
             uint8_t dstRAMBlock;

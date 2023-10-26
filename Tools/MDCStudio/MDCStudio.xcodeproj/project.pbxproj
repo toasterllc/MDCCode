@@ -174,7 +174,6 @@
 		5544AE0227B5E57A006AB473 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mod.h; sourceTree = "<group>"; };
 		5544AE0427B5E57A006AB473 /* Interp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Interp.h; sourceTree = "<group>"; };
 		5544AE0527B5E57A006AB473 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
-		5544AE0727B5E585006AB473 /* BufQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BufQueue.h; sourceTree = "<group>"; };
 		5544AE0827B5E585006AB473 /* ImgAutoExposure.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgAutoExposure.h; sourceTree = "<group>"; };
 		5544AE0927B5E585006AB473 /* GetBits.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GetBits.h; sourceTree = "<group>"; };
 		5544AE0A27B5E585006AB473 /* ChecksumFletcher32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
@@ -544,7 +543,6 @@
 		5544AE0627B5E585006AB473 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				5544AE0727B5E585006AB473 /* BufQueue.h */,
 				5544AE0827B5E585006AB473 /* ImgAutoExposure.h */,
 				5544AE0927B5E585006AB473 /* GetBits.h */,
 				5544AE0A27B5E585006AB473 /* ChecksumFletcher32.h */,

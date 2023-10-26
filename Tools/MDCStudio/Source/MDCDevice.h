@@ -188,19 +188,6 @@ struct MDCDevice : ImageSource {
     }
     
     void factoryReset() {
-        // Reset the device
-        {
-            auto hostMode = _hostModeEnter(true);
-            
-            auto lock = _status.signal.lock();
-                _status.state.sd = {};
-                _status.state.settings = {};
-                const MSP::State mspState = _status.state;
-            lock.unlock();
-            
-            _device.device->mspStateWrite(mspState);
-        }
-        
         // Clear the image library
         {
             auto lock = std::unique_lock(*_imageLibrary);
@@ -215,7 +202,32 @@ struct MDCDevice : ImageSource {
             _sync.signal.wait([&] { return !_sync.progress; });
         }
         
+        // Reset MSP430 state, and erase the SD card
+        {
+            auto sdMode = _sdModeEnter(true);
+            
+            // Reset MSP430 state
+            {
+                auto lock = _status.signal.lock();
+                    _status.state.sd = {};
+                    _status.state.settings = {};
+                    const MSP::State mspState = _status.state;
+                lock.unlock();
+                
+                _device.device->mspStateWrite(mspState);
+            }
+            
+            // Erase the entire SD card
+            {
+                const _SDRegion region = { 0, SD::BlockCapacity(_sdMode.cardInfo.cardData) };
+                _sdRegionsErase({ region });
+            }
+        }
+        
         // Clear our caches
+        // This is necessary because future images that are captured will occupy the
+        // same region of previous images in the cache, which will result in stale
+        // images being supplied from the cache, from before the factory reset.
         {
             _thumbCache.clear();
             _imageCache.clear();
@@ -279,30 +291,6 @@ struct MDCDevice : ImageSource {
         return _loadImage(priority, rec);
     }
     
-    struct AddrRange {
-        uint64_t begin = 0;
-        uint64_t end = 0;
-    };
-    
-    static std::vector<AddrRange> _CoalesceAddresses(const std::vector<uint64_t>& addrs, uint64_t len) {
-        std::vector<AddrRange> ranges;
-        std::optional<AddrRange> current;
-        for (uint64_t addr : addrs) {
-            if (current && current->end==addr) {
-                current->end = addr+len;
-            
-            } else {
-                if (current) ranges.push_back(*current);
-                current = {
-                    .begin = addr,
-                    .end = addr+len,
-                };
-            }
-        }
-        if (current) ranges.push_back(*current);
-        return ranges;
-    }
-    
     void deleteImages(const ImageSet& images) override {
         {
             auto lock = std::unique_lock(*_imageLibrary);
@@ -310,8 +298,8 @@ struct MDCDevice : ImageSource {
         }
         
         {
-            std::vector<uint64_t> addrFull;
-            std::vector<uint64_t> addrThumb;
+            std::vector<_SDBlock> addrFull;
+            std::vector<_SDBlock> addrThumb;
             for (const ImageRecordPtr& rec : images) {
                 addrFull.push_back(rec->info.addrFull);
                 addrThumb.push_back(rec->info.addrThumb);
@@ -320,8 +308,14 @@ struct MDCDevice : ImageSource {
             std::sort(addrFull.begin(), addrFull.end());
             std::sort(addrThumb.begin(), addrThumb.end());
             
-            const std::vector<AddrRange> rangesFull = _CoalesceAddresses(addrFull, ImgSD::Full::ImagePaddedLen);
-            const std::vector<AddrRange> rangesThumb = _CoalesceAddresses(addrThumb, ImgSD::Thumb::ImagePaddedLen);
+            const std::vector<_SDRegion> regionsFull = _SDBlocksCoalesce(addrFull, ImgSD::Full::ImageBlockCount);
+            const std::vector<_SDRegion> regionsThumb = _SDBlocksCoalesce(addrThumb, ImgSD::Thumb::ImageBlockCount);
+            
+            {
+                auto sdMode = _sdModeEnter(true);
+                _sdRegionsErase(regionsFull);
+                _sdRegionsErase(regionsThumb);
+            }
         }
     }
     
@@ -468,6 +462,25 @@ struct MDCDevice : ImageSource {
 //        return 1;
         static int CPUCount = std::max(1, (int)std::thread::hardware_concurrency());
         return CPUCount;
+    }
+    
+    static std::vector<_SDRegion> _SDBlocksCoalesce(const std::vector<_SDBlock>& addrs, _SDBlock len) {
+        std::vector<_SDRegion> regions;
+        std::optional<_SDRegion> current;
+        for (_SDBlock addr : addrs) {
+            if (current && current->end==addr) {
+                current->end = addr+len;
+            
+            } else {
+                if (current) regions.push_back(*current);
+                current = {
+                    .begin = addr,
+                    .end = addr+len,
+                };
+            }
+        }
+        if (current) regions.push_back(*current);
+        return regions;
     }
     
     static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
@@ -828,6 +841,15 @@ struct MDCDevice : ImageSource {
         Image image = _imageCreate(buf.entry());
         _imageCache.set(region, std::move(buf));
         return image;
+    }
+    
+    void _sdRegionsErase(const std::vector<_SDRegion>& regions) {
+        for (const _SDRegion& region : regions) {
+            _device.device->sdErase(
+                Toastbox::Cast<SD::Block>(region.begin),
+                Toastbox::Cast<SD::Block>(region.end-1)
+            );
+        }
     }
     
     // MARK: - Sync
@@ -1227,8 +1249,8 @@ struct MDCDevice : ImageSource {
     
     // SD mode: acquires the device lock, tells the device to enter host mode,
     // loads ICEAppSDReadoutSTM onto the ICE40, and initializes the SD card.
-    _Cleanup _sdModeEnter() {
-        _sdModeSet(true);
+    _Cleanup _sdModeEnter(bool interrupt=false) {
+        _sdModeSet(true, interrupt);
         return std::make_unique<__Cleanup>([=] { _sdModeSet(false); });
     }
     
@@ -1267,27 +1289,27 @@ struct MDCDevice : ImageSource {
         }
     }
     
-    void _sdModeSet(bool en) {
+    void _sdModeSet(bool en, bool interrupt=false) {
         try {
             if (en) {
                 auto timeStart = std::chrono::steady_clock::now();
                 
                 // Enter host mode while we're in SD mode, since MSP can't talk to
                 // ICE40 or SD card while we're using it.
-                _sdMode.hostMode = _hostModeEnter();
+                _sdMode.hostMode = _hostModeEnter(interrupt);
                 
                 // Load ICE40 with our app
                 _ICEConfigure(*_device.device);
                 
                 // Init SD card
-                const STM::SDCardInfo sdCardInfo = _device.device->sdInit();
+                _sdMode.cardInfo = _device.device->sdInit();
                 
                 // If _device.state.sd is valid, verify that the current SD card id matches MSP's card id
                 {
                     auto lock = _status.signal.lock();
                     if (_status.state.sd.valid) {
-                        if (memcmp(&sdCardInfo.cardId, &_status.state.sd.cardId, sizeof(_status.state.sd.cardId))) {
-                            throw Toastbox::RuntimeError("sdCardInfo.cardId != _mspSDState.cardId");
+                        if (memcmp(&_sdMode.cardInfo.cardId, &_status.state.sd.cardId, sizeof(_status.state.sd.cardId))) {
+                            throw Toastbox::RuntimeError("_sdMode.cardInfo.cardId != _mspSDState.cardId");
                         }
                     }
                 }
@@ -1336,6 +1358,7 @@ struct MDCDevice : ImageSource {
     
     struct {
         _Cleanup hostMode;
+        STM::SDCardInfo cardInfo;
     } _sdMode;
     
     struct {

@@ -300,6 +300,22 @@ public:
         }
     }
     
+    static void Erase(SD::Block first, SD::Block last) {
+        _SendCmd(_CMD32, first);
+        _SendCmd(_CMD33, last);
+        _SendCmd(_CMD38, 0);
+        
+        #warning TODO: do we implement a timeout here?
+        constexpr auto SleepDuration = _Ms<100>;
+        // Wait for SD card to indicate that it's ready (DAT0=1)
+        for (;;) {
+            const _SDStatusResp status = T_ICE::SDStatus();
+            if (status.dat0Idle()) break;
+            // Let other tasks run
+            _Sleep(SleepDuration);
+        }
+    }
+    
 private:
     using _SDConfigMsg  = typename T_ICE::SDConfigMsg;
     using _SDSendCmdMsg = typename T_ICE::SDSendCmdMsg;
@@ -341,6 +357,9 @@ private:
     static constexpr uint8_t _CMD18 = 18;
     static constexpr uint8_t _CMD23 = 23;
     static constexpr uint8_t _CMD25 = 25;
+    static constexpr uint8_t _CMD32 = 32;
+    static constexpr uint8_t _CMD33 = 33;
+    static constexpr uint8_t _CMD38 = 38;
     static constexpr uint8_t _CMD41 = 41;
     static constexpr uint8_t _CMD55 = 55;
     

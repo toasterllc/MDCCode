@@ -209,16 +209,20 @@ public:
         return _CardData;
     }
     
-    static void ReadStart(uint32_t blockIdx) {
+    static void ReadStart(SD::Block block) {
         if (_Reading) ReadStop(); // Stop current read if one is in progress
         
         _Reading = true;
-        _SDCard::ReadStart(blockIdx);
+        _SDCard::ReadStart(block);
     }
     
     static void ReadStop() {
         _Reading = false;
         _SDCard::ReadStop();
+    }
+    
+    static void Erase(SD::Block blockFirst, SD::Block blockLast) {
+        _SDCard::Erase(blockFirst, blockLast);
     }
     
 private:
@@ -1512,6 +1516,19 @@ static void _SDRead(const STM::Cmd& cmd) {
     _TaskReadout::Start(std::nullopt);
 }
 
+static void _SDErase(const STM::Cmd& cmd) {
+    const auto& arg = cmd.arg.SDErase;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Perform the erase
+    _SD::Erase(arg.first, arg.last);
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
 void _ImgInit(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
@@ -1629,6 +1646,7 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     // SD Card
     case Op::SDInit:                _SDInit(cmd);                       break;
     case Op::SDRead:                _SDRead(cmd);                       break;
+    case Op::SDErase:               _SDErase(cmd);                      break;
     // Img
     case Op::ImgInit:               _ImgInit(cmd);                      break;
     case Op::ImgExposureSet:        _ImgExposureSet(cmd);               break;

@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "Code/Shared/GetBits.h"
 
 namespace SD {
 
@@ -23,5 +24,9 @@ struct [[gnu::packed]] CardData {
     uint8_t data[15]    = {};
     uint8_t crc         = 0;
 };
+
+inline uint32_t BlockCapacity(const SD::CardData& cardData) {
+    return ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
+}
 
 } // namespace SD

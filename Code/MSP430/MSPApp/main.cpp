@@ -12,7 +12,6 @@
 #include "Code/Shared/ImgAutoExposure.h"
 #include "Code/Shared/Assert.h"
 #include "Code/Shared/MSP.h"
-#include "Code/Shared/GetBits.h"
 #include "Code/Shared/ImgSD.h"
 #include "Code/Shared/Time.h"
 #include "Code/Shared/TimeConstants.h"
@@ -872,7 +871,7 @@ struct _TaskSD {
         // CombinedBlockCount: thumbnail block count + full-size block count
         constexpr uint32_t CombinedBlockCount = ImgSD::Thumb::ImageBlockCount + ImgSD::Full::ImageBlockCount;
         // blockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
-        const uint32_t blockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
+        const uint32_t blockCap = SD::BlockCapacity(cardData);
         // imgCap: the capacity of the SD card in number of images
         const uint32_t imgCap = blockCap / CombinedBlockCount;
         

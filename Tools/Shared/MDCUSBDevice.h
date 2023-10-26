@@ -599,6 +599,22 @@ public:
         _checkStatus("SDRead command failed");
     }
     
+    void sdErase(SD::Block first, SD::Block last) {
+        assert(_mode == STM::Status::Mode::STMApp);
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::SDErase,
+            .arg = {
+                .SDErase = {
+                    .first = first,
+                    .last = last,
+                },
+            },
+        };
+        _sendCmd(cmd);
+        _checkStatus("SDErase command failed");
+    }
+    
     void imgInit() {
         assert(_mode == STM::Status::Mode::STMApp);
         
