@@ -897,7 +897,6 @@ struct MDCDevice : ImageSource {
                     
                     // Calculate how many images to add to the end of the library: device has, lib doesn't
                     {
-                        
                         const std::optional<size_t> count = LoadImageCount(lock, _imageLibrary, deviceImageRange);
                         if (count) {
                             addCount = (uint32_t)*count;
@@ -958,6 +957,21 @@ struct MDCDevice : ImageSource {
                         }
                         observersNotify({});
                     });
+                }
+                
+                // Prune unloaded images
+                // The unloaded images at this point are unloaded because they failed to load,
+                // so we presume that they've been deleted from the device from a previous
+                // MDCStudio session.
+                {
+                    std::set<ImageRecordPtr> recs;
+                    for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
+                        if (!rec->status.loadCount) {
+                            recs.insert(rec);
+                        }
+                    }
+                    printf("[_sync_thread] Pruning %ju unloaded images\n", (uintmax_t)recs.size());
+                    _imageLibrary->remove(recs);
                 }
                 
                 // Write the image library now that we're done syncing
@@ -1126,6 +1140,17 @@ struct MDCDevice : ImageSource {
                     {
                         const Img::Header& imgHeader = *(const Img::Header*)(*work.buf);
                         
+                        // Validate the magic number
+                        if (imgHeader.magic.u24 != Img::Header::MagicNumber.u24) {
+                            printf("[_thumbRender_thread] Invalid magic number (got: %jx, expected: %jx)\n",
+                                imgHeader.magic.u24, Img::Header::MagicNumber.u24);
+                            printf("[_thumbRender_thread] Skipping image\n");
+                            // Skip this image
+                            // In particular, we want to make sure loadCount==0, so that _sync_thread() can observe
+                            // it and remove this image.
+                            goto thumbDone;
+                        }
+                        
                         if (imgHeader.id != rec.info.id) {
                             #warning TODO: how do we properly handle this?
 //                            printf("[_thumbRender_thread] Invalid image id (got: %ju, expected: %ju)\n", (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
@@ -1185,6 +1210,7 @@ struct MDCDevice : ImageSource {
                     loadCount = loadCountCopy;
                 }
                 
+            thumbDone:
                 work.callback();
             }
         
