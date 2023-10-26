@@ -2,97 +2,110 @@
 #import "NibViewInit.h"
 using namespace MDCStudio;
 
-@interface FactoryResetConfirmationAlertAccessoryView : NSView
-@end
-
-@implementation FactoryResetConfirmationAlertAccessoryView {
-    IBOutlet NSView* _nibView;
-}
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    NibViewInit(self, _nibView);
-    return self;
-}
-
-@end
-
 NSString* ConfirmationPhrase = @"nuke it";
 
 @implementation FactoryResetConfirmationAlert {
     IBOutlet NSView* _accessoryView;
+    IBOutlet NSView* _accessoryTextFieldContainer;
+    IBOutlet NSView* _accessorySpinnerContainer;
     IBOutlet NSTextField* _accessoryTextField;
+    IBOutlet NSProgressIndicator* _accessorySpinner;
+    FactoryResetConfirmationAlertHandler _handler;
     NSButton* _okButton;
+    NSButton* _cancelButton;
+    NSButton* _dismissButton;
+    bool _spinnerVisible;
 }
 
 - (instancetype)init {
     if (!(self = [super init])) return nil;
     
-    [self setAlertStyle:NSAlertStyleWarning];
-    [self setMessageText:@"Factory Reset"];
-    [self setInformativeText:[NSString stringWithFormat:@"A factory reset will permanently erase all photos and settings from your Photon.\n\nTo continue, enter “%@” below.", ConfirmationPhrase]];
-    [self addButtonWithTitle:@"OK"];
-    [[[self buttons] lastObject] setTag:NSModalResponseOK];
-    [self addButtonWithTitle:@"Cancel"];
-    [[[self buttons] lastObject] setTag:NSModalResponseCancel];
-    
-    _okButton = [self buttons][0];
-    
     bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil]
         instantiateWithOwner:self topLevelObjects:nil];
     assert(br);
     
+    [self setAlertStyle:NSAlertStyleWarning];
+    [self setMessageText:@"Factory Reset"];
+    [self setInformativeText:[NSString stringWithFormat:@"A factory reset will permanently erase all photos and settings from your Photon.\n\nTo continue, enter “%@” below.", ConfirmationPhrase]];
+    {
+        [self addButtonWithTitle:@"OK"];
+        NSButton* button = [[self buttons] lastObject];
+        [button setTag:NSModalResponseOK];
+        [button setTarget:self];
+        [button setAction:@selector(_ok:)];
+        _okButton = button;
+    }
+    {
+        [self addButtonWithTitle:@"Cancel"];
+        NSButton* button = [[self buttons] lastObject];
+        [button setTag:NSModalResponseCancel];
+        [button setTarget:self];
+        [button setAction:@selector(_cancel:)];
+        _cancelButton = button;
+    }
+    
+    {
+        [self addButtonWithTitle:@"CancelHidden"];
+        NSButton* button = [[self buttons] lastObject];
+        // Make button invisible, in case other versions of macOS break our -setFrame: technique
+        [button setAlphaValue:0];
+        [self layout];
+        [button setFrame:{}];
+        _dismissButton = button;
+    }
+    
     [_accessoryTextField setPlaceholderString:ConfirmationPhrase];
     [self setAccessoryView:_accessoryView];
-    
-    [self _okButtonUpdate];
     
     [self layout];
     [[_accessoryTextField window] makeFirstResponder:_accessoryTextField];
     
-//    NSTextField* field = [[NSTextField alloc] initWithFrame:{100,20}];
-//    [field setAutoresizingMask:
-//        NSViewMinXMargin|NSViewMaxXMargin|
-//        NSViewMinYMargin|NSViewMaxYMargin|
-//        NSViewWidthSizable];
-//    [self setAccessoryView:field];
-    
-//    FactoryResetConfirmationAlertAccessoryView* accessoryView =
-//        [[FactoryResetConfirmationAlertAccessoryView alloc] initWithFrame:{}];
-//    [self setAccessoryView:accessoryView];
-//    [self layout];
-    
-//    NSView* superview = [accessoryView superview];
-//    [superview setTranslatesAutoresizingMaskIntoConstraints:false];
-//    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[accessoryView]|"
-//        options:0 metrics:nil views:NSDictionaryOfVariableBindings(accessoryView)]];
-//    
-//    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[accessoryView]|"
-//        options:0 metrics:nil views:NSDictionaryOfVariableBindings(accessoryView)]];
-    
-    
-    
-//    {
-//        NSTextView *accessory = [[NSTextView alloc] initWithFrame:NSMakeRect(0,0,200,15)];
-//        NSFont *font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-//        NSDictionary *textAttributes = [NSDictionary dictionaryWithObject:font forKey:NSFontAttributeName];
-//        [accessory insertText:[[NSAttributedString alloc] initWithString:@"Text in accessory view." attributes:textAttributes]];
-//        [accessory setEditable:NO];
-//        [accessory setDrawsBackground:NO];
-//        
-//        
-//        [self setAccessoryView:accessory];
-//    }
+    [self _update];
     
     return self;
 }
 
-- (void)_okButtonUpdate {
-    [_okButton setEnabled:[[_accessoryTextField stringValue] isEqualToString:ConfirmationPhrase]];
+- (void)beginSheetModalForWindow:(NSWindow*)window
+completionHandler:(FactoryResetConfirmationAlertHandler)handler {
+    
+    _handler = handler;
+    [super beginSheetModalForWindow:window completionHandler:nil];
+}
+
+- (void)setSpinnerVisible:(bool)x {
+    _spinnerVisible = x;
+    [self _update];
+}
+
+- (void)dismiss {
+    [_dismissButton performClick:self];
+}
+
+- (IBAction)_ok:(id)sender {
+    _handler(NSModalResponseOK);
+}
+
+- (IBAction)_cancel:(id)sender {
+    _handler(NSModalResponseCancel);
+}
+
+- (void)_update {
+    if (_spinnerVisible) {
+        [_okButton setEnabled:false];
+        [_cancelButton setEnabled:false];
+    } else {
+        [_okButton setEnabled:[[_accessoryTextField stringValue] isEqualToString:ConfirmationPhrase]];
+        [_cancelButton setEnabled:true];
+    }
+    
+    [_accessoryTextFieldContainer setHidden:_spinnerVisible];
+    [_accessorySpinnerContainer setHidden:!_spinnerVisible];
+    if (_spinnerVisible) [_accessorySpinner startAnimation:nil];
+    else                 [_accessorySpinner stopAnimation:nil];
 }
 
 - (void)controlTextDidChange:(NSNotification*)obj {
-    [self _okButtonUpdate];
+    [self _update];
 }
 
 @end

@@ -7,7 +7,10 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="FactoryResetConfirmationAlert">
             <connections>
+                <outlet property="_accessorySpinner" destination="Hr6-i9-pqB" id="kMT-4p-crn"/>
+                <outlet property="_accessorySpinnerContainer" destination="jPb-J8-ssj" id="mum-cc-fFG"/>
                 <outlet property="_accessoryTextField" destination="wdo-qJ-Zs4" id="ez9-Ls-JRY"/>
+                <outlet property="_accessoryTextFieldContainer" destination="puO-88-x4O" id="yOK-dr-IjE"/>
                 <outlet property="_accessoryView" destination="RWS-80-0an" id="4Uo-Xb-DX5"/>
             </connections>
         </customObject>
@@ -16,24 +19,61 @@
         <customView translatesAutoresizingMaskIntoConstraints="NO" id="RWS-80-0an">
             <rect key="frame" x="0.0" y="0.0" width="388" height="21"/>
             <subviews>
-                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="wdo-qJ-Zs4">
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="jPb-J8-ssj">
                     <rect key="frame" x="0.0" y="0.0" width="388" height="21"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="em7-JK-WMZ">
-                        <font key="font" usesAppearanceFont="YES"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <outlet property="delegate" destination="-2" id="BKU-N4-dTO"/>
-                    </connections>
-                </textField>
+                    <subviews>
+                        <progressIndicator wantsLayer="YES" maxValue="100" indeterminate="YES" controlSize="small" style="spinning" translatesAutoresizingMaskIntoConstraints="NO" id="Hr6-i9-pqB">
+                            <rect key="frame" x="10" y="3" width="16" height="16"/>
+                        </progressIndicator>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ApF-qI-LJc">
+                            <rect key="frame" x="32" y="3" width="72" height="16"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="Resetting…" id="QMl-2H-f70">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                    </subviews>
+                    <constraints>
+                        <constraint firstItem="Hr6-i9-pqB" firstAttribute="centerY" secondItem="jPb-J8-ssj" secondAttribute="centerY" id="3N8-Rq-AMF"/>
+                        <constraint firstItem="Hr6-i9-pqB" firstAttribute="leading" secondItem="jPb-J8-ssj" secondAttribute="leading" constant="10" id="6o2-ak-YF2"/>
+                        <constraint firstItem="ApF-qI-LJc" firstAttribute="centerY" secondItem="jPb-J8-ssj" secondAttribute="centerY" id="lN5-XX-jq6"/>
+                        <constraint firstItem="ApF-qI-LJc" firstAttribute="leading" secondItem="Hr6-i9-pqB" secondAttribute="trailing" constant="8" id="t0p-pg-ebw"/>
+                    </constraints>
+                </customView>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="puO-88-x4O">
+                    <rect key="frame" x="0.0" y="0.0" width="388" height="21"/>
+                    <subviews>
+                        <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="wdo-qJ-Zs4">
+                            <rect key="frame" x="0.0" y="0.0" width="388" height="21"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="em7-JK-WMZ">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                            <connections>
+                                <outlet property="delegate" destination="-2" id="BKU-N4-dTO"/>
+                            </connections>
+                        </textField>
+                    </subviews>
+                    <constraints>
+                        <constraint firstAttribute="trailing" secondItem="wdo-qJ-Zs4" secondAttribute="trailing" id="FWR-k1-Yfn"/>
+                        <constraint firstItem="wdo-qJ-Zs4" firstAttribute="leading" secondItem="puO-88-x4O" secondAttribute="leading" id="Fez-nS-Sfr"/>
+                        <constraint firstAttribute="bottom" secondItem="wdo-qJ-Zs4" secondAttribute="bottom" id="cMN-cR-rwb"/>
+                        <constraint firstItem="wdo-qJ-Zs4" firstAttribute="top" secondItem="puO-88-x4O" secondAttribute="top" id="yU8-rI-Day"/>
+                    </constraints>
+                </customView>
             </subviews>
             <constraints>
-                <constraint firstAttribute="bottom" secondItem="wdo-qJ-Zs4" secondAttribute="bottom" id="Mme-Sb-njD"/>
-                <constraint firstAttribute="trailing" secondItem="wdo-qJ-Zs4" secondAttribute="trailing" id="Ou3-l9-Gih"/>
-                <constraint firstItem="wdo-qJ-Zs4" firstAttribute="leading" secondItem="RWS-80-0an" secondAttribute="leading" id="el1-9l-bRq"/>
-                <constraint firstItem="wdo-qJ-Zs4" firstAttribute="top" secondItem="RWS-80-0an" secondAttribute="top" id="hcM-6l-REa"/>
+                <constraint firstAttribute="trailing" secondItem="jPb-J8-ssj" secondAttribute="trailing" id="5h9-cS-nET"/>
+                <constraint firstAttribute="trailing" secondItem="puO-88-x4O" secondAttribute="trailing" id="6ao-hP-c56"/>
+                <constraint firstItem="puO-88-x4O" firstAttribute="top" secondItem="RWS-80-0an" secondAttribute="top" id="LWc-b3-ZPt"/>
+                <constraint firstItem="jPb-J8-ssj" firstAttribute="leading" secondItem="RWS-80-0an" secondAttribute="leading" id="Mwl-yT-B4g"/>
+                <constraint firstItem="jPb-J8-ssj" firstAttribute="top" secondItem="RWS-80-0an" secondAttribute="top" id="RTW-0G-kXc"/>
+                <constraint firstAttribute="bottom" secondItem="jPb-J8-ssj" secondAttribute="bottom" id="g6c-Zy-qLa"/>
+                <constraint firstItem="puO-88-x4O" firstAttribute="leading" secondItem="RWS-80-0an" secondAttribute="leading" id="ifW-kY-L7c"/>
                 <constraint firstAttribute="width" constant="388" id="lkC-5d-Pq0"/>
+                <constraint firstAttribute="bottom" secondItem="puO-88-x4O" secondAttribute="bottom" id="uVB-7l-3Il"/>
             </constraints>
             <point key="canvasLocation" x="109" y="118"/>
         </customView>

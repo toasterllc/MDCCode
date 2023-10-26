@@ -356,10 +356,41 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     NSLog(@"sourceListView:factoryResetDevice:");
     
     FactoryResetConfirmationAlert* alert = [FactoryResetConfirmationAlert new];
+    __weak auto alertWeak = alert;
     [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse r) {
-        if (r != NSModalResponseOK) return;
         NSLog(@"FACTORY RESET");
-        device->factoryReset();
+        if (r == NSModalResponseOK) {
+            [alertWeak setSpinnerVisible:true];
+            
+            dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
+                std::exception_ptr esaved;
+                try {
+                    device->factoryReset();
+                } catch (...) {
+                    esaved = std::current_exception();
+                }
+                
+                // Dismiss the alert on the main thread
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [alertWeak dismiss];
+                    
+                    // Show an error dialog if an error occurred
+                    if (esaved) {
+                        try {
+                            std::rethrow_exception(esaved);
+                        } catch (const std::exception& e) {
+                            NSAlert* alert = [NSAlert new];
+                            [alert setAlertStyle:NSAlertStyleCritical];
+                            [alert setMessageText:@"Factory Reset Failed"];
+                            [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
+                            [alert beginSheetModalForWindow:self->_window completionHandler:nil];
+                        }
+                    }
+                });
+            });
+        } else {
+            [alertWeak dismiss];
+        }
     }];
 }
 
@@ -621,7 +652,7 @@ static void _SortNewestFirst(bool x) {
         } catch (const std::exception& e) {
             NSAlert* alert = [NSAlert new];
             [alert setAlertStyle:NSAlertStyleCritical];
-            [alert setMessageText:@"An error occurred when trying to save these settings"];
+            [alert setMessageText:@"Save Settings Failed"];
             [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
             [alert beginSheetModalForWindow:[view window] completionHandler:nil];
             return;

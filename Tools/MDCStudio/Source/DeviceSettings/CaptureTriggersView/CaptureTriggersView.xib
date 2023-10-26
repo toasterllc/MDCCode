@@ -170,11 +170,11 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                 </scrollView>
-                <customView translatesAutoresizingMaskIntoConstraints="NO" id="iG6-k9-Zxe" userLabel="No Triggers View">
-                    <rect key="frame" x="150" y="219" width="300" height="151"/>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="iG6-k9-Zxe" userLabel="Add a Photo Trigger">
+                    <rect key="frame" x="163" y="219" width="275" height="151"/>
                     <subviews>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tcN-PV-F9r">
-                            <rect key="frame" x="51" y="123" width="199" height="28"/>
+                            <rect key="frame" x="38" y="123" width="199" height="28"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" title="Add a Photo Trigger" id="kA0-UF-qqd">
                                 <font key="font" metaFont="systemThin" size="24"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -182,10 +182,10 @@
                             </textFieldCell>
                         </textField>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SsV-J9-A7A">
-                            <rect key="frame" x="-2" y="43" width="304" height="70"/>
+                            <rect key="frame" x="-2" y="43" width="279" height="70"/>
                             <textFieldCell key="cell" controlSize="small" alignment="left" id="2Eg-a3-5Kr">
-                                <font key="font" metaFont="message" size="11"/>
-                                <string key="title">With photo triggers, you can choose to capture photos when a date/time occurs, when motion occurs, or when the button is pressed.
+                                <font key="font" metaFont="menu" size="11"/>
+                                <string key="title">You can choose to capture photos when a date/time occurs, when motion occurs, or when the button is pressed.
 
 Add a photo trigger using the menu below.</string>
                                 <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -193,7 +193,7 @@ Add a photo trigger using the menu below.</string>
                             </textFieldCell>
                         </textField>
                         <popUpButton translatesAutoresizingMaskIntoConstraints="NO" id="gjI-Y0-dpO" userLabel="Add">
-                            <rect key="frame" x="91" y="-3" width="118" height="30"/>
+                            <rect key="frame" x="78" y="-3" width="118" height="30"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="26" id="Lnt-ya-9V0"/>
                             </constraints>
@@ -234,7 +234,7 @@ Add a photo trigger using the menu below.</string>
                         <constraint firstItem="SsV-J9-A7A" firstAttribute="top" secondItem="tcN-PV-F9r" secondAttribute="bottom" constant="10" id="Exe-t9-83R"/>
                         <constraint firstItem="gjI-Y0-dpO" firstAttribute="top" secondItem="SsV-J9-A7A" secondAttribute="bottom" constant="17" id="Mp9-gD-KEm"/>
                         <constraint firstItem="tcN-PV-F9r" firstAttribute="centerX" secondItem="iG6-k9-Zxe" secondAttribute="centerX" id="O5S-It-JdS"/>
-                        <constraint firstAttribute="width" constant="300" id="lDM-vd-ieE"/>
+                        <constraint firstAttribute="width" constant="275" id="lDM-vd-ieE"/>
                         <constraint firstItem="gjI-Y0-dpO" firstAttribute="centerX" secondItem="iG6-k9-Zxe" secondAttribute="centerX" id="ncT-rT-QpE"/>
                     </constraints>
                 </customView>
@@ -723,7 +723,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ZhD-fg-EKZ">
                     <rect key="frame" x="38" y="118" width="514" height="28"/>
                     <textFieldCell key="cell" title="After this number of triggers, your Photon ignores motion until the next day to prolong its battery life." id="77K-Wk-abH">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="menu" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -731,7 +731,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="icX-od-xa4">
                     <rect key="frame" x="38" y="30" width="514" height="28"/>
                     <textFieldCell key="cell" id="Org-0X-drC">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="menu" size="11"/>
                         <string key="title">After motion occurs, your Photon will ignore further motion for this amount of time. This can help limit the number of triggers during long periods of continuous motion, prolonging battery life.</string>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -740,7 +740,7 @@ CA
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fCg-QT-CcV">
                     <rect key="frame" x="38" y="394" width="425" height="14"/>
                     <textFieldCell key="cell" title="You can restrict when your Photon responds to motion to prolong its battery life." id="Oar-aS-K64">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="menu" size="11"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -863,7 +863,7 @@ CA
                 <segmentedControl verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="WO9-Yi-XDc">
                     <rect key="frame" x="-2" y="-2" width="301" height="21"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectAny" id="6jt-aG-9Bq">
-                        <font key="font" metaFont="message" size="11"/>
+                        <font key="font" metaFont="menu" size="11"/>
                         <segments>
                             <segment label="Mon"/>
                             <segment label="Tue" selected="YES" tag="1"/>
