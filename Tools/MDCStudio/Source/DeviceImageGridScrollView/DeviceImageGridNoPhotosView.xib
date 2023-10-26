@@ -17,27 +17,27 @@
             <rect key="frame" x="0.0" y="0.0" width="250" height="249"/>
             <subviews>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="lfo-F7-HP7">
-                    <rect key="frame" x="-6" y="58" width="263" height="133"/>
+                    <rect key="frame" x="-6" y="58" width="262" height="133"/>
                     <subviews>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7iG-Ul-ZFP">
-                            <rect key="frame" x="78" y="85" width="107" height="28"/>
-                            <textFieldCell key="cell" lineBreakMode="clipping" title="No Photos" id="XgB-Yx-hl2">
+                            <rect key="frame" x="33" y="85" width="196" height="28"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="Set Up Your Photon" id="XgB-Yx-hl2">
                                 <font key="font" metaFont="systemThin" size="24"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xIU-Hg-yJo">
-                            <rect key="frame" x="18" y="61" width="227" height="14"/>
-                            <textFieldCell key="cell" controlSize="small" alignment="center" title="Configure your Photon to capture photos!" id="DpW-Tg-kUQ">
-                                <font key="font" metaFont="controlContent" size="11"/>
+                            <rect key="frame" x="18" y="61" width="226" height="14"/>
+                            <textFieldCell key="cell" controlSize="small" alignment="center" title="Your Photon doesn't have any photos yet." id="DpW-Tg-kUQ">
+                                <font key="font" metaFont="menu" size="11"/>
                                 <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XQj-hE-yGQ">
-                            <rect key="frame" x="53" y="13" width="157" height="32"/>
-                            <buttonCell key="cell" type="push" title="Configure Photon…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OQr-3N-XIl">
+                            <rect key="frame" x="57" y="13" width="148" height="32"/>
+                            <buttonCell key="cell" type="push" title="Photon Settings…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OQr-3N-XIl">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
