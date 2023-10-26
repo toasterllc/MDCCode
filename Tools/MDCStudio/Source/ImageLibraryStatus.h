@@ -31,6 +31,7 @@ inline std::string ImageLibraryStatus(size_t count, Time::Instant first, Time::I
         const std::string strLast = Calendar::MonthYearString(tLast);
         ss << " from ";
         ss << strFirst;
+        ss << " – " << strLast;
         if (strFirst != strLast) ss << " – " << strLast;
     }
     

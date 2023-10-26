@@ -22,6 +22,7 @@ using namespace MDCStudio;
     NSString* name;
     __weak SourceListView* sourceListView;
     IBOutlet NSLayoutConstraint* _height;
+    NSLayoutConstraint* _preventClippingConstraint;
     // We keep a weak reference to the ImageSourcePtr because the NSTableView likes
     // to keep/reuse its NSTableCellView, which otherwise would cause our MDCDevice
     // objects to leak when unplugging the device.
@@ -51,6 +52,63 @@ using namespace MDCStudio;
         [[self textField] setStringValue:[self name]];
     }
 }
+
+//- (void)updateConstraints {
+//    printf("updateConstraints\n");
+//    // Kill existing constraint
+//    NSView* superSuperview = [[self superview] superview];
+//    if (superSuperview) {
+//        [[[superSuperview rightAnchor] constraintEqualToAnchor:[self rightAnchor]] setActive:true];
+//    }
+////    if (!_preventClippingConstraint && superSuperview) {
+//////        [_preventClippingConstraint setActive:false];
+////        _preventClippingConstraint = [NSLayoutConstraint constraintWithItem:superSuperview
+////            attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationGreaterThanOrEqual
+////            toItem:self attribute:NSLayoutAttributeTrailing multiplier:1 constant:0];
+////        [_preventClippingConstraint setActive:true];
+////    }
+//    
+//    [super updateConstraints];
+//}
+//
+//- (void)viewDidMoveToWindow {
+//    NSView* superSuperview = [[self superview] superview];
+//    NSLayoutConstraint* constraint = [NSLayoutConstraint constraintWithItem:superSuperview
+//        attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationGreaterThanOrEqual
+//        toItem:self attribute:NSLayoutAttributeTrailing multiplier:1 constant:0];
+//    [constraint setActive:true];
+//}
+
+
+- (void)viewDidMoveToWindow {
+    NSView* superSuperview = [[self superview] superview];
+    if (!superSuperview) return;
+    // Kill existing constraint
+    [_preventClippingConstraint setActive:false];
+    _preventClippingConstraint = [[superSuperview rightAnchor]
+        constraintGreaterThanOrEqualToAnchor:[self rightAnchor]];
+    [_preventClippingConstraint setActive:true];
+}
+
+
+//- (void)viewDidMoveToSuperview {
+//    [super viewDidMoveToSuperview];
+//    NSView* superview = [self superview];
+//    if (!superview) return;
+//    [[[superview rightAnchor] constraintEqualToAnchor:[self rightAnchor]] setActive:true];
+//}
+
+
+
+//- (void)viewDidMoveToSuperview {
+//    NSView* superview = [self superview];
+//    if (!superview) return;
+//    NSLayoutConstraint* constraint = [NSLayoutConstraint constraintWithItem:superview
+//        attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationGreaterThanOrEqual
+//        toItem:self attribute:NSLayoutAttributeTrailing multiplier:1 constant:0];
+//    [constraint setActive:true];
+//}
+
 
 @end
 
@@ -138,6 +196,24 @@ static NSString* _BatteryLevelImage(float level) {
 
 @implementation SourceListView_RowView
 - (BOOL)isEmphasized { return false; }
+
+//- (void)viewDidMoveToSuperview {
+//    [super viewDidMoveToSuperview];
+//    NSView* superview = [self superview];
+//    if (!superview) return;
+//    [[[superview rightAnchor] constraintEqualToAnchor:[self rightAnchor]] setActive:true];
+//}
+
+
+//- (void)viewDidMoveToSuperview {
+//    NSView* superview = [self superview];
+//    if (!superview) return;
+//    NSLayoutConstraint* constraint = [NSLayoutConstraint constraintWithItem:superview
+//        attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual
+//        toItem:self attribute:NSLayoutAttributeTrailing multiplier:1 constant:0];
+//    [constraint setActive:true];
+//}
+
 @end
 
 #define Item            SourceListView_Item

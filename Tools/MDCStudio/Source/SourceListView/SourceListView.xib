@@ -41,7 +41,7 @@
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                     </tableCellView>
                                     <tableCellView identifier="SourceListView_Device" translatesAutoresizingMaskIntoConstraints="NO" id="08g-eg-N7V" customClass="SourceListView_Device">
-                                        <rect key="frame" x="1" y="20" width="247" height="74"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="247" height="74"/>
                                         <subviews>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY" userLabel="Icon Image">
                                                 <rect key="frame" x="-17" y="12" width="63" height="50"/>
@@ -125,9 +125,6 @@
                 </subviews>
                 <nil key="backgroundColor"/>
             </clipView>
-            <constraints>
-                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="250" id="r1z-nZ-ZF8"/>
-            </constraints>
             <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="oaD-I2-Mvd">
                 <rect key="frame" x="0.0" y="384" width="0.0" height="16"/>
                 <autoresizingMask key="autoresizingMask"/>
