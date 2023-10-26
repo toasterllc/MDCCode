@@ -36,7 +36,7 @@
                                 </textFieldCell>
                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                 <prototypeCellViews>
-                                    <tableCellView identifier="SourceListView_RowView" id="2gM-Xi-JvJ" customClass="SourceListView_RowView">
+                                    <tableCellView identifier="SourceListView_RowView" translatesAutoresizingMaskIntoConstraints="NO" id="2gM-Xi-JvJ" customClass="SourceListView_RowView">
                                         <rect key="frame" x="1" y="1" width="247" height="17"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                     </tableCellView>
@@ -62,7 +62,7 @@
                                                     <action selector="_textFieldChanged:" target="08g-eg-N7V" id="rvh-zP-hHo"/>
                                                 </connections>
                                             </textField>
-                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="cuS-aa-uKX" userLabel="Text Field">
+                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="cuS-aa-uKX" userLabel="Text Field">
                                                 <rect key="frame" x="49" y="17" width="98" height="15"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="7 days of photos" id="Eij-ik-9WJ">
                                                     <font key="font" metaFont="label" size="12"/>
@@ -125,6 +125,9 @@
                 </subviews>
                 <nil key="backgroundColor"/>
             </clipView>
+            <constraints>
+                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="250" id="r1z-nZ-ZF8"/>
+            </constraints>
             <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="oaD-I2-Mvd">
                 <rect key="frame" x="0.0" y="384" width="0.0" height="16"/>
                 <autoresizingMask key="autoresizingMask"/>
