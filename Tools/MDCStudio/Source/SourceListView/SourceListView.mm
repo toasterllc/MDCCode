@@ -142,7 +142,13 @@ static NSString* _BatteryLevelImage(float level) {
     [super update];
     MDCDevicePtr device = [self device];
     if (!device) return;
-    [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage(device->status().batteryLevel)]];
+    std::optional<MDCDevice::Status> status = device->status();
+    if (status) {
+        [_batteryImageView setImage:[NSImage imageNamed:_BatteryLevelImage(status->batteryLevel)]];
+        [_batteryImageView setHidden:false];
+    } else {
+        [_batteryImageView setHidden:true];
+    }
     [_descriptionLabel setStringValue:@(ImageLibraryStatus(device->imageLibrary()).c_str())];
 }
 

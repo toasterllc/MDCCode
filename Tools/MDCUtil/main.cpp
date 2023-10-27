@@ -891,7 +891,7 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    std::vector<MDCUSBDevice> devices;
+    std::vector<MDCUSBDevicePtr> devices;
     try {
         devices = MDCUSBDevice::GetDevices();
     } catch (const std::exception& e) {
@@ -907,7 +907,7 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    MDCUSBDevice& device = devices[0];
+    MDCUSBDevice& device = *(devices[0]);
     try {
         if (args.cmd == lower(ResetCmd))                    Reset(args, device);
         else if (args.cmd == lower(StatusGetCmd))           StatusGet(args, device);

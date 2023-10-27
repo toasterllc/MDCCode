@@ -180,13 +180,13 @@ static void _SetView(T& x, NSView* y) {
         return true;
     
     } else if ([item action] == @selector(_nextImage:)) {
-        return _center.view == _active.fullSizeImageView;
+        return _active.fullSizeImageView && _center.view==_active.fullSizeImageView;
     
     } else if ([item action] == @selector(_previousImage:)) {
-        return _center.view == _active.fullSizeImageView;
+        return _active.fullSizeImageView && _center.view==_active.fullSizeImageView;
     
     } else if ([item action] == @selector(_backToImages:)) {
-        return _center.view == _active.fullSizeImageView;
+        return _active.fullSizeImageView && _center.view==_active.fullSizeImageView;
     
     // Export
     } else if ([item action] == @selector(_export:)) {
@@ -410,6 +410,8 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 // MARK: - Device Observer
 - (void)_activeDeviceChanged {
+    if (!_active.imageSource) return;
+    
     MDCDevicePtr device = Toastbox::Cast<MDCDevicePtr>(_active.imageSource);
     
     bool libraryEmpty = false;
@@ -421,8 +423,13 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     
     // Perform an initial load the first time our image library doesn't have photos, but the device does.
     // This is a simple UX affordance for a nicer 'out of box' experience.
-    if (libraryEmpty && device->status().loadImageCount) {
-        device->sync();
+    {
+        auto status = device->status();
+        if (status) {
+            if (libraryEmpty && status->loadImageCount) {
+                device->sync();
+            }
+        }
     }
 }
 
@@ -431,7 +438,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     switch (type) {
     case ImageLibrary::Event::Type::Remove:
         // Go back to the grid view if the currently-displayed full-size image is deleted
-        if (_center.view == _active.fullSizeImageView) {
+        if (_active.fullSizeImageView && _center.view==_active.fullSizeImageView) {
             auto lock = std::unique_lock(*_active.imageLibrary);
             const bool deleted = _active.imageLibrary->find([_active.fullSizeImageView imageRecord]) == _active.imageLibrary->end();
             if (deleted) {
@@ -501,19 +508,19 @@ static void _SortNewestFirst(bool x) {
 }
 
 - (IBAction)_nextImage:(id)sender {
-    assert(_center.view == _active.fullSizeImageView);
+    assert(_active.fullSizeImageView && _center.view==_active.fullSizeImageView);
     const bool ok = [self _openImage:[_active.fullSizeImageView imageRecord] delta:1];
     if (!ok) NSBeep();
 }
 
 - (IBAction)_previousImage:(id)sender {
-    assert(_center.view == _active.fullSizeImageView);
+    assert(_active.fullSizeImageView && _center.view==_active.fullSizeImageView);
     const bool ok = [self _openImage:[_active.fullSizeImageView imageRecord] delta:-1];
     if (!ok) NSBeep();
 }
 
 - (IBAction)_backToImages:(id)sender {
-    assert(_center.view == _active.fullSizeImageView);
+    assert(_active.fullSizeImageView && _center.view==_active.fullSizeImageView);
     _SetView(_center, _active.imageGridScrollView);
     
     // -layoutIfNeeded is necessary on the window so that we can scroll the grid

@@ -99,6 +99,12 @@ struct Object : std::enable_shared_from_this<Object> {
     template<typename T=Object>
     SharedPtr<T> self() const { return const_cast<Object*>(this)->self<T>(); }
     
+    template<typename T=Object>
+    typename std::weak_ptr<T> selfWeak() { return self<T>(); }
+    
+    template<typename T=Object>
+    typename std::weak_ptr<T> selfWeak() const { return const_cast<Object*>(this)->selfWeak<T>(); }
+    
     // selfOrNull(): returns null in the case that the object has already been deleted.
     // The only case that we've found this to be useful is when an object is executing
     // the destructor on ThreadA, and the destructor has signalled its worker thread,
@@ -118,10 +124,10 @@ struct Object : std::enable_shared_from_this<Object> {
     SharedPtr<T> selfOrNull() const { return const_cast<Object*>(this)->selfOrNull<T>(); }
     
     template<typename T=Object>
-    typename std::weak_ptr<T> selfWeak() { return self<T>(); }
+    typename std::weak_ptr<T> selfOrNullWeak() { return selfOrNull<T>(); }
     
     template<typename T=Object>
-    typename std::weak_ptr<T> selfWeak() const { return const_cast<Object*>(this)->selfWeak<T>(); }
+    typename std::weak_ptr<T> selfOrNullWeak() const { return const_cast<Object*>(this)->selfOrNullWeak<T>(); }
     
     // MARK: - Observation
     

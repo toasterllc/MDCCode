@@ -66,7 +66,8 @@ using namespace MDCStudio;
 // We're naming this _refresh instead...
 - (void)_refresh {
     ImageLibraryPtr imageLibrary = _device->imageLibrary();
-    const MDCDevice::Status status = _device->status();
+    const std::optional<MDCDevice::Status> status = _device->status();
+    const std::optional<float> syncProgress = _device->syncProgress();
     const ImageSet& selection = _selection->images();
     
     // Update status
@@ -82,14 +83,14 @@ using namespace MDCStudio;
     }
     
     // Update unloaded photo count
-    const size_t loadCount = (!status.syncProgress ? status.loadImageCount : 0);
     {
+        const size_t loadCount = (status && !syncProgress ? status->loadImageCount : 0);
         [_headerView setLoadCount:loadCount];
     }
     
-    // Upload load progress
+    // Update load progress
     {
-        [_headerView setProgress:status.syncProgress.value_or(0)];
+        [_headerView setProgress:syncProgress.value_or(0)];
     }
     
     // Update our 'no photos' state
