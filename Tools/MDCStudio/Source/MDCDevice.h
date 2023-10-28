@@ -29,6 +29,10 @@ namespace MDCStudio {
 
 struct MDCDevice : ImageSource {
     using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
+    using _SendRight = Toastbox::SendRight;
+    using _USBDevice = Toastbox::USBDevice;
+    using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
+    using _IONotificationPtr = std::unique_ptr<IONotificationPortRef, void(*)(IONotificationPortRef*)>;
     
     struct ImageRange {
         Img::Id begin = 0;
@@ -64,12 +68,12 @@ struct MDCDevice : ImageSource {
         printf("MDCDevice::init()\n");
         Object::init(); // Call super
         
-        _dir = _DirForSerial(dev.serial());
+        _dir = _DirForSerial(dev->serial());
         _imageLibrary = Object::Create<ImageLibrary>();
         
         // Give device a default name
         char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", dev.serial().c_str());
+        snprintf(name, sizeof(name), "MDC Device %s", dev->serial().c_str());
         _name = std::string(name);
         
         // Read state from disk
@@ -84,15 +88,27 @@ struct MDCDevice : ImageSource {
             _imageLibrary->read(_dir / "ImageLibrary");
         }
         
-        std::atomic<bool> started = false;
-        _device.thread = _Thread([&] { _init_thread(std::move(dev), started); });
+        _device.thread = _Thread([&] { _init_thread(std::move(dev)); });
         // Wait until thread starts
         // TODO: use std::binary_semaphore when we can use C++20
-        while (!started) usleep(1000);
+        while (!_device.runLoop) usleep(1000);
     }
     
     ~MDCDevice() {
         printf("~MDCDevice()\n");
+        
+        // Kill _init_thread
+        try {
+            for (;;) {
+                // Keep telling the run loop to stop.
+                // This is necessary because CFRunLoopStop() doesn't have an effect unless the thread is
+                // executing within CFRunLoopRunInMode().
+                // We'll bail when _state.signal.lock() throws because the thread exited.
+                auto lock = _device.signal.lock();
+                CFRunLoopStop((CFRunLoopRef)_device.runLoop);
+            }
+        } catch (...) {}
+        
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
         _status.signal.stop();
@@ -110,7 +126,8 @@ struct MDCDevice : ImageSource {
         }
     }
     
-    const Toastbox::SendRight& service() const {
+    const Toastbox::SendRight& service() {
+        auto lock = deviceLock();
         return _device.device->dev().service();
     }
     
@@ -122,7 +139,7 @@ struct MDCDevice : ImageSource {
             _sdRead.signal.signalAll();
         }
         
-        auto lock = std::unique_lock(_device.lock);
+        auto lock = _device.signal.lock();
         
         // Un-pause the SD thread
         if (interrupt) {
@@ -611,19 +628,42 @@ struct MDCDevice : ImageSource {
     
     // MARK: - Init
     
-    using _SendRight = Toastbox::SendRight;
-    using _USBDevice = Toastbox::USBDevice;
-    using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
+    static _IONotificationPtr _IONotificationCreate() {
+        _IONotificationPtr note(new IONotificationPortRef(IONotificationPortCreate(kIOMasterPortDefault)),
+            _IONotificationDestroy);
+        
+        if (!*note) throw Toastbox::RuntimeError("IONotificationPortCreate returned null");
+        
+        CFRunLoopSourceRef rls = IONotificationPortGetRunLoopSource(*note);
+        CFRunLoopAddSource(CFRunLoopGetCurrent(), rls, kCFRunLoopCommonModes);
+        return note;
+    } 
     
-    static _MDCUSBDevicePtr _WaitForDeviceReenumerate(const _SendRight& serviceIter, std::string_view serial) {
-        for (;;) {
+    static void _IONotificationDestroy(IONotificationPortRef* x) {
+        assert(x);
+        if (*x) IONotificationPortDestroy(*x);
+    }
+    
+    static _MDCUSBDevicePtr _WaitForDeviceReenumerate(std::string_view serial) {
+        _IONotificationPtr note = _IONotificationCreate();
+        
+        _SendRight serviceIter;
+        {
+            io_iterator_t iter = MACH_PORT_NULL;
+            kern_return_t kr = IOServiceAddMatchingNotification(*note, kIOMatchedNotification,
+                IOServiceMatching(kIOUSBDeviceClassName), _Nop, nullptr, &iter);
+            if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
+            serviceIter = _SendRight(_SendRight::NoRetain, iter);
+        }
+        
+        _MDCUSBDevicePtr dev;
+        while (!dev) {
             // Wait for matching services to appear
             CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
             if (r == kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
             assert(r == kCFRunLoopRunHandledSource);
             
             // Handle connected devices
-            _MDCUSBDevicePtr dev;
             for (;;) {
                 _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
                 if (!service) break;
@@ -650,6 +690,12 @@ struct MDCDevice : ImageSource {
         return dev;
     }
     
+    static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {
+        if (msgType == kIOMessageServiceIsTerminated) {
+            CFRunLoopStop(CFRunLoopGetCurrent());
+        }
+    }
+    
     static void _Nop(void* ctx, io_iterator_t iter) {}
     
     static void _DeviceBootload(const _MDCUSBDevicePtr& dev) {
@@ -665,7 +711,7 @@ struct MDCDevice : ImageSource {
         dev->stmReset(elf.entryPointAddr());
     }
     
-    static void _ModeCheck(const _MDCUSBDevicePtr& dev, STM::Status::Mode mode) {
+    static void _DeviceModeCheck(const _MDCUSBDevicePtr& dev, STM::Status::Mode mode) {
         const STM::Status::Mode m = dev->statusGet().mode;
         if (mode != m) {
             throw Toastbox::RuntimeError("Invalid state (expected %ju, got %ju)",
@@ -673,251 +719,101 @@ struct MDCDevice : ImageSource {
         }
     }
     
-    void doit(_MDCUSBDevicePtr&& dev) {
-        printf("[MDCDevice : _threadHandleDevices] Start\n");
+    static _MDCUSBDevicePtr _DevicePrepare(const _MDCUSBDevicePtr& d) {
+        const std::string serial = d->serial();
         
-        const std::string serial = _dev.serialNumber();
-        
-        enum class _DeviceState {
-            STMLoaderInvoke,
-            STMLoaderCheck,
-            STMAppWrite,
-            STMAppCheck,
-            Finish,
-        };
-        
-        {
-            auto lock = _state.signal.lock();
-            _state.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
-            _state.signal.signalAll();
-        }
-        
-        IONotificationPortRef notePort = IONotificationPortCreate(kIOMasterPortDefault);
-        if (!notePort) throw Toastbox::RuntimeError("IONotificationPortCreate returned null");
-        Defer(IONotificationPortDestroy(notePort));
-        
-        _SendRight serviceIter;
-        {
-            io_iterator_t iter = MACH_PORT_NULL;
-            kern_return_t kr = IOServiceAddMatchingNotification(notePort, kIOMatchedNotification,
-                IOServiceMatching(kIOUSBDeviceClassName), _Nop, nullptr, &iter);
-            if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
-            serviceIter = _SendRight(_SendRight::NoRetain, iter);
-        }
-        
-        CFRunLoopSourceRef rls = IONotificationPortGetRunLoopSource(notePort);
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), rls, kCFRunLoopCommonModes);
+        _MDCUSBDevicePtr dev;
         
         // Invoke bootloader
         {
-            dev->bootloaderInvoke();
-            dev = _WaitForDeviceReenumerate(serviceIter, serial);
-            _ModeCheck(dev, STM::Status::Mode::STMLoader);
+            d->bootloaderInvoke();
+            dev = _WaitForDeviceReenumerate(serial);
+            _DeviceModeCheck(dev, STM::Status::Mode::STMLoader);
         }
         
         // Bootload device with STMApp
         {
             _DeviceBootload(dev);
-            dev = _WaitForDeviceReenumerate(serviceIter, serial);
-            _ModeCheck(dev, STM::Status::Mode::STMApp);
+            dev = _WaitForDeviceReenumerate(serial);
+            _DeviceModeCheck(dev, STM::Status::Mode::STMApp);
         }
         
-        // Create our final MDCDevice instance
-        MDCDevicePtr mdc = Object::Create<MDCDevice>(std::move(*dev));
+        return dev;
+    }
+    
+    static void _DeviceWaitForTerminate(const _MDCUSBDevicePtr& dev) {
+        _IONotificationPtr note = _IONotificationCreate();
         
         // Watch the service so we know when it goes away
         io_object_t ioObj = MACH_PORT_NULL;
-        kern_return_t kr = IOServiceAddInterestNotification(notePort, service,
-            kIOGeneralInterest, _ServiceInterestCallback, this, &ioObj);
+        kern_return_t kr = IOServiceAddInterestNotification(*note, dev->dev().service(),
+            kIOGeneralInterest, _ServiceInterestCallback, nullptr, &ioObj);
         if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddInterestNotification failed: 0x%x", kr);
+        _SendRight obj(_SendRight::NoRetain, ioObj); // Make sure port gets cleaned up
         
-        note = _SendRight(_SendRight::NoRetain, ioObj);
-        
-        // Add the device to our _state.devices
-        {
-            auto lock = _state.signal.lock();
-            _state.devices.push_back(_Device{
-                .dev = mdc,
-                .note = _SendRight(_SendRight::NoRetain, ioObj),
-            });
-        }
-        
-        printf("Device connected\n");
-        changed = true;
-        break; // Device is fully configured
-        
-        
-        
-        
-        
-        if (dev->statusGet().mode == STM::Status::Mode::STMLoader) {
-            state = _DeviceState::STMAppWrite;
-        } else {
-            state = _DeviceState::STMLoaderInvoke; // Start over
-        }
-        
-        
-        
-        std::map<std::string,_DeviceState> deviceStates;
-        for (;;) @autoreleasepool {
-            bool changed = false;
-            
-            // Handle connected devices
-            for (;;) {
-                _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
-                if (!service) break;
-                
-                std::unique_ptr<MDCUSBDevice> dev;
-                try {
-                    _USBDevice usbDev(service);
-                    if (!MDCUSBDevice::USBDeviceMatches(usbDev)) continue;
-                    dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
-                
-                } catch (const std::exception& e) {
-                    // Ignore failures to create USBDevice
-                    printf("Ignoring USB device: %s\n", e.what());
-                    continue;
-                }
-                
-                try {
-                    for (;;) {
-                        _DeviceState& state = deviceStates[dev->serial()];
-                        switch (state) {
-                        case _DeviceState::STMLoaderInvoke: {
-                            dev->bootloaderInvoke();
-                            state = _DeviceState::STMLoaderCheck;
-                            break; // Device will re-enumerate; continue to the next device
-                        }
-                        
-                        case _DeviceState::STMLoaderCheck: {
-                            if (dev->statusGet().mode == STM::Status::Mode::STMLoader) {
-                                state = _DeviceState::STMAppWrite;
-                            } else {
-                                state = _DeviceState::STMLoaderInvoke; // Start over
-                            }
-                            continue;
-                        }
-                        
-                        case _DeviceState::STMAppWrite: {
-                            _deviceBootload(*dev);
-                            state = _DeviceState::STMAppCheck;
-                            break; // Device will re-enumerate; continue to the next device
-                        }
-                        
-                        case _DeviceState::STMAppCheck: {
-                            if (dev->statusGet().mode == STM::Status::Mode::STMApp) {
-                                state = _DeviceState::Finish;
-                            } else {
-                                state = _DeviceState::STMLoaderInvoke; // Start over
-                            }
-                            continue;
-                        }
-                        
-                        case _DeviceState::Finish: {
-                            state = _DeviceState::STMLoaderInvoke; // Start over if this device appears again
-                            
-                            // Create our final MDCDevice instance
-                            MDCDevicePtr mdc = Object::Create<MDCDevice>(std::move(*dev));
-                            
-                            // Watch the service so we know when it goes away
-                            io_object_t ioObj = MACH_PORT_NULL;
-                            kern_return_t kr = IOServiceAddInterestNotification(notePort, service,
-                                kIOGeneralInterest, _ServiceInterestCallback, this, &ioObj);
-                            if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddInterestNotification failed: 0x%x", kr);
-                            
-                            // Add the device to our _state.devices
-                            {
-                                auto lock = _state.signal.lock();
-                                _state.devices.push_back(_Device{
-                                    .dev = mdc,
-                                    .note = _SendRight(_SendRight::NoRetain, ioObj),
-                                });
-                            }
-                            
-                            printf("Device connected\n");
-                            changed = true;
-                            break; // Device is fully configured
-                        }}
-                        
-                        break;
-                    }
-                
-                } catch (const std::exception& e) {
-                    // Ignore failures to create USBDevice
-                    printf("Configure MDCDevice failed: %s\n", e.what());
-                }
-            }
-            
-            // Handle disconnected devices
-            {
-                for (const _SendRight& service : _state.terminatedServices) {
-                    auto lock = _state.signal.lock();
-                    for (auto it=_state.devices.begin(); it!=_state.devices.end(); it++) {
-                        if (it->dev->service() == service) {
-                            _state.devices.erase(it);
-                            changed = true;
-                            printf("Device disconnected\n");
-                            break;
-                        }
-                    }
-                }
-                
-                _state.terminatedServices.clear();
-            }
-            
-            // Notify observers that something changed
-            if (changed) observersNotify({});
-            
-            // Wait for matching services to appear
+        for (;;) {
             CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
-            if (r == kCFRunLoopRunStopped) break; // Signalled to stop
-            assert(r == kCFRunLoopRunHandledSource);
+            if (r == kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
         }
-        
-        // Signal that we've stopped
-        _state.signal.stop();
-        
-        printf("[MDCDevice : _threadHandleDevices] Returning\n");
     }
     
-    void _init_thread(_MDCUSBDevicePtr&& dev, std::atomic<bool>& started) {
-        {
-            auto lock = std::unique_lock(_device.lock);
-            
-            // Signal init() that we've started
-            // We need to do this while the device lock is held, to prevent anyone from attempting
-            // IO with the device until we've set it up!
-            started = true;
-            
-            doit(std::move(dev));
-        }
-        
-        
-        // Update our device status
-        _status_update();
-        
-        // Update the device's time
-        {
-            // Enter host mode to adjust the device time
-            auto hostMode = _hostModeEnter();
-            
-            // Adjust the device's time to correct it for crystal innaccuracy
-            std::cout << "Adjusting device time:\n";
-            _device.device->mspTimeAdjust();
-        }
-        
-        // Start threads
-        {
-            _sdRead.thread = _Thread([&] { _sdRead_thread(); });
-            
-            for (int i=0; i<_CPUCount(); i++) {
-                _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
+    void _init_thread(_MDCUSBDevicePtr&& dev) {
+        try {
+            {
+                auto lock = deviceLock();
+                _device.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
+                _device.device = _DevicePrepare(dev);
             }
             
-            _status.thread = _Thread([&] { _status_thread(); });
+            // Update our device status
+            _status_update();
             
-            sync();
+            // Update the device's time
+            {
+                // Enter host mode to adjust the device time
+                auto hostMode = _hostModeEnter();
+                
+                // Adjust the device's time to correct it for crystal innaccuracy
+                std::cout << "Adjusting device time:\n";
+                _device.device->mspTimeAdjust();
+            }
+            
+            // Start threads
+            {
+                _sdRead.thread = _Thread([&] { _sdRead_thread(); });
+                
+                for (int i=0; i<_CPUCount(); i++) {
+                    _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
+                }
+                
+                _status.thread = _Thread([&] { _status_thread(); });
+                
+                sync();
+            }
+            
+            // Wait for device to disappear
+            _DeviceWaitForTerminate(_device.device);
+        
+        } catch (const Toastbox::Signal::Stop&) {
+            printf("[_init_thread] Stopping\n");
+        
+        } catch (const std::exception& e) {
+            printf("[_init_thread] Error: %s\n", e.what());
         }
+        
+        // Update our state so everyone knows the device is gone
+        {
+            auto lock = deviceLock();
+            _device.device = nullptr;
+            // Signal that this thread has stopped
+            _device.signal.stop();
+        }
+        
+        // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
+        // exception if our MDCDevice is undergoing destruction on a different thread.
+        // The destructor waits for this thread to terminate, so this should be safe.
+        const auto self = selfOrNull();
+        if (self) observersNotify(self, {});
     }
     
     Image _imageCreate(const _ImageBuffer& buf) {
@@ -1658,9 +1554,9 @@ struct MDCDevice : ImageSource {
     ImageLibraryPtr _imageLibrary;
     
     struct {
-        std::mutex lock; // Protects this struct
-//        Toastbox::Signal signal; // Protects this struct
+        Toastbox::Signal signal; // Protects this struct
         _Thread thread;
+        id /* CFRunLoopRef */ runLoop;
         std::unique_ptr<MDCUSBDevice> device;
     } _device;
     
