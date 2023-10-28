@@ -55,6 +55,7 @@ struct MDCDevicesManager : Object {
     
     void _threadHandleDevices() {
         printf("[MDCDevicesManager : _threadHandleDevices] Start\n");
+        auto timeStart = std::chrono::steady_clock::now();
         
         _runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
         
@@ -79,15 +80,39 @@ struct MDCDevicesManager : Object {
                 bool changed = false;
                 
                 // Remove dead devices from _state.devices
+                // We do this in a way that avoids calling MDCDevice::alive() while our _state.signal
+                // lock is held, otherwise devices() would be blocked while we call alive(), and
+                // during MDCDevice initialization, alive() won't return until the device is
+                // initialized, which effectively means our devices() function can't return until the
+                // MDCDevice is fully initialized. MDCDevice initialization can take a few seconds,
+                // so we don't want to block devices() that long.
                 {
-                    auto lock = _state.signal.lock();
-                    for (auto it=_state.devices.begin(); it!=_state.devices.end();) {
-                        const _Device& device = it->second;
-                        if (!device.device->alive()) {
-                            it = _state.devices.erase(it);
-                            changed = true;
-                        } else {
-                            it++;
+                    // Copy devices into `devices`
+                    std::set<MDCDevicePtr> devices;
+                    {
+                        auto lock = _state.signal.lock();
+                        for (const auto& kv : _state.devices) {
+                            devices.insert(kv.second.device);
+                        }
+                    }
+                    
+                    // Filter `devices` down to the alive devices
+                    std::set<MDCDevicePtr> alive;
+                    for (const MDCDevicePtr& device : devices) {
+                        if (device->alive()) alive.insert(device);
+                    }
+                    
+                    // Remove the dead devices from _state.devices
+                    {
+                        auto lock = _state.signal.lock();
+                        for (auto it=_state.devices.begin(); it!=_state.devices.end();) {
+                            const _Device& device = it->second;
+                            if (alive.find(device.device) == alive.end()) {
+                                it = _state.devices.erase(it);
+                                changed = true;
+                            } else {
+                                it++;
+                            }
                         }
                     }
                 }
@@ -142,21 +167,19 @@ struct MDCDevicesManager : Object {
                         const std::string& serial = kv.first;
                         _USBDevicePtr& usbDev = kv.second;
                         
-                        // Create a MDCUSBDevice from the USBDevice
-                        _MDCUSBDevicePtr mdcUSBDev;
-                        try {
-                            mdcUSBDev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
-                        
-                        } catch (const std::exception& e) {
-                            // Ignore failures to create MDCUSBDevice
-                            printf("Ignoring USB device (MDCUSBDevice): %s\n", e.what());
-                            continue;
-                        }
-                        
                         // Create our final MDCDevice instance
                         auto selfWeak = selfOrNullWeak<MDCDevicesManager>();
                         if (!selfWeak.lock()) throw Toastbox::Signal::Stop();
-                        MDCDevicePtr mdc = Object::Create<MDCDevice>(std::move(mdcUSBDev));
+                        
+                        MDCDevicePtr mdc;
+                        try {
+                            mdc = Object::Create<MDCDevice>(std::move(usbDev));
+                        } catch (const std::exception& e) {
+                            // Ignore failures to create MDCDevice
+                            printf("Ignoring USB device (MDCDevice): %s\n", e.what());
+                            continue;
+                        }
+                        
                         Object::ObserverPtr ob = mdc->observerAdd([=] (MDCDevicePtr device, const Object::Event& ev) {
                             auto selfStrong = selfWeak.lock();
                             if (!selfStrong) return;
@@ -181,16 +204,20 @@ struct MDCDevicesManager : Object {
                 // Let observers know that a device appeared
                 if (changed) observersNotify({});
                 
-                // Wait for matching services to appear
-                CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
                 {
-                    // Check if we need to bail, and set _state.init if needed
+                    // Set _state.init if needed
                     auto lock = _state.signal.lock();
                     if (!_state.init) {
+                        using namespace std::chrono;
+                        const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+                        printf("[MDCDevicesManager : _threadHandleDevices] Initial init took %ju ms\n", (uintmax_t)duration.count());
                         _state.init = true;
                         _state.signal.signalAll();
                     }
                 }
+                
+                // Wait for matching services to appear
+                CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
             }
         
         } catch (const Toastbox::Signal::Stop&) {

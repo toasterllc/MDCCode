@@ -68,15 +68,11 @@ struct MDCDevice : ImageSource {
         }
     };
     
-    static void _InitThread(MDCDevice* me, _MDCUSBDevicePtr&& dev) {
-        me->_device_thread(std::move(dev));
-    }
-    
-    void init(_MDCUSBDevicePtr&& dev) {
+    void init(_USBDevicePtr&& dev) {
         printf("MDCDevice::init() %p\n", this);
         Object::init(); // Call super
         
-        _serial = dev->serial();
+        _serial = dev->serialNumber();
         _dir = _DirForSerial(_serial);
         _imageLibrary = Object::Create<ImageLibrary>();
         
@@ -97,7 +93,7 @@ struct MDCDevice : ImageSource {
             _imageLibrary->read(_dir / "ImageLibrary");
         }
         
-        _device.thread = _Thread([&] (_MDCUSBDevicePtr&& dev) {
+        _device.thread = _Thread([&] (_USBDevicePtr&& dev) {
             _device_thread(std::move(dev));
         }, std::move(dev));
         
@@ -110,10 +106,15 @@ struct MDCDevice : ImageSource {
         printf("~MDCDevice()\n");
         
         // Tell _device_thread to bail
-        CFRunLoopPerformBlock((CFRunLoopRef)_device.runLoop, kCFRunLoopCommonModes, ^{
-            CFRunLoopStop(CFRunLoopGetCurrent());
-        });
-        CFRunLoopWakeUp((CFRunLoopRef)_device.runLoop);
+        // We have to check for _device.runLoop, even though the constructor waits
+        // for _device.runLoop to be set, because the constructor may not have
+        // completed due to an exception!
+        if (_device.runLoop) {
+            CFRunLoopPerformBlock((CFRunLoopRef)_device.runLoop, kCFRunLoopCommonModes, ^{
+                CFRunLoopStop(CFRunLoopGetCurrent());
+            });
+            CFRunLoopWakeUp((CFRunLoopRef)_device.runLoop);
+        }
         
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
@@ -741,15 +742,15 @@ struct MDCDevice : ImageSource {
         }
     }
     
-    static _MDCUSBDevicePtr _DevicePrepare(const _MDCUSBDevicePtr& d) {
-        const std::string serial = d->serial();
+    static _MDCUSBDevicePtr _DevicePrepare(_USBDevicePtr&& usbDev) {
+        const std::string serial = usbDev->serialNumber();
         
-        _MDCUSBDevicePtr dev;
+        _MDCUSBDevicePtr dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
         
         // Invoke bootloader
         {
-            d->bootloaderInvoke();
-            dev = _WaitForDeviceReenumerate(d->dev(), serial);
+            dev->bootloaderInvoke();
+            dev = _WaitForDeviceReenumerate(dev->dev(), serial);
             _DeviceModeCheck(dev, STM::Status::Mode::STMLoader);
         }
         
@@ -782,12 +783,12 @@ struct MDCDevice : ImageSource {
     
     // MARK: - Device
     
-    void _device_thread(_MDCUSBDevicePtr&& dev) {
+    void _device_thread(_USBDevicePtr&& dev) {
         try {
             {
                 auto lock = deviceLock();
                 _device.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
-                _device.device = _DevicePrepare(dev);
+                _device.device = _DevicePrepare(std::move(dev));
             }
             
             // Update the device's time
