@@ -410,6 +410,8 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 // MARK: - Device Observer
 - (void)_activeDeviceChanged {
+    if (!_active.imageSource) return;
+    
     MDCDevicePtr device = Toastbox::Cast<MDCDevicePtr>(_active.imageSource);
     
     bool libraryEmpty = false;
