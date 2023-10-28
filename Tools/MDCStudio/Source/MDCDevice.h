@@ -261,7 +261,7 @@ struct MDCDevice : ImageSource {
         }
         
         // Notify observers that syncing started
-        observersNotify({});
+        _status_observersNotify();
     }
     
     // MARK: - Status
@@ -998,7 +998,7 @@ struct MDCDevice : ImageSource {
                     },
                 };
                 
-                printf("[_loadImages:p%ju] Enqueuing _SDReadWork\n", (uintmax_t)priority);
+//                printf("[_loadImages:p%ju] Enqueuing _SDReadWork\n", (uintmax_t)priority);
                 {
                     auto lock = _sdRead.signal.lock();
                     _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
@@ -1171,7 +1171,7 @@ struct MDCDevice : ImageSource {
                             _sync.progress = progress;
                             _sync.signal.signalAll();
                         }
-                        observersNotify({});
+                        _status_observersNotify();
                     });
                 }
                 
@@ -1215,7 +1215,7 @@ struct MDCDevice : ImageSource {
         // exception if our MDCDevice is undergoing destruction on a different thread.
         // The destructor waits for this thread to terminate, so this should be safe.
         const auto self = selfOrNull();
-        if (self) observersNotify(self, {});
+        if (self) _status_observersNotify(self);
     }
     
     // MARK: - SD Read
@@ -1272,7 +1272,7 @@ struct MDCDevice : ImageSource {
                         });
                         // Check if we timed out waiting for work
                         if (!queue || pause) break;
-                        printf("[_sdRead_thread] Dequeued work\n");
+//                        printf("[_sdRead_thread] Dequeued work\n");
                         work = std::move(queue->front());
                         queue->pop();
                     }
@@ -1302,7 +1302,7 @@ struct MDCDevice : ImageSource {
                                 _device.device->readout(dst, len);
                             
                             } else {
-                                printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
+//                                printf("[_deviceSDRead] Continuing readout at %ju\n", (uintmax_t)block);
                                 _device.device->readout(dst, len);
                             }
                             sdReadEnd = _SDBlockEnd(block, len);
@@ -1464,13 +1464,23 @@ struct MDCDevice : ImageSource {
         }
     }
     
+    void _status_observersNotify(ObjectPtr self) {
+        Object::Event ev;
+        ev.prop = &_status;
+        observersNotify(self, ev);
+    }
+    
+    void _status_observersNotify() {
+        _status_observersNotify(self());
+    }
+    
     void _status_thread() {
         constexpr auto UpdateInterval = std::chrono::seconds(2);
         try {
             for (;;) {
                 _status.signal.wait_for(UpdateInterval, [] { return false; });
                 _status_update();
-                observersNotify({});
+                _status_observersNotify();
             }
         
         } catch (const Toastbox::Signal::Stop&) {

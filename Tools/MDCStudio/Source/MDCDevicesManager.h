@@ -83,6 +83,20 @@ struct MDCDevicesManager : Object {
         for (;;) @autoreleasepool {
             bool changed = false;
             
+            // Remove dead devices from _state.devices
+            {
+                auto lock = std::unique_lock(_state.lock);
+                for (auto it=_state.devices.begin(); it!=_state.devices.end();) {
+                    const _Device& device = it->second;
+                    if (!device.device->alive()) {
+                        it = _state.devices.erase(it);
+                        changed = true;
+                    } else {
+                        it++;
+                    }
+                }
+            }
+            
             // Add new devices to _state.pending
             for (;;) {
                 _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
@@ -151,6 +165,7 @@ struct MDCDevicesManager : Object {
                     Object::ObserverPtr ob = mdc->observerAdd([=] (MDCDevicePtr device, const Object::Event& ev) {
                         auto selfStrong = selfWeak.lock();
                         if (!selfStrong) return;
+                        if (ev.prop == &device->_status) return; // Ignore status changes
                         selfStrong->_deviceChanged(device);
                     });
                     
@@ -188,23 +203,9 @@ struct MDCDevicesManager : Object {
     }
     
     void _deviceChanged(MDCDevicePtr device) {
-        // Ignore if the device is still alive
-        if (device->alive()) return;
-        
-        // Remove `device` from _state.devices
-        {
-            auto lock = std::unique_lock(_state.lock);
-            auto it = _state.devices.find(device->serial());
-            assert(it != _state.devices.end());
-            assert(it->second.device == device);
-            _state.devices.erase(it);
-        }
-        
+        printf("_deviceChanged\n");
         // Signal runloop that it needs to recheck its pending devices
         _RunLoopInterrupt(_runLoop);
-        
-        // Let observers know that a device disappeared
-        observersNotify({});
     }
     
     static void _Nop(void* ctx, io_iterator_t iter) {}
