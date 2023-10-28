@@ -14,9 +14,11 @@
 #include "Code/Shared/TimeAdjustment.h"
 #include "Code/Shared/TimeString.h"
 
+struct MDCUSBDevice; using MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
 class MDCUSBDevice {
 public:
     using USBDevice = Toastbox::USBDevice;
+    using USBDevicePtr = Toastbox::USBDevicePtr;
     
     static bool USBDeviceMatches(const USBDevice& dev) {
         namespace USB = Toastbox::USB;
@@ -24,13 +26,13 @@ public:
         return desc.idVendor==1155 && desc.idProduct==57105;
     }
     
-    static std::vector<MDCUSBDevice> GetDevices() {
-        std::vector<MDCUSBDevice> devs;
+    static std::vector<MDCUSBDevicePtr> GetDevices() {
+        std::vector<MDCUSBDevicePtr> devs;
         auto usbDevs = USBDevice::GetDevices();
-        for (USBDevice& usbDev : usbDevs) {
-            if (USBDeviceMatches(usbDev)) {
+        for (USBDevicePtr& usbDev : usbDevs) {
+            if (USBDeviceMatches(*usbDev)) {
                 try {
-                    devs.push_back(std::move(usbDev));
+                    devs.push_back(std::make_unique<MDCUSBDevice>(std::move(usbDev)));
                 
                 // Suppress failures to create a MDCUSBDevice
                 } catch (const std::exception& e) {
@@ -41,13 +43,13 @@ public:
         return devs;
     }
     
-    MDCUSBDevice(USBDevice&& dev) : _dev(std::move(dev)) {
+    MDCUSBDevice(std::unique_ptr<USBDevice>&& dev) : _dev(std::move(dev)) {
         printf("[MDCUSBDevice] reset START\n");
         // We don't know what state the device was left in, so reset its state
         reset();
         printf("[MDCUSBDevice] reset END\n");
         
-        _serial = _dev.serialNumber();
+        _serial = _dev->serialNumber();
         const STM::Status status = statusGet();
         _mode = status.mode;
     }
@@ -63,7 +65,7 @@ public:
         return _dev == x._dev;
     }
     
-    const USBDevice& dev() const { return _dev; }
+    const USBDevice& dev() const { return *_dev; }
     
     // MARK: - Accessors
     
@@ -77,11 +79,11 @@ public:
         // doesn't send this status because the state of endpoint is assumed broken hence the need to reset.)
         printf("[MDCUSBDevice] reset vendor request start\n");
         const STM::Cmd cmd = { .op = STM::Op::Reset };
-        _dev.vendorRequestOut(0, cmd);
+        _dev->vendorRequestOut(0, cmd);
         printf("[MDCUSBDevice] reset vendor request end\n");
         
         // Reset endpoints
-        const std::vector<uint8_t> eps = _dev.endpoints();
+        const std::vector<uint8_t> eps = _dev->endpoints();
         for (const uint8_t ep : eps) {
             _endpointReset(ep);
         }
@@ -93,7 +95,7 @@ public:
         _sendCmd(cmd);
         
         STM::Status status;
-        _dev.read(STM::Endpoint::DataIn, status);
+        _dev->read(STM::Endpoint::DataIn, status);
         if (status.magic != STM::Status::MagicNumber) {
             throw Toastbox::RuntimeError("invalid magic number (expected:0x%08jx got:0x%08jx)",
                 (uintmax_t)STM::Status::MagicNumber, (uintmax_t)status.magic);
@@ -107,7 +109,7 @@ public:
         _sendCmd(cmd);
         
         STM::BatteryStatus status = {};
-        _dev.read(STM::Endpoint::DataIn, status);
+        _dev->read(STM::Endpoint::DataIn, status);
         return status;
     }
     
@@ -119,7 +121,7 @@ public:
     // bootloaderInvoke version that replaces `this` with the newly-enumerated USB device
 //    void bootloaderInvoke() {
 //        const STM::Cmd cmd = { .op = STM::Op::BootloaderInvoke };
-//        _dev.vendorRequestOut(0, cmd);
+//        _dev->vendorRequestOut(0, cmd);
 //        _checkStatus("BootloaderInvoke command failed");
 //        
 //        // Wait for a new MDCUSBDevice that's not equal to `this` (ie the underlying USB
@@ -173,7 +175,7 @@ public:
         };
         _sendCmd(cmd);
         // Send data
-        _dev.write(STM::Endpoint::DataOut, data, len);
+        _dev->write(STM::Endpoint::DataOut, data, len);
     }
     
     void stmReset(uintptr_t entryPointAddr) {
@@ -211,7 +213,7 @@ public:
         };
         _sendCmd(cmd);
         // Send data
-        _dev.write(STM::Endpoint::DataOut, data, len);
+        _dev->write(STM::Endpoint::DataOut, data, len);
         _checkStatus("ICERAMWrite command failed");
     }
     
@@ -235,7 +237,7 @@ public:
         };
         _sendCmd(cmd);
         // Read data
-        _dev.read(STM::Endpoint::DataIn, data, len);
+        _dev->read(STM::Endpoint::DataIn, data, len);
         _checkStatus("ICEFlashRead command failed");
     }
     
@@ -259,7 +261,7 @@ public:
         };
         _sendCmd(cmd);
         // Send data
-        _dev.write(STM::Endpoint::DataOut, data, len);
+        _dev->write(STM::Endpoint::DataOut, data, len);
         _checkStatus("ICEFlashWrite command failed");
     }
     
@@ -273,7 +275,7 @@ public:
 //        _checkStatus("MSPStateRead command failed");
 //        
 //        MSP::State state;
-//        _dev.read(STM::Endpoint::DataIn, state);
+//        _dev->read(STM::Endpoint::DataIn, state);
 //        return state;
 //    }
     
@@ -287,7 +289,7 @@ public:
 //        _sendCmd(cmd);
 //        _checkStatus("MSPStateRead command failed");
 //        
-//        _dev.read(STM::Endpoint::DataIn, t);
+//        _dev->read(STM::Endpoint::DataIn, t);
 //    }
     
     MSP::State mspStateRead() {
@@ -302,7 +304,7 @@ public:
             _sendCmd(cmd);
             
             MSP::State::Header header;
-            _dev.read(STM::Endpoint::DataIn, header);
+            _dev->read(STM::Endpoint::DataIn, header);
             _checkStatus("MSPStateRead command failed (header)");
             
             if (header.magic != MSP::StateHeader.magic) {
@@ -336,7 +338,7 @@ public:
             _sendCmd(cmd);
             
             MSP::State state;
-            _dev.read(STM::Endpoint::DataIn, state);
+            _dev->read(STM::Endpoint::DataIn, state);
             _checkStatus("MSPStateRead command failed (header+payload)");
             
             return state;
@@ -353,7 +355,7 @@ public:
         // Send command
         _sendCmd(cmd);
         // Send data
-        _dev.write(STM::Endpoint::DataOut, &state, sizeof(state));
+        _dev->write(STM::Endpoint::DataOut, &state, sizeof(state));
         // Check status
         _checkStatus("MSPStateWrite command failed");
     }
@@ -365,7 +367,7 @@ public:
         _checkStatus("MSPTimeGet command failed");
         
         MSP::TimeState state;
-        _dev.read(STM::Endpoint::DataIn, state);
+        _dev->read(STM::Endpoint::DataIn, state);
         return state;
     }
     
@@ -498,7 +500,7 @@ public:
         };
         _sendCmd(cmd);
         // Read data
-        _dev.read(STM::Endpoint::DataIn, data, len);
+        _dev->read(STM::Endpoint::DataIn, data, len);
         _checkStatus("MSPSBWRead command failed");
     }
     
@@ -522,7 +524,7 @@ public:
         };
         _sendCmd(cmd);
         // Send data
-        _dev.write(STM::Endpoint::DataOut, data, len);
+        _dev->write(STM::Endpoint::DataOut, data, len);
         _checkStatus("MSPSBWWrite command failed");
     }
     
@@ -561,12 +563,12 @@ public:
         
         // Write the MSPDebugCmds
         if (cmdsLen) {
-            _dev.write(STM::Endpoint::DataOut, cmds, cmdsLen*sizeof(STM::MSPSBWDebugCmd));
+            _dev->write(STM::Endpoint::DataOut, cmds, cmdsLen*sizeof(STM::MSPSBWDebugCmd));
         }
         
         // Read back the queued data
         if (respLen) {
-            _dev.read(STM::Endpoint::DataIn, resp, respLen);
+            _dev->read(STM::Endpoint::DataIn, resp, respLen);
         }
         
         _checkStatus("MSPDebug command failed");
@@ -580,7 +582,7 @@ public:
         _checkStatus("SDInit command failed");
         
         STM::SDCardInfo cardInfo = {};
-        _dev.read(STM::Endpoint::DataIn, cardInfo);
+        _dev->read(STM::Endpoint::DataIn, cardInfo);
         return cardInfo;
     }
     
@@ -662,7 +664,7 @@ public:
         _sendCmd(cmd);
         
         STM::ImgCaptureStats stats;
-        _dev.read(STM::Endpoint::DataIn, stats);
+        _dev->read(STM::Endpoint::DataIn, stats);
         _checkStatus("ImgCapture command failed");
         return stats;
     }
@@ -671,7 +673,7 @@ public:
         assert(_mode == STM::Status::Mode::STMApp);
         const size_t imageLen = (size==Img::Size::Full ? ImgSD::Full::ImagePaddedLen : ImgSD::Thumb::ImagePaddedLen);
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(imageLen);
-        const size_t lenGot = _dev.read(STM::Endpoint::DataIn, buf.get(), imageLen);
+        const size_t lenGot = _dev->read(STM::Endpoint::DataIn, buf.get(), imageLen);
         if (lenGot != imageLen) {
             throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)imageLen, (uintmax_t)lenGot);
         }
@@ -692,15 +694,15 @@ public:
         assert(_mode == STM::Status::Mode::STMApp);
         if (!len) return 0; // Short-circuit if there's no data to read
         
-        const size_t mps = _dev.maxPacketSize(STM::Endpoint::DataIn);
+        const size_t mps = _dev->maxPacketSize(STM::Endpoint::DataIn);
         if (len % mps) {
             throw Toastbox::RuntimeError("len isn't a multiple of max packet size (len: %ju, max packet size: %ju)", (uintmax_t)len, (uintmax_t)mps);
         }
         
-        return _dev.read(STM::Endpoint::DataIn, dst, len);
+        return _dev->read(STM::Endpoint::DataIn, dst, len);
         
 //        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(Img::PaddedLen);
-//        const size_t lenGot = _dev.read(STM::Endpoint::DataIn, buf.get(), Img::PaddedLen);
+//        const size_t lenGot = _dev->read(STM::Endpoint::DataIn, buf.get(), Img::PaddedLen);
 //        if (lenGot < Img::Len) {
 //            throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)Img::PaddedLen, (uintmax_t)lenGot);
 //        }
@@ -721,10 +723,10 @@ private:
         namespace USB = Toastbox::USB;
         if ((ep&USB::Endpoint::DirectionMask) == USB::Endpoint::DirectionOut) {
             // Send 2x ZLPs + sentinel
-            _dev.write(ep, nullptr, 0);
-            _dev.write(ep, nullptr, 0);
+            _dev->write(ep, nullptr, 0);
+            _dev->write(ep, nullptr, 0);
             const uint8_t sentinel = 0;
-            _dev.write(ep, &sentinel, sizeof(sentinel));
+            _dev->write(ep, &sentinel, sizeof(sentinel));
         
         } else {
             constexpr size_t BufSize = 16*1024;
@@ -732,7 +734,7 @@ private:
             
             // Flush data from the endpoint until we get a ZLP
             for (;;) {
-                const size_t len = _dev.read(ep, buf.get(), BufSize);
+                const size_t len = _dev->read(ep, buf.get(), BufSize);
                 if (!len) break;
             }
             
@@ -740,7 +742,7 @@ private:
             // It's possible to get a ZLP in this stage -- just ignore it
             for (;;) {
                 uint8_t sentinel = 0;
-                const size_t len = _dev.read(ep, &sentinel, sizeof(sentinel));
+                const size_t len = _dev->read(ep, &sentinel, sizeof(sentinel));
                 if (len == sizeof(sentinel)) break;
             }
         }
@@ -751,7 +753,7 @@ private:
         constexpr int TryCount = 2;
         for (int i=0; i<TryCount; i++) {
             try {
-                _dev.vendorRequestOut(0, cmd);
+                _dev->vendorRequestOut(0, cmd);
                 break;
                 
             } catch (...) {
@@ -766,14 +768,14 @@ private:
         // Wait for completion and throw on failure
         bool s = false;
         try {
-            _dev.read(STM::Endpoint::DataIn, s);
+            _dev->read(STM::Endpoint::DataIn, s);
         } catch (const std::exception& e) {
             throw Toastbox::RuntimeError("%s: failed to read status", e.what());
         }
         if (!s) throw std::runtime_error(errMsg);
     }
     
-    USBDevice _dev;
+    std::unique_ptr<USBDevice> _dev;
     std::string _serial = {};
     STM::Status::Mode _mode = STM::Status::Mode::None;
 };

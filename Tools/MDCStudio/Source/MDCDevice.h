@@ -4,6 +4,8 @@
 #import <set>
 #import <array>
 #import <chrono>
+#import <IOKit/IOKitLib.h>
+#import <IOKit/IOMessage.h>
 #import "Toastbox/Atomic.h"
 #import "Toastbox/Mmap.h"
 #import "Toastbox/Queue.h"
@@ -20,6 +22,7 @@
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/AssertionCounter.h"
 #import "Tools/Shared/BC7Encoder.h"
+#import "Tools/Shared/ELF32Binary.h"
 #import "ImageLibrary.h"
 #import "ImageSource.h"
 #import "BufferPool.h"
@@ -31,6 +34,7 @@ struct MDCDevice : ImageSource {
     using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
     using _SendRight = Toastbox::SendRight;
     using _USBDevice = Toastbox::USBDevice;
+    using _USBDevicePtr = std::unique_ptr<Toastbox::USBDevice>;
     using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
     using _IONotificationPtr = std::unique_ptr<IONotificationPortRef, void(*)(IONotificationPortRef*)>;
     
@@ -68,12 +72,13 @@ struct MDCDevice : ImageSource {
         printf("MDCDevice::init()\n");
         Object::init(); // Call super
         
-        _dir = _DirForSerial(dev->serial());
+        _serial = dev->serial();
+        _dir = _DirForSerial(_serial);
         _imageLibrary = Object::Create<ImageLibrary>();
         
         // Give device a default name
         char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", dev->serial().c_str());
+        snprintf(name, sizeof(name), "MDC Device %s", _serial.c_str());
         _name = std::string(name);
         
         // Read state from disk
@@ -97,17 +102,11 @@ struct MDCDevice : ImageSource {
     ~MDCDevice() {
         printf("~MDCDevice()\n");
         
-        // Kill _init_thread
-        try {
-            for (;;) {
-                // Keep telling the run loop to stop.
-                // This is necessary because CFRunLoopStop() doesn't have an effect unless the thread is
-                // executing within CFRunLoopRunInMode().
-                // We'll bail when _state.signal.lock() throws because the thread exited.
-                auto lock = _device.signal.lock();
-                CFRunLoopStop((CFRunLoopRef)_device.runLoop);
-            }
-        } catch (...) {}
+        // Tell _init_thread to bail
+        CFRunLoopPerformBlock((CFRunLoopRef)_device.runLoop, kCFRunLoopCommonModes, ^{
+            CFRunLoopStop(CFRunLoopGetCurrent());
+        });
+        CFRunLoopWakeUp((CFRunLoopRef)_device.runLoop);
         
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
@@ -126,9 +125,22 @@ struct MDCDevice : ImageSource {
         }
     }
     
-    const Toastbox::SendRight& service() {
-        auto lock = deviceLock();
-        return _device.device->dev().service();
+//    const Toastbox::SendRight& service() {
+//        auto lock = deviceLock();
+//        return _device.device->dev().service();
+//    }
+    
+    const std::string& serial() {
+        return _serial;
+    }
+    
+    bool alive() {
+        try {
+            deviceLock();
+        } catch (const Toastbox::Signal::Stop&) {
+            return false;
+        }
+        return true;
     }
     
     std::unique_lock<std::mutex> deviceLock(bool interrupt=false) {
@@ -657,7 +669,7 @@ struct MDCDevice : ImageSource {
         }
         
         _MDCUSBDevicePtr dev;
-        while (!dev) {
+        while (!dev) @autoreleasepool {
             // Wait for matching services to appear
             CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
             if (r == kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
@@ -675,9 +687,9 @@ struct MDCDevice : ImageSource {
                 }
                 
                 try {
-                    _USBDevice usbDev(service);
-                    if (!MDCUSBDevice::USBDeviceMatches(usbDev)) continue;
-                    if (usbDev.serialNumber() != serial) continue;
+                    _USBDevicePtr usbDev = std::make_unique<_USBDevice>(service);
+                    if (!MDCUSBDevice::USBDeviceMatches(*usbDev)) continue;
+                    if (usbDev->serialNumber() != serial) continue;
                     dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
                 
                 } catch (const std::exception& e) {
@@ -751,7 +763,7 @@ struct MDCDevice : ImageSource {
         if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddInterestNotification failed: 0x%x", kr);
         _SendRight obj(_SendRight::NoRetain, ioObj); // Make sure port gets cleaned up
         
-        for (;;) {
+        for (;;) @autoreleasepool {
             CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
             if (r == kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
         }
@@ -1329,7 +1341,7 @@ struct MDCDevice : ImageSource {
                         // Validate the magic number
                         if (imgHeader.magic.u24 != Img::Header::MagicNumber.u24) {
                             printf("[_thumbRender_thread] Invalid magic number (got: %jx, expected: %jx)\n",
-                                imgHeader.magic.u24, Img::Header::MagicNumber.u24);
+                                (uintmax_t)imgHeader.magic.u24, (uintmax_t)Img::Header::MagicNumber.u24);
                             printf("[_thumbRender_thread] Skipping image\n");
                             // Skip this image
                             // In particular, we want to make sure loadCount==0, so that _sync_thread() can observe
@@ -1550,6 +1562,7 @@ struct MDCDevice : ImageSource {
     
     // MARK: - Members
     
+    std::string _serial;
     _Path _dir;
     ImageLibraryPtr _imageLibrary;
     
