@@ -104,7 +104,7 @@ struct MDCDevicesManager : Object {
                     
                     } catch (const std::exception& e) {
                         // Ignore failures to create USBDevice
-                        printf("Ignoring USB device: %s\n", e.what());
+                        printf("Ignoring USB device (_USBDevice): %s\n", e.what());
                         continue;
                     }
                     
@@ -149,7 +149,7 @@ struct MDCDevicesManager : Object {
                         
                         } catch (const std::exception& e) {
                             // Ignore failures to create MDCUSBDevice
-                            printf("Ignoring USB device: %s\n", e.what());
+                            printf("Ignoring USB device (MDCUSBDevice): %s\n", e.what());
                             continue;
                         }
                         
