@@ -18,22 +18,16 @@ struct MDCDevicesManager : Object {
         Object::init();
         
         _thread = std::thread([&] { _threadHandleDevices(); });
-        // Wait for _runLoop to be populated, so that ~MDCDevicesManager
-        // can assume it exists.
-        for (;;) {
-            {
-                auto lock = std::unique_lock(_state.lock);
-                if (_runLoop) break;
-            }
-            usleep(1000);
-        }
+        // Wait for the thread to initialize, so that we know the devices
+        // are valid as soon as we're instantiated.
+        _state.signal.wait([&] { return _state.init; });
     }
     
     ~MDCDevicesManager() {
-        printf("[MDCDevicesManager] ~MDCDevicesManager()\n");
+        printf("[MDCDevicesManager : _threadHandleDevices] ~MDCDevicesManager()\n");
         
         // Tell thread to bail
-        _stop = true;
+        _state.signal.stop();
         _RunLoopInterrupt(_runLoop);
         
         assert(_thread.joinable());
@@ -41,7 +35,7 @@ struct MDCDevicesManager : Object {
     }
     
     std::vector<MDCDevicePtr> devices() {
-        auto lock = std::unique_lock(_state.lock);
+        auto lock = _state.signal.lock();
         std::vector<MDCDevicePtr> devs;
         for (const auto& kv : _state.devices) {
             devs.push_back(kv.second.device);
@@ -80,118 +74,132 @@ struct MDCDevicesManager : Object {
         CFRunLoopSourceRef rls = IONotificationPortGetRunLoopSource(notePort);
         CFRunLoopAddSource(CFRunLoopGetCurrent(), rls, kCFRunLoopCommonModes);
         
-        for (;;) @autoreleasepool {
-            bool changed = false;
-            
-            // Remove dead devices from _state.devices
-            {
-                auto lock = std::unique_lock(_state.lock);
-                for (auto it=_state.devices.begin(); it!=_state.devices.end();) {
-                    const _Device& device = it->second;
-                    if (!device.device->alive()) {
-                        it = _state.devices.erase(it);
-                        changed = true;
-                    } else {
-                        it++;
-                    }
-                }
-            }
-            
-            // Add new devices to _state.pending
-            for (;;) {
-                _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
-                if (!service) break;
+        try {
+            for (;;) @autoreleasepool {
+                bool changed = false;
                 
-                _USBDevicePtr usbDev;
-                try {
-                    usbDev = std::make_unique<_USBDevice>(service);
-                    if (!MDCUSBDevice::USBDeviceMatches(*usbDev)) continue;
-                
-                } catch (const std::exception& e) {
-                    // Ignore failures to create USBDevice
-                    printf("Ignoring USB device: %s\n", e.what());
-                    continue;
-                }
-                
-                // Add the device to _state.pending.
-                const std::string serial = usbDev->serialNumber();
+                // Remove dead devices from _state.devices
                 {
-                    auto lock = std::unique_lock(_state.lock);
-                    _state.pending[serial].push_back(std::move(usbDev));
-                }
-            }
-            
-            // Promote devices from _state.pending to _state.devices, if no device
-            // exists for the given serial in _state.devices.
-            // We loop until `promote` is empty, because the first device for a
-            // given serial might not work, so we need to try the next one, etc.
-            for (;;) {
-                // Assemble devices to promote
-                std::map<std::string,_USBDevicePtr> promote;
-                {
-                    auto lock = std::unique_lock(_state.lock);
-                    for (auto& kv : _state.pending) {
-                        const std::string& serial = kv.first;
-                        std::vector<_USBDevicePtr>& devices = kv.second;
-                        if (devices.empty()) continue;
-                        // If we have a device for the serial
-                        if (_state.devices.find(kv.first) != _state.devices.end()) continue;
-                        promote[serial] = std::move(devices.back());
-                        devices.pop_back();
+                    auto lock = _state.signal.lock();
+                    for (auto it=_state.devices.begin(); it!=_state.devices.end();) {
+                        const _Device& device = it->second;
+                        if (!device.device->alive()) {
+                            it = _state.devices.erase(it);
+                            changed = true;
+                        } else {
+                            it++;
+                        }
                     }
                 }
                 
-                if (promote.empty()) break;
-                
-                for (auto& kv : promote) {
-                    const std::string& serial = kv.first;
-                    _USBDevicePtr& usbDev = kv.second;
+                // Add new devices to _state.pending
+                for (;;) {
+                    _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
+                    if (!service) break;
                     
-                    // Create a MDCUSBDevice from the USBDevice
-                    _MDCUSBDevicePtr mdcUSBDev;
+                    _USBDevicePtr usbDev;
                     try {
-                        mdcUSBDev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
+                        usbDev = std::make_unique<_USBDevice>(service);
+                        if (!MDCUSBDevice::USBDeviceMatches(*usbDev)) continue;
                     
                     } catch (const std::exception& e) {
-                        // Ignore failures to create MDCUSBDevice
+                        // Ignore failures to create USBDevice
                         printf("Ignoring USB device: %s\n", e.what());
                         continue;
                     }
                     
-                    // Create our final MDCDevice instance
-                    auto selfWeak = selfOrNullWeak<MDCDevicesManager>();
-                    if (!selfWeak.lock()) goto done;
-                    MDCDevicePtr mdc = Object::Create<MDCDevice>(std::move(mdcUSBDev));
-                    Object::ObserverPtr ob = mdc->observerAdd([=] (MDCDevicePtr device, const Object::Event& ev) {
-                        auto selfStrong = selfWeak.lock();
-                        if (!selfStrong) return;
-                        if (ev.prop == &device->_status) return; // Ignore status changes
-                        selfStrong->_deviceChanged(device);
-                    });
-                    
-                    // Add the device to our _state.devices
+                    // Add the device to _state.pending.
+                    const std::string serial = usbDev->serialNumber();
                     {
-                        auto lock = std::unique_lock(_state.lock);
-                        _state.devices[serial] = {
-                            .device = mdc,
-                            .observer = ob,
-                        };
-                        changed = true;
+                        auto lock = _state.signal.lock();
+                        _state.pending[serial].push_back(std::move(usbDev));
+                    }
+                }
+                
+                // Promote devices from _state.pending to _state.devices, if no device
+                // exists for the given serial in _state.devices.
+                // We loop until `promote` is empty, because the first device for a
+                // given serial might not work, so we need to try the next one, etc.
+                for (;;) {
+                    // Assemble devices to promote
+                    std::map<std::string,_USBDevicePtr> promote;
+                    {
+                        auto lock = _state.signal.lock();
+                        for (auto& kv : _state.pending) {
+                            const std::string& serial = kv.first;
+                            std::vector<_USBDevicePtr>& devices = kv.second;
+                            if (devices.empty()) continue;
+                            // If we have a device for the serial
+                            if (_state.devices.find(kv.first) != _state.devices.end()) continue;
+                            promote[serial] = std::move(devices.back());
+                            devices.pop_back();
+                        }
                     }
                     
-                    printf("Device connected\n");
+                    if (promote.empty()) break;
+                    
+                    for (auto& kv : promote) {
+                        const std::string& serial = kv.first;
+                        _USBDevicePtr& usbDev = kv.second;
+                        
+                        // Create a MDCUSBDevice from the USBDevice
+                        _MDCUSBDevicePtr mdcUSBDev;
+                        try {
+                            mdcUSBDev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
+                        
+                        } catch (const std::exception& e) {
+                            // Ignore failures to create MDCUSBDevice
+                            printf("Ignoring USB device: %s\n", e.what());
+                            continue;
+                        }
+                        
+                        // Create our final MDCDevice instance
+                        auto selfWeak = selfOrNullWeak<MDCDevicesManager>();
+                        if (!selfWeak.lock()) throw Toastbox::Signal::Stop();
+                        MDCDevicePtr mdc = Object::Create<MDCDevice>(std::move(mdcUSBDev));
+                        Object::ObserverPtr ob = mdc->observerAdd([=] (MDCDevicePtr device, const Object::Event& ev) {
+                            auto selfStrong = selfWeak.lock();
+                            if (!selfStrong) return;
+                            if (ev.prop == &device->_status) return; // Ignore status changes
+                            selfStrong->_deviceChanged(device);
+                        });
+                        
+                        // Add the device to our _state.devices
+                        {
+                            auto lock = _state.signal.lock();
+                            _state.devices[serial] = {
+                                .device = mdc,
+                                .observer = ob,
+                            };
+                            changed = true;
+                        }
+                        
+                        printf("[MDCDevicesManager : _threadHandleDevices] Device connected\n");
+                    }
+                }
+                
+                // Let observers know that a device appeared
+                if (changed) observersNotify({});
+                
+                // Wait for matching services to appear
+                CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
+                {
+                    // Check if we need to bail, and set _state.init if needed
+                    auto lock = _state.signal.lock();
+                    if (!_state.init) {
+                        _state.init = true;
+                        _state.signal.signalAll();
+                    }
                 }
             }
-            
-            // Let observers know that a device appeared
-            if (changed) observersNotify({});
-            
-            // Wait for matching services to appear
-            CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
-            if (_stop) break;
+        
+        } catch (const Toastbox::Signal::Stop&) {
+            printf("[MDCDevicesManager : _threadHandleDevices] Stopping\n");
+        
+        } catch (const std::exception& e) {
+            printf("[MDCDevicesManager : _threadHandleDevices] Error: %s\n", e.what());
         }
         
-    done:
         printf("[MDCDevicesManager : _threadHandleDevices] Terminating\n");
     }
     
@@ -203,7 +211,7 @@ struct MDCDevicesManager : Object {
     }
     
     void _deviceChanged(MDCDevicePtr device) {
-        printf("_deviceChanged\n");
+        printf("[MDCDevicesManager : _threadHandleDevices] _deviceChanged\n");
         // Signal runloop that it needs to recheck its pending devices
         _RunLoopInterrupt(_runLoop);
     }
@@ -211,14 +219,14 @@ struct MDCDevicesManager : Object {
     static void _Nop(void* ctx, io_iterator_t iter) {}
     
     struct {
-        std::mutex lock; // Protects this struct
+        Toastbox::Signal signal; // Protects this struct
         std::map<std::string,_Device> devices;
         std::map<std::string,std::vector<_USBDevicePtr>> pending;
+        bool init = false;
     } _state;
     
     std::thread _thread;
     id /* CFRunLoopRef */ _runLoop;
-    std::atomic<bool> _stop = false;
 };
 
 using MDCDevicesManagerPtr = SharedPtr<MDCDevicesManager>;
