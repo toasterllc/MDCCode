@@ -113,27 +113,28 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     ImageExportSaveDialog::Show(window, batch, filename, [=] (auto res) {
         // Only show progress dialog if we're exporting a significant number of images
         ImageExportProgressDialog* progress = nil;
-        if (recs.size() > 3) {
+        const size_t recsSize = recs.size();
+        if (recsSize > 3) {
             progress = [ImageExportProgressDialog new];
-            [progress setImageCount:recs.size()];
+            [progress setImageCount:recsSize];
             [window beginSheet:[progress window] completionHandler:nil];
         }
         
         std::thread exportThread([=] {
             size_t completed = 0;
-            _Export(imageSource, res.format, [res.path UTF8String], recs, [&] {
+            _Export(imageSource, res.format, [res.path UTF8String], recs, [=, &completed] {
                 if (!progress) return true;
                 // Signal main thread to update progress bar
                 completed++;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [progress setProgress:(float)completed / recs.size()];
-                });
+                const float p = (float)completed / recsSize;
+                dispatch_async(dispatch_get_main_queue(), ^{ [progress setProgress:p]; });
                 return ![progress canceled];
             });
             
             // Close the sheet
             if (progress) {
                 dispatch_async(dispatch_get_main_queue(), ^{
+//                    printf("Closing progress sheet\n");
                     [window endSheet:[progress window]];
                 });
             }
