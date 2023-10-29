@@ -64,20 +64,6 @@ inline void _Export(MDCTools::Renderer& renderer, ImageSourcePtr imageSource, co
     __Export(renderer, fmt, *rec, image, filePath);
 }
 
-//// Batch export to directory `dirPath`
-//inline void _Export(MDCTools::Renderer& renderer, ImageSourcePtr imageSource, const Format* fmt, const ImageSet& recs,
-//    const std::filesystem::path& dirPath, const std::string filenamePrefix, std::function<void()> progress) {
-//    for (ImageRecordPtr rec : recs) @autoreleasepool {
-//        const std::filesystem::path filePath = dirPath / (filenamePrefix + std::to_string(rec->info.id) + "." + fmt->extension);
-//        _Export(renderer, imageSource, fmt, rec, filePath);
-//        progress();
-//    }
-//}
-//
-//inline void ExportThread() {
-//    
-//}
-
 inline void _Export(ImageSourcePtr imageSource, const ImageExporter::Format* fmt,
     const std::filesystem::path& path, const ImageSet& recs, std::function<bool()> progress) {
     

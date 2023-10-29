@@ -598,6 +598,12 @@ struct SelectionDelta {
     }
     
     switch (ev.type) {
+    case ImageLibrary::Event::Type::Add:
+    case ImageLibrary::Event::Type::Remove:
+    case ImageLibrary::Event::Type::Clear:
+        [self _selectionUpdate];
+        break;
+    
     case ImageLibrary::Event::Type::ChangeProperty:
         if ([self _recordsIntersectVisibleRange:ev.records]) {
             // Re-render visible thumbs that are dirty
