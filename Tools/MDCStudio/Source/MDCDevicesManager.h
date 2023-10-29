@@ -184,6 +184,7 @@ struct MDCDevicesManager : Object {
                             auto selfStrong = selfWeak.lock();
                             if (!selfStrong) return;
                             if (ev.prop == &device->_status) return; // Ignore status changes
+                            if (ev.prop == &device->_sync) return; // Ignore sync changes
                             selfStrong->_deviceChanged(device);
                         });
                         
