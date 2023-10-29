@@ -24,7 +24,7 @@ struct MDCDevicesManager : Object {
     }
     
     ~MDCDevicesManager() {
-        printf("[MDCDevicesManager : _threadHandleDevices] ~MDCDevicesManager()\n");
+        printf("[MDCDevicesManager] ~MDCDevicesManager()\n");
         
         // Tell thread to bail
         _state.signal.stop();
@@ -239,7 +239,7 @@ struct MDCDevicesManager : Object {
     }
     
     void _deviceChanged(MDCDevicePtr device) {
-        printf("[MDCDevicesManager : _threadHandleDevices] _deviceChanged\n");
+        printf("[MDCDevicesManager] _deviceChanged\n");
         // Signal runloop that it needs to recheck its pending devices
         _RunLoopInterrupt(_runLoop);
     }
