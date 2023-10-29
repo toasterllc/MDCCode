@@ -8,15 +8,6 @@ using namespace MDCStudio::FullSizeImageViewTypes;
 namespace MDCStudio {
 namespace FullSizeImageViewShader {
 
-static constexpr constant float2 _Verts[6] = {
-    {0, 0},
-    {0, 1},
-    {1, 0},
-    {1, 0},
-    {0, 1},
-    {1, 1},
-};
-
 struct VertexOutput {
     float4 pos [[position]];
     float2 posUnit;
@@ -27,8 +18,8 @@ vertex VertexOutput ImageVertexShader(
     uint vidx [[vertex_id]]
 ) {
     VertexOutput r = {
-        .pos = ctx.transform * float4(_Verts[vidx], 0, 1),
-        .posUnit = _Verts[vidx],
+        .pos = ctx.transform * float4(SquareVert[vidx], 0, 1),
+        .posUnit = SquareVertYFlipped[vidx],
     };
     return r;
 }

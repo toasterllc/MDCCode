@@ -91,16 +91,7 @@ static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, std::string_vie
 }
 
 static simd::float2 _TimestampOffset(simd::float2 position, simd::float2 size) {
-    simd::float2 a = { 1.f-size.x, 1.f-size.y };
-    return a * position;
-//    using X = ImageOptions::Corner;
-//    switch (corner) {
-//    case X::BottomRight: return { 1.f-size.x, 1.f-size.y };
-//    case X::BottomLeft:  return {          0, 1.f-size.y };
-//    case X::TopLeft:     return {          0,          0 };
-//    case X::TopRight:    return { 1.f-size.x,          0 };
-//    }
-//    abort();
+    return simd::float2{ 1.f-size.x, 1.f-size.y } * position;
 }
 
 void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb) {

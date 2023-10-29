@@ -44,8 +44,8 @@ struct SampleRect {
 };
 
 struct TimestampContext {
-    simd::float2 timestampOffset;
-    simd::float2 timestampSize;
+    simd::float2 timestampOffset; // [0,1] Cartesion
+    simd::float2 timestampSize;   // [0,1]
 };
 
 } // namespace ImagePipeline

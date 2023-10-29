@@ -26,21 +26,25 @@
 namespace MDCTools {
 namespace MetalUtil {
 
-// Unique vertexes (defines a unit square)
-constexpr MetalConstant vector_float4 SquareVert[4] = {
-    { 1,  1, 0, 1},
-    {-1,  1, 0, 1},
-    {-1, -1, 0, 1},
-    { 1, -1, 0, 1},
+constexpr MetalConstant simd::float2 SquareVert[6] = {
+    {0, 0},
+    {0, 1},
+    {1, 0},
+    {1, 0},
+    {0, 1},
+    {1, 1},
 };
 
-// Vertex indicies (for a square)
-constexpr MetalConstant uint8_t SquareVertIdx[6] = {
-    0, 1, 2,
-    0, 2, 3,
+constexpr MetalConstant simd::float2 SquareVertYFlipped[6] = {
+    {0, 1},
+    {0, 0},
+    {1, 1},
+    {1, 1},
+    {0, 0},
+    {1, 0},
 };
 
-constexpr MetalConstant size_t SquareVertIdxCount = sizeof(SquareVertIdx)/sizeof(*SquareVertIdx);
+constexpr MetalConstant size_t SquareVertCount = sizeof(SquareVert)/sizeof(*SquareVert);
 
 #if MetalShaderContext
 
@@ -51,12 +55,9 @@ struct VertexOutput {
 
 inline VertexOutput VertexShader(uint vidx) {
     VertexOutput r = {
-        .pos = SquareVert[SquareVertIdx[vidx]],
-        .posUnit = SquareVert[SquareVertIdx[vidx]].xy,
+        .pos = float4((2*SquareVert[vidx])-1, 0, 1),
+        .posUnit = SquareVertYFlipped[vidx],
     };
-    r.posUnit += 1;
-    r.posUnit /= 2;
-    r.posUnit.y = 1-r.posUnit.y;
     return r;
 }
 

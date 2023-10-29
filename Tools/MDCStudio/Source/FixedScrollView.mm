@@ -545,6 +545,7 @@ static bool _EventPhaseBegan(NSEventPhase x) {
 - (NSRect)constrainBoundsRect:(NSRect)bounds {
     bounds = [super constrainBoundsRect:bounds];
     
+    const bool flipped = [[self documentView] isFlipped];
     const CGSize docSize = [[self documentView] frame].size;
     const NSEdgeInsets contentInsets = [self contentInsets];
     const CGFloat xinset = contentInsets.left + contentInsets.right;
@@ -553,7 +554,12 @@ static bool _EventPhaseBegan(NSEventPhase x) {
     const CGFloat yexcess = (bounds.size.height-yinset) - docSize.height;
     
     if (xexcess > 0) bounds.origin.x = -(contentInsets.left + xexcess/2);
-    if (yexcess > 0) bounds.origin.y = -(contentInsets.top + yexcess/2);
+    
+    if (flipped) {
+        if (yexcess > 0) bounds.origin.y = -(contentInsets.top + yexcess/2);
+    } else {
+        if (yexcess > 0) bounds.origin.y = -(contentInsets.bottom + yexcess/2);
+    }
     
     return bounds;
 }

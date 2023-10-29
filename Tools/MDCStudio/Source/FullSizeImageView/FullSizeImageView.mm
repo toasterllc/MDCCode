@@ -250,10 +250,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
     }
 }
 
-- (bool)fixedFlipped {
-    return true;
-}
-
 - (void)fixedCreateConstraintsForContainer:(NSView*)container {
     _width = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeWidth
         relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1

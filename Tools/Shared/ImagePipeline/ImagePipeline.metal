@@ -507,25 +507,15 @@ fragment float4 DebayerDownsample(
     return 0;
 }
 
-static constexpr constant float2 _TimestampVerts[6] = {
-    {0, 0},
-    {0, 1},
-    {1, 0},
-    {1, 0},
-    {0, 1},
-    {1, 1},
-};
-
 vertex VertexOutput TimestampVertexShader(
     constant TimestampContext& ctx [[buffer(0)]],
     uint vidx [[vertex_id]]
 ) {
-    float2 off = (ctx.timestampOffset*2)-1;
+    float2 off = (2*ctx.timestampOffset)-1;
     VertexOutput r = {
-        .pos = float4(off + (2 * _TimestampVerts[vidx] * ctx.timestampSize), 0, 1),
-        .posUnit = _TimestampVerts[vidx],
+        .pos = float4(off + (2*SquareVert[vidx] * ctx.timestampSize), 0, 1),
+        .posUnit = SquareVertYFlipped[vidx],
     };
-    r.posUnit.y = 1-r.posUnit.y;
     return r;
 }
 

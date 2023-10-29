@@ -215,7 +215,7 @@ public:
         const _VertexShader<T_VertArgs...>& vert,
         const _FragmentShader<T_FragArgs...>& frag
     ) {
-        render(txt, blendType, MTLPrimitiveTypeTriangle, MDCTools::MetalUtil::SquareVertIdxCount, 1,
+        render(txt, blendType, MTLPrimitiveTypeTriangle, MDCTools::MetalUtil::SquareVertCount, 1,
             vert,
             frag
         );
@@ -324,7 +324,7 @@ public:
         }, frag.args);
         
         [enc drawPrimitives:MTLPrimitiveTypeTriangle
-            vertexStart:0 vertexCount:MDCTools::MetalUtil::SquareVertIdxCount];
+            vertexStart:0 vertexCount:MDCTools::MetalUtil::SquareVertCount];
         
         [enc endEncoding];
     }
