@@ -85,7 +85,7 @@ private:
     using _BAT_CHRG_STAT = GPIO::PortB::Pin<10, GPIO::Option::Input, GPIO::Option::Resistor0>;
     
     [[noreturn]]
-    static void _SchedulerStackOverflow() {
+    static void _SchedulerStackOverflow(size_t taskIdx) {
 //        Toastbox::IntState ints(false);
 //        
 //        for (bool x=true;; x=!x) {

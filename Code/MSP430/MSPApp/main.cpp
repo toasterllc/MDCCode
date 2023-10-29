@@ -91,7 +91,6 @@ static MSP::State _State = {
 
 static void _EventsEnabledUpdate();
 static void _EventsEnabledChanged();
-
 static void _MotionPoweredUpdate();
 
 // _TaskPowerStateSaved: remembers our power state across crashes and LPM3.5.
@@ -129,7 +128,14 @@ static T_Dst& _Cast(T_Src& x) {
     return static_cast<T_Dst&>(x);
 }
 
-// MARK: - Abort
+// MARK: - Reset
+
+[[noreturn]]
+static void _BOR() {
+    PMMCTL0 = PMMPW | PMMSWBOR;
+    // Wait for reset
+    for (;;);
+}
 
 static void _ResetRecord(MSP::Reset::Type type, uint16_t ctx) {
     using namespace MSP;
@@ -159,24 +165,27 @@ static void _ResetRecord(MSP::Reset::Type type, uint16_t ctx) {
 }
 
 [[noreturn]]
-static void _BOR() {
-    PMMCTL0 = PMMPW | PMMSWBOR;
-    // Wait for reset
-    for (;;);
+static void _Reset(MSP::Reset::Type type, uint16_t ctx) {
+    // Disable interrupts
+    Toastbox::IntState::Set(false);
+    // Record the abort
+    _ResetRecord(type, ctx);
+    // Wait until all prints have been drained, so we don't drop important
+    // info by aborting before it's been read.
+    while (!Debug::Empty());
+    _BOR();
+}
+
+[[noreturn]]
+void _SchedulerStackOverflow(size_t taskIdx) {
+    _Reset(MSP::Reset::Type::StackOverflow, taskIdx);
 }
 
 // Abort(): called by Assert() with the address that aborted
 extern "C"
 [[noreturn, gnu::used]]
 void Abort(uintptr_t addr) {
-    // Disable interrupts
-    Toastbox::IntState::Set(false);
-    // Record the abort
-    _ResetRecord(MSP::Reset::Type::Abort, addr);
-    // Wait until all prints have been drained, so we don't drop important
-    // info by aborting before it's been read.
-    while (!Debug::Empty());
-    _BOR();
+    _Reset(MSP::Reset::Type::Abort, addr);
 }
 
 extern "C"
@@ -1750,8 +1759,7 @@ int main() {
     // the interrupt would immediately fire again and a crash loop would ensue. (We may
     // have encountered this issue when we had missing entries in our vector table.)
     if (Startup::ResetReason() != SYSRSTIV_DOBOR) {
-        _ResetRecord(MSP::Reset::Type::Reset, Startup::ResetReason());
-        _BOR();
+        _Reset(MSP::Reset::Type::Reset, Startup::ResetReason());
     }
     
     // Invokes the first task's Run() function (_TaskPower::Run)

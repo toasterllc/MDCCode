@@ -161,6 +161,7 @@ struct [[gnu::packed]] Reset {
     enum class Type : uint8_t {
         Reset,
         Abort,
+        StackOverflow,
     };
     
     Type type;
@@ -174,6 +175,10 @@ struct [[gnu::packed]] Reset {
         struct [[gnu::packed]] {
             uint16_t addr;
         } Abort;
+        
+        struct [[gnu::packed]] {
+            uint16_t taskIdx;
+        } StackOverflow;
         
         uint16_t u16;
     } ctx;

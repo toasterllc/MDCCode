@@ -44,9 +44,7 @@ static constexpr uint32_t _SysTickFreqHz    = 2048;         // 2.048 kHz
 static void _Sleep();
 
 [[noreturn]]
-static void _SchedulerStackOverflow() {
-    Assert(false);
-}
+void _SchedulerStackOverflow(size_t taskIdx);
 
 #warning TODO: disable stack guard for production
 static constexpr size_t _StackGuardCount = 16;
