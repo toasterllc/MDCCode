@@ -16,6 +16,7 @@ namespace MDCStudio::ImageExporter {
 // Single image export to file `filePath`
 inline void __Export(MDCTools::Renderer& renderer, const Format* fmt, const ImageRecord& rec, const Image& image,
     const std::filesystem::path& filePath) {
+    
     printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
     using namespace MDCTools;
     using namespace MDCTools::ImagePipeline;
@@ -29,7 +30,7 @@ inline void __Export(MDCTools::Renderer& renderer, const Format* fmt, const Imag
     Renderer::Txt rgbTxt = renderer.textureCreate(MTLPixelFormatRGBA16Float,
         image.width, image.height);
     
-    const Pipeline::Options popts = PipelineOptionsForImage(rec.options, image);
+    const Pipeline::Options popts = PipelineOptionsForImage(rec, image);
     Pipeline::Run(renderer, popts, rawTxt, rgbTxt);
     
     id cgimage = renderer.imageCreate(rgbTxt);

@@ -507,6 +507,33 @@ fragment float4 DebayerDownsample(
     return 0;
 }
 
+static constexpr constant float2 _TimestampVerts[6] = {
+    {0, 0},
+    {0, 1},
+    {1, 0},
+    {1, 0},
+    {0, 1},
+    {1, 1},
+};
+
+vertex VertexOutput TimestampVertexShader(
+    constant TimestampContext& ctx [[buffer(0)]],
+    uint vidx [[vertex_id]]
+) {
+    VertexOutput r = {
+        .pos = float4(ctx.timestampOffset + (_TimestampVerts[vidx] * ctx.timestampSize), 0, 1),
+        .posUnit = _TimestampVerts[vidx],
+    };
+    return r;
+}
+
+fragment float4 TimestampFragmentShader(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    return txt.sample({}, in.posUnit);
+}
+
 } // namespace Base
 } // namespace Shader
 } // namespace ImagePipeline

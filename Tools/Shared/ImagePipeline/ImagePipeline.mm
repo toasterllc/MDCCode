@@ -54,6 +54,55 @@ namespace MDCTools::ImagePipeline {
 //    }
 //}
 
+static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, std::string_view str) {
+    static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+    
+    NSAttributedString* astr = [[NSAttributedString alloc] initWithString:@(std::string(str).c_str())
+    attributes:@{
+        NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:48],
+        NSForegroundColorAttributeName: [NSColor whiteColor],
+    }];
+    
+    constexpr CGFloat PaddingX = 20;
+    constexpr CGFloat PaddingY = 2;
+    constexpr size_t SamplesPerPixel = 4;
+    constexpr size_t BytesPerSample = 1;
+    const CGSize astrSize = [astr size];
+    const size_t w = std::lround(astrSize.width+2*PaddingX);
+    const size_t h = std::lround(astrSize.height+2*PaddingY);
+    const size_t bytesPerRow = SamplesPerPixel*BytesPerSample*w;
+    id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateWithName(kCGColorSpaceSRGB));
+    const id /* CGContextRef */ ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, BytesPerSample*8,
+        bytesPerRow, (CGColorSpaceRef)cs, kCGImageAlphaPremultipliedLast));
+    
+    const CGRect bounds = {{}, { (CGFloat)w, (CGFloat)h }};
+//    CGContextScaleCTM((CGContextRef)ctx, contentsScale, contentsScale);
+    CGContextSetRGBFillColor((CGContextRef)ctx, 0, 0, 0, 1);
+    CGContextFillRect((CGContextRef)ctx, bounds);
+    
+    NSGraphicsContext* nsctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)ctx flipped:false];
+    [NSGraphicsContext setCurrentContext:nsctx];
+    [astr drawAtPoint:{ PaddingX, PaddingY }];
+    
+    const uint8_t* samples = (const uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
+    Renderer::Txt txt = renderer.textureCreate(_PixelFormat, w, h);
+    renderer.textureWrite(txt, samples, SamplesPerPixel);
+    return txt;
+}
+
+static simd::float2 _TimestampOffset(simd::float2 position, simd::float2 size) {
+    simd::float2 a = { 1.f-size.x, 1.f-size.y };
+    return a * position;
+//    using X = ImageOptions::Corner;
+//    switch (corner) {
+//    case X::BottomRight: return { 1.f-size.x, 1.f-size.y };
+//    case X::BottomLeft:  return {          0, 1.f-size.y };
+//    case X::TopLeft:     return {          0,          0 };
+//    case X::TopRight:    return { 1.f-size.x,          0 };
+//    }
+//    abort();
+}
+
 void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb) {
     assert(srcRaw);
     assert(dstRgb);
@@ -234,6 +283,30 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         } else {
             renderer.copy(srcRgb, dstRgb);
         }
+    }
+    
+    // Draw the timestamp string if requested
+    if (!opts.timestamp.string.empty()) {
+        Renderer::Txt timestampTxt = _TimestampTextureCreate(renderer, opts.timestamp.string);
+        
+        const simd::float2 timestampSize = {
+            (float)[timestampTxt width] / [dstRgb width],
+            (float)[timestampTxt height] / [dstRgb height],
+        };
+        
+        const simd::float2 timestampOffset = _TimestampOffset(opts.timestamp.position, timestampSize);
+        
+        const TimestampContext ctx = {
+            .timestampOffset = timestampOffset,
+            .timestampSize   = timestampSize,
+        };
+        
+        // Render the timestamp if requested
+        renderer.render(dstRgb, Renderer::BlendType::None,
+            renderer.VertexShader(ImagePipelineShaderNamespace "Base::TimestampVertexShader", ctx),
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::TimestampFragmentShader", timestampTxt)
+        );
+        
     }
 }
 

@@ -192,7 +192,7 @@ static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 s
         Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
             _image.image.width, _image.image.height, (ImagePixel*)(_image.image.data.get()));
         
-        Pipeline::Options popts = PipelineOptionsForImage(opts, _image.image);
+        Pipeline::Options popts = PipelineOptionsForImage(*_imageRecord, _image.image);
         Pipeline::Run(_renderer, popts, rawTxt, _image.txt);
         _image.txtValid = true;
     }

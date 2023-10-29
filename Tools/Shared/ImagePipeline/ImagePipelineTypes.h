@@ -43,5 +43,10 @@ struct SampleRect {
     }
 };
 
+struct TimestampContext {
+    simd::float2 timestampOffset;
+    simd::float2 timestampSize;
+};
+
 } // namespace ImagePipeline
 } // namespace MDCTools

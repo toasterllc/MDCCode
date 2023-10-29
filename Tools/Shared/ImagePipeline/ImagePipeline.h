@@ -64,6 +64,11 @@ public:
             float amount = 0;
             float radius = 0;
         } localContrast;
+        
+        struct {
+            std::string string;
+            simd::float2 position;
+        } timestamp;
     };
     
     static Renderer::Txt TextureForRaw(MDCTools::Renderer& renderer, size_t width, size_t height, const ImagePixel* pixels) {
