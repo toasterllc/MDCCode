@@ -809,7 +809,8 @@ static void _Copy(uint16_t& x, NSTextField* field, uint16_t min=0) {
     if constexpr (T_Forward) {
         [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x]];
     } else {
-        x = std::max((int)min, [field intValue]);
+        x = (uint16_t)std::clamp([field integerValue],
+            (NSInteger)min, (NSInteger)std::numeric_limits<decltype(min)>::max());
     }
 }
 
@@ -958,7 +959,7 @@ static void _CopyTimeRange(T_TimeRange& x, CaptureTriggersView* view) {
 template<bool T_Forward>
 static void _Copy(Capture& x, CaptureTriggersView* view) {
     auto& v = *view;
-    _Copy<T_Forward>(x.count, v._capture_CountField);
+    _Copy<T_Forward>(x.count, v._capture_CountField, 1);
     _Copy<T_Forward>(x.interval, v._capture_IntervalField, v._capture_IntervalUnitMenu);
     
     if constexpr (T_Forward) {
