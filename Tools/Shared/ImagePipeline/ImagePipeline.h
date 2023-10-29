@@ -35,6 +35,11 @@ public:
 //        ColorRaw illum; // Illuminant that was used
 //    };
     
+    struct TimestampOptions {
+        std::string string;
+        simd::float2 position; // [0,1] Cartesion
+    };
+    
     struct Options {
         MDCTools::CFADesc cfaDesc;
         
@@ -65,10 +70,7 @@ public:
             float radius = 0;
         } localContrast;
         
-        struct {
-            std::string string;
-            simd::float2 position; // [0,1] Cartesion
-        } timestamp;
+        TimestampOptions timestamp;
     };
     
     static Renderer::Txt TextureForRaw(MDCTools::Renderer& renderer, size_t width, size_t height, const ImagePixel* pixels) {
@@ -84,6 +86,9 @@ public:
     
 //    static Color<ColorSpace::Raw> EstimateIlluminant(MDCTools::Renderer& renderer, const MDCTools::CFADesc& cfaDesc, id<MTLTexture> srcRaw);
     static void Run(MDCTools::Renderer& renderer, const Options& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
+    
+    static void TimestampOverlayRender(MDCTools::Renderer& renderer,
+        const TimestampOptions& opts, id<MTLTexture> txt);
 };
 
 } // namespace MDCTools::ImagePipeline

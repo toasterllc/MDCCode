@@ -45,8 +45,8 @@ inline MDCTools::ImagePipeline::Pipeline::Options PipelineOptionsForImage(const 
         },
         
         .timestamp = {
-            .string = (opts.timestamp.show ? Calendar::TimestampString(info.timestamp) : ""),
-            .position = _TimestampPosition(opts.timestamp.corner),
+            .string             = (opts.timestamp.show ? Calendar::TimestampString(info.timestamp) : ""),
+            .position           = _TimestampPosition(opts.timestamp.corner),
         },
     };
 }

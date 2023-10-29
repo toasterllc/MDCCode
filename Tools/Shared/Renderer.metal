@@ -10,6 +10,13 @@ vertex VertexOutput VertexShader(uint vidx [[vertex_id]]) {
     return MDCTools::MetalUtil::VertexShader(vidx);
 }
 
+fragment float4 FragmentShader(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    return MDCTools::MetalUtil::FragmentShader(txt, in);
+}
+
 template <typename T>
 float LoadFloat(uint32_t w, uint32_t h, uint32_t samplesPerPixel, uint32_t maxValue, constant T* data, int2 pos) {
     return (float)data[samplesPerPixel*(w*pos.y + pos.x)] / maxValue;

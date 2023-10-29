@@ -45,11 +45,6 @@ struct _ImageLoadThreadState {
     ImageRecordPtr _imageRecord;
     
     struct {
-        Renderer::Txt txt;
-        bool txtValid = false;
-    } _thumb;
-    
-    struct {
         Image image;
         Renderer::Txt txt;
         bool txtValid = false;
@@ -116,7 +111,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
     NSParameterAssert(rec);
     
     _imageRecord = rec;
-    _thumb.txtValid = false;
     _image.txtValid = false;
     
     // Fetch the image from the cache
@@ -159,42 +153,43 @@ static CGColorSpaceRef _SRGBColorSpace() {
     id<MTLTexture> drawableTxt = [drawable texture];
     assert(drawableTxt);
     
-    // Create _image.txt if it doesn't exist yet and we have the image
-    if (_image.image && !_image.txtValid) {
-        if (!_image.txt) {
-            // _image.txt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
-            // representation of the pipeline result without clipping to 8-bit components, so we can
-            // render to an HDR display and make use of the depth.
-            _image.txt = _renderer.textureCreate(MTLPixelFormatRGBA16Float,
-                _image.image.width, _image.image.height);
-        }
-        
-        Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
-            _image.image.width, _image.image.height, (ImagePixel*)(_image.image.data.get()));
-        
-        Pipeline::Options popts = PipelineOptionsForImage(*_imageRecord, _image.image);
-        Pipeline::Run(_renderer, popts, rawTxt, _image.txt);
-        _image.txtValid = true;
+    if (!_image.txt) {
+        // _image.txt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
+        // representation of the pipeline result without clipping to 8-bit components, so we can
+        // render to an HDR display and make use of the depth.
+        _image.txt = _renderer.textureCreate(MTLPixelFormatRGBA16Float,
+            _imageRecord->info.imageWidth, _imageRecord->info.imageHeight);
     }
     
-    // If we don't have the thumbnail texture yet, create it
-    if (!_thumb.txtValid) {
-        const size_t w = ImageThumb::ThumbWidth;
-        const size_t h = ImageThumb::ThumbHeight;
-        if (!_thumb.txt) {
-            _thumb.txt = _renderer.textureCreate(MTLPixelFormatBC7_RGBAUnorm, w, h);
+    if (!_image.txtValid) {
+        Pipeline::Options popts = PipelineOptionsForImage(*_imageRecord, _image.image);
+        
+        // Create _image.txt if it doesn't exist yet and we have the image
+        if (_image.image) {
+            Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
+                _image.image.width, _image.image.height, (ImagePixel*)(_image.image.data.get()));
+            
+            Pipeline::Run(_renderer, popts, rawTxt, _image.txt);
+        
+        } else {
+            const size_t w = ImageThumb::ThumbWidth;
+            const size_t h = ImageThumb::ThumbHeight;
+            Renderer::Txt thumbTxt = _renderer.textureCreate(MTLPixelFormatBC7_RGBAUnorm, w, h);
+            [thumbTxt replaceRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0
+                slice:0 withBytes:_imageRecord->thumb.data bytesPerRow:w*4 bytesPerImage:0];
+            
+            _renderer.render(_image.txt, thumbTxt);
+            if (!popts.timestamp.string.empty()) {
+                Pipeline::TimestampOverlayRender(_renderer, popts.timestamp, _image.txt);
+            }
         }
         
-        [_thumb.txt replaceRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0
-            slice:0 withBytes:_imageRecord->thumb.data bytesPerRow:w*4 bytesPerImage:0];
-        _thumb.txtValid = true;
+        _image.txtValid = true;
     }
     
     // Finally render into `drawableTxt`, from the full-size image if it
     // exists, or the thumbnail otherwise.
     {
-        id<MTLTexture> srcTxt = (_image.txtValid ? _image.txt : _thumb.txt);
-        
         _renderer.clear(drawableTxt, {0,0,0,0});
         
         const RenderContext ctx = {
@@ -203,7 +198,7 @@ static CGColorSpaceRef _SRGBColorSpace() {
         
         _renderer.render(drawableTxt, Renderer::BlendType::None,
             _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::ImageVertexShader", ctx),
-            _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", srcTxt)
+            _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", _image.txt)
         );
         
         _renderer.commitAndWait();
@@ -240,7 +235,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
         break;
     case ImageLibrary::Event::Type::ChangeProperty:
         if (ev.records.count(_imageRecord)) {
-            _thumb.txtValid = false;
             _image.txtValid = false;
             [self setNeedsDisplay];
         }

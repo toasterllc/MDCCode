@@ -61,6 +61,10 @@ inline VertexOutput VertexShader(uint vidx) {
     return r;
 }
 
+inline float4 FragmentShader(metal::texture2d<float> txt, VertexOutput in) {
+    return txt.sample({}, in.posUnit);
+}
+
 namespace Clamp {
     using namespace metal;
     inline int Mirror(uint bound, int pt) {

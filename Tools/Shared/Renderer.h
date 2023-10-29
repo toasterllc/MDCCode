@@ -21,6 +21,7 @@ namespace MDCTools {
 class Renderer {
 #define _ShaderNamespace "MDCTools::RendererShader::"
 #define _DefaultVertexShader _ShaderNamespace "VertexShader"
+#define _DefaultFragmentShader _ShaderNamespace "FragmentShader"
 private:
     template <typename... T_Args>
     struct _VertexShader {
@@ -191,6 +192,17 @@ public:
         render(txt, BlendType::None,
             VertexShader(_DefaultVertexShader),
             frag
+        );
+    }
+    
+    // Render pass to a target texture from a source texture
+    void render(
+        id<MTLTexture> txt,
+        id<MTLTexture> srcTxt
+    ) {
+        render(txt, BlendType::None,
+            VertexShader(_DefaultVertexShader),
+            FragmentShader(_DefaultFragmentShader, srcTxt)
         );
     }
     

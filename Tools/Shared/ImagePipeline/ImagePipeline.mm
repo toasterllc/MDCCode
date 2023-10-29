@@ -278,28 +278,33 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     
     // Draw the timestamp string if requested
     if (!opts.timestamp.string.empty()) {
-        Renderer::Txt timestampTxt = _TimestampTextureCreate(renderer, opts.timestamp.string);
-//        renderer.debugTextureShow(timestampTxt);
-        
-        const simd::float2 timestampSize = {
-            (float)[timestampTxt width] / [dstRgb width],
-            (float)[timestampTxt height] / [dstRgb height],
-        };
-        
-        const simd::float2 timestampOffset = _TimestampOffset(opts.timestamp.position, timestampSize);
-        
-        const TimestampContext ctx = {
-            .timestampOffset = timestampOffset,
-            .timestampSize   = timestampSize,
-        };
-        
-        // Render the timestamp if requested
-        renderer.render(dstRgb, Renderer::BlendType::None,
-            renderer.VertexShader(ImagePipelineShaderNamespace "Base::TimestampVertexShader", ctx),
-            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::TimestampFragmentShader", timestampTxt)
-        );
-        
+        TimestampOverlayRender(renderer, opts.timestamp, dstRgb);
     }
+}
+
+void Pipeline::TimestampOverlayRender(MDCTools::Renderer& renderer,
+    const Pipeline::TimestampOptions& opts, id<MTLTexture> txt) {
+    
+    assert(!opts.string.empty());
+    Renderer::Txt timestampTxt = _TimestampTextureCreate(renderer, opts.string);
+    
+    const simd::float2 timestampSize = {
+        (float)[timestampTxt width] / [txt width],
+        (float)[timestampTxt height] / [txt height],
+    };
+    
+    const simd::float2 timestampOffset = _TimestampOffset(opts.position, timestampSize);
+    
+    const TimestampContext ctx = {
+        .timestampOffset = timestampOffset,
+        .timestampSize   = timestampSize,
+    };
+    
+    // Render the timestamp if requested
+    renderer.render(txt, Renderer::BlendType::None,
+        renderer.VertexShader(ImagePipelineShaderNamespace "Base::TimestampVertexShader", ctx),
+        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::TimestampFragmentShader", timestampTxt)
+    );
 }
 
 } // namespace MDCTools::ImagePipeline
