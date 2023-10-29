@@ -1096,13 +1096,17 @@ struct MDCDevice : ImageSource {
     }
     
     void _sync_thread() {
+        struct StaleLibrary : std::runtime_error {
+            using std::runtime_error::runtime_error;
+        };
+        
         try {
             auto lock = _status.signal.wait([&] { return (bool)_status.status; });
                 const MSP::SDState sd = _status.status->state.sd;
             lock.unlock();
             
             const MSP::ImgRingBuf imgRingBuf = _GetImgRingBuf(sd);
-            if (!imgRingBuf.valid) throw Toastbox::RuntimeError("image ring buf invalid");
+            if (!imgRingBuf.valid) throw StaleLibrary("image ring buf invalid");
             const ImageRange deviceImageRange = _GetImageRange(imgRingBuf, sd.imgCap);
             
             {
@@ -1132,9 +1136,7 @@ struct MDCDevice : ImageSource {
                         if (count) {
                             addCount = (uint32_t)*count;
                         } else {
-                            printf("[_sync_thread] LoadImageCount failed\n");
-                            printf("[_sync_thread] Clearing image library\n");
-                            _imageLibrary->clear();
+                            throw StaleLibrary("LoadImageCount failed");
                         }
                         
 //                        addCount = 1000;
@@ -1211,6 +1213,12 @@ struct MDCDevice : ImageSource {
                     _imageLibrary->write();
                 }
             }
+        
+        } catch (const StaleLibrary& e) {
+            printf("[_sync_thread] Stale ImageLibrary: %s\n", e.what());
+            printf("[_sync_thread] Clearing ImageLibrary\n");
+            auto lock = std::unique_lock(*_imageLibrary);
+            _imageLibrary->clear();
         
         } catch (const Toastbox::Signal::Stop&) {
             printf("[_sync_thread] Stopping\n");
