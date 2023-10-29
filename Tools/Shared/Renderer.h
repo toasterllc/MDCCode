@@ -707,7 +707,7 @@ public:
         return CFBridgingRelease(CGBitmapContextCreateImage((CGContextRef)ctx));
     }
     
-    void debugShowTexture(id<MTLTexture> txt) {
+    void debugTextureShow(id<MTLTexture> txt) {
         const char* outputPath = "/tmp/tempimage.png";
         
         sync(txt);

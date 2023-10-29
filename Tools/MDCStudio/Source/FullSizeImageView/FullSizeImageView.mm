@@ -11,7 +11,6 @@
 #import "FixedMetalDocumentLayer.h"
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
-#import "Calendar.h"
 #import "ImagePipelineUtil.h"
 #import "ImageExporter/ImageExporter.h"
 using namespace MDCStudio;
@@ -55,8 +54,6 @@ struct _ImageLoadThreadState {
         Renderer::Txt txt;
         bool txtValid = false;
     } _image;
-    
-    Renderer::Txt _timestampTxt;
     
     std::shared_ptr<_ImageLoadThreadState> _imageLoad;
 }
@@ -121,7 +118,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
     _imageRecord = rec;
     _thumb.txtValid = false;
     _image.txtValid = false;
-    _timestampTxt = {};
     
     // Fetch the image from the cache
     _image.image = _imageSource->getCachedImage(_imageRecord);
@@ -148,17 +144,6 @@ static CGColorSpaceRef _SRGBColorSpace() {
     ImageExporter::Export(window, _imageSource, { _imageRecord });
 }
 
-static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 size) {
-    using X = ImageOptions::Corner;
-    switch (corner) {
-    case X::BottomRight: return { 1.f-size.x, 1.f-size.y };
-    case X::BottomLeft:  return {          0, 1.f-size.y };
-    case X::TopLeft:     return {          0,          0 };
-    case X::TopRight:    return { 1.f-size.x,          0 };
-    }
-    abort();
-}
-
 - (void)display {
     using namespace MDCTools;
     using namespace MDCTools::ImagePipeline;
@@ -168,11 +153,6 @@ static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 s
     
     // Nothing to do if we haven't been given an ImageRecord yet
     if (!_imageRecord) return;
-    
-    const ImageInfo& info = _imageRecord->info;
-    const ImageOptions& opts = _imageRecord->options;
-    const uint16_t w = _imageRecord->info.imageWidth;
-    const uint16_t h = _imageRecord->info.imageHeight;
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
     assert(drawable);
@@ -215,38 +195,16 @@ static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 s
     {
         id<MTLTexture> srcTxt = (_image.txtValid ? _image.txt : _thumb.txt);
         
-        if (opts.timestamp.show && !_timestampTxt) {
-            const std::string timestampStr = Calendar::TimestampString(info.timestamp);
-            _timestampTxt = _TimestampTextureCreate(_renderer, @(timestampStr.c_str()));
-        }
-        
         _renderer.clear(drawableTxt, {0,0,0,0});
         
-        const simd::float2 timestampSize = {
-            (_timestampTxt ? (float)[_timestampTxt width] : 0.f) / w,
-            (_timestampTxt ? (float)[_timestampTxt height] : 0.f) / h,
-        };
-        
-        const simd::float2 timestampOffset = _TimestampOffset(opts.timestamp.corner, timestampSize);
-        
         const RenderContext ctx = {
-            .transform       = [self fixedTransform],
-            .timestampOffset = timestampOffset,
-            .timestampSize   = timestampSize,
+            .transform = [self fixedTransform],
         };
         
         _renderer.render(drawableTxt, Renderer::BlendType::None,
             _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::ImageVertexShader", ctx),
             _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", srcTxt)
         );
-        
-        // Render the timestamp if requested
-        if (opts.timestamp.show) {
-            _renderer.render(drawableTxt, Renderer::BlendType::None,
-                _renderer.VertexShader("MDCStudio::FullSizeImageViewShader::TimestampVertexShader", ctx),
-                _renderer.FragmentShader("MDCStudio::FullSizeImageViewShader::FragmentShader", _timestampTxt)
-            );
-        }
         
         _renderer.commitAndWait();
         [drawable present];
@@ -258,39 +216,6 @@ static simd::float2 _TimestampOffset(ImageOptions::Corner corner, simd::float2 s
     _image.image = std::move(image);
     _image.txtValid = false;
     [self setNeedsDisplay];
-}
-
-static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, NSString* str) {
-    NSAttributedString* astr = [[NSAttributedString alloc] initWithString:str attributes:@{
-        NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:48],
-        NSForegroundColorAttributeName: [NSColor whiteColor],
-    }];
-    
-    constexpr CGFloat PaddingX = 20;
-    constexpr CGFloat PaddingY = 2;
-    constexpr size_t SamplesPerPixel = 4;
-    constexpr size_t BytesPerSample = 1;
-    const CGSize astrSize = [astr size];
-    const size_t w = std::lround(astrSize.width+2*PaddingX);
-    const size_t h = std::lround(astrSize.height+2*PaddingY);
-    const size_t bytesPerRow = SamplesPerPixel*BytesPerSample*w;
-    id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateWithName(kCGColorSpaceSRGB));
-    const id /* CGContextRef */ ctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, w, h, BytesPerSample*8,
-        bytesPerRow, (CGColorSpaceRef)cs, kCGImageAlphaPremultipliedLast));
-    
-    const CGRect bounds = {{}, { (CGFloat)w, (CGFloat)h }};
-//    CGContextScaleCTM((CGContextRef)ctx, contentsScale, contentsScale);
-    CGContextSetRGBFillColor((CGContextRef)ctx, 0, 0, 0, 1);
-    CGContextFillRect((CGContextRef)ctx, bounds);
-    
-    NSGraphicsContext* nsctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)ctx flipped:false];
-    [NSGraphicsContext setCurrentContext:nsctx];
-    [astr drawAtPoint:{ PaddingX, PaddingY }];
-    
-    const uint8_t* samples = (const uint8_t*)CGBitmapContextGetData((CGContextRef)ctx);
-    Renderer::Txt txt = renderer.textureCreate(_PixelFormat, w, h);
-    renderer.textureWrite(txt, samples, SamplesPerPixel);
-    return txt;
 }
 
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,

@@ -520,10 +520,12 @@ vertex VertexOutput TimestampVertexShader(
     constant TimestampContext& ctx [[buffer(0)]],
     uint vidx [[vertex_id]]
 ) {
+    float2 off = (ctx.timestampOffset*2)-1;
     VertexOutput r = {
-        .pos = float4(ctx.timestampOffset + (_TimestampVerts[vidx] * ctx.timestampSize), 0, 1),
+        .pos = float4(off + (2 * _TimestampVerts[vidx] * ctx.timestampSize), 0, 1),
         .posUnit = _TimestampVerts[vidx],
     };
+    r.posUnit.y = 1-r.posUnit.y;
     return r;
 }
 

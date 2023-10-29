@@ -33,17 +33,6 @@ vertex VertexOutput ImageVertexShader(
     return r;
 }
 
-vertex VertexOutput TimestampVertexShader(
-    constant RenderContext& ctx [[buffer(0)]],
-    uint vidx [[vertex_id]]
-) {
-    VertexOutput r = {
-        .pos = ctx.transform * float4(ctx.timestampOffset + (_Verts[vidx] * ctx.timestampSize), 0, 1),
-        .posUnit = _Verts[vidx],
-    };
-    return r;
-}
-
 fragment float4 FragmentShader(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]

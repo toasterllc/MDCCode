@@ -55,7 +55,7 @@ namespace MDCTools::ImagePipeline {
 //}
 
 static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, std::string_view str) {
-    static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+    static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatRGBA8Unorm_sRGB;
     
     NSAttributedString* astr = [[NSAttributedString alloc] initWithString:@(std::string(str).c_str())
     attributes:@{
@@ -288,6 +288,7 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     // Draw the timestamp string if requested
     if (!opts.timestamp.string.empty()) {
         Renderer::Txt timestampTxt = _TimestampTextureCreate(renderer, opts.timestamp.string);
+//        renderer.debugTextureShow(timestampTxt);
         
         const simd::float2 timestampSize = {
             (float)[timestampTxt width] / [dstRgb width],

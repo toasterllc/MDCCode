@@ -67,7 +67,7 @@ public:
         
         struct {
             std::string string;
-            simd::float2 position;
+            simd::float2 position; // Cartesion [0,1]
         } timestamp;
     };
     
