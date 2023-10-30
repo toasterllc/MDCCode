@@ -260,9 +260,11 @@ static void StatusGet(const Args& args, MDCUSBDevice& device) {
     using namespace STM;
     Status status = device.statusGet();
     printf("Status:\n");
-    printf("  magic:    0x%08jx\n", (uintmax_t)status.magic);
-    printf("  version:  0x%08jx\n", (uintmax_t)status.version);
-    printf("  mode:     %s\n", _StringForStatusMode(status.mode));
+    printf("  header:\n");
+    printf("    magic:    0x%08jx\n", (uintmax_t)status.header.magic);
+    printf("    version:  %ju\n", (uintmax_t)status.header.version);
+    printf("  mspVersion: %ju\n", (uintmax_t)status.mspVersion);
+    printf("  mode:       %s\n", _StringForStatusMode(status.mode));
     printf("\n");
 }
 

@@ -20,6 +20,10 @@ public:
     using USBDevice = Toastbox::USBDevice;
     using USBDevicePtr = Toastbox::USBDevicePtr;
     
+    struct IncompatibleVersion : Toastbox::RuntimeError {
+        using Toastbox::RuntimeError::RuntimeError;
+    };
+    
     static bool USBDeviceMatches(const USBDevice& dev) {
         namespace USB = Toastbox::USB;
         USB::DeviceDescriptor desc = dev.deviceDescriptor();
@@ -70,6 +74,7 @@ public:
     // MARK: - Accessors
     
     const std::string& serial() const { return _serial; }
+    const STM::Status::Mode mode() const { return _mode; }
     
     // MARK: - Common Commands
     void reset() {
@@ -96,14 +101,20 @@ public:
         
         STM::Status status;
         _dev->read(STM::Endpoint::DataIn, status);
-        if (status.magic != STM::Status::MagicNumber) {
+        
+        if (status.header.magic != STM::StatusHeader.magic) {
             throw Toastbox::RuntimeError("invalid STM magic number (expected:0x%08jx got:0x%08jx)",
-                (uintmax_t)STM::Status::MagicNumber, (uintmax_t)status.magic);
+                (uintmax_t)STM::StatusHeader.magic, (uintmax_t)status.header.magic);
         }
         
-        if (status.version != STM::Version) {
-            throw Toastbox::RuntimeError("invalid STM version (expected:%ju got:%ju)",
-                (uintmax_t)STM::Version, (uintmax_t)status.version);
+        if (status.header.version != STM::StatusHeader.version) {
+            throw IncompatibleVersion("invalid STM version (expected:%ju got:%ju)",
+                (uintmax_t)STM::StatusHeader.version, (uintmax_t)status.header.version);
+        }
+        
+        if (status.mspVersion != MSP::StateHeader.version) {
+            throw IncompatibleVersion("invalid MSP version (expected:%ju got:%ju)",
+                (uintmax_t)MSP::StateHeader.version, (uintmax_t)status.mspVersion);
         }
         
         return status;
@@ -270,57 +281,63 @@ public:
         _checkStatus("ICEFlashWrite command failed");
     }
     
+    static void _MSPStateHeaderValidate(const MSP::State::Header& header) {
+        if (header.magic != MSP::StateHeader.magic) {
+            throw Toastbox::RuntimeError("invalid MSP::State magic number (expected:0x%08jx, got:0x%08jx)",
+                (uintmax_t)MSP::StateHeader.magic,
+                (uintmax_t)header.magic
+            );
+        }
+        
+        if (header.version != MSP::StateHeader.version) {
+            throw IncompatibleVersion("invalid MSP::State version (expected:%ju, got:%ju)",
+                (uintmax_t)MSP::StateHeader.version,
+                (uintmax_t)header.version
+            );
+        }
+        
+        if (header.length != sizeof(MSP::State)) {
+            throw Toastbox::RuntimeError("invalid MSP::State length (expected:%ju, got:%ju)",
+                (uintmax_t)sizeof(MSP::State),
+                (uintmax_t)header.length
+            );
+        }
+    }
+    
+//    MSP::State::Header mspStateHeaderRead() {
+//        assert(_mode == STM::Status::Mode::STMApp);
+//        
+//        const STM::Cmd cmd = {
+//            .op = STM::Op::MSPStateRead,
+//            .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
+//        };
+//        _sendCmd(cmd);
+//        
+//        MSP::State::Header header;
+//        _dev->read(STM::Endpoint::DataIn, header);
+//        _checkStatus("MSPStateRead command failed (header)");
+//        
+//        // Validate the header
+//        _MSPStateHeaderValidate(header);
+//        return header;
+//    }
+    
     MSP::State mspStateRead() {
         assert(_mode == STM::Status::Mode::STMApp);
         
-        // Read MSP::State::Header and make sure we understand it
-        {
-            const STM::Cmd cmd = {
-                .op = STM::Op::MSPStateRead,
-                .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
-            };
-            _sendCmd(cmd);
-            
-            MSP::State::Header header;
-            _dev->read(STM::Endpoint::DataIn, header);
-            _checkStatus("MSPStateRead command failed (header)");
-            
-            if (header.magic != MSP::StateHeader.magic) {
-                throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
-                    (uintmax_t)MSP::StateHeader.magic,
-                    (uintmax_t)header.magic
-                );
-            }
-            
-            if (header.version != MSP::StateHeader.version) {
-                throw Toastbox::RuntimeError("unrecognized MSP::State version (expected: 0x%02jx, got: 0x%02jx)",
-                    (uintmax_t)MSP::StateHeader.version,
-                    (uintmax_t)header.version
-                );
-            }
-            
-            if (header.length != sizeof(MSP::State)) {
-                throw Toastbox::RuntimeError("invalid MSP::State length (expected: 0x%jx, got: 0x%jx)",
-                    (uintmax_t)sizeof(MSP::State),
-                    (uintmax_t)header.length
-                );
-            }
-        }
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPStateRead,
+            .arg = { .MSPStateRead = { .len = sizeof(MSP::State) } },
+        };
+        _sendCmd(cmd);
         
-        // Header looks good; read the full MSP::State
-        {
-            const STM::Cmd cmd = {
-                .op = STM::Op::MSPStateRead,
-                .arg = { .MSPStateRead = { .len = sizeof(MSP::State) } },
-            };
-            _sendCmd(cmd);
-            
-            MSP::State state;
-            _dev->read(STM::Endpoint::DataIn, state);
-            _checkStatus("MSPStateRead command failed (header+payload)");
-            
-            return state;
-        }
+        MSP::State state;
+        _dev->read(STM::Endpoint::DataIn, state);
+        _checkStatus("MSPStateRead command failed");
+        
+        // Validate the header
+        _MSPStateHeaderValidate(state.header);
+        return state;
     }
     
     void mspStateWrite(const MSP::State& state) {

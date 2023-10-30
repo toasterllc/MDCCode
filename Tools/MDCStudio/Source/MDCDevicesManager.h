@@ -14,9 +14,11 @@
 namespace MDCStudio {
 
 struct MDCDevicesManager : Object {
-    void init() {
+    using IncompatibleVersionHandler = std::function<void(const MDCUSBDevice::IncompatibleVersion&)>;
+    void init(IncompatibleVersionHandler handler) {
         Object::init();
         
+        _incompatibleVersionHandler = handler;
         _thread = std::thread([&] { _threadHandleDevices(); });
         // Wait for the thread to initialize, so that we know the devices
         // are valid as soon as we're instantiated.
@@ -173,7 +175,13 @@ struct MDCDevicesManager : Object {
                         
                         MDCDevicePtr mdc;
                         try {
-                            mdc = Object::Create<MDCDevice>(std::move(usbDev));
+                            _MDCUSBDevicePtr mdcUSBDev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
+                            mdc = Object::Create<MDCDevice>(std::move(mdcUSBDev));
+                        } catch (const MDCUSBDevice::IncompatibleVersion& e) {
+                            // Ignore failures to create MDCDevice
+                            printf("Ignoring MDCUSBDevice due to incompatible version: %s\n", e.what());
+                            _incompatibleVersionHandler(e);
+                            continue;
                         } catch (const std::exception& e) {
                             // Ignore failures to create MDCDevice
                             printf("Ignoring USB device (MDCDevice): %s\n", e.what());
@@ -253,17 +261,24 @@ struct MDCDevicesManager : Object {
         bool init = false;
     } _state;
     
+    IncompatibleVersionHandler _incompatibleVersionHandler;
     std::thread _thread;
     id /* CFRunLoopRef */ _runLoop;
 };
 
 using MDCDevicesManagerPtr = SharedPtr<MDCDevicesManager>;
 
+// Don't destroy MDCDevicesManager upon exit, just to speed up exiting
+[[clang::no_destroy]]
+inline MDCDevicesManagerPtr _MDCDevicesManagerGlobal;
+
+inline void MDCDevicesManagerGlobal(MDCDevicesManagerPtr x) {
+    _MDCDevicesManagerGlobal = x;
+}
+
 inline MDCDevicesManagerPtr MDCDevicesManagerGlobal() {
-    // Don't destroy MDCDevicesManager upon exit, just to speed up exiting
-    [[clang::no_destroy]]
-    static MDCDevicesManagerPtr x = Object::Create<MDCDevicesManager>();
-    return x;
+    assert(_MDCDevicesManagerGlobal);
+    return _MDCDevicesManagerGlobal;
 }
 
 } // namespace MDCStudio

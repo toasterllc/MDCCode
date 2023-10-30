@@ -10,6 +10,9 @@
 
 namespace MSP {
 
+using Version = uint16_t;
+constexpr Version VersionInvalid = 0xFFFF;
+
 // BatteryLevelMv: battery voltage in millivolts
 using BatteryLevelMv = uint16_t;
 constexpr BatteryLevelMv BatteryLevelMvInvalid = 0;
@@ -349,7 +352,7 @@ static_assert(sizeof(SDState) == 56); // Debug
 struct [[gnu::packed]] State {
     struct [[gnu::packed]] Header {
         uint32_t magic;
-        uint16_t version;
+        Version version;
         uint16_t length;
     };
     

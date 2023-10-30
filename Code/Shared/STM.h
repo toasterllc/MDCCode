@@ -1,14 +1,15 @@
 #pragma once
 #include "Code/Lib/Toastbox/Enum.h"
 #include "Code/Lib/Toastbox/USB.h"
+#include "Code/Shared/MSP.h"
 #include "Img.h"
 #include "SD.h"
 #include "ImgSD.h"
-#include "Code/Shared/MSP.h"
 
 namespace STM {
 
-static constexpr uint32_t Version = 0;
+using Version = uint16_t;
+constexpr Version VersionInvalid = 0xFFFF;
 
 struct Endpoint {
     // Control endpoint
@@ -88,6 +89,10 @@ struct [[gnu::packed]] Cmd {
         
         // # STMApp
         struct [[gnu::packed]] {
+            uint8_t en;
+        } HostModeSet;
+        
+        struct [[gnu::packed]] {
             uint32_t len;
         } ICERAMWrite;
         
@@ -97,8 +102,9 @@ struct [[gnu::packed]] Cmd {
         } ICEFlashRead;
         
         struct [[gnu::packed]] {
-            uint8_t en;
-        } HostModeSet;
+            uint32_t addr;
+            uint32_t len;
+        } ICEFlashWrite;
         
         struct [[gnu::packed]] {
             uint32_t len;
@@ -115,11 +121,6 @@ struct [[gnu::packed]] Cmd {
         struct [[gnu::packed]] {
             MSP::TimeAdjustment adjustment;
         } MSPTimeAdjust;
-        
-        struct [[gnu::packed]] {
-            uint32_t addr;
-            uint32_t len;
-        } ICEFlashWrite;
         
         struct [[gnu::packed]] {
             uint32_t addr;
@@ -163,7 +164,10 @@ struct [[gnu::packed]] Cmd {
 static_assert(sizeof(Cmd) == 64); // Verify that Cmd is exactly the size of a EP0 packet
 
 struct [[gnu::packed]] Status {
-    static constexpr uint32_t MagicNumber = 0xCAFEBABE;
+    struct Header {
+        uint32_t magic = 0;
+        Version version = 0;
+    };
     
     enum class Mode : uint32_t {
         None,
@@ -171,9 +175,14 @@ struct [[gnu::packed]] Status {
         STMApp,
     };
     
-    uint32_t magic = 0;
-    uint32_t version = 0;
+    Header header;
+    MSP::Version mspVersion = 0;
     Mode mode = Mode::None;
+};
+
+constexpr Status::Header StatusHeader = {
+    .magic   = 0xCAFEBABE,
+    .version = 0,
 };
 
 struct [[gnu::packed]] MSPSBWDebugCmd {
