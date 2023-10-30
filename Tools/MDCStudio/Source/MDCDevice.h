@@ -654,6 +654,22 @@ struct MDCDevice : ImageSource {
         return ccm;
     }
     
+    static void _RemoveStaleImages(const std::unique_lock<ImageLibrary>& lock,
+        ImageLibraryPtr imageLibrary, const ImageRange& deviceImageRange) {
+    
+        // Remove images from beginning of library: lib has, device doesn't
+        const auto removeBegin = imageLibrary->begin();
+        
+        // Find the first image >= `deviceImageRange.begin`
+        const auto removeEnd = std::lower_bound(imageLibrary->begin(), imageLibrary->end(), 0,
+            [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
+                return sample->info.id < deviceImageRange.begin;
+            });
+        
+        printf("[_RemoveStaleImages] Removing %ju stale images\n", (uintmax_t)(removeEnd-removeBegin));
+        imageLibrary->remove(removeBegin, removeEnd);
+    }
+    
     // MARK: - Init
     
     static _IONotificationPtr _IONotificationCreate() {
@@ -1117,18 +1133,7 @@ struct MDCDevice : ImageSource {
                     auto lock = std::unique_lock(*_imageLibrary);
                     
                     // Remove images from beginning of library: lib has, device doesn't
-                    {
-                        const auto removeBegin = _imageLibrary->begin();
-                        
-                        // Find the first image >= `deviceImageRange.begin`
-                        const auto removeEnd = std::lower_bound(_imageLibrary->begin(), _imageLibrary->end(), 0,
-                            [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                                return sample->info.id < deviceImageRange.begin;
-                            });
-                        
-                        printf("[_sync_thread] Removing %ju stale images\n", (uintmax_t)(removeEnd-removeBegin));
-                        _imageLibrary->remove(removeBegin, removeEnd);
-                    }
+                    _RemoveStaleImages(lock, _imageLibrary, deviceImageRange);
                     
                     // Calculate how many images to add to the end of the library: device has, lib doesn't
                     {
@@ -1486,20 +1491,25 @@ struct MDCDevice : ImageSource {
     }
     
     void _status_update() {
+        auto lock = deviceLock();
+            const auto bat = _device.device->batteryStatusGet();
+            const auto msp = _device.device->mspStateRead();
+        lock.unlock();
+        
         {
-            auto lock = deviceLock();
-                const auto bat = _device.device->batteryStatusGet();
-                const auto msp = _device.device->mspStateRead();
-            lock.unlock();
-            
-            {
-                auto lock = _status.signal.lock();
-                _status.status = {
-                    .state = msp,
-                    .batteryLevel = _BatteryLevel(bat),
-                };
-            }
+            auto lock = _status.signal.lock();
+            _status.status = {
+                .state = msp,
+                .batteryLevel = _BatteryLevel(bat),
+            };
         }
+        
+        // Remove images from beginning of library: lib has, device doesn't
+        {
+            const ImageRange deviceImageRange = _GetImageRange(_GetImgRingBuf(msp.sd), msp.sd.imgCap);
+            _RemoveStaleImages(std::unique_lock(*_imageLibrary), _imageLibrary, deviceImageRange);
+        }
+        
         _status.signal.signalAll();
     }
     
