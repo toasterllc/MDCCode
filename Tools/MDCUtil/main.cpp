@@ -582,7 +582,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
             printf( "    addr:                  0x%04jx [ %s ]\n",      (uintmax_t)reset.ctx.Abort.addr, _MSPLineForAddr(reset.ctx.Abort.addr).c_str());
             break;
         case MSP::Reset::Type::StackOverflow:
-            printf( "    taskIdx:               0x%ju\n",               (uintmax_t)reset.ctx.StackOverflow.taskIdx);
+            printf( "    taskIdx:               %ju\n",                 (uintmax_t)reset.ctx.StackOverflow.taskIdx);
             break;
         }
         printf(     "    count:                 %ju\n",                 (uintmax_t)reset.count);

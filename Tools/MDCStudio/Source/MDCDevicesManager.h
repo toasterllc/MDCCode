@@ -260,6 +260,8 @@ struct MDCDevicesManager : Object {
 using MDCDevicesManagerPtr = SharedPtr<MDCDevicesManager>;
 
 inline MDCDevicesManagerPtr MDCDevicesManagerGlobal() {
+    // Don't destroy MDCDevicesManager upon exit, just to speed up exiting
+    [[clang::no_destroy]]
     static MDCDevicesManagerPtr x = Object::Create<MDCDevicesManager>();
     return x;
 }

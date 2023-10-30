@@ -97,8 +97,13 @@ public:
         STM::Status status;
         _dev->read(STM::Endpoint::DataIn, status);
         if (status.magic != STM::Status::MagicNumber) {
-            throw Toastbox::RuntimeError("invalid magic number (expected:0x%08jx got:0x%08jx)",
+            throw Toastbox::RuntimeError("invalid STM magic number (expected:0x%08jx got:0x%08jx)",
                 (uintmax_t)STM::Status::MagicNumber, (uintmax_t)status.magic);
+        }
+        
+        if (status.version != STM::Version) {
+            throw Toastbox::RuntimeError("invalid STM version (expected:%ju got:%ju)",
+                (uintmax_t)STM::Version, (uintmax_t)status.version);
         }
         
         return status;
@@ -264,33 +269,6 @@ public:
         _dev->write(STM::Endpoint::DataOut, data, len);
         _checkStatus("ICEFlashWrite command failed");
     }
-    
-//    MSP::State::Header mspStateHeaderRead() {
-//        assert(_mode == STM::Status::Mode::STMApp);
-//        const STM::Cmd cmd = {
-//            .op = STM::Op::MSPStateRead,
-//            .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
-//        };
-//        _sendCmd(cmd);
-//        _checkStatus("MSPStateRead command failed");
-//        
-//        MSP::State state;
-//        _dev->read(STM::Endpoint::DataIn, state);
-//        return state;
-//    }
-    
-//    template <typename T>
-//    void mspStateRead(T& t) {
-//        assert(_mode == STM::Status::Mode::STMApp);
-//        const STM::Cmd cmd = {
-//            .op = STM::Op::MSPStateRead,
-//            .arg = { .MSPStateRead = { .len = sizeof(t) } },
-//        };
-//        _sendCmd(cmd);
-//        _checkStatus("MSPStateRead command failed");
-//        
-//        _dev->read(STM::Endpoint::DataIn, t);
-//    }
     
     MSP::State mspStateRead() {
         assert(_mode == STM::Status::Mode::STMApp);
