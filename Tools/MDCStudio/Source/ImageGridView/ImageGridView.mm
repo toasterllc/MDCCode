@@ -59,7 +59,6 @@ struct _ThumbRenderThreadState {
     ImageLibraryPtr _imageLibrary;
     ImageSelectionPtr _selection;
     Object::ObserverPtr _selectionOb;
-    Object::ObserverPtr _imageLibraryOb;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
     Grid _grid;
@@ -100,10 +99,6 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
     _selection = selection;
     
     __weak auto selfWeak = self;
-    _imageLibraryOb = _imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
-        [selfWeak _handleImageLibraryEvent:static_cast<const ImageLibrary::Event&>(ev)];
-    });
-    
     _selectionOb = _selection->observerAdd([=] (auto, const Object::Event& ev) {
         [selfWeak _handleSelectionEvent:ev];
     });
@@ -583,45 +578,6 @@ struct SelectionDelta {
     [self _selectionUpdate];
 }
 
-// MARK: - ImageLibrary Observer
-// _handleImageLibraryEvent: called on whatever thread where the modification happened,
-// and with the ImageLibrary lock held!
-- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
-    // Trampoline the event to our main thread, if we're not on the main thread
-    if (![NSThread isMainThread]) {
-        ImageLibrary::Event evCopy = ev;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            auto lock = std::unique_lock(*self->_imageLibrary);
-            [self _handleImageLibraryEvent:evCopy];
-        });
-        return;
-    }
-    
-    switch (ev.type) {
-    case ImageLibrary::Event::Type::Add:
-    case ImageLibrary::Event::Type::Remove:
-    case ImageLibrary::Event::Type::Clear:
-        [self _selectionUpdate];
-        break;
-    
-    case ImageLibrary::Event::Type::ChangeProperty:
-        if ([self _recordsIntersectVisibleRange:ev.records]) {
-            // Re-render visible thumbs that are dirty
-            // We don't check if any of `ev` intersect the visible range, because _thumbRenderVisibleIfNeeded
-            // should be cheap and reduces to a no-op if none of the visible thumbs are dirty.
-            [self _thumbRenderVisibleIfNeeded];
-        }
-        break;
-    case ImageLibrary::Event::Type::ChangeThumbnail:
-        if ([self _recordsIntersectVisibleRange:ev.records]) {
-            [self setNeedsDisplay];
-        }
-        break;
-    default:
-        break;
-    }
-}
-
 // MARK: - FixedScrollViewDocument
 - (bool)fixedFlipped {
     return true;
@@ -756,7 +712,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     // Create ImageGridLayer
     ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageSource:imageSource
         selection:selection];
-    
     if (!(self = [super initWithFixedLayer:imageGridLayer])) return nil;
     
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
@@ -764,6 +719,19 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     _imageSource = imageSource;
     _selection = selection;
     _imageLibrary = _imageSource->imageLibrary();
+    
+    __weak auto selfWeak = self;
+    // We observe the ImageLibrary with ImageGridView, and not with ImageGridLayer,
+    // because when images are added/removed, we need to schedule layout+redraw,
+    // and we want both to be apart of the same runloop iteration to avoid
+    // flickering. By observing the ImageLibrary with ImageGridView, we can
+    // do:
+    //     [[self enclosingScrollView] setNeedsLayout:true];
+    //     [_imageGridLayer _selectionUpdate];
+    // to schedule both the view layout and layer redraw in the same runloop iteration.
+    _imageLibraryOb = _imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
+        [selfWeak _handleImageLibraryEvent:static_cast<const ImageLibrary::Event&>(ev)];
+    });
     
     _imageGridLayer = imageGridLayer;
     
@@ -777,23 +745,6 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         [_selectionRectLayer setBorderWidth:1];
         [_imageGridLayer addSublayer:_selectionRectLayer];
     }
-    
-    // Observe image library changes so that we update the image grid
-    {
-        __weak auto selfWeak = self;
-        _imageLibraryOb = _imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
-            const ImageLibrary::Event::Type type = static_cast<const ImageLibrary::Event&>(ev).type;
-            [selfWeak _handleImageLibraryEventType:type];
-        });
-    }
-    
-    
-//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
-//        NSColor* c = [[self enclosingScrollView] backgroundColor];
-////        NSColor* c = [[self window] backgroundColor];
-//        NSColor* c2 = [c colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
-//        NSLog(@"backgroundColor: %f %f %f", [c2 redComponent], [c2 greenComponent], [c2 blueComponent]);
-//    }];
     
     return self;
 }
@@ -842,32 +793,50 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
     [_docHeight setConstant:[_imageGridLayer containerHeight]];
 }
 
-//- (void)_handleImageLibraryChanged {
-//    [[self enclosingScrollView] tile];
-//}
+
+
+
 
 // MARK: - ImageLibrary Observer
-- (void)_handleImageLibraryEventType:(ImageLibrary::Event::Type)type {
+
+// _handleImageLibraryEvent: called on whatever thread where the modification happened,
+// and with the ImageLibrary lock held!
+- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
+    // Trampoline the event to our main thread, if we're not on the main thread
     if (![NSThread isMainThread]) {
-        dispatch_async(dispatch_get_main_queue(), ^{ [self _handleImageLibraryEventType:type]; });
+        ImageLibrary::Event evCopy = ev;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            auto lock = std::unique_lock(*self->_imageLibrary);
+            [self _handleImageLibraryEvent:evCopy];
+        });
         return;
     }
     
-    switch (type) {
+    switch (ev.type) {
     case ImageLibrary::Event::Type::Add:
     case ImageLibrary::Event::Type::Remove:
     case ImageLibrary::Event::Type::Clear:
-        [_imageGridLayer setNeedsDisplay];
         [[self enclosingScrollView] setNeedsLayout:true];
+        [_imageGridLayer _selectionUpdate];
+        break;
+    
+    case ImageLibrary::Event::Type::ChangeProperty:
+        if ([_imageGridLayer _recordsIntersectVisibleRange:ev.records]) {
+            // Re-render visible thumbs that are dirty
+            // We don't check if any of `ev` intersect the visible range, because _thumbRenderVisibleIfNeeded
+            // should be cheap and reduces to a no-op if none of the visible thumbs are dirty.
+            [_imageGridLayer _thumbRenderVisibleIfNeeded];
+        }
+        break;
+    case ImageLibrary::Event::Type::ChangeThumbnail:
+        if ([_imageGridLayer _recordsIntersectVisibleRange:ev.records]) {
+            [_imageGridLayer setNeedsDisplay];
+        }
         break;
     default:
         break;
     }
 }
-
-
-
-
 
 
 
@@ -1026,8 +995,8 @@ static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
 }
 
-- (void)tile {
-    [super tile];
+- (void)layout {
+    [super layout];
     ImageGridView*const gridView = (ImageGridView*)[self document];
     [gridView _updateDocumentHeight];
 }
