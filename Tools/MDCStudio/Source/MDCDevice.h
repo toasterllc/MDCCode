@@ -25,7 +25,6 @@
 #import "Tools/Shared/ELF32Binary.h"
 #import "ImageLibrary.h"
 #import "ImageSource.h"
-#import "BufferPool.h"
 #import "Cache.h"
 
 namespace MDCStudio {
@@ -814,6 +813,8 @@ struct MDCDevice : ImageSource {
                 auto lock = deviceLock();
                 _device.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
                 _device.device = _DevicePrepare(std::move(dev));
+                // Read the MSP header to validate that we know how to talk to the MSP firmware version
+                _device.device->mspStateHeaderRead();
             }
             
             // Update the device's time

@@ -516,8 +516,7 @@ private:
         // Send status struct
         alignas(void*) // Aligned to send via USB
         const STM::Status status = {
-            .magic      = STM::Status::MagicNumber,
-            .version    = STM::Version,
+            .header     = STM::StatusHeader,
             .mode       = T_Mode,
         };
         
