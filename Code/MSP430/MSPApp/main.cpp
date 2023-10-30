@@ -1530,7 +1530,7 @@ struct _TaskMotion {
     
     // Task stack
     SchedulerStack(".stack._TaskMotion")
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[256];
 };
 
 
