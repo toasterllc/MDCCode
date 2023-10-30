@@ -175,6 +175,10 @@ struct MDCDevicesManager : Object {
                         try {
                             _MDCUSBDevicePtr mdcUSBDev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
                             mdc = Object::Create<MDCDevice>(std::move(mdcUSBDev));
+                        } catch (const MDCUSBDevice::IncompatibleVersion& e) {
+                            // Ignore failures to create MDCDevice
+                            printf("Ignoring MDCUSBDevice due to incompatible version: %s\n", e.what());
+                            continue;
                         } catch (const std::exception& e) {
                             // Ignore failures to create MDCDevice
                             printf("Ignoring USB device (MDCDevice): %s\n", e.what());

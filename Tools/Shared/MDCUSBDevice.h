@@ -101,6 +101,7 @@ public:
         
         STM::Status status;
         _dev->read(STM::Endpoint::DataIn, status);
+        
         if (status.header.magic != STM::StatusHeader.magic) {
             throw Toastbox::RuntimeError("invalid STM magic number (expected:0x%08jx got:0x%08jx)",
                 (uintmax_t)STM::StatusHeader.magic, (uintmax_t)status.header.magic);
