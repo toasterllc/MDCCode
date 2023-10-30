@@ -66,11 +66,11 @@ struct MDCDevice : ImageSource {
         }
     };
     
-    void init(_USBDevicePtr&& dev) {
+    void init(_MDCUSBDevicePtr&& dev) {
         printf("MDCDevice::init() %p\n", this);
         Object::init(); // Call super
         
-        _serial = dev->serialNumber();
+        _serial = dev->serial();
         _dir = _DirForSerial(_serial);
         _imageLibrary = Object::Create<ImageLibrary>();
         
@@ -91,7 +91,7 @@ struct MDCDevice : ImageSource {
             _imageLibrary->read(_dir / "ImageLibrary");
         }
         
-        _device.thread = _Thread([&] (_USBDevicePtr&& dev) {
+        _device.thread = _Thread([&] (_MDCUSBDevicePtr&& dev) {
             _device_thread(std::move(dev));
         }, std::move(dev));
         
@@ -765,10 +765,10 @@ struct MDCDevice : ImageSource {
         }
     }
     
-    static _MDCUSBDevicePtr _DevicePrepare(_USBDevicePtr&& usbDev) {
-        const std::string serial = usbDev->serialNumber();
+    static _MDCUSBDevicePtr _DevicePrepare(_MDCUSBDevicePtr&& dev) {
+        const std::string serial = dev->serial();
         
-        _MDCUSBDevicePtr dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
+//        _MDCUSBDevicePtr dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
         
         // Invoke bootloader
         {
@@ -784,7 +784,7 @@ struct MDCDevice : ImageSource {
             _DeviceModeCheck(dev, STM::Status::Mode::STMApp);
         }
         
-        return dev;
+        return std::move(dev);
     }
     
     static void _DeviceWaitForTerminate(const _MDCUSBDevicePtr& dev) {
@@ -806,7 +806,7 @@ struct MDCDevice : ImageSource {
     
     // MARK: - Device
     
-    void _device_thread(_USBDevicePtr&& dev) {
+    void _device_thread(_MDCUSBDevicePtr&& dev) {
         try {
             {
                 auto lock = deviceLock();

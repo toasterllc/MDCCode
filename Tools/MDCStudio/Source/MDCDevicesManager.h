@@ -173,7 +173,8 @@ struct MDCDevicesManager : Object {
                         
                         MDCDevicePtr mdc;
                         try {
-                            mdc = Object::Create<MDCDevice>(std::move(usbDev));
+                            _MDCUSBDevicePtr mdcUSBDev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
+                            mdc = Object::Create<MDCDevice>(std::move(mdcUSBDev));
                         } catch (const std::exception& e) {
                             // Ignore failures to create MDCDevice
                             printf("Ignoring USB device (MDCDevice): %s\n", e.what());
