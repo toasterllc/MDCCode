@@ -8,6 +8,9 @@
 
 namespace STM {
 
+using Version = uint16_t;
+constexpr Version VersionInvalid = 0xFFFF;
+
 struct Endpoint {
     // Control endpoint
     static constexpr uint8_t Ctrl    = 0x00;
@@ -86,6 +89,10 @@ struct [[gnu::packed]] Cmd {
         
         // # STMApp
         struct [[gnu::packed]] {
+            uint8_t en;
+        } HostModeSet;
+        
+        struct [[gnu::packed]] {
             uint32_t len;
         } ICERAMWrite;
         
@@ -95,8 +102,9 @@ struct [[gnu::packed]] Cmd {
         } ICEFlashRead;
         
         struct [[gnu::packed]] {
-            uint8_t en;
-        } HostModeSet;
+            uint32_t addr;
+            uint32_t len;
+        } ICEFlashWrite;
         
         struct [[gnu::packed]] {
             uint32_t len;
@@ -113,11 +121,6 @@ struct [[gnu::packed]] Cmd {
         struct [[gnu::packed]] {
             MSP::TimeAdjustment adjustment;
         } MSPTimeAdjust;
-        
-        struct [[gnu::packed]] {
-            uint32_t addr;
-            uint32_t len;
-        } ICEFlashWrite;
         
         struct [[gnu::packed]] {
             uint32_t addr;
@@ -163,7 +166,7 @@ static_assert(sizeof(Cmd) == 64); // Verify that Cmd is exactly the size of a EP
 struct [[gnu::packed]] Status {
     struct Header {
         uint32_t magic = 0;
-        uint16_t version = 0;
+        Version version = 0;
     };
     
     enum class Mode : uint32_t {
@@ -173,7 +176,7 @@ struct [[gnu::packed]] Status {
     };
     
     Header header;
-    uint16_t mspVersion = 0;
+    MSP::Version mspVersion = 0;
     Mode mode = Mode::None;
 };
 

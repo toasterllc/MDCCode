@@ -262,7 +262,9 @@ static void StatusGet(const Args& args, MDCUSBDevice& device) {
     printf("Status:\n");
     printf("  header:\n");
     printf("    magic:    0x%08jx\n", (uintmax_t)status.header.magic);
-    printf("    version:  0x%08jx\n", (uintmax_t)status.header.version);
+    printf("    version:  %ju\n", (uintmax_t)status.header.version);
+    printf("\n");
+    printf("  mspVersion: %ju\n", (uintmax_t)status.mspVersion);
     printf("  mode:       %s\n", _StringForStatusMode(status.mode));
     printf("\n");
 }

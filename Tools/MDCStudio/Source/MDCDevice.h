@@ -759,10 +759,9 @@ struct MDCDevice : ImageSource {
     }
     
     static void _DeviceModeCheck(const _MDCUSBDevicePtr& dev, STM::Status::Mode mode) {
-        const STM::Status::Mode m = dev->statusGet().mode;
-        if (mode != m) {
-            throw Toastbox::RuntimeError("Invalid state (expected %ju, got %ju)",
-                (uintmax_t)mode, (uintmax_t)m);
+        if (dev->mode() != mode) {
+            throw Toastbox::RuntimeError("invalid mode (expected %ju, got %ju)",
+                (uintmax_t)mode, (uintmax_t)dev->mode());
         }
     }
     
@@ -813,8 +812,6 @@ struct MDCDevice : ImageSource {
                 auto lock = deviceLock();
                 _device.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
                 _device.device = _DevicePrepare(std::move(dev));
-                // Read the MSP header to validate that we know how to talk to the MSP firmware version
-                _device.device->mspStateHeaderRead();
             }
             
             // Update the device's time

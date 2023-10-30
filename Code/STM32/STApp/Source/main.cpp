@@ -351,9 +351,12 @@ static QSPI_CommandTypeDef ICEAppReadOnly(size_t len) {
 
 template<typename T>
 void _SPIConfigSet() {
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Waddress\"")
     if constexpr (T::QSPIConfig) {
         _QSPI::ConfigSet(*T::QSPIConfig);
     }
+_Pragma("GCC diagnostic pop")
     
     T::GPIOConfig::ICE_STM_SPI_CS_::Init();
     T::GPIOConfig::ICE_STM_FLASH_EN::Init();

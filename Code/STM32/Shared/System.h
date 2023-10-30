@@ -252,7 +252,7 @@ private:
                 _Cmd.resp = _Send(_Cmd.cmd);
                 // Update our state
                 _Cmd.state = _State::Resp;
-                // Give Send() an oppurtunity to consume the response.
+                // Give Send() an opportunity to consume the response.
                 // We reset our state to Idle, instead to have the task calling Send() do it after it
                 // consumes the response, so that we can recover if the task calling Send() is stopped
                 // and therefore will never consume the response.
@@ -387,7 +387,7 @@ private:
         
         static STM::BatteryStatus _BatteryStatusGet() {
             const auto resp = MSPSend({ .op = MSP::Cmd::Op::BatteryStatusGet });
-            if (!resp->ok) return {};
+            if (!resp || !resp->ok) return {};
             return {
                 .chargeStatus = resp->arg.BatteryStatusGet.chargeStatus,
                 .level = resp->arg.BatteryStatusGet.level,
@@ -509,6 +509,22 @@ private:
         USBSendStatus(true);
     }
     
+    static MSP::Version _MSPVersionGet() {
+        const MSP::Cmd mspCmd = {
+            .op = MSP::Cmd::Op::StateRead,
+            .arg = { .StateRead = { .off = 0 } },
+        };
+        
+        const auto mspResp = MSPSend(mspCmd);
+        if (!mspResp || !mspResp->ok) return MSP::VersionInvalid;
+        
+        MSP::State::Header header;
+        // Make sure that we can read the header in a single transaction
+        static_assert(sizeof(mspResp->arg.StateRead.data) >= sizeof(header));
+        memcpy(&header, mspResp->arg.StateRead.data, sizeof(header));
+        return header.version;
+    }
+    
     static void _StatusGet(const STM::Cmd& cmd) {
         // Accept command
         USBAcceptCommand(true);
@@ -517,6 +533,7 @@ private:
         alignas(void*) // Aligned to send via USB
         const STM::Status status = {
             .header     = STM::StatusHeader,
+            .mspVersion = _MSPVersionGet(),
             .mode       = T_Mode,
         };
         

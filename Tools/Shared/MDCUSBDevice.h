@@ -74,6 +74,7 @@ public:
     // MARK: - Accessors
     
     const std::string& serial() const { return _serial; }
+    const STM::Status::Mode mode() const { return _mode; }
     
     // MARK: - Common Commands
     void reset() {
@@ -108,6 +109,11 @@ public:
         if (status.header.version != STM::StatusHeader.version) {
             throw IncompatibleVersion("invalid STM version (expected:%ju got:%ju)",
                 (uintmax_t)STM::StatusHeader.version, (uintmax_t)status.header.version);
+        }
+        
+        if (status.mspVersion != MSP::StateHeader.version) {
+            throw IncompatibleVersion("invalid MSP version (expected:%ju got:%ju)",
+                (uintmax_t)MSP::StateHeader.version, (uintmax_t)status.mspVersion);
         }
         
         return status;
@@ -297,23 +303,23 @@ public:
         }
     }
     
-    MSP::State::Header mspStateHeaderRead() {
-        assert(_mode == STM::Status::Mode::STMApp);
-        
-        const STM::Cmd cmd = {
-            .op = STM::Op::MSPStateRead,
-            .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
-        };
-        _sendCmd(cmd);
-        
-        MSP::State::Header header;
-        _dev->read(STM::Endpoint::DataIn, header);
-        _checkStatus("MSPStateRead command failed (header)");
-        
-        // Validate the header
-        _MSPStateHeaderValidate(header);
-        return header;
-    }
+//    MSP::State::Header mspStateHeaderRead() {
+//        assert(_mode == STM::Status::Mode::STMApp);
+//        
+//        const STM::Cmd cmd = {
+//            .op = STM::Op::MSPStateRead,
+//            .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
+//        };
+//        _sendCmd(cmd);
+//        
+//        MSP::State::Header header;
+//        _dev->read(STM::Endpoint::DataIn, header);
+//        _checkStatus("MSPStateRead command failed (header)");
+//        
+//        // Validate the header
+//        _MSPStateHeaderValidate(header);
+//        return header;
+//    }
     
     MSP::State mspStateRead() {
         assert(_mode == STM::Status::Mode::STMApp);
@@ -326,7 +332,7 @@ public:
         
         MSP::State state;
         _dev->read(STM::Endpoint::DataIn, state);
-        _checkStatus("MSPStateRead command failed (header+payload)");
+        _checkStatus("MSPStateRead command failed");
         
         // Validate the header
         _MSPStateHeaderValidate(state.header);
