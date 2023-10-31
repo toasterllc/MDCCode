@@ -318,6 +318,7 @@ struct MDCDevice : ImageSource {
         {
             auto lock = std::unique_lock(*_imageLibrary);
             _imageLibrary->remove(images);
+            _imageLibrary->write();
         }
         
         {
