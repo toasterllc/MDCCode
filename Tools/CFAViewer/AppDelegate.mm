@@ -473,8 +473,8 @@ static void _configureDevice(MDCUSBDevice& dev) {
             if (!service) break;
             
             try {
-                USBDevice dev(service);
-                if (!MDCUSBDevice::USBDeviceMatches(dev)) continue;
+                USBDevicePtr dev = std::make_unique<USBDevice>(service);
+                if (!MDCUSBDevice::USBDeviceMatches(*dev)) continue;
                 
                 __block std::unique_ptr<MDCUSBDevice> mdc = std::make_unique<MDCUSBDevice>(std::move(dev));
                 
