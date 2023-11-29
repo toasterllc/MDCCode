@@ -31,6 +31,14 @@ public:
             )
         );
         
+        Renderer::Txt thresholdMap = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
+        renderer.render(thresholdMap,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "ReconstructHighlights::CreateThresholdMap",
+                // Texture args
+                rgb
+            )
+        );
+        
         // `Scale` balances the raw colors from the sensor for the purpose
         // of highlight reconstruction (empirically determined)
         const simd::float3 Scale = {1.179, 0.649, 1.180};
@@ -45,10 +53,10 @@ public:
             renderer.FragmentShader(ImagePipelineShaderNamespace "ReconstructHighlights::CreateHighlightMap",
                 // Buffer args
                 Scale,
-                Thresh,
                 simdIllumMin1,
                 // Texture args
-                rgb
+                rgb,
+                thresholdMap
             )
         );
         
