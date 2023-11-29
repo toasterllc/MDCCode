@@ -1229,6 +1229,38 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 
 // MARK: - MainViewDelegate
 
+
+//static Mat<double,3,1> _averageRaw(const SampleRect& rect, const CFADesc& cfaDesc,
+//    const Img::Pixel* pixels, size_t width, size_t height) {
+//    
+//    
+//    pixels[];
+//    
+//    const simd::float3* vals = (simd::float3*)[buf contents];
+//    assert([buf length] >= rect.count()*sizeof(simd::float3));
+//    
+//    size_t i = 0;
+//    Mat<double,3,1> r;
+//    uint32_t count[3] = {};
+//    for (size_t y=rect.top; y<rect.bottom; y++) {
+//        for (size_t x=rect.left; x<rect.right; x++, i++) {
+//            const CFAColor c = cfaDesc.color(x, y);
+//            const simd::float3& val = vals[i];
+//            if (c == CFAColor::Red)     count[0]++;
+//            if (c == CFAColor::Green)   count[1]++;
+//            if (c == CFAColor::Blue)    count[2]++;
+//            r += {(double)val[0], (double)val[1], (double)val[2]};
+//        }
+//    }
+//    
+//    if (count[0]) r[0] /= count[0];
+//    if (count[1]) r[1] /= count[1];
+//    if (count[2]) r[2] /= count[2];
+//    return r;
+//}
+
+
+
 - (void)mainViewSampleRectChanged:(MainView*)v {
     CGRect rect = [_mainView sampleRect];
     rect.origin.x *= _raw.image.width;
@@ -1244,6 +1276,50 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     
     if (sampleRect.left == sampleRect.right) sampleRect.right++;
     if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
+    
+    const auto sampler = PixelSampler(_raw.image.width, _raw.image.height, _raw.image.pixels);
+    
+    size_t i = 0;
+    Mat<double,3,1> r;
+    size_t count[3] = {};
+    for (size_t y=sampleRect.top; y<sampleRect.bottom; y++) {
+        for (size_t x=sampleRect.left; x<sampleRect.right; x++, i++) {
+            const CFAColor c = _raw.image.cfaDesc.color(x, y);
+            if (c == CFAColor::Red) {
+                count[0]++;
+                r[0] += sampler.px(x,y);
+            }
+            
+            if (c == CFAColor::Green) {
+                count[1]++;
+                r[1] += sampler.px(x,y);
+            }
+            
+            if (c == CFAColor::Blue) {
+                count[2]++;
+                r[2] += sampler.px(x,y);
+            }
+        }
+    }
+    
+    r[0] /= count[0];
+    r[1] /= count[1];
+    r[2] /= count[2];
+    
+    printf("%f %f %f\n", r[0], r[1], r[2]);
+    
+//    for (int32_t y=sampleRect.top; y<sampleRect.bottom; y++) {
+//        for (int32_t x=sampleRect.left; x<sampleRect.right; x++) {
+//            
+//            printf("%d %d\n", x, y);
+//        }
+//    }
+    
+//    _averageRaw(sampleRect, _raw.image.cfaDesc, _raw.pixels);
+    
+//    printf("%f %f\n", rect.origin.x, rect.origin.y);
+//    const auto sampler = PixelSampler(_raw.image.width, _raw.image.height, _raw.image.pixels);
+//    sampler.px();
 }
 
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
