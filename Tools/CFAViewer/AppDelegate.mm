@@ -217,6 +217,8 @@ struct RawImage {
         .debayerLMMSE = { .applyGamma = true, },
         
         .exposure = 0,
+//        .exposure = -2,
+        
         .saturation = 0,
         .brightness = 0,
         .contrast = 0,
@@ -233,7 +235,9 @@ struct RawImage {
     
     // /Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021-4-4/C5ImageSets/Indoor-Night2-ColorChecker"}];
-    [self _loadImages:{"/Users/dave/Desktop/Old/2021-4-4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
+    [self _loadImages:{"/Users/dave/Desktop/Highlight-Reconstruction-Test-Images"}];
+//    [self _loadImages:{"/Users/dave/Desktop/Highlight-Reconstruction-Test-Images/Living-Room-Day.cfa"}];
+//    [self _loadImages:{"/Users/dave/Desktop/Old/2021-4-4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_43.cfa"}];
 //    [self _loadImages:{"/Users/dave/Desktop/Highlight-Reconstruction-Test-Images/Kitchen-Day.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];

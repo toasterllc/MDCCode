@@ -16,10 +16,11 @@ fragment float CreateThresholdMap(
     texture2d<float> rgb [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    constexpr float Sat = 0.99;
-    constexpr float Thresh[] = { 0.534, 0.774, 0.774, 0.774 };
+    constexpr float Sat = 0.9999;
+    constexpr float Thresh[] = { .99, 0.25, 0.25/2, 0.25/4 };
+//    constexpr float Thresh[] = { 1, 0.5, 0.25, 0.125 };
     const float3 s = rgb.sample({filter::linear}, in.posUnit).rgb;
-    const uint count = s[0]>Sat + s[1]>Sat + s[2]>Sat;
+    const uint count = (uint)(s.r>Sat) + (uint)(s.g>Sat) + (uint)(s.b>Sat);
     return Thresh[count];
 }
 
