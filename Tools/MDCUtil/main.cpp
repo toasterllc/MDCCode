@@ -34,6 +34,7 @@ const CmdStr LEDSetCmd              = "LEDSet";
 
 // STMLoader Commands
 const CmdStr STMRAMWriteCmd         = "STMRAMWrite";
+const CmdStr STMRAMWriteLegacyCmd   = "STMRAMWriteLegacy";
 
 // STMApp Commands
 const CmdStr STMFlashWriteCmd       = "STMFlashWrite";
@@ -67,6 +68,7 @@ static void printUsage() {
     
     // STMLoader Commands
     cout << "  " << STMRAMWriteCmd          << " <file>\n";
+    cout << "  " << STMRAMWriteLegacyCmd    << " <file>\n";
     
     // STMApp Commands
     cout << "  " << STMFlashWriteCmd        << " <file>\n";
@@ -106,6 +108,10 @@ struct Args {
     struct {
         std::string filePath;
     } STMRAMWrite = {};
+    
+    struct {
+        std::string filePath;
+    } STMRAMWriteLegacy = {};
     
     struct {
         std::string filePath;
@@ -185,6 +191,10 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == lower(STMRAMWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.STMRAMWrite.filePath = strs[1];
+    
+    } else if (args.cmd == lower(STMRAMWriteLegacyCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
+        args.STMRAMWriteLegacy.filePath = strs[1];
     
     } else if (args.cmd == lower(STMFlashWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
@@ -331,6 +341,22 @@ static void STMRAMWrite(const Args& args, MDCUSBDevice& device) {
     
     // Reset the device, triggering it to load the program we just wrote
     printf("STMRAMWrite: Resetting device\n");
+    device.stmReset(elf.entryPointAddr());
+}
+
+static void STMRAMWriteLegacy(const Args& args, MDCUSBDevice& device) {
+    ELF32Binary elf(args.STMRAMWriteLegacy.filePath.c_str());
+    
+    elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+    size_t size, const char* name) {
+        printf("STMRAMWriteLegacy: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
+            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+        
+        device.stmRAMWriteLegacy(paddr, data, size);
+    });
+    
+    // Reset the device, triggering it to load the program we just wrote
+    printf("STMRAMWriteLegacy: Resetting device\n");
     device.stmReset(elf.entryPointAddr());
 }
 
@@ -950,6 +976,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(BootloaderInvokeCmd))    BootloaderInvoke(args, device);
         else if (args.cmd == lower(LEDSetCmd))              LEDSet(args, device);
         else if (args.cmd == lower(STMRAMWriteCmd))         STMRAMWrite(args, device);
+        else if (args.cmd == lower(STMRAMWriteLegacyCmd))   STMRAMWriteLegacy(args, device);
         else if (args.cmd == lower(STMFlashWriteCmd))       STMFlashWrite(args, device);
         else if (args.cmd == lower(HostModeSetCmd))         HostModeSet(args, device);
         else if (args.cmd == lower(ICERAMWriteCmd))         ICERAMWrite(args, device);

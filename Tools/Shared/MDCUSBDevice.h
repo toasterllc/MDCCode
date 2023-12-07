@@ -27,7 +27,12 @@ public:
     static bool USBDeviceMatches(const USBDevice& dev) {
         namespace USB = Toastbox::USB;
         USB::DeviceDescriptor desc = dev.deviceDescriptor();
-//        return desc.idVendor==1155 && desc.idProduct==57105;
+        
+        // TODO: legacy; remove
+        if (desc.idVendor==1155 && desc.idProduct==57105) {
+            return true;
+        }
+        
         return desc.idVendor==0 && desc.idProduct==0 && dev.manufacturer()=="Toaster LLC";
     }
     
@@ -197,6 +202,30 @@ public:
         
         // Check status
         _checkStatus("STMRAMWrite command failed");
+    }
+    
+    void stmRAMWriteLegacy(uintptr_t addr, const void* data, size_t len) {
+        assert(_mode == STM::Status::Mode::STMLoader);
+        
+        if (addr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
+        
+        if (len >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::STMRAMWrite,
+            .arg = {
+                .STMRAMWrite = {
+                    .addr = (uint32_t)addr,
+                    .len = (uint32_t)len,
+                },
+            },
+        };
+        _sendCmd(cmd);
+        
+        // Send data
+        _dev->write(STM::Endpoint::DataOut, data, len);
     }
     
     void stmReset(uintptr_t entryPointAddr) {
