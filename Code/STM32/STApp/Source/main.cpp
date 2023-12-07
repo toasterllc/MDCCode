@@ -970,30 +970,79 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static void _STMFlashErase(const STM::Cmd& cmd) {
+static bool __STMFlashWrite_ErasedSectors[4];
+
+static void _STMFlashWriteInit(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Clear any pending errors
-    FLASH_WaitForLastOperation(0);
+    for (bool& x : __STMFlashWrite_ErasedSectors) {
+        x = false;
+    }
+    
+    _System::USBSendStatus(true);
+}
+
+static size_t __STMFlashWrite_WritableAddress(uint32_t addr) {
+    // ITCM addresses: convert to AXIM address, which support writing (ITCM flash addresses are read-only)
+    if (addr>=0x00200000 && addr<0x210000) {
+        return (addr-0x00200000) + 0x08000000;
+    
+    // AXIM addresses: return as-is
+    } else if (addr>=0x08000000 && addr<0x08010000) {
+        return addr;
+    
+    // Anything else: invalid address
+    } else {
+        Assert(false);
+    }
+}
+
+static uint8_t __STMFlashWrite_SectorForAddress(uint32_t addr) {
+    if (addr < 0x08000000) {
+        Assert(false);
+    } else if (addr < 0x08004000) {
+        return 0;
+    } else if (addr < 0x08008000) {
+        return 1;
+    } else if (addr < 0x0800C000) {
+        return 2;
+    } else if (addr < 0x08010000) {
+        return 3;
+    } else {
+        Assert(false);
+    }
+}
+
+static bool __STMFlashWrite_EraseSectorIfNeeded(uint8_t sector) {
+    if (__STMFlashWrite_ErasedSectors[sector]) {
+        return true;
+    }
     
     FLASH_EraseInitTypeDef info = {
-        .TypeErase      = FLASH_TYPEERASE_MASSERASE,
-        .Sector         = 0,
-        .NbSectors      = 0,
+        .TypeErase      = FLASH_TYPEERASE_SECTORS,
+        .Sector         = sector,
+        .NbSectors      = 1,
         .VoltageRange   = FLASH_VOLTAGE_RANGE_1, // 1.8 V
     };
     uint32_t junk = 0;
     
-    HAL_FLASH_Unlock();
     HAL_StatusTypeDef hs = HAL_FLASHEx_Erase(&info, &junk);
-    HAL_FLASH_Lock();
+    if (hs != HAL_OK) return false;
     
-    _System::USBSendStatus(hs == HAL_OK);
+    __STMFlashWrite_ErasedSectors[sector] = true;
+    return true;
 }
 
 static void _STMFlashWrite(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.STMFlashWrite;
+    
+    // Require at least 1 byte to be written
+    if (!arg.len) {
+        // Reject command
+        _System::USBAcceptCommand(false);
+        return;
+    }
     
     // Accept command
     _System::USBAcceptCommand(true);
@@ -1001,13 +1050,25 @@ static void _STMFlashWrite(const STM::Cmd& cmd) {
     // Reset state
     _Bufs.reset();
     
+    // Clear any pending errors
+    FLASH_WaitForLastOperation(0);
+    
     // Trigger the USB DataOut task with the amount of data
     _TaskUSBDataOut::Start(arg.len);
     
     HAL_FLASH_Unlock();
     
-    uint32_t addr = arg.addr;
+    uint32_t addr = __STMFlashWrite_WritableAddress(arg.addr);
+    
     bool ok = true;
+    
+    // Erase affected sectors
+    const uint32_t addrLast = __STMFlashWrite_WritableAddress(arg.addr + arg.len - 1);
+    for (uint8_t sector=__STMFlashWrite_SectorForAddress(addr); sector<=__STMFlashWrite_SectorForAddress(addrLast); sector++) {
+        bool erased = __STMFlashWrite_EraseSectorIfNeeded(sector);
+        if (!erased) ok = false;
+    }
+    
     for (;;) {
         // Wait for a buffer containing more data to write
         _Scheduler::Wait([] { return _Bufs.rok(); });
@@ -1682,7 +1743,7 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     
     switch (cmd.op) {
     // Flashing
-    case Op::STMFlashErase:         _STMFlashErase(cmd);                break;
+    case Op::STMFlashWriteInit:     _STMFlashWriteInit(cmd);            break;
     case Op::STMFlashWrite:         _STMFlashWrite(cmd);                break;
     // Host mode
     case Op::HostModeSet:           _HostModeSet(cmd);                  break;

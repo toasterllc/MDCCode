@@ -34,7 +34,7 @@ enum class Op : uint8_t {
     STMReset,
     
     // STMApp
-    STMFlashErase,
+    STMFlashWriteInit,
     STMFlashWrite,
     
     HostModeSet,

@@ -213,11 +213,11 @@ public:
     }
     
     // MARK: - STMApp Commands
-    void stmFlashErase() {
+    void stmFlashWriteInit() {
         assert(_mode == STM::Status::Mode::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::STMFlashErase };
+        const STM::Cmd cmd = { .op = STM::Op::STMFlashWriteInit };
         _sendCmd(cmd);
-        _checkStatus("STMFlashErase command failed");
+        _checkStatus("STMFlashWriteInit command failed");
     }
     
     void stmFlashWrite(uintptr_t addr, const void* data, size_t len) {

@@ -752,7 +752,7 @@ struct MDCDevice : ImageSource {
         
         elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
         size_t size, const char* name) {
-            dev->stmWrite(paddr, data, size);
+            dev->stmRAMWrite(paddr, data, size);
         });
         
         // Reset the device, triggering it to load the program we just wrote
@@ -1484,7 +1484,7 @@ struct MDCDevice : ImageSource {
         
         } else {
             #warning Debug to catch invalid battery state, remove!
-            abort();
+//            abort();
             return 0;
         }
     }
