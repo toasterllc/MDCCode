@@ -33,9 +33,10 @@ const CmdStr BootloaderInvokeCmd    = "BootloaderInvoke";
 const CmdStr LEDSetCmd              = "LEDSet";
 
 // STMLoader Commands
-const CmdStr STMWriteCmd            = "STMWrite";
+const CmdStr STMRAMWriteCmd         = "STMRAMWrite";
 
 // STMApp Commands
+const CmdStr STMFlashWriteCmd       = "STMFlashWrite";
 const CmdStr HostModeSetCmd         = "HostModeSet";
 const CmdStr ICERAMWriteCmd         = "ICERAMWrite";
 const CmdStr ICEFlashReadCmd        = "ICEFlashRead";
@@ -65,9 +66,11 @@ static void printUsage() {
     cout << "  " << LEDSetCmd               << " <idx> <0/1>\n";
     
     // STMLoader Commands
-    cout << "  " << STMWriteCmd             << " <file>\n";
+    cout << "  " << STMRAMWriteCmd          << " <file>\n";
     
     // STMApp Commands
+    cout << "  " << STMFlashWriteCmd        << " <file>\n";
+    
     cout << "  " << HostModeSetCmd          << " <0/1>\n";
     
     cout << "  " << ICERAMWriteCmd          << " <file>\n";
@@ -102,7 +105,11 @@ struct Args {
     
     struct {
         std::string filePath;
-    } STMWrite = {};
+    } STMRAMWrite = {};
+    
+    struct {
+        std::string filePath;
+    } STMFlashWrite = {};
     
     struct {
         bool en;
@@ -175,9 +182,13 @@ static Args parseArgs(int argc, const char* argv[]) {
         IntForStr(args.LEDSet.idx, strs[1]);
         IntForStr(args.LEDSet.on, strs[2]);
     
-    } else if (args.cmd == lower(STMWriteCmd)) {
+    } else if (args.cmd == lower(STMRAMWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
-        args.STMWrite.filePath = strs[1];
+        args.STMRAMWrite.filePath = strs[1];
+    
+    } else if (args.cmd == lower(STMFlashWriteCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
+        args.STMFlashWrite.filePath = strs[1];
     
     } else if (args.cmd == lower(HostModeSetCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: host mode state");
@@ -307,25 +318,43 @@ static void LEDSet(const Args& args, MDCUSBDevice& device) {
     device.ledSet(args.LEDSet.idx, args.LEDSet.on);
 }
 
-static void HostModeSet(const Args& args, MDCUSBDevice& device) {
-    printf("HostModeSet: %d\n", (int)args.HostModeSet.en);
-    device.hostModeSet(args.HostModeSet.en);
-}
-
-static void STMWrite(const Args& args, MDCUSBDevice& device) {
-    ELF32Binary elf(args.STMWrite.filePath.c_str());
+static void STMRAMWrite(const Args& args, MDCUSBDevice& device) {
+    ELF32Binary elf(args.STMRAMWrite.filePath.c_str());
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
     size_t size, const char* name) {
-        printf("STMWrite: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
+        printf("STMRAMWrite: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
             name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
-        device.stmWrite(paddr, data, size);
+        device.stmRAMWrite(paddr, data, size);
     });
     
     // Reset the device, triggering it to load the program we just wrote
-    printf("STMWrite: Resetting device\n");
+    printf("STMRAMWrite: Resetting device\n");
     device.stmReset(elf.entryPointAddr());
+}
+
+static void STMFlashWrite(const Args& args, MDCUSBDevice& device) {
+    ELF32Binary elf(args.STMFlashWrite.filePath.c_str());
+    
+    device.stmFlashErase();
+    
+    elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+    size_t size, const char* name) {
+        printf("STMFlashWrite: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
+            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+        
+        device.stmFlashWrite(paddr, data, size);
+    });
+    
+    // Reset the device, triggering it to load the program we just wrote
+    printf("STMFlashWrite: Resetting device\n");
+    device.stmReset(0);
+}
+
+static void HostModeSet(const Args& args, MDCUSBDevice& device) {
+    printf("HostModeSet: %d\n", (int)args.HostModeSet.en);
+    device.hostModeSet(args.HostModeSet.en);
 }
 
 static void ICERAMWrite(const Args& args, MDCUSBDevice& device) {
@@ -920,7 +949,8 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(BatteryStatusGetCmd))    BatteryStatusGet(args, device);
         else if (args.cmd == lower(BootloaderInvokeCmd))    BootloaderInvoke(args, device);
         else if (args.cmd == lower(LEDSetCmd))              LEDSet(args, device);
-        else if (args.cmd == lower(STMWriteCmd))            STMWrite(args, device);
+        else if (args.cmd == lower(STMRAMWriteCmd))         STMRAMWrite(args, device);
+        else if (args.cmd == lower(STMFlashWriteCmd))       STMFlashWrite(args, device);
         else if (args.cmd == lower(HostModeSetCmd))         HostModeSet(args, device);
         else if (args.cmd == lower(ICERAMWriteCmd))         ICERAMWrite(args, device);
         else if (args.cmd == lower(ICEFlashReadCmd))        ICEFlashRead(args, device);

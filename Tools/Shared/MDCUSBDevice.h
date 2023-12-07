@@ -171,7 +171,7 @@ public:
     }
     
     // MARK: - STMLoader Commands
-    void stmWrite(uintptr_t addr, const void* data, size_t len) {
+    void stmRAMWrite(uintptr_t addr, const void* data, size_t len) {
         assert(_mode == STM::Status::Mode::STMLoader);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
@@ -181,17 +181,21 @@ public:
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
         
         const STM::Cmd cmd = {
-            .op = STM::Op::STMWrite,
+            .op = STM::Op::STMRAMWrite,
             .arg = {
-                .STMWrite = {
+                .STMRAMWrite = {
                     .addr = (uint32_t)addr,
                     .len = (uint32_t)len,
                 },
             },
         };
         _sendCmd(cmd);
+        
         // Send data
         _dev->write(STM::Endpoint::DataOut, data, len);
+        
+        // Check status
+        _checkStatus("STMRAMWrite command failed");
     }
     
     void stmReset(uintptr_t entryPointAddr) {
@@ -208,6 +212,40 @@ public:
     }
     
     // MARK: - STMApp Commands
+    void stmFlashErase() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::STMFlashErase };
+        _sendCmd(cmd);
+        _checkStatus("STMFlashErase command failed");
+    }
+    
+    void stmFlashWrite(uintptr_t addr, const void* data, size_t len) {
+        assert(_mode == STM::Status::Mode::STMApp);
+        
+        if (addr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
+        
+        if (len >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::STMFlashWrite,
+            .arg = {
+                .STMFlashWrite = {
+                    .addr = (uint32_t)addr,
+                    .len = (uint32_t)len,
+                },
+            },
+        };
+        _sendCmd(cmd);
+        
+        // Send data
+        _dev->write(STM::Endpoint::DataOut, data, len);
+        
+        // Check status
+        _checkStatus("STMFlashWrite command failed");
+    }
+    
     void hostModeSet(bool en) {
         assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {

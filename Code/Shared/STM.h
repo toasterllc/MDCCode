@@ -30,10 +30,13 @@ enum class Op : uint8_t {
     LEDSet,
     
     // STMLoader
-    STMWrite,
+    STMRAMWrite,
     STMReset,
     
     // STMApp
+    STMFlashErase,
+    STMFlashWrite,
+    
     HostModeSet,
     
     ICERAMWrite,
@@ -81,13 +84,18 @@ struct [[gnu::packed]] Cmd {
         struct [[gnu::packed]] {
             uint32_t addr;
             uint32_t len;
-        } STMWrite;
+        } STMRAMWrite;
         
         struct [[gnu::packed]] {
             uint32_t entryPointAddr;
         } STMReset;
         
         // # STMApp
+        struct [[gnu::packed]] {
+            uint32_t addr;
+            uint32_t len;
+        } STMFlashWrite;
+        
         struct [[gnu::packed]] {
             uint8_t en;
         } HostModeSet;

@@ -47,8 +47,8 @@ static size_t _STMRegionCapacity(void* addr) {
     return cap;
 }
 
-static void _STMWrite(const STM::Cmd& cmd) {
-    const auto& arg = cmd.arg.STMWrite;
+static void _STMRAMWrite(const STM::Cmd& cmd) {
+    const auto& arg = cmd.arg.STMRAMWrite;
     
     // Bail if the region capacity is too small to hold the
     // incoming data length (ceiled to the packet length)
@@ -64,6 +64,9 @@ static void _STMWrite(const STM::Cmd& cmd) {
     
     // Receive USB data
     _USB::Recv(Endpoint::DataOut, (void*)arg.addr, len);
+    
+    // Send success
+    _System::USBSendStatus(true);
 }
 
 static void _STMReset(const STM::Cmd& cmd) {
@@ -81,8 +84,8 @@ static void _STMReset(const STM::Cmd& cmd) {
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // STM32 Bootloader
-    case Op::STMWrite:  _STMWrite(cmd);                     break;
-    case Op::STMReset:  _STMReset(cmd);                     break;
+    case Op::STMRAMWrite:   _STMRAMWrite(cmd);              break;
+    case Op::STMReset:      _STMReset(cmd);                 break;
     // Bad command
     default:            _System::USBAcceptCommand(false);   break;
     }

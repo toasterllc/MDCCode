@@ -970,6 +970,68 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
+static void _STMFlashErase(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    FLASH_EraseInitTypeDef info = {
+        .TypeErase      = FLASH_TYPEERASE_MASSERASE,
+        .Sector         = 0,
+        .NbSectors      = 0,
+        .VoltageRange   = FLASH_VOLTAGE_RANGE_1, // 1.8 V
+    };
+    uint32_t junk = 0;
+    
+    HAL_FLASH_Unlock();
+    HAL_StatusTypeDef hs = HAL_FLASHEx_Erase(&info, &junk);
+    HAL_FLASH_Lock();
+    
+    if (hs != HAL_OK) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _STMFlashWrite(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.STMFlashWrite;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Trigger the USB DataOut task with the amount of data
+    _TaskUSBDataOut::Start(arg.len);
+    
+    HAL_FLASH_Unlock();
+    
+    uint32_t addr = arg.addr;
+    bool ok = true;
+    for (;;) {
+        // Wait for a buffer containing more data to write
+        _Scheduler::Wait([] { return _Bufs.rok(); });
+        auto& buf = _Bufs.rget();
+        if (!buf.len) break; // We're done when we receive an empty buffer
+        
+        // Program each byte individually
+        for (size_t i=0; i<buf.len; i++, addr++) {
+            HAL_StatusTypeDef hs = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, addr, buf.data[i]);
+            if (hs != HAL_OK) ok = false;
+        }
+        
+        _Bufs.rpop();
+    }
+    
+    HAL_FLASH_Lock();
+    
+    // Send status
+    _System::USBSendStatus(ok);
+}
+
 static void _HostModeSet(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.HostModeSet;
     
@@ -1622,6 +1684,9 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     _TasksReset();
     
     switch (cmd.op) {
+    // Flashing
+    case Op::STMFlashErase:         _STMFlashErase(cmd);                break;
+    case Op::STMFlashWrite:         _STMFlashWrite(cmd);                break;
     // Host mode
     case Op::HostModeSet:           _HostModeSet(cmd);                  break;
     // ICE40 Bootloader
