@@ -337,7 +337,9 @@ static void STMRAMWrite(const Args& args, MDCUSBDevice& device) {
 static void STMFlashWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.STMFlashWrite.filePath.c_str());
     
+    printf("Erasing flash...\n");
     device.stmFlashErase();
+    printf("-> OK\n\n");
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
     size_t size, const char* name) {

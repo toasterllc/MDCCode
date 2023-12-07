@@ -974,6 +974,9 @@ static void _STMFlashErase(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
+    // Clear any pending errors
+    FLASH_WaitForLastOperation(0);
+    
     FLASH_EraseInitTypeDef info = {
         .TypeErase      = FLASH_TYPEERASE_MASSERASE,
         .Sector         = 0,
@@ -986,13 +989,7 @@ static void _STMFlashErase(const STM::Cmd& cmd) {
     HAL_StatusTypeDef hs = HAL_FLASHEx_Erase(&info, &junk);
     HAL_FLASH_Lock();
     
-    if (hs != HAL_OK) {
-        _System::USBSendStatus(false);
-        return;
-    }
-    
-    // Send status
-    _System::USBSendStatus(true);
+    _System::USBSendStatus(hs == HAL_OK);
 }
 
 static void _STMFlashWrite(const STM::Cmd& cmd) {
