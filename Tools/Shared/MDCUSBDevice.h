@@ -27,7 +27,7 @@ public:
     static bool USBDeviceMatches(const USBDevice& dev) {
         namespace USB = Toastbox::USB;
         USB::DeviceDescriptor desc = dev.deviceDescriptor();
-        return desc.idVendor==1155 && desc.idProduct==57105;
+        return desc.idVendor==0 && desc.idProduct==0 && dev.manufacturer()=="Toaster LLC";
     }
     
     static std::vector<MDCUSBDevicePtr> GetDevices() {

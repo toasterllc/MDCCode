@@ -1,11 +1,11 @@
 #include "usbd_core.h"
 #include "usbd_desc.h"
 
-#define USBD_VID                        1155
+#define USBD_VID                        0
 #define USBD_LANGID_STRING              1033
-#define USBD_MANUFACTURER_STRING        "STMicroelectronics"
-#define USBD_PID_HS                     57105
-#define USBD_PRODUCT_STRING_HS          "STM32 DownLoad Firmware Update [STMApp]"
+#define USBD_MANUFACTURER_STRING        "Toaster LLC"
+#define USBD_PID_HS                     0
+#define USBD_PRODUCT_STRING_HS          "Photon [STMApp]"
 #define USBD_CONFIGURATION_STRING_HS    "DFU Config"
 #define USBD_INTERFACE_STRING_HS        "DFU Interface"
 #define USB_SIZ_BOS_DESC                0x0C
