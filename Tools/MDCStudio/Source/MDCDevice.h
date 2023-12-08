@@ -571,8 +571,8 @@ struct MDCDevice : ImageSource {
 //    }
     
     static void _ICEConfigure(MDCUSBDevice& dev) {
-        const char* ICEBinPath = "/Users/dave/repos/MDCCode/Code/ICE40/ICEAppSDReadoutSTM/Synth/Top.bin";
-        Toastbox::Mmap mmap(ICEBinPath);
+        std::string iceBinPath = [[[NSBundle mainBundle] pathForResource:@"ICEApp" ofType:@"bin"] UTF8String];
+        Toastbox::Mmap mmap(iceBinPath);
         
         // Write the ICE40 binary
         dev.iceRAMWrite(mmap.data(), mmap.len());
@@ -747,8 +747,8 @@ struct MDCDevice : ImageSource {
     static void _Nop(void* ctx, io_iterator_t iter) {}
     
     static void _DeviceBootload(const _MDCUSBDevicePtr& dev) {
-        const char* STMBinPath = "/Users/dave/repos/MDCCode/Code/STM32/STApp/Release/STApp.elf";
-        ELF32Binary elf(STMBinPath);
+        std::string stmBinPath = [[[NSBundle mainBundle] pathForResource:@"STMApp" ofType:@"elf"] UTF8String];
+        ELF32Binary elf(stmBinPath);
         
         elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
         size_t size, const char* name) {

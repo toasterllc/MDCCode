@@ -68,6 +68,8 @@
 		558E201B2AC8F977001E743A /* DeviceImageGridScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558E20192AC8F977001E743A /* DeviceImageGridScrollView.mm */; };
 		558FFC5829C8F26F0022E840 /* EstimateIlluminant.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */; };
 		55A36AB827A35ABD00FD0181 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55A36AB727A35ABD00FD0181 /* IOKit.framework */; };
+		55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CA2B23CCCF004D6564 /* STMApp.elf */; };
+		55A884CD2B23CCD0004D6564 /* ICEApp.bin in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CB2B23CCCF004D6564 /* ICEApp.bin */; };
 		55B451062ADA583000CE1C51 /* Photon-Icon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55B451042ADA583000CE1C51 /* Photon-Icon.pdf */; };
 		55C456862955A1AE00A20363 /* FixedScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456822955A1AE00A20363 /* FixedScrollView.mm */; };
 		55C456872955A1AE00A20363 /* FixedMetalDocumentLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456832955A1AE00A20363 /* FixedMetalDocumentLayer.mm */; };
@@ -270,6 +272,8 @@
 		55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		55A36AB727A35ABD00FD0181 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55A417DD29DC9804003A68A4 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
+		55A884CA2B23CCCF004D6564 /* STMApp.elf */ = {isa = PBXFileReference; lastKnownFileType = file; path = STMApp.elf; sourceTree = "<group>"; };
+		55A884CB2B23CCCF004D6564 /* ICEApp.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = ICEApp.bin; sourceTree = "<group>"; };
 		55B1658129CB9A50008D53E5 /* Cache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cache.h; sourceTree = "<group>"; };
 		55B451042ADA583000CE1C51 /* Photon-Icon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Photon-Icon.pdf"; sourceTree = "<group>"; };
 		55C456802955A1AE00A20363 /* FixedDocumentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FixedDocumentView.h; sourceTree = "<group>"; };
@@ -641,6 +645,8 @@
 		55496F56278CFC3E00BCA739 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				55A884CB2B23CCCF004D6564 /* ICEApp.bin */,
+				55A884CA2B23CCCF004D6564 /* STMApp.elf */,
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
 				55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */,
 				55B451042ADA583000CE1C51 /* Photon-Icon.pdf */,
@@ -981,6 +987,7 @@
 				558E20092AC4B608001E743A /* DeviceImageGridHeaderView.xib in Resources */,
 				55838C932AD0BE7200D4B024 /* SourceList-Battery-Error.pdf in Resources */,
 				553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */,
+				55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */,
 				55838C962AD0BE7200D4B024 /* SourceList-Battery-Charging-0.pdf in Resources */,
 				55C6A2A22AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
@@ -1004,6 +1011,7 @@
 				55838C9E2AD0BE7200D4B024 /* SourceList-Battery-Charging-60.pdf in Resources */,
 				55838CC02AD0BEAA00D4B024 /* Inspector-WhiteBalance-Max.pdf in Resources */,
 				55838C9B2AD0BE7200D4B024 /* SourceList-Battery-Charging-90.pdf in Resources */,
+				55A884CD2B23CCD0004D6564 /* ICEApp.bin in Resources */,
 				55838C992AD0BE7200D4B024 /* SourceList-Battery-Charging-30.pdf in Resources */,
 				55D30A4329A96D670080BCBD /* ImageCornerButton-1.pdf in Resources */,
 				55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */,
