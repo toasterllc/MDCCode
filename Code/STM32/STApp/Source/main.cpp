@@ -3,7 +3,6 @@
 #include <tuple>
 #include <ratio>
 #include "Code/Lib/Toastbox/Scheduler.h"
-#include "Code/Lib/Toastbox/Scheduler.h"
 #include "Code/Lib/Toastbox/Util.h"
 #include "Code/Shared/STM.h"
 #include "Code/Shared/Assert.h"
@@ -32,22 +31,7 @@ asm(".equ _StartupStack, _TaskCmdRecvStack+" Stringify(_TaskCmdRecvStackSize));
 
 // MARK: - System
 
-// This crazniness is necessary to allow System to accept 2 parameter packs (T_Pins and T_Tasks).
-// We do that by way of template class specialization, hence the two `class System` occurences.
-template<
-STM::Status::Mode T_Mode,
-bool T_USBDMAEn,
-typename...
->
-class System;
-
-template<
-STM::Status::Mode T_Mode,
-bool T_USBDMAEn,
-typename... T_Pins,
-typename... T_Tasks
->
-class System<T_Mode, T_USBDMAEn, std::tuple<T_Pins...>, std::tuple<T_Tasks...>> {
+class _System {
 public:
     static constexpr uint8_t CPUFreqMHz = 128;
     using SysTickPeriod = std::ratio<1,1000>;
@@ -94,13 +78,12 @@ public:
                                                     //                   Scheduler only uses this to detect stack overflow
         
         _TaskCmdRecv,                               // T_Tasks: list of tasks
-        _TaskCmdHandle,
-        T_Tasks...
+        _TaskCmdHandle
     >;
     
     using USB = T_USB<
         Scheduler,  // T_Scheduler
-        T_USBDMAEn, // T_DMAEn
+        true,       // T_DMAEn
         USBConfig   // T_Config
     >;
     
@@ -198,9 +181,7 @@ private:
             _USB_DP,
             
             _OSC_IN,
-            _OSC_OUT,
-            
-            T_Pins...
+            _OSC_OUT
         >();
         
         // Reset peripherals, initialize flash interface, initialize SysTick
@@ -271,7 +252,7 @@ private:
         const STM::Status status = {
             .header     = STM::StatusHeader,
             .mspVersion = 0,
-            .mode       = T_Mode,
+            .mode       = STM::Status::Mode::STMApp,
         };
         
         USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
@@ -305,17 +286,6 @@ void Toastbox::IntState::Set(bool en) {
     if (en) __enable_irq();
     else __disable_irq();
 }
-
-using _System = System<
-    STM::Status::Mode::STMApp,  // T_Mode
-    true,                       // T_USBDMAEn
-    
-    // T_Pins
-    std::tuple<>,
-    
-    // T_Tasks
-    std::tuple<>
->;
 
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
