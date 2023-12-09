@@ -7,7 +7,6 @@
 #include "Code/Lib/Toastbox/Util.h"
 #include "Code/Shared/STM.h"
 #include "Code/Shared/Assert.h"
-#include "Code/Shared/MSP.h"
 #include "GPIO.h"
 #include "USB.h"
 #include "USBConfig.h"
@@ -60,9 +59,6 @@ public:
 private:
     #warning TODO: remove stack guards for production
     static constexpr size_t _StackGuardCount = 4;
-    
-    using _MSP_TEST = GPIO::PortG::Pin<11>;
-    using _MSP_RST_ = GPIO::PortG::Pin<12>;
     
     using _USB_DM   = GPIO::PortB::Pin<14, GPIO::Option::Speed3, GPIO::Option::AltFn12>;
     using _USB_DP   = GPIO::PortB::Pin<15, GPIO::Option::Speed3, GPIO::Option::AltFn12>;
@@ -123,7 +119,6 @@ public:
         USBSendStatus(s);
     }
     
-    #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
     [[noreturn]]
     static void Abort() {
         Toastbox::IntState ints(false);
