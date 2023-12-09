@@ -1396,6 +1396,12 @@ struct MDCDevice : ImageSource {
     // MARK: - Thumb Render
     
     static constexpr at_block_format_t _CompressedThumbFormat() {
+//        if constexpr (ImageThumb::PixelFormat == MTLPixelFormatASTC_4x4_LDR) {
+//            return at_block_format_astc_4x4_ldr;
+//        } else if constexpr (ImageThumb::PixelFormat == MTLPixelFormatBC7_RGBAUnorm) {
+//            return at_block_format_bc7;
+//        }
+        
 #if defined(__aarch64__)
         return at_block_format_astc_4x4_ldr;
 #elif defined(__x86_64__)
