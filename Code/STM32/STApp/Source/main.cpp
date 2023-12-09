@@ -155,9 +155,6 @@ private:
             
             switch (_Cmd->op) {
             case Op::Reset:             _Reset(*_Cmd);              break;
-            case Op::StatusGet:         _StatusGet(*_Cmd);          break;
-            case Op::BootloaderInvoke:  _BootloaderInvoke(*_Cmd);   break;
-            case Op::LEDSet:            _LEDSet(*_Cmd);             break;
             default:                    USBAcceptCommand(false);    break;
             }
             
@@ -241,38 +238,6 @@ private:
         USB::EndpointsReset();
         // Send status
         USBSendStatus(true);
-    }
-    
-    static void _StatusGet(const STM::Cmd& cmd) {
-        // Accept command
-        USBAcceptCommand(true);
-        
-        // Send status struct
-        alignas(void*) // Aligned to send via USB
-        const STM::Status status = {
-            .header     = STM::StatusHeader,
-            .mspVersion = 0,
-            .mode       = STM::Status::Mode::STMApp,
-        };
-        
-        USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
-    }
-    
-    static void _BootloaderInvoke(const STM::Cmd& cmd) {
-        // Accept command
-        USBAcceptCommand(true);
-        // Perform software reset
-        HAL_NVIC_SystemReset();
-        // Unreachable
-        Assert(false);
-    }
-    
-    static void _LEDSet(const STM::Cmd& cmd) {
-        switch (cmd.arg.LEDSet.idx) {
-        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
-        case 1:  USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
-        default: USBAcceptCommand(false); return;
-        }
     }
 };
 
