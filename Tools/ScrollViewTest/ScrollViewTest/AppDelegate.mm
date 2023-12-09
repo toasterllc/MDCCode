@@ -62,23 +62,35 @@ static CGColorSpaceRef _SRGBColorSpace() {
     
     
     {
+        constexpr size_t ThumbWidth = 512;
+        constexpr size_t ThumbHeight = 288;
+        
         MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-        [desc setTextureType:MTLTextureType2DArray];
+        [desc setTextureType:MTLTextureType2D];
         [desc setPixelFormat:MTLPixelFormatASTC_4x4_LDR];
-        [desc setWidth:512];
-        [desc setHeight:288];
+        [desc setWidth:ThumbWidth];
+        [desc setHeight:ThumbHeight];
         [desc setArrayLength:1];
         
-        id<MTLTexture> txt = [_device newTextureWithDescriptor:desc];
-        assert(txt);
+        _imageTexture = [_device newTextureWithDescriptor:desc];
+        assert(_imageTexture);
+        
+        NSData* data = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"thumb-astc-4x4" ofType:@"bin"]];
+        assert(data);
+        
+        [_imageTexture replaceRegion:MTLRegionMake2D(0,0,ThumbWidth,ThumbHeight) mipmapLevel:0
+            slice:0 withBytes:[data bytes] bytesPerRow:ThumbWidth*4 bytesPerImage:0];
+        
     }
     
-    MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:_device];
+    
+    
+//    MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:_device];
 //    _imageTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"TestImage"] options:nil error:nil];
     
-    _imageTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForResource:@"thumb-astc-4x4" withExtension:@".bin"] options:nil error:nil];
+//    _imageTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForResource:@"thumb-astc-4x4" withExtension:@".bin"] options:nil error:nil];
     
-    assert(_imageTexture);
+//    assert(_imageTexture);
     return self;
 }
 

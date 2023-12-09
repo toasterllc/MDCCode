@@ -10,10 +10,10 @@
 		55290239294924080092B16D /* FixedMetalDocumentLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55290233294924080092B16D /* FixedMetalDocumentLayer.mm */; };
 		5529023A294924080092B16D /* FixedScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55290235294924080092B16D /* FixedScrollView.mm */; };
 		5529023B294924080092B16D /* FixedDocumentView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55290238294924080092B16D /* FixedDocumentView.mm */; };
-		553EAB652B243D8300C2B4C8 /* thumb-astc-4x4.bin in Resources */ = {isa = PBXBuildFile; fileRef = 553EAB642B243D8300C2B4C8 /* thumb-astc-4x4.bin */; };
 		55C15C2127CC566E00C70A8E /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C15C2027CC566E00C70A8E /* Renderer.metal */; };
 		55F1144827C8BFD800C24343 /* ImageView-Shadow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F1144727C8BFD800C24343 /* ImageView-Shadow@2x.png */; };
 		55F1144A27C8C0DA00C24343 /* RenderNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F1144927C8C0DA00C24343 /* RenderNoise.metal */; };
+		55F1AE592B2442CF00D8EBAF /* thumb-astc-4x4.bin in Resources */ = {isa = PBXBuildFile; fileRef = 55F1AE582B2442CF00D8EBAF /* thumb-astc-4x4.bin */; };
 		55F8D0A327C594F800757165 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D0A227C594F800757165 /* AppDelegate.mm */; };
 		55F8D0A527C594FA00757165 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D0A427C594FA00757165 /* Assets.xcassets */; };
 		55F8D0A827C594FA00757165 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D0A627C594FA00757165 /* MainMenu.xib */; };
@@ -31,12 +31,12 @@
 		55290236294924080092B16D /* FixedDocumentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FixedDocumentView.h; path = ../../MDCStudio/Source/FixedDocumentView.h; sourceTree = "<group>"; };
 		55290237294924080092B16D /* FixedScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FixedScrollView.h; path = ../../MDCStudio/Source/FixedScrollView.h; sourceTree = "<group>"; };
 		55290238294924080092B16D /* FixedDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = FixedDocumentView.mm; path = ../../MDCStudio/Source/FixedDocumentView.mm; sourceTree = "<group>"; };
-		553EAB642B243D8300C2B4C8 /* thumb-astc-4x4.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; name = "thumb-astc-4x4.bin"; path = "../../../../../Desktop/astc-compress/thumb-astc-4x4.bin"; sourceTree = "<group>"; };
 		55C15C1F27CC566E00C70A8E /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../../Shared/Renderer.h; sourceTree = "<group>"; };
 		55C15C2027CC566E00C70A8E /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../../Shared/Renderer.metal; sourceTree = "<group>"; };
 		55C15C2227CC567700C70A8E /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../../Shared/Mat.h; sourceTree = "<group>"; };
 		55F1144727C8BFD800C24343 /* ImageView-Shadow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageView-Shadow@2x.png"; sourceTree = "<group>"; };
 		55F1144927C8C0DA00C24343 /* RenderNoise.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderNoise.metal; sourceTree = "<group>"; };
+		55F1AE582B2442CF00D8EBAF /* thumb-astc-4x4.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; name = "thumb-astc-4x4.bin"; path = "../../../../astc-compress/thumb-astc-4x4.bin"; sourceTree = "<group>"; };
 		55F8D09E27C594F800757165 /* ScrollViewTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ScrollViewTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55F8D0A127C594F800757165 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		55F8D0A227C594F800757165 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -86,7 +86,7 @@
 			isa = PBXGroup;
 			children = (
 				55C15C2227CC567700C70A8E /* Mat.h */,
-				553EAB642B243D8300C2B4C8 /* thumb-astc-4x4.bin */,
+				55F1AE582B2442CF00D8EBAF /* thumb-astc-4x4.bin */,
 				55F8D0E927C7C9DA00757165 /* TestImage.jpg */,
 				55C15C1F27CC566E00C70A8E /* Renderer.h */,
 				55C15C2027CC566E00C70A8E /* Renderer.metal */,
@@ -179,7 +179,7 @@
 			files = (
 				55F8D0A527C594FA00757165 /* Assets.xcassets in Resources */,
 				55F1144827C8BFD800C24343 /* ImageView-Shadow@2x.png in Resources */,
-				553EAB652B243D8300C2B4C8 /* thumb-astc-4x4.bin in Resources */,
+				55F1AE592B2442CF00D8EBAF /* thumb-astc-4x4.bin in Resources */,
 				55F8D0A827C594FA00757165 /* MainMenu.xib in Resources */,
 				55F8D0EA27C7C9DA00757165 /* TestImage.jpg in Resources */,
 			);
