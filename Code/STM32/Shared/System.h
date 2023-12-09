@@ -9,7 +9,6 @@
 #include "Code/Shared/MSP.h"
 #include "GPIO.h"
 #include "USB.h"
-#include "I2C.h"
 #include "BoolLock.h"
 #include "USBConfig.h"
 #include "MSP430JTAG.h"
@@ -66,9 +65,6 @@ private:
     #warning TODO: remove stack guards for production
     static constexpr size_t _StackGuardCount = 4;
     
-    using _I2C_SCL  = GPIO::PortB::Pin<8>;
-    using _I2C_SDA  = GPIO::PortB::Pin<9>;
-    
     using _MSP_TEST = GPIO::PortG::Pin<11>;
     using _MSP_RST_ = GPIO::PortG::Pin<12>;
     
@@ -103,8 +99,6 @@ private:
     
     struct _TaskCmdRecv;
     struct _TaskCmdHandle;
-    struct _TaskMSPComms;
-    struct _TaskBatteryStatus;
     
 public:
     // LEDs
@@ -124,14 +118,11 @@ public:
         
         _TaskCmdRecv,                               // T_Tasks: list of tasks
         _TaskCmdHandle,
-        _TaskMSPComms,
-        _TaskBatteryStatus,
         T_Tasks...
     >;
     
     // MSP Spy-bi-wire
     using MSPJTAG = MSP430JTAG<_MSP_TEST, _MSP_RST_, CPUFreqMHz>;
-    using MSPLock = BoolLock<Scheduler, _TaskMSPComms::Lock>;
     
     using USB = T_USB<
         Scheduler,  // T_Scheduler
@@ -150,10 +141,6 @@ public:
         USBSendStatus(s);
     }
     
-    static std::optional<MSP::Resp> MSPSend(const MSP::Cmd& cmd) {
-        return _TaskMSPComms::Send(cmd);
-    }
-    
     #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
     [[noreturn]]
     static void Abort() {
@@ -166,18 +153,7 @@ public:
         }
     }
     
-    static void ISR_I2CEvent() {
-        _I2C::ISR_Event();
-    }
-    
-    static void ISR_I2CError() {
-        _I2C::ISR_Error();
-    }
-    
 private:
-    static constexpr uint32_t _I2CTimeoutMs = 2000;
-    using _I2C = T_I2C<Scheduler, _I2C_SCL, _I2C_SDA, MSP::I2CAddr, _I2CTimeoutMs>;
-    
     struct _TaskCmdRecv {
         static void Run() {
             // Init system
@@ -224,7 +200,6 @@ private:
             switch (_Cmd->op) {
             case Op::Reset:             _Reset(*_Cmd);              break;
             case Op::StatusGet:         _StatusGet(*_Cmd);          break;
-            case Op::BatteryStatusGet:  _BatteryStatusGet(*_Cmd);   break;
             case Op::BootloaderInvoke:  _BootloaderInvoke(*_Cmd);   break;
             case Op::LEDSet:            _LEDSet(*_Cmd);             break;
             default:                    T_CmdHandle(*_Cmd);         break;
@@ -239,167 +214,6 @@ private:
         [[gnu::section(".stack._TaskCmdHandle")]]
         alignas(void*)
         static inline uint8_t Stack[1024];
-    };
-    
-    struct _TaskMSPComms {
-        static inline bool Lock = false;
-        
-        static void Run() {
-            for (;;) {
-                // Wait until we get a command or for the deadline to pass
-                Scheduler::Wait([] { return _Cmd.state==_State::Cmd; });
-                // Send command and return response to the caller
-                _Cmd.resp = _Send(_Cmd.cmd);
-                // Update our state
-                _Cmd.state = _State::Resp;
-                // Give Send() an opportunity to consume the response.
-                // We reset our state to Idle, instead to have the task calling Send() do it after it
-                // consumes the response, so that we can recover if the task calling Send() is stopped
-                // and therefore will never consume the response.
-                Scheduler::Yield();
-                // Reset our state
-                _Cmd.state = _State::Idle;
-            }
-        }
-        
-        static std::optional<MSP::Resp> Send(const MSP::Cmd& cmd) {
-            // Wait until we're idle
-            Scheduler::Wait([] { return _Cmd.state==_State::Idle; });
-            // Supply the I2C command to be sent
-            _Cmd.cmd = cmd;
-            _Cmd.state = _State::Cmd;
-            // Wait until we get a response
-            Scheduler::Wait([] { return _Cmd.state==_State::Resp; });
-            return _Cmd.resp;
-        }
-        
-        static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
-            // Acquire mutex while we talk to MSP via I2C, to prevent MSPJTAG from
-            // being used until we're done
-            MSPLock lock(MSPLock::Lock);
-            
-            MSP::Resp resp;
-            const auto status = _I2C::Send(cmd, resp);
-            switch (status) {
-            case _I2C::Status::OK:      return resp;
-            case _I2C::Status::NAK:     return std::nullopt;
-            case _I2C::Status::Error:   return std::nullopt;
-            }
-            Assert(false);
-        }
-        
-        enum class _State {
-            Idle,
-            Cmd,
-            Resp,
-        };
-        
-        static inline struct {
-            _State state = _State::Idle;
-            MSP::Cmd cmd;
-            std::optional<MSP::Resp> resp;
-        } _Cmd;
-        
-        // Task stack
-        [[gnu::section(".stack._TaskMSPComms")]]
-        alignas(void*)
-        static inline uint8_t Stack[512];
-    };
-    
-    struct _TaskBatteryStatus {
-        static void Run() {
-            constexpr uint32_t UpdateIntervalMs = 2000;
-            constexpr uint32_t ResampleBatteryIntervalMs = 150000;
-            constexpr uint32_t ResampleBatteryIntervalCount = ResampleBatteryIntervalMs / UpdateIntervalMs;
-            constexpr auto UpdateInterval = Scheduler::template Ms<UpdateIntervalMs>;
-            
-            // Wait until we detect a battery
-            for (;;) {
-                _BatteryStatus = _BatteryStatusGet();
-                if (_BatteryStatus.level != MSP::BatteryLevelMvInvalid) break;
-                Scheduler::Sleep(UpdateInterval);
-            }
-            
-            // Turn on battery charger
-            _BAT_CHRG_EN_::Write(0);
-            Scheduler::Sleep(Scheduler::template Ms<10>);
-            
-            // If we're already displaying a charge status, wait a bit for battery
-            // charging to stabilize.
-            //
-            // This delay is necessary to workaround the fact that our _BAT_CHRG_EN_
-            // net glitches when loading STMApp (because the STM32 GPIO configuration
-            // gets reset when the chip resets), causing charging to be momentarily
-            // interrupted, which would cause the LED to transition from
-            // green->red->green, if not for this workaround.
-            if (_BatteryStatus.chargeStatus != MSP::ChargeStatus::Invalid) {
-                Scheduler::Sleep(Scheduler::template Ms<10000>);
-            }
-            
-            uint32_t chargeUnderwayCount = 0;
-            MSP::BatteryLevelMv batteryLevel = _BatteryStatus.level;
-            for (;;) {
-                const MSP::ChargeStatus chargeStatus = _ChargeStatusRead();
-                if (chargeStatus == MSP::ChargeStatus::Underway) {
-                    chargeUnderwayCount++;
-                    if (chargeUnderwayCount >= ResampleBatteryIntervalCount) {
-                        chargeUnderwayCount = 0;
-                        
-                        // Temporarily disable the battery chager while we sample the battery
-                        _BAT_CHRG_EN_::Write(1);
-                        Scheduler::Sleep(Scheduler::template Ms<1000>);
-                        // Sample battery
-                        batteryLevel = _BatteryStatusGet().level;
-                        // Re-enable the battery charger
-                        _BAT_CHRG_EN_::Write(0);
-                    }
-                } else {
-                    batteryLevel = _BatteryStatusGet().level;
-                    chargeUnderwayCount = 0;
-                }
-                
-                _BatteryStatus = {
-                    .chargeStatus = chargeStatus,
-                    .level = batteryLevel,
-                };
-                
-                // Set the charge status LED
-                _ChargeStatusSet(_BatteryStatus.chargeStatus);
-                Scheduler::Sleep(UpdateInterval);
-            }
-        }
-        
-        static const STM::BatteryStatus& BatteryStatus() {
-            return _BatteryStatus;
-        }
-        
-        static void _ChargeStatusSet(MSP::ChargeStatus status) {
-            const MSP::Cmd cmd = {
-                .op = MSP::Cmd::Op::ChargeStatusSet,
-                .arg = { .ChargeStatusSet = { .status = status }, },
-            };
-            MSPSend(cmd);
-        }
-        
-        static MSP::ChargeStatus _ChargeStatusRead() {
-            return (_BAT_CHRG_STAT::Read() ? MSP::ChargeStatus::Complete : MSP::ChargeStatus::Underway);
-        }
-        
-        static STM::BatteryStatus _BatteryStatusGet() {
-            const auto resp = MSPSend({ .op = MSP::Cmd::Op::BatteryStatusGet });
-            if (!resp || !resp->ok) return {};
-            return {
-                .chargeStatus = resp->arg.BatteryStatusGet.chargeStatus,
-                .level = resp->arg.BatteryStatusGet.level,
-            };
-        }
-        
-        static inline STM::BatteryStatus _BatteryStatus = {};
-        
-        // Task stack
-        [[gnu::section(".stack._TaskBatteryStatus")]]
-        alignas(void*)
-        static inline uint8_t Stack[512];
     };
     
     static void _Init() {
@@ -419,9 +233,6 @@ private:
             _BAT_CHRG_EN_,
             _BAT_CHRG_STAT,
             
-            typename _I2C::Pin::SCL,
-            typename _I2C::Pin::SDA,
-            
             T_Pins...
         >();
         
@@ -439,14 +250,8 @@ private:
         // Configure MSP
         MSPJTAG::Init();
         
-        // Configure I2C
-        _I2C::Init();
-        
         // Configure USB
         USB::Init();
-        
-        // Start _TaskMSPComms task
-        Scheduler::template Start<_TaskMSPComms, _TaskBatteryStatus>();
     }
     
     static void _ClockInit() {
@@ -484,20 +289,6 @@ private:
             HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_6);
             Assert(hr == HAL_OK);
         }
-        
-        {
-            RCC_PeriphCLKInitTypeDef cfg = {};
-            cfg.PeriphClockSelection = RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_CLK48;
-            cfg.PLLSAI.PLLSAIN = 96;
-            cfg.PLLSAI.PLLSAIQ = 2;
-            cfg.PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV4;
-            cfg.PLLSAIDivQ = 1;
-            cfg.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
-            cfg.Clk48ClockSelection = RCC_CLK48SOURCE_PLLSAIP;
-            
-            HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);
-            Assert(hr == HAL_OK);
-        }
     }
     
     static void _Reset(const STM::Cmd& cmd) {
@@ -509,22 +300,6 @@ private:
         USBSendStatus(true);
     }
     
-    static MSP::Version _MSPVersionGet() {
-        const MSP::Cmd mspCmd = {
-            .op = MSP::Cmd::Op::StateRead,
-            .arg = { .StateRead = { .off = 0 } },
-        };
-        
-        const auto mspResp = MSPSend(mspCmd);
-        if (!mspResp || !mspResp->ok) return MSP::VersionInvalid;
-        
-        MSP::State::Header header;
-        // Make sure that we can read the header in a single transaction
-        static_assert(sizeof(mspResp->arg.StateRead.data) >= sizeof(header));
-        memcpy(&header, mspResp->arg.StateRead.data, sizeof(header));
-        return header.version;
-    }
-    
     static void _StatusGet(const STM::Cmd& cmd) {
         // Accept command
         USBAcceptCommand(true);
@@ -533,19 +308,10 @@ private:
         alignas(void*) // Aligned to send via USB
         const STM::Status status = {
             .header     = STM::StatusHeader,
-            .mspVersion = _MSPVersionGet(),
+            .mspVersion = 0,
             .mode       = T_Mode,
         };
         
-        USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
-    }
-    
-    static void _BatteryStatusGet(const STM::Cmd& cmd) {
-        // Accept command
-        USBAcceptCommand(true);
-        
-        alignas(void*) // Aligned to send via USB
-        const STM::BatteryStatus status = _TaskBatteryStatus::BatteryStatus();
         USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
     }
     

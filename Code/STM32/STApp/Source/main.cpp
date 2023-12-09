@@ -41,14 +41,6 @@ extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
     _USB::ISR();
 }
 
-extern "C" [[gnu::section(".isr")]] void ISR_I2C1_EV() {
-    _System::ISR_I2CEvent();
-}
-
-extern "C" [[gnu::section(".isr")]] void ISR_I2C1_ER() {
-    _System::ISR_I2CError();
-}
-
 // MARK: - Abort
 
 extern "C"
