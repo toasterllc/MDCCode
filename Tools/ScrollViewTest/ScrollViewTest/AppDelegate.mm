@@ -65,18 +65,25 @@ static CGColorSpaceRef _SRGBColorSpace() {
         constexpr size_t ThumbWidth = 512;
         constexpr size_t ThumbHeight = 288;
         
+//        NSData* data = [NSData dataWithContentsOfFile:[[NSBundle mainBundle]
+//            pathForResource:@"thumb-astc-4x4" ofType:@"bin"]];
+//        assert(data);
+//        MTLPixelFormat fmt = MTLPixelFormatASTC_4x4_LDR;
+        
+        NSData* data = [NSData dataWithContentsOfFile:[[NSBundle mainBundle]
+            pathForResource:@"thumb-bc7" ofType:@"bin"]];
+        assert(data);
+        MTLPixelFormat fmt = MTLPixelFormatBC7_RGBAUnorm;
+        
         MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
         [desc setTextureType:MTLTextureType2D];
-        [desc setPixelFormat:MTLPixelFormatASTC_4x4_LDR];
+        [desc setPixelFormat:fmt];
         [desc setWidth:ThumbWidth];
         [desc setHeight:ThumbHeight];
         [desc setArrayLength:1];
         
         _imageTexture = [_device newTextureWithDescriptor:desc];
         assert(_imageTexture);
-        
-        NSData* data = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"thumb-astc-4x4" ofType:@"bin"]];
-        assert(data);
         
         [_imageTexture replaceRegion:MTLRegionMake2D(0,0,ThumbWidth,ThumbHeight) mipmapLevel:0
             slice:0 withBytes:[data bytes] bytesPerRow:ThumbWidth*4 bytesPerImage:0];
