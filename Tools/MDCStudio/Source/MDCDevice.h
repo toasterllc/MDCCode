@@ -31,6 +31,8 @@ namespace MDCStudio {
 
 struct MDCDevice : ImageSource {
     using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
+    static_assert(_ThumbCompressor::OutputLen() == 147456);
+    
     using _SendRight = Toastbox::SendRight;
     using _USBDevice = Toastbox::USBDevice;
     using _USBDevicePtr = std::unique_ptr<Toastbox::USBDevice>;
@@ -591,7 +593,7 @@ struct MDCDevice : ImageSource {
         return true;
     }
     
-    static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
+    static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4;
     using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
     
     // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
