@@ -13,6 +13,10 @@
 		553031FF27BC45A100BEFFEA /* Mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FB27BC45A100BEFFEA /* Mask.png */; };
 		5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */; };
 		5530DC3D29DCDA50005FEC0A /* DeviceSettingsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */; };
+		553EAB6F2B2448F300C2B4C8 /* thumb-raw.bin in Resources */ = {isa = PBXBuildFile; fileRef = 553EAB6B2B2448F200C2B4C8 /* thumb-raw.bin */; };
+		553EAB702B2448F300C2B4C8 /* thumb-bc7.bin in Resources */ = {isa = PBXBuildFile; fileRef = 553EAB6D2B2448F300C2B4C8 /* thumb-bc7.bin */; };
+		553EAB712B2448F300C2B4C8 /* thumb-astc-4x4.bin in Resources */ = {isa = PBXBuildFile; fileRef = 553EAB6E2B2448F300C2B4C8 /* thumb-astc-4x4.bin */; };
+		553EAB732B24499200C2B4C8 /* libate.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 553EAB722B24499200C2B4C8 /* libate.tbd */; };
 		553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */; };
 		553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */; };
 		553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5542AD4953400157484 /* BatteryLifePlotView.mm */; };
@@ -143,6 +147,10 @@
 		5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsView.mm; sourceTree = "<group>"; };
 		5530DC3A29DCDA3E005FEC0A /* DeviceSettingsView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceSettingsView.h; sourceTree = "<group>"; };
 		5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceSettingsView.xib; sourceTree = "<group>"; };
+		553EAB6B2B2448F200C2B4C8 /* thumb-raw.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "thumb-raw.bin"; sourceTree = "<group>"; };
+		553EAB6D2B2448F300C2B4C8 /* thumb-bc7.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "thumb-bc7.bin"; sourceTree = "<group>"; };
+		553EAB6E2B2448F300C2B4C8 /* thumb-astc-4x4.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "thumb-astc-4x4.bin"; sourceTree = "<group>"; };
+		553EAB722B24499200C2B4C8 /* libate.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libate.tbd; path = usr/lib/libate.tbd; sourceTree = SDKROOT; };
 		553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-BestIcon.pdf"; sourceTree = "<group>"; };
 		553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-WorstIcon.pdf"; sourceTree = "<group>"; };
 		553EF5542AD4953400157484 /* BatteryLifePlotView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifePlotView.mm; sourceTree = "<group>"; };
@@ -379,6 +387,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				553EAB732B24499200C2B4C8 /* libate.tbd in Frameworks */,
 				55496F5B278CFCE200BCA739 /* Cocoa.framework in Frameworks */,
 				55A36AB827A35ABD00FD0181 /* IOKit.framework in Frameworks */,
 				55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */,
@@ -624,6 +633,9 @@
 		55496F39278CFC0400BCA739 = {
 			isa = PBXGroup;
 			children = (
+				553EAB6E2B2448F300C2B4C8 /* thumb-astc-4x4.bin */,
+				553EAB6D2B2448F300C2B4C8 /* thumb-bc7.bin */,
+				553EAB6B2B2448F200C2B4C8 /* thumb-raw.bin */,
 				55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */,
 				5544AB4D27B5E3DF006AB473 /* Code */,
 				5544A7F127B5E3B3006AB473 /* Tools */,
@@ -711,6 +723,7 @@
 		55496F59278CFCE200BCA739 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				553EAB722B24499200C2B4C8 /* libate.tbd */,
 				55D4AAA227B1D3F20052EFEE /* Accelerate.framework */,
 				55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */,
 				55A36AB727A35ABD00FD0181 /* IOKit.framework */,
@@ -984,6 +997,7 @@
 				553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */,
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
 				557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */,
+				553EAB702B2448F300C2B4C8 /* thumb-bc7.bin in Resources */,
 				558E20092AC4B608001E743A /* DeviceImageGridHeaderView.xib in Resources */,
 				55838C932AD0BE7200D4B024 /* SourceList-Battery-Error.pdf in Resources */,
 				553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */,
@@ -1006,6 +1020,7 @@
 				55D30A4129A96D670080BCBD /* ImageCornerButton-0.pdf in Resources */,
 				55C6A2852AE6F74E008149AF /* FactoryResetConfirmationAlert.xib in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
+				553EAB6F2B2448F300C2B4C8 /* thumb-raw.bin in Resources */,
 				55838CC72AD0BEAA00D4B024 /* Inspector-Clear.pdf in Resources */,
 				55F8883929D9EF1C0075593F /* CaptureTriggers-Icon-Time-Large.pdf in Resources */,
 				55838C9E2AD0BE7200D4B024 /* SourceList-Battery-Charging-60.pdf in Resources */,
@@ -1039,6 +1054,7 @@
 				55C6A27A2AE44599008149AF /* ImageExportProgressDialog.xib in Resources */,
 				55838CC12AD0BEAA00D4B024 /* Inspector-WhiteBalance-Min.pdf in Resources */,
 				55838C982AD0BE7200D4B024 /* SourceList-Battery-Charging-80.pdf in Resources */,
+				553EAB712B2448F300C2B4C8 /* thumb-astc-4x4.bin in Resources */,
 				55F8D01027BDF26400757165 /* Shadow.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1150,7 +1166,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"HAS_REMOTE_API=0",
 					"USE_OS_TZDB=1",
