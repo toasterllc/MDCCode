@@ -58,10 +58,6 @@ public:
         // We don't know what state the device was left in, so reset its state
         reset();
         printf("[MDCUSBDevice] reset END\n");
-        
-        _serial = _dev->serialNumber();
-        const STM::Status status = statusGet();
-        _mode = status.mode;
     }
     
     // Copy
