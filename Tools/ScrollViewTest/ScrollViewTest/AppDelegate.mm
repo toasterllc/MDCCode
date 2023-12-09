@@ -59,8 +59,25 @@ static CGColorSpaceRef _SRGBColorSpace() {
     _library = [_device newDefaultLibrary];
     _commandQueue = [_device newCommandQueue];
     
+    
+    
+    {
+        MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
+        [desc setTextureType:MTLTextureType2DArray];
+        [desc setPixelFormat:MTLPixelFormatASTC_4x4_LDR];
+        [desc setWidth:512];
+        [desc setHeight:288];
+        [desc setArrayLength:1];
+        
+        id<MTLTexture> txt = [_device newTextureWithDescriptor:desc];
+        assert(txt);
+    }
+    
     MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:_device];
-    _imageTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"TestImage"] options:nil error:nil];
+//    _imageTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"TestImage"] options:nil error:nil];
+    
+    _imageTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForResource:@"thumb-astc-4x4" withExtension:@".bin"] options:nil error:nil];
+    
     assert(_imageTexture);
     return self;
 }
