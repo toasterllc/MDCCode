@@ -87,6 +87,8 @@ uint8_t USBD_HS_BOSDesc[USB_SIZ_BOS_DESC] __attribute__((aligned(4))) =
 };
 #endif
 
+#define USBD_MAX_STR_DESC_SIZ     512U
+
 // USB lang indentifier descriptor
 uint8_t USBD_LangIDDesc[USB_LEN_LANGID_STR_DESC] __attribute__((aligned(4))) =
 {
@@ -107,7 +109,7 @@ uint8_t USBD_StringSerial[USB_SIZ_STRING_SERIAL] __attribute__((aligned(4))) = {
 // Return the device descriptor
 uint8_t * USBD_HS_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  UNUSED(speed);
+//  UNUSED(speed);
   *length = sizeof(USBD_HS_DeviceDesc);
   return USBD_HS_DeviceDesc;
 }
@@ -115,7 +117,7 @@ uint8_t * USBD_HS_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 // Return the LangID string descriptor
 uint8_t * USBD_HS_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  UNUSED(speed);
+//  UNUSED(speed);
   *length = sizeof(USBD_LangIDDesc);
   return USBD_LangIDDesc;
 }
@@ -137,7 +139,7 @@ uint8_t * USBD_HS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length
 // Return the manufacturer string descriptor
 uint8_t * USBD_HS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  UNUSED(speed);
+//  UNUSED(speed);
   USBD_GetString((uint8_t *)USBD_MANUFACTURER_STRING, USBD_StrDesc, length);
   return USBD_StrDesc;
 }
@@ -145,7 +147,7 @@ uint8_t * USBD_HS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *l
 // Return the serial number string descriptor
 uint8_t * USBD_HS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  UNUSED(speed);
+//  UNUSED(speed);
   *length = USB_SIZ_STRING_SERIAL;
 
   // Update the serial number string descriptor with the data from the unique ID
@@ -185,7 +187,7 @@ uint8_t * USBD_HS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *leng
 // Return the BOS descriptor
 uint8_t * USBD_HS_USR_BOSDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
-  UNUSED(speed);
+//  UNUSED(speed);
   *length = sizeof(USBD_HS_BOSDesc);
   return (uint8_t*)USBD_HS_BOSDesc;
 }

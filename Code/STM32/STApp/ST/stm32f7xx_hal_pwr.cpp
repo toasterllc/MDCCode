@@ -11,16 +11,15 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
-  */ 
+  */
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
@@ -56,7 +55,7 @@
 /** @defgroup PWR_ENABLE_WUP_Mask PWR Enable WUP Mask
   * @{
   */  
-#define PWR_EWUP_MASK                          ((uint32_t)0x00003F00)
+#define  PWR_EWUP_MASK                          ((uint32_t)0x00003F00)
 /**
   * @}
   */
@@ -502,10 +501,10 @@ void HAL_PWR_EnterSTANDBYMode(void)
 
 /**
   * @brief This function handles the PWR PVD interrupt request.
-  * @note This API should be called under the ISR_PVD().
+  * @note This API should be called under the PVD_IRQHandler().
   * @retval None
   */
-void ISR_HAL_PWR_PVD(void)
+void HAL_PWR_PVD_IRQHandler(void)
 {
   /* Check PWR Exti flag */
   if(__HAL_PWR_PVD_EXTI_GET_FLAG() != RESET)
@@ -596,4 +595,3 @@ void HAL_PWR_DisableSEVOnPend(void)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

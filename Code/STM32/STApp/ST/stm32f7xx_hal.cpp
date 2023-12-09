@@ -5,6 +5,17 @@
   * @brief   HAL module driver.
   *          This is the common part of the HAL initialization
   *
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
   @verbatim
   ==============================================================================
                      ##### How to use this driver #####
@@ -18,17 +29,6 @@
          (+) Services HAL APIs
 
   @endverbatim
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
   ******************************************************************************
   */ 
 
@@ -50,11 +50,11 @@
   * @{
   */
 /**
- * @brief STM32F7xx HAL Driver version number V1.2.8
+ * @brief STM32F7xx HAL Driver version number V1.3.0
    */
 #define __STM32F7xx_HAL_VERSION_MAIN   (0x01) /*!< [31:24] main version */
-#define __STM32F7xx_HAL_VERSION_SUB1   (0x02) /*!< [23:16] sub1 version */
-#define __STM32F7xx_HAL_VERSION_SUB2   (0x08) /*!< [15:8]  sub2 version */
+#define __STM32F7xx_HAL_VERSION_SUB1   (0x03) /*!< [23:16] sub1 version */
+#define __STM32F7xx_HAL_VERSION_SUB2   (0x00) /*!< [15:8]  sub2 version */
 #define __STM32F7xx_HAL_VERSION_RC     (0x00) /*!< [7:0]  release candidate */ 
 #define __STM32F7xx_HAL_VERSION         ((__STM32F7xx_HAL_VERSION_MAIN << 24)\
                                         |(__STM32F7xx_HAL_VERSION_SUB1 << 16)\
@@ -118,9 +118,6 @@ HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_DEFAULT;  /* 1KHz */
   * @{
   */
 
-static void HAL_MspInit();
-static void HAL_MspDeInit();
-
 /**
   * @brief  This function is used to initialize the HAL Library; it must be the first 
   *         instruction to be executed in the main program (before to call any other
@@ -141,9 +138,9 @@ static void HAL_MspDeInit();
 HAL_StatusTypeDef HAL_Init(void)
 {
   /* Configure Instruction cache through ART accelerator */ 
-#if (ART_ACCLERATOR_ENABLE != 0)
-   __HAL_FLASH_ART_ENABLE();
-#endif /* ART_ACCLERATOR_ENABLE */
+#if (ART_ACCELERATOR_ENABLE != 0)
+  __HAL_FLASH_ART_ENABLE();
+#endif /* ART_ACCELERATOR_ENABLE */
 
   /* Configure Flash prefetch */
 #if (PREFETCH_ENABLE != 0U)
@@ -155,10 +152,10 @@ HAL_StatusTypeDef HAL_Init(void)
 
   /* Use systick as time base source and configure 1ms tick (default clock after Reset is HSI) */
   HAL_InitTick(TICK_INT_PRIORITY);
-  
+
   /* Init the low level hardware */
   HAL_MspInit();
-  
+
   /* Return function status */
   return HAL_OK;
 }
@@ -188,7 +185,7 @@ HAL_StatusTypeDef HAL_DeInit(void)
 
   /* De-Init the low level hardware */
   HAL_MspDeInit();
-    
+
   /* Return function status */
   return HAL_OK;
 }
@@ -197,16 +194,22 @@ HAL_StatusTypeDef HAL_DeInit(void)
   * @brief  Initialize the MSP.
   * @retval None
   */
-static void HAL_MspInit() {
-    __HAL_RCC_PWR_CLK_ENABLE();
-    __HAL_RCC_SYSCFG_CLK_ENABLE();
+__weak void HAL_MspInit(void)
+{
+  /* NOTE : This function should not be modified, when the callback is needed,
+            the HAL_MspInit could be implemented in the user file
+   */
 }
 
 /**
   * @brief  DeInitializes the MSP.
   * @retval None
   */
-static void HAL_MspDeInit() {
+__weak void HAL_MspDeInit(void)
+{
+  /* NOTE : This function should not be modified, when the callback is needed,
+            the HAL_MspDeInit could be implemented in the user file
+   */ 
 }
 
 /**
@@ -415,7 +418,7 @@ __weak void HAL_ResumeTick(void)
   */
 uint32_t HAL_GetHalVersion(void)
 {
- return __STM32F7xx_HAL_VERSION;
+  return __STM32F7xx_HAL_VERSION;
 }
 
 /**
@@ -442,7 +445,7 @@ uint32_t HAL_GetDEVID(void)
   */
 uint32_t HAL_GetUIDw0(void)
 {
-   return(READ_REG(*((uint32_t *)UID_BASE)));
+  return(READ_REG(*((uint32_t *)UID_BASE)));
 }
 
 /**
@@ -451,7 +454,7 @@ uint32_t HAL_GetUIDw0(void)
   */
 uint32_t HAL_GetUIDw1(void)
 {
-   return(READ_REG(*((uint32_t *)(UID_BASE + 4U))));
+  return(READ_REG(*((uint32_t *)(UID_BASE + 4U))));
 }
 
 /**
@@ -460,7 +463,7 @@ uint32_t HAL_GetUIDw1(void)
   */
 uint32_t HAL_GetUIDw2(void)
 {
-   return(READ_REG(*((uint32_t *)(UID_BASE + 8U))));
+  return(READ_REG(*((uint32_t *)(UID_BASE + 8U))));
 }
 
 /**
@@ -562,7 +565,6 @@ void HAL_EnableFMCMemorySwapping(void)
   */
 void HAL_DisableFMCMemorySwapping(void)
 {
-
   SYSCFG->MEMRMP &= (uint32_t)~((uint32_t)SYSCFG_MEMRMP_SWP_FMC);
 }
 
@@ -614,4 +616,4 @@ void HAL_DisableMemorySwappingBank(void)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+

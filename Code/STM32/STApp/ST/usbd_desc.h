@@ -1,5 +1,6 @@
 #pragma once
 #include "usbd_def.h"
+#include "stm32f730xx.h"
 
 #define DEVICE_ID1  (UID_BASE)
 #define DEVICE_ID2  (UID_BASE + 0x4)
