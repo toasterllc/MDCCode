@@ -84,17 +84,10 @@ public:
         // We're not using _sendCmd() because the Reset command is special and doesn't respond with the typical
         // 'command-accepted' status on the DataIn endpoint, which _sendCmd() expects. (The Reset command
         // doesn't send this status because the state of endpoint is assumed broken hence the need to reset.)
-        printf("[MDCUSBDevice] reset vendor request start\n");
+        printf("[MDCUSBDevice] reset vendor request START\n");
         const STM::Cmd cmd = { .op = STM::Op::Reset };
         _dev->vendorRequestOut(0, cmd);
-        printf("[MDCUSBDevice] reset vendor request end\n");
-        
-        // Reset endpoints
-        const std::vector<uint8_t> eps = _dev->endpoints();
-        for (const uint8_t ep : eps) {
-            _endpointReset(ep);
-        }
-        _checkStatus("Reset command failed");
+        printf("[MDCUSBDevice] reset vendor request END\n");
     }
     
     STM::Status statusGet() {
@@ -817,7 +810,10 @@ private:
                 
             } catch (...) {
                 // We failed, so if this is the last attempt, throw the exception
-                if (i == TryCount-1) throw;
+                if (i == TryCount-1) {
+                    printf("MEOWMIX\n");
+                    throw;
+                }
             }
         }
         _checkStatus("command rejected");
@@ -827,7 +823,9 @@ private:
         // Wait for completion and throw on failure
         bool s = false;
         try {
+            printf("AAA\n");
             _dev->read(STM::Endpoint::DataIn, s);
+            printf("BBB\n");
         } catch (const std::exception& e) {
             throw Toastbox::RuntimeError("%s: failed to read status", e.what());
         }
