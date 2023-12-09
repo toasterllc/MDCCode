@@ -59,7 +59,6 @@ private:
     }
     
     struct _TaskCmdRecv;
-    struct _TaskCmdHandle;
     
 public:
     // LEDs
@@ -77,8 +76,7 @@ public:
         _StackInterrupt,                            // T_StackInterrupt: stack used for handling interrupts;
                                                     //                   Scheduler only uses this to detect stack overflow
         
-        _TaskCmdRecv,                               // T_Tasks: list of tasks
-        _TaskCmdHandle
+        _TaskCmdRecv                                // T_Tasks: list of tasks
     >;
     
     using USB = T_USB<
@@ -86,17 +84,6 @@ public:
         true,       // T_DMAEn
         USBConfig   // T_Config
     >;
-    
-    static void USBSendStatus(bool s) {
-        alignas(void*) // Aligned to send via USB
-        bool status = s;
-        
-        USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
-    }
-    
-    static void USBAcceptCommand(bool s) {
-        USBSendStatus(s);
-    }
     
     [[noreturn]]
     static void Abort() {
@@ -125,48 +112,12 @@ private:
             for (;;) {
                 STM::Cmd cmd;
                 USB::CmdRecv(cmd);
-                
-                // Dispatch the command to our handler task
-                const bool accepted = _TaskCmdHandle::Handle(cmd);
-                // Tell the host whether we accepted the command
-                USB::CmdAccept(accepted);
+                USB::CmdAccept(true);
             }
         }
         
         // Task stack
         static constexpr auto& Stack = _TaskCmdRecvStack;
-    };
-    
-    struct _TaskCmdHandle {
-        static bool Handle(const STM::Cmd& c) {
-            using namespace STM;
-            // Short-circuit if we already have a command, and the new command isn't a Reset command.
-            // We specifically allow Reset commands to interrupt whatever command is currently
-            // underway, since Reset commands are meant to recover from a broken state and
-            // _TaskCmdHandle might be hung.
-            if (_Cmd && c.op!=Op::Reset) return false;
-            _Cmd = c;
-            Scheduler::template Start<_TaskCmdHandle>(Run);
-            return true;
-        }
-        
-        static void Run() {
-            using namespace STM;
-            
-            switch (_Cmd->op) {
-            case Op::Reset:             _Reset(*_Cmd);              break;
-            default:                    USBAcceptCommand(false);    break;
-            }
-            
-            _Cmd = std::nullopt;
-        }
-        
-        static inline std::optional<STM::Cmd> _Cmd;
-        
-        // Task stack
-        [[gnu::section(".stack._TaskCmdHandle")]]
-        alignas(void*)
-        static inline uint8_t Stack[1024];
     };
     
     static void _Init() {
@@ -231,13 +182,6 @@ private:
             HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_6);
             Assert(hr == HAL_OK);
         }
-    }
-    
-    static void _Reset(const STM::Cmd& cmd) {
-        // Reset USB endpoints
-        USB::EndpointsReset();
-        // Send status
-        USBSendStatus(true);
     }
 };
 
