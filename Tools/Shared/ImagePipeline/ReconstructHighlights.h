@@ -57,9 +57,6 @@ public:
         // `Scale` balances the raw colors from the sensor for the purpose
         // of highlight reconstruction (empirically determined)
         const simd::float3 Scale = { 1.179, 0.649, 1.180 };
-        // `Thresh` is the threshold at which pixels are considered for
-        // highlight reconstruction (empirically determined)
-        const float Thresh = 0.774;
         const double illumMin = std::min(std::min(illum[0], illum[1]), illum[2]);
         const Mat<double,3,1> illumMin1 = illum/illumMin;
         const simd::float3 simdIllumMin1 = {(float)illumMin1[0], (float)illumMin1[1], (float)illumMin1[2]};

@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <optional>
+#import <functional>
 #import "ImageExporter/ImageExporterTypes.h"
 
 namespace MDCStudio::ImageExportSaveDialog {

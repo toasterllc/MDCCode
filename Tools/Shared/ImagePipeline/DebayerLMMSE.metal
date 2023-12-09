@@ -60,7 +60,6 @@ fragment float NoiseEst(
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const sampler s;
     const CFAColor c = cfaDesc.color(pos);
     const float r = Sample::R(raw, pos);
     const float f = Sample::R(filtered, pos);
