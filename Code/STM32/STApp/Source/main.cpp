@@ -12,7 +12,7 @@
 #include "USBConfig.h"
 using namespace STM;
 
-#define _StackInterruptSize 1024
+#define _StackInterruptSize 2048
 
 [[gnu::section(".stack.interrupt")]]
 alignas(void*)
@@ -21,7 +21,7 @@ uint8_t _StackInterrupt[_StackInterruptSize];
 asm(".global _StartupStackInterrupt");
 asm(".equ _StartupStackInterrupt, _StackInterrupt+" Stringify(_StackInterruptSize));
 
-#define _TaskCmdRecvStackSize 512
+#define _TaskCmdRecvStackSize 2048
 
 [[gnu::section(".stack._TaskCmdRecv")]]
 alignas(void*)
@@ -37,8 +37,6 @@ asm(".equ _StartupStack, _TaskCmdRecvStack+" Stringify(_TaskCmdRecvStackSize));
 template<
 STM::Status::Mode T_Mode,
 bool T_USBDMAEn,
-auto T_CmdHandle,
-auto T_Reset,
 typename...
 >
 class System;
@@ -46,12 +44,10 @@ class System;
 template<
 STM::Status::Mode T_Mode,
 bool T_USBDMAEn,
-auto T_CmdHandle,
-auto T_Reset,
 typename... T_Pins,
 typename... T_Tasks
 >
-class System<T_Mode, T_USBDMAEn, T_CmdHandle, T_Reset, std::tuple<T_Pins...>, std::tuple<T_Tasks...>> {
+class System<T_Mode, T_USBDMAEn, std::tuple<T_Pins...>, std::tuple<T_Tasks...>> {
 public:
     static constexpr uint8_t CPUFreqMHz = 128;
     using SysTickPeriod = std::ratio<1,1000>;
@@ -179,7 +175,7 @@ private:
             case Op::StatusGet:         _StatusGet(*_Cmd);          break;
             case Op::BootloaderInvoke:  _BootloaderInvoke(*_Cmd);   break;
             case Op::LEDSet:            _LEDSet(*_Cmd);             break;
-            default:                    T_CmdHandle(*_Cmd);         break;
+            default:                    USBAcceptCommand(false);    break;
             }
             
             _Cmd = std::nullopt;
@@ -262,8 +258,6 @@ private:
     static void _Reset(const STM::Cmd& cmd) {
         // Reset USB endpoints
         USB::EndpointsReset();
-        // Call supplied T_Reset function
-        T_Reset();
         // Send status
         USBSendStatus(true);
     }
@@ -312,14 +306,9 @@ void Toastbox::IntState::Set(bool en) {
     else __disable_irq();
 }
 
-static void _Reset();
-static void _CmdHandle(const STM::Cmd& cmd);
-
 using _System = System<
     STM::Status::Mode::STMApp,  // T_Mode
     true,                       // T_USBDMAEn
-    _CmdHandle,                 // T_CmdHandle
-    _Reset,                     // T_Reset
     
     // T_Pins
     std::tuple<>,
@@ -330,12 +319,6 @@ using _System = System<
 
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
-
-static void _Reset() {
-}
-
-static void _CmdHandle(const STM::Cmd& cmd) {
-}
 
 // MARK: - ISRs
 
