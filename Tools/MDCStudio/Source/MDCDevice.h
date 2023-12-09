@@ -623,7 +623,7 @@ struct MDCDevice : ImageSource {
                 .colorMatrix            = ccm.matrix,
                 
                 .defringe               = { .en = false, },
-                .reconstructHighlights  = { .en = false, },
+                .reconstructHighlights  = { .en = opts.reconstructHighlights, },
                 .debayerLMMSE           = { .applyGamma = true, },
                 
                 .exposure               = (float)opts.exposure,

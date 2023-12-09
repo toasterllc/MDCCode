@@ -31,7 +31,7 @@ struct [[gnu::packed]] ImageOptions {
     
     Rotation rotation = Rotation::Clockwise0;
     bool defringe = false;
-    bool reconstructHighlights = false;
+    bool reconstructHighlights = true;
     struct [[gnu::packed]] {
         bool show = false;
         Corner corner = Corner::BottomRight;
