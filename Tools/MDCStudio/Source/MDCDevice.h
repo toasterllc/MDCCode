@@ -22,7 +22,6 @@
 #import "Tools/Shared/ImagePipeline/EstimateIlluminant.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/AssertionCounter.h"
-#import "Tools/Shared/BC7Encoder.h"
 #import "Tools/Shared/ELF32Binary.h"
 #import "ImageLibrary.h"
 #import "ImageSource.h"
@@ -31,9 +30,6 @@
 namespace MDCStudio {
 
 struct MDCDevice : ImageSource {
-    using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
-    static_assert(_ThumbCompressor::OutputLen() == 147456);
-    
     using _SendRight = Toastbox::SendRight;
     using _USBDevice = Toastbox::USBDevice;
     using _USBDevicePtr = std::unique_ptr<Toastbox::USBDevice>;

@@ -84,7 +84,6 @@
 		55C6A2A22AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2A12AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C846279001CA005ABD39 /* ImageGridLayer.metal */; };
-		55C90C7129B795B3007CC97E /* libbc7enc_rdo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */; };
 		55D30A2E29A828E60080BCBD /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55D30A2C29A828070080BCBD /* tz.cpp */; };
 		55D30A3F29A96D670080BCBD /* ImageCornerButton-3.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55D30A3A29A96D670080BCBD /* ImageCornerButton-3.pdf */; };
 		55D30A4029A96D670080BCBD /* ImageCornerButton-4.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55D30A3B29A96D670080BCBD /* ImageCornerButton-4.pdf */; };
@@ -121,16 +120,6 @@
 		55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* FullSizeImageView.mm */; };
 		55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* FullSizeImageView.metal */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		55C90C6D29B795A4007CC97E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 55C90BC329B66A44007CC97E;
-			remoteInfo = bc7enc_rdo;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
@@ -301,8 +290,6 @@
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
 		55C90B9229B58283007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageThumb.h; sourceTree = "<group>"; };
 		55C90C6329B70494007CC97E /* LRU.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LRU.h; sourceTree = "<group>"; };
-		55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = bc7enc_rdo.xcodeproj; path = ../../Code/Lib/bc7enc_rdo/bc7enc_rdo.xcodeproj; sourceTree = "<group>"; };
-		55C90C7329B79651007CC97E /* BC7Encoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BC7Encoder.h; sourceTree = "<group>"; };
 		55D3097E29A80F2E0080BCBD /* Time.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Time.h; sourceTree = "<group>"; };
 		55D3099229A822D60080BCBD /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
 		55D30A1B29A828070080BCBD /* tz_private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz_private.h; sourceTree = "<group>"; };
@@ -389,7 +376,6 @@
 				55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */,
 				55D4AAA127B1D3E70052EFEE /* MetalPerformanceShaders.framework in Frameworks */,
 				55D4AAA327B1D3F20052EFEE /* Accelerate.framework in Frameworks */,
-				55C90C7129B795B3007CC97E /* libbc7enc_rdo.a in Frameworks */,
 				553EAB792B2452FB00C2B4C8 /* libate.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -541,7 +527,6 @@
 				5544AE0427B5E57A006AB473 /* Interp.h */,
 				5544AE0527B5E57A006AB473 /* Assert.h */,
 				55E43F7928C0085500FCCEA0 /* CFA.h */,
-				55C90C7329B79651007CC97E /* BC7Encoder.h */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -627,7 +612,6 @@
 		55496F39278CFC0400BCA739 = {
 			isa = PBXGroup;
 			children = (
-				55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */,
 				5544AB4D27B5E3DF006AB473 /* Code */,
 				5544A7F127B5E3B3006AB473 /* Tools */,
 				55496F58278CFC7600BCA739 /* Source */,
@@ -803,14 +787,6 @@
 			path = FactoryResetConfirmationAlert;
 			sourceTree = "<group>";
 		};
-		55C90C6A29B795A4007CC97E /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		55D3099329A828070080BCBD /* date */ = {
 			isa = PBXGroup;
 			children = (
@@ -955,28 +931,12 @@
 			mainGroup = 55496F39278CFC0400BCA739;
 			productRefGroup = 55496F43278CFC0400BCA739 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 55C90C6A29B795A4007CC97E /* Products */;
-					ProjectRef = 55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				55496F41278CFC0400BCA739 /* MDCStudio */,
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libbc7enc_rdo.a;
-			remoteRef = 55C90C6D29B795A4007CC97E /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		55496F40278CFC0400BCA739 /* Resources */ = {

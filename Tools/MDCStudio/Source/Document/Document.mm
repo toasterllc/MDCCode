@@ -6,7 +6,6 @@
 #import "ImageGridView/ImageGridView.h"
 #import "FullSizeImageView/FullSizeImageView.h"
 #import "FixedScrollView.h"
-#import "MockImageSource.h"
 #import "Prefs.h"
 #import "ImageLibraryStatus.h"
 #import "DeviceSettings/DeviceSettingsView.h"
