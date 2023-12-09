@@ -1,4 +1,5 @@
 #pragma once
+#import <Metal/Metal.h>
 
 namespace MDCStudio {
 
@@ -15,6 +16,14 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 480;
 //    static constexpr size_t ThumbHeight     = 270;
     
+#if defined(__aarch64__)
+    static constexpr MTLPixelFormat PixelFormat = MTLPixelFormatASTC_4x4_LDR;
+#elif defined(__x86_64__)
+    static constexpr MTLPixelFormat PixelFormat = MTLPixelFormatBC7_RGBAUnorm;
+#else
+    #error Unknown platform
+#endif
+    
     static constexpr size_t ThumbWidth      = 512;
     static constexpr size_t ThumbHeight     = 288;
     
@@ -24,7 +33,7 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 2304;
 //    static constexpr size_t ThumbHeight     = 1296;
     
-    alignas(8)
+    alignas(16) // Must be aligned to the block size of the compressed thumb format (either ASTC or BC7)
     uint8_t data[ThumbHeight][ThumbWidth];
 };
 

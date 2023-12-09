@@ -6,6 +6,7 @@
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "Grid.h"
+#import "ImageThumb.h"
 #import "Code/Shared/Img.h"
 #import "Toastbox/LRU.h"
 #import "Toastbox/IterAny.h"
@@ -262,7 +263,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
 static MTLTextureDescriptor* _TextureDescriptor() {
     MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
     [desc setTextureType:MTLTextureType2DArray];
-    [desc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm];
+    [desc setPixelFormat:ImageThumb::PixelFormat];
     [desc setWidth:ImageThumb::ThumbWidth];
     [desc setHeight:ImageThumb::ThumbHeight];
     [desc setArrayLength:_ChunkTexture::SliceCount];

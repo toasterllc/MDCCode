@@ -6,6 +6,7 @@
 #import <chrono>
 #import <IOKit/IOKitLib.h>
 #import <IOKit/IOMessage.h>
+#import <AppleTextureEncoder.h>
 #import "Toastbox/Atomic.h"
 #import "Toastbox/Mmap.h"
 #import "Toastbox/Queue.h"
@@ -598,7 +599,7 @@ struct MDCDevice : ImageSource {
     
     // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
     // destination buffer (dst), as BC7-compressed data
-    static CCM _ThumbRender(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage,
+    static CCM _ThumbRender(MDCTools::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage& tmpStorage,
         const ImageOptions& opts, bool estimateIlluminant, const void* src, void* dst) {
         
         using namespace MDCTools;
@@ -647,10 +648,41 @@ struct MDCDevice : ImageSource {
         
         // Compress thumbnail into `dst`
         {
+//            constexpr float CompressErrorThreshold = 0.0009765625;    // Fast
+            constexpr float CompressErrorThreshold = 0.00003051757812;  // High quality
+            
             [thumbTxt getBytes:&tmpStorage[0] bytesPerRow:ImageThumb::ThumbWidth*4
                 fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
             
-            compressor.encode(&tmpStorage[0], dst);
+            const at_texel_region_t srcTexels = {
+                .texels = (void*)&tmpStorage[0],
+                .validSize = {
+                    .x = ImageThumb::ThumbWidth,
+                    .y = ImageThumb::ThumbHeight,
+                    .z = 1,
+                },
+                .rowBytes = ImageThumb::ThumbWidth*4,
+                .sliceBytes = 0,
+            };
+            
+            const at_block_buffer_t dstBuffer = {
+                .blocks = dst,
+                .rowBytes = ImageThumb::ThumbWidth*4,
+                .sliceBytes = 0,
+            };
+            
+            const float cr = at_encoder_compress_texels(
+                compressor,
+                &srcTexels,
+                &dstBuffer,
+                CompressErrorThreshold,
+        //        at_flags_default
+                at_flags_print_debug_info
+            );
+            
+            if (cr < 0) {
+                throw Toastbox::RuntimeError("at_encoder_compress_texels failed");
+            }
         }
         
         return ccm;
@@ -1363,14 +1395,36 @@ struct MDCDevice : ImageSource {
     
     // MARK: - Thumb Render
     
+    static constexpr at_block_format_t _CompressedThumbFormat() {
+#if defined(__aarch64__)
+        return at_block_format_astc_4x4_ldr;
+#elif defined(__x86_64__)
+        return at_block_format_bc7;
+#else
+    #error Unknown platform
+#endif
+    }
+    
     void _thumbRender_thread() {
         using namespace MDCTools;
         
         try {
             id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
             Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
-            _ThumbCompressor compressor;
             std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
+            
+            at_encoder_t compressor = at_encoder_create(
+                at_texel_format_rgba8_unorm,
+                at_alpha_opaque,
+                _CompressedThumbFormat(),
+                at_alpha_opaque,
+                nullptr
+            );
+            
+            if (!compressor) {
+                throw Toastbox::RuntimeError("failed to create at_encoder_create");
+            }
+            
             
             for (;;) @autoreleasepool {
                 _RenderWork work;
