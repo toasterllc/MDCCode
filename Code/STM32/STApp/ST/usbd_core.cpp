@@ -449,7 +449,7 @@ USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef* pdev,
 {
   USBD_EndpointTypeDef* pep;
   USBD_StatusTypeDef ret;
-
+  
   if (epnum == 0U)
   {
     pep = &pdev->ep_out[0];

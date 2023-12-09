@@ -266,7 +266,9 @@ public:
                 T_Scheduler::Wait([] { return _CmdRecvLen || _State!=State::Connected; });
                 
                 // If we're no longer connected, bail and wait to be connected again
-                if (_State != State::Connected) break;
+                if (_State != State::Connected) {
+                	break;
+                }
                 
                 // Consume the command
                 const size_t len = *_CmdRecvLen;

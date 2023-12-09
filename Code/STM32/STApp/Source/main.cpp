@@ -81,7 +81,7 @@ public:
     
     using USB = T_USB<
         Scheduler,  // T_Scheduler
-        true,       // T_DMAEn
+        false,       // T_DMAEn
         USBConfig   // T_Config
     >;
     

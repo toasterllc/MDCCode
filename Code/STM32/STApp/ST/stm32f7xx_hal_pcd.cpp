@@ -949,6 +949,11 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   * @param  hpcd PCD handle
   * @retval HAL status
   */
+  
+
+[[gnu::used]]
+int Meowmix1 = 0;
+
 void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 {
   USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
@@ -1019,6 +1024,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 
           if ((epint & USB_OTG_DOEPINT_XFRC) == USB_OTG_DOEPINT_XFRC)
           {
+            Meowmix1++;
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_XFRC);
             (void)PCD_EP_OutXfrComplete_int(hpcd, epnum);
           }
@@ -2028,100 +2034,14 @@ static HAL_StatusTypeDef PCD_EP_OutXfrComplete_int(PCD_HandleTypeDef *hpcd, uint
 {
   USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
   uint32_t USBx_BASE = (uint32_t)USBx;
-  uint32_t gSNPSiD = *(__IO uint32_t *)(&USBx->CID + 0x1U);
   uint32_t DoepintReg = USBx_OUTEP(epnum)->DOEPINT;
-
-  if (hpcd->Init.dma_enable == 1U)
+  
+  if ((epnum == 0U) && (hpcd->OUT_ep[epnum].xfer_len == 0U))
   {
-    if ((DoepintReg & USB_OTG_DOEPINT_STUP) == USB_OTG_DOEPINT_STUP) /* Class C */
-    {
-      /* StupPktRcvd = 1 this is a setup packet */
-      if ((gSNPSiD > USB_OTG_CORE_ID_300A) &&
-          ((DoepintReg & USB_OTG_DOEPINT_STPKTRX) == USB_OTG_DOEPINT_STPKTRX))
-      {
-        CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_STPKTRX);
-      }
-    }
-    else if ((DoepintReg & USB_OTG_DOEPINT_OTEPSPR) == USB_OTG_DOEPINT_OTEPSPR) /* Class E */
-    {
-      CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_OTEPSPR);
-    }
-    else if ((DoepintReg & (USB_OTG_DOEPINT_STUP | USB_OTG_DOEPINT_OTEPSPR)) == 0U)
-    {
-      /* StupPktRcvd = 1 this is a setup packet */
-      if ((gSNPSiD > USB_OTG_CORE_ID_300A) &&
-          ((DoepintReg & USB_OTG_DOEPINT_STPKTRX) == USB_OTG_DOEPINT_STPKTRX))
-      {
-        CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_STPKTRX);
-      }
-      else
-      {
-        // STBUG
-        const uint32_t xfer_len = hpcd->OUT_ep[epnum].xfer_len;
-        const uint32_t xfrsiz = (USBx_OUTEP(epnum)->DOEPTSIZ & USB_OTG_DOEPTSIZ_XFRSIZ);
-        if (xfer_len) {
-            const uint32_t xfer_count = xfer_len - xfrsiz;
-            hpcd->OUT_ep[epnum].xfer_count = xfer_count;
-            hpcd->OUT_ep[epnum].xfer_buff += xfer_count;
-        } else {
-            hpcd->OUT_ep[epnum].xfer_count = 0;
-        }
-        
-        if (epnum == 0U)
-        {
-          /* this is ZLP, so prepare EP0 for next setup */
-          (void)USB_EP0_OutStart(hpcd->Instance, 1U, (uint8_t *)hpcd->Setup);
-        }
-#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
-        hpcd->DataOutStageCallback(hpcd, (uint8_t)epnum);
-#else
-        HAL_PCD_DataOutStageCallback(hpcd, (uint8_t)epnum);
-#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
-      }
-    }
-    else
-    {
-      /* ... */
-    }
+    /* this is ZLP, so prepare EP0 for next setup */
+    (void)USB_EP0_OutStart(hpcd->Instance, 0U, (uint8_t *)hpcd->Setup);
   }
-  else
-  {
-    if (gSNPSiD == USB_OTG_CORE_ID_310A)
-    {
-      /* StupPktRcvd = 1 this is a setup packet */
-      if ((DoepintReg & USB_OTG_DOEPINT_STPKTRX) == USB_OTG_DOEPINT_STPKTRX)
-      {
-        CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_STPKTRX);
-      }
-      else
-      {
-        if ((DoepintReg & USB_OTG_DOEPINT_OTEPSPR) == USB_OTG_DOEPINT_OTEPSPR)
-        {
-          CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_OTEPSPR);
-        }
-
-#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
-        hpcd->DataOutStageCallback(hpcd, (uint8_t)epnum);
-#else
-        HAL_PCD_DataOutStageCallback(hpcd, (uint8_t)epnum);
-#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
-      }
-    }
-    else
-    {
-      if ((epnum == 0U) && (hpcd->OUT_ep[epnum].xfer_len == 0U))
-      {
-        /* this is ZLP, so prepare EP0 for next setup */
-        (void)USB_EP0_OutStart(hpcd->Instance, 0U, (uint8_t *)hpcd->Setup);
-      }
-
-#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
-      hpcd->DataOutStageCallback(hpcd, (uint8_t)epnum);
-#else
-      HAL_PCD_DataOutStageCallback(hpcd, (uint8_t)epnum);
-#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
-    }
-  }
+  HAL_PCD_DataOutStageCallback(hpcd, (uint8_t)epnum);
 
   return HAL_OK;
 }
