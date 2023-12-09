@@ -809,7 +809,7 @@ private:
     
     void _sendCmd(const STM::Cmd& cmd) {
         // The device will reject a control request if the previous request is still in progress.
-        constexpr int TryCount = 2;
+        constexpr int TryCount = 10;
         for (int i=0; i<TryCount; i++) {
             try {
                 _dev->vendorRequestOut(0, cmd);
