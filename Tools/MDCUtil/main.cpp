@@ -936,10 +936,9 @@ int main(int argc, const char* argv[]) {
     }
     
     try {
-        printf("[MDCUSBDevice] reset START\n");
-        const STM::Cmd cmd = { .op = STM::Op::Reset };
-        dev->vendorRequestOut(0, cmd);
-        printf("[MDCUSBDevice] reset END\n");
+        printf("[MDCUSBDevice] status START\n");
+        dev->status();
+        printf("[MDCUSBDevice] status END\n");
     
     } catch (const std::exception& e) {
         printf("Error: %s\n", e.what());
