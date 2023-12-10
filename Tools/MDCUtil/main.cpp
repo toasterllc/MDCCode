@@ -937,7 +937,7 @@ int main(int argc, const char* argv[]) {
     
     try {
         printf("[MDCUSBDevice] status START\n");
-        dev->status();
+        dev->debugGetStatus();
         printf("[MDCUSBDevice] status END\n");
     
     } catch (const std::exception& e) {
