@@ -28,6 +28,11 @@ public:
         namespace USB = Toastbox::USB;
         USB::DeviceDescriptor desc = dev.deviceDescriptor();
         
+        // TODO: tinyusb; remove
+        if (desc.idVendor==51966 && desc.idProduct==16384) {
+            return true;
+        }
+        
         // TODO: legacy; remove
         if (desc.idVendor==1155 && desc.idProduct==57105) {
             return true;
