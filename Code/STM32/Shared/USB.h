@@ -106,6 +106,7 @@ public:
         _PCD.Init.dev_endpoints = 9;
         _PCD.Init.dma_enable = T_DMAEn;
         _PCD.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
+        _PCD.Init.speed = USBD_HSINFS_SPEED;
         _PCD.Init.sof_enable = false;
         _PCD.Init.low_power_enable = false;
         _PCD.Init.lpm_enable = false;
