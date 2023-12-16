@@ -101,7 +101,7 @@
                                     									
                                     <listOptionValue builtIn="false" value="-iquote &quot;${ProjDirPath}/../Shared&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="-iquote &quot;${ProjDirPath}/ST&quot;"/>
+                                    <listOptionValue builtIn="false" value="-iquote &quot;${ProjDirPath}/../Shared/ST&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="-iquote &quot;${ProjDirPath}/Source&quot;"/>
                                     								
@@ -139,7 +139,7 @@
                                     									
                                     <listOptionValue builtIn="false" value="-iquote &quot;${ProjDirPath}/../Shared&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="-iquote &quot;${ProjDirPath}/ST&quot;"/>
+                                    <listOptionValue builtIn="false" value="-iquote &quot;${ProjDirPath}/../Shared/ST&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="-iquote &quot;${ProjDirPath}/Source&quot;"/>
                                     								
