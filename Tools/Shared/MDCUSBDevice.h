@@ -33,7 +33,7 @@ public:
             return true;
         }
         
-        return desc.idVendor==0 && desc.idProduct==0 && dev.manufacturer()=="Toaster LLC";
+        return dev.product()=="Photon" && dev.manufacturer()=="Toaster LLC";
     }
     
     static std::vector<MDCUSBDevicePtr> GetDevices() {
