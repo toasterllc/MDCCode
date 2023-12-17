@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -16,11 +17,11 @@
                 <outlet property="_statusLabel" destination="zEQ-4d-gM0" id="UXb-DA-TRV"/>
             </connections>
         </customObject>
-        <visualEffectView wantsLayer="YES" blendingMode="withinWindow" material="fullScreenUI" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
+        <visualEffectView clipsToBounds="YES" wantsLayer="YES" blendingMode="withinWindow" material="fullScreenUI" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
             <rect key="frame" x="0.0" y="0.0" width="830" height="50"/>
             <subviews>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="zEQ-4d-gM0">
-                    <rect key="frame" x="18" y="14" width="310" height="21"/>
+                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="zEQ-4d-gM0">
+                    <rect key="frame" x="18" y="14" width="313" height="21"/>
                     <textFieldCell key="cell" lineBreakMode="truncatingTail" title="10 photos from Feb 2023 – March 2023" id="utu-oB-Dri">
                         <font key="font" metaFont="systemThin" size="18"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -30,7 +31,7 @@
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="bA5-3S-iVB">
                     <rect key="frame" x="626" y="0.0" width="204" height="50"/>
                     <subviews>
-                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lj9-Jf-aEb">
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lj9-Jf-aEb">
                             <rect key="frame" x="-2" y="9" width="38" height="33"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="28" id="f3j-ad-pqi">
                                 <font key="font" metaFont="system" size="28"/>
@@ -38,7 +39,7 @@
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qoJ-Kq-CeU">
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qoJ-Kq-CeU">
                             <rect key="frame" x="37" y="12" width="64" height="28"/>
                             <constraints>
                                 <constraint firstAttribute="width" constant="60" id="JyA-p5-zGK"/>
@@ -49,15 +50,15 @@
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DUf-K3-QmS">
-                            <rect key="frame" x="98" y="8" width="92" height="32"/>
-                            <constraints>
-                                <constraint firstAttribute="width" constant="80" id="MBv-PR-nJm"/>
-                            </constraints>
+                        <button wantsLayer="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DUf-K3-QmS">
+                            <rect key="frame" x="97" y="8" width="94" height="32"/>
                             <buttonCell key="cell" type="push" title="Load" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ziJ-si-Khp">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="80" id="MBv-PR-nJm"/>
+                            </constraints>
                         </button>
                     </subviews>
                     <constraints>
@@ -71,7 +72,7 @@
                     </constraints>
                 </customView>
                 <progressIndicator wantsLayer="YES" maxValue="1" controlSize="small" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="n4F-mV-p8l">
-                    <rect key="frame" x="-5" y="-8" width="840" height="12"/>
+                    <rect key="frame" x="-5" y="-7" width="840" height="12"/>
                 </progressIndicator>
             </subviews>
             <constraints>
@@ -82,7 +83,7 @@
                 <constraint firstItem="n4F-mV-p8l" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="-5" id="JbQ-ZB-X8m"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="trailing" priority="250" id="LYc-fl-6F9"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="zEQ-4d-gM0" secondAttribute="trailing" priority="500" constant="10" id="MtU-vv-WcH"/>
-                <constraint firstAttribute="bottom" secondItem="n4F-mV-p8l" secondAttribute="top" constant="3.5" id="Ufw-5O-21d"/>
+                <constraint firstAttribute="bottom" secondItem="n4F-mV-p8l" secondAttribute="centerY" constant="-1" id="Ufw-5O-21d"/>
                 <constraint firstItem="zEQ-4d-gM0" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" constant="1" id="hfG-ee-3wU"/>
                 <constraint firstAttribute="trailing" secondItem="n4F-mV-p8l" secondAttribute="trailing" constant="-5" id="pqh-6y-C1S"/>
                 <constraint firstAttribute="bottom" secondItem="bA5-3S-iVB" secondAttribute="bottom" id="vBD-Wv-Kni"/>
