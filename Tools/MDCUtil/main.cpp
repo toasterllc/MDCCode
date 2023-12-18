@@ -870,9 +870,14 @@ static void SDRead(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
     
     printf("Reading data...\n");
+    
     auto buf = std::make_unique<uint8_t[]>(len);
+    auto timeStart = std::chrono::steady_clock::now();
     device.readout(buf.get(), len);
-    printf("-> OK\n\n");
+    auto duration = std::chrono::steady_clock::now() - timeStart;
+    auto durationUs = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+    const float throughputMBPerSec = (((double)(len*(uint64_t)1000000)) / durationUs.count()) / (1024*1024);
+    printf("-> OK (throughput: %.1f MB/sec)\n\n", throughputMBPerSec);
     
     // Write data
     printf("Writing data...\n");
