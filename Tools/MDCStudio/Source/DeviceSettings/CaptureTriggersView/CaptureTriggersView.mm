@@ -23,7 +23,7 @@ using namespace DeviceSettings;
 
 #warning TODO: add version, or is the version specified by whatever contains Trigger instances?
 
-constexpr Calendar::TimeOfDay _TimeStartInit(32400); // 9 AM
+constexpr Calendar::TimeOfDay _TimeStartInit(34200); // 9:30 AM
 constexpr Calendar::TimeOfDay _TimeEndInit  (61200); // 5 PM
 //static const Calendar::DaysOfWeek _DaysOfWeekInit = Calendar::DaysOfWeekFromVector({
 //    Calendar::DayOfWeek_::Mon,
