@@ -445,7 +445,8 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     [self _display:drawableTxt commandBuffer:commandBuffer];
     
     [commandBuffer commit];
-//    [commandBuffer waitUntilCompleted]; // Necessary to prevent artifacts when resizing window
+    // -waitUntilCompleted necessary because we're rendering directly from the image library, while the lock is held.
+    [commandBuffer waitUntilCompleted];
     [drawable present];
 }
 
