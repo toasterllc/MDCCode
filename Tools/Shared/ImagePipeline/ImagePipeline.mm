@@ -55,7 +55,7 @@ namespace MDCTools::ImagePipeline {
 //}
 
 static Renderer::Txt _TimestampTextureCreate(Renderer& renderer, std::string_view str) {
-    static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatRGBA8Unorm_sRGB;
+    static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatRGBA8Unorm;
     
     NSAttributedString* astr = [[NSAttributedString alloc] initWithString:@(std::string(str).c_str())
     attributes:@{

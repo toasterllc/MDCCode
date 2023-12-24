@@ -11,7 +11,7 @@
 #import "Tools/MDCStudio/Source/FixedMetalDocumentLayer.h"
 using namespace MDCTools;
 
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 inline NSDictionary* LayerNullActions = @{
     kCAOnOrderIn: [NSNull null],
@@ -31,8 +31,8 @@ inline NSDictionary* LayerNullActions = @{
 @interface MyDocLayer : FixedMetalDocumentLayer
 @end
 
-static CGColorSpaceRef _SRGBColorSpace() {
-    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+static CGColorSpaceRef _LinearSRGBColorSpace() {
+    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
     return cs;
 }
 
@@ -54,7 +54,7 @@ static CGColorSpaceRef _SRGBColorSpace() {
     
     [self setDevice:[self preferredDevice]];
     [self setPixelFormat:_PixelFormat];
-    [self setColorspace:_SRGBColorSpace()]; // See comment for _PixelFormat
+    [self setColorspace:_LinearSRGBColorSpace()]; // See comment for _PixelFormat
     
     _library = [_device newDefaultLibrary];
     _commandQueue = [_device newCommandQueue];

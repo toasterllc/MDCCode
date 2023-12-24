@@ -81,7 +81,11 @@ fragment float4 FragmentShader(
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos = uint2(in.posPx);
-    if (!loadCounts[in.idx]) return placeholderTxt.sample({}, in.posNorm);
+    if (!loadCounts[in.idx]) {
+        constexpr float PlaceholderAlpha = 0.15;
+        const float4 c = placeholderTxt.sample({}, in.posNorm);
+        return float4(c.rgb, PlaceholderAlpha*c.a);
+    }
     const uint2 txtSize = { txt.get_width(), txt.get_height() };
     
     constexpr float4 SelectionBorderColor1 = float4(0,0.523,1,1);
