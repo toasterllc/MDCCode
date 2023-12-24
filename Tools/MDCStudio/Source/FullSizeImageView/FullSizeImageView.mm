@@ -174,7 +174,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
         } else {
             const size_t w = ImageThumb::ThumbWidth;
             const size_t h = ImageThumb::ThumbHeight;
-            Renderer::Txt thumbTxt = _renderer.textureCreate(MTLPixelFormatBC7_RGBAUnorm, w, h);
+            Renderer::Txt thumbTxt = _renderer.textureCreate(ImageThumb::PixelFormat, w, h);
             [thumbTxt replaceRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0
                 slice:0 withBytes:_imageRecord->thumb.data bytesPerRow:w*4 bytesPerImage:0];
             

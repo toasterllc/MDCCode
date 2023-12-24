@@ -13,6 +13,7 @@
 #import "Toastbox/Math.h"
 #import "Toastbox/Signal.h"
 #import "Toastbox/LRU.h"
+#import "Toastbox/Util.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/Clock.h"
 #import "Code/Shared/MSP.h"
@@ -1391,20 +1392,15 @@ struct MDCDevice : ImageSource {
     
     // MARK: - Thumb Render
     
-    static constexpr at_block_format_t _CompressedThumbFormat() {
-//        if constexpr (ImageThumb::PixelFormat == MTLPixelFormatASTC_4x4_LDR) {
-//            return at_block_format_astc_4x4_ldr;
-//        } else if constexpr (ImageThumb::PixelFormat == MTLPixelFormatBC7_RGBAUnorm) {
-//            return at_block_format_bc7;
-//        }
-        
-#if defined(__aarch64__)
-        return at_block_format_astc_4x4_ldr;
-#elif defined(__x86_64__)
-        return at_block_format_bc7;
-#else
-    #error Unknown platform
-#endif
+    template<MTLPixelFormat T_Format>
+    static constexpr at_block_format_t _ATBlockFormatForMTLPixelFormat() {
+        if constexpr (T_Format == MTLPixelFormatASTC_4x4_LDR) {
+            return at_block_format_astc_4x4_ldr;
+        } else if constexpr (T_Format == MTLPixelFormatBC7_RGBAUnorm) {
+            return at_block_format_bc7;
+        } else {
+            static_assert(Toastbox::AlwaysFalse_v<T_Format>);
+        }
     }
     
     void _thumbRender_thread() {
@@ -1418,7 +1414,7 @@ struct MDCDevice : ImageSource {
             at_encoder_t compressor = at_encoder_create(
                 at_texel_format_rgba8_unorm,
                 at_alpha_opaque,
-                _CompressedThumbFormat(),
+                _ATBlockFormatForMTLPixelFormat<ImageThumb::PixelFormat>(),
                 at_alpha_opaque,
                 nullptr
             );
