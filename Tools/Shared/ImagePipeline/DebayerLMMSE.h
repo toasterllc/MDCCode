@@ -167,8 +167,9 @@ public:
         
         // Calculate diffGRTxt.b
         {
+            Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
             const bool modeGR = true;
-            renderer.render(diffGRTxt,
+            renderer.render(tmp,
                 renderer.FragmentShader(ImagePipelineShaderNamespace "DebayerLMMSE::CalcDiagAvgDiffGRGB",
                     // Buffer args
                     cfaDesc,
@@ -179,12 +180,14 @@ public:
                     diffGRTxt
                 )
             );
+            diffGRTxt = std::move(tmp);
         }
         
         // Calculate diffGBTxt.r
         {
+            Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
             const bool modeGR = false;
-            renderer.render(diffGBTxt,
+            renderer.render(tmp,
                 renderer.FragmentShader(ImagePipelineShaderNamespace "DebayerLMMSE::CalcDiagAvgDiffGRGB",
                     // Buffer args
                     cfaDesc,
@@ -195,11 +198,13 @@ public:
                     diffGBTxt
                 )
             );
+            diffGBTxt = std::move(tmp);
         }
         
         // Calculate diffGRTxt.g
         {
-            renderer.render(diffGRTxt,
+            Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
+            renderer.render(tmp,
                 renderer.FragmentShader(ImagePipelineShaderNamespace "DebayerLMMSE::CalcAxialAvgDiffGRGB",
                     // Buffer args
                     cfaDesc,
@@ -209,11 +214,13 @@ public:
                     diffGRTxt
                 )
             );
+            diffGRTxt = std::move(tmp);
         }
         
         // Calculate diffGBTxt.g
         {
-            renderer.render(diffGBTxt,
+            Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
+            renderer.render(tmp,
                 renderer.FragmentShader(ImagePipelineShaderNamespace "DebayerLMMSE::CalcAxialAvgDiffGRGB",
                     // Buffer args
                     cfaDesc,
@@ -223,6 +230,7 @@ public:
                     diffGBTxt
                 )
             );
+            diffGBTxt = std::move(tmp);
         }
         
         // Calculate dstRGB.rb
