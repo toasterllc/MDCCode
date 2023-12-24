@@ -18,6 +18,10 @@ using namespace MDCStudio;
     return { NSViewNoIntrinsicMetric, [_heightConstraint constant] };
 }
 
+- (void)mouseDown:(NSEvent*)event {
+    [[self window] performWindowDragWithEvent:event];
+}
+
 - (void)setDelegate:(id<FullSizeImageHeaderViewDelegate>)x {
     _delegate = x;
 }
