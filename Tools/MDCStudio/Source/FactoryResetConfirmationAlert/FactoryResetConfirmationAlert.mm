@@ -13,8 +13,9 @@ NSString* ConfirmationPhrase = @"nuke it";
     FactoryResetConfirmationAlertHandler _handler;
     NSButton* _okButton;
     NSButton* _cancelButton;
-    NSButton* _dismissButton;
     bool _spinnerVisible;
+    __weak id _dismissTarget;
+    SEL _dismissAction;
 }
 
 - (instancetype)init {
@@ -28,30 +29,20 @@ NSString* ConfirmationPhrase = @"nuke it";
     [self setMessageText:@"Factory Reset"];
     [self setInformativeText:[NSString stringWithFormat:@"A factory reset will permanently erase all photos and settings from your Photon.\n\nTo continue, enter “%@” below.", ConfirmationPhrase]];
     {
-        [self addButtonWithTitle:@"OK"];
-        NSButton* button = [[self buttons] lastObject];
+        NSButton* button = [self addButtonWithTitle:@"OK"];
         [button setTag:NSModalResponseOK];
         [button setTarget:self];
         [button setAction:@selector(_ok:)];
         _okButton = button;
     }
     {
-        [self addButtonWithTitle:@"Cancel"];
-        NSButton* button = [[self buttons] lastObject];
+        NSButton* button = [self addButtonWithTitle:@"Cancel"];
+        _dismissTarget = [button target];
+        _dismissAction = [button action];
         [button setTag:NSModalResponseCancel];
         [button setTarget:self];
         [button setAction:@selector(_cancel:)];
         _cancelButton = button;
-    }
-    
-    {
-        [self addButtonWithTitle:@"CancelHidden"];
-        NSButton* button = [[self buttons] lastObject];
-        // Make button invisible, in case other versions of macOS break our -setFrame: technique
-        [button setAlphaValue:0];
-        [self layout];
-        [button setFrame:{}];
-        _dismissButton = button;
     }
     
     [_accessoryTextField setPlaceholderString:ConfirmationPhrase];
@@ -78,7 +69,7 @@ completionHandler:(FactoryResetConfirmationAlertHandler)handler {
 }
 
 - (void)dismiss {
-    [_dismissButton performClick:self];
+    [NSApp sendAction:_dismissAction to:_dismissTarget from:_cancelButton];
 }
 
 - (IBAction)_ok:(id)sender {

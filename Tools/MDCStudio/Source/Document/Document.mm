@@ -593,30 +593,27 @@ static void _SortNewestFirst(bool x) {
         imageCount, (imageCount>1 ? "photos" : "photo")]];
     
     {
-        [alert addButtonWithTitle:@"Delete"];
-        NSButton* button = [[alert buttons] lastObject];
+        NSButton* button = [alert addButtonWithTitle:@"Delete"];
         [button setTag:NSModalResponseOK];
         [button setKeyEquivalent:@"\x7f"];
         [button setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
     }
     
     {
-        [alert addButtonWithTitle:@"Cancel"];
-        NSButton* button = [[alert buttons] lastObject];
+        NSButton* button = [alert addButtonWithTitle:@"Cancel"];
         [button setTag:NSModalResponseCancel];
         [button setKeyEquivalent:@"\r"];
     }
     
-    {
-        [alert addButtonWithTitle:@"CancelHidden"];
-        NSButton* button = [[alert buttons] lastObject];
-        [button setTag:NSModalResponseCancel];
-        [button setKeyEquivalent:@"\x1b"];
-        // Make button invisible, in case other versions of macOS break our -setFrame: technique
-        [button setAlphaValue:0];
-        [alert layout];
-        [button setFrame:{}];
-    }
+//    {
+//        NSButton* button = [alert addButtonWithTitle:@"CancelHidden"];
+//        [button setTag:NSModalResponseCancel];
+//        [button setKeyEquivalent:@"\x1b"];
+//        // Make button invisible, in case other versions of macOS break our -setFrame: technique
+//        [button setAlphaValue:0];
+//        [alert layout];
+//        [button setFrame:{}];
+//    }
     
     [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse r) {
         if (r != NSModalResponseOK) return;
