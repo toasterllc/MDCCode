@@ -361,14 +361,12 @@ private:
     }
     
     static uint8_t _USBD_Suspend() {
-        if (_State == State::Disconnected) return USBD_OK; // Short-circuit if we're already Disconnected
-        
-        Init();
         _State = State::Disconnected;
         return (uint8_t)USBD_OK;
     }
     
     static uint8_t _USBD_Resume() {
+        _State = State::Connected;
         return (uint8_t)USBD_OK;
     }
     
