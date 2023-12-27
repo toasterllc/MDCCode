@@ -661,7 +661,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     
     IBOutlet NSView* _nibView;
     IBOutlet NSTextField* _noSelectionLabel;
-    IBOutlet NSView* _outlineContainerView;
+    IBOutlet NSScrollView* _scrollView;
     IBOutlet NSOutlineView* _outlineView;
     NSTrackingArea* _trackingArea;
     Item_Section* _mouseSection;
@@ -699,6 +699,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     
     // Load view from nib
     NibViewInit(self, _nibView);
+    [_scrollView setAutomaticallyAdjustsContentInsets:false];
     
     // Create NSOutlineView items
     {
@@ -1291,7 +1292,7 @@ static void _Update(Item* it) {
 }
 
 - (void)_selectionChanged {
-    [_outlineContainerView setHidden:_selection->images().empty()];
+    [_scrollView setHidden:_selection->images().empty()];
     [_noSelectionLabel setHidden:!_selection->images().empty()];
     _Update(_rootItem);
 }
