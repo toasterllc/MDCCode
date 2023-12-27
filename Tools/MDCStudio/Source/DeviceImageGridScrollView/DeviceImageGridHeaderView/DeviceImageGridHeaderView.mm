@@ -1,5 +1,6 @@
 #import "DeviceImageGridHeaderView.h"
 #import "NibViewInit.h"
+#import "ProgressBar.h"
 using namespace MDCStudio;
 
 @implementation DeviceImageGridHeaderView {
@@ -8,7 +9,7 @@ using namespace MDCStudio;
     IBOutlet NSLayoutConstraint* _hideLoadPhotosConstraint;
     IBOutlet NSTextField* _loadPhotosCountLabel;
     IBOutlet NSButton* _loadButton;
-    IBOutlet NSProgressIndicator* _progressIndicator;
+    IBOutlet ProgressBar* _progressBar;
     IBOutlet NSLayoutConstraint* _heightConstraint;
 //    MDCDevicePtr _device;
 }
@@ -50,7 +51,7 @@ using namespace MDCStudio;
 }
 
 - (void)setProgress:(float)x {
-    [_progressIndicator setDoubleValue:x];
+    [_progressBar setProgress:x];
 }
 
 @end

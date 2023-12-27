@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		55116D302B3CC130004617DD /* ProgressBar.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55116D2E2B3CC130004617DD /* ProgressBar.mm */; };
 		551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551328B827B45D7C00CD823B /* ImageGridView.mm */; };
 		553031FC27BC45A100BEFFEA /* Selection.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F827BC45A100BEFFEA /* Selection.png */; };
 		553031FD27BC45A100BEFFEA /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F927BC45A100BEFFEA /* Outline.png */; };
@@ -122,6 +123,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		55116D2E2B3CC130004617DD /* ProgressBar.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ProgressBar.mm; sourceTree = "<group>"; };
+		55116D2F2B3CC130004617DD /* ProgressBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressBar.h; sourceTree = "<group>"; };
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
 		551328B827B45D7C00CD823B /* ImageGridView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridView.mm; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
@@ -661,6 +664,8 @@
 				559704E52AE0E46B006CD617 /* ImageExporter */,
 				55425B5A29A2B8C900F25D57 /* ImageCornerButton */,
 				55F8877C29D3A6E30075593F /* DeviceSettings */,
+				55116D2F2B3CC130004617DD /* ProgressBar.h */,
+				55116D2E2B3CC130004617DD /* ProgressBar.mm */,
 				55C456802955A1AE00A20363 /* FixedDocumentView.h */,
 				55C456852955A1AE00A20363 /* FixedDocumentView.mm */,
 				55C456812955A1AE00A20363 /* FixedMetalDocumentLayer.h */,
@@ -1054,6 +1059,7 @@
 				553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */,
 				55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */,
 				5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */,
+				55116D302B3CC130004617DD /* ProgressBar.mm in Sources */,
 				55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */,
 				55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */,
 			);

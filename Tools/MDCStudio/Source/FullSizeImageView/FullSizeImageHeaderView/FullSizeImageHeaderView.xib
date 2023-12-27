@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -14,32 +15,35 @@
         <visualEffectView wantsLayer="YES" blendingMode="withinWindow" material="fullScreenUI" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="MCr-up-gtv">
             <rect key="frame" x="0.0" y="0.0" width="830" height="50"/>
             <subviews>
-                <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="o4K-MR-L5v">
-                    <rect key="frame" x="0.0" y="-2" width="830" height="5"/>
-                </box>
-                <button verticalHuggingPriority="750" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dpY-R3-nlv">
+                <button imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dpY-R3-nlv">
                     <rect key="frame" x="0.0" y="0.0" width="100" height="50"/>
-                    <constraints>
-                        <constraint firstAttribute="width" constant="100" id="tEQ-PY-DQ7"/>
-                    </constraints>
                     <buttonCell key="cell" type="bevel" title=" Photos" bezelStyle="regularSquare" image="NSGoBackTemplate" imagePosition="left" alignment="center" imageScaling="proportionallyDown" inset="2" id="Ock-mg-sFM">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="systemThin" size="18"/>
                     </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="100" id="tEQ-PY-DQ7"/>
+                    </constraints>
                     <connections>
                         <action selector="actionBack:" target="-2" id="Mth-Jt-TCl"/>
                     </connections>
                 </button>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="lVP-pq-3TO" customClass="ProgressBar">
+                    <rect key="frame" x="0.0" y="0.0" width="830" height="1"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="1" id="fpl-WI-fwu"/>
+                    </constraints>
+                </customView>
             </subviews>
             <constraints>
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" id="2sc-R9-B5b"/>
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" id="2tC-4O-Ez2"/>
                 <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
-                <constraint firstAttribute="trailing" secondItem="o4K-MR-L5v" secondAttribute="trailing" id="BRN-9t-ibi"/>
-                <constraint firstAttribute="bottom" secondItem="o4K-MR-L5v" secondAttribute="bottom" id="VpQ-zs-SN6"/>
+                <constraint firstAttribute="bottom" secondItem="lVP-pq-3TO" secondAttribute="bottom" id="JmM-Mw-scm"/>
+                <constraint firstItem="lVP-pq-3TO" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" id="T05-PB-OXG"/>
                 <constraint firstAttribute="bottom" secondItem="dpY-R3-nlv" secondAttribute="bottom" id="eC7-MN-qC0"/>
-                <constraint firstItem="o4K-MR-L5v" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" id="pIE-cK-rUd"/>
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" id="vY7-aF-HAI"/>
+                <constraint firstAttribute="trailing" secondItem="lVP-pq-3TO" secondAttribute="trailing" id="wNo-r4-z97"/>
             </constraints>
             <point key="canvasLocation" x="696" y="-337"/>
         </visualEffectView>
@@ -47,6 +51,6 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
     </objects>
     <resources>
-        <image name="NSGoBackTemplate" width="9" height="12"/>
+        <image name="NSGoBackTemplate" width="12" height="17"/>
     </resources>
 </document>

@@ -13,7 +13,7 @@
                 <outlet property="_loadButton" destination="DUf-K3-QmS" id="8ye-sZ-QIZ"/>
                 <outlet property="_loadPhotosCountLabel" destination="lj9-Jf-aEb" id="Qev-FI-9rx"/>
                 <outlet property="_nibView" destination="MCr-up-gtv" id="MuD-1o-jBO"/>
-                <outlet property="_progressIndicator" destination="n4F-mV-p8l" id="gSP-C6-ji7"/>
+                <outlet property="_progressBar" destination="CO6-AT-pbn" id="wKd-La-ala"/>
                 <outlet property="_statusLabel" destination="zEQ-4d-gM0" id="UXb-DA-TRV"/>
             </connections>
         </customObject>
@@ -71,21 +71,24 @@
                         <constraint firstItem="DUf-K3-QmS" firstAttribute="leading" secondItem="qoJ-Kq-CeU" secondAttribute="trailing" constant="5" id="yDq-85-vkm"/>
                     </constraints>
                 </customView>
-                <progressIndicator wantsLayer="YES" maxValue="1" controlSize="small" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="n4F-mV-p8l">
-                    <rect key="frame" x="-5" y="-7" width="840" height="12"/>
-                </progressIndicator>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="CO6-AT-pbn" customClass="ProgressBar">
+                    <rect key="frame" x="0.0" y="0.0" width="830" height="1"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="1" id="Wbl-2d-dxj"/>
+                    </constraints>
+                </customView>
             </subviews>
             <constraints>
                 <constraint firstItem="zEQ-4d-gM0" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="20" id="192-UL-lTY"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" id="3HK-Zs-34g"/>
                 <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" id="Dgn-19-9hS"/>
-                <constraint firstItem="n4F-mV-p8l" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="-5" id="JbQ-ZB-X8m"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="trailing" priority="250" id="LYc-fl-6F9"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="zEQ-4d-gM0" secondAttribute="trailing" priority="500" constant="10" id="MtU-vv-WcH"/>
-                <constraint firstAttribute="bottom" secondItem="n4F-mV-p8l" secondAttribute="centerY" constant="-1" id="Ufw-5O-21d"/>
+                <constraint firstAttribute="trailing" secondItem="CO6-AT-pbn" secondAttribute="trailing" id="RYP-rm-HUs"/>
+                <constraint firstItem="CO6-AT-pbn" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" id="VKo-3Q-kdh"/>
+                <constraint firstAttribute="bottom" secondItem="CO6-AT-pbn" secondAttribute="bottom" id="We6-HJ-tow"/>
                 <constraint firstItem="zEQ-4d-gM0" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" constant="1" id="hfG-ee-3wU"/>
-                <constraint firstAttribute="trailing" secondItem="n4F-mV-p8l" secondAttribute="trailing" constant="-5" id="pqh-6y-C1S"/>
                 <constraint firstAttribute="bottom" secondItem="bA5-3S-iVB" secondAttribute="bottom" id="vBD-Wv-Kni"/>
                 <constraint firstAttribute="trailing" secondItem="bA5-3S-iVB" secondAttribute="trailing" priority="500" id="wOa-Ys-JHJ"/>
             </constraints>
