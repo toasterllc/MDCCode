@@ -40,11 +40,15 @@ namespace DS = DeviceSettings;
     std::optional<T::BatteryLifeEstimate> _estimate;
 }
 
+static float _StimulusIntervalClamp(float x) {
+    return std::clamp(x, 1.f, (float)UINT16_MAX);
+}
+
 static DS::Duration _StimulusIntervalGet(std::string key, const DS::Duration& uninit) {
     namespace DS = DeviceSettings;
     try {
         DS::Duration dur = DS::DurationFromString(PrefsGlobal()->get(key, ""));
-        dur.value = std::max(1.f, dur.value);
+        dur.value = _StimulusIntervalClamp(dur.value);
         return dur;
     } catch (std::exception& e) {
         return uninit;
@@ -53,7 +57,7 @@ static DS::Duration _StimulusIntervalGet(std::string key, const DS::Duration& un
 
 static void _StimulusIntervalSet(std::string key, const DS::Duration& dur) {
     namespace DS = DeviceSettings;
-    PrefsGlobal()->set(key, std::to_string(dur.value) + " " + DS::Duration::StringFromUnit(dur.unit));
+    PrefsGlobal()->set(key, std::to_string(_StimulusIntervalClamp(dur.value)) + " " + DS::Duration::StringFromUnit(dur.unit));
 }
 
 static DS::Duration _MotionStimulusInterval() {
