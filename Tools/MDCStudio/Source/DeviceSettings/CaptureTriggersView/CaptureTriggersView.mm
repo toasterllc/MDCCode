@@ -572,7 +572,7 @@ static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
     [self->_addButton setHidden:emptyMode];
     [self->_removeButton setHidden:emptyMode];
     [self->_batteryLifeButton setHidden:emptyMode];
-    [self->_separatorLineOffset setConstant:(emptyMode ? 1000 : 8)];
+    [self->_separatorLineOffset setConstant:(emptyMode ? 1000 : 7.5)];
 }
 
 static ListItem* _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool select=false) {

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -25,10 +26,10 @@
                     </constraints>
                 </visualEffectView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="P5p-bo-0PS">
-                    <rect key="frame" x="0.0" y="61" width="600" height="731"/>
+                    <rect key="frame" x="0.0" y="40" width="600" height="752"/>
                 </customView>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="loq-oF-BLr">
-                    <rect key="frame" x="504" y="13" width="82" height="32"/>
+                    <rect key="frame" x="511" y="13" width="76" height="32"/>
                     <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="iMF-nE-jdf">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -38,7 +39,7 @@
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="HXO-cR-ctO">
-                    <rect key="frame" x="422" y="13" width="82" height="32"/>
+                    <rect key="frame" x="437" y="13" width="76" height="32"/>
                     <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="YGv-xU-voq">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
@@ -53,7 +54,7 @@ Gw
             </subviews>
             <constraints>
                 <constraint firstItem="loq-oF-BLr" firstAttribute="firstBaseline" secondItem="HXO-cR-ctO" secondAttribute="firstBaseline" id="1cD-Zb-En7"/>
-                <constraint firstItem="loq-oF-BLr" firstAttribute="top" secondItem="P5p-bo-0PS" secondAttribute="bottom" constant="20" id="3jx-ma-fIp"/>
+                <constraint firstItem="loq-oF-BLr" firstAttribute="top" secondItem="P5p-bo-0PS" secondAttribute="bottom" id="3jx-ma-fIp"/>
                 <constraint firstAttribute="trailing" secondItem="htS-Zh-S2s" secondAttribute="trailing" id="7TX-rW-Gh8"/>
                 <constraint firstItem="P5p-bo-0PS" firstAttribute="leading" secondItem="8kh-WA-1UA" secondAttribute="leading" id="7bg-ON-6g5"/>
                 <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="600" id="9OT-Nk-FLC"/>
