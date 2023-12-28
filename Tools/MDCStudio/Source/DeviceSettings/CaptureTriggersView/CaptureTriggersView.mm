@@ -819,7 +819,7 @@ static void _Copy(DayInterval& x, NSTextField* field) {
     if constexpr (T_Forward) {
         [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.count()]];
     } else {
-        x = DayInterval(std::max(2, [field intValue]));
+        x = DayInterval(std::clamp([field intValue], 2, UINT8_MAX));
     }
 }
 
@@ -832,7 +832,7 @@ static void _Copy(DeviceSettings::Duration& x, NSTextField* field, NSPopUpButton
     } else {
         const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
         try {
-            x.value = std::max(0.f, FloatFromString([[field stringValue] UTF8String]));
+            x.value = std::clamp(FloatFromString([[field stringValue] UTF8String]), 0.f, (float)UINT16_MAX);
         } catch (...) {}
         x.unit = DeviceSettings::Duration::UnitFromString([[menu titleOfSelectedItem] UTF8String]);
     }
