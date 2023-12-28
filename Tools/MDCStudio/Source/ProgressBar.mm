@@ -12,7 +12,7 @@ static void _Init(ProgressBar* self) {
     [bar setActions:Toastbox::LayerNullActions];
     
     CALayer* layer = [CALayer new];
-    [layer setBackgroundColor:[[NSColor colorWithSRGBRed:0.310 green:0.310 blue:0.310 alpha:1] CGColor]];
+    [layer setBackgroundColor:[[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:.075] CGColor]];
     [layer addSublayer:bar];
     self->_bar = bar;
     [self setLayer:layer];
