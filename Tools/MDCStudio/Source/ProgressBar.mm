@@ -1,4 +1,5 @@
 #import "ProgressBar.h"
+#import "Toastbox/Mac/Util.h"
 
 @implementation ProgressBar {
     CALayer* _bar;
@@ -6,10 +7,12 @@
 }
 
 static void _Init(ProgressBar* self) {
-    CALayer* layer = [CALayer new];
     CALayer* bar = [CALayer new];
-    [layer setBackgroundColor:[[NSColor colorWithSRGBRed:0.310 green:0.310 blue:0.310 alpha:1] CGColor]];
     [bar setBackgroundColor:[[NSColor colorWithSRGBRed:0.090 green:0.412 blue:0.902 alpha:1] CGColor]];
+    [bar setActions:Toastbox::LayerNullActions];
+    
+    CALayer* layer = [CALayer new];
+    [layer setBackgroundColor:[[NSColor colorWithSRGBRed:0.310 green:0.310 blue:0.310 alpha:1] CGColor]];
     [layer addSublayer:bar];
     self->_bar = bar;
     [self setLayer:layer];

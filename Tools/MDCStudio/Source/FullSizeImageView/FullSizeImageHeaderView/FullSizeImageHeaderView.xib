@@ -8,6 +8,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="FullSizeImageHeaderView">
             <connections>
+                <outlet property="_backButton" destination="dpY-R3-nlv" id="bXJ-9r-9Zn"/>
                 <outlet property="_heightConstraint" destination="3zV-F0-Xdo" id="tUs-J5-Oqa"/>
                 <outlet property="_nibView" destination="MCr-up-gtv" id="CnK-7N-xtN"/>
             </connections>
@@ -36,7 +37,7 @@
                 </customView>
             </subviews>
             <constraints>
-                <constraint firstItem="dpY-R3-nlv" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" id="2sc-R9-B5b"/>
+                <constraint firstItem="dpY-R3-nlv" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" priority="750" id="2sc-R9-B5b"/>
                 <constraint firstItem="dpY-R3-nlv" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" id="2tC-4O-Ez2"/>
                 <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
                 <constraint firstAttribute="bottom" secondItem="lVP-pq-3TO" secondAttribute="bottom" id="JmM-Mw-scm"/>

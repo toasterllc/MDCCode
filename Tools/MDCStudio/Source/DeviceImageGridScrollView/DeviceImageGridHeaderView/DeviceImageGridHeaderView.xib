@@ -79,7 +79,7 @@
                 </customView>
             </subviews>
             <constraints>
-                <constraint firstItem="zEQ-4d-gM0" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" constant="20" id="192-UL-lTY"/>
+                <constraint firstItem="zEQ-4d-gM0" firstAttribute="leading" secondItem="MCr-up-gtv" secondAttribute="leading" priority="750" constant="20" id="192-UL-lTY"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="centerY" secondItem="MCr-up-gtv" secondAttribute="centerY" id="3HK-Zs-34g"/>
                 <constraint firstAttribute="height" constant="50" id="3zV-F0-Xdo"/>
                 <constraint firstItem="bA5-3S-iVB" firstAttribute="top" secondItem="MCr-up-gtv" secondAttribute="top" id="Dgn-19-9hS"/>

@@ -54,4 +54,14 @@ using namespace MDCStudio;
     [_progressBar setProgress:x];
 }
 
+- (void)viewDidMoveToWindow {
+    [super viewDidMoveToWindow];
+    NSView* contentView = [[self window] contentView];
+    if (!contentView) return;
+    NSLayoutConstraint* windowLeftMin = [NSLayoutConstraint constraintWithItem:_statusLabel
+        attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationGreaterThanOrEqual
+        toItem:contentView attribute:NSLayoutAttributeLeft multiplier:1 constant:75];
+    [windowLeftMin setActive:true];
+}
+
 @end
