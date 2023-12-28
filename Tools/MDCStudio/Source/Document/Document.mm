@@ -9,6 +9,7 @@
 #import "Prefs.h"
 #import "ImageLibraryStatus.h"
 #import "DeviceSettings/DeviceSettingsView.h"
+#import "DeviceSettings/DeviceSettingsSheet.h"
 #import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
 #import "FactoryResetConfirmationAlert/FactoryResetConfirmationAlert.h"
 #import "ImageExporter/ImageExporter.h"
@@ -628,17 +629,8 @@ static void _SortNewestFirst(bool x) {
         .view = [[DeviceSettingsView alloc] initWithSettings:device->settings() delegate:self],
     };
     
-    NSWindow* sheetWindow = [[NSWindow alloc] initWithContentRect:{}
-        styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
-        backing:NSBackingStoreBuffered defer:false];
-    NSView* contentView = [sheetWindow contentView];
-    [contentView addSubview:_deviceSettings.view];
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[view]|"
-        options:0 metrics:nil views:@{@"view":_deviceSettings.view}]];
-    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[view]|"
-        options:0 metrics:nil views:@{@"view":_deviceSettings.view}]];
-    
-    [_window beginSheet:sheetWindow completionHandler:^(NSModalResponse returnCode) {
+    DeviceSettingsSheet* sheet = [[DeviceSettingsSheet alloc] initWithView:_deviceSettings.view];
+    [_window beginSheet:sheet completionHandler:^(NSModalResponse returnCode) {
         NSLog(@"sheet complete");
     }];
 }

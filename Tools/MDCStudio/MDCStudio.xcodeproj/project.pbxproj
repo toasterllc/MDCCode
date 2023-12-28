@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		55116D302B3CC130004617DD /* ProgressBar.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55116D2E2B3CC130004617DD /* ProgressBar.mm */; };
 		551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551328B827B45D7C00CD823B /* ImageGridView.mm */; };
+		551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */; };
 		553031FC27BC45A100BEFFEA /* Selection.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F827BC45A100BEFFEA /* Selection.png */; };
 		553031FD27BC45A100BEFFEA /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F927BC45A100BEFFEA /* Outline.png */; };
 		553031FF27BC45A100BEFFEA /* Mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FB27BC45A100BEFFEA /* Mask.png */; };
@@ -127,6 +128,8 @@
 		55116D2F2B3CC130004617DD /* ProgressBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressBar.h; sourceTree = "<group>"; };
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
 		551328B827B45D7C00CD823B /* ImageGridView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridView.mm; sourceTree = "<group>"; };
+		551467E52B3E1FDA00D8DF58 /* DeviceSettingsSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceSettingsSheet.h; sourceTree = "<group>"; };
+		551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsSheet.mm; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
 		552F4BF529B28543000CEAB2 /* ImageUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageUtil.h; sourceTree = "<group>"; };
 		552F4BF629B306DB000CEAB2 /* ImageOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageOptions.h; sourceTree = "<group>"; };
@@ -869,6 +872,8 @@
 		55F8877C29D3A6E30075593F /* DeviceSettings */ = {
 			isa = PBXGroup;
 			children = (
+				551467E52B3E1FDA00D8DF58 /* DeviceSettingsSheet.h */,
+				551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */,
 				5530DC3A29DCDA3E005FEC0A /* DeviceSettingsView.h */,
 				5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */,
 				5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */,
@@ -1039,6 +1044,7 @@
 				5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */,
 				55496F61278E88B800BCA739 /* Grid.h in Sources */,
 				55E43F9728C00D6B00FCCEA0 /* Defringe.metal in Sources */,
+				551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */,
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
 				55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */,
 				55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */,
