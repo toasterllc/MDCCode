@@ -21,6 +21,7 @@
 		553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5542AD4953400157484 /* BatteryLifePlotView.mm */; };
 		553EF5612AD7174800157484 /* FullSizeImageHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 553EF55F2AD7174800157484 /* FullSizeImageHeaderView.xib */; };
 		553EF5622AD7174800157484 /* FullSizeImageHeaderView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553EF5602AD7174800157484 /* FullSizeImageHeaderView.mm */; };
+		554243AE2B3EC4DB00BDFE25 /* PrintImages.mm in Sources */ = {isa = PBXBuildFile; fileRef = 554243AD2B3EC4DB00BDFE25 /* PrintImages.mm */; };
 		55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B2229A02F7D00F25D57 /* InspectorView.mm */; };
 		55425B2629A0752300F25D57 /* InspectorView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55425B2529A0752300F25D57 /* InspectorView.xib */; };
 		55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B5C29A2B8C900F25D57 /* ImageCornerButton.mm */; };
@@ -149,6 +150,8 @@
 		553EF55F2AD7174800157484 /* FullSizeImageHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FullSizeImageHeaderView.xib; sourceTree = "<group>"; };
 		553EF5602AD7174800157484 /* FullSizeImageHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FullSizeImageHeaderView.mm; sourceTree = "<group>"; };
 		553EF56C2AD8E4DF00157484 /* Object.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Object.h; sourceTree = "<group>"; };
+		554243AC2B3EC4DB00BDFE25 /* PrintImages.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PrintImages.h; sourceTree = "<group>"; };
+		554243AD2B3EC4DB00BDFE25 /* PrintImages.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PrintImages.mm; sourceTree = "<group>"; };
 		55425B1929A01BE000F25D57 /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		55425B2229A02F7D00F25D57 /* InspectorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorView.mm; sourceTree = "<group>"; };
 		55425B2329A02F7D00F25D57 /* InspectorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorView.h; sourceTree = "<group>"; };
@@ -667,6 +670,8 @@
 				559704E52AE0E46B006CD617 /* ImageExporter */,
 				55425B5A29A2B8C900F25D57 /* ImageCornerButton */,
 				55F8877C29D3A6E30075593F /* DeviceSettings */,
+				554243AC2B3EC4DB00BDFE25 /* PrintImages.h */,
+				554243AD2B3EC4DB00BDFE25 /* PrintImages.mm */,
 				55116D2F2B3CC130004617DD /* ProgressBar.h */,
 				55116D2E2B3CC130004617DD /* ProgressBar.mm */,
 				55C456802955A1AE00A20363 /* FixedDocumentView.h */,
@@ -1041,6 +1046,7 @@
 				55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */,
 				55E43F9628C00D6B00FCCEA0 /* FFCC.metal in Sources */,
 				55E43F9F28C00D6B00FCCEA0 /* RenderThumb.metal in Sources */,
+				554243AE2B3EC4DB00BDFE25 /* PrintImages.mm in Sources */,
 				5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */,
 				55496F61278E88B800BCA739 /* Grid.h in Sources */,
 				55E43F9728C00D6B00FCCEA0 /* Defringe.metal in Sources */,
