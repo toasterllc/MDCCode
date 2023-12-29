@@ -395,6 +395,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     printf("~FullSizeImageView\n");
 }
 
+- (IBAction)print:(id)sender {
+    [[NSPrintOperation printOperationWithView:self] runOperation];
+}
+
 - (FullSizeImageLayer*)_fullSizeImageLayer {
     return Toastbox::Cast<FullSizeImageLayer*>([[_scrollView document] layer]);
 }

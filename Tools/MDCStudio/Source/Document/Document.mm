@@ -14,6 +14,7 @@
 #import "FactoryResetConfirmationAlert/FactoryResetConfirmationAlert.h"
 #import "ImageExporter/ImageExporter.h"
 #import "MDCDevicesManager.h"
+#import "PrintImages.h"
 
 using namespace MDCStudio;
 
@@ -154,6 +155,20 @@ static void _SetView(T& x, NSView* y) {
         return false;
     } else if ([item action] == @selector(saveDocumentAs:)) {
         return false;
+    } else if ([item action] == @selector(revertDocumentToSaved:)) {
+        return false;
+    
+    // Printing
+    } else if ([item action] == @selector(printDocument:)) {
+        const size_t selectionCount = _active.selection->images().size();
+        NSString* title = nil;
+        if (selectionCount > 1) {
+            title = [NSString stringWithFormat:@"Print %ju Photos…", (uintmax_t)selectionCount];
+        } else {
+            title = @"Print Photo…";
+        }
+        [mitem setTitle:title];
+        return !_active.selection->images().empty();
     
     // Sort
     } else if ([item action] == @selector(_sortNewestFirst:)) {
@@ -195,7 +210,7 @@ static void _SetView(T& x, NSView* y) {
         if (selectionCount > 1) {
             title = [NSString stringWithFormat:@"Export %ju Photos…", (uintmax_t)selectionCount];
         } else if (selectionCount == 1) {
-            title = @"Export 1 Photo…";
+            title = @"Export Photo…";
         } else {
             title = @"Export…";
         }
@@ -209,7 +224,7 @@ static void _SetView(T& x, NSView* y) {
         if (selectionCount > 1) {
             title = [NSString stringWithFormat:@"Delete %ju Photos…", (uintmax_t)selectionCount];
         } else if (selectionCount == 1) {
-            title = @"Delete 1 Photo…";
+            title = @"Delete Photo…";
         } else {
             title = @"Delete…";
         }
@@ -656,6 +671,12 @@ static void _SortNewestFirst(bool x) {
     
     [_window endSheet:[_deviceSettings.view window]];
     _deviceSettings = {};
+}
+
+// MARK: - Printing
+
+- (NSPrintOperation*)printOperationWithSettings:(NSDictionary<NSPrintInfoAttributeKey,id>*)settings error:(NSError**)error {
+    return PrintImages(settings, _active.imageSource, _active.selection->images(), !_SortNewestFirst());
 }
 
 @end
