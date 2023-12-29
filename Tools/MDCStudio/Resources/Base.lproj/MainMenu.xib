@@ -153,12 +153,8 @@ CA
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="YCV-Pu-axB"/>
-                            <menuItem title="Page Setup…" keyEquivalent="P" id="qIS-W8-SiK">
-                                <connections>
-                                    <action selector="runPageLayout:" target="-1" id="Din-rz-gC5"/>
-                                </connections>
-                            </menuItem>
                             <menuItem title="Print…" keyEquivalent="p" id="aTl-1u-JFS">
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="printDocument:" target="-1" id="qaZ-4w-aoO"/>
                                 </connections>

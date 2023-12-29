@@ -717,23 +717,40 @@ static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPt
     PrintImageView* view = [[PrintImageView alloc] initWithImages:std::move(images)];
     
     NSPrintInfo* pi = [[NSPrintInfo alloc] initWithDictionary:printSettings];
+    [pi setVerticalPagination:NSPrintingPaginationModeFit];
+    [pi setHorizontalPagination:NSPrintingPaginationModeFit];
+    [pi setOrientation:NSPaperOrientationLandscape];
     
-    [pi setHorizontalPagination:NSFitPagination];
-    [pi setVerticalPagination:NSFitPagination];
-    [pi setHorizontallyCentered:true];
-    [pi setVerticallyCentered:true];
-    [pi setLeftMargin:20];
-    [pi setRightMargin:20];
-    [pi setTopMargin:10];
-    [pi setBottomMargin:10];
+    NSPrintOperation* pop = [NSPrintOperation printOperationWithView:view printInfo:pi];
+    NSPrintPanel* pp = [pop printPanel];
+    [pp setOptions:
+        [pp options] |
+        NSPrintPanelShowsOrientation |
+        NSPrintPanelShowsScaling
+    ];
     
+//    NSMutableDictionary* ps = [printSettings mutableCopy];
+//    NSPrintInfo* pi = [[NSPrintInfo alloc] initWithDictionary:printSettings];
+//    [pi setVerticalPagination:NSPrintingPaginationModeFit];
+//    [pi setHorizontalPagination:NSPrintingPaginationModeFit];
+//    [pi setOrientation:NSPaperOrientationLandscape];
+    
+//    [pi setHorizontalPagination:NSFitPagination];
+//    [pi setVerticalPagination:NSFitPagination];
+//    [pi setHorizontallyCentered:true];
+//    [pi setVerticallyCentered:true];
+//    [pi setLeftMargin:20];
+//    [pi setRightMargin:20];
+//    [pi setTopMargin:10];
+//    [pi setBottomMargin:10];
+//    
 //    [pi setHorizontalPagination:NSPrintingPaginationModeFit];
 //    [pi setVerticalPagination:NSPrintingPaginationModeFit];
 //    [pi setScalingFactor:.1];
 //    [pi setHorizontallyCentered:NO];
 //    [pi setVerticallyCentered:NO];
     
-    return [NSPrintOperation printOperationWithView:view printInfo:pi];
+    return pop;
 }
 
 @end
@@ -752,10 +769,31 @@ static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPt
     return self;
 }
 
-- (NSRect)rectForPage:(NSInteger)page {
-//    [self setImage:_images.at(page-1)];
-    return [self bounds];
-}
+
+//- (NSRect)rectForPage:(NSInteger)page {
+////    [self setImage:_images.at(page-1)];
+//    NSRect dst = [[NSPrintInfo sharedPrintInfo] imageablePageBounds];
+//    NSRect src = [self bounds];
+//    
+//    CGFloat w = dst.size.width / src.size.width;
+//    CGFloat h = dst.size.height / src.size.height;
+//    
+////    if (w > h) {
+////        src.size.width *= w;
+////        src.size.height *= w;
+////    } else {
+////        src.size.width *= h;
+////        src.size.height *= h;
+////    }
+//    
+//    return src;
+//    
+////    bounds.size.width /= 2;
+////    bounds.size.height /= 2;
+////    return bounds;
+////    return {0,0,100,100};
+////    return [self bounds];
+//}
 
 //- (void)adjustPageWidthNew:(CGFloat *)newRight left:(CGFloat)oldLeft right:(CGFloat)oldRight limit:(CGFloat)rightLimit {
 //    NSLog(@"%s", sel_getName(_cmd));
@@ -777,10 +815,51 @@ static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPt
 //
 //}
 
+
+//// Return the drawing rectangle for a particular page number
+//- (NSRect)rectForPage:(NSInteger)page {
+//    NSRect bounds = [self bounds];
+//    float pageHeight = [self calculatePrintHeight];
+//    return NSMakeRect( NSMinX(bounds), 0,
+//                        NSWidth(bounds), pageHeight );
+//}
+// 
+//// Calculate the vertical size of the view that fits on a single page
+//- (float)calculatePrintHeight {
+//    // Obtain the print info object for the current operation
+//    NSPrintInfo *pi = [[NSPrintOperation currentOperation] printInfo];
+// 
+//    // Calculate the page height in points
+//    NSSize paperSize = [pi paperSize];
+//    float pageHeight = paperSize.height - [pi topMargin] - [pi bottomMargin];
+// 
+//    // Convert height to the scaled view
+//    float scale = [[[pi dictionary] objectForKey:NSPrintScalingFactor] floatValue];
+//    return pageHeight / scale;
+//}
+
+
+
+
+
+
+
+- (NSRect)rectForPage:(NSInteger)page {
+    [self setImage:_images.at(page-1)];
+    NSPrintInfo* pi = [[NSPrintOperation currentOperation] printInfo];
+    const NSRect pageBounds = [pi imageablePageBounds];
+    const CGFloat scale = [pi scalingFactor];
+    [self setFrame:{{}, {
+        pageBounds.size.width*scale,
+        pageBounds.size.height*scale
+    }}];
+    return [self bounds];
+}
+
 - (BOOL)knowsPageRange:(NSRangePointer)range {
     range->location = 1;
     range->length = _images.size();
-    return YES;
+    return true;
 }
 
 @end
