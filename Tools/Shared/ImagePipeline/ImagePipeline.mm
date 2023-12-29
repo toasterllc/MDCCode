@@ -170,7 +170,8 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     
     // Exposure
     {
-        const float exposure = pow(2, opts.exposure);
+        constexpr float ExposureCoeff = 4;
+        const float exposure = pow(2, ExposureCoeff*opts.exposure);
         renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Exposure",
                 // Buffer args
@@ -242,7 +243,10 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     }
     
     // Saturation
-    Saturation::Run(renderer, opts.saturation, srcRgb);
+    {
+        constexpr float SaturationCoeff = 2;
+        Saturation::Run(renderer, SaturationCoeff*opts.saturation, srcRgb);
+    }
     
     // XYZ.D50 -> XYZ.D65
     {
