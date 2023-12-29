@@ -71,6 +71,8 @@ static NSMenu* _ContextMenuCreate() {
     [menu addItemWithTitle:@"Export…" action:@selector(_export:) keyEquivalent:@""];
     [menu addItem:[NSMenuItem separatorItem]];
     [menu addItemWithTitle:@"Delete…" action:@selector(_delete:) keyEquivalent:@""];
+    [menu addItem:[NSMenuItem separatorItem]];
+    [menu addItemWithTitle:@"Print…" action:@selector(printDocument:) keyEquivalent:@""];
     return menu;
 }
 
