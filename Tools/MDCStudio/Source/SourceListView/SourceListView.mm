@@ -218,6 +218,10 @@ static void _Init(SourceListView* self) {
         [menu addItemWithTitle:@"Factory Reset…" action:@selector(_factoryReset:) keyEquivalent:@""];
         [self->_outlineView setMenu:menu];
     }
+    
+    NSScrollView* scrollView = [self->_outlineView enclosingScrollView];
+    [scrollView setAutomaticallyAdjustsContentInsets:false];
+    [scrollView setContentInsets:{28,0,0,0}];
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
