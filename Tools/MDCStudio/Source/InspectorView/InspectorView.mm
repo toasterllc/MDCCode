@@ -988,6 +988,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->getter = _GetterCreate(self, _Get_reconstructHighlights);
                 it->setter = _SetterCreate(self, _Set_reconstructHighlights);
                 it->section = section;
+                it->valueDefault = true;
                 [section addItem:it];
             }
             

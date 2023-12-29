@@ -14,8 +14,13 @@
 #import "FactoryResetConfirmationAlert/FactoryResetConfirmationAlert.h"
 #import "ImageExporter/ImageExporter.h"
 #import "MDCDevicesManager.h"
+#import "Tools/Shared/Renderer.h"
 
 using namespace MDCStudio;
+
+@interface PrintImageView : NSImageView
+- (instancetype)initWithImages:(std::vector<NSImage*>&&)images;
+@end
 
 @interface Document () <NSSplitViewDelegate, SourceListViewDelegate, DeviceSettingsViewDelegate>
 @end
@@ -154,6 +159,20 @@ static void _SetView(T& x, NSView* y) {
         return false;
     } else if ([item action] == @selector(saveDocumentAs:)) {
         return false;
+    } else if ([item action] == @selector(revertDocumentToSaved:)) {
+        return false;
+    
+    // Printing
+    } else if ([item action] == @selector(printDocument:)) {
+        const size_t selectionCount = _active.selection->images().size();
+        NSString* title = nil;
+        if (selectionCount > 1) {
+            title = [NSString stringWithFormat:@"Print %ju Photos…", (uintmax_t)selectionCount];
+        } else {
+            title = @"Print Photo…";
+        }
+        [mitem setTitle:title];
+        return !_active.selection->images().empty();
     
     // Sort
     } else if ([item action] == @selector(_sortNewestFirst:)) {
@@ -195,7 +214,7 @@ static void _SetView(T& x, NSView* y) {
         if (selectionCount > 1) {
             title = [NSString stringWithFormat:@"Export %ju Photos…", (uintmax_t)selectionCount];
         } else if (selectionCount == 1) {
-            title = @"Export 1 Photo…";
+            title = @"Export Photo…";
         } else {
             title = @"Export…";
         }
@@ -209,7 +228,7 @@ static void _SetView(T& x, NSView* y) {
         if (selectionCount > 1) {
             title = [NSString stringWithFormat:@"Delete %ju Photos…", (uintmax_t)selectionCount];
         } else if (selectionCount == 1) {
-            title = @"Delete 1 Photo…";
+            title = @"Delete Photo…";
         } else {
             title = @"Delete…";
         }
@@ -656,6 +675,112 @@ static void _SortNewestFirst(bool x) {
     
     [_window endSheet:[_deviceSettings.view window]];
     _deviceSettings = {};
+}
+
+// MARK: - Printing
+
+static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPtr& rec) {
+    using namespace MDCTools;
+    using namespace MDCTools::ImagePipeline;
+    
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    
+    Image image = imageSource->loadImage(ImageSource::Priority::High, rec);
+    Pipeline::Options popts = PipelineOptionsForImage(*rec, image);
+    
+    Renderer::Txt txt = renderer.textureCreate(MTLPixelFormatRGBA16Float,
+        rec->info.imageWidth, rec->info.imageHeight);
+    
+    Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+        image.width, image.height, (ImagePixel*)(image.data.get()));
+    
+    Pipeline::Run(renderer, popts, rawTxt, txt);
+    
+//    renderer.debugTextureShow(txt);
+    
+    return [[NSImage alloc] initWithCGImage:(__bridge CGImageRef)renderer.imageCreate(txt)
+        size:NSZeroSize];
+}
+
+- (NSPrintOperation*)printOperationWithSettings:(NSDictionary<NSPrintInfoAttributeKey,id>*)printSettings
+    error:(NSError**)error {
+    
+    ImageSet imageSet = _active.selection->images();
+    assert(!imageSet.empty());
+    
+    std::vector<NSImage*> images;
+    for (const ImageRecordPtr& rec : imageSet) {
+        images.push_back(_NSImageForImage(_active.imageSource, rec));
+    }
+    
+    PrintImageView* view = [[PrintImageView alloc] initWithImages:std::move(images)];
+    
+    NSPrintInfo* pi = [[NSPrintInfo alloc] initWithDictionary:printSettings];
+    
+    [pi setHorizontalPagination:NSFitPagination];
+    [pi setVerticalPagination:NSFitPagination];
+    [pi setHorizontallyCentered:true];
+    [pi setVerticallyCentered:true];
+    [pi setLeftMargin:20];
+    [pi setRightMargin:20];
+    [pi setTopMargin:10];
+    [pi setBottomMargin:10];
+    
+//    [pi setHorizontalPagination:NSPrintingPaginationModeFit];
+//    [pi setVerticalPagination:NSPrintingPaginationModeFit];
+//    [pi setScalingFactor:.1];
+//    [pi setHorizontallyCentered:NO];
+//    [pi setVerticallyCentered:NO];
+    
+    return [NSPrintOperation printOperationWithView:view printInfo:pi];
+}
+
+@end
+
+@implementation PrintImageView {
+    std::vector<NSImage*> _images;
+}
+
+- (instancetype)initWithImages:(std::vector<NSImage*>&&)images {
+    if (!(self = [super initWithFrame:{}])) return nil;
+    assert(!images.empty());
+    _images = std::move(images);
+    [self setImage:_images.at(0)];
+    [self setFrame:{{}, [self intrinsicContentSize]}];
+//    [self setImageScaling:NSImageScaleAxesIndependently];
+    return self;
+}
+
+- (NSRect)rectForPage:(NSInteger)page {
+//    [self setImage:_images.at(page-1)];
+    return [self bounds];
+}
+
+//- (void)adjustPageWidthNew:(CGFloat *)newRight left:(CGFloat)oldLeft right:(CGFloat)oldRight limit:(CGFloat)rightLimit {
+//    NSLog(@"%s", sel_getName(_cmd));
+//}
+//
+//- (void)adjustPageHeightNew:(CGFloat *)newBottom top:(CGFloat)oldTop bottom:(CGFloat)oldBottom limit:(CGFloat)bottomLimit {
+//    NSLog(@"%s", sel_getName(_cmd));
+//}
+
+//- (NSPoint)locationOfPrintRect:(NSRect)rect {
+//    return {};
+//}
+
+//- (void)beginPageInRect:(NSRect)rect atPlacement:(NSPoint)location {
+//    
+//}
+//
+//- (void)endPage {
+//
+//}
+
+- (BOOL)knowsPageRange:(NSRangePointer)range {
+    range->location = 1;
+    range->length = _images.size();
+    return YES;
 }
 
 @end
