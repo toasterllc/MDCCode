@@ -75,9 +75,7 @@ struct MDCDevice : ImageSource {
         _imageLibrary = Object::Create<ImageLibrary>();
         
         // Give device a default name
-        char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", _serial.c_str());
-        _name = std::string(name);
+        _name = "Photon";
         
         // Read state from disk
         try {
