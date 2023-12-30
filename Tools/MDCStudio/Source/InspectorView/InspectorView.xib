@@ -66,7 +66,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Section" translatesAutoresizingMaskIntoConstraints="NO" id="1DK-eC-wsd" customClass="InspectorViewItem_Section">
-                                                <rect key="frame" x="1" y="42" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="42" width="247" height="27"/>
                                                 <subviews>
                                                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="Anr-aQ-Hl6">
                                                         <rect key="frame" x="0.0" y="3" width="82" height="14"/>
@@ -95,9 +95,9 @@
                                                     <constraint firstItem="NSv-VQ-1Xw" firstAttribute="leading" secondItem="Anr-aQ-Hl6" secondAttribute="trailing" constant="2" id="1S3-Vg-8bS"/>
                                                     <constraint firstItem="Anr-aQ-Hl6" firstAttribute="leading" secondItem="1DK-eC-wsd" secondAttribute="leading" id="E8k-XA-jCl"/>
                                                     <constraint firstItem="NSv-VQ-1Xw" firstAttribute="centerY" secondItem="Anr-aQ-Hl6" secondAttribute="centerY" id="OPD-v4-RXx"/>
-                                                    <constraint firstAttribute="height" constant="20" id="OwQ-54-anQ"/>
+                                                    <constraint firstAttribute="bottom" secondItem="Anr-aQ-Hl6" secondAttribute="bottom" constant="3" id="d4w-8a-7Oq"/>
                                                     <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Anr-aQ-Hl6" secondAttribute="trailing" constant="12" id="feg-2T-Snu"/>
-                                                    <constraint firstItem="Anr-aQ-Hl6" firstAttribute="centerY" secondItem="1DK-eC-wsd" secondAttribute="centerY" id="qxK-9m-WR7"/>
+                                                    <constraint firstItem="Anr-aQ-Hl6" firstAttribute="top" secondItem="1DK-eC-wsd" secondAttribute="top" constant="10" id="vgR-Kl-D6n"/>
                                                 </constraints>
                                                 <connections>
                                                     <outlet property="_clearButton" destination="NSv-VQ-1Xw" id="WHW-lt-8vT"/>
@@ -106,7 +106,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_SliderWithIcon" translatesAutoresizingMaskIntoConstraints="NO" id="Oca-BY-FTK" customClass="InspectorViewItem_SliderWithIcon">
-                                                <rect key="frame" x="1" y="64" width="247" height="41"/>
+                                                <rect key="frame" x="1" y="71" width="247" height="41"/>
                                                 <subviews>
                                                     <button translatesAutoresizingMaskIntoConstraints="NO" id="ccx-WW-HOu">
                                                         <rect key="frame" x="0.0" y="19" width="18" height="18"/>
@@ -182,7 +182,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_SliderWithLabel" translatesAutoresizingMaskIntoConstraints="NO" id="JiA-Ly-2Hk" customClass="InspectorViewItem_SliderWithLabel">
-                                                <rect key="frame" x="1" y="107" width="247" height="39"/>
+                                                <rect key="frame" x="1" y="114" width="247" height="39"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
                                                         <rect key="frame" x="-2" y="21" width="44" height="14"/>
@@ -239,7 +239,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_WhiteBalance" translatesAutoresizingMaskIntoConstraints="NO" id="ZAu-Q2-IoJ" customClass="InspectorViewItem_WhiteBalance">
-                                                <rect key="frame" x="1" y="148" width="247" height="35"/>
+                                                <rect key="frame" x="1" y="155" width="247" height="35"/>
                                                 <subviews>
                                                     <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y1N-7g-Mqb">
                                                         <rect key="frame" x="-1" y="11" width="122" height="16"/>
@@ -287,7 +287,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Checkbox" translatesAutoresizingMaskIntoConstraints="NO" id="EwO-sD-ijl" customClass="InspectorViewItem_Checkbox">
-                                                <rect key="frame" x="1" y="185" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="192" width="247" height="20"/>
                                                 <subviews>
                                                     <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="4h7-i2-RCa">
                                                         <rect key="frame" x="-1" y="2" width="55" height="16"/>
@@ -313,7 +313,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorView_Menu" translatesAutoresizingMaskIntoConstraints="NO" id="Uqz-Ai-fuI" customClass="InspectorView_Menu">
-                                                <rect key="frame" x="1" y="207" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="214" width="247" height="20"/>
                                                 <subviews>
                                                     <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="98b-tg-mR0">
                                                         <rect key="frame" x="-4" y="-2" width="243" height="22"/>
@@ -343,7 +343,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Timestamp" translatesAutoresizingMaskIntoConstraints="NO" id="ZXZ-qK-hhw" customClass="InspectorViewItem_Timestamp">
-                                                <rect key="frame" x="1" y="229" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="236" width="247" height="20"/>
                                                 <subviews>
                                                     <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="yui-q4-XJp">
                                                         <rect key="frame" x="-1" y="2" width="80" height="16"/>
@@ -386,7 +386,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Rotation" translatesAutoresizingMaskIntoConstraints="NO" id="QyM-zH-3HC" customClass="InspectorViewItem_Rotation">
-                                                <rect key="frame" x="1" y="251" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="258" width="247" height="20"/>
                                                 <subviews>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Sz1-Dv-gjR">
                                                         <rect key="frame" x="-1.5" y="3.5" width="15" height="17"/>
@@ -410,7 +410,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Stat" translatesAutoresizingMaskIntoConstraints="NO" id="PvD-sd-A2Z" customClass="InspectorViewItem_Stat">
-                                                <rect key="frame" x="1" y="273" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="280" width="247" height="20"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">
                                                         <rect key="frame" x="0.0" y="3" width="38" height="14"/>
