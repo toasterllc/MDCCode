@@ -52,13 +52,12 @@
                                         </textFieldCell>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
-                                            <tableCellView identifier="InspectorView_DarkRowView" id="wGH-6D-BJs" customClass="InspectorView_DarkRowView">
+                                            <tableCellView identifier="InspectorView_DarkRowView" translatesAutoresizingMaskIntoConstraints="NO" id="wGH-6D-BJs" customClass="InspectorView_DarkRowView">
                                                 <rect key="frame" x="1" y="1" width="247" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_Spacer" id="xVL-Ng-GMo" customClass="InspectorViewItem_Spacer">
+                                            <tableCellView identifier="InspectorViewItem_Spacer" translatesAutoresizingMaskIntoConstraints="NO" id="xVL-Ng-GMo" customClass="InspectorViewItem_Spacer">
                                                 <rect key="frame" x="1" y="20" width="247" height="20"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <constraints>
                                                     <constraint firstAttribute="height" constant="20" id="wWk-M5-Tlg"/>
                                                 </constraints>
@@ -66,9 +65,8 @@
                                                     <outlet property="_height" destination="wWk-M5-Tlg" id="tIp-Ea-ZT4"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_Section" id="1DK-eC-wsd" customClass="InspectorViewItem_Section">
+                                            <tableCellView identifier="InspectorViewItem_Section" translatesAutoresizingMaskIntoConstraints="NO" id="1DK-eC-wsd" customClass="InspectorViewItem_Section">
                                                 <rect key="frame" x="1" y="42" width="247" height="20"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="Anr-aQ-Hl6">
                                                         <rect key="frame" x="0.0" y="3" width="82" height="14"/>
@@ -107,12 +105,11 @@
                                                     <outlet property="_label" destination="Anr-aQ-Hl6" id="Tmh-Ek-6Js"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_SliderWithIcon" id="Oca-BY-FTK" customClass="InspectorViewItem_SliderWithIcon">
-                                                <rect key="frame" x="1" y="64" width="247" height="38"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <tableCellView identifier="InspectorViewItem_SliderWithIcon" translatesAutoresizingMaskIntoConstraints="NO" id="Oca-BY-FTK" customClass="InspectorViewItem_SliderWithIcon">
+                                                <rect key="frame" x="1" y="64" width="247" height="41"/>
                                                 <subviews>
                                                     <button translatesAutoresizingMaskIntoConstraints="NO" id="ccx-WW-HOu">
-                                                        <rect key="frame" x="0.0" y="16" width="18" height="18"/>
+                                                        <rect key="frame" x="0.0" y="19" width="18" height="18"/>
                                                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="buttonCell:07h-Ue-Jj7:image" imagePosition="only" alignment="center" inset="2" id="07h-Ue-Jj7">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
@@ -126,7 +123,7 @@
                                                         </connections>
                                                     </button>
                                                     <button translatesAutoresizingMaskIntoConstraints="NO" id="1eQ-eD-Mpf">
-                                                        <rect key="frame" x="217" y="16" width="18" height="18"/>
+                                                        <rect key="frame" x="217" y="19" width="18" height="18"/>
                                                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="buttonCell:OMA-fp-Ejh:image" imagePosition="only" alignment="center" inset="2" id="OMA-fp-Ejh">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
@@ -140,7 +137,7 @@
                                                         </connections>
                                                     </button>
                                                     <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DZe-QJ-YrD">
-                                                        <rect key="frame" x="22" y="14" width="191" height="20"/>
+                                                        <rect key="frame" x="22" y="17" width="191" height="20"/>
                                                         <sliderCell key="cell" controlSize="small" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="below" numberOfTickMarks="1" sliderType="linear" id="vU9-Eb-SsE"/>
                                                         <connections>
                                                             <action selector="sliderAction:" target="Oca-BY-FTK" id="fO0-Gd-Y29"/>
@@ -168,7 +165,7 @@
                                                     <constraint firstItem="DZe-QJ-YrD" firstAttribute="leading" secondItem="ccx-WW-HOu" secondAttribute="trailing" constant="6" id="P5q-nT-2DI"/>
                                                     <constraint firstAttribute="trailing" secondItem="1eQ-eD-Mpf" secondAttribute="trailing" constant="12" id="S7S-4p-ij9"/>
                                                     <constraint firstItem="kGS-IH-WVJ" firstAttribute="centerX" secondItem="DZe-QJ-YrD" secondAttribute="centerX" id="VYP-Te-CqS"/>
-                                                    <constraint firstItem="kGS-IH-WVJ" firstAttribute="top" secondItem="DZe-QJ-YrD" secondAttribute="bottom" id="eyk-n5-q1z"/>
+                                                    <constraint firstItem="kGS-IH-WVJ" firstAttribute="top" secondItem="DZe-QJ-YrD" secondAttribute="bottom" constant="3" id="eyk-n5-q1z"/>
                                                     <constraint firstItem="1eQ-eD-Mpf" firstAttribute="centerY" secondItem="ccx-WW-HOu" secondAttribute="centerY" id="ml2-wa-JZM"/>
                                                     <constraint firstItem="1eQ-eD-Mpf" firstAttribute="leading" secondItem="DZe-QJ-YrD" secondAttribute="trailing" constant="6" id="pXx-h4-14b"/>
                                                     <constraint firstItem="DZe-QJ-YrD" firstAttribute="centerY" secondItem="ccx-WW-HOu" secondAttribute="centerY" constant="0.5" id="whR-FX-dyp"/>
@@ -184,12 +181,11 @@
                                                     <outlet property="_slider" destination="DZe-QJ-YrD" id="75m-xG-gqk"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_SliderWithLabel" id="JiA-Ly-2Hk" customClass="InspectorViewItem_SliderWithLabel">
-                                                <rect key="frame" x="1" y="104" width="247" height="38"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <tableCellView identifier="InspectorViewItem_SliderWithLabel" translatesAutoresizingMaskIntoConstraints="NO" id="JiA-Ly-2Hk" customClass="InspectorViewItem_SliderWithLabel">
+                                                <rect key="frame" x="1" y="107" width="247" height="41"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
-                                                        <rect key="frame" x="-2" y="20" width="33" height="14"/>
+                                                        <rect key="frame" x="-2" y="23" width="33" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" title="Label" id="v9N-Nx-KcH">
                                                             <font key="font" metaFont="label" size="11"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -197,7 +193,7 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="WRI-17-iHa">
-                                                        <rect key="frame" x="35" y="14" width="202" height="20"/>
+                                                        <rect key="frame" x="35" y="17" width="202" height="20"/>
                                                         <sliderCell key="cell" controlSize="small" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="below" numberOfTickMarks="1" sliderType="linear" id="91Q-rx-s56"/>
                                                         <connections>
                                                             <action selector="sliderAction:" target="JiA-Ly-2Hk" id="eAr-cS-nkr"/>
@@ -225,7 +221,7 @@
                                                     <constraint firstItem="gUz-V3-zNi" firstAttribute="centerX" secondItem="WRI-17-iHa" secondAttribute="centerX" id="BMn-2G-YX5"/>
                                                     <constraint firstItem="2Wk-Za-sn6" firstAttribute="top" secondItem="JiA-Ly-2Hk" secondAttribute="top" constant="4" id="OYN-ac-Ug7"/>
                                                     <constraint firstItem="2Wk-Za-sn6" firstAttribute="leading" secondItem="JiA-Ly-2Hk" secondAttribute="leading" id="Q6L-zI-UVh"/>
-                                                    <constraint firstItem="gUz-V3-zNi" firstAttribute="top" secondItem="WRI-17-iHa" secondAttribute="bottom" id="c8R-rZ-auo"/>
+                                                    <constraint firstItem="gUz-V3-zNi" firstAttribute="top" secondItem="WRI-17-iHa" secondAttribute="bottom" constant="3" id="c8R-rZ-auo"/>
                                                     <constraint firstAttribute="bottom" secondItem="gUz-V3-zNi" secondAttribute="bottom" constant="2" id="k9p-zM-5C9"/>
                                                     <constraint firstItem="WRI-17-iHa" firstAttribute="centerY" secondItem="2Wk-Za-sn6" secondAttribute="centerY" constant="3" id="r8F-bE-YBZ"/>
                                                     <constraint firstAttribute="trailing" secondItem="WRI-17-iHa" secondAttribute="trailing" constant="12" id="ul2-D6-zDc"/>
@@ -239,9 +235,8 @@
                                                     <outlet property="_slider" destination="WRI-17-iHa" id="1OS-zG-2xZ"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_WhiteBalance" id="ZAu-Q2-IoJ" customClass="InspectorViewItem_WhiteBalance">
-                                                <rect key="frame" x="1" y="144" width="247" height="35"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <tableCellView identifier="InspectorViewItem_WhiteBalance" translatesAutoresizingMaskIntoConstraints="NO" id="ZAu-Q2-IoJ" customClass="InspectorViewItem_WhiteBalance">
+                                                <rect key="frame" x="1" y="150" width="247" height="35"/>
                                                 <subviews>
                                                     <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y1N-7g-Mqb">
                                                         <rect key="frame" x="-1" y="11" width="122" height="16"/>
@@ -288,9 +283,8 @@
                                                     <outlet property="_modeControl" destination="Y1N-7g-Mqb" id="Snz-Kf-vm4"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_Checkbox" id="EwO-sD-ijl" customClass="InspectorViewItem_Checkbox">
-                                                <rect key="frame" x="1" y="181" width="247" height="20"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <tableCellView identifier="InspectorViewItem_Checkbox" translatesAutoresizingMaskIntoConstraints="NO" id="EwO-sD-ijl" customClass="InspectorViewItem_Checkbox">
+                                                <rect key="frame" x="1" y="187" width="247" height="20"/>
                                                 <subviews>
                                                     <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="4h7-i2-RCa">
                                                         <rect key="frame" x="-1" y="2" width="55" height="16"/>
@@ -315,9 +309,8 @@
                                                     <outlet property="_indentRight" destination="g17-fM-mE9" id="tlL-Ua-WoF"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorView_Menu" id="Uqz-Ai-fuI" customClass="InspectorView_Menu">
-                                                <rect key="frame" x="1" y="203" width="247" height="20"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <tableCellView identifier="InspectorView_Menu" translatesAutoresizingMaskIntoConstraints="NO" id="Uqz-Ai-fuI" customClass="InspectorView_Menu">
+                                                <rect key="frame" x="1" y="209" width="247" height="20"/>
                                                 <subviews>
                                                     <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="98b-tg-mR0">
                                                         <rect key="frame" x="-4" y="-2" width="243" height="22"/>
@@ -346,9 +339,8 @@
                                                     <outlet property="_indentRight" destination="rUv-V2-sgZ" id="p4U-He-fls"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_Timestamp" id="ZXZ-qK-hhw" customClass="InspectorViewItem_Timestamp">
-                                                <rect key="frame" x="1" y="225" width="247" height="20"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <tableCellView identifier="InspectorViewItem_Timestamp" translatesAutoresizingMaskIntoConstraints="NO" id="ZXZ-qK-hhw" customClass="InspectorViewItem_Timestamp">
+                                                <rect key="frame" x="1" y="231" width="247" height="20"/>
                                                 <subviews>
                                                     <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="yui-q4-XJp">
                                                         <rect key="frame" x="-1" y="2" width="80" height="16"/>
@@ -390,9 +382,8 @@
                                                     <outlet property="_indentRight" destination="iX1-xT-jNh" id="bwo-MP-taM"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_Rotation" id="QyM-zH-3HC" customClass="InspectorViewItem_Rotation">
-                                                <rect key="frame" x="1" y="247" width="247" height="20"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <tableCellView identifier="InspectorViewItem_Rotation" translatesAutoresizingMaskIntoConstraints="NO" id="QyM-zH-3HC" customClass="InspectorViewItem_Rotation">
+                                                <rect key="frame" x="1" y="253" width="247" height="20"/>
                                                 <subviews>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Sz1-Dv-gjR">
                                                         <rect key="frame" x="-1.5" y="3.5" width="15" height="17"/>
@@ -415,9 +406,8 @@
                                                     <outlet property="_indentLeft" destination="wgz-5l-XcB" id="IbU-fg-yJk"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_Stat" id="PvD-sd-A2Z" customClass="InspectorViewItem_Stat">
-                                                <rect key="frame" x="1" y="269" width="247" height="20"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <tableCellView identifier="InspectorViewItem_Stat" translatesAutoresizingMaskIntoConstraints="NO" id="PvD-sd-A2Z" customClass="InspectorViewItem_Stat">
+                                                <rect key="frame" x="1" y="275" width="247" height="20"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">
                                                         <rect key="frame" x="0.0" y="3" width="38" height="14"/>
