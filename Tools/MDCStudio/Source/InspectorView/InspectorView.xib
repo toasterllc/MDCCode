@@ -33,14 +33,14 @@
                         <rect key="frame" x="0.0" y="0.0" width="250" height="400"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="20" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" id="AKO-DU-mMa" customClass="InspectorOutlineView">
+                            <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" tableStyle="plain" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="20" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" id="AKO-DU-mMa" customClass="InspectorOutlineView">
                                 <rect key="frame" x="0.0" y="0.0" width="250" height="400"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn width="218" minWidth="16" maxWidth="9999999999" id="wRa-Pk-v3r">
+                                    <tableColumn width="247" minWidth="16" maxWidth="9999999999" id="wRa-Pk-v3r">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
@@ -53,11 +53,11 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="InspectorView_DarkRowView" translatesAutoresizingMaskIntoConstraints="NO" id="wGH-6D-BJs" customClass="InspectorView_DarkRowView">
-                                                <rect key="frame" x="11" y="1" width="227" height="17"/>
+                                                <rect key="frame" x="1" y="1" width="247" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Spacer" translatesAutoresizingMaskIntoConstraints="NO" id="xVL-Ng-GMo" customClass="InspectorViewItem_Spacer">
-                                                <rect key="frame" x="11" y="20" width="227" height="20"/>
+                                                <rect key="frame" x="1" y="20" width="247" height="20"/>
                                                 <constraints>
                                                     <constraint firstAttribute="height" constant="20" id="wWk-M5-Tlg"/>
                                                 </constraints>
@@ -66,7 +66,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Section" translatesAutoresizingMaskIntoConstraints="NO" id="1DK-eC-wsd" customClass="InspectorViewItem_Section">
-                                                <rect key="frame" x="11" y="42" width="227" height="27"/>
+                                                <rect key="frame" x="1" y="42" width="247" height="27"/>
                                                 <subviews>
                                                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="Anr-aQ-Hl6">
                                                         <rect key="frame" x="0.0" y="3" width="82" height="14"/>
@@ -106,7 +106,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_SliderWithIcon" translatesAutoresizingMaskIntoConstraints="NO" id="Oca-BY-FTK" customClass="InspectorViewItem_SliderWithIcon">
-                                                <rect key="frame" x="11" y="71" width="227" height="38"/>
+                                                <rect key="frame" x="1" y="71" width="247" height="38"/>
                                                 <subviews>
                                                     <button translatesAutoresizingMaskIntoConstraints="NO" id="ccx-WW-HOu">
                                                         <rect key="frame" x="0.0" y="16" width="18" height="18"/>
@@ -123,7 +123,7 @@
                                                         </connections>
                                                     </button>
                                                     <button translatesAutoresizingMaskIntoConstraints="NO" id="1eQ-eD-Mpf">
-                                                        <rect key="frame" x="197" y="16" width="18" height="18"/>
+                                                        <rect key="frame" x="217" y="16" width="18" height="18"/>
                                                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="buttonCell:OMA-fp-Ejh:image" imagePosition="only" alignment="center" inset="2" id="OMA-fp-Ejh">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
@@ -137,14 +137,14 @@
                                                         </connections>
                                                     </button>
                                                     <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DZe-QJ-YrD">
-                                                        <rect key="frame" x="22" y="17" width="171" height="20"/>
+                                                        <rect key="frame" x="22" y="17" width="191" height="20"/>
                                                         <sliderCell key="cell" controlSize="small" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="below" numberOfTickMarks="1" sliderType="linear" id="vU9-Eb-SsE"/>
                                                         <connections>
                                                             <action selector="sliderAction:" target="Oca-BY-FTK" id="fO0-Gd-Y29"/>
                                                         </connections>
                                                     </slider>
                                                     <textField focusRingType="none" verticalHuggingPriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="kGS-IH-WVJ">
-                                                        <rect key="frame" x="81" y="2" width="54" height="14"/>
+                                                        <rect key="frame" x="91" y="2" width="54" height="14"/>
                                                         <constraints>
                                                             <constraint firstAttribute="width" constant="50" id="75p-14-Ud2"/>
                                                         </constraints>
@@ -182,7 +182,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_SliderWithLabel" translatesAutoresizingMaskIntoConstraints="NO" id="JiA-Ly-2Hk" customClass="InspectorViewItem_SliderWithLabel">
-                                                <rect key="frame" x="11" y="111" width="227" height="36"/>
+                                                <rect key="frame" x="1" y="111" width="247" height="36"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
                                                         <rect key="frame" x="-2" y="18" width="44" height="14"/>
@@ -196,14 +196,14 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="WRI-17-iHa">
-                                                        <rect key="frame" x="46" y="17" width="171" height="20"/>
+                                                        <rect key="frame" x="46" y="17" width="191" height="20"/>
                                                         <sliderCell key="cell" controlSize="small" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="below" numberOfTickMarks="1" sliderType="linear" id="91Q-rx-s56"/>
                                                         <connections>
                                                             <action selector="sliderAction:" target="JiA-Ly-2Hk" id="eAr-cS-nkr"/>
                                                         </connections>
                                                     </slider>
                                                     <textField focusRingType="none" verticalHuggingPriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="gUz-V3-zNi">
-                                                        <rect key="frame" x="105" y="2" width="54" height="14"/>
+                                                        <rect key="frame" x="115" y="2" width="54" height="14"/>
                                                         <constraints>
                                                             <constraint firstAttribute="width" constant="50" id="QaC-hy-wbx"/>
                                                         </constraints>
@@ -239,15 +239,15 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_WhiteBalance" translatesAutoresizingMaskIntoConstraints="NO" id="ZAu-Q2-IoJ" customClass="InspectorViewItem_WhiteBalance">
-                                                <rect key="frame" x="11" y="149" width="227" height="34"/>
+                                                <rect key="frame" x="1" y="149" width="247" height="36"/>
                                                 <subviews>
                                                     <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y1N-7g-Mqb">
-                                                        <rect key="frame" x="-1" y="11" width="102" height="16"/>
+                                                        <rect key="frame" x="-1" y="11" width="102" height="18"/>
                                                         <constraints>
                                                             <constraint firstAttribute="width" constant="100" id="PVs-MO-NeY"/>
                                                         </constraints>
-                                                        <segmentedCell key="cell" controlSize="mini" borderStyle="border" alignment="left" segmentDistribution="fillProportionally" style="roundRect" trackingMode="selectOne" id="szj-of-JSt">
-                                                            <font key="font" metaFont="miniSystem"/>
+                                                        <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" segmentDistribution="fillProportionally" style="roundRect" trackingMode="selectOne" id="szj-of-JSt">
+                                                            <font key="font" metaFont="smallSystem"/>
                                                             <segments>
                                                                 <segment label="Auto" selected="YES"/>
                                                                 <segment label="Manual" tag="1"/>
@@ -258,7 +258,7 @@
                                                         </connections>
                                                     </segmentedControl>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Krd-2V-vJW">
-                                                        <rect key="frame" x="106" y="11" width="24" height="15"/>
+                                                        <rect key="frame" x="104" y="11" width="28" height="16"/>
                                                         <buttonCell key="cell" type="push" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" inset="2" id="xcE-mp-KPy">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="miniSystem"/>
@@ -287,7 +287,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Checkbox" translatesAutoresizingMaskIntoConstraints="NO" id="EwO-sD-ijl" customClass="InspectorViewItem_Checkbox">
-                                                <rect key="frame" x="11" y="185" width="227" height="20"/>
+                                                <rect key="frame" x="1" y="187" width="247" height="20"/>
                                                 <subviews>
                                                     <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="4h7-i2-RCa">
                                                         <rect key="frame" x="-1" y="2" width="55" height="16"/>
@@ -313,10 +313,10 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorView_Menu" translatesAutoresizingMaskIntoConstraints="NO" id="Uqz-Ai-fuI" customClass="InspectorView_Menu">
-                                                <rect key="frame" x="11" y="207" width="227" height="20"/>
+                                                <rect key="frame" x="1" y="209" width="247" height="20"/>
                                                 <subviews>
                                                     <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="98b-tg-mR0">
-                                                        <rect key="frame" x="-4" y="-2" width="223" height="22"/>
+                                                        <rect key="frame" x="-4" y="-2" width="243" height="22"/>
                                                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" allowsMixedState="YES" imageScaling="proportionallyDown" inset="2" selectedItem="Y5b-qt-FR1" id="D89-oK-seX">
                                                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="menu" size="11"/>
@@ -343,7 +343,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Timestamp" translatesAutoresizingMaskIntoConstraints="NO" id="ZXZ-qK-hhw" customClass="InspectorViewItem_Timestamp">
-                                                <rect key="frame" x="11" y="229" width="227" height="20"/>
+                                                <rect key="frame" x="1" y="231" width="247" height="20"/>
                                                 <subviews>
                                                     <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="yui-q4-XJp">
                                                         <rect key="frame" x="-1" y="2" width="80" height="16"/>
@@ -386,7 +386,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Rotation" translatesAutoresizingMaskIntoConstraints="NO" id="QyM-zH-3HC" customClass="InspectorViewItem_Rotation">
-                                                <rect key="frame" x="11" y="251" width="227" height="20"/>
+                                                <rect key="frame" x="1" y="253" width="247" height="20"/>
                                                 <subviews>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Sz1-Dv-gjR">
                                                         <rect key="frame" x="-1.5" y="3.5" width="15" height="17"/>
@@ -410,7 +410,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Stat" translatesAutoresizingMaskIntoConstraints="NO" id="PvD-sd-A2Z" customClass="InspectorViewItem_Stat">
-                                                <rect key="frame" x="11" y="273" width="227" height="20"/>
+                                                <rect key="frame" x="1" y="275" width="247" height="20"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">
                                                         <rect key="frame" x="0.0" y="3" width="38" height="14"/>
