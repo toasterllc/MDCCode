@@ -16,6 +16,9 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 480;
 //    static constexpr size_t ThumbHeight     = 270;
     
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+    
 #if defined(__aarch64__)
     static constexpr MTLPixelFormat PixelFormat = MTLPixelFormatASTC_4x4_LDR;
 #elif defined(__x86_64__)
@@ -23,6 +26,8 @@ struct [[gnu::packed]] ImageThumb {
 #else
     #error Unknown platform
 #endif
+    
+#pragma clang diagnostic pop
     
     static constexpr size_t ThumbWidth      = 512;
     static constexpr size_t ThumbHeight     = 288;

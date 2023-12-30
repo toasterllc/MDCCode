@@ -1186,13 +1186,13 @@ static id _Get_localContrastRadius(const ImageRecord& rec) {
     return @(rec.options.localContrast.radius);
 }
 
-static id _Get_rotation(const ImageRecord& rec) {
-    return @((int)rec.options.rotation);
-}
-
-static id _Get_defringe(const ImageRecord& rec) {
-    return @(rec.options.defringe);
-}
+//static id _Get_rotation(const ImageRecord& rec) {
+//    return @((int)rec.options.rotation);
+//}
+//
+//static id _Get_defringe(const ImageRecord& rec) {
+//    return @(rec.options.defringe);
+//}
 
 static id _Get_reconstructHighlights(const ImageRecord& rec) {
     return @(rec.options.reconstructHighlights);

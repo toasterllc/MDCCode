@@ -289,17 +289,6 @@ static bool _EventPhaseChanged(NSEventPhase x) {
     return false;
 }
 
-static bool _EventPhaseBegan(NSEventPhase x) {
-    if (x & NSEventPhaseBegan) return true;
-    return false;
-}
-
-//std::optional<bool> _BoolOptionalForEventPhase(NSEventPhase x) {
-//    if (x & NSEventPhaseBegan) return true;
-//    else if (x & (NSEventPhaseEnded|NSEventPhaseCancelled)) return false;
-//    return std::nullopt;
-//}
-
 - (void)_updateScrollWheelInteractionUnderway:(NSEventPhase)phase momentumPhase:(NSEventPhase)momentumPhase {
     if (_EventPhaseChanged(phase)) {
         if (phase & NSEventPhaseBegan) {

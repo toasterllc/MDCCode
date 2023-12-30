@@ -1391,9 +1391,12 @@ struct MDCDevice : ImageSource {
     
     template<MTLPixelFormat T_Format>
     static constexpr at_block_format_t _ATBlockFormatForMTLPixelFormat() {
+// For compilation on macOS 10.15
 #if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_15_1
         return at_block_format_bc7;
 #else
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
         if constexpr (T_Format == MTLPixelFormatASTC_4x4_LDR) {
             return at_block_format_astc_4x4_ldr;
         } else if constexpr (T_Format == MTLPixelFormatBC7_RGBAUnorm) {
@@ -1401,6 +1404,7 @@ struct MDCDevice : ImageSource {
         } else {
             static_assert(Toastbox::AlwaysFalse_v<T_Format>);
         }
+#pragma clang diagnostic pop
 #endif
     }
     
