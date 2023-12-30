@@ -8,22 +8,24 @@ namespace Time {
 
 static std::string StringForTimeInstant(Time::Instant t, bool relative=false) {
     using namespace std::chrono;
-    std::stringstream ss;
+    char buf[128];
     if (Time::Absolute(t)) {
         const date::time_zone& tz = *date::current_zone();
         const auto tpDevice = Time::Clock::TimePointFromTimeInstant(t);
         const auto tpLocal = tz.to_local(date::clock_cast<std::chrono::system_clock>(tpDevice));
-        ss << tpLocal;
+        std::stringstream tpLocalStream;
+        tpLocalStream << tpLocal;
         if (relative) {
             const auto tpNow = Time::Clock::now();
-            ss << " (" << Toastbox::DurationString(true, duration_cast<seconds>(tpNow-tpDevice)) << " ago)";
+            snprintf(buf, sizeof(buf), "%s (%s ago)", tpLocalStream.str().c_str(),
+                Toastbox::DurationString(true, duration_cast<seconds>(tpNow-tpDevice)).c_str());
         } else {
-            ss << " (0x" << std::setfill('0') << std::setw(16) << std::hex << t << ")";
+            snprintf(buf, sizeof(buf), "%s (0x%016jx)", tpLocalStream.str().c_str(), (uintmax_t)t);
         }
     } else {
-        ss << "0x" << std::setfill('0') << std::setw(16) << std::hex << t << " [relative]";
+        snprintf(buf, sizeof(buf), "0x%016jx [relative]", (uintmax_t)t);
     }
-    return ss.str();
+    return buf;
 }
 
 static std::string StringForTimeState(const MSP::TimeState& state) {

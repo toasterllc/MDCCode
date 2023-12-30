@@ -221,6 +221,7 @@
 		55496F60278E88B800BCA739 /* Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Grid.h; sourceTree = "<group>"; };
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		554986302B400CBA00B68E4B /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
 		556F313E2AE069830028BF9C /* NibViewInit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NibViewInit.h; sourceTree = "<group>"; };
 		557ABCED29DD24230032619E /* BatteryLifeView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifeView.mm; sourceTree = "<group>"; };
 		557ABCEE29DD24230032619E /* BatteryLifeView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BatteryLifeView.xib; sourceTree = "<group>"; };
@@ -558,6 +559,7 @@
 				5544AE1427B5E585006AB473 /* Assert.h */,
 				55D3097E29A80F2E0080BCBD /* Time.h */,
 				55838C7F2AD0903000D4B024 /* TimeConstants.h */,
+				554986302B400CBA00B68E4B /* TimeString.h */,
 				55D3099229A822D60080BCBD /* Clock.h */,
 			);
 			path = Shared;
