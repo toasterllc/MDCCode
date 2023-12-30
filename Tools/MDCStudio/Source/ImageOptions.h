@@ -1,18 +1,18 @@
 #pragma once
+#include "Toastbox/Util.h"
 
 namespace MDCStudio {
 
 struct [[gnu::packed]] ImageWhiteBalance {
     bool automatic = false;
     uint8_t _pad[7];
-    double value = 0;
     double illum[3] = {};
     double colorMatrix[3][3] = {};
     
     uint8_t _reserved[128]; // For future use (we may want to specify which 2 illuminants we're interpolating between)
 };
 
-static_assert(!(sizeof(ImageWhiteBalance) % 8), "ImageWhiteBalance must be multiple of 8 bytes");
+static_assert(!(sizeof(ImageWhiteBalance) % 8), "ImageWhiteBalance must be multiple of 16 bytes");
 
 struct [[gnu::packed]] ImageOptions {
     enum class Rotation : uint8_t {

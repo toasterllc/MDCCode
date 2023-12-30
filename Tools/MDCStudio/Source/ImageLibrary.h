@@ -56,15 +56,19 @@ struct [[gnu::packed]] ImageRecord {
     ImageInfo info;
     ImageStatus status;
     ImageOptions options;
-//    // _pad: necessary for our thumbnail compression to keep our `thumb` member aligned
-//    // to a 4-pixel boundary. Each row of the thumbnail is ThumbWidth bytes, and info+options consume 1 row  (where each row is 512 bytes)
-//    uint8_t _pad[ImageThumb::ThumbWidth*3];
+    
+    // _pad: necessary for our thumbnail compression to keep our `thumb` member aligned
+    // to a 16-byte boundary.
+    uint8_t _pad[8];
     
     ImageThumb thumb;
 };
 
-static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageRecord is a multiple of 8 bytes
-//static_assert(!(offsetof(ImageRecord, thumb) % (ImageThumb::ThumbWidth*4)); // Ensure that the thumbnail is aligned to a 4-pixel boImageLibrarymension
+// Ensure that ImageRecord is a multiple of 8 bytes
+static_assert(!(sizeof(ImageRecord) % 8));
+
+// Ensure that the thumbnail is aligned to a 4-pixel boundary
+static_assert(!(offsetof(ImageRecord, thumb) % 16));
 
 struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
     using RecordStore::RecordStore;

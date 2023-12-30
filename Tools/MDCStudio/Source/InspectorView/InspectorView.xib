@@ -92,38 +92,23 @@
                                                             <action selector="clearAction:" target="1DK-eC-wsd" id="RZR-LY-ZyV"/>
                                                         </connections>
                                                     </button>
-                                                    <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ecm-MW-alh">
-                                                        <rect key="frame" x="201" y="2" width="46" height="16"/>
-                                                        <buttonCell key="cell" type="check" title="Auto" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" allowsMixedState="YES" inset="2" id="i7t-zy-0YG" customClass="InspectorCheckboxCell">
-                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                            <font key="font" metaFont="label" size="11"/>
-                                                        </buttonCell>
-                                                        <connections>
-                                                            <action selector="checkboxAction:" target="1DK-eC-wsd" id="caN-ip-JXy"/>
-                                                        </connections>
-                                                    </button>
                                                 </subviews>
                                                 <constraints>
                                                     <constraint firstItem="NSv-VQ-1Xw" firstAttribute="leading" secondItem="Anr-aQ-Hl6" secondAttribute="trailing" constant="2" id="1S3-Vg-8bS"/>
                                                     <constraint firstItem="Anr-aQ-Hl6" firstAttribute="leading" secondItem="1DK-eC-wsd" secondAttribute="leading" id="E8k-XA-jCl"/>
-                                                    <constraint firstAttribute="trailing" secondItem="ecm-MW-alh" secondAttribute="trailing" id="NbA-Wx-J94"/>
                                                     <constraint firstItem="NSv-VQ-1Xw" firstAttribute="centerY" secondItem="Anr-aQ-Hl6" secondAttribute="centerY" id="OPD-v4-RXx"/>
                                                     <constraint firstAttribute="height" constant="20" id="OwQ-54-anQ"/>
-                                                    <constraint firstItem="ecm-MW-alh" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="NSv-VQ-1Xw" secondAttribute="trailing" constant="4" id="YEf-MS-bEc"/>
                                                     <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Anr-aQ-Hl6" secondAttribute="trailing" constant="12" id="feg-2T-Snu"/>
-                                                    <constraint firstItem="ecm-MW-alh" firstAttribute="centerY" secondItem="Anr-aQ-Hl6" secondAttribute="centerY" id="nK8-B1-z30"/>
                                                     <constraint firstItem="Anr-aQ-Hl6" firstAttribute="centerY" secondItem="1DK-eC-wsd" secondAttribute="centerY" id="qxK-9m-WR7"/>
                                                 </constraints>
                                                 <connections>
-                                                    <outlet property="_checkbox" destination="ecm-MW-alh" id="ZVQ-zp-iR6"/>
                                                     <outlet property="_clearButton" destination="NSv-VQ-1Xw" id="WHW-lt-8vT"/>
                                                     <outlet property="_indentLeft" destination="E8k-XA-jCl" id="wPD-Pn-JeC"/>
-                                                    <outlet property="_indentRight" destination="NbA-Wx-J94" id="J5C-dQ-J8B"/>
                                                     <outlet property="_label" destination="Anr-aQ-Hl6" id="Tmh-Ek-6Js"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_SliderWithIcon" misplaced="YES" id="Oca-BY-FTK" customClass="InspectorViewItem_SliderWithIcon">
-                                                <rect key="frame" x="1" y="64" width="247" height="41"/>
+                                            <tableCellView identifier="InspectorViewItem_SliderWithIcon" id="Oca-BY-FTK" customClass="InspectorViewItem_SliderWithIcon">
+                                                <rect key="frame" x="1" y="64" width="247" height="40"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <button translatesAutoresizingMaskIntoConstraints="NO" id="ccx-WW-HOu">
@@ -199,8 +184,8 @@
                                                     <outlet property="_slider" destination="DZe-QJ-YrD" id="75m-xG-gqk"/>
                                                 </connections>
                                             </tableCellView>
-                                            <tableCellView identifier="InspectorViewItem_SliderWithLabel" misplaced="YES" id="JiA-Ly-2Hk" customClass="InspectorViewItem_SliderWithLabel">
-                                                <rect key="frame" x="1" y="107" width="247" height="39"/>
+                                            <tableCellView identifier="InspectorViewItem_SliderWithLabel" id="JiA-Ly-2Hk" customClass="InspectorViewItem_SliderWithLabel">
+                                                <rect key="frame" x="1" y="106" width="247" height="38"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
@@ -254,8 +239,57 @@
                                                     <outlet property="_slider" destination="WRI-17-iHa" id="1OS-zG-2xZ"/>
                                                 </connections>
                                             </tableCellView>
+                                            <tableCellView identifier="InspectorViewItem_WhiteBalance" id="ZAu-Q2-IoJ" customClass="InspectorViewItem_WhiteBalance">
+                                                <rect key="frame" x="1" y="146" width="247" height="35"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <subviews>
+                                                    <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y1N-7g-Mqb">
+                                                        <rect key="frame" x="-1" y="11" width="122" height="16"/>
+                                                        <constraints>
+                                                            <constraint firstAttribute="width" constant="120" id="PVs-MO-NeY"/>
+                                                        </constraints>
+                                                        <segmentedCell key="cell" controlSize="mini" borderStyle="border" alignment="left" segmentDistribution="fillEqually" style="rounded" trackingMode="selectOne" id="szj-of-JSt">
+                                                            <font key="font" metaFont="miniSystem"/>
+                                                            <segments>
+                                                                <segment label="Auto" selected="YES"/>
+                                                                <segment label="Manual" tag="1"/>
+                                                            </segments>
+                                                        </segmentedCell>
+                                                        <connections>
+                                                            <action selector="modeControlAction:" target="ZAu-Q2-IoJ" id="gG5-g8-r3z"/>
+                                                        </connections>
+                                                    </segmentedControl>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Krd-2V-vJW">
+                                                        <rect key="frame" x="126" y="12" width="24" height="15"/>
+                                                        <buttonCell key="cell" type="push" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" inset="2" id="xcE-mp-KPy">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="miniSystem"/>
+                                                        </buttonCell>
+                                                        <color key="bezelColor" name="systemYellowColor" catalog="System" colorSpace="catalog"/>
+                                                        <constraints>
+                                                            <constraint firstAttribute="width" constant="20" id="MAn-z0-ptj"/>
+                                                            <constraint firstAttribute="height" constant="12" id="exo-s5-BhF"/>
+                                                        </constraints>
+                                                        <connections>
+                                                            <action selector="colorButtonAction:" target="ZAu-Q2-IoJ" id="bpY-Bk-3g2"/>
+                                                        </connections>
+                                                    </button>
+                                                </subviews>
+                                                <constraints>
+                                                    <constraint firstItem="Krd-2V-vJW" firstAttribute="leading" secondItem="Y1N-7g-Mqb" secondAttribute="trailing" constant="8" id="0Gw-eC-lT7"/>
+                                                    <constraint firstItem="Y1N-7g-Mqb" firstAttribute="top" secondItem="ZAu-Q2-IoJ" secondAttribute="top" constant="8" id="5iw-58-g3n"/>
+                                                    <constraint firstItem="Krd-2V-vJW" firstAttribute="centerY" secondItem="Y1N-7g-Mqb" secondAttribute="centerY" id="8Iq-Oz-Im6"/>
+                                                    <constraint firstAttribute="bottom" secondItem="Y1N-7g-Mqb" secondAttribute="bottom" constant="12" id="HUd-BL-sOT"/>
+                                                    <constraint firstItem="Y1N-7g-Mqb" firstAttribute="leading" secondItem="ZAu-Q2-IoJ" secondAttribute="leading" id="NUO-b4-CbK"/>
+                                                </constraints>
+                                                <connections>
+                                                    <outlet property="_colorButton" destination="Krd-2V-vJW" id="3cd-aq-8LI"/>
+                                                    <outlet property="_indentLeft" destination="NUO-b4-CbK" id="6uc-Tf-Jco"/>
+                                                    <outlet property="_modeControl" destination="Y1N-7g-Mqb" id="Snz-Kf-vm4"/>
+                                                </connections>
+                                            </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Checkbox" id="EwO-sD-ijl" customClass="InspectorViewItem_Checkbox">
-                                                <rect key="frame" x="1" y="148" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="183" width="247" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="4h7-i2-RCa">
@@ -282,7 +316,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorView_Menu" id="Uqz-Ai-fuI" customClass="InspectorView_Menu">
-                                                <rect key="frame" x="1" y="170" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="205" width="247" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="98b-tg-mR0">
@@ -313,7 +347,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Timestamp" id="ZXZ-qK-hhw" customClass="InspectorViewItem_Timestamp">
-                                                <rect key="frame" x="1" y="192" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="227" width="247" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="yui-q4-XJp">
@@ -357,7 +391,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Rotation" id="QyM-zH-3HC" customClass="InspectorViewItem_Rotation">
-                                                <rect key="frame" x="1" y="214" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="249" width="247" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Sz1-Dv-gjR">
@@ -382,7 +416,7 @@
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorViewItem_Stat" id="PvD-sd-A2Z" customClass="InspectorViewItem_Stat">
-                                                <rect key="frame" x="1" y="236" width="247" height="20"/>
+                                                <rect key="frame" x="1" y="271" width="247" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">

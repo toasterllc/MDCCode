@@ -1499,7 +1499,7 @@ struct MDCDevice : ImageSource {
                         // Populate .info.illumEst
                         ccm.illum.m.get(rec.info.illumEst);
                         // Populate .options.whiteBalance
-                        ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
+                        ImageWhiteBalanceSet(rec.options.whiteBalance, true, ccm);
                     }
                 }
                 
