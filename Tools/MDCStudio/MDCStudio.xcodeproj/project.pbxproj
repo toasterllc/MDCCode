@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		55116D302B3CC130004617DD /* ProgressBar.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55116D2E2B3CC130004617DD /* ProgressBar.mm */; };
 		551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551328B827B45D7C00CD823B /* ImageGridView.mm */; };
+		551453032B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 551453022B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf */; };
 		551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */; };
 		553031FC27BC45A100BEFFEA /* Selection.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F827BC45A100BEFFEA /* Selection.png */; };
 		553031FD27BC45A100BEFFEA /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F927BC45A100BEFFEA /* Outline.png */; };
@@ -129,6 +130,7 @@
 		55116D2F2B3CC130004617DD /* ProgressBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressBar.h; sourceTree = "<group>"; };
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
 		551328B827B45D7C00CD823B /* ImageGridView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridView.mm; sourceTree = "<group>"; };
+		551453022B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-100.pdf"; sourceTree = "<group>"; };
 		551467E52B3E1FDA00D8DF58 /* DeviceSettingsSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceSettingsSheet.h; sourceTree = "<group>"; };
 		551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsSheet.mm; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
@@ -185,7 +187,6 @@
 		5544AE0E27B5E585006AB473 /* ImgSD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgSD.h; sourceTree = "<group>"; };
 		5544AE0F27B5E585006AB473 /* ImgSensor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgSensor.h; sourceTree = "<group>"; };
 		5544AE1027B5E585006AB473 /* ICE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ICE.h; sourceTree = "<group>"; };
-		5544AE1127B5E585006AB473 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		5544AE1227B5E585006AB473 /* STM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STM.h; sourceTree = "<group>"; };
 		5544AE1327B5E585006AB473 /* SD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SD.h; sourceTree = "<group>"; };
 		5544AE1427B5E585006AB473 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
@@ -491,6 +492,7 @@
 				55838C8C2AD0BE7200D4B024 /* SourceList-Battery-Charging-70.pdf */,
 				55838C8A2AD0BE7200D4B024 /* SourceList-Battery-Charging-80.pdf */,
 				55838C8D2AD0BE7200D4B024 /* SourceList-Battery-Charging-90.pdf */,
+				551453022B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf */,
 				55838C852AD0BE7100D4B024 /* SourceList-Battery-Error.pdf */,
 				55838C822AD0BE7100D4B024 /* SourceList-Gear.pdf */,
 			);
@@ -553,7 +555,6 @@
 				5544AE0E27B5E585006AB473 /* ImgSD.h */,
 				5544AE0F27B5E585006AB473 /* ImgSensor.h */,
 				5544AE1027B5E585006AB473 /* ICE.h */,
-				5544AE1127B5E585006AB473 /* Util.h */,
 				5544AE1227B5E585006AB473 /* STM.h */,
 				5544AE1327B5E585006AB473 /* SD.h */,
 				5544AE1427B5E585006AB473 /* Assert.h */,
@@ -976,6 +977,7 @@
 				55838CCA2AD0BEAA00D4B024 /* Inspector-Contrast-Min.pdf in Resources */,
 				55838C912AD0BE7200D4B024 /* SourceList-Gear.pdf in Resources */,
 				55838CC52AD0BEAA00D4B024 /* Inspector-Saturation-Max.pdf in Resources */,
+				551453032B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf in Resources */,
 				55838CC62AD0BEAA00D4B024 /* Inspector-Brightness-Max.pdf in Resources */,
 				553031FF27BC45A100BEFFEA /* Mask.png in Resources */,
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,

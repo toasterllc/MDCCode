@@ -133,7 +133,7 @@ static NSString* _BatteryLevelImage(float level) {
     } else if (level == 0) {
         return @"SourceList-Battery-Error";
     } else {
-        const int levelInt = ((int)(level*10))*10;
+        const int levelInt = ((int)std::round(level*10))*10;
         return [NSString stringWithFormat:@"SourceList-Battery-Charging-%d", levelInt];
     }
 }
