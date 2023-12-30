@@ -1257,15 +1257,15 @@ static void _Set_localContrastRadius(ImageRecord& rec, id data) {
     rec.options.thumb.render = true;
 }
 
-static void _Set_rotation(ImageRecord& rec, id data) {
-    rec.options.rotation = (ImageOptions::Rotation)[data intValue];
-    rec.options.thumb.render = true;
-}
-
-static void _Set_defringe(ImageRecord& rec, id data) {
-    rec.options.defringe = [data boolValue];
-    rec.options.thumb.render = true;
-}
+//static void _Set_rotation(ImageRecord& rec, id data) {
+//    rec.options.rotation = (ImageOptions::Rotation)[data intValue];
+//    rec.options.thumb.render = true;
+//}
+//
+//static void _Set_defringe(ImageRecord& rec, id data) {
+//    rec.options.defringe = [data boolValue];
+//    rec.options.thumb.render = true;
+//}
 
 static void _Set_reconstructHighlights(ImageRecord& rec, id data) {
     rec.options.reconstructHighlights = [data boolValue];
