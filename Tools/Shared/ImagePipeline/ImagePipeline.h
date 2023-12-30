@@ -65,7 +65,6 @@ public:
         float contrast = 0;
         
         struct {
-            bool en = false;
             float amount = 0;
             float radius = 0;
         } localContrast;

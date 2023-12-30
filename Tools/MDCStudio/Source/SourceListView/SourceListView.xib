@@ -12,7 +12,7 @@
                 <outlet property="_outlineView" destination="AKO-DU-mMa" id="8cY-GE-qnW"/>
             </connections>
         </customObject>
-        <visualEffectView misplaced="YES" blendingMode="behindWindow" material="sidebar" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="NJC-Ov-ASV">
+        <visualEffectView blendingMode="behindWindow" material="sidebar" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="NJC-Ov-ASV">
             <rect key="frame" x="0.0" y="0.0" width="260" height="350"/>
             <subviews>
                 <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="76" horizontalPageScroll="10" verticalLineScroll="76" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fLh-R7-6A0">
@@ -57,7 +57,7 @@
                                                         <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="Photon-Icon" id="KoV-V9-mVz"/>
                                                     </imageView>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
-                                                        <rect key="frame" x="49" y="36" width="168" height="21"/>
+                                                        <rect key="frame" x="49" y="36" width="164" height="21"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="aUI-KD-Hqx">
                                                             <font key="font" metaFont="label" size="18"/>
                                                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -79,7 +79,7 @@
                                                         </connections>
                                                     </textField>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g8q-te-9OC" userLabel="Settings Button">
-                                                        <rect key="frame" x="233" y="14" width="17" height="17"/>
+                                                        <rect key="frame" x="229" y="14" width="17" height="17"/>
                                                         <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="SourceList-Gear" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="rni-HE-MKl">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
@@ -89,7 +89,7 @@
                                                         </connections>
                                                     </button>
                                                     <imageView translatesAutoresizingMaskIntoConstraints="NO" id="YYE-UM-oso" userLabel="Battery Image">
-                                                        <rect key="frame" x="223" y="38" width="30" height="20"/>
+                                                        <rect key="frame" x="219" y="38" width="30" height="20"/>
                                                         <constraints>
                                                             <constraint firstAttribute="height" constant="20" id="277-f4-oyy"/>
                                                         </constraints>
@@ -98,7 +98,7 @@
                                                 </subviews>
                                                 <constraints>
                                                     <constraint firstItem="MZn-BH-IiQ" firstAttribute="leading" secondItem="7cJ-fN-hbY" secondAttribute="trailing" constant="5" id="1zf-B5-EyI"/>
-                                                    <constraint firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="4" id="4IY-c9-aI9"/>
+                                                    <constraint firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="8" id="4IY-c9-aI9"/>
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="cuS-aa-uKX" secondAttribute="trailing" constant="8" id="6ti-sS-P4B"/>
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="-3" id="Hsj-yQ-x0d"/>
                                                     <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" constant="-17" id="Kje-qB-Fxx"/>

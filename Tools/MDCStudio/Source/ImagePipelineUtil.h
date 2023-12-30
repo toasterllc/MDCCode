@@ -39,7 +39,6 @@ inline MDCTools::ImagePipeline::Pipeline::Options PipelineOptionsForImage(const 
         .contrast               = (float)opts.contrast,
         
         .localContrast = {
-            .en                 = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
             .amount             = (float)opts.localContrast.amount,
             .radius             = (float)opts.localContrast.radius,
         },

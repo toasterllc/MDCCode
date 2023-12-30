@@ -227,9 +227,8 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     }
     
     // Local contrast
-    if (opts.localContrast.en) {
-        LocalContrast::Run(renderer, opts.localContrast.amount,
-            opts.localContrast.radius, srcRgb);
+    if (opts.localContrast.amount != 0) {
+        LocalContrast::Run(renderer, opts.localContrast.amount, opts.localContrast.radius, srcRgb);
     }
     
     // Lab.D50 -> XYZ.D50

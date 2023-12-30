@@ -749,6 +749,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource
     selection:(ImageSelectionPtr)selection {
     
+    constexpr ImageOptions ImageOptionsDefault{};
+    
     assert(imageSource);
     assert(selection);
     
@@ -785,7 +787,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         
         {
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = 3;
+            spacer->height = 10;
             spacer->darkBackground = true;
             [_rootItem addItem:spacer];
             
@@ -840,7 +842,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             
             {
                 Item_Spacer* it = [self _createItemWithClass:[Item_Spacer class]];
-                it->height = 10;
+                it->height = 15;
                 it->darkBackground = true;
                 [section addItem:it];
             }
@@ -883,7 +885,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->setter = _SetterCreate(self, _Set_exposure);
                 it->valueMin = -1;
                 it->valueMax = +1;
-                it->valueDefault = 0;
+                it->valueDefault = ImageOptionsDefault.exposure;
                 [section addItem:it];
             }
             
@@ -905,7 +907,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->setter = _SetterCreate(self, _Set_saturation);
                 it->valueMin = -1;
                 it->valueMax = +1;
-                it->valueDefault = 0;
+                it->valueDefault = ImageOptionsDefault.saturation;
                 [section addItem:it];
             }
             
@@ -927,7 +929,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->setter = _SetterCreate(self, _Set_brightness);
                 it->valueMin = -1;
                 it->valueMax = +1;
-                it->valueDefault = 0;
+                it->valueDefault = ImageOptionsDefault.brightness;
                 [section addItem:it];
             }
             
@@ -949,7 +951,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->setter = _SetterCreate(self, _Set_contrast);
                 it->valueMin = -1;
                 it->valueMax = +1;
-                it->valueDefault = 0;
+                it->valueDefault = ImageOptionsDefault.contrast;
                 [section addItem:it];
             }
             
@@ -977,7 +979,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->setter = _SetterCreate(self, _Set_localContrastAmount);
                 it->valueMin = -2;
                 it->valueMax = +2;
-                it->valueDefault = 0;
+                it->valueDefault = ImageOptionsDefault.localContrast.amount;
                 [section addItem:it];
             }
             
@@ -988,7 +990,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->setter = _SetterCreate(self, _Set_localContrastRadius);
                 it->valueMin = 0;
                 it->valueMax = +100;
-                it->valueDefault = 0;
+                it->valueDefault = ImageOptionsDefault.localContrast.radius;
                 [section addItem:it];
             }
             
@@ -1038,7 +1040,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->name = @"Reconstruct highlights";
                 it->getter = _GetterCreate(self, _Get_reconstructHighlights);
                 it->setter = _SetterCreate(self, _Set_reconstructHighlights);
-                it->valueDefault = true;
+                it->valueDefault = ImageOptionsDefault.reconstructHighlights;
                 [section addItem:it];
             }
             
@@ -1057,6 +1059,12 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 //            [section addItem:spacer];
             
             [_rootItem addItem:section];
+        }
+        
+        {
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
+            spacer->height = 20;
+            [_rootItem addItem:spacer];
         }
     }
     

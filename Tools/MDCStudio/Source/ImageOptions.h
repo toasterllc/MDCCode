@@ -46,7 +46,7 @@ struct [[gnu::packed]] ImageOptions {
     double contrast = 0;
     struct {
         double amount = 0;
-        double radius = 0;
+        double radius = 50;
     } localContrast;
     
     struct {
