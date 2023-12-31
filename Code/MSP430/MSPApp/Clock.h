@@ -187,7 +187,7 @@ private:
             return DCORSEL_0 | _CSCTL1Default;
         } else {
             // Unsupported frequency
-            static_assert(Toastbox::AlwaysFalse<T_MCLKFreqHz>);
+            static_assert(Toastbox::AlwaysFalse_v<T_MCLKFreqHz>);
         }
     }
     

@@ -42,7 +42,7 @@ struct T_LED {
         else if constexpr (T_Divider == 6) return TAIDEX_5;
         else if constexpr (T_Divider == 7) return TAIDEX_6;
         else if constexpr (T_Divider == 8) return TAIDEX_7;
-        else                               static_assert(Toastbox::AlwaysFalse<T_Divider>);
+        else                               static_assert(Toastbox::AlwaysFalse_v<T_Divider>);
     }
     
     static constexpr _Tocks32 _TocksMax = 0x10000;

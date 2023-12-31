@@ -68,7 +68,7 @@ private:
         else if constexpr (divider == 8192*K)   return WDTIS__8192K;
         else if constexpr (divider == 128*M)    return WDTIS__128M;
         else if constexpr (divider == 2*G)      return WDTIS__2G;
-        else                                    static_assert(Toastbox::AlwaysFalse<T_ACLKFreqHz>);
+        else                                    static_assert(Toastbox::AlwaysFalse_v<T_ACLKFreqHz>);
     }
     
     static constexpr uint16_t _WDTCTL =
