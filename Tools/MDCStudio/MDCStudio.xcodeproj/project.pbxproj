@@ -10,6 +10,7 @@
 		55116D302B3CC130004617DD /* ProgressBar.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55116D2E2B3CC130004617DD /* ProgressBar.mm */; };
 		551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551328B827B45D7C00CD823B /* ImageGridView.mm */; };
 		551453032B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 551453022B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf */; };
+		5514532B2B4116B20056A92D /* ColorButtonCell.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5514532A2B4116B20056A92D /* ColorButtonCell.mm */; };
 		551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */; };
 		553031FC27BC45A100BEFFEA /* Selection.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F827BC45A100BEFFEA /* Selection.png */; };
 		553031FD27BC45A100BEFFEA /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F927BC45A100BEFFEA /* Outline.png */; };
@@ -131,6 +132,8 @@
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
 		551328B827B45D7C00CD823B /* ImageGridView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridView.mm; sourceTree = "<group>"; };
 		551453022B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-100.pdf"; sourceTree = "<group>"; };
+		551453292B4116B20056A92D /* ColorButtonCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorButtonCell.h; sourceTree = "<group>"; };
+		5514532A2B4116B20056A92D /* ColorButtonCell.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ColorButtonCell.mm; sourceTree = "<group>"; };
 		551467E52B3E1FDA00D8DF58 /* DeviceSettingsSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceSettingsSheet.h; sourceTree = "<group>"; };
 		551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsSheet.mm; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
@@ -675,6 +678,8 @@
 				55F8877C29D3A6E30075593F /* DeviceSettings */,
 				554243AC2B3EC4DB00BDFE25 /* PrintImages.h */,
 				554243AD2B3EC4DB00BDFE25 /* PrintImages.mm */,
+				551453292B4116B20056A92D /* ColorButtonCell.h */,
+				5514532A2B4116B20056A92D /* ColorButtonCell.mm */,
 				55116D2F2B3CC130004617DD /* ProgressBar.h */,
 				55116D2E2B3CC130004617DD /* ProgressBar.mm */,
 				55C456802955A1AE00A20363 /* FixedDocumentView.h */,
@@ -1076,6 +1081,7 @@
 				55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */,
 				5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */,
 				55116D302B3CC130004617DD /* ProgressBar.mm in Sources */,
+				5514532B2B4116B20056A92D /* ColorButtonCell.mm in Sources */,
 				55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */,
 				55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */,
 			);

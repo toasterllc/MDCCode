@@ -260,15 +260,14 @@
                                                         </connections>
                                                     </segmentedControl>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Krd-2V-vJW">
-                                                        <rect key="frame" x="106" y="12" width="24" height="15"/>
-                                                        <buttonCell key="cell" type="push" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" inset="2" id="xcE-mp-KPy">
+                                                        <rect key="frame" x="110" y="13" width="14" height="13"/>
+                                                        <buttonCell key="cell" type="push" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" inset="2" id="xcE-mp-KPy" customClass="ColorButtonCell">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="miniSystem"/>
                                                         </buttonCell>
-                                                        <color key="bezelColor" name="systemYellowColor" catalog="System" colorSpace="catalog"/>
                                                         <constraints>
-                                                            <constraint firstAttribute="width" constant="20" id="MAn-z0-ptj"/>
-                                                            <constraint firstAttribute="height" constant="12" id="exo-s5-BhF"/>
+                                                            <constraint firstAttribute="width" constant="10" id="MAn-z0-ptj"/>
+                                                            <constraint firstAttribute="height" constant="10" id="exo-s5-BhF"/>
                                                         </constraints>
                                                         <connections>
                                                             <action selector="colorButtonAction:" target="ZAu-Q2-IoJ" id="bpY-Bk-3g2"/>
@@ -276,14 +275,14 @@
                                                     </button>
                                                 </subviews>
                                                 <constraints>
-                                                    <constraint firstItem="Krd-2V-vJW" firstAttribute="leading" secondItem="Y1N-7g-Mqb" secondAttribute="trailing" constant="8" id="0Gw-eC-lT7"/>
+                                                    <constraint firstItem="Krd-2V-vJW" firstAttribute="leading" secondItem="Y1N-7g-Mqb" secondAttribute="trailing" constant="12" id="0Gw-eC-lT7"/>
                                                     <constraint firstItem="Y1N-7g-Mqb" firstAttribute="top" secondItem="ZAu-Q2-IoJ" secondAttribute="top" constant="8" id="5iw-58-g3n"/>
                                                     <constraint firstItem="Krd-2V-vJW" firstAttribute="centerY" secondItem="Y1N-7g-Mqb" secondAttribute="centerY" id="8Iq-Oz-Im6"/>
                                                     <constraint firstAttribute="bottom" secondItem="Y1N-7g-Mqb" secondAttribute="bottom" constant="12" id="HUd-BL-sOT"/>
                                                     <constraint firstItem="Y1N-7g-Mqb" firstAttribute="leading" secondItem="ZAu-Q2-IoJ" secondAttribute="leading" id="NUO-b4-CbK"/>
                                                 </constraints>
                                                 <connections>
-                                                    <outlet property="_colorButton" destination="Krd-2V-vJW" id="3cd-aq-8LI"/>
+                                                    <outlet property="_colorButton" destination="xcE-mp-KPy" id="Hp7-b9-hjo"/>
                                                     <outlet property="_indentLeft" destination="NUO-b4-CbK" id="6uc-Tf-Jco"/>
                                                     <outlet property="_modeControl" destination="Y1N-7g-Mqb" id="Snz-Kf-vm4"/>
                                                 </connections>

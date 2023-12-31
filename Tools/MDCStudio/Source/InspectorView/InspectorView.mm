@@ -10,6 +10,7 @@
 #import "ImageUtil.h"
 #import "Calendar.h"
 #import "NibViewInit.h"
+#import "ColorButtonCell.h"
 using namespace MDCStudio;
 
 struct _ModelData {
@@ -352,7 +353,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 @implementation InspectorViewItem_WhiteBalance {
 @private
     IBOutlet NSSegmentedControl* _modeControl;
-    IBOutlet NSButton* _colorButton;
+    IBOutlet ColorButtonCell* _colorButton;
 }
 
 static NSColor* _WhiteBalanceDefaultColor() {
@@ -370,16 +371,16 @@ static NSColor* _WhiteBalanceDefaultColor() {
         const bool automatic = !data.data;
         modified |= !automatic;
         [_modeControl setSelectedSegment:(automatic ? 0 : 1)];
-        [_colorButton setHidden:automatic];
+        [[_colorButton controlView] setHidden:automatic];
         if (!automatic) {
-            [_colorButton setBezelColor:Toastbox::Cast<NSColor*>(data.data)];
+            [_colorButton setColor:Toastbox::Cast<NSColor*>(data.data)];
         }
         break;
     }
     case _ModelData::Type::Mixed:
         modified = true;
         [_modeControl setSelectedSegment:-1];
-        [_colorButton setHidden:true];
+        [[_colorButton controlView] setHidden:true];
         break;
     }
     
