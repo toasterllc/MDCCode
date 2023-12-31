@@ -263,8 +263,18 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 @private
     IBOutlet NSButton* _buttonMin;
     IBOutlet NSButton* _buttonMax;
+    IBOutlet NSLayoutConstraint* _iconYConstraint;
 @public
     NSString* icon;
+}
+
+- (void)awakeFromNib {
+    if (@available(macOS 11, *)) {
+        // >= macOS 11
+    } else {
+        // < macOS 11
+        [_iconYConstraint setConstant:1.5];
+    }
 }
 
 - (bool)updateView {
@@ -309,8 +319,18 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 @implementation InspectorViewItem_SliderWithLabel {
 @private
     IBOutlet NSTextField* _label;
+    IBOutlet NSLayoutConstraint* _labelYConstraint;
 @public
     NSString* name;
+}
+
+- (void)awakeFromNib {
+    if (@available(macOS 11, *)) {
+        // >= macOS 11
+    } else {
+        // < macOS 11
+        [_labelYConstraint setConstant:1.5];
+    }
 }
 
 - (bool)updateView {
