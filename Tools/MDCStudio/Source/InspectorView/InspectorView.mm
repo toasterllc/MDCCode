@@ -428,6 +428,13 @@ static NSColorPanel* _ColorPanel() {
         [colorPanel setColor:Toastbox::Cast<NSColor*>(data.data)];
     }
     
+    if (![colorPanel isVisible]) {
+        NSView* button = [_colorButton controlView];
+        NSWindow* win = [[_colorButton controlView] window];
+        NSPoint pointWindow = [button convertPoint:{} toView:nil];
+        NSPoint pointScreen = [win convertPointToScreen:pointWindow];
+        [colorPanel setFrameTopLeftPoint:pointScreen];
+    }
     [colorPanel orderFront:nil];
 }
 
