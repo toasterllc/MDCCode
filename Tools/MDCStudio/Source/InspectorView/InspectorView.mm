@@ -1145,19 +1145,7 @@ static id _Get_id(const ImageRecord& rec) {
 }
 
 static id _Get_timestamp(const ImageRecord& rec) {
-    using namespace std::chrono;
-    const Time::Instant t = rec.info.timestamp;
-    if (Time::Absolute(t)) {
-        const std::string str =
-            Calendar::TimestampString(rec.info.timestamp);
-        return @(str.c_str());
-    
-    } else {
-        const auto dur = Time::Clock::DurationFromTimeInstant(rec.info.timestamp);
-        const seconds sec = std::chrono::duration_cast<seconds>(dur);
-        const std::string relTimeStr = Toastbox::DurationString(true, sec);
-        return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
-    }
+    return @(Calendar::TimestampString(rec.info.timestamp).c_str());
 }
 
 static id _Get_integrationTime(const ImageRecord& rec) {

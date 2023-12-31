@@ -5,6 +5,7 @@
 #include "date/date.h"
 #include "Toastbox/RuntimeError.h"
 #include "Toastbox/NumForStr.h"
+#include "Toastbox/DurationString.h"
 #include "Toastbox/String.h"
 #include "Code/Shared/Clock.h"
 
@@ -408,18 +409,26 @@ inline NSDate* Date(const date::year_month_day& ymd) {
     return [_DateFormatterStateGet().cal dateFromComponents:comp];
 }
 
-template<typename T>
-inline std::string TimestampString(const T& t) {
-    return [[_DateFormatterStateGet().timestampFormatter stringFromDate:Date(t)] UTF8String];
+inline std::string TimestampString(Time::Instant t) {
+    if (Time::Absolute(t)) {
+        return [[_DateFormatterStateGet().timestampFormatter stringFromDate:Date(t)] UTF8String];
+    } else {
+        std::stringstream ss;
+        const auto dur = Time::Clock::DurationFromTimeInstant(t);
+        const auto sec = std::chrono::duration_cast<std::chrono::seconds>(dur);
+        ss << Toastbox::DurationString(true, sec);
+        ss << " after boot";
+        return ss.str();
+    }
 }
 
-template<typename T>
-inline std::string TimestampEXIFString(const T& t) {
+inline std::string TimestampEXIFString(Time::Instant t) {
+    assert(Time::Absolute(t));
     return [[_DateFormatterStateGet().timestampEXIFFormatter stringFromDate:Date(t)] UTF8String];
 }
 
-template<typename T>
-inline std::string TimestampOffsetEXIFString(const T& t) {
+inline std::string TimestampOffsetEXIFString(Time::Instant t) {
+    assert(Time::Absolute(t));
     return [[_DateFormatterStateGet().timestampOffsetEXIFFormatter stringFromDate:Date(t)] UTF8String];
 }
 
