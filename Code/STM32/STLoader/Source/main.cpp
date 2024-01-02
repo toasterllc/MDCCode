@@ -78,7 +78,7 @@ static void _STMReset(const STM::Cmd& cmd) {
     _AppEntryPoint = (_VoidFn)cmd.arg.STMReset.entryPointAddr;
     
     // Perform software reset
-    HAL_NVIC_SystemReset();
+    _System::Reset();
     // Unreachable
     Assert(false);
 }
@@ -86,10 +86,10 @@ static void _STMReset(const STM::Cmd& cmd) {
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // STM32 Bootloader
-    case Op::STMRAMWrite:   _STMRAMWrite(cmd);              break;
-    case Op::STMReset:      _STMReset(cmd);                 break;
+    case Op::STMRAMWrite:   _STMRAMWrite(cmd);                  break;
+    case Op::STMReset:      _STMReset(cmd);                     break;
     // Bad command
-    default:            _System::USBAcceptCommand(false);   break;
+    default:                _System::USBAcceptCommand(false);   break;
     }
 }
 

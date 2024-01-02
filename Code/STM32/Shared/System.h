@@ -154,6 +154,15 @@ public:
         return _TaskMSPComms::Send(cmd);
     }
     
+    [[noreturn]]
+    static void Reset() {
+        // Acquire the MSP lock so we don't reset in the middle of an I2C transaction
+        MSPLock lock(MSPLock::Lock);
+        // Perform software reset
+        HAL_NVIC_SystemReset();
+        for (;;);
+    }
+    
     #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
     [[noreturn]]
     static void Abort() {
@@ -552,8 +561,7 @@ private:
     static void _BootloaderInvoke(const STM::Cmd& cmd) {
         // Accept command
         USBAcceptCommand(true);
-        // Perform software reset
-        HAL_NVIC_SystemReset();
+        Reset();
         // Unreachable
         Assert(false);
     }
