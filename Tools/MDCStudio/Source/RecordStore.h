@@ -476,25 +476,26 @@ struct RecordStore {
     }
     
     static Toastbox::Mmap _ChunkFileCreate(const Path& path) {
+        constexpr int OpenFlags = O_RDWR|O_CREAT|O_CLOEXEC;
         constexpr int ChunkPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
-        const int fd = open(path.c_str(), O_RDWR|O_CREAT|O_CLOEXEC, ChunkPerm);
+        const int fd = open(path.c_str(), OpenFlags, ChunkPerm);
         if (fd < 0) throw Toastbox::RuntimeError("failed to create chunk file: %s", strerror(errno));
         const size_t cap = Toastbox::Mmap::PageCeil(_ChunkLen);
-        return Toastbox::Mmap(fd, cap, MAP_SHARED);
+        return Toastbox::Mmap(fd, cap, OpenFlags);
     }
     
     static Toastbox::Mmap _ChunkFileOpen(const Path& path) {
-        int fdi = open(path.c_str(), O_RDWR);
+        constexpr int OpenFlags = O_RDWR;
+        int fdi = open(path.c_str(), OpenFlags);
         if (fdi < 0) throw Toastbox::RuntimeError("open failed: %s", strerror(errno));
         Toastbox::FileDescriptor fd(fdi);
-        
         // Determine file size
         struct stat st;
         int ir = fstat(fd, &st);
         if (ir) throw Toastbox::RuntimeError("fstat failed: %s", strerror(errno));
         // Create the mapping with a capacity of either the file size or _ChunkLen, whichever is larger.
         const size_t cap = Toastbox::Mmap::PageCeil(std::max((size_t)st.st_size, _ChunkLen));
-        return Toastbox::Mmap(std::move(fd), cap, MAP_SHARED);
+        return Toastbox::Mmap(std::move(fd), cap, OpenFlags);
     }
     
     Path _chunkPath(ChunkId id) const {
