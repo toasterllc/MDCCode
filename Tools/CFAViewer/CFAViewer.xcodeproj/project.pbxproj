@@ -541,7 +541,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MTL_HEADER_SEARCH_PATHS = "../.. ../../Code/Shared . ./ImagePipeline ../Shared";
-				PRODUCT_BUNDLE_IDENTIFIER = com.dave.CFAViewer;
+				PRODUCT_BUNDLE_IDENTIFIER = llc.toaster.CFAViewer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = (
 					$PROJECT_DIR/../..,

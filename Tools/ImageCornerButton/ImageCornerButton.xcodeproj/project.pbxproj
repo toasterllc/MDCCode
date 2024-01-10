@@ -308,7 +308,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.ImageCornerButton;
+				PRODUCT_BUNDLE_IDENTIFIER = llc.toaster.ImageCornerButton;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -328,7 +328,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.ImageCornerButton;
+				PRODUCT_BUNDLE_IDENTIFIER = llc.toaster.ImageCornerButton;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

@@ -337,7 +337,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MTL_HEADER_SEARCH_PATHS = $PROJECT_DIR/../..;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.ScrollViewTest;
+				PRODUCT_BUNDLE_IDENTIFIER = llc.toaster.ScrollViewTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = (
 					$PROJECT_DIR/../..,
@@ -359,7 +359,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MTL_HEADER_SEARCH_PATHS = $PROJECT_DIR/../..;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.ScrollViewTest;
+				PRODUCT_BUNDLE_IDENTIFIER = llc.toaster.ScrollViewTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = (
 					$PROJECT_DIR/../..,
