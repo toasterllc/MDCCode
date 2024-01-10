@@ -152,6 +152,11 @@ static void _SetView(T& x, NSView* y) {
     NSLog(@"[Document] validateUserInterfaceItem: %@\n", item);
     NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
     
+    // Disable all menu items if we're not displaying anything
+    // This is necessary to protect the code below from looking at _active.selection,
+    // which will be nullptr in this case.
+    if (!_center.view) return false;
+    
     // Save
     if ([item action] == @selector(saveDocument:)) {
         return false;
