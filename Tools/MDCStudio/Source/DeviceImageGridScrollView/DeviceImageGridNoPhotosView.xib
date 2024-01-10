@@ -17,7 +17,7 @@
             <rect key="frame" x="0.0" y="0.0" width="481" height="249"/>
             <subviews>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="lfo-F7-HP7">
-                    <rect key="frame" x="57" y="58" width="367" height="133"/>
+                    <rect key="frame" x="5" y="58" width="472" height="133"/>
                     <subviews>
                         <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="knf-rn-Gre">
                             <rect key="frame" x="0.0" y="17" width="100" height="100"/>
@@ -54,13 +54,15 @@
                     <constraints>
                         <constraint firstItem="xIU-Hg-yJo" firstAttribute="centerX" secondItem="7iG-Ul-ZFP" secondAttribute="centerX" id="2V8-l4-bVv"/>
                         <constraint firstItem="XQj-hE-yGQ" firstAttribute="centerX" secondItem="xIU-Hg-yJo" secondAttribute="centerX" id="6fM-72-HZb"/>
-                        <constraint firstItem="knf-rn-Gre" firstAttribute="leading" secondItem="lfo-F7-HP7" secondAttribute="leading" id="EKv-X8-aKX"/>
                         <constraint firstItem="7iG-Ul-ZFP" firstAttribute="top" secondItem="lfo-F7-HP7" secondAttribute="top" constant="20" id="GYP-MV-UmF"/>
+                        <constraint firstItem="knf-rn-Gre" firstAttribute="leading" secondItem="lfo-F7-HP7" secondAttribute="leading" id="NEP-QP-WWS"/>
                         <constraint firstItem="xIU-Hg-yJo" firstAttribute="top" secondItem="7iG-Ul-ZFP" secondAttribute="bottom" constant="10" id="SpN-qN-7Xl"/>
                         <constraint firstItem="knf-rn-Gre" firstAttribute="centerY" secondItem="lfo-F7-HP7" secondAttribute="centerY" id="TkJ-fY-9v8"/>
+                        <constraint firstItem="7iG-Ul-ZFP" firstAttribute="centerX" secondItem="lfo-F7-HP7" secondAttribute="centerX" id="WXf-ki-vVQ"/>
+                        <constraint firstItem="xIU-Hg-yJo" firstAttribute="centerX" secondItem="lfo-F7-HP7" secondAttribute="centerX" id="XLI-Mm-jhY"/>
                         <constraint firstItem="XQj-hE-yGQ" firstAttribute="top" secondItem="xIU-Hg-yJo" secondAttribute="bottom" constant="20" id="dfq-1k-0pS"/>
-                        <constraint firstAttribute="trailing" secondItem="xIU-Hg-yJo" secondAttribute="trailing" constant="20" id="hhW-rI-OE6"/>
                         <constraint firstAttribute="bottom" secondItem="XQj-hE-yGQ" secondAttribute="bottom" constant="20" id="nOB-33-UTU"/>
+                        <constraint firstItem="XQj-hE-yGQ" firstAttribute="centerX" secondItem="lfo-F7-HP7" secondAttribute="centerX" id="pgY-4t-8dU"/>
                         <constraint firstItem="xIU-Hg-yJo" firstAttribute="leading" secondItem="knf-rn-Gre" secondAttribute="trailing" constant="25" id="uMy-OH-dNv"/>
                     </constraints>
                 </customView>
