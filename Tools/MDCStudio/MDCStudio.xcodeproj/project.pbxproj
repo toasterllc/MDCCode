@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		550CA8042B4F1EFA0061A367 /* ArtworkPlaceholder.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 550CA8032B4F1EFA0061A367 /* ArtworkPlaceholder.pdf */; };
 		55116D302B3CC130004617DD /* ProgressBar.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55116D2E2B3CC130004617DD /* ProgressBar.mm */; };
 		551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551328B827B45D7C00CD823B /* ImageGridView.mm */; };
 		551453032B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 551453022B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf */; };
@@ -127,6 +128,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		550CA8032B4F1EFA0061A367 /* ArtworkPlaceholder.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = ArtworkPlaceholder.pdf; sourceTree = "<group>"; };
 		55116D2E2B3CC130004617DD /* ProgressBar.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ProgressBar.mm; sourceTree = "<group>"; };
 		55116D2F2B3CC130004617DD /* ProgressBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressBar.h; sourceTree = "<group>"; };
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
@@ -650,6 +652,7 @@
 				55A884CB2B23CCCF004D6564 /* ICEApp.bin */,
 				55A884CA2B23CCCF004D6564 /* STMApp.elf */,
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
+				550CA8032B4F1EFA0061A367 /* ArtworkPlaceholder.pdf */,
 				55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */,
 				55B451042ADA583000CE1C51 /* Photon-Icon.pdf */,
 				553031FB27BC45A100BEFFEA /* Mask.png */,
@@ -1018,6 +1021,7 @@
 				55F8883729D9EF1C0075593F /* CaptureTriggers-Icon-Button-Small.pdf in Resources */,
 				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
+				550CA8042B4F1EFA0061A367 /* ArtworkPlaceholder.pdf in Resources */,
 				55F8883829D9EF1C0075593F /* CaptureTriggers-Icon-Time-Small.pdf in Resources */,
 				55838CC42AD0BEAA00D4B024 /* Inspector-Contrast-Max.pdf in Resources */,
 				55425B2629A0752300F25D57 /* InspectorView.xib in Resources */,
