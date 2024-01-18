@@ -16,41 +16,62 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" appearanceType="darkAqua" animationBehavior="default" titlebarAppearsTransparent="YES" titleVisibility="hidden" id="xOd-HO-29H" userLabel="Window">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" fullSizeContentView="YES"/>
-            <rect key="contentRect" x="0.0" y="0.0" width="1000" height="600"/>
+            <rect key="contentRect" x="0.0" y="0.0" width="1000" height="432"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
             <value key="minSize" type="size" width="94" height="86"/>
             <view key="contentView" id="gIp-Ho-8D9">
-                <rect key="frame" x="0.0" y="0.0" width="1000" height="600"/>
+                <rect key="frame" x="0.0" y="0.0" width="1000" height="432"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="WfS-w1-Plf" userLabel="No Devices View">
-                        <rect key="frame" x="328" y="227" width="344" height="146"/>
+                        <rect key="frame" x="328" y="143" width="344" height="146"/>
                         <subviews>
                             <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="bk8-K4-AVv">
                                 <rect key="frame" x="20" y="20" width="106" height="106"/>
                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="ArtworkPlaceholder" id="vFY-Fq-eNT"/>
                             </imageView>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="S2M-ej-Rco">
-                                <rect key="frame" x="144" y="59" width="182" height="28"/>
+                                <rect key="frame" x="144" y="69" width="182" height="28"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Connect a Photon" id="GGq-Cu-6D2">
                                     <font key="font" metaFont="systemThin" size="24"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y2u-Vd-xdg">
+                                <rect key="frame" x="201" y="42" width="17" height="16"/>
+                                <textFieldCell key="cell" lineBreakMode="clipping" title="or" id="ed7-tv-M0i">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9nf-1d-g0c">
+                                <rect key="frame" x="224" y="40" width="100" height="17"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="100" id="mPW-Gi-kBb"/>
+                                </constraints>
+                                <buttonCell key="cell" type="inline" title="Start Tour…" bezelStyle="inline" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zOs-Kc-ZT0">
+                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="smallSystemBold"/>
+                                </buttonCell>
+                            </button>
                         </subviews>
                         <constraints>
                             <constraint firstItem="S2M-ej-Rco" firstAttribute="leading" secondItem="bk8-K4-AVv" secondAttribute="trailing" constant="20" id="FSH-7J-56l"/>
                             <constraint firstItem="bk8-K4-AVv" firstAttribute="top" secondItem="WfS-w1-Plf" secondAttribute="top" constant="20" id="IbZ-jg-L7S"/>
                             <constraint firstAttribute="trailing" secondItem="S2M-ej-Rco" secondAttribute="trailing" constant="20" id="K53-qq-acQ"/>
                             <constraint firstItem="bk8-K4-AVv" firstAttribute="leading" secondItem="WfS-w1-Plf" secondAttribute="leading" constant="20" id="KMB-jg-0fu"/>
-                            <constraint firstItem="S2M-ej-Rco" firstAttribute="centerY" secondItem="bk8-K4-AVv" secondAttribute="centerY" id="PYx-cT-3OD"/>
-                            <constraint firstItem="S2M-ej-Rco" firstAttribute="centerY" secondItem="WfS-w1-Plf" secondAttribute="centerY" id="RyR-09-091"/>
+                            <constraint firstItem="S2M-ej-Rco" firstAttribute="centerY" secondItem="bk8-K4-AVv" secondAttribute="centerY" constant="-10" id="PYx-cT-3OD"/>
+                            <constraint firstItem="9nf-1d-g0c" firstAttribute="firstBaseline" secondItem="Y2u-Vd-xdg" secondAttribute="firstBaseline" id="U34-1r-5Mf"/>
+                            <constraint firstItem="9nf-1d-g0c" firstAttribute="leading" secondItem="Y2u-Vd-xdg" secondAttribute="trailing" constant="8" id="cfy-dw-CaL"/>
+                            <constraint firstItem="9nf-1d-g0c" firstAttribute="top" secondItem="S2M-ej-Rco" secondAttribute="bottom" constant="12" id="fFz-eN-zcp"/>
+                            <constraint firstItem="9nf-1d-g0c" firstAttribute="trailing" secondItem="S2M-ej-Rco" secondAttribute="trailing" id="ldy-eP-d6M"/>
                             <constraint firstAttribute="bottom" secondItem="bk8-K4-AVv" secondAttribute="bottom" constant="20" id="ndT-p3-Rtn"/>
                         </constraints>
                     </customView>
                     <splitView arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wmp-X4-4cT">
-                        <rect key="frame" x="0.0" y="0.0" width="1000" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="1000" height="432"/>
                         <connections>
                             <outlet property="delegate" destination="-2" id="eRu-SN-5r4"/>
                         </connections>
@@ -68,7 +89,7 @@
             <connections>
                 <outlet property="delegate" destination="-2" id="0bl-1N-x8E"/>
             </connections>
-            <point key="canvasLocation" x="139" y="148"/>
+            <point key="canvasLocation" x="139" y="356"/>
         </window>
     </objects>
     <resources>

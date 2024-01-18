@@ -313,11 +313,7 @@ struct MDCDevice : ImageSource {
     }
     
     void deleteImages(const ImageSet& images) override {
-        {
-            auto lock = std::unique_lock(*_imageLibrary);
-            _imageLibrary->remove(images);
-            _imageLibrary->write();
-        }
+        ImageSource::deleteImages(images);
         
         {
             std::vector<_SDBlock> addrFull;
