@@ -17,7 +17,7 @@
             <rect key="frame" x="0.0" y="0.0" width="481" height="249"/>
             <subviews>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="lfo-F7-HP7">
-                    <rect key="frame" x="57" y="58" width="367" height="133"/>
+                    <rect key="frame" x="67" y="58" width="347" height="133"/>
                     <subviews>
                         <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="knf-rn-Gre">
                             <rect key="frame" x="0.0" y="17" width="100" height="100"/>
@@ -38,7 +38,7 @@
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xIU-Hg-yJo">
                             <rect key="frame" x="123" y="61" width="226" height="14"/>
                             <textFieldCell key="cell" controlSize="small" alignment="center" title="Your Photon doesn't have any photos yet." id="DpW-Tg-kUQ">
-                                <font key="font" metaFont="message" size="11"/>
+                                <font key="font" metaFont="menu" size="11"/>
                                 <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
@@ -59,7 +59,7 @@
                         <constraint firstItem="xIU-Hg-yJo" firstAttribute="top" secondItem="7iG-Ul-ZFP" secondAttribute="bottom" constant="10" id="SpN-qN-7Xl"/>
                         <constraint firstItem="knf-rn-Gre" firstAttribute="centerY" secondItem="lfo-F7-HP7" secondAttribute="centerY" id="TkJ-fY-9v8"/>
                         <constraint firstItem="7iG-Ul-ZFP" firstAttribute="leading" secondItem="xIU-Hg-yJo" secondAttribute="leading" id="VPC-lt-04C"/>
-                        <constraint firstAttribute="trailing" secondItem="xIU-Hg-yJo" secondAttribute="trailing" constant="20" id="cOK-eO-haX"/>
+                        <constraint firstAttribute="trailing" secondItem="xIU-Hg-yJo" secondAttribute="trailing" id="cOK-eO-haX"/>
                         <constraint firstItem="XQj-hE-yGQ" firstAttribute="top" secondItem="xIU-Hg-yJo" secondAttribute="bottom" constant="20" id="dfq-1k-0pS"/>
                         <constraint firstAttribute="bottom" secondItem="XQj-hE-yGQ" secondAttribute="bottom" constant="20" id="nOB-33-UTU"/>
                         <constraint firstItem="xIU-Hg-yJo" firstAttribute="leading" secondItem="knf-rn-Gre" secondAttribute="trailing" constant="25" id="uMy-OH-dNv"/>

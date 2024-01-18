@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -21,7 +20,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="260" height="350"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" tableStyle="plain" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="74" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" id="AKO-DU-mMa">
+                            <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="74" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" id="AKO-DU-mMa">
                                 <rect key="frame" x="0.0" y="0.0" width="260" height="350"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
@@ -49,17 +48,17 @@
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY" userLabel="Icon Image">
-                                                        <rect key="frame" x="-17" y="12" width="63" height="50"/>
+                                                        <rect key="frame" x="5" y="12" width="63" height="50"/>
                                                         <constraints>
                                                             <constraint firstAttribute="width" constant="63" id="eSu-j3-Hou"/>
                                                             <constraint firstAttribute="height" constant="50" id="u3f-gJ-ek7"/>
                                                         </constraints>
-                                                        <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="Photon-Icon" id="KoV-V9-mVz"/>
+                                                        <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="ArtworkPlaceholder" id="KoV-V9-mVz"/>
                                                     </imageView>
-                                                    <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
-                                                        <rect key="frame" x="49" y="36" width="164" height="21"/>
+                                                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
+                                                        <rect key="frame" x="71" y="36" width="142" height="21"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="aUI-KD-Hqx">
-                                                            <font key="font" metaFont="label" size="18"/>
+                                                            <font key="font" metaFont="system" size="18"/>
                                                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -67,8 +66,8 @@
                                                             <action selector="_textFieldChanged:" target="08g-eg-N7V" id="rvh-zP-hHo"/>
                                                         </connections>
                                                     </textField>
-                                                    <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="cuS-aa-uKX" userLabel="Text Field">
-                                                        <rect key="frame" x="49" y="17" width="98" height="15"/>
+                                                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="cuS-aa-uKX" userLabel="Text Field">
+                                                        <rect key="frame" x="71" y="17" width="98" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="7 days of photos" id="Eij-ik-9WJ">
                                                             <font key="font" metaFont="label" size="12"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -101,7 +100,7 @@
                                                     <constraint firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="8" id="4IY-c9-aI9"/>
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="cuS-aa-uKX" secondAttribute="trailing" constant="8" id="6ti-sS-P4B"/>
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="-3" id="Hsj-yQ-x0d"/>
-                                                    <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" constant="-17" id="Kje-qB-Fxx"/>
+                                                    <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" constant="5" id="Kje-qB-Fxx"/>
                                                     <constraint firstItem="cuS-aa-uKX" firstAttribute="leading" secondItem="MZn-BH-IiQ" secondAttribute="leading" id="NdT-qC-bXN"/>
                                                     <constraint firstAttribute="height" constant="74" id="T60-bh-CJV"/>
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="top" secondItem="YYE-UM-oso" secondAttribute="bottom" constant="7" id="fnt-jE-AJb"/>
@@ -155,7 +154,7 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
     </objects>
     <resources>
-        <image name="Photon-Icon" width="126" height="100"/>
+        <image name="ArtworkPlaceholder" width="106" height="106"/>
         <image name="SourceList-Battery-Charging-50" width="30" height="14"/>
         <image name="SourceList-Gear" width="17" height="17"/>
     </resources>
