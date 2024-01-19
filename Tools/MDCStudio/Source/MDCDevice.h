@@ -297,8 +297,12 @@ struct MDCDevice : ImageSource {
     
     ImageLibraryPtr imageLibrary() override { return _imageLibrary; }
     
-    void renderThumbs(Priority priority, std::set<ImageRecordPtr> recs) override {
-        _loadThumbs(priority, false, recs);
+    void renderThumbs(std::set<ImageRecordPtr> recs) override {
+        {
+            auto lock = _thumbRender.master.signal.lock();
+            _thumbRender.master.recs = std::move(recs);
+        }
+        _thumbRender.master.signal.signalOne();
     }
     
     Image getCachedImage(const ImageRecordPtr& rec) override {
@@ -861,8 +865,10 @@ struct MDCDevice : ImageSource {
             
             // Init _thumbRender
             {
+                _thumbRender.master.thread = _Thread([&] { _thumbRender_masterThread(); });
+                
                 for (int i=0; i<_CPUCount(); i++) {
-                    _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
+                    _thumbRender.slave.threads.emplace_back([&] { _thumbRender_slaveThread(); });
                 }
             }
             
@@ -886,7 +892,8 @@ struct MDCDevice : ImageSource {
         }
         
         _sdRead.signal.stop();
-        _thumbRender.signal.stop();
+        _thumbRender.master.signal.stop();
+        _thumbRender.slave.signal.stop();
         _status.signal.stop();
         
         for (_LoadState& loadState : _loadStates.mem()) {
@@ -918,10 +925,10 @@ struct MDCDevice : ImageSource {
         // Enqueue rendering
         {
             {
-                auto lock = _thumbRender.signal.lock();
+                auto lock = _thumbRender.slave.signal.lock();
                 _renderEnqueue(lock, state, initial, true, work.rec, buf.entry());
             }
-            _thumbRender.signal.signalAll();
+            _thumbRender.slave.signal.signalAll();
         }
         
         // Insert buffers into our cache, if this isn't the initial load.
@@ -954,8 +961,8 @@ struct MDCDevice : ImageSource {
     }
     
     void _renderEnqueue(const std::unique_lock<std::mutex>& lock, _LoadState& state, bool initial, bool validateChecksum, ImageRecordPtr rec, _ThumbBuffer buf) {
-        // Enqueue _RenderWork into _thumbRender.queue
-        _thumbRender.queue.push(_RenderWork{
+        // Enqueue _RenderWork into _thumbRender.slave.queue
+        _thumbRender.slave.queue.push(_RenderWork{
             .initial = initial,
             .validateChecksum = validateChecksum,
             .rec = rec,
@@ -1007,7 +1014,7 @@ struct MDCDevice : ImageSource {
         {
             bool enqueued = false;
             {
-                auto lock = _thumbRender.signal.lock();
+                auto lock = _thumbRender.slave.signal.lock();
                 
                 for (auto it=recs.begin(); it!=recs.end();) {
                     const ImageRecordPtr& rec = *it;
@@ -1028,7 +1035,7 @@ struct MDCDevice : ImageSource {
             }
             
             // Notify _thumbRender of more work
-            if (enqueued) _thumbRender.signal.signalAll();
+            if (enqueued) _thumbRender.slave.signal.signalAll();
         }
         
         // The remaining recs aren't in our cache, so kick off SD reading + rendering
@@ -1404,7 +1411,33 @@ struct MDCDevice : ImageSource {
 #endif
     }
     
-    void _thumbRender_thread() {
+    void _thumbRender_masterThread() {
+        printf("[_thumbRender_masterThread] Starting\n");
+        try {
+            for (;;) {
+                ImageSet recs;
+                {
+                    auto lock = _thumbRender.master.signal.wait([&] { return !_thumbRender.master.recs.empty(); });
+                    recs = std::move(_thumbRender.master.recs);
+                    // Update .thumb.render asap (ie before we've actually rendered) so that the
+                    // visibleThumbs() function on the main thread stops enqueuing work asap
+                    for (const ImageRecordPtr& rec : recs) {
+                        rec->options.thumb.render = false;
+                    }
+                }
+                
+                printf("[_thumbRender_masterThread] Enqueueing %ju thumbnails for rendering\n", (uintmax_t)recs.size());
+                _loadThumbs(ImageSource::Priority::High, false, recs);
+                printf("[_thumbRender_masterThread] Rendered %ju thumbnails\n", (uintmax_t)recs.size());
+            }
+        
+        } catch (const Toastbox::Signal::Stop&) {
+        }
+        printf("[_thumbRender_masterThread] Exiting\n");
+    }
+    
+    
+    void _thumbRender_slaveThread() {
         using namespace MDCTools;
         
         try {
@@ -1428,9 +1461,9 @@ struct MDCDevice : ImageSource {
             for (;;) @autoreleasepool {
                 _RenderWork work;
                 {
-                    auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.queue.empty(); });
-                    work = _thumbRender.queue.front();
-                    _thumbRender.queue.pop();
+                    auto lock = _thumbRender.slave.signal.wait([&] { return !_thumbRender.slave.queue.empty(); });
+                    work = _thumbRender.slave.queue.front();
+                    _thumbRender.slave.queue.pop();
                 }
                 
                 ImageRecord& rec = *work.rec;
@@ -1451,9 +1484,9 @@ struct MDCDevice : ImageSource {
                         
                         // Validate the magic number
                         if (imgHeader.magic.u24 != Img::Header::MagicNumber.u24) {
-                            printf("[_thumbRender_thread] Invalid magic number (got: %jx, expected: %jx)\n",
+                            printf("[_thumbRender_slaveThread] Invalid magic number (got: %jx, expected: %jx)\n",
                                 (uintmax_t)imgHeader.magic.u24, (uintmax_t)Img::Header::MagicNumber.u24);
-                            printf("[_thumbRender_thread] Skipping image\n");
+                            printf("[_thumbRender_slaveThread] Skipping image\n");
                             // Skip this image
                             // In particular, we want to make sure loadCount==0, so that _sync_thread() can observe
                             // it and remove this image.
@@ -1462,7 +1495,7 @@ struct MDCDevice : ImageSource {
                         
                         if (imgHeader.id != rec.info.id) {
                             #warning TODO: how do we properly handle this?
-//                            printf("[_thumbRender_thread] Invalid image id (got: %ju, expected: %ju)\n", (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+//                            printf("[_thumbRender_slaveThread] Invalid image id (got: %ju, expected: %ju)\n", (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
 //                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
 //                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
                         }
@@ -1524,7 +1557,7 @@ struct MDCDevice : ImageSource {
             }
         
         } catch (const Toastbox::Signal::Stop&) {
-            printf("[_thumbRender_thread] Stopping\n");
+            printf("[_thumbRender_slaveThread] Stopping\n");
         }
     }
     
@@ -1731,9 +1764,17 @@ struct MDCDevice : ImageSource {
     } _sdRead;
     
     struct {
-        Toastbox::Signal signal; // Protects this struct
-        std::vector<_Thread> threads;
-        _RenderWorkQueue queue;
+        struct {
+            Toastbox::Signal signal; // Protects this struct
+            _Thread thread;
+            ImageSet recs;
+        } master;
+        
+        struct {
+            Toastbox::Signal signal; // Protects this struct
+            std::vector<_Thread> threads;
+            _RenderWorkQueue queue;
+        } slave;
     } _thumbRender;
     
     struct _Status {

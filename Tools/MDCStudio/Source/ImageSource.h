@@ -23,8 +23,8 @@ struct ImageSource : Object {
     // imageLibrary(): returns the image library
     virtual ImageLibraryPtr imageLibrary() = 0;
     
-    // renderThumbs(): synchronously renders the thumbnails for `recs`
-    virtual void renderThumbs(Priority priority, ImageSet recs) = 0;
+    // renderThumbs(): asynchronously renders the thumbnails for `recs`
+    virtual void renderThumbs(ImageSet recs) = 0;
     
     // getCachedImage(): returns a cached image for `rec`, if it exists. Otherwise returns Image{}.
     virtual Image getCachedImage(const ImageRecordPtr& rec) = 0;

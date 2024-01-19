@@ -47,12 +47,6 @@ struct _ChunkTexture {
 static constexpr size_t _ChunkTexturesCacheCapacity = 4;
 using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,_ChunkTexturesCacheCapacity>;
 
-struct _ThumbRenderThreadState {
-    Toastbox::Signal signal; // Protects this struct
-    ImageSourcePtr imageSource;
-    ImageSet recs;
-};
-
 // MARK: - ImageGridLayer
 
 @implementation ImageGridLayer {
@@ -73,7 +67,6 @@ struct _ThumbRenderThreadState {
     id<MTLTexture> _placeholderTexture;
     
     _ChunkTextures _chunkTxts;
-    std::shared_ptr<_ThumbRenderThreadState> _thumbRender;
     
     struct {
         size_t base = 0;
@@ -160,12 +153,6 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
     assert(_pipelineState);
     
-    // Start our _ThumbRenderThread
-    auto thumbRender = std::make_shared<_ThumbRenderThreadState>();
-    thumbRender->imageSource = _imageSource;
-    std::thread([=] { _ThumbRenderThread(*thumbRender); }).detach();
-    _thumbRender = thumbRender;
-    
     // Make our layer transparent against the layer's background
     [self setOpaque:false];
     
@@ -179,8 +166,6 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
 
 - (void)dealloc {
     printf("~ImageGridLayer\n");
-    // Signal our thread to exit
-    _thumbRender->signal.stop();
 }
 
 - (Grid&)grid {
@@ -410,7 +395,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     }
     
     // Re-render the visible thumbnails that are marked dirty
-    _ThumbRenderIfNeeded(*_thumbRender, { visibleBegin, visibleEnd });
+    _ThumbRenderIfNeeded(_imageSource, { visibleBegin, visibleEnd });
 }
 
 - (void)display {
@@ -609,51 +594,21 @@ static _IterRange _VisibleRange(Grid::IndexRange ir, const ImageLibrary& il, boo
     return std::make_pair(visibleBegin, visibleEnd);
 }
 
-static void _ThumbRenderIfNeeded(_ThumbRenderThreadState& thread, _IterRange range) {
-    bool enqueued = false;
-    {
-        auto lock = thread.signal.lock();
-        thread.recs.clear();
-        for (auto it=range.first; it!=range.second; it++) {
-            if ((*it)->options.thumb.render) {
-                thread.recs.insert(*it);
-                enqueued = true;
-            }
+static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
+    std::set<ImageRecordPtr> recs;
+    for (auto it=range.first; it!=range.second; it++) {
+        if ((*it)->options.thumb.render) {
+            recs.insert(*it);
         }
     }
-    if (enqueued) thread.signal.signalOne();
-}
-
-static void _ThumbRenderThread(_ThumbRenderThreadState& state) {
-    printf("[_ThumbRenderThread] Starting\n");
-    try {
-        for (;;) {
-            ImageSet recs;
-            {
-                auto lock = state.signal.wait([&] { return !state.recs.empty(); });
-                recs = std::move(state.recs);
-                // Update .thumb.render asap (ie before we've actually rendered) so that the
-                // visibleThumbs() function on the main thread stops enqueuing work asap
-                for (const ImageRecordPtr& rec : recs) {
-                    rec->options.thumb.render = false;
-                }
-            }
-            
-            printf("[_ThumbRenderThread] Enqueueing %ju thumbnails for rendering\n", (uintmax_t)recs.size());
-            state.imageSource->renderThumbs(ImageSource::Priority::High, recs);
-            printf("[_ThumbRenderThread] Rendered %ju thumbnails\n", (uintmax_t)recs.size());
-        }
-    
-    } catch (const Toastbox::Signal::Stop&) {
-    }
-    printf("[_ThumbRenderThread] Exiting\n");
+    is->renderThumbs(recs);
 }
 
 // _imageLibrary must be locked!
 - (void)_thumbRenderVisibleIfNeeded {
     const auto vir = _VisibleIndexRange(_grid, [self frame], [self contentsScale]);
     const auto vr = _VisibleRange(vir, *_imageLibrary, _sortNewestFirst);
-    _ThumbRenderIfNeeded(*_thumbRender, vr);
+    _ThumbRenderIfNeeded(_imageSource, vr);
 }
 
 // _imageLibrary must be locked!
