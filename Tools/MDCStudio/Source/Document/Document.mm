@@ -15,6 +15,7 @@
 #import "ImageExporter/ImageExporter.h"
 #import "MDCDevicesManager.h"
 #import "PrintImages.h"
+#import "MDCDeviceDemo.h"
 
 using namespace MDCStudio;
 
@@ -24,6 +25,7 @@ using namespace MDCStudio;
 @implementation Document {
     IBOutlet NSSplitView* _splitView;
     IBOutlet NSView* _noDevicesView;
+    bool _demoMode;
     NSWindow* _window;
     Object::ObserverPtr _devicesOb;
     Object::ObserverPtr _prefsOb;
@@ -417,11 +419,19 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 }
 
 - (void)_updateDevices {
-    std::vector<MDCDevicePtr> devices = MDCDevicesManagerGlobal()->devices();
     std::set<ImageSourcePtr> imageSources;
-    for (MDCDevicePtr device : devices) {
-        imageSources.insert(device);
+    if (!_demoMode) {
+        std::vector<MDCDeviceRealPtr> devices = MDCDevicesManagerGlobal()->devices();
+        for (MDCDeviceRealPtr device : devices) {
+            imageSources.insert(device);
+        }
+    
+    } else {
+        MDCDeviceDemoPtr demoDevice = Object::Create<MDCDeviceDemo>();
+        imageSources.insert(demoDevice);
+//        imageSources.insert()
     }
+    
     [_sourceListView setImageSources:imageSources];
     [self sourceListViewSelectionChanged:_sourceListView];
     
@@ -612,8 +622,12 @@ static void _SortNewestFirst(bool x) {
     [alert setMessageText:[NSString stringWithFormat:@"Delete %ju %s",
         imageCount, (imageCount>1 ? "Photos" : "Photo")]];
     
-    [alert setInformativeText:[NSString stringWithFormat:@"Are you sure you want to delete %ju %s?\n\nOnce deleted, these photos will be unrecoverable, and this action cannot be undone.",
-        imageCount, (imageCount>1 ? "photos" : "photo")]];
+    [alert setInformativeText:[NSString stringWithFormat:
+        @"Are you sure you want to delete %ju %s? Once deleted, %s will be unrecoverable.\n\nThis action cannot be undone.",
+        imageCount,
+        (imageCount>1 ? "photos" : "photo"),
+        (imageCount>1 ? "these photos" : "this photo")
+    ]];
     
     {
         NSButton* button = [alert addButtonWithTitle:@"Delete"];
@@ -684,6 +698,14 @@ static void _SortNewestFirst(bool x) {
 
 - (NSPrintOperation*)printOperationWithSettings:(NSDictionary<NSPrintInfoAttributeKey,id>*)settings error:(NSError**)error {
     return PrintImages(settings, _active.imageSource, _active.selection->images(), !_SortNewestFirst());
+}
+
+// MARK: - Demo
+
+- (IBAction)_tryDemo:(id)sender {
+    _demoMode = true;
+    [self _updateDevices];
+    NSLog(@"_tryDemo:");
 }
 
 @end

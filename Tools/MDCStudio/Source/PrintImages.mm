@@ -15,7 +15,7 @@ static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPt
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
-    Image image = imageSource->loadImage(ImageSource::Priority::High, rec);
+    Image image = imageSource->getImage(ImageSource::Priority::High, rec);
     Pipeline::Options popts = PipelineOptionsForImage(*rec, image);
     
     Renderer::Txt txt = renderer.textureCreate(MTLPixelFormatRGBA16Float,

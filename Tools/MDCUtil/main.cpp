@@ -53,6 +53,8 @@ const CmdStr MSPSBWEraseCmd         = "MSPSBWErase";
 const CmdStr MSPSBWDebugLogCmd      = "MSPSBWDebugLog";
 const CmdStr SDReadCmd              = "SDRead";
 const CmdStr SDEraseCmd             = "SDErase";
+const CmdStr ImgReadFullCmd         = "ImgReadFull";
+const CmdStr ImgReadThumbCmd        = "ImgReadThumb";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 
 static void printUsage() {
@@ -92,6 +94,9 @@ static void printUsage() {
     
     cout << "  " << SDReadCmd               << " <addr> <blockcount> <output>\n";
     cout << "  " << SDEraseCmd              << " <addr> <blockcount> <output>\n";
+    
+    cout << "  " << ImgReadFullCmd          << " <id> <output>\n";
+    cout << "  " << ImgReadThumbCmd         << " <id> <output>\n";
     cout << "  " << ImgCaptureCmd           << " <output.cfa>\n";
     
     cout << "\n";
@@ -153,6 +158,16 @@ struct Args {
         SD::Block addr = 0;
         SD::Block count = 0;
     } SDErase = {};
+    
+    struct {
+        Img::Id id = 0;
+        std::string filePath;
+    } ImgReadFull = {};
+    
+    struct {
+        Img::Id id = 0;
+        std::string filePath;
+    } ImgReadThumb = {};
     
     struct {
         std::string filePath;
@@ -250,6 +265,16 @@ static Args parseArgs(int argc, const char* argv[]) {
         if (strs.size() < 3) throw std::runtime_error("missing argument: address/length");
         IntForStr(args.SDErase.addr, strs[1]);
         IntForStr(args.SDErase.count, strs[2]);
+    
+    } else if (args.cmd == lower(ImgReadFullCmd)) {
+        if (strs.size() < 3) throw std::runtime_error("missing argument: id/file path");
+        IntForStr(args.ImgReadFull.id, strs[1]);
+        args.ImgReadFull.filePath = strs[2];
+    
+    } else if (args.cmd == lower(ImgReadThumbCmd)) {
+        if (strs.size() < 3) throw std::runtime_error("missing argument: id/file path");
+        IntForStr(args.ImgReadThumb.id, strs[1]);
+        args.ImgReadThumb.filePath = strs[2];
     
     } else if (args.cmd == lower(ImgCaptureCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
@@ -900,6 +925,47 @@ static void SDErase(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
 }
 
+static void _ImgRead(MDCUSBDevice& device, const std::string& filePath, SD::Block block, size_t len) {
+    static_assert(!(SD::BlockLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk));
+    
+    printf("Sending SDInit command...\n");
+    device.sdInit();
+    printf("-> OK\n\n");
+    
+    printf("Sending SDRead command...\n");
+    device.sdRead(block);
+    printf("-> OK\n\n");
+    
+    printf("Reading data...\n");
+    auto buf = std::make_unique<uint8_t[]>(len);
+    device.readout(buf.get(), len);
+    printf("-> OK\n\n");
+    
+    // Write data
+    printf("Writing data...\n");
+    std::ofstream f;
+    f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    f.open(filePath.c_str());
+    f.write((char*)buf.get(), len);
+    printf("-> OK\n");
+}
+
+static void ImgReadFull(const Args& args, MDCUSBDevice& device) {
+    const auto& a = args.ImgReadFull;
+    const MSP::State mspState = device.mspStateRead();
+    const uint32_t idx = a.id % mspState.sd.imgCap;
+    const SD::Block block = MSP::SDBlockStart(mspState.sd.baseFull, ImgSD::Full::ImageBlockCount, idx);
+    _ImgRead(device, a.filePath, block, ImgSD::Full::ImagePaddedLen);
+}
+
+static void ImgReadThumb(const Args& args, MDCUSBDevice& device) {
+    const auto& a = args.ImgReadThumb;
+    const MSP::State mspState = device.mspStateRead();
+    const uint32_t idx = a.id % mspState.sd.imgCap;
+    const SD::Block block = MSP::SDBlockStart(mspState.sd.baseThumb, ImgSD::Thumb::ImageBlockCount, idx);
+    _ImgRead(device, a.filePath, block, ImgSD::Thumb::ImagePaddedLen);
+}
+
 static void ImgCapture(const Args& args, MDCUSBDevice& device) {
     printf("Sending ImgInit command...\n");
     device.imgInit();
@@ -998,6 +1064,8 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPSBWDebugLogCmd))      MSPSBWDebugLog(args, device);
         else if (args.cmd == lower(SDReadCmd))              SDRead(args, device);
         else if (args.cmd == lower(SDEraseCmd))             SDErase(args, device);
+        else if (args.cmd == lower(ImgReadFullCmd))         ImgReadFull(args, device);
+        else if (args.cmd == lower(ImgReadThumbCmd))        ImgReadThumb(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))          ImgCapture(args, device);
     
     } catch (const std::exception& e) {

@@ -11,23 +11,23 @@
                 <outlet property="_outlineView" destination="AKO-DU-mMa" id="8cY-GE-qnW"/>
             </connections>
         </customObject>
-        <visualEffectView blendingMode="behindWindow" material="sidebar" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="NJC-Ov-ASV">
-            <rect key="frame" x="0.0" y="0.0" width="260" height="350"/>
+        <visualEffectView misplaced="YES" blendingMode="behindWindow" material="sidebar" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="NJC-Ov-ASV">
+            <rect key="frame" x="0.0" y="0.0" width="310" height="350"/>
             <subviews>
                 <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="76" horizontalPageScroll="10" verticalLineScroll="76" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fLh-R7-6A0">
-                    <rect key="frame" x="0.0" y="0.0" width="260" height="350"/>
+                    <rect key="frame" x="0.0" y="0.0" width="310" height="350"/>
                     <clipView key="contentView" drawsBackground="NO" id="OCF-P9-iE6">
-                        <rect key="frame" x="0.0" y="0.0" width="260" height="350"/>
+                        <rect key="frame" x="0.0" y="0.0" width="310" height="350"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="74" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" id="AKO-DU-mMa">
-                                <rect key="frame" x="0.0" y="0.0" width="260" height="350"/>
+                                <rect key="frame" x="0.0" y="0.0" width="310" height="350"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="displayP3"/>
                                 <color key="gridColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="displayP3"/>
                                 <tableColumns>
-                                    <tableColumn width="257" minWidth="16" maxWidth="1000" id="wRa-Pk-v3r">
+                                    <tableColumn width="307" minWidth="16" maxWidth="1000" id="wRa-Pk-v3r">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
@@ -40,11 +40,11 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="SourceListView_RowView" id="2gM-Xi-JvJ" customClass="SourceListView_RowView">
-                                                <rect key="frame" x="1" y="1" width="257" height="17"/>
+                                                <rect key="frame" x="1" y="1" width="307" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                             </tableCellView>
                                             <tableCellView identifier="SourceListView_Device" id="08g-eg-N7V" customClass="SourceListView_Device">
-                                                <rect key="frame" x="1" y="20" width="257" height="74"/>
+                                                <rect key="frame" x="1" y="20" width="307" height="74"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY" userLabel="Icon Image">
@@ -56,7 +56,7 @@
                                                         <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="ArtworkPlaceholder" id="KoV-V9-mVz"/>
                                                     </imageView>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
-                                                        <rect key="frame" x="71" y="36" width="142" height="21"/>
+                                                        <rect key="frame" x="71" y="36" width="192" height="21"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="aUI-KD-Hqx">
                                                             <font key="font" metaFont="system" size="18"/>
                                                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -78,7 +78,7 @@
                                                         </connections>
                                                     </textField>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g8q-te-9OC" userLabel="Settings Button">
-                                                        <rect key="frame" x="229" y="14" width="17" height="17"/>
+                                                        <rect key="frame" x="279" y="14" width="17" height="17"/>
                                                         <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="SourceList-Gear" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="rni-HE-MKl">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
@@ -88,7 +88,7 @@
                                                         </connections>
                                                     </button>
                                                     <imageView translatesAutoresizingMaskIntoConstraints="NO" id="YYE-UM-oso" userLabel="Battery Image">
-                                                        <rect key="frame" x="219" y="38" width="30" height="20"/>
+                                                        <rect key="frame" x="269" y="38" width="30" height="20"/>
                                                         <constraints>
                                                             <constraint firstAttribute="height" constant="20" id="277-f4-oyy"/>
                                                         </constraints>
@@ -130,7 +130,7 @@
                         <nil key="backgroundColor"/>
                     </clipView>
                     <constraints>
-                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="260" id="r1z-nZ-ZF8"/>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="310" id="r1z-nZ-ZF8"/>
                     </constraints>
                     <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="oaD-I2-Mvd">
                         <rect key="frame" x="0.0" y="384" width="250" height="16"/>

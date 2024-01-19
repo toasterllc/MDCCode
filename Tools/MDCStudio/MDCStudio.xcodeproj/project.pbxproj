@@ -43,6 +43,7 @@
 		55496F61278E88B800BCA739 /* Grid.h in Sources */ = {isa = PBXBuildFile; fileRef = 55496F60278E88B800BCA739 /* Grid.h */; };
 		55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F62278FCDD000BCA739 /* MetalKit.framework */; };
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
+		5557260B2B5F677E00B32710 /* demo in Copy Resources/demo */ = {isa = PBXBuildFile; fileRef = 5557260A2B5F677C00B32710 /* demo */; };
 		557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557ABCED29DD24230032619E /* BatteryLifeView.mm */; };
 		557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 557ABCEE29DD24230032619E /* BatteryLifeView.xib */; };
 		55838C912AD0BE7200D4B024 /* SourceList-Gear.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55838C822AD0BE7100D4B024 /* SourceList-Gear.pdf */; };
@@ -127,7 +128,24 @@
 		55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* FullSizeImageView.metal */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		550C47402B5E3A8300CFBE09 /* Copy Resources/demo */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 12;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+				5557260B2B5F677E00B32710 /* demo in Copy Resources/demo */,
+			);
+			name = "Copy Resources/demo";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		550C44DF2B5B147F00CFBE09 /* MDCDeviceReal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDeviceReal.h; sourceTree = "<group>"; };
+		550C44E02B5B147F00CFBE09 /* MDCDeviceDemo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDeviceDemo.h; sourceTree = "<group>"; };
+		550C44E12B5C8A1500CFBE09 /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		550CA8032B4F1EFA0061A367 /* ArtworkPlaceholder.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = ArtworkPlaceholder.pdf; sourceTree = "<group>"; };
 		55116D2E2B3CC130004617DD /* ProgressBar.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ProgressBar.mm; sourceTree = "<group>"; };
 		55116D2F2B3CC130004617DD /* ProgressBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressBar.h; sourceTree = "<group>"; };
@@ -228,6 +246,7 @@
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		554986302B400CBA00B68E4B /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
+		5557260A2B5F677C00B32710 /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
 		556F313E2AE069830028BF9C /* NibViewInit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NibViewInit.h; sourceTree = "<group>"; };
 		557ABCED29DD24230032619E /* BatteryLifeView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifeView.mm; sourceTree = "<group>"; };
 		557ABCEE29DD24230032619E /* BatteryLifeView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BatteryLifeView.xib; sourceTree = "<group>"; };
@@ -275,7 +294,7 @@
 		558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminant.mm; sourceTree = "<group>"; };
 		558FFC6029CA1E520022E840 /* Prefs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Prefs.h; sourceTree = "<group>"; };
 		559704ED2AE0E481006CD617 /* ImageExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageExporter.h; sourceTree = "<group>"; };
-		55A36A8E27A2951900FD0181 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
+		55A36A8E27A2951900FD0181 /* ImageSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageSource.h; sourceTree = "<group>"; };
 		55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		55A36AB727A35ABD00FD0181 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55A417DD29DC9804003A68A4 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
@@ -376,7 +395,6 @@
 		55F8D01627BEF97200757165 /* FullSizeImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FullSizeImageView.metal; sourceTree = "<group>"; };
 		55F8D01827BEF97200757165 /* FullSizeImageViewTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FullSizeImageViewTypes.h; sourceTree = "<group>"; };
 		55F8D05827C0E07900757165 /* Lockable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lockable.h; sourceTree = "<group>"; };
-		55F8D09227C2EE9D00757165 /* ImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSource.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -649,6 +667,7 @@
 		55496F56278CFC3E00BCA739 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				5557260A2B5F677C00B32710 /* demo */,
 				55A884CB2B23CCCF004D6564 /* ICEApp.bin */,
 				55A884CA2B23CCCF004D6564 /* STMApp.elf */,
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
@@ -695,13 +714,15 @@
 				55F8882629D8DADD0075593F /* TokenField.mm */,
 				55B1658129CB9A50008D53E5 /* Cache.h */,
 				553EF56C2AD8E4DF00157484 /* Object.h */,
-				55A36A8E27A2951900FD0181 /* MDCDevice.h */,
+				55A36A8E27A2951900FD0181 /* ImageSource.h */,
+				550C44E12B5C8A1500CFBE09 /* MDCDevice.h */,
+				550C44DF2B5B147F00CFBE09 /* MDCDeviceReal.h */,
+				550C44E02B5B147F00CFBE09 /* MDCDeviceDemo.h */,
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
 				55C90B9229B58283007CC97E /* ImageThumb.h */,
 				552F4BF629B306DB000CEAB2 /* ImageOptions.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				553EF5572AD7088A00157484 /* ImageLibraryStatus.h */,
-				55F8D09227C2EE9D00757165 /* ImageSource.h */,
 				55C6A2A42AE9925B008149AF /* ImageSelection.h */,
 				556F313E2AE069830028BF9C /* NibViewInit.h */,
 				558FFC6029CA1E520022E840 /* Prefs.h */,
@@ -922,6 +943,7 @@
 				55496F3E278CFC0400BCA739 /* Sources */,
 				55496F3F278CFC0400BCA739 /* Frameworks */,
 				55496F40278CFC0400BCA739 /* Resources */,
+				550C47402B5E3A8300CFBE09 /* Copy Resources/demo */,
 			);
 			buildRules = (
 			);

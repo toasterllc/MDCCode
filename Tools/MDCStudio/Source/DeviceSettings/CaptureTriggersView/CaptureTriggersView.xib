@@ -171,10 +171,10 @@
                     </scroller>
                 </scrollView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="iG6-k9-Zxe" userLabel="Add a Photo Trigger">
-                    <rect key="frame" x="90" y="219" width="420" height="151"/>
+                    <rect key="frame" x="90" y="240" width="420" height="109"/>
                     <subviews>
                         <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Amy-gf-1wW">
-                            <rect key="frame" x="0.0" y="25" width="100" height="100"/>
+                            <rect key="frame" x="0.0" y="4" width="100" height="100"/>
                             <constraints>
                                 <constraint firstAttribute="width" constant="100" id="4nI-lM-iY5"/>
                                 <constraint firstAttribute="height" constant="100" id="X1B-Xd-DXm"/>
@@ -182,7 +182,7 @@
                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="ArtworkPlaceholder" id="BXg-sR-Yw4"/>
                         </imageView>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tcN-PV-F9r">
-                            <rect key="frame" x="138" y="123" width="199" height="28"/>
+                            <rect key="frame" x="138" y="81" width="199" height="28"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" title="Add a Photo Trigger" id="kA0-UF-qqd">
                                 <font key="font" metaFont="systemThin" size="24"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -190,15 +190,12 @@
                             </textFieldCell>
                         </textField>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SsV-J9-A7A">
-                            <rect key="frame" x="138" y="43" width="284" height="70"/>
+                            <rect key="frame" x="138" y="43" width="284" height="28"/>
                             <constraints>
                                 <constraint firstAttribute="width" constant="280" id="rCZ-gc-nAM"/>
                             </constraints>
-                            <textFieldCell key="cell" controlSize="small" alignment="left" id="2Eg-a3-5Kr">
+                            <textFieldCell key="cell" controlSize="small" alignment="left" title="You can capture photos when a date/time occurs, when motion occurs, or when the button is pressed." id="2Eg-a3-5Kr">
                                 <font key="font" metaFont="menu" size="11"/>
-                                <string key="title">You can choose to capture photos when a date/time occurs, when motion occurs, or when the button is pressed.
-
-Add a photo trigger using the menu below.</string>
                                 <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>

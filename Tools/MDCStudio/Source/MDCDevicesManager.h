@@ -9,6 +9,7 @@
 #import "Toastbox/USBDevice.h"
 #import "Toastbox/Signal.h"
 #import "MDCDevice.h"
+#import "MDCDeviceReal.h"
 #import "Object.h"
 
 namespace MDCStudio {
@@ -36,9 +37,9 @@ struct MDCDevicesManager : Object {
         _thread.join();
     }
     
-    std::vector<MDCDevicePtr> devices() {
+    std::vector<MDCDeviceRealPtr> devices() {
         auto lock = _state.signal.lock();
-        std::vector<MDCDevicePtr> devs;
+        std::vector<MDCDeviceRealPtr> devs;
         for (const auto& kv : _state.devices) {
             devs.push_back(kv.second.device);
         }
@@ -51,7 +52,7 @@ struct MDCDevicesManager : Object {
     using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
     
     struct _Device {
-        MDCDevicePtr device;
+        MDCDeviceRealPtr device;
         Object::ObserverPtr observer;
     };
     
@@ -90,7 +91,7 @@ struct MDCDevicesManager : Object {
                 // so we don't want to block devices() that long.
                 {
                     // Copy devices into `devices`
-                    std::set<MDCDevicePtr> devices;
+                    std::set<MDCDeviceRealPtr> devices;
                     {
                         auto lock = _state.signal.lock();
                         for (const auto& kv : _state.devices) {
@@ -99,8 +100,8 @@ struct MDCDevicesManager : Object {
                     }
                     
                     // Filter `devices` down to the alive devices
-                    std::set<MDCDevicePtr> alive;
-                    for (const MDCDevicePtr& device : devices) {
+                    std::set<MDCDeviceRealPtr> alive;
+                    for (const MDCDeviceRealPtr& device : devices) {
                         if (device->alive()) alive.insert(device);
                     }
                     
@@ -131,7 +132,7 @@ struct MDCDevicesManager : Object {
                     
                     } catch (const std::exception& e) {
                         // Ignore failures to create USBDevice
-                        printf("Ignoring USB device (_USBDevice): %s\n", e.what());
+                        printf("Ignoring USB device (1): %s\n", e.what());
                         continue;
                     }
                     
@@ -173,10 +174,10 @@ struct MDCDevicesManager : Object {
                         auto selfWeak = selfOrNullWeak<MDCDevicesManager>();
                         if (!selfWeak.lock()) throw Toastbox::Signal::Stop();
                         
-                        MDCDevicePtr mdc;
+                        MDCDeviceRealPtr mdc;
                         try {
                             _MDCUSBDevicePtr mdcUSBDev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
-                            mdc = Object::Create<MDCDevice>(std::move(mdcUSBDev));
+                            mdc = Object::Create<MDCDeviceReal>(std::move(mdcUSBDev));
                         } catch (const MDCUSBDevice::IncompatibleVersion& e) {
                             // Ignore failures to create MDCDevice
                             printf("Ignoring MDCUSBDevice due to incompatible version: %s\n", e.what());
@@ -184,11 +185,11 @@ struct MDCDevicesManager : Object {
                             continue;
                         } catch (const std::exception& e) {
                             // Ignore failures to create MDCDevice
-                            printf("Ignoring USB device (MDCDevice): %s\n", e.what());
+                            printf("Ignoring USB device (2): %s\n", e.what());
                             continue;
                         }
                         
-                        Object::ObserverPtr ob = mdc->observerAdd([=] (MDCDevicePtr device, const Object::Event& ev) {
+                        Object::ObserverPtr ob = mdc->observerAdd([=] (MDCDeviceRealPtr device, const Object::Event& ev) {
                             auto selfStrong = selfWeak.lock();
                             if (!selfStrong) return;
                             if (ev.prop == &device->_status) return; // Ignore status changes
@@ -246,7 +247,7 @@ struct MDCDevicesManager : Object {
         CFRunLoopWakeUp((CFRunLoopRef)x);
     }
     
-    void _deviceChanged(MDCDevicePtr device) {
+    void _deviceChanged(MDCDeviceRealPtr device) {
         printf("[MDCDevicesManager] _deviceChanged\n");
         // Signal runloop that it needs to recheck its pending devices
         _RunLoopInterrupt(_runLoop);

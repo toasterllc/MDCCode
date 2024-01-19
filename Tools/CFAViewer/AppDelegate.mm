@@ -233,7 +233,7 @@ struct RawImage {
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_43.cfa"}];
     
-    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];
+//    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_78.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_64.cfa"}];
     
@@ -301,7 +301,8 @@ static bool less(const fs::path& a, const fs::path& b) {
 }
 
 static bool isCFAFile(const fs::path& path) {
-    return fs::is_regular_file(path) && path.extension() == ".cfa";
+    return path.string().at(0) != '.';
+//    return fs::is_regular_file(path) && path.extension() == ".cfa";
 }
 
 - (void)_loadImages:(const ImagePaths&)paths {
@@ -359,6 +360,22 @@ static bool isCFAFile(const fs::path& path) {
         const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), Img::Full::ChecksumOffset);
         uint32_t checksumGot = 0;
         memcpy(&checksumGot, imgData.data()+Img::Full::ChecksumOffset, sizeof(checksumGot));
+        assert(checksumExpected == checksumGot);
+    
+    // (3) header + raw pixel data + checksum
+    } else if (imgData.len()==Img::Thumb::ImageLen || imgData.len()==ImgSD::Thumb::ImagePaddedLen) {
+        const Img::Header& header = *(Img::Header*)imgData.data();
+        
+        _raw.image.width = header.imageWidth;
+        _raw.image.height = header.imageHeight;
+        
+        // Copy the image data into _raw.image
+        memcpy(_raw.pixels, imgData.data()+Img::PixelsOffset, Img::Thumb::PixelLen);
+        
+        // Validate checksum
+        const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), Img::Thumb::ChecksumOffset);
+        uint32_t checksumGot = 0;
+        memcpy(&checksumGot, imgData.data()+Img::Thumb::ChecksumOffset, sizeof(checksumGot));
         assert(checksumExpected == checksumGot);
     
     // invaid image
