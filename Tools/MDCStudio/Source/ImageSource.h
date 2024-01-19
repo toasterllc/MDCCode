@@ -20,14 +20,23 @@ struct Image {
 struct ImageSource : Object {
     enum class Priority : uint8_t { High, Low, Last=Low };
     
+    // imageLibrary(): returns the image library
     virtual ImageLibraryPtr imageLibrary() = 0;
+    
+    // renderThumbs(): synchronously renders the thumbnails for `recs`
     virtual void renderThumbs(Priority priority, ImageSet recs) = 0;
+    
+    // getCachedImage(): returns a cached image for `rec`, if it exists. Otherwise returns Image{}.
     virtual Image getCachedImage(const ImageRecordPtr& rec) = 0;
+    
+    // loadImage(): synchronously loads the full-size image for `rec`
     virtual Image loadImage(Priority priority, const ImageRecordPtr& rec) = 0;
-    virtual void deleteImages(const ImageSet& images) {
+    
+    // deleteImages(): synchronously deletes the images specified by `recs`
+    virtual void deleteImages(const ImageSet& recs) {
         ImageLibraryPtr il = imageLibrary();
         auto lock = std::unique_lock(*il);
-        il->remove(images);
+        il->remove(recs);
         il->write();
     }
 };
