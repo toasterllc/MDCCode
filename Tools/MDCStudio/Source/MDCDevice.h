@@ -1297,22 +1297,6 @@ struct MDCDevice : ImageSource {
         return nullptr;
     }
     
-//    void _sdRead_handleWork(_SDReadWork&& work) {
-//        const _SDBlock blockBegin = work.region.begin;
-//        const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
-//        // Verify that the length of data that we're reading will fit in our buffer
-//        assert(len <= work.buf.cap());
-//        
-//        {
-//            printf("[_sdRead_handleWork] reading blockBegin:%ju len:%ju (%.1f MB)\n",
-//                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
-//            
-//            _deviceSDRead(blockBegin, len, work.buf.storage());
-//        }
-//        
-//        work.callback(std::move(work));
-//    }
-    
     void _sdRead_thread() {
         constexpr auto SDModeTimeout = std::chrono::seconds(3);
         try {
