@@ -113,7 +113,6 @@ struct RawImage {
     IBOutlet NSSlider* _saturationSlider;
     IBOutlet NSTextField* _saturationLabel;
     
-    IBOutlet NSButton* _localContrastCheckbox;
     IBOutlet NSSlider* _localContrastAmountSlider;
     IBOutlet NSTextField* _localContrastAmountLabel;
     IBOutlet NSSlider* _localContrastRadiusSlider;
@@ -221,7 +220,6 @@ struct RawImage {
         .contrast = 0,
         
         .localContrast = {
-            .en = true,
             .amount = .5,
             .radius = 50,
         },
@@ -1061,7 +1059,6 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     opts.contrast = [_contrastSlider floatValue];
     opts.saturation = [_saturationSlider floatValue];
     
-    opts.localContrast.en = ([_localContrastCheckbox state]==NSControlStateValueOn);
     opts.localContrast.amount = [_localContrastAmountSlider floatValue];
     opts.localContrast.radius = [_localContrastRadiusSlider floatValue];
     
@@ -1152,8 +1149,6 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     
     // Local contrast
     {
-        [_localContrastCheckbox setState:(opts.localContrast.en ? NSControlStateValueOn : NSControlStateValueOff)];
-        
         [_localContrastAmountSlider setFloatValue:opts.localContrast.amount];
         [_localContrastAmountLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.localContrast.amount]];
         
