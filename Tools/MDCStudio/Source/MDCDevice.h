@@ -37,7 +37,6 @@ struct MDCDevice : ImageSource {
     
     virtual std::optional<Status> status() = 0;
     virtual std::optional<float> syncProgress() = 0;
-
 };
 
 } // namespace MDCStudio

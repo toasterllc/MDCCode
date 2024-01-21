@@ -284,8 +284,8 @@
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="olf-dc-ZVA">
-                    <rect key="frame" x="146" y="297" width="145" height="16"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Projected Battery Level" id="CpC-iY-fer">
+                    <rect key="frame" x="151" y="297" width="136" height="16"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Projected Battery Life" id="CpC-iY-fer">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
