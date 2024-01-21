@@ -207,10 +207,6 @@ struct MDCDeviceUSB : MDCDevice {
         };
     }
     
-//    static ImageRange _GetImageRange(const MSP::SDState& sd) {
-//        return _GetImageRange(_GetImgRingBuf(sd), sd.imgCap);
-//    }
-    
     // status(): returns nullopt if the status hasn't been loaded yet
     std::optional<Status> status() override {
         try {
@@ -417,8 +413,6 @@ struct MDCDeviceUSB : MDCDevice {
     
     static _MDCUSBDevicePtr _DevicePrepare(_MDCUSBDevicePtr&& dev) {
         const std::string serial = dev->serial();
-        
-//        _MDCUSBDevicePtr dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
         
         // Invoke bootloader
         {
@@ -879,8 +873,6 @@ struct MDCDeviceUSB : MDCDevice {
         dev.iceRAMWrite(mmap.data(), mmap.len());
     }
     
-    
-    
     bool alive() {
         try {
             deviceLock();
@@ -897,91 +889,6 @@ struct MDCDeviceUSB : MDCDevice {
         auto lock = _device.signal.lock();
         return lock;
     }
-    
-    
-    
-    
-    
-//    void _dataRead_thread() {
-//        constexpr auto SDModeTimeout = std::chrono::seconds(3);
-//        try {
-//            for (;;) {
-//                // Wait for work
-//                printf("[_dataRead_thread] Waiting for work...\n");
-//                _dataRead.signal.wait([&] { return _dataRead_nextQueue() && !_dataRead.pause; });
-//                
-//                // Initiate SD mode
-//                printf("[_dataRead_thread] Entering SD mode...\n");
-//                auto sdMode = _sdModeEnter();
-//                printf("[_dataRead_thread] Entered SD mode\n");
-//                
-//                std::optional<_SDBlock> dataReadEnd;
-//                for (;;) {
-//                    _DataReadWork work;
-//                    {
-//                        // Wait for work
-//                        _DataReadWorkQueue* queue = nullptr;
-//                        bool pause = false;
-//                        auto lock = _dataRead.signal.wait_for(SDModeTimeout, [&] {
-//                            queue = _dataRead_nextQueue();
-//                            pause = _dataRead.pause;
-//                            return queue || pause;
-//                        });
-//                        // Check if we timed out waiting for work
-//                        if (!queue || pause) break;
-////                        printf("[_dataRead_thread] Dequeued work\n");
-//                        work = std::move(queue->front());
-//                        queue->pop();
-//                    }
-//                    
-//                    {
-//                        const _SDBlock blockBegin = work.region.begin;
-//                        const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
-//                        // Verify that the length of data that we're reading will fit in our buffer
-//                        assert(len <= work.buf.cap());
-//                        
-//                        {
-////                            printf("[_dataRead_thread] reading blockBegin:%ju len:%ju (%.1f MB)\n",
-////                                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
-//                            
-//                            const _SDBlock block = blockBegin;
-//                            void*const dst = work.buf.storage();
-//                            if (!dataReadEnd || *dataReadEnd!=block) {
-//                                printf("[_dataRead_thread] Starting readout at %ju\n", (uintmax_t)block);
-//                                // If readout was in progress at a different address, reset the device
-//                                if (sdReadEnd) {
-//                                    _device.device->reset();
-//                                }
-//                                
-//                                // Verify that blockBegin can be safely cast to SD::Block
-//                                assert(std::numeric_limits<SD::Block>::max() >= block);
-//                                _device.device->sdRead((SD::Block)block);
-//                                _device.device->readout(dst, len);
-//                            
-//                            } else {
-////                                printf("[_dataRead_thread] Continuing readout at %ju\n", (uintmax_t)block);
-//                                _device.device->readout(dst, len);
-//                            }
-//                            sdReadEnd = _SDBlockEnd(block, len);
-//                        }
-//                        
-//                        work.callback(std::move(work));
-//                    }
-//                }
-//                
-//                printf("[_dataRead_thread] Exiting SD mode\n");
-//            }
-//        
-//        } catch (const Toastbox::Signal::Stop&) {
-//            printf("[_dataRead_thread] Stopping\n");
-//        } catch (const std::exception& e) {
-//            printf("[_dataRead_thread] Error: %s\n", e.what());
-//        }
-//    }
-    
-    
-    
-    
     
     std::string _serial;
     
