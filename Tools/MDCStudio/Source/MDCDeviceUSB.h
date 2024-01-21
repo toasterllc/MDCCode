@@ -1,8 +1,21 @@
 #import "MDCDevice.h"
+#import "Tools/Shared/MDCUSBDevice.h"
+#import <IOKit/IOKitLib.h>
+#import <IOKit/IOMessage.h>
 
 namespace MDCStudio {
 
 struct MDCDeviceUSB : MDCDevice {
+    using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
+    using _SendRight = Toastbox::SendRight;
+    using _USBDevice = Toastbox::USBDevice;
+    using _USBDevicePtr = std::unique_ptr<Toastbox::USBDevice>;
+    using _IONotificationPtr = std::unique_ptr<IONotificationPortRef, void(*)(IONotificationPortRef*)>;
+    
+    struct ImageRange {
+        Img::Id begin = 0;
+        Img::Id end = 0;
+    };
     
     static Path _DirForSerial(const std::string_view& serial) {
         auto urls = [[NSFileManager defaultManager] URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask];
@@ -12,13 +25,64 @@ struct MDCDeviceUSB : MDCDevice {
         return appSupportDir / "Devices" / serial;
     }
     
+// _SDBlock: we're intentionally not using SD::Block because we want our block addressing type
+    // to be wider than the SD card's addressing. This is because in our math logic, we want to be
+    // able to use an 'end strategy' (ie last+1) instead of a 'last strategy', and the former can't
+    // address the last block if it's the same width as the SD card's addressing.
+    using _SDBlock = uint64_t;
+    
+    struct _SDRegion {
+        _SDBlock begin = 0;
+        _SDBlock end   = 0;
+        
+        bool operator<(const _SDRegion& x) const {
+            if (begin != x.begin) return begin < x.begin;
+            if (end != x.end) return end < x.end;
+            return false;
+        }
+        
+        bool operator==(const _SDRegion& x) const {
+            if (begin != x.begin) return false;
+            if (end != x.end) return false;
+            return true;
+        }
+        
+        bool operator!=(const _SDRegion& x) const { return !(*this == x); }
+    };
+    
+    static std::vector<_SDRegion> _SDBlocksCoalesce(const std::vector<_SDBlock>& addrs, _SDBlock len) {
+        std::vector<_SDRegion> regions;
+        std::optional<_SDRegion> current;
+        for (_SDBlock addr : addrs) {
+            if (current && current->end==addr) {
+                current->end = addr+len;
+            
+            } else {
+                if (current) regions.push_back(*current);
+                current = {
+                    .begin = addr,
+                    .end = addr+len,
+                };
+            }
+        }
+        if (current) regions.push_back(*current);
+        return regions;
+    }
+    
+    static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
+        const _SDBlock blockCount = Toastbox::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
+        // Verify that block+blockLen doesn't overflow _SDBlock
+        assert(std::numeric_limits<_SDBlock>::max()-block >= blockCount);
+        return block + blockCount;
+    }
+    
     void init(_MDCUSBDevicePtr&& dev) {
-        printf("MDCDevice::init() %p\n", this);
+        printf("MDCDeviceUSB::init() %p\n", this);
         
         _serial = dev->serial();
         MDCDevice::init(_DirForSerial(_serial)); // Call super
         
-        _device.thread = _Thread([&] (_MDCUSBDevicePtr&& dev) {
+        _device.thread = Thread([&] (_MDCUSBDevicePtr&& dev) {
             _device_thread(std::move(dev));
         }, std::move(dev));
         
@@ -27,8 +91,8 @@ struct MDCDeviceUSB : MDCDevice {
         while (!_device.runLoop) usleep(1000);
     }
     
-    ~MDCDevice() {
-        printf("~MDCDevice()\n");
+    ~MDCDeviceUSB() {
+        printf("~MDCDeviceUSB()\n");
         
         // Tell _device_thread to bail
         // We have to check for _device.runLoop, even though the constructor waits
@@ -48,12 +112,12 @@ struct MDCDeviceUSB : MDCDevice {
     
     // MARK: - Device Settings
     
-    const MSP::Settings settings() {
+    const MSP::Settings settings() override {
         auto lock = _status.signal.wait([&] { return (bool)_status.status; });
         return _status.status->state.settings;
     }
     
-    void settings(const MSP::Settings& x) {
+    void settings(const MSP::Settings& x) override {
         // Wait until _status.status is loaded
         _status.signal.wait([&] { return (bool)_status.status; });
         
@@ -68,7 +132,7 @@ struct MDCDeviceUSB : MDCDevice {
         _device.device->mspStateWrite(_status.status->state);
     }
     
-    void factoryReset() {
+    void factoryReset() override {
         // Wait until _status.status is loaded
         _status.signal.wait([&] { return (bool)_status.status; });
         
@@ -120,13 +184,13 @@ struct MDCDeviceUSB : MDCDevice {
     
     // MARK: - Image Syncing
     
-    void sync() {
+    void sync() override {
         {
             auto lock = _sync.signal.lock();
             // Bail if syncing is already underway
             if (_sync.progress) return;
             _sync.progress = 0;
-            _sync.thread = _Thread([&] { _sync_thread(); });
+            _sync.thread = Thread([&] { _sync_thread(); });
         }
         
         // Notify observers that syncing started
@@ -148,7 +212,7 @@ struct MDCDeviceUSB : MDCDevice {
 //    }
     
     // status(): returns nullopt if the status hasn't been loaded yet
-    std::optional<Status> status() {
+    std::optional<Status> status() override {
         try {
             auto statusLock = _status.signal.lock();
                 if (!_status.status) return std::nullopt;
@@ -169,7 +233,7 @@ struct MDCDeviceUSB : MDCDevice {
         }
     }
     
-    std::optional<float> syncProgress() {
+    std::optional<float> syncProgress() override {
         try {
             auto lock = _sync.signal.lock();
             return _sync.progress;
@@ -210,6 +274,18 @@ struct MDCDeviceUSB : MDCDevice {
             _sdRegionsErase(regionsFull);
             _sdRegionsErase(regionsThumb);
         }
+    }
+    
+    virtual Cleanup dataReadStart() override {
+        return _sdModeEnter();
+    }
+    
+    virtual void dataReadThumb(const ImageRecordPtr& rec, void* data) override {
+        
+    }
+    
+    virtual void dataReadImage(const ImageRecordPtr& rec, void* data) override {
+        
     }
     
     // MARK: - Init
@@ -349,12 +425,6 @@ struct MDCDeviceUSB : MDCDevice {
     
     // MARK: - Device
     
-    static int _CPUCount() {
-//        return 1;
-        static int CPUCount = std::max(1, (int)std::thread::hardware_concurrency());
-        return CPUCount;
-    }
-    
     void _device_thread(_MDCUSBDevicePtr&& dev) {
         try {
             {
@@ -375,21 +445,7 @@ struct MDCDeviceUSB : MDCDevice {
             
             // Init _status
             {
-                _status.thread = _Thread([&] { _status_thread(); });
-            }
-            
-            // Init _dataRead
-            {
-                _dataRead.thread = _Thread([&] { _dataRead_thread(); });
-            }
-            
-            // Init _thumbRender
-            {
-                _thumbRender.master.thread = _Thread([&] { _thumbRender_masterThread(); });
-                
-                for (int i=0; i<_CPUCount(); i++) {
-                    _thumbRender.slave.threads.emplace_back([&] { _thumbRender_slaveThread(); });
-                }
+                _status.thread = Thread([&] { _status_thread(); });
             }
             
             // Start syncing
@@ -411,14 +467,7 @@ struct MDCDeviceUSB : MDCDevice {
             _device.signal.stop(lock);
         }
         
-        _dataRead.signal.stop();
-        _thumbRender.master.signal.stop();
-        _thumbRender.slave.signal.stop();
         _status.signal.stop();
-        
-        for (_LoadState& loadState : _loadStates.mem()) {
-            loadState.signal.stop();
-        }
         
         // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
         // exception if our MDCDevice is undergoing destruction on a different thread.
@@ -437,7 +486,7 @@ struct MDCDeviceUSB : MDCDevice {
             return std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
         
         } else {
-            #warning Debug to catch invalid battery state, remove!
+            #warning TODO: Debug to catch invalid battery state, remove!
 //            abort();
             return 0;
         }
@@ -493,21 +542,21 @@ struct MDCDeviceUSB : MDCDevice {
     }
     
     // Host mode: acquires the device lock, and tells the device to enter host mode
-    _Cleanup _hostModeEnter(bool interrupt=false) {
+    Cleanup _hostModeEnter(bool interrupt=false) {
         _hostModeSet(true, interrupt);
-        return std::make_unique<__Cleanup>([=] { _hostModeSet(false); });
+        return std::make_unique<_Cleanup>([=] { _hostModeSet(false); });
     }
     
     // SD mode: acquires the device lock, tells the device to enter host mode,
     // loads ICEAppSDReadoutSTM onto the ICE40, and initializes the SD card.
-    _Cleanup _sdModeEnter(bool interrupt=false) {
+    Cleanup _sdModeEnter(bool interrupt=false) {
         _sdModeSet(true, interrupt);
-        return std::make_unique<__Cleanup>([=] { _sdModeSet(false); });
+        return std::make_unique<_Cleanup>([=] { _sdModeSet(false); });
     }
     
-    _Cleanup _suddenTerminationDisable() {
+    Cleanup _suddenTerminationDisable() {
         [[NSProcessInfo processInfo] disableSuddenTermination];
-        return std::make_unique<__Cleanup>([=] {
+        return std::make_unique<_Cleanup>([=] {
             [[NSProcessInfo processInfo] enableSuddenTermination];
         });
     }
@@ -825,57 +874,83 @@ struct MDCDeviceUSB : MDCDevice {
     
     
     
-    // _SDBlock: we're intentionally not using SD::Block because we want our block addressing type
-    // to be wider than the SD card's addressing. This is because in our math logic, we want to be
-    // able to use an 'end strategy' (ie last+1) instead of a 'last strategy', and the former can't
-    // address the last block if it's the same width as the SD card's addressing.
-    using _SDBlock = uint64_t;
     
-    struct _SDRegion {
-        _SDBlock begin = 0;
-        _SDBlock end   = 0;
-        
-        bool operator<(const _SDRegion& x) const {
-            if (begin != x.begin) return begin < x.begin;
-            if (end != x.end) return end < x.end;
-            return false;
-        }
-        
-        bool operator==(const _SDRegion& x) const {
-            if (begin != x.begin) return false;
-            if (end != x.end) return false;
-            return true;
-        }
-        
-        bool operator!=(const _SDRegion& x) const { return !(*this == x); }
-    };
-    
-    static std::vector<_SDRegion> _SDBlocksCoalesce(const std::vector<_SDBlock>& addrs, _SDBlock len) {
-        std::vector<_SDRegion> regions;
-        std::optional<_SDRegion> current;
-        for (_SDBlock addr : addrs) {
-            if (current && current->end==addr) {
-                current->end = addr+len;
-            
-            } else {
-                if (current) regions.push_back(*current);
-                current = {
-                    .begin = addr,
-                    .end = addr+len,
-                };
-            }
-        }
-        if (current) regions.push_back(*current);
-        return regions;
-    }
-    
-    static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
-        const _SDBlock blockCount = Toastbox::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
-        // Verify that block+blockLen doesn't overflow _SDBlock
-        assert(std::numeric_limits<_SDBlock>::max()-block >= blockCount);
-        return block + blockCount;
-    }
-    
+//    void _dataRead_thread() {
+//        constexpr auto SDModeTimeout = std::chrono::seconds(3);
+//        try {
+//            for (;;) {
+//                // Wait for work
+//                printf("[_dataRead_thread] Waiting for work...\n");
+//                _dataRead.signal.wait([&] { return _dataRead_nextQueue() && !_dataRead.pause; });
+//                
+//                // Initiate SD mode
+//                printf("[_dataRead_thread] Entering SD mode...\n");
+//                auto sdMode = _sdModeEnter();
+//                printf("[_dataRead_thread] Entered SD mode\n");
+//                
+//                std::optional<_SDBlock> dataReadEnd;
+//                for (;;) {
+//                    _DataReadWork work;
+//                    {
+//                        // Wait for work
+//                        _DataReadWorkQueue* queue = nullptr;
+//                        bool pause = false;
+//                        auto lock = _dataRead.signal.wait_for(SDModeTimeout, [&] {
+//                            queue = _dataRead_nextQueue();
+//                            pause = _dataRead.pause;
+//                            return queue || pause;
+//                        });
+//                        // Check if we timed out waiting for work
+//                        if (!queue || pause) break;
+////                        printf("[_dataRead_thread] Dequeued work\n");
+//                        work = std::move(queue->front());
+//                        queue->pop();
+//                    }
+//                    
+//                    {
+//                        const _SDBlock blockBegin = work.region.begin;
+//                        const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
+//                        // Verify that the length of data that we're reading will fit in our buffer
+//                        assert(len <= work.buf.cap());
+//                        
+//                        {
+////                            printf("[_dataRead_thread] reading blockBegin:%ju len:%ju (%.1f MB)\n",
+////                                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
+//                            
+//                            const _SDBlock block = blockBegin;
+//                            void*const dst = work.buf.storage();
+//                            if (!dataReadEnd || *dataReadEnd!=block) {
+//                                printf("[_dataRead_thread] Starting readout at %ju\n", (uintmax_t)block);
+//                                // If readout was in progress at a different address, reset the device
+//                                if (sdReadEnd) {
+//                                    _device.device->reset();
+//                                }
+//                                
+//                                // Verify that blockBegin can be safely cast to SD::Block
+//                                assert(std::numeric_limits<SD::Block>::max() >= block);
+//                                _device.device->sdRead((SD::Block)block);
+//                                _device.device->readout(dst, len);
+//                            
+//                            } else {
+////                                printf("[_dataRead_thread] Continuing readout at %ju\n", (uintmax_t)block);
+//                                _device.device->readout(dst, len);
+//                            }
+//                            sdReadEnd = _SDBlockEnd(block, len);
+//                        }
+//                        
+//                        work.callback(std::move(work));
+//                    }
+//                }
+//                
+//                printf("[_dataRead_thread] Exiting SD mode\n");
+//            }
+//        
+//        } catch (const Toastbox::Signal::Stop&) {
+//            printf("[_dataRead_thread] Stopping\n");
+//        } catch (const std::exception& e) {
+//            printf("[_dataRead_thread] Error: %s\n", e.what());
+//        }
+//    }
     
     
     
@@ -885,24 +960,24 @@ struct MDCDeviceUSB : MDCDevice {
     
     struct {
         Toastbox::Signal signal; // Protects this struct
-        _Thread thread;
+        Thread thread;
         id /* CFRunLoopRef */ runLoop;
         std::unique_ptr<MDCUSBDevice> device;
     } _device;
     
     struct {
         std::unique_lock<std::mutex> deviceLock;
-        _Cleanup suddenTermination;
+        Cleanup suddenTermination;
     } _hostMode;
     
     struct {
-        _Cleanup hostMode;
+        Cleanup hostMode;
         STM::SDCardInfo cardInfo;
     } _sdMode;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
-        _Thread thread;
+        Thread thread;
         std::optional<float> progress;
     } _sync;
     
@@ -913,10 +988,10 @@ struct MDCDeviceUSB : MDCDevice {
     
     struct {
         Toastbox::Signal signal; // Protects this struct
-        _Thread thread;
+        Thread thread;
         std::optional<_Status> status;
     } _status;
-
 };
+using MDCDeviceUSBPtr = SharedPtr<MDCDeviceUSB>;
 
 } // namespace MDCStudio

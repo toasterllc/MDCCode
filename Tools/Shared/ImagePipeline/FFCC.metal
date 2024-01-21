@@ -17,7 +17,7 @@ fragment float CreateMask(
 ) {
     const int2 pos = int2(in.pos.xy);
     const float3 s = Sample::RGB(img, pos);
-    #warning we should mask out highlights too right?
+    #warning TODO: we should mask out highlights too right?
     // If any of the pixels are 0, the mask is 0
     if (s.r==0 || s.g==0 || s.b==0) return 0;
     // Otherwise the mask is 1

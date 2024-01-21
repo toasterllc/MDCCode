@@ -4,6 +4,11 @@ namespace MDCStudio {
 
 struct MDCDevice : ImageSource {
 
+    struct Status {
+        float batteryLevel = 0;
+        size_t loadImageCount = 0;
+    };
+    
     void init(const Path& dir) {
         printf("MDCDevice::init() %p\n", this);
         ImageSource::init(dir); // Call super
@@ -16,18 +21,18 @@ struct MDCDevice : ImageSource {
     
     // MARK: - Device Settings
     
-    const MSP::Settings settings() = 0;
-    void settings(const MSP::Settings& x) = 0;
-    void factoryReset() = 0;
+    virtual const MSP::Settings settings() = 0;
+    virtual void settings(const MSP::Settings& x) = 0;
+    virtual void factoryReset() = 0;
     
     // MARK: - Image Syncing
     
-    void sync() = 0;
+    virtual void sync() = 0;
     
     // MARK: - Status
     
-    std::optional<Status> status() = 0;
-    std::optional<float> syncProgress() = 0;
+    virtual std::optional<Status> status() = 0;
+    virtual std::optional<float> syncProgress() = 0;
 
 };
 using MDCDevicePtr = SharedPtr<MDCDevice>;

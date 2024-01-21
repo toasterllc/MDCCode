@@ -38,8 +38,8 @@ using namespace MDCStudio;
     // Ensure that all devices are out of host mode when we exit, by acquiring each device's
     // device lock and stashing the locks in our global DeviceLocks.
     MDCDevicesManagerPtr devicesManager = MDCDevicesManagerGlobal();
-    const std::vector<MDCDevicePtr> devices = devicesManager->devices();
-    for (MDCDevicePtr device : devices) {
+    const std::vector<MDCDeviceUSBPtr> devices = devicesManager->devices();
+    for (MDCDeviceUSBPtr device : devices) {
         DeviceLocks.push_back(device->deviceLock(true));
     }
     printf("applicationShouldTerminate\n");

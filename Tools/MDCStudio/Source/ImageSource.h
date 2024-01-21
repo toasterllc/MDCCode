@@ -4,28 +4,22 @@
 #import <set>
 #import <array>
 #import <chrono>
-#import <IOKit/IOKitLib.h>
-#import <IOKit/IOMessage.h>
 #import <AppleTextureEncoder.h>
 #import "Toastbox/Atomic.h"
-#import "Toastbox/Mmap.h"
-#import "Toastbox/Queue.h"
 #import "Toastbox/Math.h"
 #import "Toastbox/Signal.h"
-#import "Toastbox/LRU.h"
 #import "Toastbox/Util.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/Clock.h"
 #import "Code/Shared/MSP.h"
 #import "Code/Shared/ImgSD.h"
-#import "Tools/Shared/MDCUSBDevice.h"
+#import "Code/Shared/ChecksumFletcher32.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "Tools/Shared/ImagePipeline/EstimateIlluminant.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/AssertionCounter.h"
 #import "Tools/Shared/ELF32Binary.h"
 #import "ImageLibrary.h"
-#import "ImageSource.h"
 #import "Cache.h"
 
 namespace MDCStudio {
@@ -38,24 +32,17 @@ struct Image {
     operator bool() const { return (bool)data; }
 };
 
-struct ImageSource : Object { {
+struct ImageSource : Object {
     enum class Priority : uint8_t { High, Low, Last=Low };
+    using Path = std::filesystem::path;
     
-    using _SendRight = Toastbox::SendRight;
-    using _USBDevice = Toastbox::USBDevice;
-    using _USBDevicePtr = std::unique_ptr<Toastbox::USBDevice>;
-    using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
-    using _IONotificationPtr = std::unique_ptr<IONotificationPortRef, void(*)(IONotificationPortRef*)>;
-    
-    struct ImageRange {
-        Img::Id begin = 0;
-        Img::Id end = 0;
+    struct _Cleanup {
+        _Cleanup(std::function<void()> fn) : _fn(fn) {}
+        ~_Cleanup() { _fn(); }
+        std::function<void()> _fn;
     };
     
-    struct Status {
-        float batteryLevel = 0;
-        size_t loadImageCount = 0;
-    };
+    using Cleanup = std::unique_ptr<_Cleanup>;
     
     // Thread: convenience to automatically join() the thread upon instance destruction
     struct Thread : std::thread {
@@ -76,6 +63,12 @@ struct ImageSource : Object { {
         }
     };
     
+    static int _CPUCount() {
+//        return 1;
+        static int CPUCount = std::max(1, (int)std::thread::hardware_concurrency());
+        return CPUCount;
+    }
+    
     void init(const Path& dir) {
         printf("ImageSource::init() %p\n", this);
         Object::init(); // Call super
@@ -93,6 +86,30 @@ struct ImageSource : Object { {
         {
             auto lock = std::unique_lock(*_imageLibrary);
             _imageLibrary->read(_dir / "ImageLibrary");
+        }
+        
+        // Init _dataRead
+        {
+            _dataRead.thread = Thread([&] { _dataRead_thread(); });
+        }
+        
+        // Init _thumbRender
+        {
+            _thumbRender.master.thread = Thread([&] { _thumbRender_masterThread(); });
+            
+            for (int i=0; i<_CPUCount(); i++) {
+                _thumbRender.slave.threads.emplace_back([&] { _thumbRender_slaveThread(); });
+            }
+        }
+    }
+    
+    ~ImageSource() {
+        _dataRead.signal.stop();
+        _thumbRender.master.signal.stop();
+        _thumbRender.slave.signal.stop();
+        
+        for (_LoadState& loadState : _loadStates.mem()) {
+            loadState.signal.stop();
         }
     }
     
@@ -146,19 +163,20 @@ struct ImageSource : Object { {
         return _loadImage(priority, rec);
     }
     
-    virtual void deleteImages(const ImageSet& images) {
+    virtual void deleteImages(const ImageSet& recs) {
         ImageLibraryPtr il = imageLibrary();
         auto lock = std::unique_lock(*il);
         il->remove(recs);
         il->write();
     }
     
+    virtual Cleanup dataReadStart() { return nullptr; }
+    virtual void dataReadThumb(const ImageRecordPtr& rec, void* data) = 0;
+    virtual void dataReadImage(const ImageRecordPtr& rec, void* data) = 0;
+    
     // MARK: - Private
     
-    using Path = std::filesystem::path;
-    
     static constexpr uint32_t _Version = 0;
-    static constexpr uint64_t _UnixTimeOffset = 1640995200; // 2022-01-01 00:00:00 +0000
     
     static constexpr MDCTools::CFADesc _CFADesc = {
         MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
@@ -227,17 +245,20 @@ struct ImageSource : Object { {
     };
     
     struct _DataReadWork {
+        bool thumb = false;
         ImageRecordPtr rec;
         _BufferReserved buf;
         std::function<void(_DataReadWork&&)> callback;
         
         bool operator<(const _DataReadWork& x) const {
+            if (thumb != x.thumb) return thumb < x.thumb;
             if (rec != x.rec) return rec->info.id > x.rec->info.id; // Order descending!
             if (buf != x.buf) return buf < x.buf;
             return false;
         }
         
         bool operator==(const _DataReadWork& x) const {
+            if (thumb != x.thumb) return false;
             if (rec != x.rec) return false;
             if (buf != x.buf) return false;
             return true;
@@ -257,14 +278,6 @@ struct ImageSource : Object { {
     using _DataReadWorkQueue = std::queue<_DataReadWork>;
     using _RenderWorkQueue = std::queue<_RenderWork>;
 //    using _ImageLoadQueue = std::queue<_RenderWork>;
-    
-    struct __Cleanup {
-        __Cleanup(std::function<void()> fn) : _fn(fn) {}
-        ~__Cleanup() { _fn(); }
-        std::function<void()> _fn;
-    };
-    
-    using _Cleanup = std::unique_ptr<__Cleanup>;
     
     static Path _StatePath(const Path& dir) { return dir / "State"; }
     
@@ -428,7 +441,7 @@ struct ImageSource : Object { {
         // We don't want to populate the cache on the initial load because we want the Cache buffers to
         // be available for SDReads, but if we store them in the cache, we have fewer buffers available
         // for use during initial import, which slows down the importing process.
-        if (!initial) _thumbCache.set(work.region, std::move(buf));
+        if (!initial) _thumbCache.set(work.rec, std::move(buf));
     }
     
     void _renderCompleteCallback(_LoadState& state, ImageRecordPtr rec) {
@@ -527,6 +540,7 @@ struct ImageSource : Object { {
     //                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
                 
                 _DataReadWork work = {
+                    .thumb = true,
                     .rec = rec,                
                     .buf = std::move(buf),
                     .callback = [&] (_DataReadWork&& work) {
@@ -571,6 +585,7 @@ struct ImageSource : Object { {
         _ImageBufferReserved buf = _imageCache.pop((uint8_t)priority);
         
         _DataReadWork work = {
+            .thumb = false,
             .rec = rec,
             .buf = std::move(buf),
             .callback = [&] (_DataReadWork&& work) {
@@ -589,11 +604,11 @@ struct ImageSource : Object { {
         // Wait until the buffer is returned to us by our SDRead callback
         state->signal.wait([&] { return buf.entry(); });
         Image image = _imageCreate(buf.entry());
-        _imageCache.set(region, std::move(buf));
+        _imageCache.set(rec, std::move(buf));
         return image;
     }
     
-    // MARK: - SD Read
+    // MARK: - Data Read
     
     // _dataRead.lock must be held!
     _DataReadWorkQueue* _dataRead_nextQueue() {
@@ -612,12 +627,11 @@ struct ImageSource : Object { {
                 printf("[_dataRead_thread] Waiting for work...\n");
                 _dataRead.signal.wait([&] { return _dataRead_nextQueue() && !_dataRead.pause; });
                 
-                // Initiate SD mode
-                printf("[_dataRead_thread] Entering SD mode...\n");
-                auto sdMode = _sdModeEnter();
-                printf("[_dataRead_thread] Entered SD mode\n");
+                // Initiate DataRead mode
+                printf("[_dataRead_thread] Calling dataReadStart() START\n");
+                auto dr = dataReadStart();
+                printf("[_dataRead_thread] Calling dataReadStart() END\n");
                 
-                std::optional<_SDBlock> dataReadEnd;
                 for (;;) {
                     _DataReadWork work;
                     {
@@ -637,34 +651,16 @@ struct ImageSource : Object { {
                     }
                     
                     {
-                        const _SDBlock blockBegin = work.region.begin;
-                        const size_t len = (size_t)SD::BlockLen * (size_t)(work.region.end-work.region.begin);
-                        // Verify that the length of data that we're reading will fit in our buffer
-                        assert(len <= work.buf.cap());
-                        
                         {
 //                            printf("[_dataRead_thread] reading blockBegin:%ju len:%ju (%.1f MB)\n",
 //                                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
                             
-                            const _SDBlock block = blockBegin;
                             void*const dst = work.buf.storage();
-                            if (!dataReadEnd || *dataReadEnd!=block) {
-                                printf("[_dataRead_thread] Starting readout at %ju\n", (uintmax_t)block);
-                                // If readout was in progress at a different address, reset the device
-                                if (sdReadEnd) {
-                                    _device.device->reset();
-                                }
-                                
-                                // Verify that blockBegin can be safely cast to SD::Block
-                                assert(std::numeric_limits<SD::Block>::max() >= block);
-                                _device.device->sdRead((SD::Block)block);
-                                _device.device->readout(dst, len);
-                            
+                            if (work.thumb) {
+                                dataReadThumb(work.rec, dst);
                             } else {
-//                                printf("[_dataRead_thread] Continuing readout at %ju\n", (uintmax_t)block);
-                                _device.device->readout(dst, len);
+                                dataReadImage(work.rec, dst);
                             }
-                            sdReadEnd = _SDBlockEnd(block, len);
                         }
                         
                         work.callback(std::move(work));
@@ -880,8 +876,7 @@ struct ImageSource : Object { {
             _RenderWorkQueue queue;
         } slave;
     } _thumbRender;
-
 };
-using MDCDevicePtr = SharedPtr<MDCDevice>;
+using ImageSourcePtr = SharedPtr<ImageSource>;
 
 } // namespace MDCStudio
