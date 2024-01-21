@@ -280,11 +280,11 @@ struct MDCDeviceUSB : MDCDevice {
         return _sdModeEnter();
     }
     
-    virtual void dataReadThumb(const ImageRecordPtr& rec, void* data) override {
+    virtual void dataRead(const ImageRecordPtr& rec, const _ThumbBuffer& data) override {
         
     }
     
-    virtual void dataReadImage(const ImageRecordPtr& rec, void* data) override {
+    virtual void dataRead(const ImageRecordPtr& rec, const _ImageBuffer& data) override {
         
     }
     

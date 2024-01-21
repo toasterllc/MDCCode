@@ -44,6 +44,16 @@ struct ImageSource : Object {
     
     using Cleanup = std::unique_ptr<_Cleanup>;
     
+    using __ThumbBuffer = uint8_t[ImgSD::Thumb::ImagePaddedLen];
+    using _ThumbCache = Cache<ImageRecordPtr,__ThumbBuffer,512,(uint8_t)Priority::Last>;
+    using _ThumbBuffer = _ThumbCache::Entry;
+    using _ThumbBufferReserved = _ThumbCache::Reserved;
+    
+    using __ImageBuffer = uint8_t[ImgSD::Full::ImagePaddedLen];
+    using _ImageCache = Cache<ImageRecordPtr,__ImageBuffer,8,(uint8_t)Priority::Last>;
+    using _ImageBuffer = _ImageCache::Entry;
+    using _ImageBufferReserved = _ImageCache::Reserved;
+    
     // Thread: convenience to automatically join() the thread upon instance destruction
     struct Thread : std::thread {
         using std::thread::thread;
@@ -171,8 +181,8 @@ struct ImageSource : Object {
     }
     
     virtual Cleanup dataReadStart() { return nullptr; }
-    virtual void dataReadThumb(const ImageRecordPtr& rec, void* data) = 0;
-    virtual void dataReadImage(const ImageRecordPtr& rec, void* data) = 0;
+    virtual void dataRead(const ImageRecordPtr& rec, const _ThumbBuffer& buf) = 0;
+    virtual void dataRead(const ImageRecordPtr& rec, const _ImageBuffer& buf) = 0;
     
     // MARK: - Private
     
@@ -196,20 +206,10 @@ struct ImageSource : Object {
     
     using _LoadStatePool = Cache<int,_LoadState,4>;
     
-    using __ThumbBuffer = uint8_t[ImgSD::Thumb::ImagePaddedLen];
-    using _ThumbCache = Cache<ImageRecordPtr,__ThumbBuffer,512,(uint8_t)Priority::Last>;
-    using _ThumbBuffer = _ThumbCache::Entry;
-    using _ThumbBufferReserved = _ThumbCache::Reserved;
-    
-    using __ImageBuffer = uint8_t[ImgSD::Full::ImagePaddedLen];
-    using _ImageCache = Cache<ImageRecordPtr,__ImageBuffer,8,(uint8_t)Priority::Last>;
-    using _ImageBuffer = _ImageCache::Entry;
-    using _ImageBufferReserved = _ImageCache::Reserved;
-    
     struct _BufferReserved : std::variant<_ThumbBufferReserved,_ImageBufferReserved> {
         size_t cap() const {
             if (auto x=thumb())      return sizeof(*(x->entry()));
-            else if (auto x =image()) return sizeof(*(x->entry()));
+            else if (auto x=image()) return sizeof(*(x->entry()));
             else                     abort();
         }
         
@@ -245,20 +245,19 @@ struct ImageSource : Object {
     };
     
     struct _DataReadWork {
-        bool thumb = false;
         ImageRecordPtr rec;
         _BufferReserved buf;
         std::function<void(_DataReadWork&&)> callback;
         
         bool operator<(const _DataReadWork& x) const {
-            if (thumb != x.thumb) return thumb < x.thumb;
+            if ((bool)buf.thumb() != (bool)x.buf.thumb()) return (bool)buf.thumb() < (bool)x.buf.thumb();
             if (rec != x.rec) return rec->info.id > x.rec->info.id; // Order descending!
             if (buf != x.buf) return buf < x.buf;
             return false;
         }
         
         bool operator==(const _DataReadWork& x) const {
-            if (thumb != x.thumb) return false;
+            if ((bool)buf.thumb() != (bool)x.buf.thumb()) return false;
             if (rec != x.rec) return false;
             if (buf != x.buf) return false;
             return true;
@@ -540,7 +539,6 @@ struct ImageSource : Object {
     //                printf("[_loadImages] Got buffer %p for image id %ju\n", &*buf, (uintmax_t)rec->info.id);
                 
                 _DataReadWork work = {
-                    .thumb = true,
                     .rec = rec,                
                     .buf = std::move(buf),
                     .callback = [&] (_DataReadWork&& work) {
@@ -585,7 +583,6 @@ struct ImageSource : Object {
         _ImageBufferReserved buf = _imageCache.pop((uint8_t)priority);
         
         _DataReadWork work = {
-            .thumb = false,
             .rec = rec,
             .buf = std::move(buf),
             .callback = [&] (_DataReadWork&& work) {
@@ -655,11 +652,10 @@ struct ImageSource : Object {
 //                            printf("[_dataRead_thread] reading blockBegin:%ju len:%ju (%.1f MB)\n",
 //                                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
                             
-                            void*const dst = work.buf.storage();
-                            if (work.thumb) {
-                                dataReadThumb(work.rec, dst);
+                            if (work.buf.thumb()) {
+                                dataRead(work.rec, work.buf.thumb()->entry());
                             } else {
-                                dataReadImage(work.rec, dst);
+                                dataRead(work.rec, work.buf.image()->entry());
                             }
                         }
                         
