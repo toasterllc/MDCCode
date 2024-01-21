@@ -191,10 +191,9 @@ struct ImageSource : Object {
     }
     
     virtual void deleteImages(const ImageSet& recs) {
-        ImageLibraryPtr il = imageLibrary();
-        auto lock = std::unique_lock(*il);
-        il->remove(recs);
-        il->write();
+        auto lock = std::unique_lock(*_imageLibrary);
+        _imageLibrary->remove(recs);
+        _imageLibrary->write();
     }
     
     virtual Cleanup dataReadStart() { return nullptr; }

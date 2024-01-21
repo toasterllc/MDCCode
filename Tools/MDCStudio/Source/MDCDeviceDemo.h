@@ -24,6 +24,13 @@ struct MDCDeviceDemo : MDCDevice {
     }
     
     void factoryReset() override {
+        // Clear the image library
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            _imageLibrary->clear();
+            _imageLibrary->write();
+        }
+        
         _settings = {};
     }
     
