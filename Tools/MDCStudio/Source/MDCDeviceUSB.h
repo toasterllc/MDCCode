@@ -5,6 +5,7 @@
 
 namespace MDCStudio {
 
+struct MDCDeviceUSB; using MDCDeviceUSBPtr = SharedPtr<MDCDeviceUSB>;
 struct MDCDeviceUSB : MDCDevice {
     using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
     using _SendRight = Toastbox::SendRight;
@@ -929,6 +930,5 @@ struct MDCDeviceUSB : MDCDevice {
         std::optional<_Status> status;
     } _status;
 };
-using MDCDeviceUSBPtr = SharedPtr<MDCDeviceUSB>;
 
 } // namespace MDCStudio

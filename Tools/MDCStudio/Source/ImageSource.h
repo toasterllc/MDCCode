@@ -32,6 +32,7 @@ struct Image {
     operator bool() const { return (bool)data; }
 };
 
+struct ImageSource; using ImageSourcePtr = SharedPtr<ImageSource>;
 struct ImageSource : Object {
     enum class Priority : uint8_t { High, Low, Cache };
     using Path = std::filesystem::path;
@@ -889,6 +890,5 @@ struct ImageSource : Object {
         } slave;
     } _thumbRender;
 };
-using ImageSourcePtr = SharedPtr<ImageSource>;
 
 } // namespace MDCStudio

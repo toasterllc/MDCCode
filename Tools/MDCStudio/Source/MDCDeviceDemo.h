@@ -2,15 +2,15 @@
 
 namespace MDCStudio {
 
-struct MDCDeviceTour : MDCDevice {
-
+struct MDCDeviceDemo; using MDCDeviceDemoPtr = SharedPtr<MDCDeviceDemo>;
+struct MDCDeviceDemo : MDCDevice {
     void init() {
-        printf("MDCDeviceTour::init() %p\n", this);
+        printf("MDCDeviceDemo::init() %p\n", this);
         MDCDevice::init(XXX); // Call super
     }
     
-    ~MDCDeviceTour() {
-        printf("~MDCDeviceTour() %p\n", this);
+    ~MDCDeviceDemo() {
+        printf("~MDCDeviceDemo() %p\n", this);
     }
     
     // MARK: - Device Settings

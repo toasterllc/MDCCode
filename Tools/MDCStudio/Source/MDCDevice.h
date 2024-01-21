@@ -2,8 +2,8 @@
 
 namespace MDCStudio {
 
+struct MDCDevice; using MDCDevicePtr = SharedPtr<MDCDevice>;
 struct MDCDevice : ImageSource {
-
     struct Status {
         float batteryLevel = 0;
         size_t loadImageCount = 0;
@@ -39,6 +39,5 @@ struct MDCDevice : ImageSource {
     virtual std::optional<float> syncProgress() = 0;
 
 };
-using MDCDevicePtr = SharedPtr<MDCDevice>;
 
 } // namespace MDCStudio
