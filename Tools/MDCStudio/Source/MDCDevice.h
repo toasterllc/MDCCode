@@ -9,6 +9,10 @@ struct MDCDevice : ImageSource {
         size_t loadImageCount = 0;
     };
     
+    ~MDCDevice() {
+        printf("~MDCDevice() %p\n", this);
+    }
+    
     void init(const Path& dir) {
         printf("MDCDevice::init() %p\n", this);
         ImageSource::init(dir); // Call super

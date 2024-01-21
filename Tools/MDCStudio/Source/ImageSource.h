@@ -114,6 +114,7 @@ struct ImageSource : Object {
     }
     
     ~ImageSource() {
+        printf("~ImageSource() %p\n", this);
         stop();
     }
     
