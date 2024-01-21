@@ -280,12 +280,43 @@ struct MDCDeviceUSB : MDCDevice {
         return _sdModeEnter();
     }
     
-    virtual void dataRead(const ImageRecordPtr& rec, const _ThumbBuffer& data) override {
+    void _dataRead(const _SDRegion& region, void* dst, size_t dstCap) {
+        const _SDBlock blockBegin = region.begin;
+        const size_t len = (size_t)SD::BlockLen * (size_t)(region.end-region.begin);
+        // Verify that the length of data that we're reading will fit in our buffer
+        assert(len <= dstCap);
         
+        {
+//            printf("[_dataRead_thread] reading blockBegin:%ju len:%ju (%.1f MB)\n",
+//                (uintmax_t)blockBegin, (uintmax_t)len, (float)len/(1024*1024));
+            
+            const _SDBlock block = blockBegin;
+            if (!_sdMode.state.dataReadEnd || *_sdMode.state.dataReadEnd!=block) {
+                printf("[_dataRead_thread] Starting readout at %ju\n", (uintmax_t)block);
+                // If readout was in progress at a different address, reset the device
+                if (_sdMode.state.dataReadEnd) {
+                    _device.device->reset();
+                }
+                
+                // Verify that blockBegin can be safely cast to SD::Block
+                assert(std::numeric_limits<SD::Block>::max() >= block);
+                _device.device->sdRead((SD::Block)block);
+                _device.device->readout(dst, len);
+            
+            } else {
+//                printf("[_dataRead_thread] Continuing readout at %ju\n", (uintmax_t)block);
+                _device.device->readout(dst, len);
+            }
+            _sdMode.state.dataReadEnd = _SDBlockEnd(block, len);
+        }
+    }
+    
+    virtual void dataRead(const ImageRecordPtr& rec, const _ThumbBuffer& data) override {
+        _dataRead(_SDRegionForThumb(rec), &*data, sizeof(&*data));
     }
     
     virtual void dataRead(const ImageRecordPtr& rec, const _ImageBuffer& data) override {
-        
+        _dataRead(_SDRegionForImage(rec), &*data, sizeof(&*data));
     }
     
     // MARK: - Init
@@ -596,7 +627,9 @@ struct MDCDeviceUSB : MDCDevice {
                 
                 // Enter host mode while we're in SD mode, since MSP can't talk to
                 // ICE40 or SD card while we're using it.
-                _sdMode.hostMode = _hostModeEnter(interrupt);
+                _sdMode.state = {
+                    .hostMode = _hostModeEnter(interrupt),
+                };
                 
                 // Load ICE40 with our app
                 _ICEConfigure(*_device.device);
@@ -626,11 +659,11 @@ struct MDCDeviceUSB : MDCDevice {
                 // Assume that we were in the middle of readout; reset the device to exit readout.
                 _device.device->reset();
                 // Exit host mode
-                _sdMode.hostMode = {};
+                _sdMode.state = {};
             }
         } catch (...) {
             // If device IO fails (ie via _hostModeEnter()), clean up our state and rethrow the exception
-            _sdMode.hostMode = {};
+            _sdMode.state = {};
             // Only throw when enabling; when disabling we're executing within a destructor,
             // so we don't want to throw in that case.
             if (en) throw;
@@ -853,21 +886,9 @@ struct MDCDeviceUSB : MDCDevice {
     
     std::unique_lock<std::mutex> deviceLock(bool interrupt=false) {
         // Pause the SD thread (if interrupt==true) to allow us to acquire the device lock ASAP
-        if (interrupt) {
-            auto lock = _dataRead.signal.lock();
-            _dataRead.pause++;
-            _dataRead.signal.signalAll();
-        }
-        
+        Cleanup pause;
+        if (interrupt) pause = dataReadPause();
         auto lock = _device.signal.lock();
-        
-        // Un-pause the SD thread
-        if (interrupt) {
-            auto lock = _dataRead.signal.lock();
-            _dataRead.pause--;
-            _dataRead.signal.signalAll();
-        }
-        
         return lock;
     }
     
@@ -971,7 +992,10 @@ struct MDCDeviceUSB : MDCDevice {
     } _hostMode;
     
     struct {
-        Cleanup hostMode;
+        struct {
+            Cleanup hostMode;
+            std::optional<_SDBlock> dataReadEnd;
+        } state;
         STM::SDCardInfo cardInfo;
     } _sdMode;
     

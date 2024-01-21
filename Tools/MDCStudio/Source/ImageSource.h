@@ -131,6 +131,17 @@ struct ImageSource : Object {
         }
     }
     
+    void _dataReadPause(int inc) {
+        auto lock = _dataRead.signal.lock();
+        _dataRead.pause += inc;
+        _dataRead.signal.signalAll();
+    }
+    
+    Cleanup dataReadPause() {
+        _dataReadPause(1);
+        return std::make_unique<_Cleanup>([=] { _dataReadPause(-1); });
+    }
+    
 //    const Toastbox::SendRight& service() {
 //        auto lock = deviceLock();
 //        return _device.device->dev().service();
