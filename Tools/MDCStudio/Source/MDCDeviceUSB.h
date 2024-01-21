@@ -25,7 +25,7 @@ struct MDCDeviceUSB : MDCDevice {
         return appSupportDir / "Devices" / serial;
     }
     
-// _SDBlock: we're intentionally not using SD::Block because we want our block addressing type
+    // _SDBlock: we're intentionally not using SD::Block because we want our block addressing type
     // to be wider than the SD card's addressing. This is because in our math logic, we want to be
     // able to use an 'end strategy' (ie last+1) instead of a 'last strategy', and the former can't
     // address the last block if it's the same width as the SD card's addressing.
