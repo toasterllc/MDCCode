@@ -33,7 +33,7 @@ struct Image {
 };
 
 struct ImageSource : Object {
-    enum class Priority : uint8_t { High, Low, Last=Low };
+    enum class Priority : uint8_t { High, Low, Cache };
     using Path = std::filesystem::path;
     
     struct _Cleanup {
@@ -45,12 +45,12 @@ struct ImageSource : Object {
     using Cleanup = std::unique_ptr<_Cleanup>;
     
     using __ThumbBuffer = uint8_t[ImgSD::Thumb::ImagePaddedLen];
-    using _ThumbCache = Cache<ImageRecordPtr,__ThumbBuffer,512,(uint8_t)Priority::Last>;
+    using _ThumbCache = Cache<ImageRecordPtr,__ThumbBuffer,512,(uint8_t)Priority::Low>;
     using _ThumbBuffer = _ThumbCache::Entry;
     using _ThumbBufferReserved = _ThumbCache::Reserved;
     
     using __ImageBuffer = uint8_t[ImgSD::Full::ImagePaddedLen];
-    using _ImageCache = Cache<ImageRecordPtr,__ImageBuffer,8,(uint8_t)Priority::Last>;
+    using _ImageCache = Cache<ImageRecordPtr,__ImageBuffer,8,(uint8_t)Priority::Low>;
     using _ImageBuffer = _ImageCache::Entry;
     using _ImageBufferReserved = _ImageCache::Reserved;
     
@@ -162,14 +162,12 @@ struct ImageSource : Object {
         _thumbRender.master.signal.signalOne();
     }
     
-    virtual Image getCachedImage(const ImageRecordPtr& rec) {
+    virtual Image getImage(Priority priority, const ImageRecordPtr& rec) {
         // If the image is in our cache, return it
-        _ImageBuffer buf = _imageCache.get(rec);
-        if (!buf) return {};
-        return _imageCreate(buf);
-    }
-    
-    virtual Image loadImage(Priority priority, const ImageRecordPtr& rec) {
+        _ImageBuffer cached = _imageCache.get(rec);
+        if (cached) return _imageCreate(cached);
+        // Short-circuit if the caller only wanted the image if it's cached
+        if (priority == Priority::Cache) return {};
         return _loadImage(priority, rec);
     }
     
@@ -855,7 +853,7 @@ struct ImageSource : Object {
     struct {
         Toastbox::Signal signal; // Protects this struct
         Thread thread;
-        _DataReadWorkQueue queues[(size_t)Priority::Last+1];
+        _DataReadWorkQueue queues[(size_t)Priority::Low+1];
         uint32_t pause = 0;
     } _dataRead;
     

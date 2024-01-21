@@ -379,7 +379,6 @@
 		55F8D01627BEF97200757165 /* FullSizeImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FullSizeImageView.metal; sourceTree = "<group>"; };
 		55F8D01827BEF97200757165 /* FullSizeImageViewTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FullSizeImageViewTypes.h; sourceTree = "<group>"; };
 		55F8D05827C0E07900757165 /* Lockable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lockable.h; sourceTree = "<group>"; };
-		55F8D09227C2EE9D00757165 /* ImageSource_.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSource_.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -707,7 +706,6 @@
 				552F4BF629B306DB000CEAB2 /* ImageOptions.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				553EF5572AD7088A00157484 /* ImageLibraryStatus.h */,
-				55F8D09227C2EE9D00757165 /* ImageSource_.h */,
 				55C6A2A42AE9925B008149AF /* ImageSelection.h */,
 				556F313E2AE069830028BF9C /* NibViewInit.h */,
 				558FFC6029CA1E520022E840 /* Prefs.h */,

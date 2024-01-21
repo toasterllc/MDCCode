@@ -58,10 +58,7 @@ inline void __Export(MDCTools::Renderer& renderer, const Format* fmt, const Imag
 inline void _Export(MDCTools::Renderer& renderer, ImageSourcePtr imageSource, const Format* fmt,
     const ImageRecordPtr& rec, const std::filesystem::path& filePath) {
     
-    Image image = imageSource->getCachedImage(rec);
-    if (!image) {
-        image = imageSource->loadImage(ImageSource::Priority::High, rec);
-    }
+    Image image = imageSource->getImage(ImageSource::Priority::High, rec);
     __Export(renderer, fmt, *rec, image, filePath);
 }
 

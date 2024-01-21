@@ -114,7 +114,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     _image.txtValid = false;
     
     // Fetch the image from the cache
-    _image.image = _imageSource->getCachedImage(_imageRecord);
+    _image.image = _imageSource->getImage(ImageSource::Priority::Cache, _imageRecord);
     // Load the image / neighbors from our thread
     {
         {
@@ -293,7 +293,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
             if (work) {
                 printf("[_ImageLoadThread] Load image start\n");
                 {
-                    Image image = is->loadImage(ImageSource::Priority::High, work);
+                    Image image = is->getImage(ImageSource::Priority::High, work);
                     state.callback(work, std::move(image));
                 }
                 printf("[_ImageLoadThread] Load image end\n");
@@ -310,9 +310,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
                             if (state.work || state.workNeighbors) break;
                         }
                         
-                        if (!is->getCachedImage(rec)) {
-                            is->loadImage(ImageSource::Priority::Low, rec);
-                        }
+                        is->getImage(ImageSource::Priority::Low, rec);
                     }
                 }
                 printf("[_ImageLoadThread] Load neighbors end\n");
