@@ -6,5 +6,11 @@ int main(int argc, const char* argv[]) {
     std::locale::global(std::locale(""));
     
 //    std::filesystem::remove_all("/Users/dave/Library/Application Support/llc.toaster.MDCStudio");
-    return NSApplicationMain(argc, argv);
+    try {
+        return NSApplicationMain(argc, argv);
+    
+    } catch (const std::exception& e) {
+        printf("Unhandled exception: %s\n", e.what());
+        return 1;
+    }
 }

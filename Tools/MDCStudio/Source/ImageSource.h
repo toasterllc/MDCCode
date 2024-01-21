@@ -114,13 +114,7 @@ struct ImageSource : Object {
     }
     
     ~ImageSource() {
-        _dataRead.signal.stop();
-        _thumbRender.master.signal.stop();
-        _thumbRender.slave.signal.stop();
-        
-        for (_LoadState& loadState : _loadStates.mem()) {
-            loadState.signal.stop();
-        }
+        stop();
     }
     
     ObjectProperty(std::string, name);
@@ -128,6 +122,16 @@ struct ImageSource : Object {
     void changed(const Event& ev) override {
         if (ev.prop == &_name) {
             write();
+        }
+    }
+    
+    virtual void stop() {
+        _dataRead.signal.stop();
+        _thumbRender.master.signal.stop();
+        _thumbRender.slave.signal.stop();
+        
+        for (_LoadState& loadState : _loadStates.mem()) {
+            loadState.signal.stop();
         }
     }
     
@@ -166,9 +170,11 @@ struct ImageSource : Object {
     virtual ImageLibraryPtr imageLibrary() { return _imageLibrary; }
     
     virtual void renderThumbs(std::set<ImageRecordPtr> recs) {
-        {
+        try {
             auto lock = _thumbRender.master.signal.lock();
             _thumbRender.master.recs = std::move(recs);
+        } catch (const Toastbox::Signal::Stop&) {
+            // No-op if we're in the process of teardown
         }
         _thumbRender.master.signal.signalOne();
     }

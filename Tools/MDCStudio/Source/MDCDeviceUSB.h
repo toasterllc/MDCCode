@@ -92,7 +92,7 @@ struct MDCDeviceUSB : MDCDevice {
     }
     
     ~MDCDeviceUSB() {
-        printf("~MDCDeviceUSB()\n");
+        printf("~MDCDeviceUSB() %p\n", this);
         
         // Tell _device_thread to bail
         // We have to check for _device.runLoop, even though the constructor waits
@@ -454,6 +454,18 @@ struct MDCDeviceUSB : MDCDevice {
         }
     }
     
+    void stop() override {
+        // Trigger our threads to exit
+        {
+            auto lock = deviceLock(true);
+            _device.signal.stop(lock);
+        }
+        
+        _status.signal.stop();
+        
+        MDCDevice::stop();
+    }
+    
     // MARK: - Device
     
     void _device_thread(_MDCUSBDevicePtr&& dev) {
@@ -492,13 +504,7 @@ struct MDCDeviceUSB : MDCDevice {
             printf("[_device_thread] Error: %s\n", e.what());
         }
         
-        // Trigger all our threads to exit
-        {
-            auto lock = deviceLock(true);
-            _device.signal.stop(lock);
-        }
-        
-        _status.signal.stop();
+        stop();
         
         // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
         // exception if our MDCDevice is undergoing destruction on a different thread.
