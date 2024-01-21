@@ -128,7 +128,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		550C44DF2B5B147F00CFBE09 /* MDCDeviceUSB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDeviceUSB.h; sourceTree = "<group>"; };
+		550C44DF2B5B147F00CFBE09 /* MDCDeviceReal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDeviceReal.h; sourceTree = "<group>"; };
 		550C44E02B5B147F00CFBE09 /* MDCDeviceDemo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDeviceDemo.h; sourceTree = "<group>"; };
 		550C44E12B5C8A1500CFBE09 /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		550CA8032B4F1EFA0061A367 /* ArtworkPlaceholder.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = ArtworkPlaceholder.pdf; sourceTree = "<group>"; };
@@ -699,7 +699,7 @@
 				553EF56C2AD8E4DF00157484 /* Object.h */,
 				55A36A8E27A2951900FD0181 /* ImageSource.h */,
 				550C44E12B5C8A1500CFBE09 /* MDCDevice.h */,
-				550C44DF2B5B147F00CFBE09 /* MDCDeviceUSB.h */,
+				550C44DF2B5B147F00CFBE09 /* MDCDeviceReal.h */,
 				550C44E02B5B147F00CFBE09 /* MDCDeviceDemo.h */,
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
 				55C90B9229B58283007CC97E /* ImageThumb.h */,

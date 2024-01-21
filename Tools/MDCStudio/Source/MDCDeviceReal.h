@@ -5,8 +5,8 @@
 
 namespace MDCStudio {
 
-struct MDCDeviceUSB; using MDCDeviceUSBPtr = SharedPtr<MDCDeviceUSB>;
-struct MDCDeviceUSB : MDCDevice {
+struct MDCDeviceReal; using MDCDeviceRealPtr = SharedPtr<MDCDeviceReal>;
+struct MDCDeviceReal : MDCDevice {
     using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
     using _SendRight = Toastbox::SendRight;
     using _USBDevice = Toastbox::USBDevice;
@@ -78,7 +78,7 @@ struct MDCDeviceUSB : MDCDevice {
     }
     
     void init(_MDCUSBDevicePtr&& dev) {
-        printf("MDCDeviceUSB::init() %p\n", this);
+        printf("MDCDeviceReal::init() %p\n", this);
         
         _serial = dev->serial();
         MDCDevice::init(_DirForSerial(_serial)); // Call super
@@ -92,8 +92,8 @@ struct MDCDeviceUSB : MDCDevice {
         while (!_device.runLoop) usleep(1000);
     }
     
-    ~MDCDeviceUSB() {
-        printf("~MDCDeviceUSB() %p\n", this);
+    ~MDCDeviceReal() {
+        printf("~MDCDeviceReal() %p\n", this);
         
         // Tell _device_thread to bail
         // We have to check for _device.runLoop, even though the constructor waits

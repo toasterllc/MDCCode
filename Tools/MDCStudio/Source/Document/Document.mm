@@ -417,9 +417,9 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 }
 
 - (void)_updateDevices {
-    std::vector<MDCDeviceUSBPtr> devices = MDCDevicesManagerGlobal()->devices();
+    std::vector<MDCDeviceRealPtr> devices = MDCDevicesManagerGlobal()->devices();
     std::set<ImageSourcePtr> imageSources;
-    for (MDCDeviceUSBPtr device : devices) {
+    for (MDCDeviceRealPtr device : devices) {
         imageSources.insert(device);
     }
     [_sourceListView setImageSources:imageSources];
