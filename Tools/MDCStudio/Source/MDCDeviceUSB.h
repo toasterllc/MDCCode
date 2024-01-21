@@ -312,11 +312,11 @@ struct MDCDeviceUSB : MDCDevice {
     }
     
     virtual void dataRead(const ImageRecordPtr& rec, const _ThumbBuffer& data) override {
-        _dataRead(_SDRegionForThumb(rec), &*data, sizeof(&*data));
+        _dataRead(_SDRegionForThumb(rec), *data, sizeof(*data));
     }
     
     virtual void dataRead(const ImageRecordPtr& rec, const _ImageBuffer& data) override {
-        _dataRead(_SDRegionForImage(rec), &*data, sizeof(&*data));
+        _dataRead(_SDRegionForImage(rec), *data, sizeof(*data));
     }
     
     // MARK: - Init
