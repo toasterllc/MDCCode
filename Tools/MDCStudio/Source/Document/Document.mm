@@ -622,8 +622,12 @@ static void _SortNewestFirst(bool x) {
     [alert setMessageText:[NSString stringWithFormat:@"Delete %ju %s",
         imageCount, (imageCount>1 ? "Photos" : "Photo")]];
     
-    [alert setInformativeText:[NSString stringWithFormat:@"Are you sure you want to delete %ju %s?\n\nOnce deleted, these photos will be unrecoverable, and this action cannot be undone.",
-        imageCount, (imageCount>1 ? "photos" : "photo")]];
+    [alert setInformativeText:[NSString stringWithFormat:
+        @"Are you sure you want to delete %ju %s? Once deleted, %s will be unrecoverable.\n\nThis action cannot be undone.",
+        imageCount,
+        (imageCount>1 ? "photos" : "photo"),
+        (imageCount>1 ? "these photos" : "this photo")
+    ]];
     
     {
         NSButton* button = [alert addButtonWithTitle:@"Delete"];

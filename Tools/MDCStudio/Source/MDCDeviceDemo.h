@@ -16,6 +16,7 @@ struct MDCDeviceDemo : MDCDevice {
         std::string tmpTemplate = fs::temp_directory_path() / _TmpDirTemplate;
         const Path tmpDir = mkdtemp(tmpTemplate.data());
         MDCDevice::init(tmpDir); // Call super
+        name("Photon Demo");
         
         const Path demoDir = Path([[[NSBundle mainBundle] resourcePath] UTF8String]) / "demo";
         _thumbDir = demoDir / "thumb";
