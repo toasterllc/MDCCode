@@ -419,8 +419,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 }
 
 - (void)_updateDevices {
-    _demoMode = true;
-    
     std::set<ImageSourcePtr> imageSources;
     if (!_demoMode) {
         std::vector<MDCDeviceRealPtr> devices = MDCDevicesManagerGlobal()->devices();
@@ -696,6 +694,14 @@ static void _SortNewestFirst(bool x) {
 
 - (NSPrintOperation*)printOperationWithSettings:(NSDictionary<NSPrintInfoAttributeKey,id>*)settings error:(NSError**)error {
     return PrintImages(settings, _active.imageSource, _active.selection->images(), !_SortNewestFirst());
+}
+
+// MARK: - Demo
+
+- (IBAction)_tryDemo:(id)sender {
+    _demoMode = true;
+    [self _updateDevices];
+    NSLog(@"_tryDemo:");
 }
 
 @end
