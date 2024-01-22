@@ -117,12 +117,8 @@ inline BatteryLevel BatteryLevelLinearize(BatteryLevelMv mv) {
     return level;
 }
 
-constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
-    return base - ((idx+1) * ImgSD::Full::ImageBlockCount);
-}
-
-constexpr SD::Block SDBlockThumb(SD::Block base, uint32_t idx) {
-    return base - ((idx+1) * ImgSD::Thumb::ImageBlockCount);
+constexpr SD::Block SDBlockStart(SD::Block base, uint32_t stride, uint32_t idx) {
+    return base - (stride * (idx+1));
 }
 
 // ImgRingBuf: stats to track captured images

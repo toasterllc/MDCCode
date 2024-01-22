@@ -361,6 +361,22 @@ static bool isCFAFile(const fs::path& path) {
         memcpy(&checksumGot, imgData.data()+Img::Full::ChecksumOffset, sizeof(checksumGot));
         assert(checksumExpected == checksumGot);
     
+    // (3) header + raw pixel data + checksum
+    } else if (imgData.len()==Img::Thumb::ImageLen || imgData.len()==ImgSD::Thumb::ImagePaddedLen) {
+        const Img::Header& header = *(Img::Header*)imgData.data();
+        
+        _raw.image.width = header.imageWidth;
+        _raw.image.height = header.imageHeight;
+        
+        // Copy the image data into _raw.image
+        memcpy(_raw.pixels, imgData.data()+Img::PixelsOffset, Img::Thumb::PixelLen);
+        
+        // Validate checksum
+        const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), Img::Thumb::ChecksumOffset);
+        uint32_t checksumGot = 0;
+        memcpy(&checksumGot, imgData.data()+Img::Thumb::ChecksumOffset, sizeof(checksumGot));
+        assert(checksumExpected == checksumGot);
+    
     // invaid image
     } else {
         abort();

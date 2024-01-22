@@ -750,11 +750,9 @@ struct MDCDeviceReal : MDCDevice {
                             addCount--;
                             
                             ImageRecordPtr rec = *it;
-                            rec->info.id = id;
-                            rec->info.addrFull = MSP::SDBlockFull(sd.baseFull, idx);
-                            rec->info.addrThumb = MSP::SDBlockThumb(sd.baseThumb, idx);
-                            
-                            rec->status.loadCount = 0;
+                            const SD::Block addrFull = MSP::SDBlockStart(sd.baseFull, ImgSD::Full::ImageBlockCount, idx);
+                            const SD::Block addrThumb = MSP::SDBlockStart(sd.baseThumb, ImgSD::Thumb::ImageBlockCount, idx);
+                            ImageRecordInit(rec, id, addrFull, addrThumb);
                         }
                     }
                     

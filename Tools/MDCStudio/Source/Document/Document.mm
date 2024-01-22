@@ -15,6 +15,7 @@
 #import "ImageExporter/ImageExporter.h"
 #import "MDCDevicesManager.h"
 #import "PrintImages.h"
+#import "MDCDeviceDemo.h"
 
 using namespace MDCStudio;
 
@@ -24,6 +25,7 @@ using namespace MDCStudio;
 @implementation Document {
     IBOutlet NSSplitView* _splitView;
     IBOutlet NSView* _noDevicesView;
+    bool _demoMode;
     NSWindow* _window;
     Object::ObserverPtr _devicesOb;
     Object::ObserverPtr _prefsOb;
@@ -417,11 +419,21 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 }
 
 - (void)_updateDevices {
-    std::vector<MDCDeviceRealPtr> devices = MDCDevicesManagerGlobal()->devices();
+    _demoMode = true;
+    
     std::set<ImageSourcePtr> imageSources;
-    for (MDCDeviceRealPtr device : devices) {
-        imageSources.insert(device);
+    if (!_demoMode) {
+        std::vector<MDCDeviceRealPtr> devices = MDCDevicesManagerGlobal()->devices();
+        for (MDCDeviceRealPtr device : devices) {
+            imageSources.insert(device);
+        }
+    
+    } else {
+        MDCDeviceDemoPtr demoDevice = Object::Create<MDCDeviceDemo>();
+        imageSources.insert(demoDevice);
+//        imageSources.insert()
     }
+    
     [_sourceListView setImageSources:imageSources];
     [self sourceListViewSelectionChanged:_sourceListView];
     

@@ -80,6 +80,13 @@ struct ImageSource : Object {
         return CPUCount;
     }
     
+    static void ImageRecordInit(ImageRecordPtr rec, Img::Id id, SD::Block addrFull, SD::Block addrThumb) {
+        rec->info.id = id;
+        rec->info.addrFull = addrFull;
+        rec->info.addrThumb = addrThumb;
+        rec->status.loadCount = 0;
+    }
+    
     void init(const Path& dir) {
         printf("ImageSource::init() %p\n", this);
         Object::init(); // Call super
@@ -793,7 +800,8 @@ struct ImageSource : Object {
                         
                         if (imgHeader.id != rec.info.id) {
                             #warning TODO: how do we properly handle this?
-//                            printf("[_thumbRender_slaveThread] Invalid image id (got: %ju, expected: %ju)\n", (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+                            printf("[_thumbRender_slaveThread] Invalid image id (got: %ju, expected: %ju)\n",
+                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
 //                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
 //                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
                         }

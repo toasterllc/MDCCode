@@ -860,13 +860,13 @@ struct _TaskSD {
         
         // Copy full-size image from RAM -> SD card
         {
-            const SD::Block block = MSP::SDBlockFull(::_State.sd.baseFull, imgRingBuf.buf.idx);
+            const SD::Block block = MSP::SDBlockStart(::_State.sd.baseFull, ImgSD::Full::ImageBlockCount, imgRingBuf.buf.idx);
             _SDCard::WriteImage(*_State.rca, srcRAMBlock, block, Img::Size::Full);
         }
         
         // Copy thumbnail from RAM -> SD card
         {
-            const SD::Block block = MSP::SDBlockThumb(::_State.sd.baseThumb, imgRingBuf.buf.idx);
+            const SD::Block block = MSP::SDBlockStart(::_State.sd.baseThumb, ImgSD::Thumb::ImageBlockCount, imgRingBuf.buf.idx);
             _SDCard::WriteImage(*_State.rca, srcRAMBlock, block, Img::Size::Thumb);
         }
         

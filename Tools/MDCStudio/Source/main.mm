@@ -6,6 +6,7 @@ int main(int argc, const char* argv[]) {
     std::locale::global(std::locale(""));
     
 //    std::filesystem::remove_all("/Users/dave/Library/Application Support/llc.toaster.MDCStudio");
+    std::filesystem::remove_all("/Users/dave/Desktop/DemoImageSource");
     try {
         return NSApplicationMain(argc, argv);
     
