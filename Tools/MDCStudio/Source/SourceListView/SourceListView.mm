@@ -149,7 +149,7 @@ static NSString* _BatteryLevelImage(float level) {
     } else {
         [_batteryImageView setHidden:true];
     }
-    [_descriptionLabel setStringValue:@"12345 photos from Jan 2024"];
+    [_descriptionLabel setStringValue:@(ImageLibraryStatus(device->imageLibrary()).c_str())];
 }
 
 - (IBAction)_textFieldChanged:(id)sender {
