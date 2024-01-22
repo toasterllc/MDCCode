@@ -1,18 +1,18 @@
 [submodule "pcb/EagleLibrary"]
 	path = PCB/EagleLibrary
-	url = git@github.com:davekeck/EagleLibrary.git
+	url = git@github.com:toasterllc/EagleLibrary.git
 [submodule "Tools/icestorm"]
 	path = Tools/icestorm
-	url = git@github.com:davekeck/icestorm-MDC.git
+	url = git@github.com:toasterllc/icestorm-MDC.git
 [submodule "Code/Lib/Toastbox"]
 	path = Code/Lib/Toastbox
-	url = git@github.com:heytoaster/Toastbox.git
+	url = git@github.com:toasterllc/Toastbox.git
 [submodule "Tools/yosys"]
 	path = Tools/yosys
-	url = git@github.com:davekeck/yosys-MDC.git
+	url = git@github.com:toasterllc/yosys-MDC.git
 [submodule "Tools/nextpnr"]
 	path = Tools/nextpnr
-	url = git@github.com:davekeck/nextpnr-MDC.git
+	url = git@github.com:toasterllc/nextpnr-MDC.git
 [submodule "Code/Lib/date"]
 	path = Code/Lib/date
-	url = git@github.com:heytoaster/date-MDC.git
+	url = git@github.com:toasterllc/date-MDC.git
