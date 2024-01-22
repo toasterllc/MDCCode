@@ -96,7 +96,9 @@ struct MDCDeviceDemo : MDCDevice {
     // MARK: - Status
     
     std::optional<Status> status() override {
-        return std::nullopt;
+        return Status{
+            .batteryLevel = 0.75,
+        };
     }
     
     std::optional<float> syncProgress() override {
