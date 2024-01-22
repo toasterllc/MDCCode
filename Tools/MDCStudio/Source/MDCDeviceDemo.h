@@ -1,4 +1,5 @@
 #import <iterator>
+#import <unistd.h>
 #import "MDCDevice.h"
 #import "Toastbox/Mmap.h"
 #import "Toastbox/NumForStr.h"
@@ -7,23 +8,28 @@ namespace MDCStudio {
 
 struct MDCDeviceDemo; using MDCDeviceDemoPtr = SharedPtr<MDCDeviceDemo>;
 struct MDCDeviceDemo : MDCDevice {
+    static constexpr const char _TmpDirTemplate[] = "llc.toaster.MDCStudio.XXXXXX";
     void init() {
         namespace fs = std::filesystem;
-        
         printf("MDCDeviceDemo::init() %p\n", this);
-        MDCDevice::init("/Users/dave/Desktop/DemoImageSource"); // Call super
         
-        _thumbDir = "/Users/dave/Desktop/demo/thumb";
-        _fullDir = "/Users/dave/Desktop/demo/full";
+        std::string tmpTemplate = fs::temp_directory_path() / _TmpDirTemplate;
+        const Path tmpDir = mkdtemp(tmpTemplate.data());
+        MDCDevice::init(tmpDir); // Call super
         
+        const Path demoDir = Path([[[NSBundle mainBundle] resourcePath] UTF8String]) / "demo";
+        _thumbDir = demoDir / "thumb";
+        _fullDir = demoDir / "full";
+        
+        // Collect the image ids into a sorted vector
         std::vector<Img::Id> thumbIds;
         for (const fs::path& p : fs::directory_iterator(_thumbDir)) {
             if (p.filename().string().at(0) == '.') continue;
             thumbIds.push_back(Toastbox::IntForStr<Img::Id>(p.filename().string()));
         }
-        
         std::sort(thumbIds.begin(), thumbIds.end());
         
+        // Create the image records in our image library
         std::set<ImageRecordPtr> recs;
         {
             auto lock = std::unique_lock(*_imageLibrary);
@@ -39,32 +45,23 @@ struct MDCDeviceDemo : MDCDevice {
                 i++;
                 it++;
             }
-            
-//            size_t i = 0;
-//            for (auto it=_imageLibrary->begin(); it!=_imageLibrary->end(); it++) {
-//                const Img::Id id = thumbIds.at(i);
-//                ImageRecordPtr rec = _imageLibrary->back();
-//                ImageRecordInit(rec, id, 0, 0);
-//                recs.insert(rec);
-//                i++;
-//            }
-            
-//            for (Img::Id id : thumbIds) {
-//    //            Toastbox::Mmap thumb(p);
-//    //            Toastbox::Mmap full(fullDir / p.filename());
-//                
-//                
-//                
-//                ImageRecordPtr rec = _imageLibrary->back();
-//                ImageRecordInit(rec, id, 0, 0);
-//                recs.insert(rec);
-//            }
         }
         
+        // Load the images!
+        // This will cause our dataRead() functions to be called to actually supply the image data.
         _loadThumbs(Priority::Low, true, recs);
     }
     
     ~MDCDeviceDemo() {
+        // Delete our temporary directory.
+        // We have some sanity checks before we remove it, so a bug
+        // doesn't cause us to delete the wrong directory.
+        const Path d = dir();
+        assert(!d.empty());
+        assert(d.is_absolute());
+        assert(d.string().size() > sizeof(_TmpDirTemplate));
+        std::filesystem::remove_all(d);
+        
         printf("~MDCDeviceDemo() %p\n", this);
     }
     

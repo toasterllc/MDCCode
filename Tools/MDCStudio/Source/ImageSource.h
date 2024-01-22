@@ -155,6 +155,10 @@ struct ImageSource : Object {
         return std::make_unique<_Cleanup>([=] { _dataReadPause(-1); });
     }
     
+    Path dir() const {
+        return _dir;
+    }
+    
 //    const Toastbox::SendRight& service() {
 //        auto lock = deviceLock();
 //        return _device.device->dev().service();
