@@ -14,7 +14,7 @@ namespace MDCStudio::BatteryLifeSimulator {
 struct Constants {
     static constexpr std::chrono::seconds BatteryLifeMin = date::days(1);
     static constexpr std::chrono::seconds BatteryLifeMax = date::years(3);
-    std::chrono::seconds motionStimulusInterval = std::chrono::seconds(30);
+    std::chrono::seconds motionStimulusInterval = std::chrono::minutes(10);
     std::chrono::seconds buttonStimulusInterval = std::chrono::hours(6);
 };
 
