@@ -59,7 +59,7 @@
                     <rect key="frame" x="0.0" y="234" width="600" height="200"/>
                     <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" translatesAutoresizingMaskIntoConstraints="NO" id="nbN-KP-BtU">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="200"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnSelection="YES" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="50" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RfV-Mq-Pvl">
                                 <rect key="frame" x="0.0" y="0.0" width="600" height="200"/>
@@ -179,7 +179,7 @@
                                 <constraint firstAttribute="width" constant="100" id="4nI-lM-iY5"/>
                                 <constraint firstAttribute="height" constant="100" id="X1B-Xd-DXm"/>
                             </constraints>
-                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="ArtworkPlaceholder" id="BXg-sR-Yw4"/>
+                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Photon-Icon" id="BXg-sR-Yw4"/>
                         </imageView>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tcN-PV-F9r">
                             <rect key="frame" x="138" y="81" width="199" height="28"/>
@@ -982,12 +982,12 @@ CA
         </customView>
     </objects>
     <resources>
-        <image name="ArtworkPlaceholder" width="106" height="106"/>
         <image name="CaptureTriggers-Battery" width="22" height="12"/>
         <image name="CaptureTriggers-Icon-Button-Small" width="22" height="22"/>
         <image name="CaptureTriggers-Icon-Motion-Small" width="23" height="22"/>
         <image name="CaptureTriggers-Icon-Time-Small" width="23" height="23"/>
         <image name="NSAddTemplate" width="11" height="11"/>
         <image name="NSRemoveTemplate" width="11" height="11"/>
+        <image name="Photon-Icon" width="128" height="128"/>
     </resources>
 </document>

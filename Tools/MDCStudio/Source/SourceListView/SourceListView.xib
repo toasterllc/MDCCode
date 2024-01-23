@@ -11,14 +11,14 @@
                 <outlet property="_outlineView" destination="AKO-DU-mMa" id="8cY-GE-qnW"/>
             </connections>
         </customObject>
-        <visualEffectView misplaced="YES" blendingMode="behindWindow" material="sidebar" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="NJC-Ov-ASV">
+        <visualEffectView blendingMode="behindWindow" material="sidebar" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="NJC-Ov-ASV">
             <rect key="frame" x="0.0" y="0.0" width="310" height="350"/>
             <subviews>
                 <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="76" horizontalPageScroll="10" verticalLineScroll="76" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fLh-R7-6A0">
                     <rect key="frame" x="0.0" y="0.0" width="310" height="350"/>
                     <clipView key="contentView" drawsBackground="NO" id="OCF-P9-iE6">
                         <rect key="frame" x="0.0" y="0.0" width="310" height="350"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="74" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" id="AKO-DU-mMa">
                                 <rect key="frame" x="0.0" y="0.0" width="310" height="350"/>
@@ -53,7 +53,7 @@
                                                             <constraint firstAttribute="width" constant="63" id="eSu-j3-Hou"/>
                                                             <constraint firstAttribute="height" constant="50" id="u3f-gJ-ek7"/>
                                                         </constraints>
-                                                        <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="ArtworkPlaceholder" id="KoV-V9-mVz"/>
+                                                        <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="Photon-Icon" id="KoV-V9-mVz"/>
                                                     </imageView>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
                                                         <rect key="frame" x="71" y="36" width="192" height="21"/>
@@ -154,7 +154,7 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
     </objects>
     <resources>
-        <image name="ArtworkPlaceholder" width="106" height="106"/>
+        <image name="Photon-Icon" width="128" height="128"/>
         <image name="SourceList-Battery-Charging-50" width="30" height="14"/>
         <image name="SourceList-Gear" width="17" height="17"/>
     </resources>
