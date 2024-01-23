@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "55496F41278CFC0400BCA739"
-               BuildableName = "Photon Capture.app"
+               BuildableName = "Photon Transfer.app"
                BlueprintName = "MDCStudio"
                ReferencedContainer = "container:MDCStudio.xcodeproj">
             </BuildableReference>
@@ -23,7 +23,7 @@
       </BuildActionEntries>
    </BuildAction>
    <TestAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
@@ -31,7 +31,7 @@
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
@@ -45,17 +45,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "55496F41278CFC0400BCA739"
-            BuildableName = "Photon Capture.app"
+            BuildableName = "Photon Transfer.app"
             BlueprintName = "MDCStudio"
             ReferencedContainer = "container:MDCStudio.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <CommandLineArguments>
-         <CommandLineArgument
-            argument = "-NSConstraintBasedLayoutVisualizeMutuallyExclusiveConstraints YES"
-            isEnabled = "YES">
-         </CommandLineArgument>
-      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -68,14 +62,14 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "55496F41278CFC0400BCA739"
-            BuildableName = "Photon Capture.app"
+            BuildableName = "Photon Transfer.app"
             BlueprintName = "MDCStudio"
             ReferencedContainer = "container:MDCStudio.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
-      buildConfiguration = "Debug">
+      buildConfiguration = "Release">
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"

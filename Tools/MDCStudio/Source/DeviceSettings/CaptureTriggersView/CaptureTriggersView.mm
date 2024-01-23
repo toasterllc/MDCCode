@@ -1220,7 +1220,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 
 // MARK: - Table View Drag / Drop
 
-static NSString*const _PboardDragItemsType = @"llc.toaster.photon-capture.CaptureTriggersView.PasteboardType";
+static NSString*const _PboardDragItemsType = @"llc.toaster.photon-transfer.CaptureTriggersView.PasteboardType";
 
 - (id<NSPasteboardWriting>)tableView:(NSTableView*)tableView pasteboardWriterForRow:(NSInteger)row {
     NSPasteboardItem* pb = [NSPasteboardItem new];
