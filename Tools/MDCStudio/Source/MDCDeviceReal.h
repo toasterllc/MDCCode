@@ -626,6 +626,13 @@ struct MDCDeviceReal : MDCDevice {
             if (en) {
                 auto timeStart = std::chrono::steady_clock::now();
                 
+                // Wait until _status.status is loaded before acquiring the hostMode lock.
+                // We can't wait for _status.status while holding the hostMode lock, because we can
+                // deadlock wrt _device_thread(), which acquires the device lock before starting
+                // _status_thread(). So we'd be waiting for _status.status to be set while holding the
+                // device lock, which couldn't happen because we held the device lock.
+                _status.signal.wait([&] { return (bool)_status.status; });
+                
                 // Enter host mode while we're in SD mode, since MSP can't talk to
                 // ICE40 or SD card while we're using it.
                 _sdMode.state = {
@@ -640,7 +647,8 @@ struct MDCDeviceReal : MDCDevice {
                 
                 // If _device.state.sd is valid, verify that the current SD card id matches MSP's card id
                 {
-                    auto lock = _status.signal.wait([&] { return (bool)_status.status; });
+                    auto lock = _status.signal.lock();
+                    assert(_status.status); // Checked above, before acquiring hostMode lock
                     if (_status.status->state.sd.valid) {
                         if (memcmp(&_sdMode.cardInfo.cardId, &_status.status->state.sd.cardId,
                             sizeof(_status.status->state.sd.cardId))) {
