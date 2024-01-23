@@ -11,7 +11,7 @@ using namespace MDCStudio;
     NSAlert* alert = [NSAlert new];
     [alert setAlertStyle:NSAlertStyleCritical];
     [alert setMessageText:@"Incompatible Photon"];
-    [alert setInformativeText:[NSString stringWithFormat:@"A Photon was connected that is running firmware that is too new for this version of Photon Studio.\n\nPlease use a newer version of Photon Studio.\n\nError: %s", e.what()]];
+    [alert setInformativeText:[NSString stringWithFormat:@"A Photon was connected that is running firmware that is too new for this version of Photon Capture.\n\nPlease use a newer version of Photon Capture.\n\nError: %s", e.what()]];
     [alert runModal];
 }
 

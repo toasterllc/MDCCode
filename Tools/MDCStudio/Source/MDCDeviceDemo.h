@@ -8,7 +8,7 @@ namespace MDCStudio {
 
 struct MDCDeviceDemo; using MDCDeviceDemoPtr = SharedPtr<MDCDeviceDemo>;
 struct MDCDeviceDemo : MDCDevice {
-    static constexpr const char _TmpDirTemplate[] = "llc.toaster.photon-studio.XXXXXX";
+    static constexpr const char _TmpDirTemplate[] = "llc.toaster.photon-capture.XXXXXX";
     void init() {
         namespace fs = std::filesystem;
         printf("MDCDeviceDemo::init() %p\n", this);
