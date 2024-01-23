@@ -9,7 +9,7 @@
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
-				<string>mdcstudio</string>
+				<string>photonstudio</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string></string>

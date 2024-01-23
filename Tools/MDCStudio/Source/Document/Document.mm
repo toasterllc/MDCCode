@@ -254,7 +254,7 @@ static void _SetView(T& x, NSView* y) {
 }
 
 - (NSString*)displayName {
-    return @"MDCStudio";
+    return @"Photon Studio";
 }
 
 static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {

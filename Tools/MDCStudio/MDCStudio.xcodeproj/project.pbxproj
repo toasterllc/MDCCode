@@ -233,7 +233,7 @@
 		5544AE5C27B6EE04006AB473 /* Document.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Document.h; sourceTree = "<group>"; };
 		5544AE5F27B6F16E006AB473 /* DocumentController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentController.h; sourceTree = "<group>"; };
 		5544AE6027B6F16F006AB473 /* DocumentController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DocumentController.mm; sourceTree = "<group>"; };
-		55496F42278CFC0400BCA739 /* MDCStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		55496F42278CFC0400BCA739 /* Photon Studio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Photon Studio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		55496F48278CFC0600BCA739 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		55496F4B278CFC0600BCA739 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
@@ -659,7 +659,7 @@
 		55496F43278CFC0400BCA739 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				55496F42278CFC0400BCA739 /* MDCStudio.app */,
+				55496F42278CFC0400BCA739 /* Photon Studio.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -951,7 +951,7 @@
 			);
 			name = MDCStudio;
 			productName = MDCStudio;
-			productReference = 55496F42278CFC0400BCA739 /* MDCStudio.app */;
+			productReference = 55496F42278CFC0400BCA739 /* Photon Studio.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -1206,8 +1206,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 5VXGM37B6Z;
 				INFOPLIST_FILE = Resources/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = llc.toaster.MDCStudio;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "llc.toaster.photon-studio";
+				PRODUCT_NAME = "Photon Studio";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
