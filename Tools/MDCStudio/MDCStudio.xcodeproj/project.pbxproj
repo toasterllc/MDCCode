@@ -13,9 +13,6 @@
 		551453032B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 551453022B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf */; };
 		5514532B2B4116B20056A92D /* ColorButtonCell.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5514532A2B4116B20056A92D /* ColorButtonCell.mm */; };
 		551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */; };
-		553031FC27BC45A100BEFFEA /* Selection.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F827BC45A100BEFFEA /* Selection.png */; };
-		553031FD27BC45A100BEFFEA /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F927BC45A100BEFFEA /* Outline.png */; };
-		553031FF27BC45A100BEFFEA /* Mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FB27BC45A100BEFFEA /* Mask.png */; };
 		5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */; };
 		5530DC3D29DCDA50005FEC0A /* DeviceSettingsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */; };
 		553EAB792B2452FB00C2B4C8 /* libate.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 553EAB772B2452FB00C2B4C8 /* libate.tbd */; };
@@ -123,7 +120,6 @@
 		55F8883929D9EF1C0075593F /* CaptureTriggers-Icon-Time-Large.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F8883329D9EF1C0075593F /* CaptureTriggers-Icon-Time-Large.pdf */; };
 		55F8883A29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Small.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F8883429D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Small.pdf */; };
 		55F8883B29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F8883529D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf */; };
-		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
 		55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* FullSizeImageView.mm */; };
 		55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* FullSizeImageView.metal */; };
 /* End PBXBuildFile section */
@@ -159,9 +155,6 @@
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
 		552F4BF529B28543000CEAB2 /* ImageUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageUtil.h; sourceTree = "<group>"; };
 		552F4BF629B306DB000CEAB2 /* ImageOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageOptions.h; sourceTree = "<group>"; };
-		553031F827BC45A100BEFFEA /* Selection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Selection.png; sourceTree = "<group>"; };
-		553031F927BC45A100BEFFEA /* Outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Outline.png; sourceTree = "<group>"; };
-		553031FB27BC45A100BEFFEA /* Mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Mask.png; sourceTree = "<group>"; };
 		5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsView.mm; sourceTree = "<group>"; };
 		5530DC3A29DCDA3E005FEC0A /* DeviceSettingsView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceSettingsView.h; sourceTree = "<group>"; };
 		5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceSettingsView.xib; sourceTree = "<group>"; };
@@ -389,7 +382,6 @@
 		55F8883329D9EF1C0075593F /* CaptureTriggers-Icon-Time-Large.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "CaptureTriggers-Icon-Time-Large.pdf"; sourceTree = "<group>"; };
 		55F8883429D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Small.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "CaptureTriggers-Icon-Motion-Small.pdf"; sourceTree = "<group>"; };
 		55F8883529D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "CaptureTriggers-Icon-Motion-Large.pdf"; sourceTree = "<group>"; };
-		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* FullSizeImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FullSizeImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* FullSizeImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FullSizeImageView.mm; sourceTree = "<group>"; };
 		55F8D01627BEF97200757165 /* FullSizeImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FullSizeImageView.metal; sourceTree = "<group>"; };
@@ -674,10 +666,6 @@
 				550CA8032B4F1EFA0061A367 /* ArtworkPlaceholder.pdf */,
 				55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */,
 				55B451042ADA583000CE1C51 /* Photon-Icon.pdf */,
-				553031FB27BC45A100BEFFEA /* Mask.png */,
-				553031F927BC45A100BEFFEA /* Outline.png */,
-				553031F827BC45A100BEFFEA /* Selection.png */,
-				55F8D00F27BDF26400757165 /* Shadow.png */,
 				55496F4A278CFC0600BCA739 /* MainMenu.xib */,
 				55496F4D278CFC0600BCA739 /* Info.plist */,
 				55496F50278CFC0600BCA739 /* MDCStudio.entitlements */,
@@ -1002,14 +990,12 @@
 				55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */,
 				55838C962AD0BE7200D4B024 /* SourceList-Battery-Charging-0.pdf in Resources */,
 				55C6A2A22AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib in Resources */,
-				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
 				55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */,
 				55838CCA2AD0BEAA00D4B024 /* Inspector-Contrast-Min.pdf in Resources */,
 				55838C912AD0BE7200D4B024 /* SourceList-Gear.pdf in Resources */,
 				55838CC52AD0BEAA00D4B024 /* Inspector-Saturation-Max.pdf in Resources */,
 				551453032B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf in Resources */,
 				55838CC62AD0BEAA00D4B024 /* Inspector-Brightness-Max.pdf in Resources */,
-				553031FF27BC45A100BEFFEA /* Mask.png in Resources */,
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
 				55838C972AD0BE7200D4B024 /* SourceList-Battery-Charging-10.pdf in Resources */,
 				55838C952AD0BE7200D4B024 /* SourceList-Battery-Charged.pdf in Resources */,
@@ -1041,7 +1027,6 @@
 				55838CCC2AD0BEEE00D4B024 /* CaptureTriggers-Battery.pdf in Resources */,
 				55838CC32AD0BEAA00D4B024 /* Inspector-Exposure-Max.pdf in Resources */,
 				55F8883729D9EF1C0075593F /* CaptureTriggers-Icon-Button-Small.pdf in Resources */,
-				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
 				550CA8042B4F1EFA0061A367 /* ArtworkPlaceholder.pdf in Resources */,
 				55F8883829D9EF1C0075593F /* CaptureTriggers-Icon-Time-Small.pdf in Resources */,
@@ -1053,7 +1038,6 @@
 				55C6A27A2AE44599008149AF /* ImageExportProgressDialog.xib in Resources */,
 				55838CC12AD0BEAA00D4B024 /* Inspector-WhiteBalance-Min.pdf in Resources */,
 				55838C982AD0BE7200D4B024 /* SourceList-Battery-Charging-80.pdf in Resources */,
-				55F8D01027BDF26400757165 /* Shadow.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
