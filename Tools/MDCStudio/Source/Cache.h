@@ -65,11 +65,14 @@ struct Cache {
     
     ~Cache() {
         // Verify that there are no outstanding entries when we're destroyed
-        assert(_free.list.size()+_cache.lru.size() == T_Cap);
+        // We don't perform this check anymore now that we added the stop() behavior,
+        // because our state may look corrupt at teardown if Toastbox::Signal::Stop was
+        // thrown in _destroy().
+//        assert(_free.list.size()+_cache.lru.size() == T_Cap);
     }
     
     std::unique_lock<std::mutex> lock() {
-        return std::unique_lock(_cache.lock);
+        return _cache.signal.lock();
     }
     
     // get(): find an existing entry for a key
@@ -203,24 +206,39 @@ struct Cache {
         return sizeFree(l, priority);
     }
     
+    void stop() {
+        _free.signal.stop();
+        _cache.signal.stop();
+    }
+    
     auto& mem() {
         return _mem;
     }
     
     void _destroy(const _Entry& x) {
-        {
-            auto lock = _free.signal.lock();
-            _free.list.push_back(x.idx);
+        try {
+            {
+                auto lock = _free.signal.lock();
+                _free.list.push_back(x.idx);
+            }
+            _free.signal.signalOne();
+        
+        } catch (const Toastbox::Signal::Stop&) {
+            // We'll crash if we throw within ~_Entry() / ~Reserved(), so suppress the Stop exception
         }
-        _free.signal.signalOne();
     }
     
     void _destroy(const Reserved& x) {
-        {
-            auto lock = _free.signal.lock();
-            _free.counter[x._state.priority]++;
+        try {
+            {
+                auto lock = _free.signal.lock();
+                _free.counter[x._state.priority]++;
+            }
+            _free.signal.signalOne();
+        
+        } catch (const Toastbox::Signal::Stop&) {
+            // We'll crash if we throw within ~_Entry() / ~Reserved(), so suppress the Stop exception
         }
-        _free.signal.signalOne();
     }
     
     // _Headroom: set the capacity of our LRU to slightly smaller than T_Cap, to ensure that
@@ -242,7 +260,7 @@ struct Cache {
     } _free;
     
     struct {
-        std::mutex lock; // Protects this struct;
+        Toastbox::Signal signal; // Protects this struct
         Toastbox::LRU<T_Key,Entry,T_Cap-_Headroom> lru;
     } _cache;
 };

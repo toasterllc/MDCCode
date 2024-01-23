@@ -142,6 +142,10 @@ struct ImageSource : Object {
         for (_LoadState& loadState : _loadStates.mem()) {
             loadState.signal.stop();
         }
+        
+        _thumbCache.stop();
+        _imageCache.stop();
+        _loadStates.stop();
     }
     
     void _dataReadPause(int inc) {
