@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "55496F41278CFC0400BCA739"
-               BuildableName = "MDCStudio.app"
+               BuildableName = "Photon Studio.app"
                BlueprintName = "MDCStudio"
                ReferencedContainer = "container:MDCStudio.xcodeproj">
             </BuildableReference>
@@ -45,7 +45,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "55496F41278CFC0400BCA739"
-            BuildableName = "MDCStudio.app"
+            BuildableName = "Photon Studio.app"
             BlueprintName = "MDCStudio"
             ReferencedContainer = "container:MDCStudio.xcodeproj">
          </BuildableReference>
@@ -68,7 +68,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "55496F41278CFC0400BCA739"
-            BuildableName = "MDCStudio.app"
+            BuildableName = "Photon Studio.app"
             BlueprintName = "MDCStudio"
             ReferencedContainer = "container:MDCStudio.xcodeproj">
          </BuildableReference>
