@@ -233,7 +233,7 @@ struct RawImage {
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_43.cfa"}];
     
-    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];
+//    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_78.cfa"}];
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_64.cfa"}];
     
@@ -301,7 +301,8 @@ static bool less(const fs::path& a, const fs::path& b) {
 }
 
 static bool isCFAFile(const fs::path& path) {
-    return fs::is_regular_file(path) && path.extension() == ".cfa";
+    return path.string().at(0) != '.';
+//    return fs::is_regular_file(path) && path.extension() == ".cfa";
 }
 
 - (void)_loadImages:(const ImagePaths&)paths {
