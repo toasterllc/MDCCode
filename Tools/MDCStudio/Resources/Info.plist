@@ -17,6 +17,8 @@
 			</array>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>None</string>
 			<key>NSDocumentClass</key>
 			<string>Document</string>
 		</dict>
@@ -49,5 +51,7 @@
 	<true/>
 	<key>NSSupportsSuddenTermination</key>
 	<true/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.photography</string>
 </dict>
 </plist>
