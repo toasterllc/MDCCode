@@ -25,7 +25,7 @@ using namespace MDCStudio;
 @implementation Document {
     IBOutlet NSSplitView* _splitView;
     IBOutlet NSView* _noDevicesView;
-    bool _demoMode;
+    MDCDeviceDemoPtr _demoDevice;
     NSWindow* _window;
     Object::ObserverPtr _devicesOb;
     Object::ObserverPtr _prefsOb;
@@ -420,16 +420,13 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 - (void)_updateDevices {
     std::set<ImageSourcePtr> imageSources;
-    if (!_demoMode) {
-        std::vector<MDCDeviceRealPtr> devices = MDCDevicesManagerGlobal()->devices();
-        for (MDCDeviceRealPtr device : devices) {
-            imageSources.insert(device);
-        }
+    std::vector<MDCDeviceRealPtr> devices = MDCDevicesManagerGlobal()->devices();
+    for (MDCDeviceRealPtr device : devices) {
+        imageSources.insert(device);
+    }
     
-    } else {
-        MDCDeviceDemoPtr demoDevice = Object::Create<MDCDeviceDemo>();
-        imageSources.insert(demoDevice);
-//        imageSources.insert()
+    if (_demoDevice) {
+        imageSources.insert(_demoDevice);
     }
     
     [_sourceListView setImageSources:imageSources];
@@ -703,9 +700,8 @@ static void _SortNewestFirst(bool x) {
 // MARK: - Demo
 
 - (IBAction)_tryDemo:(id)sender {
-    _demoMode = true;
+    _demoDevice = Object::Create<MDCDeviceDemo>();
     [self _updateDevices];
-    NSLog(@"_tryDemo:");
 }
 
 @end
