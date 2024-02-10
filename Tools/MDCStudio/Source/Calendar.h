@@ -236,9 +236,14 @@ static _DateFormatterState _DateFormatterStateCreate() {
         [x.timestampFormatter setTimeZone:[x.cal timeZone]];
         [x.timestampFormatter setDateStyle:NSDateFormatterMediumStyle];
         [x.timestampFormatter setTimeStyle:NSDateFormatterMediumStyle];
+        // Replace any kind of Unicode whitespace with a space
+        // This is necessary because the whitespace preceeding the 'AM/PM' suffix is a "NARROW NO-BREAK SPACE",
+        // rather than a simple space, and that Unicode character doesn't properly render when we draw it with
+        // an NSAttributedString.
+        NSString* format = [[[x.timestampFormatter dateFormat] componentsSeparatedByCharactersInSet:
+            [NSCharacterSet whitespaceAndNewlineCharacterSet]] componentsJoinedByString:@" "];
         // Update date format to show milliseconds
-        [x.timestampFormatter setDateFormat:[[x.timestampFormatter dateFormat]
-            stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
+        [x.timestampFormatter setDateFormat:[format stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
     }
     
     {
