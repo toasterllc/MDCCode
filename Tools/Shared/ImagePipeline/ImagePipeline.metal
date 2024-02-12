@@ -107,7 +107,7 @@ fragment float4 XYYD50FromCamRaw(
     return float4(c, 1);
 }
 
-fragment float WhiteBalance(
+fragment float WhiteBalanceRaw(
     constant CFADesc& cfaDesc [[buffer(0)]],
     constant float3& wb [[buffer(1)]],
     texture2d<float> raw [[texture(0)]],
@@ -130,6 +130,7 @@ fragment float4 WhiteBalanceRGB(
 ) {
     return float4(wb*Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
+
 
 //fragment float4 WhiteBalance(
 //    texture2d<float> txt [[texture(0)]],
