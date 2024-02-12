@@ -54,7 +54,7 @@ using namespace CFAViewer;
     _sampleLayer = [CALayer new];
     [_sampleLayer setActions:LayerNullActions()];
     [_sampleLayer setBorderColor:(CGColorRef)SRGBColor(1, 0, 0, 1)];
-    [_sampleLayer setBorderWidth:1];
+    [_sampleLayer setBorderWidth:.1];
     [_imageLayer addSublayer:_sampleLayer];
     
     // Create our color checker circles if they don't exist yet

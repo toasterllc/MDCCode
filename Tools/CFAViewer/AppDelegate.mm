@@ -190,6 +190,8 @@ struct RawImage {
     
     ImagePaths _imagePaths;
     ImagePathsIter _imagePathIter;
+    std::optional<Color<ColorSpace::Raw>> _whiteBalanceColor;
+    std::optional<CGRect> _focusSampleRect;
 }
 
 - (void)awakeFromNib {
@@ -201,6 +203,9 @@ struct RawImage {
     };
     
     MDCDevicesManagerGlobal(MDCStudio::Object::Create<MDCStudio::MDCDevicesManager>(handler));
+
+    _whiteBalanceColor = {0.263170, 0.278725, 0.097797};
+    __weak auto weakSelf = self;
     
     _device = MTLCreateSystemDefaultDevice();
     _renderer = Renderer(_device, [_device newDefaultLibrary], [_device newCommandQueue]);
@@ -461,6 +466,20 @@ static void _configureDevice(MDCUSBDevice& dev) {
     [self _updateInspectorUI];
 }
 
+static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
+    return {
+        simd::float3{(float)m[0], (float)m[1], (float)m[2]},
+    };
+}
+
+static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
+    return {
+        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
+        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
+        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
+    };
+}
+
 - (void)_render {
     Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
     
@@ -475,11 +494,67 @@ static void _configureDevice(MDCUSBDevice& dev) {
     if (!popts.illum) popts.illum = EstimateIlluminant::Run(_renderer, _raw.image.cfaDesc, rawTxt);
     if (!popts.colorMatrix) popts.colorMatrix = MDCStudio::ColorMatrixForIlluminant(*popts.illum).matrix;
     
-    // Run image pipeline
-    Pipeline::Run(_renderer, popts, rawTxt, _txt);
-    _renderer.sync(_txt);
+    
+    // White balance
+    Color<ColorSpace::Raw> color = (_whiteBalanceColor ? *_whiteBalanceColor : Color<ColorSpace::Raw>{1,1,1});
+//    Color<ColorSpace::Raw> illum = (_whiteBalanceColor ? *_whiteBalanceColor : Color<ColorSpace::Raw>{1,1,1});
+//    if (_whiteBalanceColor) {
+//        illum = *_whiteBalanceColor;
+//    }
+    const double factor = std::max(std::max(color[0], color[1]), color[2]);
+//    const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+    const Mat<double,3,1> wb(factor/color[0], factor/color[1], factor/color[2]);
+    const simd::float3 simdWB = _SimdForMat(wb);
+    _renderer.render(rawTxt,
+        _renderer.FragmentShader("MDCTools::ImagePipeline::Shader::" "Base::WhiteBalanceRaw",
+            // Buffer args
+            _raw.image.cfaDesc,
+            simdWB,
+            // Texture args
+            rawTxt
+        )
+    );
+    
+    
+    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatR32Float, _raw.image.width/2, _raw.image.height/2);
+    _renderer.render(grayTxt,
+        _renderer.FragmentShader("GrayscaleForRaw",
+            // Texture args
+            rawTxt
+        )
+    );
+    
+    _renderer.sync(grayTxt);
     _renderer.commitAndWait();
-    [[_mainView imageLayer] setTexture:_txt];
+    
+    if (_focusSampleRect) {
+        const SampleRect sampleRect = _SampleRectForCGRect(*_focusSampleRect, [grayTxt width], [grayTxt height]);
+        const size_t w = sampleRect.right-sampleRect.left+1;
+        const size_t h = sampleRect.bottom-sampleRect.top+1;
+        const size_t sampleCount = w*h;
+        std::unique_ptr<float[]> samples = std::make_unique<float[]>(sampleCount);
+        
+        _renderer.textureRead(grayTxt, samples.get(), sampleCount, MTLRegionMake2D(sampleRect.left, sampleRect.top, w, h));
+        
+        float avg = 0;
+        for (size_t i=0; i<sampleCount; i++) {
+            avg += samples[i];
+        }
+        avg /= sampleCount;
+//        printf("avg: %f\n", avg);
+        
+        float k = 0;
+        for (size_t i=0; i<sampleCount; i++) {
+            float s = samples[i];
+            k += pow(avg-s, 2);
+        }
+        k /= sampleCount;
+        k *= 1000;
+        printf("k: %f\n", k);
+    }
+    
+    
+    [[_mainView imageLayer] setTexture:grayTxt];
     [self _renderCompleted:popts];
 }
 
@@ -549,7 +624,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
             if (setExp) {
                 dev.imgExposureSet(exposure);
                 lastExposure = exposure;
-                printf("Set exposure %d\n", exposure.coarseIntTime);
+//                printf("Set exposure %d\n", exposure.coarseIntTime);
 //                usleep(100000);
             }
             
@@ -564,7 +639,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
                 throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)ImageLen, (uintmax_t)imgStats.len);
             }
             
-            printf("Highlights: %ju   Shadows: %ju\n", (uintmax_t)imgStats.highlightCount, (uintmax_t)imgStats.shadowCount);
+//            printf("Highlights: %ju   Shadows: %ju\n", (uintmax_t)imgStats.highlightCount, (uintmax_t)imgStats.shadowCount);
             
             std::unique_ptr<uint8_t[]> img = dev.imgReadout(ImageSize);
             {
@@ -614,7 +689,8 @@ static void _configureDevice(MDCUSBDevice& dev) {
             // Perform auto exposure
             if (autoExp) {
                 autoExp->update(imgStats.highlightCount, imgStats.shadowCount);
-                exposure.coarseIntTime = autoExp->integrationTime();
+//                exposure.coarseIntTime = autoExp->integrationTime();
+                exposure.coarseIntTime = 1000;
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
@@ -1161,24 +1237,94 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     ]];
 }
 
+static SampleRect _SampleRectForCGRect(CGRect rect, size_t width, size_t height) {
+    rect.origin.x *= width;
+    rect.origin.y *= height;
+    rect.size.width *= width;
+    rect.size.height *= height;
+    return SampleRect{
+        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)width),
+        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)width),
+        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)height),
+        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)height),
+    };
+}
+
 // MARK: - MainViewDelegate
 
 - (void)mainViewSampleRectChanged:(MainView*)v {
     CGRect rect = [_mainView sampleRect];
-    rect.origin.x *= _raw.image.width;
-    rect.origin.y *= _raw.image.height;
-    rect.size.width *= _raw.image.width;
-    rect.size.height *= _raw.image.height;
-    SampleRect sampleRect = {
-        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)_raw.image.width),
-        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)_raw.image.width),
-        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)_raw.image.height),
-        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)_raw.image.height),
-    };
+    SampleRect sampleRect = _SampleRectForCGRect(rect, _raw.image.width, _raw.image.height);
     
-    if (sampleRect.left == sampleRect.right) sampleRect.right++;
-    if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
+    
+    // Click point: update white balance
+    if (sampleRect.left == sampleRect.right) {
+        constexpr int WhiteBalanceRectSize = 10;
+        sampleRect.left -= WhiteBalanceRectSize/2;
+        sampleRect.right += WhiteBalanceRectSize/2;
+        sampleRect.top -= WhiteBalanceRectSize/2;
+        sampleRect.bottom += WhiteBalanceRectSize/2;
+        
+        const auto sampler = PixelSampler(_raw.image.width, _raw.image.height, _raw.image.pixels);
+        uint32_t vals[3] = {};
+        uint32_t counts[3] = {};
+        for (int iy=sampleRect.top; iy<sampleRect.bottom; iy++) {
+            for (int ix=sampleRect.left; ix<sampleRect.right; ix++) {
+                const CFAColor c = _raw.image.cfaDesc.color(ix, iy);
+                vals[(int)c] += sampler.px(ix, iy);
+                counts[(int)c]++;
+            }
+        }
+        
+        Color<ColorSpace::Raw> c;
+        for (size_t i=0; i<3; i++) {
+            if (counts[i]) c[i] = (double)vals[i] / (ImagePixelMax*counts[i]);
+        }
+        _whiteBalanceColor = c;
+        
+        printf("%f %f %f\n", c[0], c[1], c[2]);
+        
+    // Drag rect: set the focus sample rect
+    } else {
+        _focusSampleRect = rect;
+    }
+    
+    
+//    printf("%.3f %.3f %.3f\n", r[0], r[1], r[2]);
+    
 }
+
+
+
+
+
+
+
+//static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int y, int radius) {
+//    const int left      = std::clamp(x-radius, 0, (int)img.width -1  )   ;
+//    const int right     = std::clamp(x+radius, 0, (int)img.width -1  )+1 ;
+//    const int bottom    = std::clamp(y-radius, 0, (int)img.height-1  )   ;
+//    const int top       = std::clamp(y+radius, 0, (int)img.height-1  )+1 ;
+//    const auto sampler = PixelSampler(img.width, img.height, img.pixels);
+//    uint32_t vals[3] = {};
+//    uint32_t counts[3] = {};
+//    for (int iy=bottom; iy<top; iy++) {
+//        for (int ix=left; ix<right; ix++) {
+//            if (sqrt(pow((double)ix-x,2) + pow((double)iy-y,2)) < (double)radius) {
+//                const CFAColor c = img.cfaDesc.color(ix, iy);
+//                vals[(int)c] += sampler.px(ix, iy);
+//                counts[(int)c]++;
+//            }
+//        }
+//    }
+//    
+//    Color<ColorSpace::Raw> r;
+//    for (size_t i=0; i<3; i++) {
+//        if (counts[i]) r[i] = (double)vals[i] / (ImagePixelMax*counts[i]);
+//    }
+//    return r;
+//}
+
 
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
     [self _updateColorMatrix];
