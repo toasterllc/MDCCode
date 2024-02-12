@@ -610,7 +610,7 @@ public:
         assert(cap >= samplesPerPixel*region.size.width*region.size.height);
         const size_t bytesPerSample = BytesPerSample(fmt);
         assert(bytesPerSample == sizeof(T));
-        const size_t bytesPerRow = samplesPerPixel*bytesPerSample*w;
+        const size_t bytesPerRow = samplesPerPixel*bytesPerSample*region.size.width;
         [txt getBytes:samples bytesPerRow:bytesPerRow fromRegion:region mipmapLevel:0];
     }
     
