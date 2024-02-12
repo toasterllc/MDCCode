@@ -29,12 +29,26 @@ public:
         try {
             USB::DeviceDescriptor desc = dev.deviceDescriptor();
             
-            // TODO: legacy; remove
-            if (desc.idVendor==1155 && desc.idProduct==57105) {
+//            // TODO: legacy; remove
+//            if (desc.idVendor==1155 && desc.idProduct==57105) {
+//                return true;
+//            }
+            
+            if (dev.product()=="Photon" && dev.manufacturer()=="Toaster LLC") {
                 return true;
             }
             
-            return dev.product()=="Photon" && dev.manufacturer()=="Toaster LLC";
+            if (dev.product()=="STM32 DownLoad Firmware Update [STMLoader]") {
+                return true;
+            }
+            
+            if ((dev.product()=="Photon [STMLoader]" || dev.product()=="Photon [STMApp]") && dev.manufacturer()=="Toaster LLC") {
+                return true;
+            }
+            
+            return false;
+            
+//            return dev.product()=="Photon" && dev.manufacturer()=="Toaster LLC";
         } catch (...) {
             // Suppress if I/O with the device fails
             return false;
