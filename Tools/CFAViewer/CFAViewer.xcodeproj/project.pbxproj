@@ -12,6 +12,7 @@
 		553630F12B7C1CDD0054E321 /* STMApp.elf in Resources */ = {isa = PBXBuildFile; fileRef = 553630F02B7C1CDD0054E321 /* STMApp.elf */; };
 		55671A38257E984F00C1CDA4 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55671A37257E984E00C1CDA4 /* IOKit.framework */; };
 		556E460026B13CBD006681FA /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = 556E45F526B13CBD006681FA /* LICENSE.md */; };
+		5571D09F2B79CC2E00D6360F /* Focus.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5571D09E2B79CC2E00D6360F /* Focus.metal */; };
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
 		559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E122598300700836B47 /* ApplicationServices.framework */; };
 		55AC9E0328ACBF7E00D0851E /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55AC9E0228ACBF7E00D0851E /* Renderer.metal */; };
@@ -64,6 +65,7 @@
 		556E45FE26B13CBD006681FA /* RingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
 		556E45FF26B13CBD006681FA /* SendRight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		556E460126B1562F006681FA /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
+		5571D09E2B79CC2E00D6360F /* Focus.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Focus.metal; sourceTree = "<group>"; };
 		5588910D2736258A0004458F /* ImgAutoExposure.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgAutoExposure.h; sourceTree = "<group>"; };
 		558FFC5929C907180022E840 /* ColorMatrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ColorMatrix.h; path = ../MDCStudio/Source/ColorMatrix.h; sourceTree = "<group>"; };
 		559C33E826165B4C001903FD /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
@@ -256,6 +258,7 @@
 				55EBCC912589C3570089A441 /* HistogramLayer.h */,
 				55EBCC902589C3570089A441 /* HistogramLayer.mm */,
 				55EBCC932589C3960089A441 /* HistogramLayerShader.metal */,
+				5571D09E2B79CC2E00D6360F /* Focus.metal */,
 				55EBCC8B258966FE0089A441 /* BaseView.h */,
 				55EBCC87258966FE0089A441 /* BaseView.mm */,
 				55B9746424C504E2000B2633 /* Info.plist */,
@@ -471,6 +474,7 @@
 				55E43FDD28C0104D00FCCEA0 /* EstimateIlluminant.mm in Sources */,
 				55E43FDC28C0104D00FCCEA0 /* ImagePipeline.metal in Sources */,
 				55E43FD428C0104D00FCCEA0 /* Defringe.mm in Sources */,
+				5571D09F2B79CC2E00D6360F /* Focus.metal in Sources */,
 				55E43FE028C0104D00FCCEA0 /* RenderThumb.metal in Sources */,
 				55E43FD728C0104D00FCCEA0 /* FFCC.metal in Sources */,
 			);
