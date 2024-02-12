@@ -30,6 +30,7 @@
 		5567F13D2E01D2AC00BFCC0E /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5567F0FB2E01D2AC00BFCC0E /* RenderThumb.metal */; };
 		5567F13E2E01D2AC00BFCC0E /* ImagePipeline.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5567F0F42E01D2AC00BFCC0E /* ImagePipeline.mm */; };
 		5567F1442E01D55700BFCC0E /* ICEApp.bin in Resources */ = {isa = PBXBuildFile; fileRef = 5567F1432E01D55700BFCC0E /* ICEApp.bin */; };
+		5567F1462E01DA7000BFCC0E /* Focus.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5567F1452E01DA7000BFCC0E /* Focus.metal */; };
 		556E460026B13CBD006681FA /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = 556E45F526B13CBD006681FA /* LICENSE.md */; };
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
 		559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E122598300700836B47 /* ApplicationServices.framework */; };
@@ -138,6 +139,7 @@
 		5567F1412E01D2E500BFCC0E /* NibViewInit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NibViewInit.h; sourceTree = "<group>"; };
 		5567F1422E01D2EA00BFCC0E /* TmpDir.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TmpDir.h; sourceTree = "<group>"; };
 		5567F1432E01D55700BFCC0E /* ICEApp.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = ICEApp.bin; sourceTree = "<group>"; };
+		5567F1452E01DA7000BFCC0E /* Focus.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Focus.metal; sourceTree = "<group>"; };
 		556E45F526B13CBD006681FA /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		556E45F626B13CBD006681FA /* Enum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		556E45F726B13CBD006681FA /* Endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
@@ -405,6 +407,7 @@
 				55EBCC912589C3570089A441 /* HistogramLayer.h */,
 				55EBCC902589C3570089A441 /* HistogramLayer.mm */,
 				55EBCC932589C3960089A441 /* HistogramLayerShader.metal */,
+				5567F1452E01DA7000BFCC0E /* Focus.metal */,
 				55EBCC8B258966FE0089A441 /* BaseView.h */,
 				55EBCC87258966FE0089A441 /* BaseView.mm */,
 				55B9746424C504E2000B2633 /* Info.plist */,
@@ -496,8 +499,8 @@
 		55C1C0632C114F1B004A4FAC /* FFCC-Metal */ = {
 			isa = PBXGroup;
 			children = (
-				55C1C0642C114F1B004A4FAC /* FFCC.metal */,
 				55C1C0652C114F1B004A4FAC /* FFCC.h */,
+				55C1C0642C114F1B004A4FAC /* FFCC.metal */,
 				55C1C07B2C114F1B004A4FAC /* FFCC.mm */,
 			);
 			path = "FFCC-Metal";
@@ -600,6 +603,7 @@
 				55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */,
 				553630EB2B7C13C90054E321 /* tz.cpp in Sources */,
 				55C1C07F2C114F54004A4FAC /* FFCC.mm in Sources */,
+				5567F1462E01DA7000BFCC0E /* Focus.metal in Sources */,
 				55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */,
 				552DC1492BB679F300E99941 /* Renderer.metal in Sources */,
 			);

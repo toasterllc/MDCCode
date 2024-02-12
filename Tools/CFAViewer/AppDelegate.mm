@@ -177,6 +177,8 @@ struct RawImage {
     
     ImagePaths _imagePaths;
     ImagePathsIter _imagePathIter;
+    std::optional<Color<ColorSpace::Raw>> _whiteBalanceColor;
+    std::optional<CGRect> _focusPosterRect;
 }
 
 - (void)awakeFromNib {
@@ -188,6 +190,8 @@ struct RawImage {
     };
     
     MDCDevicesManagerGlobal(MDCStudio::Object::Create<MDCStudio::MDCDevicesManager>(handler));
+
+    _whiteBalanceColor = {0.263170, 0.278725, 0.097797};
     
     _device = MTLCreateSystemDefaultDevice();
     
@@ -444,8 +448,251 @@ static void _configureDevice(MDCUSBDevice& dev) {
     [self _updateInspectorUI];
 }
 
+static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
+    return {
+        simd::float3{(float)m[0], (float)m[1], (float)m[2]},
+    };
+}
+
+static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
+    return {
+        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
+        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
+        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
+    };
+}
+
+struct ImgSamples {
+    ImgSamples(int32_t w) : w(w), h(1) {
+        assert(w > 0);
+        s.resize(w);
+    }
+    
+    ImgSamples(int32_t w, int32_t h) : w(w), h(h) {
+        assert(w > 0);
+        assert(h > 0);
+        s.resize(w*h);
+    }
+    
+    float& at(int32_t x) {
+        assert(x >= 0);
+        assert(x < w);
+        assert(h == 1);
+        return s.at(x);
+    }
+    
+    float& at(int32_t x, int32_t y) {
+        assert(x >= 0);
+        assert(y >= 0);
+        assert(x < w);
+        assert(y < h);
+        return s.at(y*w+x);
+    }
+    
+    int32_t w = 0;
+    int32_t h = 0;
+    std::vector<float> s;
+};
+
+static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const Renderer::Txt& txt) {
+    const int32_t w = rect.right-rect.left;
+    const int32_t h = rect.bottom-rect.top;
+    ImgSamples r(w,h);
+    renderer.textureRead(txt, r.s.data(), r.s.size(), MTLRegionMake2D(rect.left, rect.top, w, h));
+    return r;
+}
+
+static std::optional<CGRect> _FindFocusPoster(Renderer& renderer, const SampleRect searchRegion, const Renderer::Txt& grayTxt) {
+    constexpr int32_t FocusPosterWidthGray  = 52;
+    constexpr int32_t FocusPosterHeightGray = 68;
+    
+    ImgSamples img = _SamplesRead(renderer, searchRegion, grayTxt);
+    
+    const int32_t W = searchRegion.right-searchRegion.left;
+    const int32_t H = searchRegion.bottom-searchRegion.top;
+    
+    // Calculate `deltaX` (derivative of image in the X direction)
+    ImgSamples deltaX(W-1, H);
+    for (int32_t y=0; y<deltaX.h; y++) {
+        for (int32_t x=0; x<deltaX.w; x++) {
+            deltaX.at(x,y) = img.at(x,y) - img.at(x+1,y);
+        }
+    }
+    
+    // Calculate `deltaY` (derivative of image in the Y direction)
+    ImgSamples deltaY(W, H-1);
+    for (int32_t y=0; y<deltaY.h; y++) {
+        for (int32_t x=0; x<deltaY.w; x++) {
+            deltaY.at(x,y) = img.at(x,y) - img.at(x,y+1);
+        }
+    }
+    
+    
+    ImgSamples deltaXMax(W-1);
+    for (int32_t x=0; x<deltaX.w; x++) {
+        float max = -INFINITY;
+        for (int32_t y=0; y<deltaX.h; y++) {
+            const float s = std::abs(deltaX.at(x,y));
+            max = std::max(max, s);
+        }
+        deltaXMax.at(x) = max;
+    }
+    
+    ImgSamples deltaYMax(H-1);
+    for (int32_t y=0; y<deltaY.h; y++) {
+        float max = -INFINITY;
+        for (int32_t x=0; x<deltaY.w; x++) {
+            const float s = std::abs(deltaY.at(x,y));
+            max = std::max(max, s);
+        }
+        deltaYMax.at(y) = max;
+    }
+    
+    
+    int32_t xMinIdx = -1;
+    int32_t xMaxIdx = -1;
+    int32_t yMinIdx = -1;
+    int32_t yMaxIdx = -1;
+    
+    constexpr float DeltaMaxThresh = 3;
+    
+    {
+        const float first = deltaXMax.at(0);
+        for (int32_t x=0; x<deltaX.w; x++) {
+            const float s = deltaXMax.at(x);
+            if (s/first > DeltaMaxThresh) {
+                xMinIdx = x;
+                break;
+            }
+        }
+        
+    }
+    
+    {
+        const float first = deltaXMax.at(deltaX.w-1);
+        for (int32_t x=deltaX.w-1; x>=0; x--) {
+            const float s = deltaXMax.at(x);
+            if (s/first > DeltaMaxThresh) {
+                xMaxIdx = x;
+                break;
+            }
+        }
+    }
+    
+    {
+        const float first = deltaYMax.at(0);
+        for (int32_t y=0; y<deltaY.h; y++) {
+            const float s = deltaYMax.at(y);
+            if (s/first > DeltaMaxThresh) {
+                yMinIdx = y;
+                break;
+            }
+        }
+    }
+    
+    {
+        const float first = deltaYMax.at(deltaY.h-1);
+        for (int32_t y=deltaY.h-1; y>=0; y--) {
+            const float s = deltaYMax.at(y);
+            if (s/first > DeltaMaxThresh) {
+                yMaxIdx = y;
+                break;
+            }
+        }
+    }
+    
+    constexpr int32_t OffsetX = +1;
+    constexpr int32_t OffsetY = +1;
+    
+    const bool good =
+        xMinIdx < xMaxIdx &&
+        yMinIdx < yMaxIdx &&
+        xMinIdx>=0 && xMaxIdx>=0 && yMinIdx>=0 && yMaxIdx>=0;
+    
+    if (!good) return std::nullopt;
+    
+    float x = (xMinIdx + xMaxIdx) / 2;
+    float y = (yMinIdx + yMaxIdx) / 2;
+    x += searchRegion.left + OffsetX;
+    y += searchRegion.top + OffsetY;
+    x -= FocusPosterWidthGray / 2;
+    y -= FocusPosterHeightGray / 2;
+    x = std::floor(x);
+    y = std::floor(y);
+    
+    return CGRect{
+        { (float)x / [grayTxt width], (float)y / [grayTxt height] },
+        { (float)FocusPosterWidthGray / [grayTxt width], (float)FocusPosterHeightGray / [grayTxt height] },
+    };
+}
+
+static float _FocusValueCalc(Renderer& renderer, const Renderer::Txt& grayTxt, CGRect focusPosterRect) {
+    const SampleRect sampleRect = _SampleRectForCGRect(focusPosterRect, [grayTxt width], [grayTxt height]);
+    ImgSamples img = _SamplesRead(renderer, sampleRect, grayTxt);
+    
+    // Apply linear adjustment to pixel values so they scale from [0,1].
+    // We determine the min/max pixel values by averaging the 10 lowest and highest values.
+    {
+        std::vector<float> sortedSamples = img.s;
+        std::sort(sortedSamples.begin(), sortedSamples.end());
+        constexpr size_t SamplesMinMaxCount = 10;
+        float samplesMin = 0;
+        float samplesMax = 0;
+        for (size_t i=0; i<SamplesMinMaxCount; i++) samplesMin += *(sortedSamples.begin()+i);
+        for (size_t i=0; i<SamplesMinMaxCount; i++) samplesMax += *(sortedSamples.rbegin()+i);
+        samplesMin /= SamplesMinMaxCount;
+        samplesMax /= SamplesMinMaxCount;
+        for (float& s : img.s) {
+            s = (s-samplesMin) / (samplesMax-samplesMin);
+        }
+    }
+    
+    float avg = 0;
+    for (float s : img.s) {
+        avg += s;
+    }
+    avg /= img.s.size();
+    
+    float k = 0;
+    for (float s : img.s) {
+        k += pow(s-avg, 2);
+    }
+    k /= img.s.size();
+    k = std::sqrt(k);
+    k *= 1000;
+    
+    
+    constexpr float KAccumCoeff = 0.90;
+    static float kaccum = 0;
+    kaccum = (KAccumCoeff)*kaccum + (1-KAccumCoeff)*k;
+    return kaccum;
+}
+
 - (void)_render {
+    const int32_t ImageWidthGray  = (int32_t)_raw.image.width/2;
+    const int32_t ImageHeightGray = (int32_t)_raw.image.height/2;
+    
+    constexpr int32_t SearchRegionWidth    = 150;
+    constexpr int32_t SearchRegionHeight   = 340;
+    constexpr int32_t SearchRegionOffsetX  =   0;
+    constexpr int32_t SearchRegionOffsetY  = -60;
+    
+    const SampleRect FocusPosterSearchRegion = {
+        .left   = (int32_t)(_raw.image.width/2 -  SearchRegionWidth/2 + SearchRegionOffsetX),
+        .right  = (int32_t)(_raw.image.width/2 +  SearchRegionWidth/2 + SearchRegionOffsetX),
+        .top    = (int32_t)(_raw.image.height/2 - SearchRegionHeight/2 + SearchRegionOffsetY),
+        .bottom = (int32_t)(_raw.image.height/2 + SearchRegionHeight/2 + SearchRegionOffsetY),
+    };
+    
+    const SampleRect FocusPosterSearchRegionGray = {
+        .left   = FocusPosterSearchRegion.left  / 2,
+        .right  = FocusPosterSearchRegion.right / 2,
+        .top    = FocusPosterSearchRegion.top / 2,
+        .bottom = FocusPosterSearchRegion.bottom / 2,
+    };
+    
     Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
+    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatR32Float, ImageWidthGray, ImageHeightGray);
     
     if (!_txt || [_txt width]!=_raw.image.width || [_txt height]!=_raw.image.height) {
         // _txt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
@@ -454,15 +701,98 @@ static void _configureDevice(MDCUSBDevice& dev) {
         _txt = _renderer.textureCreate(rawTxt, MTLPixelFormatRGBA16Float);
     }
     
+    // White balance `rawTxt` using the 'gray world' technique, but only refer to samples within FocusPosterSearchRegion,
+    // since we know those are grayscale (it's out unpainted door in our house).
+    {
+        _renderer.sync(rawTxt);
+        _renderer.commitAndWait();
+        
+        simd::float3 rgb = {};
+        simd::float3 count = {};
+        ImgSamples raw = _SamplesRead(_renderer, FocusPosterSearchRegion, rawTxt);
+        for (int32_t y=0; y<raw.h; y++) {
+            for (int32_t x=0; x<raw.w; x++) {
+                const int32_t xAbs = x+FocusPosterSearchRegion.left;
+                const int32_t yAbs = y+FocusPosterSearchRegion.top;
+                const CFAColor c = _raw.image.cfaDesc.color(xAbs, yAbs);
+                const float s = raw.at(x,y);;
+                switch (c) {
+                case CFAColor::Red:
+                    rgb.r += s;
+                    count.r++;
+                    break;
+                case CFAColor::Green:
+                    rgb.g += s;
+                    count.g++;
+                    break;
+                case CFAColor::Blue:
+                    rgb.b += s;
+                    count.b++;
+                    break;
+                }
+            }
+        }
+        rgb /= count;
+        
+        const float factor = std::max(std::max(rgb.r, rgb.g), rgb.b);
+        const simd::float3 wb = factor / rgb;
+//        printf("WB: %f %f %f\n", wb.r, wb.g, wb.b);
+        
+        _renderer.render(rawTxt,
+            _renderer.FragmentShader("ImagePipeline::Shader::" "Base::WhiteBalanceRaw",
+                // Buffer args
+                _raw.image.cfaDesc,
+                wb,
+                // Texture args
+                rawTxt
+            )
+        );
+    }
+    
+    // rawTxt -> grayTxt
+    {
+        _renderer.render(grayTxt,
+            _renderer.FragmentShader("GrayscaleForRaw",
+                // Texture args
+                rawTxt
+            )
+        );
+        
+        _renderer.render(grayTxt,
+            _renderer.FragmentShader("SearchRegionDarken",
+                // Buffer args
+                FocusPosterSearchRegionGray,
+                // Texture args
+                grayTxt
+            )
+        );
+        
+        _renderer.sync(grayTxt);
+        _renderer.commitAndWait();
+    }
+    
+    // Find the focus poster, and calculate/print our focus value
+    {
+        _focusPosterRect = _FindFocusPoster(_renderer, FocusPosterSearchRegionGray, grayTxt);
+        
+        if (_focusPosterRect) {
+            const float focusValue = _FocusValueCalc(_renderer, grayTxt, *_focusPosterRect);
+            printf("Focus: %f\n", focusValue);
+            
+            [_mainView setSampleRect:*_focusPosterRect];
+        } else {
+            [_mainView setSampleRect:{}];
+        }
+    }
+    
+    // Display!
+    {
+        [[_mainView imageLayer] setTexture:grayTxt];
+    }
+    
     Pipeline::Options popts = _pipelineOptions;
     if (!popts.illum) popts.illum = EstimateIlluminant::Run(_renderer, _raw.image.cfaDesc, rawTxt);
     if (!popts.colorMatrix) popts.colorMatrix = MDCStudio::ColorMatrixForIlluminant(*popts.illum).matrix;
-    
-    // Run image pipeline
-    Pipeline::Run(_renderer, popts, rawTxt, _txt);
-    _renderer.sync(_txt);
-    _renderer.commitAndWait();
-    [[_mainView imageLayer] setTexture:_txt];
     [self _renderCompleted:popts];
 }
 
@@ -532,7 +862,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
             if (setExp) {
                 dev.imgExposureSet(exposure);
                 lastExposure = exposure;
-                printf("Set exposure %d\n", exposure.coarseIntTime);
+//                printf("Set exposure %d\n", exposure.coarseIntTime);
 //                usleep(100000);
             }
             
@@ -547,7 +877,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
                 throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)ImageLen, (uintmax_t)imgStats.len);
             }
             
-            printf("Highlights: %ju   Shadows: %ju\n", (uintmax_t)imgStats.highlightCount, (uintmax_t)imgStats.shadowCount);
+//            printf("Highlights: %ju   Shadows: %ju\n", (uintmax_t)imgStats.highlightCount, (uintmax_t)imgStats.shadowCount);
             
             std::unique_ptr<uint8_t[]> img = dev.imgReadout(ImageSize);
             {
@@ -597,7 +927,9 @@ static void _configureDevice(MDCUSBDevice& dev) {
             // Perform auto exposure
             if (autoExp) {
                 autoExp->update(imgStats.highlightCount, imgStats.shadowCount);
-                exposure.coarseIntTime = autoExp->integrationTime();
+//                exposure.coarseIntTime = autoExp->integrationTime();
+                exposure.coarseIntTime = 1000;  // Daytime
+//                exposure.coarseIntTime = 2000;  // Nightime
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
@@ -1116,24 +1448,94 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     ]];
 }
 
+static SampleRect _SampleRectForCGRect(CGRect rect, size_t width, size_t height) {
+    rect.origin.x *= width;
+    rect.origin.y *= height;
+    rect.size.width *= width;
+    rect.size.height *= height;
+    return SampleRect{
+        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)width),
+        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)width),
+        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)height),
+        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)height),
+    };
+}
+
 // MARK: - MainViewDelegate
 
 - (void)mainViewSampleRectChanged:(MainView*)v {
     CGRect rect = [_mainView sampleRect];
-    rect.origin.x *= _raw.image.width;
-    rect.origin.y *= _raw.image.height;
-    rect.size.width *= _raw.image.width;
-    rect.size.height *= _raw.image.height;
-    SampleRect sampleRect = {
-        .left = std::clamp((int32_t)round(CGRectGetMinX(rect)), 0, (int32_t)_raw.image.width),
-        .right = std::clamp((int32_t)round(CGRectGetMaxX(rect)), 0, (int32_t)_raw.image.width),
-        .top = std::clamp((int32_t)round(CGRectGetMinY(rect)), 0, (int32_t)_raw.image.height),
-        .bottom = std::clamp((int32_t)round(CGRectGetMaxY(rect)), 0, (int32_t)_raw.image.height),
-    };
+    SampleRect sampleRect = _SampleRectForCGRect(rect, _raw.image.width, _raw.image.height);
     
-    if (sampleRect.left == sampleRect.right) sampleRect.right++;
-    if (sampleRect.top == sampleRect.bottom) sampleRect.bottom++;
+    
+    // Click point: update white balance
+    if (sampleRect.left == sampleRect.right) {
+        constexpr int WhiteBalanceRectSize = 10;
+        sampleRect.left -= WhiteBalanceRectSize/2;
+        sampleRect.right += WhiteBalanceRectSize/2;
+        sampleRect.top -= WhiteBalanceRectSize/2;
+        sampleRect.bottom += WhiteBalanceRectSize/2;
+        
+        const auto sampler = PixelSampler(_raw.image.width, _raw.image.height, _raw.image.pixels);
+        uint32_t vals[3] = {};
+        uint32_t counts[3] = {};
+        for (int iy=sampleRect.top; iy<sampleRect.bottom; iy++) {
+            for (int ix=sampleRect.left; ix<sampleRect.right; ix++) {
+                const CFAColor c = _raw.image.cfaDesc.color(ix, iy);
+                vals[(int)c] += sampler.px(ix, iy);
+                counts[(int)c]++;
+            }
+        }
+        
+        Color<ColorSpace::Raw> c;
+        for (size_t i=0; i<3; i++) {
+            if (counts[i]) c[i] = (double)vals[i] / (Img::PixelMax*counts[i]);
+        }
+        _whiteBalanceColor = c;
+        
+        printf("%f %f %f\n", c[0], c[1], c[2]);
+        
+    // Drag rect: set the focus sample rect
+    } else {
+        _focusPosterRect = rect;
+    }
+    
+    
+//    printf("%.3f %.3f %.3f\n", r[0], r[1], r[2]);
+    
 }
+
+
+
+
+
+
+
+//static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int y, int radius) {
+//    const int left      = std::clamp(x-radius, 0, (int)img.width -1  )   ;
+//    const int right     = std::clamp(x+radius, 0, (int)img.width -1  )+1 ;
+//    const int bottom    = std::clamp(y-radius, 0, (int)img.height-1  )   ;
+//    const int top       = std::clamp(y+radius, 0, (int)img.height-1  )+1 ;
+//    const auto sampler = PixelSampler(img.width, img.height, img.pixels);
+//    uint32_t vals[3] = {};
+//    uint32_t counts[3] = {};
+//    for (int iy=bottom; iy<top; iy++) {
+//        for (int ix=left; ix<right; ix++) {
+//            if (sqrt(pow((double)ix-x,2) + pow((double)iy-y,2)) < (double)radius) {
+//                const CFAColor c = img.cfaDesc.color(ix, iy);
+//                vals[(int)c] += sampler.px(ix, iy);
+//                counts[(int)c]++;
+//            }
+//        }
+//    }
+//    
+//    Color<ColorSpace::Raw> r;
+//    for (size_t i=0; i<3; i++) {
+//        if (counts[i]) r[i] = (double)vals[i] / (ImagePixelMax*counts[i]);
+//    }
+//    return r;
+//}
+
 
 - (void)mainViewColorCheckerPositionsChanged:(MainView*)v {
     [self _updateColorMatrix];
