@@ -5,13 +5,13 @@
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 using namespace CFAViewer;
 
-// _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
-// To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
-// and we opt-in to color matching by setting the colorspace on our CAMetalLayer via -setColorspace:.
+// _PixelFormat == BGRA8Unorm with -setColorspace:LinearSRGB appears to be the correct
+// combination such that we supply color data in the linear SRGB colorspace and the
+// system handles conversion into SRGB.
 // (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
-static CGColorSpaceRef _LSRGBColorSpace() {
+static CGColorSpaceRef _LinearSRGBColorSpace() {
     static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
     return cs;
 }
@@ -31,7 +31,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     [self setActions:LayerNullActions()];
     [self setPixelFormat:_PixelFormat];
-    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
+    [self setColorspace:_LinearSRGBColorSpace()]; // See comment for _PixelFormat
     [self setDevice:device];
     return self;
 }

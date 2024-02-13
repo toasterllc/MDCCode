@@ -261,11 +261,14 @@ static CGPoint eventPositionInLayer(NSWindow* win, CALayer* layer, NSEvent* ev) 
     const CGPoint start = p;
     TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
         const CGPoint end = eventPositionInLayer(win, _imageLayer, ev);
-        CGRect frame = {start, {end.x-start.x, end.y-start.y}};
-        if ([ev modifierFlags] & NSEventModifierFlagShift) {
-            frame.size.height = (frame.size.height >= 0 ? 1 : -1) * fabs(frame.size.width);
-        }
-        frame = CGRectStandardize(frame);
+        CGRect frame = {end, {}};
+//        CGRect frame = {start, {end.x-start.x, end.y-start.y}};
+//        if ([ev modifierFlags] & NSEventModifierFlagShift) {
+//            frame.size.height = (frame.size.height >= 0 ? 1 : -1) * fabs(frame.size.width);
+//        }
+//        frame = CGRectStandardize(frame);
+//        frame = CGRectInset(frame, -6.5, -8.5);
+        frame = CGRectInset(frame, -6, -8);
         [_sampleLayer setFrame:frame];
     });
     [_delegate mainViewSampleRectChanged:self];

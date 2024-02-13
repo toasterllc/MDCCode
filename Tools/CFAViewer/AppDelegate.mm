@@ -553,6 +553,26 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
         printf("k: %f\n", k);
     }
     
+    static int count = 0;
+    count++;
+    if (!(count % 10)) {
+        static const fs::path ImageDir = "/Users/dave/Desktop/Focus-Train-Images";
+        static bool imageDirCreated = false;
+        if (!imageDirCreated) {
+            std::filesystem::create_directory(ImageDir);
+            imageDirCreated = true;
+        }
+        
+        const fs::path imagePath = ImageDir / (std::to_string(count) + ".png");
+        
+        id img = _renderer.imageCreate(grayTxt);
+        assert(img);
+        NSURL* outputURL = [NSURL fileURLWithPath:@(imagePath.c_str())];
+        CGImageDestinationRef imageDest = CGImageDestinationCreateWithURL((CFURLRef)outputURL, kUTTypePNG, 1, nullptr);
+        CGImageDestinationAddImage(imageDest, (__bridge CGImageRef)img, nullptr);
+        CGImageDestinationFinalize(imageDest);
+    }
+    
     
     [[_mainView imageLayer] setTexture:grayTxt];
     [self _renderCompleted:popts];
