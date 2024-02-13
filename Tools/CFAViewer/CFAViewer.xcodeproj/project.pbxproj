@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		553630EB2B7C13C90054E321 /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55BB944A2A1226CB0044C87B /* tz.cpp */; };
+		553630ED2B7C13D70054E321 /* libate.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 553630EC2B7C13D60054E321 /* libate.tbd */; };
+		553630F12B7C1CDD0054E321 /* STMApp.elf in Resources */ = {isa = PBXBuildFile; fileRef = 553630F02B7C1CDD0054E321 /* STMApp.elf */; };
 		55671A38257E984F00C1CDA4 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55671A37257E984E00C1CDA4 /* IOKit.framework */; };
 		556E460026B13CBD006681FA /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = 556E45F526B13CBD006681FA /* LICENSE.md */; };
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
@@ -44,6 +47,9 @@
 		552F4BCB29B1BE82000CEAB2 /* ThreePartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
 		552F4BCC29B1BE82000CEAB2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		552F4BCD29B1BE82000CEAB2 /* ThreePartView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ThreePartView.mm; sourceTree = "<group>"; };
+		553630EA2B7C11B40054E321 /* MDCDevicesManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MDCDevicesManager.h; path = ../MDCStudio/Source/MDCDevicesManager.h; sourceTree = "<group>"; };
+		553630EC2B7C13D60054E321 /* libate.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libate.tbd; path = usr/lib/libate.tbd; sourceTree = SDKROOT; };
+		553630F02B7C1CDD0054E321 /* STMApp.elf */ = {isa = PBXFileReference; lastKnownFileType = file; path = STMApp.elf; sourceTree = "<group>"; };
 		55671A30257E94BD00C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		55671A37257E984E00C1CDA4 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		556E45F526B13CBD006681FA /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
@@ -157,6 +163,7 @@
 				55B9747A24C50A86000B2633 /* Metal.framework in Frameworks */,
 				55B9747C24C50A8A000B2633 /* QuartzCore.framework in Frameworks */,
 				55671A38257E984F00C1CDA4 /* IOKit.framework in Frameworks */,
+				553630ED2B7C13D70054E321 /* libate.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -235,6 +242,7 @@
 				559D8E0E2593EAB200836B47 /* Util.h */,
 				55E98EBB25A921D80062B458 /* ColorChecker.h */,
 				558FFC5929C907180022E840 /* ColorMatrix.h */,
+				553630EA2B7C11B40054E321 /* MDCDevicesManager.h */,
 				55B9745D24C504E2000B2633 /* AppDelegate.mm */,
 				55E98EB525A920030062B458 /* MainView.h */,
 				55E98EB425A920030062B458 /* MainView.mm */,
@@ -252,6 +260,7 @@
 				55EBCC87258966FE0089A441 /* BaseView.mm */,
 				55B9746424C504E2000B2633 /* Info.plist */,
 				55B9746524C504E2000B2633 /* main.m */,
+				553630F02B7C1CDD0054E321 /* STMApp.elf */,
 				55B9745F24C504E2000B2633 /* Assets.xcassets */,
 				55B9746124C504E2000B2633 /* MainMenu.xib */,
 				55B9747624C50A81000B2633 /* Frameworks */,
@@ -270,6 +279,7 @@
 		55B9747624C50A81000B2633 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				553630EC2B7C13D60054E321 /* libate.tbd */,
 				55E98ED325BFBA800062B458 /* MetalPerformanceShaders.framework */,
 				559D8E122598300700836B47 /* ApplicationServices.framework */,
 				559D8E0F2594205300836B47 /* Accelerate.framework */,
@@ -430,6 +440,7 @@
 			files = (
 				55B9746024C504E2000B2633 /* Assets.xcassets in Resources */,
 				556E460026B13CBD006681FA /* LICENSE.md in Resources */,
+				553630F12B7C1CDD0054E321 /* STMApp.elf in Resources */,
 				55B9746324C504E2000B2633 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -451,6 +462,7 @@
 				55E43FE128C0104D00FCCEA0 /* FFCC.mm in Sources */,
 				55E43FD928C0104D00FCCEA0 /* ImagePipeline.mm in Sources */,
 				55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */,
+				553630EB2B7C13C90054E321 /* tz.cpp in Sources */,
 				55E43FDB28C0104D00FCCEA0 /* ReconstructHighlights.metal in Sources */,
 				55E43FDA28C0104D00FCCEA0 /* DebayerLMMSE.metal in Sources */,
 				55E43FD828C0104D00FCCEA0 /* Defringe.metal in Sources */,
@@ -535,6 +547,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CFAViewer.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"HAS_REMOTE_API=0",
+					"USE_OS_TZDB=1",
+				);
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

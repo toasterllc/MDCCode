@@ -33,6 +33,7 @@
 #import "ImagePipeline.h"
 #import "EstimateIlluminant.h"
 #import "ColorMatrix.h"
+#import "MDCDevicesManager.h"
 using namespace CFAViewer;
 using namespace MDCTools::MetalUtil;
 using namespace MDCTools::ImagePipeline;
@@ -151,10 +152,6 @@ struct RawImage {
     bool _colorCheckersEnabled;
     float _colorCheckerCircleRadius;
     
-//    std::optional<IOServiceMatcher> _serviceAppearWatcher;
-    std::optional<IOServiceWatcher> _serviceDisappearWatcher;
-    std::unique_ptr<MDCUSBDevice> _mdcDevice;
-    
     struct {
         std::mutex lock; // Protects this struct
         std::condition_variable signal;
@@ -171,6 +168,9 @@ struct RawImage {
     Pipeline::Options _pipelineOptions;
     Pipeline::Options _pipelineOptionsPost;
     Renderer::Txt _txt;
+    
+    MDCStudio::Object::ObserverPtr _mdcDevicesOb;
+    MDCStudio::MDCDeviceRealPtr _mdcDevice;
     
     struct {
         Img::Pixel pixels[2200*2200];
@@ -194,7 +194,14 @@ struct RawImage {
 }
 
 - (void)awakeFromNib {
-    __weak auto weakSelf = self;
+    MDCStudio::MDCDevicesManager::IncompatibleVersionHandler handler = [=] (const MDCUSBDevice::IncompatibleVersion& e) {
+        MDCUSBDevice::IncompatibleVersion ecopy = e;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            abort();
+        });
+    };
+    
+    MDCDevicesManagerGlobal(MDCStudio::Object::Create<MDCStudio::MDCDevicesManager>(handler));
     
     _device = MTLCreateSystemDefaultDevice();
     _renderer = Renderer(_device, [_device newDefaultLibrary], [_device newCommandQueue]);
@@ -245,11 +252,17 @@ struct RawImage {
     [self _setExposureSettings:{
         .autoExposureEnabled = true,
     }];
-    [self _setMDCUSBDevice:nullptr];
+    [self _setMDCDevice:nullptr];
     
-    [NSThread detachNewThreadWithBlock:^{
-        [self _threadHandleNewMDCUSBDevices];
-    }];
+    // Observe devices connecting/disconnecting
+    {
+        __weak auto selfWeak = self;
+        _mdcDevicesOb = MDCStudio::MDCDevicesManagerGlobal()->observerAdd([=] (auto, auto) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleMDCDevicesChanged]; });
+        });
+    }
+    
+    [self _handleMDCDevicesChanged];
 }
 
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
@@ -259,6 +272,27 @@ struct RawImage {
         return [[[NSApp mainWindow] sheets] count] == 0;
     }
     return true;
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
+    [self _streamImagesStop];
+    
+    // no_destroy attribute is required, otherwise DeviceLocks would be destroyed and
+    // relinquish the locks, which is exactly what we don't want to do! The locks need
+    // to be held throughout termination to prevent device IO, to ensure the device is
+    // kept out of host mode.
+    [[clang::no_destroy]]
+    static std::vector<std::unique_lock<std::mutex>> DeviceLocks;
+    
+    // Ensure that all devices are out of host mode when we exit, by acquiring each device's
+    // device lock and stashing the locks in our global DeviceLocks.
+    MDCStudio::MDCDevicesManagerPtr devicesManager = MDCStudio::MDCDevicesManagerGlobal();
+    const std::vector<MDCStudio::MDCDeviceRealPtr> devices = devicesManager->devices();
+    for (MDCStudio::MDCDeviceRealPtr device : devices) {
+        DeviceLocks.push_back(device->deviceLock(true));
+    }
+    printf("applicationShouldTerminate\n");
+    return NSTerminateNow;
 }
 
 static std::vector<std::string> split(const std::string& str, char delim) {
@@ -418,19 +452,6 @@ static void _configureDevice(MDCUSBDevice& dev) {
         // Write the ICE40 binary
         dev.iceRAMWrite(mmap.data(), mmap.len());
     }
-    
-//    {
-//        const char* STMBinPath = "/Users/dave/repos/MDC/Code/STM32/STApp/Release/STApp.elf";
-//        ELF32Binary elf(STMBinPath);
-//        
-//        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-//        size_t size, const char* name) {
-//            dev.stmWrite(paddr, data, size);
-//        });
-//        
-//        // Reset the device, triggering it to load the program we just wrote
-//        dev.stmReset(elf.entryPointAddr());
-//    }
 }
 
 - (void)_renderCompleted:(const Pipeline::Options&)opts {
@@ -463,117 +484,23 @@ static void _configureDevice(MDCUSBDevice& dev) {
     [self _renderCompleted:popts];
 }
 
-- (void)_threadHandleNewMDCUSBDevices {
-    IONotificationPortRef p = IONotificationPortCreate(kIOMasterPortDefault);
-    if (!p) throw Toastbox::RuntimeError("IONotificationPortCreate returned null");
-    Defer(IONotificationPortDestroy(p));
+- (void)_handleMDCDevicesChanged {
+    std::vector<MDCStudio::MDCDeviceRealPtr> devices = MDCStudio::MDCDevicesManagerGlobal()->devices();
+    assert(devices.size()==0 || devices.size()==1);
+    MDCStudio::MDCDeviceRealPtr device = (!devices.empty() ? devices.at(0) : nullptr);
+    [self _setMDCDevice:device];
     
-    SendRight serviceIter;
-    {
-        io_iterator_t iter = MACH_PORT_NULL;
-        kern_return_t kr = IOServiceAddMatchingNotification(p, kIOMatchedNotification,
-            IOServiceMatching(kIOUSBDeviceClassName), _nop, nullptr, &iter);
-        if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
-        serviceIter = SendRight(SendRight::NoRetain, iter);
-    }
-    
-    CFRunLoopSourceRef rls = IONotificationPortGetRunLoopSource(p);
-    CFRunLoopAddSource(CFRunLoopGetCurrent(), rls, kCFRunLoopCommonModes);
-    
-//    std::set<std::string> configuredDevices;
-    for (;;) {
-        // Drain all services from the iterator
-        for (;;) {
-            SendRight service(SendRight::NoRetain, IOIteratorNext(serviceIter));
-            if (!service) break;
-            
-            try {
-                USBDevicePtr dev = std::make_unique<USBDevice>(service);
-                if (!MDCUSBDevice::USBDeviceMatches(*dev)) continue;
-                
-                __block std::unique_ptr<MDCUSBDevice> mdc = std::make_unique<MDCUSBDevice>(std::move(dev));
-                
-                const STM::Status status = mdc->statusGet();
-                switch (status.mode) {
-                case STM::Status::Mode::STMLoader: {
-                    abort();
-                    break;
-//                    _configureDevice(*mdc);
-//                    configuredDevices.insert(mdc->serial());
-//                    break;
-                }
-                
-                case STM::Status::Mode::STMApp: {
-                    // Enter host mode
-                    mdc->hostModeSet(true);
-                    
-                    _configureDevice(*mdc);
-                    
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [self _setMDCUSBDevice:std::move(mdc)];
-                    });
-                    
-//                    // If we previously configured this device, this device is ready!
-//                    if (configuredDevices.find(mdc->serial()) != configuredDevices.end()) {
-//                        dispatch_async(dispatch_get_main_queue(), ^{
-//                            [self _setMDCUSBDevice:std::move(mdc)];
-//                        });
-//                        
-//                        configuredDevices.erase(mdc->serial());
-//                        
-//                    // If we didn't previously configure this device, trigger the bootloader so we can configure it
-//                    } else {
-//                        mdc->bootloaderInvoke();
-//                    }
-                    break;
-                }
-                
-                default: {
-                    abort();
-                }
-                
-//                default:
-////                    configuredDevices.erase(mdc->serial());
-////                    mdc->bootloaderInvoke();
-//                    break;
-                }
-            
-            } catch (const std::exception& e) {
-                // Ignore failures to create USBDevice
-                printf("Configure MDCUSBDevice failed: %s\n", e.what());
-            }
-        }
-        
-        // Wait for matching services to appear
-        CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
-        assert(r == kCFRunLoopRunHandledSource);
-    }
 }
 
-- (void)_setMDCUSBDevice:(std::unique_ptr<MDCUSBDevice>)dev {
-    // Stop streaming, set switch to off, and enable or disable switch
+- (void)_setMDCDevice:(MDCStudio::MDCDeviceRealPtr)dev {
     [self _streamImagesStop];
     
-    _mdcDevice = std::move(dev);
+    _mdcDevice = dev;
     [_streamImagesSwitch setEnabled:(bool)_mdcDevice];
     [_streamImagesSwitch setState:NSControlStateValueOff];
     
     if (_mdcDevice) {
-        __weak auto weakSelf = self;
-        _serviceDisappearWatcher = IOServiceWatcher(_mdcDevice->dev().service(), dispatch_get_main_queue(),
-            ^(uint32_t msgType, void* msgArg) {
-                [weakSelf _handleMDCUSBDeviceNotificationType:msgType arg:msgArg];
-            });
-        
         [self _setStreamImagesEnabled:true];
-    } else {
-        _serviceDisappearWatcher = std::nullopt;
-    }
-}
-
-- (void)_handleMDCUSBDeviceNotificationType:(uint32_t)msgType arg:(void*)msgArg {
-    if (msgType == kIOMessageServiceIsTerminated) {
-        [self _setMDCUSBDevice:nullptr];
     }
 }
 
@@ -591,23 +518,22 @@ static void _configureDevice(MDCUSBDevice& dev) {
     [self _render];
 }
 
-- (void)_threadStreamImages {
-    assert(_mdcDevice);
-    MDCUSBDevice& dev = *_mdcDevice;
-    
-    Defer(
-        // Notify that our thread has exited
-        _streamImagesThread.lock.lock();
-            _streamImagesThread.running = false;
-            _streamImagesThread.signal.notify_all();
-        _streamImagesThread.lock.unlock();
-    );
+- (void)_threadStreamImages:(MDCStudio::MDCDeviceRealPtr)device {
+    assert(device);
     
 //    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
 //    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
 //    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
     
     try {
+        // TODO: stop accessing privates of MDCUSBDevice!
+        auto hostMode = device->_hostModeEnter();
+        // Get the MDCUSBDevice only after entering host mode!
+        // Otherwise there's a race before MDCDeviceReal has assigned its _device.device.
+        MDCUSBDevice& dev = *device->_device.device;
+        
+        _configureDevice(dev);
+        
 //        float intTime = .5;
 //        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
 //        auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);
@@ -740,8 +666,9 @@ static void _configureDevice(MDCUSBDevice& dev) {
             _streamImagesThread.signal.notify_all();
         _streamImagesThread.lock.unlock();
         
+        auto dev = _mdcDevice;
         [NSThread detachNewThreadWithBlock:^{
-            [self _threadStreamImages];
+            [self _threadStreamImages:dev];
         }];
     }
 }

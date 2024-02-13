@@ -87,7 +87,8 @@ struct MDCDeviceReal : MDCDevice {
             _device_thread(std::move(dev));
         }, std::move(dev));
         
-        // Wait until thread starts
+        // Wait until thread starts, so that our destructor knows that it can
+        // safely acccess _device.runLoop.
         // TODO: use std::binary_semaphore when we can use C++20
         while (!_device.runLoop) usleep(1000);
     }
