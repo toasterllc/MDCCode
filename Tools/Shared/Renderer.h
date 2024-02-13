@@ -85,8 +85,8 @@ public:
         Over,
     };
     
-    static id /* CGColorSpaceRef */ GrayColorSpace() {
-        static id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateDeviceGray());
+    static id /* CGColorSpaceRef */ LinearGrayColorSpace() {
+        static id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateWithName(kCGColorSpaceLinearGray));
         return cs;
     }
     
@@ -95,7 +95,7 @@ public:
         return cs;
     }
     
-    static id /* CGColorSpaceRef */ LSRGBColorSpace() {
+    static id /* CGColorSpaceRef */ LinearSRGBColorSpace() {
         static id /* CGColorSpaceRef */ cs = CFBridgingRelease(CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB));
         return cs;
     }
@@ -695,12 +695,12 @@ public:
         // Choose a colorspace if one wasn't supplied
         id /* CGColorSpaceRef */ colorSpace = nil;
         if (samplesPerPixel == 1) {
-            colorSpace = GrayColorSpace();
+            colorSpace = LinearGrayColorSpace();
         } else if (samplesPerPixel == 4) {
             if (srgbGammaApplied) {
                 colorSpace = SRGBColorSpace();
             } else {
-                colorSpace = LSRGBColorSpace();
+                colorSpace = LinearSRGBColorSpace();
             }
         } else {
             throw std::runtime_error("invalid texture format");
