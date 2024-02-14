@@ -517,9 +517,9 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
     );
     
     
-    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatR32Float, _raw.image.width/2, _raw.image.height/2);
+    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatRGBA8Unorm_sRGB, _raw.image.width/2, _raw.image.height/2);
     _renderer.render(grayTxt,
-        _renderer.FragmentShader("GrayscaleForRaw",
+        _renderer.FragmentShader("GrayscaleRGBForRaw",
             // Texture args
             rawTxt
         )
