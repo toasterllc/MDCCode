@@ -3,7 +3,7 @@
 using namespace metal;
 using namespace MDCTools::MetalUtil;
 
-fragment float GrayscaleForRaw(
+fragment float4 GrayscaleRGBForRaw(
     texture2d<float> raw [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -16,6 +16,6 @@ fragment float GrayscaleForRaw(
     const float r = Sample::R(raw, posRawR);
     const float g = (Sample::R(raw, posRawG0) + Sample::R(raw, posRawG1)) / 2;
     const float b = Sample::R(raw, posRawB);
-    
-    return (r+g+b) / 3;
+    const float x = (r+g+b) / 3;
+    return float4(x,x,x,1);
 }
