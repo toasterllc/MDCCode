@@ -597,25 +597,26 @@ struct MDCDeviceReal : MDCDevice {
     void _hostModeSet(bool en, bool interrupt=false) {
         try {
             if (en) {
-                _hostMode.suddenTermination = _suddenTerminationDisable();
+                printf("_hostModeSet(1)\n");
+                
                 _hostMode.deviceLock = deviceLock(interrupt);
+                _hostMode.suddenTermination = _suddenTerminationDisable();
                 _device.device->hostModeSet(true);
                 // Only stash the lock in our ivar if hostModeSet() didn't throw
-                
-                printf("_hostModeSet(1)\n");
             
             } else {
                 printf("_hostModeSet(0)\n");
                 
                 // Move the lock to the stack to ensure that it's destroyed if hostModeSet() throws
                 _device.device->hostModeSet(false);
-                _hostMode.deviceLock = {};
                 _hostMode.suddenTermination = {};
+                _hostMode.deviceLock = {};
             }
         } catch (...) {
+            printf("_hostModeSet(ERR)\n");
             // If device IO fails (ie hostModeSet()), clean up our state and rethrow the exception
-            _hostMode.deviceLock = {};
             _hostMode.suddenTermination = {};
+            _hostMode.deviceLock = {};
             // Only throw when enabling; when disabling we're executing within a destructor,
             // so we don't want to throw in that case.
             if (en) throw;
