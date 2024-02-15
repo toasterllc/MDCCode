@@ -15,6 +15,8 @@
 		551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */; };
 		5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */; };
 		5530DC3D29DCDA50005FEC0A /* DeviceSettingsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */; };
+		553630FE2B7DE6B70054E321 /* Connect-A-Photon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553630FC2B7DE6B60054E321 /* Connect-A-Photon@2x.pdf */; };
+		553630FF2B7DE6B70054E321 /* Photon-Settings@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553630FD2B7DE6B60054E321 /* Photon-Settings@2x.pdf */; };
 		553EAB792B2452FB00C2B4C8 /* libate.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 553EAB772B2452FB00C2B4C8 /* libate.tbd */; };
 		553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */; };
 		553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */; };
@@ -158,6 +160,8 @@
 		5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsView.mm; sourceTree = "<group>"; };
 		5530DC3A29DCDA3E005FEC0A /* DeviceSettingsView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceSettingsView.h; sourceTree = "<group>"; };
 		5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceSettingsView.xib; sourceTree = "<group>"; };
+		553630FC2B7DE6B60054E321 /* Connect-A-Photon@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Connect-A-Photon@2x.pdf"; sourceTree = "<group>"; };
+		553630FD2B7DE6B60054E321 /* Photon-Settings@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Photon-Settings@2x.pdf"; sourceTree = "<group>"; };
 		553EAB772B2452FB00C2B4C8 /* libate.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libate.tbd; path = usr/lib/libate.tbd; sourceTree = SDKROOT; };
 		553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-BestIcon.pdf"; sourceTree = "<group>"; };
 		553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-WorstIcon.pdf"; sourceTree = "<group>"; };
@@ -666,6 +670,8 @@
 				550CA8032B4F1EFA0061A367 /* ArtworkPlaceholder.pdf */,
 				55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */,
 				55B451042ADA583000CE1C51 /* Photon-Icon.pdf */,
+				553630FC2B7DE6B60054E321 /* Connect-A-Photon@2x.pdf */,
+				553630FD2B7DE6B60054E321 /* Photon-Settings@2x.pdf */,
 				55496F4A278CFC0600BCA739 /* MainMenu.xib */,
 				55496F4D278CFC0600BCA739 /* Info.plist */,
 				55496F50278CFC0600BCA739 /* MDCStudio.entitlements */,
@@ -988,11 +994,13 @@
 				55838C932AD0BE7200D4B024 /* SourceList-Battery-Error.pdf in Resources */,
 				553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */,
 				55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */,
+				553630FF2B7DE6B70054E321 /* Photon-Settings@2x.pdf in Resources */,
 				55838C962AD0BE7200D4B024 /* SourceList-Battery-Charging-0.pdf in Resources */,
 				55C6A2A22AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib in Resources */,
 				55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */,
 				55838CCA2AD0BEAA00D4B024 /* Inspector-Contrast-Min.pdf in Resources */,
 				55838C912AD0BE7200D4B024 /* SourceList-Gear.pdf in Resources */,
+				553630FE2B7DE6B70054E321 /* Connect-A-Photon@2x.pdf in Resources */,
 				55838CC52AD0BEAA00D4B024 /* Inspector-Saturation-Max.pdf in Resources */,
 				551453032B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf in Resources */,
 				55838CC62AD0BEAA00D4B024 /* Inspector-Brightness-Max.pdf in Resources */,
