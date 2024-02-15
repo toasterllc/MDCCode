@@ -883,9 +883,8 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 - (void)selectAll:(id)sender {
     ImageSet selection;
     {
-        ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
-        auto lock = std::unique_lock(*imageLibrary);
-        for (auto it=imageLibrary->begin(); it!=imageLibrary->end(); it++) {
+        auto lock = std::unique_lock(*_imageLibrary);
+        for (auto it=_imageLibrary->begin(); it!=_imageLibrary->end(); it++) {
             selection.insert(*it);
         }
     }

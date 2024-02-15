@@ -84,7 +84,9 @@
                 <constraints>
                     <constraint firstItem="wmp-X4-4cT" firstAttribute="top" secondItem="gIp-Ho-8D9" secondAttribute="top" id="BId-h8-ipU"/>
                     <constraint firstItem="WfS-w1-Plf" firstAttribute="centerY" secondItem="gIp-Ho-8D9" secondAttribute="centerY" id="Ml5-Yr-cI8"/>
+                    <constraint firstItem="WfS-w1-Plf" firstAttribute="top" relation="greaterThanOrEqual" secondItem="gIp-Ho-8D9" secondAttribute="top" constant="20" symbolic="YES" id="XeN-Gs-kZ6"/>
                     <constraint firstItem="wmp-X4-4cT" firstAttribute="leading" secondItem="gIp-Ho-8D9" secondAttribute="leading" id="cff-kE-j1I"/>
+                    <constraint firstItem="WfS-w1-Plf" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="gIp-Ho-8D9" secondAttribute="leading" constant="20" symbolic="YES" id="k59-bA-0xr"/>
                     <constraint firstAttribute="bottom" secondItem="wmp-X4-4cT" secondAttribute="bottom" id="lMK-Vb-YnC"/>
                     <constraint firstAttribute="trailing" secondItem="wmp-X4-4cT" secondAttribute="trailing" id="qG7-K9-N8b"/>
                     <constraint firstItem="WfS-w1-Plf" firstAttribute="centerX" secondItem="gIp-Ho-8D9" secondAttribute="centerX" id="zUq-bZ-Jsk"/>

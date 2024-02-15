@@ -17,6 +17,9 @@
 		5530DC3D29DCDA50005FEC0A /* DeviceSettingsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */; };
 		553630FE2B7DE6B70054E321 /* Connect-A-Photon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553630FC2B7DE6B60054E321 /* Connect-A-Photon@2x.pdf */; };
 		553630FF2B7DE6B70054E321 /* Photon-Settings@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553630FD2B7DE6B60054E321 /* Photon-Settings@2x.pdf */; };
+		553631012B7DF3E10054E321 /* Hello-Photon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553631002B7DF3DC0054E321 /* Hello-Photon@2x.pdf */; };
+		5536310A2B7E894B0054E321 /* ImageGridContainerView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553631032B7E894B0054E321 /* ImageGridContainerView.mm */; };
+		5536310B2B7E894B0054E321 /* ImageGridContainerView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 553631042B7E894B0054E321 /* ImageGridContainerView.xib */; };
 		553EAB792B2452FB00C2B4C8 /* libate.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 553EAB772B2452FB00C2B4C8 /* libate.tbd */; };
 		553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */; };
 		553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */; };
@@ -72,7 +75,7 @@
 		55838CCC2AD0BEEE00D4B024 /* CaptureTriggers-Battery.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55838CCB2AD0BEEE00D4B024 /* CaptureTriggers-Battery.pdf */; };
 		558E20092AC4B608001E743A /* DeviceImageGridHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 558E20052AC4B608001E743A /* DeviceImageGridHeaderView.xib */; };
 		558E200A2AC4B608001E743A /* DeviceImageGridHeaderView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558E20062AC4B608001E743A /* DeviceImageGridHeaderView.mm */; };
-		558E201B2AC8F977001E743A /* DeviceImageGridScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558E20192AC8F977001E743A /* DeviceImageGridScrollView.mm */; };
+		558E201B2AC8F977001E743A /* DeviceImageGridContainerView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558E20192AC8F977001E743A /* DeviceImageGridContainerView.mm */; };
 		558FFC5829C8F26F0022E840 /* EstimateIlluminant.mm in Sources */ = {isa = PBXBuildFile; fileRef = 558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */; };
 		55A36AB827A35ABD00FD0181 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55A36AB727A35ABD00FD0181 /* IOKit.framework */; };
 		55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CA2B23CCCF004D6564 /* STMApp.elf */; };
@@ -87,7 +90,7 @@
 		55C6A27B2AE44599008149AF /* ImageExportProgressDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A2782AE44599008149AF /* ImageExportProgressDialog.mm */; };
 		55C6A27F2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A27D2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm */; };
 		55C6A2852AE6F74E008149AF /* FactoryResetConfirmationAlert.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2842AE6F74E008149AF /* FactoryResetConfirmationAlert.xib */; };
-		55C6A2A22AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2A12AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib */; };
+		55C6A2A22AE82AA9008149AF /* DeviceImageGridContainerView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2A12AE82AA9008149AF /* DeviceImageGridContainerView.xib */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C846279001CA005ABD39 /* ImageGridLayer.metal */; };
 		55D30A2E29A828E60080BCBD /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55D30A2C29A828070080BCBD /* tz.cpp */; };
@@ -162,6 +165,10 @@
 		5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceSettingsView.xib; sourceTree = "<group>"; };
 		553630FC2B7DE6B60054E321 /* Connect-A-Photon@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Connect-A-Photon@2x.pdf"; sourceTree = "<group>"; };
 		553630FD2B7DE6B60054E321 /* Photon-Settings@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Photon-Settings@2x.pdf"; sourceTree = "<group>"; };
+		553631002B7DF3DC0054E321 /* Hello-Photon@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Hello-Photon@2x.pdf"; sourceTree = "<group>"; };
+		553631032B7E894B0054E321 /* ImageGridContainerView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridContainerView.mm; sourceTree = "<group>"; };
+		553631042B7E894B0054E321 /* ImageGridContainerView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageGridContainerView.xib; sourceTree = "<group>"; };
+		553631092B7E894B0054E321 /* ImageGridContainerView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridContainerView.h; sourceTree = "<group>"; };
 		553EAB772B2452FB00C2B4C8 /* libate.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libate.tbd; path = usr/lib/libate.tbd; sourceTree = SDKROOT; };
 		553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-BestIcon.pdf"; sourceTree = "<group>"; };
 		553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-WorstIcon.pdf"; sourceTree = "<group>"; };
@@ -284,8 +291,8 @@
 		558E20052AC4B608001E743A /* DeviceImageGridHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceImageGridHeaderView.xib; sourceTree = "<group>"; };
 		558E20062AC4B608001E743A /* DeviceImageGridHeaderView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceImageGridHeaderView.mm; sourceTree = "<group>"; };
 		558E20072AC4B608001E743A /* DeviceImageGridHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceImageGridHeaderView.h; sourceTree = "<group>"; };
-		558E20192AC8F977001E743A /* DeviceImageGridScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceImageGridScrollView.mm; sourceTree = "<group>"; };
-		558E201A2AC8F977001E743A /* DeviceImageGridScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceImageGridScrollView.h; sourceTree = "<group>"; };
+		558E20192AC8F977001E743A /* DeviceImageGridContainerView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceImageGridContainerView.mm; sourceTree = "<group>"; };
+		558E201A2AC8F977001E743A /* DeviceImageGridContainerView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceImageGridContainerView.h; sourceTree = "<group>"; };
 		558FFC4629C7EF920022E840 /* IterAny.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IterAny.h; sourceTree = "<group>"; };
 		558FFC5629C8F26F0022E840 /* EstimateIlluminant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminant.h; sourceTree = "<group>"; };
 		558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminant.mm; sourceTree = "<group>"; };
@@ -316,7 +323,7 @@
 		55C6A27D2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FactoryResetConfirmationAlert.mm; sourceTree = "<group>"; };
 		55C6A27E2AE6EFC9008149AF /* FactoryResetConfirmationAlert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FactoryResetConfirmationAlert.h; sourceTree = "<group>"; };
 		55C6A2842AE6F74E008149AF /* FactoryResetConfirmationAlert.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FactoryResetConfirmationAlert.xib; sourceTree = "<group>"; };
-		55C6A2A12AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceImageGridNoPhotosView.xib; sourceTree = "<group>"; };
+		55C6A2A12AE82AA9008149AF /* DeviceImageGridContainerView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DeviceImageGridContainerView.xib; sourceTree = "<group>"; };
 		55C6A2A42AE9925B008149AF /* ImageSelection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSelection.h; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
@@ -439,6 +446,16 @@
 				55838CCB2AD0BEEE00D4B024 /* CaptureTriggers-Battery.pdf */,
 			);
 			path = CaptureTriggersView;
+			sourceTree = "<group>";
+		};
+		553631022B7E894B0054E321 /* ImageGridContainerView */ = {
+			isa = PBXGroup;
+			children = (
+				553631092B7E894B0054E321 /* ImageGridContainerView.h */,
+				553631032B7E894B0054E321 /* ImageGridContainerView.mm */,
+				553631042B7E894B0054E321 /* ImageGridContainerView.xib */,
+			);
+			path = ImageGridContainerView;
 			sourceTree = "<group>";
 		};
 		553EF5582AD7173000157484 /* FullSizeImageHeaderView */ = {
@@ -672,6 +689,7 @@
 				55B451042ADA583000CE1C51 /* Photon-Icon.pdf */,
 				553630FC2B7DE6B60054E321 /* Connect-A-Photon@2x.pdf */,
 				553630FD2B7DE6B60054E321 /* Photon-Settings@2x.pdf */,
+				553631002B7DF3DC0054E321 /* Hello-Photon@2x.pdf */,
 				55496F4A278CFC0600BCA739 /* MainMenu.xib */,
 				55496F4D278CFC0600BCA739 /* Info.plist */,
 				55496F50278CFC0600BCA739 /* MDCStudio.entitlements */,
@@ -683,7 +701,8 @@
 			isa = PBXGroup;
 			children = (
 				551328BA27B45E6200CD823B /* ImageGridView */,
-				558E20182AC8F977001E743A /* DeviceImageGridScrollView */,
+				553631022B7E894B0054E321 /* ImageGridContainerView */,
+				558E20182AC8F977001E743A /* DeviceImageGridContainerView */,
 				55F8D01127BEF3E500757165 /* FullSizeImageView */,
 				5544A7E927B5E011006AB473 /* SourceListView */,
 				55425B1C29A02F6500F25D57 /* InspectorView */,
@@ -774,15 +793,15 @@
 			path = DeviceImageGridHeaderView;
 			sourceTree = "<group>";
 		};
-		558E20182AC8F977001E743A /* DeviceImageGridScrollView */ = {
+		558E20182AC8F977001E743A /* DeviceImageGridContainerView */ = {
 			isa = PBXGroup;
 			children = (
 				558E20042AC4B608001E743A /* DeviceImageGridHeaderView */,
-				558E201A2AC8F977001E743A /* DeviceImageGridScrollView.h */,
-				558E20192AC8F977001E743A /* DeviceImageGridScrollView.mm */,
-				55C6A2A12AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib */,
+				558E201A2AC8F977001E743A /* DeviceImageGridContainerView.h */,
+				558E20192AC8F977001E743A /* DeviceImageGridContainerView.mm */,
+				55C6A2A12AE82AA9008149AF /* DeviceImageGridContainerView.xib */,
 			);
-			path = DeviceImageGridScrollView;
+			path = DeviceImageGridContainerView;
 			sourceTree = "<group>";
 		};
 		559704E52AE0E46B006CD617 /* ImageExporter */ = {
@@ -993,14 +1012,16 @@
 				558E20092AC4B608001E743A /* DeviceImageGridHeaderView.xib in Resources */,
 				55838C932AD0BE7200D4B024 /* SourceList-Battery-Error.pdf in Resources */,
 				553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */,
+				553631012B7DF3E10054E321 /* Hello-Photon@2x.pdf in Resources */,
 				55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */,
 				553630FF2B7DE6B70054E321 /* Photon-Settings@2x.pdf in Resources */,
 				55838C962AD0BE7200D4B024 /* SourceList-Battery-Charging-0.pdf in Resources */,
-				55C6A2A22AE82AA9008149AF /* DeviceImageGridNoPhotosView.xib in Resources */,
+				55C6A2A22AE82AA9008149AF /* DeviceImageGridContainerView.xib in Resources */,
 				55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */,
 				55838CCA2AD0BEAA00D4B024 /* Inspector-Contrast-Min.pdf in Resources */,
 				55838C912AD0BE7200D4B024 /* SourceList-Gear.pdf in Resources */,
 				553630FE2B7DE6B70054E321 /* Connect-A-Photon@2x.pdf in Resources */,
+				5536310B2B7E894B0054E321 /* ImageGridContainerView.xib in Resources */,
 				55838CC52AD0BEAA00D4B024 /* Inspector-Saturation-Max.pdf in Resources */,
 				551453032B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf in Resources */,
 				55838CC62AD0BEAA00D4B024 /* Inspector-Brightness-Max.pdf in Resources */,
@@ -1081,10 +1102,11 @@
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
 				55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */,
 				55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */,
+				5536310A2B7E894B0054E321 /* ImageGridContainerView.mm in Sources */,
 				558E200A2AC4B608001E743A /* DeviceImageGridHeaderView.mm in Sources */,
 				55F8882729D8DADD0075593F /* TokenField.mm in Sources */,
 				55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */,
-				558E201B2AC8F977001E743A /* DeviceImageGridScrollView.mm in Sources */,
+				558E201B2AC8F977001E743A /* DeviceImageGridContainerView.mm in Sources */,
 				553EF5622AD7174800157484 /* FullSizeImageHeaderView.mm in Sources */,
 				55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */,
 				558FFC5829C8F26F0022E840 /* EstimateIlluminant.mm in Sources */,

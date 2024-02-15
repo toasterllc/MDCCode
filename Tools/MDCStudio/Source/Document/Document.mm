@@ -10,7 +10,7 @@
 #import "ImageLibraryStatus.h"
 #import "DeviceSettings/DeviceSettingsView.h"
 #import "DeviceSettings/DeviceSettingsSheet.h"
-#import "DeviceImageGridScrollView/DeviceImageGridScrollView.h"
+#import "DeviceImageGridContainerView/DeviceImageGridContainerView.h"
 #import "FactoryResetConfirmationAlert/FactoryResetConfirmationAlert.h"
 #import "ImageExporter/ImageExporter.h"
 #import "MDCDevicesManager.h"
@@ -55,8 +55,8 @@ using namespace MDCStudio;
         Object::ObserverPtr deviceOb;
         Object::ObserverPtr imageLibraryOb;
         
-        ImageGridScrollView* imageGridScrollView;
-        ImageGridView* imageGridView;
+        ImageGridContainerView* imageGridContainerView;
+        
         FullSizeImageView* fullSizeImageView;
         
         InspectorView* inspectorView;
@@ -199,7 +199,7 @@ static void _SetView(T& x, NSView* y) {
     
     // Navigation
     } else if ([item action] == @selector(_showImage:)) {
-        if (_center.view != _active.imageGridScrollView) return false;
+        if (_center.view != _active.imageGridContainerView) return false;
         if (_active.selection->images().size() != 1) return false;
         return true;
     
@@ -263,9 +263,10 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 - (void)_prefsChanged {
     NSLog(@"prefs changed");
-    if (_active.imageGridScrollView) {
-        auto v = Toastbox::Cast<ImageGridView*>([_active.imageGridScrollView document]);
-        _UpdateImageGridViewFromPrefs(PrefsGlobal(), v);
+    if (_active.imageGridContainerView) {
+        auto cv = Toastbox::Cast<DeviceImageGridContainerView*>(_active.imageGridContainerView);
+        auto doc = Toastbox::Cast<ImageGridView*>([[cv imageGridScrollView] document]);
+        _UpdateImageGridViewFromPrefs(PrefsGlobal(), doc);
     }
 }
 
@@ -342,16 +343,16 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
         });
         
-        DeviceImageGridScrollView* imageGridScrollView = [[DeviceImageGridScrollView alloc] initWithDevice:device
+        DeviceImageGridContainerView* imageGridContainerView = [[DeviceImageGridContainerView alloc] initWithDevice:device
             selection:_active.selection];
         
-        [[imageGridScrollView configureDeviceButton] setTarget:self];
-        [[imageGridScrollView configureDeviceButton] setAction:@selector(_showSettingsForActiveDevice:)];
-        _active.imageGridScrollView = imageGridScrollView;
+        [[imageGridContainerView configureDeviceButton] setTarget:self];
+        [[imageGridContainerView configureDeviceButton] setAction:@selector(_showSettingsForActiveDevice:)];
+        _active.imageGridContainerView = imageGridContainerView;
         
-        _active.imageGridView = Toastbox::Cast<ImageGridView*>([_active.imageGridScrollView document]);
-        _UpdateImageGridViewFromPrefs(PrefsGlobal(), _active.imageGridView);
-        [_active.imageGridView setMenu:_ContextMenuCreate()];
+//        _active.imageGridView = Toastbox::Cast<ImageGridView*>([[imageGridContainerView imageGridScrollView] document]);
+        _UpdateImageGridViewFromPrefs(PrefsGlobal(), [_active.imageGridContainerView imageGridView]);
+        [[_active.imageGridContainerView imageGridView] setMenu:_ContextMenuCreate()];
         
         _active.fullSizeImageView = [[FullSizeImageView alloc] initWithImageSource:device];
         [_active.fullSizeImageView setMenu:_ContextMenuCreate()];
@@ -359,10 +360,10 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
         _active.inspectorView = [[InspectorView alloc] initWithImageSource:device selection:_active.selection];
     }
     
-    _SetView(_center, _active.imageGridScrollView);
+    _SetView(_center, _active.imageGridContainerView);
     _SetView(_right, _active.inspectorView);
     
-    [_window makeFirstResponder:_active.imageGridView];
+    [_window makeFirstResponder:_active.imageGridContainerView];
 }
 
 // MARK: - Source List
@@ -471,13 +472,13 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
             auto lock = std::unique_lock(*_active.imageLibrary);
             const bool deleted = _active.imageLibrary->find([_active.fullSizeImageView imageRecord]) == _active.imageLibrary->end();
             if (deleted) {
-                _SetView(_center, _active.imageGridScrollView);
+                _SetView(_center, _active.imageGridContainerView);
             }
         }
         break;
     case ImageLibrary::Event::Type::Clear:
         // When the image library is cleared, return to the grid view
-        _SetView(_center, _active.imageGridScrollView);
+        _SetView(_center, _active.imageGridContainerView);
         _active.selection->images({});
         break;
     default:
@@ -550,7 +551,7 @@ static void _SortNewestFirst(bool x) {
 
 - (IBAction)_backToImages:(id)sender {
     assert(_active.fullSizeImageView && _center.view==_active.fullSizeImageView);
-    _SetView(_center, _active.imageGridScrollView);
+    _SetView(_center, _active.imageGridContainerView);
     
     // -layoutIfNeeded is necessary on the window so that we can scroll the grid
     // view to a particular spot immediately, instead of having to wait until
@@ -559,10 +560,12 @@ static void _SortNewestFirst(bool x) {
     
     ImageRecordPtr rec = [_active.fullSizeImageView imageRecord];
     _active.selection->images({ rec });
-    [_window makeFirstResponder:_active.imageGridView];
     
-    const std::optional<CGRect> rect = [_active.imageGridView rectForImageRecord:rec];
-    if (rect) [_active.imageGridView scrollToImageRect:*rect center:true];
+    ImageGridView* igv = [_active.imageGridContainerView imageGridView];
+    [_window makeFirstResponder:igv];
+    
+    const std::optional<CGRect> rect = [igv rectForImageRecord:rec];
+    if (rect) [igv scrollToImageRect:*rect center:true];
 }
 
 - (IBAction)_export:(id)sender {

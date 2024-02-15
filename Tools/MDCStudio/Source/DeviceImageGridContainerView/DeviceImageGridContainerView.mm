@@ -1,12 +1,15 @@
-#import "DeviceImageGridScrollView.h"
+#import "DeviceImageGridContainerView.h"
 #import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
 #import "ImageLibraryStatus.h"
 #import "date/date.h"
 #import "date/tz.h"
 #import "Calendar.h"
+#import "NibViewInit.h"
+#import "ImageGridView/ImageGridView.h"
 using namespace MDCStudio;
 
-@implementation DeviceImageGridScrollView {
+@implementation DeviceImageGridContainerView {
+    IBOutlet NSView* _nibView;
     IBOutlet NSView* _noPhotosView;
     IBOutlet NSButton* _configureDeviceButton;
     
@@ -17,14 +20,15 @@ using namespace MDCStudio;
     Object::ObserverPtr _imageLibraryOb;
     Object::ObserverPtr _selectionOb;
     
-    ImageGridView* _imageGridView;
     DeviceImageGridHeaderView* _headerView;
 }
 
 - (instancetype)initWithDevice:(MDCDevicePtr)device selection:(ImageSelectionPtr)selection {
-    _imageGridView = [[ImageGridView alloc] initWithImageSource:device selection:selection];
-    if (!(self = [super initWithFixedDocument:_imageGridView])) return nil;
+    ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:device selection:selection];
     
+    if (!(self = [super initWithImageGridView:imageGridView])) return nil;
+    
+    NibViewInit(self, _nibView);
     _device = device;
     _selection = selection;
     
@@ -45,18 +49,7 @@ using namespace MDCStudio;
     _headerView = [[DeviceImageGridHeaderView alloc] initWithFrame:{}];
     [[_headerView loadButton] setTarget:self];
     [[_headerView loadButton] setAction:@selector(_load:)];
-    [self setHeaderView:_headerView];
-    
-    {
-        bool br = [[[NSNib alloc] initWithNibNamed:@"DeviceImageGridNoPhotosView" bundle:nil]
-            instantiateWithOwner:self topLevelObjects:nil];
-        assert(br);
-        [[self floatingSubviewContainer] addSubview:_noPhotosView];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_noPhotosView]|"
-            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_noPhotosView)]];
-        [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_noPhotosView]|"
-            options:0 metrics:nil views:NSDictionaryOfVariableBindings(_noPhotosView)]];
-    }
+    [[self imageGridScrollView] setHeaderView:_headerView];
     
     [self _refresh];
     return self;
@@ -97,7 +90,7 @@ using namespace MDCStudio;
     {
         auto lock = std::unique_lock(*_device->imageLibrary());
         const bool noPhotos = _device->imageLibrary()->empty();
-        [_headerView setHidden:noPhotos];
+        [[self imageGridScrollView] setHidden:noPhotos];
         [_noPhotosView setHidden:!noPhotos];
     }
 }

@@ -1,35 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <deployment identifier="macosx"/>
+        <deployment version="140000" identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="DeviceImageGridScrollView">
+        <customObject id="-2" userLabel="File's Owner" customClass="DeviceImageGridContainerView">
             <connections>
                 <outlet property="_configureDeviceButton" destination="XQj-hE-yGQ" id="0Jq-SU-poY"/>
+                <outlet property="_nibView" destination="hQZ-fp-A1Q" id="wa8-0w-szI"/>
                 <outlet property="_noPhotosView" destination="hQZ-fp-A1Q" id="pXt-DB-ViT"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <customView translatesAutoresizingMaskIntoConstraints="NO" id="hQZ-fp-A1Q" colorLabel="IBBuiltInLabel-Blue">
-            <rect key="frame" x="0.0" y="0.0" width="481" height="249"/>
+        <customView misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hQZ-fp-A1Q" colorLabel="IBBuiltInLabel-Blue">
+            <rect key="frame" x="0.0" y="0.0" width="455" height="249"/>
             <subviews>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="lfo-F7-HP7">
-                    <rect key="frame" x="68" y="59" width="346" height="132"/>
+                    <rect key="frame" x="20" y="60" width="415" height="130"/>
                     <subviews>
-                        <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="knf-rn-Gre">
-                            <rect key="frame" x="0.0" y="16" width="100" height="100"/>
-                            <constraints>
-                                <constraint firstAttribute="height" constant="100" id="7w7-rH-5zl"/>
-                                <constraint firstAttribute="width" constant="100" id="C0A-4k-fWZ"/>
-                            </constraints>
-                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Photon-Icon" id="UaC-LA-ivi"/>
+                        <imageView autoresizesSubviews="NO" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="knf-rn-Gre">
+                            <rect key="frame" x="0.0" y="-22" width="169" height="174"/>
+                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" image="Hello-Photon" id="UaC-LA-ivi"/>
                         </imageView>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7iG-Ul-ZFP">
-                            <rect key="frame" x="123" y="84" width="225" height="28"/>
+                            <rect key="frame" x="192" y="82" width="225" height="28"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" title="Hello, Photon" id="XgB-Yx-hl2">
                                 <font key="font" metaFont="systemThin" size="24"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -37,15 +34,15 @@
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xIU-Hg-yJo">
-                            <rect key="frame" x="123" y="60" width="225" height="14"/>
+                            <rect key="frame" x="192" y="60" width="225" height="14"/>
                             <textFieldCell key="cell" controlSize="small" alignment="left" title="Set up your Photon to start taking photos!" id="DpW-Tg-kUQ">
                                 <font key="font" metaFont="menu" size="11"/>
                                 <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XQj-hE-yGQ">
-                            <rect key="frame" x="118" y="13" width="142" height="32"/>
+                        <button horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="XQj-hE-yGQ">
+                            <rect key="frame" x="187" y="13" width="142" height="32"/>
                             <buttonCell key="cell" type="push" title="Photon Settings…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OQr-3N-XIl">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -57,9 +54,10 @@
                         <constraint firstItem="7iG-Ul-ZFP" firstAttribute="top" secondItem="lfo-F7-HP7" secondAttribute="top" constant="20" id="GYP-MV-UmF"/>
                         <constraint firstItem="XQj-hE-yGQ" firstAttribute="leading" secondItem="xIU-Hg-yJo" secondAttribute="leading" id="L0D-bf-iU9"/>
                         <constraint firstItem="knf-rn-Gre" firstAttribute="leading" secondItem="lfo-F7-HP7" secondAttribute="leading" id="NEP-QP-WWS"/>
-                        <constraint firstItem="xIU-Hg-yJo" firstAttribute="top" secondItem="7iG-Ul-ZFP" secondAttribute="bottom" constant="10" id="SpN-qN-7Xl"/>
+                        <constraint firstItem="xIU-Hg-yJo" firstAttribute="top" secondItem="7iG-Ul-ZFP" secondAttribute="bottom" constant="8" id="SpN-qN-7Xl"/>
                         <constraint firstItem="knf-rn-Gre" firstAttribute="centerY" secondItem="lfo-F7-HP7" secondAttribute="centerY" id="TkJ-fY-9v8"/>
                         <constraint firstItem="7iG-Ul-ZFP" firstAttribute="leading" secondItem="xIU-Hg-yJo" secondAttribute="leading" id="VPC-lt-04C"/>
+                        <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="XQj-hE-yGQ" secondAttribute="trailing" id="Yfs-1a-k8A"/>
                         <constraint firstAttribute="trailing" secondItem="xIU-Hg-yJo" secondAttribute="trailing" id="cOK-eO-haX"/>
                         <constraint firstItem="XQj-hE-yGQ" firstAttribute="top" secondItem="xIU-Hg-yJo" secondAttribute="bottom" constant="20" id="dfq-1k-0pS"/>
                         <constraint firstAttribute="bottom" secondItem="XQj-hE-yGQ" secondAttribute="bottom" constant="20" id="nOB-33-UTU"/>
@@ -68,13 +66,15 @@
                 </customView>
             </subviews>
             <constraints>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="lfo-F7-HP7" secondAttribute="trailing" priority="750" constant="20" id="Jn4-fQ-NXJ"/>
+                <constraint firstItem="lfo-F7-HP7" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="hQZ-fp-A1Q" secondAttribute="leading" constant="20" id="NgW-LH-ezV"/>
                 <constraint firstItem="lfo-F7-HP7" firstAttribute="centerY" secondItem="hQZ-fp-A1Q" secondAttribute="centerY" id="fDg-0l-QaZ"/>
                 <constraint firstItem="lfo-F7-HP7" firstAttribute="centerX" secondItem="hQZ-fp-A1Q" secondAttribute="centerX" id="mLJ-3r-qS1"/>
             </constraints>
-            <point key="canvasLocation" x="769.5" y="39.5"/>
+            <point key="canvasLocation" x="695.5" y="39.5"/>
         </customView>
     </objects>
     <resources>
-        <image name="Photon-Icon" width="126" height="100"/>
+        <image name="Hello-Photon" width="169" height="174"/>
     </resources>
 </document>
