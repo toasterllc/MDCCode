@@ -80,6 +80,7 @@
 		55A36AB827A35ABD00FD0181 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55A36AB727A35ABD00FD0181 /* IOKit.framework */; };
 		55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CA2B23CCCF004D6564 /* STMApp.elf */; };
 		55A884CD2B23CCD0004D6564 /* ICEApp.bin in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CB2B23CCCF004D6564 /* ICEApp.bin */; };
+		55ADD4EE2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */; };
 		55B451062ADA583000CE1C51 /* Photon-Icon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55B451042ADA583000CE1C51 /* Photon-Icon.pdf */; };
 		55C456862955A1AE00A20363 /* FixedScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456822955A1AE00A20363 /* FixedScrollView.mm */; };
 		55C456872955A1AE00A20363 /* FixedMetalDocumentLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456832955A1AE00A20363 /* FixedMetalDocumentLayer.mm */; };
@@ -304,6 +305,7 @@
 		55A417DD29DC9804003A68A4 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
 		55A884CA2B23CCCF004D6564 /* STMApp.elf */ = {isa = PBXFileReference; lastKnownFileType = file; path = STMApp.elf; sourceTree = "<group>"; };
 		55A884CB2B23CCCF004D6564 /* ICEApp.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = ICEApp.bin; sourceTree = "<group>"; };
+		55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Source-List-Photon-Icon@2x.pdf"; sourceTree = "<group>"; };
 		55B1658129CB9A50008D53E5 /* Cache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cache.h; sourceTree = "<group>"; };
 		55B451042ADA583000CE1C51 /* Photon-Icon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Photon-Icon.pdf"; sourceTree = "<group>"; };
 		55C456802955A1AE00A20363 /* FixedDocumentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FixedDocumentView.h; sourceTree = "<group>"; };
@@ -690,6 +692,7 @@
 				553630FC2B7DE6B60054E321 /* Connect-A-Photon@2x.pdf */,
 				553630FD2B7DE6B60054E321 /* Photon-Settings@2x.pdf */,
 				553631002B7DF3DC0054E321 /* Hello-Photon@2x.pdf */,
+				55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */,
 				55496F4A278CFC0600BCA739 /* MainMenu.xib */,
 				55496F4D278CFC0600BCA739 /* Info.plist */,
 				55496F50278CFC0600BCA739 /* MDCStudio.entitlements */,
@@ -1009,6 +1012,7 @@
 				553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */,
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
 				557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */,
+				55ADD4EE2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf in Resources */,
 				558E20092AC4B608001E743A /* DeviceImageGridHeaderView.xib in Resources */,
 				55838C932AD0BE7200D4B024 /* SourceList-Battery-Error.pdf in Resources */,
 				553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */,

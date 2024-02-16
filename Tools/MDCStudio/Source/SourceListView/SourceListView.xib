@@ -15,13 +15,13 @@
         <visualEffectView blendingMode="behindWindow" material="sidebar" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="NJC-Ov-ASV">
             <rect key="frame" x="0.0" y="0.0" width="400" height="350"/>
             <subviews>
-                <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="76" horizontalPageScroll="10" verticalLineScroll="76" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fLh-R7-6A0">
+                <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="68" horizontalPageScroll="10" verticalLineScroll="68" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fLh-R7-6A0">
                     <rect key="frame" x="0.0" y="0.0" width="400" height="350"/>
                     <clipView key="contentView" drawsBackground="NO" id="OCF-P9-iE6">
                         <rect key="frame" x="0.0" y="0.0" width="400" height="350"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <outlineView verticalHuggingPriority="750" misplaced="YES" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="74" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa">
+                            <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="66" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa">
                                 <rect key="frame" x="0.0" y="0.0" width="400" height="350"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
@@ -45,21 +45,17 @@
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                             </tableCellView>
                                             <tableCellView identifier="SourceListView_Device" id="08g-eg-N7V" customClass="SourceListView_Device">
-                                                <rect key="frame" x="11" y="20" width="377" height="74"/>
+                                                <rect key="frame" x="11" y="20" width="377" height="66"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY" userLabel="Icon Image">
-                                                        <rect key="frame" x="5" y="12" width="63" height="50"/>
-                                                        <constraints>
-                                                            <constraint firstAttribute="width" constant="63" id="eSu-j3-Hou"/>
-                                                            <constraint firstAttribute="height" constant="50" id="u3f-gJ-ek7"/>
-                                                        </constraints>
-                                                        <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="Photon-Icon" id="KoV-V9-mVz"/>
+                                                        <rect key="frame" x="7" y="31" width="25" height="21"/>
+                                                        <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="Source-List-Photon-Icon" id="KoV-V9-mVz"/>
                                                     </imageView>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
-                                                        <rect key="frame" x="71" y="36" width="262" height="21"/>
+                                                        <rect key="frame" x="37" y="33" width="296" height="19"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="aUI-KD-Hqx">
-                                                            <font key="font" metaFont="system" size="18"/>
+                                                            <font key="font" size="16" name="HelveticaNeue-Medium"/>
                                                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -68,9 +64,9 @@
                                                         </connections>
                                                     </textField>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="cuS-aa-uKX" userLabel="Text Field">
-                                                        <rect key="frame" x="71" y="17" width="98" height="15"/>
+                                                        <rect key="frame" x="9" y="12" width="91" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="7 days of photos" id="Eij-ik-9WJ">
-                                                            <font key="font" metaFont="label" size="12"/>
+                                                            <font key="font" size="12" name="HelveticaNeue-Light"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -79,7 +75,7 @@
                                                         </connections>
                                                     </textField>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g8q-te-9OC" userLabel="Settings Button">
-                                                        <rect key="frame" x="349" y="14" width="17" height="17"/>
+                                                        <rect key="frame" x="349" y="12" width="17" height="17"/>
                                                         <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="SourceList-Gear" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="rni-HE-MKl">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
@@ -89,7 +85,7 @@
                                                         </connections>
                                                     </button>
                                                     <imageView translatesAutoresizingMaskIntoConstraints="NO" id="YYE-UM-oso" userLabel="Battery Image">
-                                                        <rect key="frame" x="339" y="38" width="30" height="20"/>
+                                                        <rect key="frame" x="339" y="33" width="30" height="20"/>
                                                         <constraints>
                                                             <constraint firstAttribute="height" constant="20" id="277-f4-oyy"/>
                                                         </constraints>
@@ -97,24 +93,23 @@
                                                     </imageView>
                                                 </subviews>
                                                 <constraints>
-                                                    <constraint firstItem="MZn-BH-IiQ" firstAttribute="leading" secondItem="7cJ-fN-hbY" secondAttribute="trailing" constant="5" id="1zf-B5-EyI"/>
+                                                    <constraint firstItem="MZn-BH-IiQ" firstAttribute="leading" secondItem="7cJ-fN-hbY" secondAttribute="trailing" constant="7" id="1zf-B5-EyI"/>
                                                     <constraint firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="8" id="4IY-c9-aI9"/>
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="cuS-aa-uKX" secondAttribute="trailing" constant="8" id="6ti-sS-P4B"/>
+                                                    <constraint firstAttribute="bottom" secondItem="cuS-aa-uKX" secondAttribute="bottom" constant="12" id="F4k-9o-9Ic"/>
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="-3" id="Hsj-yQ-x0d"/>
-                                                    <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" constant="5" id="Kje-qB-Fxx"/>
-                                                    <constraint firstItem="cuS-aa-uKX" firstAttribute="leading" secondItem="MZn-BH-IiQ" secondAttribute="leading" id="NdT-qC-bXN"/>
-                                                    <constraint firstAttribute="height" constant="74" id="T60-bh-CJV"/>
-                                                    <constraint firstItem="g8q-te-9OC" firstAttribute="top" secondItem="YYE-UM-oso" secondAttribute="bottom" constant="7" id="fnt-jE-AJb"/>
-                                                    <constraint firstItem="MZn-BH-IiQ" firstAttribute="top" secondItem="7cJ-fN-hbY" secondAttribute="top" constant="5" id="hP7-ya-fk0"/>
-                                                    <constraint firstItem="7cJ-fN-hbY" firstAttribute="centerY" secondItem="08g-eg-N7V" secondAttribute="centerY" id="iyb-P3-8nF"/>
-                                                    <constraint firstItem="YYE-UM-oso" firstAttribute="top" secondItem="08g-eg-N7V" secondAttribute="top" constant="16" id="n6q-U0-zNV"/>
+                                                    <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" constant="7" id="Kje-qB-Fxx"/>
+                                                    <constraint firstItem="YYE-UM-oso" firstAttribute="centerY" secondItem="MZn-BH-IiQ" secondAttribute="centerY" id="LEA-ZG-eKf"/>
+                                                    <constraint firstItem="MZn-BH-IiQ" firstAttribute="centerY" secondItem="7cJ-fN-hbY" secondAttribute="centerY" constant="-1.5" id="MVk-jH-hz3"/>
+                                                    <constraint firstItem="cuS-aa-uKX" firstAttribute="leading" secondItem="7cJ-fN-hbY" secondAttribute="leading" constant="4" id="QN8-qI-YLE"/>
+                                                    <constraint firstItem="g8q-te-9OC" firstAttribute="top" secondItem="YYE-UM-oso" secondAttribute="bottom" constant="4" id="fnt-jE-AJb"/>
+                                                    <constraint firstItem="cuS-aa-uKX" firstAttribute="top" secondItem="MZn-BH-IiQ" secondAttribute="bottom" constant="6" id="kb8-i7-3af"/>
+                                                    <constraint firstItem="MZn-BH-IiQ" firstAttribute="top" secondItem="08g-eg-N7V" secondAttribute="top" constant="14" id="n5B-JE-T5y"/>
                                                     <constraint firstItem="YYE-UM-oso" firstAttribute="leading" secondItem="MZn-BH-IiQ" secondAttribute="trailing" constant="8" id="qQx-fS-mN8"/>
-                                                    <constraint firstItem="7cJ-fN-hbY" firstAttribute="bottom" secondItem="cuS-aa-uKX" secondAttribute="bottom" constant="5" id="yey-f8-vqZ"/>
                                                 </constraints>
                                                 <connections>
                                                     <outlet property="_batteryImageView" destination="YYE-UM-oso" id="Whg-Rx-g6c"/>
                                                     <outlet property="_descriptionLabel" destination="cuS-aa-uKX" id="yyR-nl-GXR"/>
-                                                    <outlet property="_height" destination="T60-bh-CJV" id="ei5-Uc-7np"/>
                                                     <outlet property="imageView" destination="7cJ-fN-hbY" id="U5o-92-vYm"/>
                                                     <outlet property="textField" destination="MZn-BH-IiQ" id="mUE-hG-002"/>
                                                 </connections>
@@ -131,7 +126,7 @@
                         <nil key="backgroundColor"/>
                     </clipView>
                     <constraints>
-                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="310" id="r1z-nZ-ZF8"/>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="225" id="r1z-nZ-ZF8"/>
                     </constraints>
                     <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="oaD-I2-Mvd">
                         <rect key="frame" x="0.0" y="334" width="310" height="16"/>
@@ -155,7 +150,7 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
     </objects>
     <resources>
-        <image name="Photon-Icon" width="126" height="100"/>
+        <image name="Source-List-Photon-Icon" width="25" height="21"/>
         <image name="SourceList-Battery-Charging-50" width="30" height="14"/>
         <image name="SourceList-Gear" width="17" height="17"/>
     </resources>
