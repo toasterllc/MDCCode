@@ -49,11 +49,11 @@
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
                                                     <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY" userLabel="Icon Image">
-                                                        <rect key="frame" x="7" y="31" width="25" height="21"/>
+                                                        <rect key="frame" x="7" y="34" width="21" height="16"/>
                                                         <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="Source-List-Photon-Icon" id="KoV-V9-mVz"/>
                                                     </imageView>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
-                                                        <rect key="frame" x="37" y="33" width="296" height="19"/>
+                                                        <rect key="frame" x="33" y="33" width="300" height="19"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="aUI-KD-Hqx">
                                                             <font key="font" size="16" name="HelveticaNeue-Medium"/>
                                                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -64,7 +64,7 @@
                                                         </connections>
                                                     </textField>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="cuS-aa-uKX" userLabel="Text Field">
-                                                        <rect key="frame" x="9" y="12" width="91" height="15"/>
+                                                        <rect key="frame" x="6" y="12" width="91" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="7 days of photos" id="Eij-ik-9WJ">
                                                             <font key="font" size="12" name="HelveticaNeue-Light"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -100,8 +100,8 @@
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="trailing" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="-3" id="Hsj-yQ-x0d"/>
                                                     <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" constant="7" id="Kje-qB-Fxx"/>
                                                     <constraint firstItem="YYE-UM-oso" firstAttribute="centerY" secondItem="MZn-BH-IiQ" secondAttribute="centerY" id="LEA-ZG-eKf"/>
-                                                    <constraint firstItem="MZn-BH-IiQ" firstAttribute="centerY" secondItem="7cJ-fN-hbY" secondAttribute="centerY" constant="-1.5" id="MVk-jH-hz3"/>
-                                                    <constraint firstItem="cuS-aa-uKX" firstAttribute="leading" secondItem="7cJ-fN-hbY" secondAttribute="leading" constant="4" id="QN8-qI-YLE"/>
+                                                    <constraint firstItem="MZn-BH-IiQ" firstAttribute="centerY" secondItem="7cJ-fN-hbY" secondAttribute="centerY" constant="-1" id="MVk-jH-hz3"/>
+                                                    <constraint firstItem="cuS-aa-uKX" firstAttribute="leading" secondItem="7cJ-fN-hbY" secondAttribute="leading" constant="1" id="QN8-qI-YLE"/>
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="top" secondItem="YYE-UM-oso" secondAttribute="bottom" constant="4" id="fnt-jE-AJb"/>
                                                     <constraint firstItem="cuS-aa-uKX" firstAttribute="top" secondItem="MZn-BH-IiQ" secondAttribute="bottom" constant="6" id="kb8-i7-3af"/>
                                                     <constraint firstItem="MZn-BH-IiQ" firstAttribute="top" secondItem="08g-eg-N7V" secondAttribute="top" constant="14" id="n5B-JE-T5y"/>
@@ -150,7 +150,7 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
     </objects>
     <resources>
-        <image name="Source-List-Photon-Icon" width="25" height="21"/>
+        <image name="Source-List-Photon-Icon" width="21" height="16"/>
         <image name="SourceList-Battery-Charging-50" width="30" height="14"/>
         <image name="SourceList-Gear" width="17" height="17"/>
     </resources>
