@@ -480,13 +480,44 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
     };
 }
 
-static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& renderer, const SampleRect& rect, const Renderer::Txt& txt) {
-    const size_t w = rect.right-rect.left;
-    const size_t h = rect.bottom-rect.top;
-    const size_t sampleCount = w*h;
-    std::unique_ptr<float[]> samples = std::make_unique<float[]>(sampleCount);
-    renderer.textureRead(txt, samples.get(), sampleCount, MTLRegionMake2D(rect.left, rect.top, w, h));
-    return std::make_tuple(std::move(samples), sampleCount);
+struct ImgSamples {
+    ImgSamples(int32_t w) : w(w), h(1) {
+        assert(w > 0);
+        s.resize(w);
+    }
+    
+    ImgSamples(int32_t w, int32_t h) : w(w), h(h) {
+        assert(w > 0);
+        assert(h > 0);
+        s.resize(w*h);
+    }
+    
+    float& at(int32_t x) {
+        assert(x >= 0);
+        assert(x < w);
+        assert(h == 1);
+        return s.at(x);
+    }
+    
+    float& at(int32_t x, int32_t y) {
+        assert(x >= 0);
+        assert(y >= 0);
+        assert(x < w);
+        assert(y < h);
+        return s.at(y*w+x);
+    }
+    
+    int32_t w = 0;
+    int32_t h = 0;
+    std::vector<float> s;
+};
+
+static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const Renderer::Txt& txt) {
+    const int32_t w = rect.right-rect.left;
+    const int32_t h = rect.bottom-rect.top;
+    ImgSamples r(w,h);
+    renderer.textureRead(txt, r.s.data(), r.s.size(), MTLRegionMake2D(rect.left, rect.top, w, h));
+    return r;
 }
 
 - (void)_render {
@@ -506,8 +537,8 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
 //    constexpr int32_t FocusPosterWidth  = 26;
 //    constexpr int32_t FocusPosterHeight = 33;
 
-    constexpr int32_t FocusPosterWidth  = 26-4;
-    constexpr int32_t FocusPosterHeight = 33-4;
+    constexpr int32_t FocusPosterWidth  = 52;
+    constexpr int32_t FocusPosterHeight = 68;
     
     Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
     
@@ -578,61 +609,29 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
     
     
     {
-        struct Img {
-            Img(int32_t w) : w(w), h(1) {
-                assert(w > 0);
-                s.resize(w);
-            }
-            
-            Img(int32_t w, int32_t h) : w(w), h(h) {
-                assert(w > 0);
-                assert(h > 0);
-                s.resize(w*h);
-            }
-            
-            float& at(int32_t x) {
-                assert(x >= 0);
-                assert(x < w);
-                assert(h == 1);
-                return s.at(x);
-            }
-            
-            float& at(int32_t x, int32_t y) {
-                assert(x >= 0);
-                assert(y >= 0);
-                assert(x < w);
-                assert(y < h);
-                return s.at(y*w+x);
-            }
-            
-            int32_t w = 0;
-            int32_t h = 0;
-            std::vector<float> s;
-        };
-        
-        auto [ samples, sampleCount ] = _SamplesRead(_renderer, FocusPosterSearchRegion, grayTxt);
+        ImgSamples img = _SamplesRead(_renderer, FocusPosterSearchRegion, grayTxt);
         
         const int32_t W = FocusPosterSearchRegion.right-FocusPosterSearchRegion.left;
         const int32_t H = FocusPosterSearchRegion.bottom-FocusPosterSearchRegion.top;
         
         // Calculate `deltaX` (derivative of image in the X direction)
-        Img deltaX(W-1, H);
+        ImgSamples deltaX(W-1, H);
         for (int32_t y=0; y<deltaX.h; y++) {
             for (int32_t x=0; x<deltaX.w; x++) {
-                deltaX.at(x,y) = samples[y*W+x] - samples[y*W+(x+1)];
+                deltaX.at(x,y) = img.at(x,y) - img.at(x+1,y);
             }
         }
         
         // Calculate `deltaY` (derivative of image in the Y direction)
-        Img deltaY(W, H-1);
+        ImgSamples deltaY(W, H-1);
         for (int32_t y=0; y<deltaY.h; y++) {
             for (int32_t x=0; x<deltaY.w; x++) {
-                deltaY.at(x,y) = samples[y*W+x] - samples[(y+1)*W+x];
+                deltaY.at(x,y) = img.at(x,y) - img.at(x,y+1);
             }
         }
         
         
-        Img deltaXMax(W-1);
+        ImgSamples deltaXMax(W-1);
         for (int32_t x=0; x<deltaX.w; x++) {
             float max = -INFINITY;
             for (int32_t y=0; y<deltaX.h; y++) {
@@ -642,7 +641,7 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             deltaXMax.at(x) = max;
         }
         
-        Img deltaYMax(H-1);
+        ImgSamples deltaYMax(H-1);
         for (int32_t y=0; y<deltaY.h; y++) {
             float max = -INFINITY;
             for (int32_t x=0; x<deltaY.w; x++) {
@@ -665,14 +664,14 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
 //        }
 //        printf("\n\n");
         
-        {
-            float first = deltaXMax.at(0);
-            for (int32_t x=0; x<deltaX.w; x++) {
-                const float s = deltaXMax.at(x);
-                printf("%.5f ", s/first);
-            }
-            printf("\n\n");
-        }
+//        {
+//            float first = deltaXMax.at(0);
+//            for (int32_t x=0; x<deltaX.w; x++) {
+//                const float s = deltaXMax.at(x);
+//                printf("%.5f ", s/first);
+//            }
+//            printf("\n\n");
+//        }
         
         
         {
@@ -835,7 +834,7 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
 //        }
         
         constexpr int32_t OffsetX = +1;
-        constexpr int32_t OffsetY = +0;
+        constexpr int32_t OffsetY = +1;
         
         const bool good =
             xMinIdx < xMaxIdx &&
@@ -903,21 +902,36 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
     
     if (_focusPosterRect) {
         const SampleRect sampleRect = _SampleRectForCGRect(*_focusPosterRect, [grayTxt width], [grayTxt height]);
-        auto [ samples, sampleCount ] = _SamplesRead(_renderer, sampleRect, grayTxt);
+        ImgSamples img = _SamplesRead(_renderer, sampleRect, grayTxt);
+        
+        // Apply linear adjustment to pixel values so they scale from [0,1].
+        // We determine the min/max pixel values by averaging the 10 lowest and highest values.
+        {
+            std::vector<float> sortedSamples = img.s;
+            std::sort(sortedSamples.begin(), sortedSamples.end());
+            constexpr size_t SamplesMinMaxCount = 10;
+            float samplesMin = 0;
+            float samplesMax = 0;
+            for (size_t i=0; i<SamplesMinMaxCount; i++) samplesMin += *(sortedSamples.begin()+i);
+            for (size_t i=0; i<SamplesMinMaxCount; i++) samplesMax += *(sortedSamples.rbegin()+i);
+            samplesMin /= SamplesMinMaxCount;
+            samplesMax /= SamplesMinMaxCount;
+            for (float& s : img.s) {
+                s = (s-samplesMin) / (samplesMax-samplesMin);
+            }
+        }
         
         float avg = 0;
-        for (size_t i=0; i<sampleCount; i++) {
-            avg += samples[i];
+        for (float s : img.s) {
+            avg += s;
         }
-        avg /= sampleCount;
-//        printf("avg: %f\n", avg);
+        avg /= img.s.size();
         
         float k = 0;
-        for (size_t i=0; i<sampleCount; i++) {
-            float s = samples[i];
+        for (float s : img.s) {
             k += pow(avg-s, 2);
         }
-        k /= sampleCount;
+        k /= img.s.size();
         k *= 1000;
         printf("k: %f\n", k);
     }
