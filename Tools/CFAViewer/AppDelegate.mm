@@ -588,15 +588,15 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             }
             
             float& at(int32_t x) {
-                assert(x > 0);
+                assert(x >= 0);
                 assert(x < w);
                 assert(h == 1);
                 return s.at(x);
             }
             
             float& at(int32_t x, int32_t y) {
-                assert(x > 0);
-                assert(y > 0);
+                assert(x >= 0);
+                assert(y >= 0);
                 assert(x < w);
                 assert(y < h);
                 return s.at(y*w+x);
@@ -629,8 +629,6 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
         }
         
         
-//        Img deltaXMin(W-1);
-//        Img deltaXMax(W-1);
         Img deltaXRatio(W-1);
         for (int32_t x=0; x<deltaX.w; x++) {
             float min = +INFINITY;
@@ -641,12 +639,8 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
                 max = std::max(max, s);
             }
             deltaXRatio.at(x) = max/min;
-//            deltaXMin.at(x) = min;
-//            deltaXMax.at(x) = max;
         }
         
-//        Img deltaYMin(H-1);
-//        Img deltaYMax(H-1);
         Img deltaYRatio(H-1);
         for (int32_t y=0; y<deltaY.h; y++) {
             float min = +INFINITY;
@@ -657,122 +651,152 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
                 max = std::max(max, s);
             }
             deltaYRatio.at(y) = max/min;
-//            deltaYMin.at(y) = min;
-//            deltaYMax.at(y) = max;
         }
         
         
+        int32_t xMinIdx = -1;
+        int32_t xMaxIdx = -1;
+        int32_t yMinIdx = -1;
+        int32_t yMaxIdx = -1;
         
+        constexpr float DeltaRatioThresh = 2;
         
-        
-        
-        
-        
-        // Calculate `avgRow`
-        std::unique_ptr<float[]> avgRow = std::make_unique<float[]>(H);
-        for (int32_t y=0; y<H; y++) {
-            float avg = 0;
-            for (int32_t x=0; x<W; x++) {
-                const float s = samples[y*W + x];
-                avg += s;
-            }
-            avg /= W;
-            avgRow[y] = avg;
-        }
-        
-        // Calculate `avgCol`
-        std::unique_ptr<float[]> avgCol = std::make_unique<float[]>(W);
-        for (int32_t x=0; x<W; x++) {
-            float avg = 0;
-            for (int32_t y=0; y<H; y++) {
-                const float s = samples[y*W + x];
-                avg += s;
-            }
-            avg /= H;
-            avgCol[x] = avg;
-        }
-        
-        // Calculate background color
-//        const float bg = (avgRow[0] + avgRow[H-1] + avgCol[0] + avgCol[W-1]) / 4;
-        
-        // Calculate `stdDevRow`
-        std::unique_ptr<float[]> stdDevRow = std::make_unique<float[]>(H);
-        for (int32_t y=0; y<H; y++) {
-            float sum = 0;
-            for (int32_t x=0; x<W; x++) {
-                const float s = samples[y*W + x];
-                const float d = s - avgRow[y];
-                sum += d*d;
-            }
-            sum /= W;
-            stdDevRow[y] = std::sqrt(sum);
-        }
-        
-        // Calculate `stdDevCol`
-        std::unique_ptr<float[]> stdDevCol = std::make_unique<float[]>(W);
-        for (int32_t x=0; x<W; x++) {
-            float sum = 0;
-            for (int32_t y=0; y<H; y++) {
-                const float s = samples[y*W + x];
-                const float d = s - avgCol[x];
-                sum += d*d;
-            }
-            sum /= H;
-            stdDevCol[x] = std::sqrt(sum);
-//            printf("%.5f ", std::sqrt(sum));
-        }
-//        printf("\n");
-//        printf("\n ======================= \n");
-        
-        // Calculate `stdDevRowDelta`
-        std::unique_ptr<float[]> stdDevRowDelta = std::make_unique<float[]>(H-1);
-        for (int32_t y=0; y<H-1; y++) {
-            stdDevRowDelta[y] = stdDevRow[y] - stdDevRow[y+1];
-        }
-        
-        // Calculate `stdDevColDelta`
-        std::unique_ptr<float[]> stdDevColDelta = std::make_unique<float[]>(W-1);
-        for (int32_t x=0; x<W-1; x++) {
-            stdDevColDelta[x] = stdDevCol[x] - stdDevCol[x+1];
-        }
-        
-        int32_t xMinIdx = 0;
-        int32_t xMaxIdx = 0;
-        int32_t yMinIdx = 0;
-        int32_t yMaxIdx = 0;
-        float xMin = INFINITY;
-        float xMax = -INFINITY;
-        float yMin = INFINITY;
-        float yMax = -INFINITY;
-        
-        // Calculate yMinIdx / yMaxIdx
-        for (int32_t y=0; y<H-1; y++) {
-            const float s = stdDevRowDelta[y];
-            if (s < yMin) {
-                yMin = s;
-                yMinIdx = y;
-            }
-            
-            if (s > yMax) {
-                yMax = s;
-                yMaxIdx = y;
-            }
-        }
-        
-        // Calculate xMinIdx / xMaxIdx
-        for (int32_t x=0; x<W-1; x++) {
-            const float s = stdDevColDelta[x];
-            if (s < xMin) {
-                xMin = s;
+        for (int32_t x=0; x<deltaX.w; x++) {
+            if (deltaXRatio.at(x) > DeltaRatioThresh) {
                 xMinIdx = x;
-            }
-            
-            if (s > xMax) {
-                xMax = s;
-                xMaxIdx = x;
+                break;
             }
         }
         
+        for (int32_t x=deltaX.w-1; x>=0; x--) {
+            if (deltaXRatio.at(x) > DeltaRatioThresh) {
+                xMaxIdx = x;
+                break;
+            }
+        }
+        
+        for (int32_t y=0; y<deltaY.h; y++) {
+            if (deltaYRatio.at(y) > DeltaRatioThresh) {
+                yMinIdx = y;
+                break;
+            }
+        }
+        
+        for (int32_t y=deltaY.h-1; y>=0; y--) {
+            if (deltaYRatio.at(y) > DeltaRatioThresh) {
+                yMaxIdx = y;
+                break;
+            }
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+//        // Calculate `avgRow`
+//        std::unique_ptr<float[]> avgRow = std::make_unique<float[]>(H);
+//        for (int32_t y=0; y<H; y++) {
+//            float avg = 0;
+//            for (int32_t x=0; x<W; x++) {
+//                const float s = samples[y*W + x];
+//                avg += s;
+//            }
+//            avg /= W;
+//            avgRow[y] = avg;
+//        }
+//        
+//        // Calculate `avgCol`
+//        std::unique_ptr<float[]> avgCol = std::make_unique<float[]>(W);
+//        for (int32_t x=0; x<W; x++) {
+//            float avg = 0;
+//            for (int32_t y=0; y<H; y++) {
+//                const float s = samples[y*W + x];
+//                avg += s;
+//            }
+//            avg /= H;
+//            avgCol[x] = avg;
+//        }
+//        
+//        // Calculate background color
+////        const float bg = (avgRow[0] + avgRow[H-1] + avgCol[0] + avgCol[W-1]) / 4;
+//        
+//        // Calculate `stdDevRow`
+//        std::unique_ptr<float[]> stdDevRow = std::make_unique<float[]>(H);
+//        for (int32_t y=0; y<H; y++) {
+//            float sum = 0;
+//            for (int32_t x=0; x<W; x++) {
+//                const float s = samples[y*W + x];
+//                const float d = s - avgRow[y];
+//                sum += d*d;
+//            }
+//            sum /= W;
+//            stdDevRow[y] = std::sqrt(sum);
+//        }
+//        
+//        // Calculate `stdDevCol`
+//        std::unique_ptr<float[]> stdDevCol = std::make_unique<float[]>(W);
+//        for (int32_t x=0; x<W; x++) {
+//            float sum = 0;
+//            for (int32_t y=0; y<H; y++) {
+//                const float s = samples[y*W + x];
+//                const float d = s - avgCol[x];
+//                sum += d*d;
+//            }
+//            sum /= H;
+//            stdDevCol[x] = std::sqrt(sum);
+////            printf("%.5f ", std::sqrt(sum));
+//        }
+////        printf("\n");
+////        printf("\n ======================= \n");
+//        
+//        // Calculate `stdDevRowDelta`
+//        std::unique_ptr<float[]> stdDevRowDelta = std::make_unique<float[]>(H-1);
+//        for (int32_t y=0; y<H-1; y++) {
+//            stdDevRowDelta[y] = stdDevRow[y] - stdDevRow[y+1];
+//        }
+//        
+//        // Calculate `stdDevColDelta`
+//        std::unique_ptr<float[]> stdDevColDelta = std::make_unique<float[]>(W-1);
+//        for (int32_t x=0; x<W-1; x++) {
+//            stdDevColDelta[x] = stdDevCol[x] - stdDevCol[x+1];
+//        }
+//        
+//        float xMin = INFINITY;
+//        float xMax = -INFINITY;
+//        float yMin = INFINITY;
+//        float yMax = -INFINITY;
+//        
+//        // Calculate yMinIdx / yMaxIdx
+//        for (int32_t y=0; y<H-1; y++) {
+//            const float s = stdDevRowDelta[y];
+//            if (s < yMin) {
+//                yMin = s;
+//                yMinIdx = y;
+//            }
+//            
+//            if (s > yMax) {
+//                yMax = s;
+//                yMaxIdx = y;
+//            }
+//        }
+//        
+//        // Calculate xMinIdx / xMaxIdx
+//        for (int32_t x=0; x<W-1; x++) {
+//            const float s = stdDevColDelta[x];
+//            if (s < xMin) {
+//                xMin = s;
+//                xMinIdx = x;
+//            }
+//            
+//            if (s > xMax) {
+//                xMax = s;
+//                xMaxIdx = x;
+//            }
+//        }
+//        
 //        constexpr int32_t DeltaXMin = +1;
 //        constexpr int32_t DeltaXMax = +1;
 //        constexpr int32_t DeltaYMin = +3;
@@ -1020,7 +1044,8 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             if (autoExp) {
                 autoExp->update(imgStats.highlightCount, imgStats.shadowCount);
 //                exposure.coarseIntTime = autoExp->integrationTime();
-                exposure.coarseIntTime = 1000;
+//                exposure.coarseIntTime = 1000;
+                exposure.coarseIntTime = 8000;
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
