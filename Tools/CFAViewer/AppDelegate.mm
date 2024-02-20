@@ -503,8 +503,11 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
         .bottom = GrayHeight/2 + SearchRegionHeight/2 + SearchRegionOffsetY,
     };
     
-    constexpr int32_t FocusPosterWidth  = 26;
-    constexpr int32_t FocusPosterHeight = 33;
+//    constexpr int32_t FocusPosterWidth  = 26;
+//    constexpr int32_t FocusPosterHeight = 33;
+
+    constexpr int32_t FocusPosterWidth  = 26-4;
+    constexpr int32_t FocusPosterHeight = 33-4;
     
     Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
     
@@ -629,28 +632,24 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
         }
         
         
-        Img deltaXRatio(W-1);
+        Img deltaXMax(W-1);
         for (int32_t x=0; x<deltaX.w; x++) {
-            float min = +INFINITY;
             float max = -INFINITY;
             for (int32_t y=0; y<deltaX.h; y++) {
-                const float s = deltaX.at(x,y);
-                min = std::min(min, s);
+                const float s = std::abs(deltaX.at(x,y));
                 max = std::max(max, s);
             }
-            deltaXRatio.at(x) = max/min;
+            deltaXMax.at(x) = max;
         }
         
-        Img deltaYRatio(H-1);
+        Img deltaYMax(H-1);
         for (int32_t y=0; y<deltaY.h; y++) {
-            float min = +INFINITY;
             float max = -INFINITY;
             for (int32_t x=0; x<deltaY.w; x++) {
-                const float s = deltaY.at(x,y);
-                min = std::min(min, s);
+                const float s = std::abs(deltaY.at(x,y));
                 max = std::max(max, s);
             }
-            deltaYRatio.at(y) = max/min;
+            deltaYMax.at(y) = max;
         }
         
         
@@ -659,33 +658,71 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
         int32_t yMinIdx = -1;
         int32_t yMaxIdx = -1;
         
-        constexpr float DeltaRatioThresh = 2;
+        constexpr float DeltaMaxThresh = 3;
         
-        for (int32_t x=0; x<deltaX.w; x++) {
-            if (deltaXRatio.at(x) > DeltaRatioThresh) {
-                xMinIdx = x;
-                break;
+//        for (int32_t x=0; x<deltaX.w; x++) {
+//            printf("%.5f ", deltaXMax.at(x));
+//        }
+//        printf("\n\n");
+        
+        {
+            float first = deltaXMax.at(0);
+            for (int32_t x=0; x<deltaX.w; x++) {
+                const float s = deltaXMax.at(x);
+                printf("%.5f ", s/first);
+            }
+            printf("\n\n");
+        }
+        
+        
+        {
+            const float first = deltaXMax.at(0);
+            for (int32_t x=0; x<deltaX.w; x++) {
+                const float s = deltaXMax.at(x);
+//                printf("%.5f ", s/first);
+                if (s/first > DeltaMaxThresh) {
+                    xMinIdx = x;
+                    break;
+                }
+//                first = s;
+            }
+            
+//            printf("\n\n");
+        }
+        
+        {
+            const float first = deltaXMax.at(deltaX.w-1);
+            for (int32_t x=deltaX.w-1; x>=0; x--) {
+                const float s = deltaXMax.at(x);
+                if (s/first > DeltaMaxThresh) {
+                    xMaxIdx = x;
+                    break;
+                }
+//                first = s;
             }
         }
         
-        for (int32_t x=deltaX.w-1; x>=0; x--) {
-            if (deltaXRatio.at(x) > DeltaRatioThresh) {
-                xMaxIdx = x;
-                break;
+        {
+            const float first = deltaYMax.at(0);
+            for (int32_t y=0; y<deltaY.h; y++) {
+                const float s = deltaYMax.at(y);
+                if (s/first > DeltaMaxThresh) {
+                    yMinIdx = y;
+                    break;
+                }
+//                first = s;
             }
         }
         
-        for (int32_t y=0; y<deltaY.h; y++) {
-            if (deltaYRatio.at(y) > DeltaRatioThresh) {
-                yMinIdx = y;
-                break;
-            }
-        }
-        
-        for (int32_t y=deltaY.h-1; y>=0; y--) {
-            if (deltaYRatio.at(y) > DeltaRatioThresh) {
-                yMaxIdx = y;
-                break;
+        {
+            const float first = deltaYMax.at(deltaY.h-1);
+            for (int32_t y=deltaY.h-1; y>=0; y--) {
+                const float s = deltaYMax.at(y);
+                if (s/first > DeltaMaxThresh) {
+                    yMaxIdx = y;
+                    break;
+                }
+//                first = s;
             }
         }
         
@@ -796,11 +833,9 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
 //                xMaxIdx = x;
 //            }
 //        }
-//        
-//        constexpr int32_t DeltaXMin = +1;
-//        constexpr int32_t DeltaXMax = +1;
-//        constexpr int32_t DeltaYMin = +3;
-//        constexpr int32_t DeltaYMax = -3;
+        
+        constexpr int32_t OffsetX = +1;
+        constexpr int32_t OffsetY = +0;
         
         const bool good =
             xMinIdx < xMaxIdx &&
@@ -810,8 +845,8 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
         if (good) {
             float x = (xMinIdx + xMaxIdx) / 2;
             float y = (yMinIdx + yMaxIdx) / 2;
-            x += FocusPosterSearchRegion.left;
-            y += FocusPosterSearchRegion.top;
+            x += FocusPosterSearchRegion.left + OffsetX;
+            y += FocusPosterSearchRegion.top + OffsetY;
             x -= FocusPosterWidth / 2;
             y -= FocusPosterHeight / 2;
             x = std::floor(x);
