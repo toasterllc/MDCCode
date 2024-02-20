@@ -603,7 +603,7 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
         }
         
         // Calculate background color
-        const float bg = (avgRow[0] + avgRow[H-1] + avgCol[0] + avgCol[W-1]) / 4;
+//        const float bg = (avgRow[0] + avgRow[H-1] + avgCol[0] + avgCol[W-1]) / 4;
         
         // Calculate `stdDevRow`
         std::unique_ptr<float[]> stdDevRow = std::make_unique<float[]>(H);
@@ -611,11 +611,11 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             float sum = 0;
             for (int32_t x=0; x<W; x++) {
                 const float s = samples[y*W + x];
-                const float d = std::abs(s - bg);
-                sum += d;
+                const float d = s - avgRow[y];
+                sum += d*d;
             }
-//            sum /= W;
-            stdDevRow[y] = sum;
+            sum /= W;
+            stdDevRow[y] = std::sqrt(sum);
         }
         
         // Calculate `stdDevCol`
@@ -624,15 +624,15 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             float sum = 0;
             for (int32_t y=0; y<H; y++) {
                 const float s = samples[y*W + x];
-                const float d = std::abs(s - bg);
-                sum += d;
+                const float d = s - avgCol[x];
+                sum += d*d;
             }
-//            sum /= H;
-            stdDevCol[x] = sum;
-            printf("%.5f ", sum);
+            sum /= H;
+            stdDevCol[x] = std::sqrt(sum);
+//            printf("%.5f ", sum);
         }
-        printf("\n");
-        printf("\n ======================= \n");
+//        printf("\n");
+//        printf("\n ======================= \n");
         
         // Calculate `stdDevRowDelta`
         std::unique_ptr<float[]> stdDevRowDelta = std::make_unique<float[]>(H-1);
