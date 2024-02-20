@@ -192,7 +192,7 @@ struct RawImage {
     ImagePaths _imagePaths;
     ImagePathsIter _imagePathIter;
     std::optional<Color<ColorSpace::Raw>> _whiteBalanceColor;
-    std::optional<CGRect> _focusSampleRect;
+    std::optional<CGRect> _focusPosterRect;
 }
 
 - (void)awakeFromNib {
@@ -629,7 +629,7 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             }
             sum /= H;
             stdDevCol[x] = std::sqrt(sum);
-//            printf("%.5f ", sum);
+//            printf("%.5f ", std::sqrt(sum));
         }
 //        printf("\n");
 //        printf("\n ======================= \n");
@@ -637,13 +637,13 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
         // Calculate `stdDevRowDelta`
         std::unique_ptr<float[]> stdDevRowDelta = std::make_unique<float[]>(H-1);
         for (int32_t y=0; y<H-1; y++) {
-            stdDevRowDelta[y] = stdDevRow[y+1] - stdDevRow[y];
+            stdDevRowDelta[y] = stdDevRow[y] - stdDevRow[y+1];
         }
         
         // Calculate `stdDevColDelta`
         std::unique_ptr<float[]> stdDevColDelta = std::make_unique<float[]>(W-1);
         for (int32_t x=0; x<W-1; x++) {
-            stdDevColDelta[x] = stdDevCol[x+1] - stdDevCol[x];
+            stdDevColDelta[x] = stdDevCol[x] - stdDevCol[x+1];
         }
         
         int32_t xMinIdx = 0;
@@ -683,35 +683,38 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             }
         }
         
-        xMinIdx += FocusPosterSearchRegion.left;
-        xMaxIdx += FocusPosterSearchRegion.left;
+        constexpr int32_t DeltaXMin = +0;
+        constexpr int32_t DeltaXMax = +1;
+        constexpr int32_t DeltaYMin = +3;
+        constexpr int32_t DeltaYMax = -3;
         
-        yMinIdx += FocusPosterSearchRegion.top;
-        yMaxIdx += FocusPosterSearchRegion.top;
+        xMinIdx += FocusPosterSearchRegion.left + DeltaXMin;
+        xMaxIdx += FocusPosterSearchRegion.left + DeltaXMax;
         
-        const CGRect rect = {
-            { (float)xMinIdx / GrayWidth, (float)yMinIdx / GrayHeight },
-            { (float)(xMaxIdx-xMinIdx) / GrayWidth, (float)(yMaxIdx-yMinIdx) / GrayHeight },
-        };
+        yMinIdx += FocusPosterSearchRegion.top + DeltaYMin;
+        yMaxIdx += FocusPosterSearchRegion.top + DeltaYMax;
         
-        [_mainView setSampleRect:rect];
+        const bool good =
+            xMinIdx < xMaxIdx &&
+            yMinIdx < yMaxIdx &&
+            xMinIdx>=0 && xMaxIdx>=0 && yMinIdx>=0 && yMaxIdx>=0;
         
-//        for (int32_t x=0; x<W-1; x++) {
-//            const float s = stdDevColDelta[x];
-//            printf("%f");
-//        }
+        if (good) {
+            _focusPosterRect = {
+                { (float)xMinIdx / GrayWidth, (float)yMinIdx / GrayHeight },
+                { (float)(xMaxIdx-xMinIdx) / GrayWidth, (float)(yMaxIdx-yMinIdx) / GrayHeight },
+            };
+            
+            [_mainView setSampleRect:*_focusPosterRect];
         
-//        printf("%d %d %d %d\n", xMinIdx, xMaxIdx, yMinIdx, yMaxIdx);
+        } else {
+            _focusPosterRect = std::nullopt;
+            [_mainView setSampleRect:{}];
+        }
     }
     
-    
-    
-    
-    
-    
-    
-    if (_focusSampleRect) {
-        const SampleRect sampleRect = _SampleRectForCGRect(*_focusSampleRect, [grayTxt width], [grayTxt height]);
+    if (_focusPosterRect) {
+        const SampleRect sampleRect = _SampleRectForCGRect(*_focusPosterRect, [grayTxt width], [grayTxt height]);
         auto [ samples, sampleCount ] = _SamplesRead(_renderer, sampleRect, grayTxt);
         
         float avg = 0;
@@ -1484,7 +1487,7 @@ static SampleRect _SampleRectForCGRect(CGRect rect, size_t width, size_t height)
         
     // Drag rect: set the focus sample rect
     } else {
-        _focusSampleRect = rect;
+        _focusPosterRect = rect;
     }
     
     
