@@ -15,6 +15,7 @@ using ColorCheckerPositions = std::array<CGPoint,ColorChecker::Count>;
 - (void)setDelegate:(id<MainViewDelegate>)delegate;
 
 - (CGRect)sampleRect;
+- (void)setSampleRect:(CGRect)x;
 
 - (const ColorCheckerPositions&)colorCheckerPositions;
 - (void)setColorCheckerPositions:(const ColorCheckerPositions&)x;
