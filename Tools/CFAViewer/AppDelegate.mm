@@ -504,6 +504,9 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
         .bottom = GrayHeight/2 + SearchRegionHeight/2 + SearchRegionOffsetY,
     };
     
+    constexpr int32_t FocusPosterWidth  = 26;
+    constexpr int32_t FocusPosterHeight = 33;
+    
     Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
     
     if (!_txt || [_txt width]!=_raw.image.width || [_txt height]!=_raw.image.height) {
@@ -683,16 +686,10 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             }
         }
         
-        constexpr int32_t DeltaXMin = +0;
-        constexpr int32_t DeltaXMax = +1;
-        constexpr int32_t DeltaYMin = +3;
-        constexpr int32_t DeltaYMax = -3;
-        
-        xMinIdx += FocusPosterSearchRegion.left + DeltaXMin;
-        xMaxIdx += FocusPosterSearchRegion.left + DeltaXMax;
-        
-        yMinIdx += FocusPosterSearchRegion.top + DeltaYMin;
-        yMaxIdx += FocusPosterSearchRegion.top + DeltaYMax;
+//        constexpr int32_t DeltaXMin = +1;
+//        constexpr int32_t DeltaXMax = +1;
+//        constexpr int32_t DeltaYMin = +3;
+//        constexpr int32_t DeltaYMax = -3;
         
         const bool good =
             xMinIdx < xMaxIdx &&
@@ -700,9 +697,18 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             xMinIdx>=0 && xMaxIdx>=0 && yMinIdx>=0 && yMaxIdx>=0;
         
         if (good) {
+            float x = (xMinIdx + xMaxIdx) / 2;
+            float y = (yMinIdx + yMaxIdx) / 2;
+            x += FocusPosterSearchRegion.left;
+            y += FocusPosterSearchRegion.top;
+            x -= FocusPosterWidth / 2;
+            y -= FocusPosterHeight / 2;
+            x = std::floor(x);
+            y = std::floor(y);
+            
             _focusPosterRect = {
-                { (float)xMinIdx / GrayWidth, (float)yMinIdx / GrayHeight },
-                { (float)(xMaxIdx-xMinIdx) / GrayWidth, (float)(yMaxIdx-yMinIdx) / GrayHeight },
+                { (float)x / GrayWidth, (float)y / GrayHeight },
+                { (float)FocusPosterWidth / GrayWidth, (float)FocusPosterHeight / GrayHeight },
             };
             
             [_mainView setSampleRect:*_focusPosterRect];
@@ -711,6 +717,42 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
             _focusPosterRect = std::nullopt;
             [_mainView setSampleRect:{}];
         }
+        
+//        float x = (xMaxIdx - xMinIdx) / 2;
+//        float y = (yMaxIdx - yMinIdx) / 2;
+//        x -= FocusPosterWidth / 2;
+//        y -= FocusPosterHeight / 2;
+//        
+//        
+//        
+//        constexpr int32_t DeltaXMin = 0;
+//        constexpr int32_t DeltaXMax = 0;
+//        constexpr int32_t DeltaYMin = 0;
+//        constexpr int32_t DeltaYMax = 0;
+//        
+//        xMinIdx += FocusPosterSearchRegion.left + DeltaXMin;
+//        xMaxIdx += FocusPosterSearchRegion.left + DeltaXMax;
+//        
+//        yMinIdx += FocusPosterSearchRegion.top + DeltaYMin;
+//        yMaxIdx += FocusPosterSearchRegion.top + DeltaYMax;
+//        
+//        const bool good =
+//            xMinIdx < xMaxIdx &&
+//            yMinIdx < yMaxIdx &&
+//            xMinIdx>=0 && xMaxIdx>=0 && yMinIdx>=0 && yMaxIdx>=0;
+//        
+//        if (good) {
+//            _focusPosterRect = {
+//                { (float)xMinIdx / GrayWidth, (float)yMinIdx / GrayHeight },
+//                { (float)(xMaxIdx-xMinIdx) / GrayWidth, (float)(yMaxIdx-yMinIdx) / GrayHeight },
+//            };
+//            
+//            [_mainView setSampleRect:*_focusPosterRect];
+//        
+//        } else {
+//            _focusPosterRect = std::nullopt;
+//            [_mainView setSampleRect:{}];
+//        }
     }
     
     if (_focusPosterRect) {
