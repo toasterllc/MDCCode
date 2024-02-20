@@ -54,7 +54,7 @@ using namespace CFAViewer;
     _sampleLayer = [CALayer new];
     [_sampleLayer setActions:LayerNullActions()];
     [_sampleLayer setBorderColor:(CGColorRef)SRGBColor(1, 0, 0, 1)];
-    [_sampleLayer setBorderWidth:.1];
+    [_sampleLayer setBorderWidth:.5];
     [_imageLayer addSublayer:_sampleLayer];
     
     // Create our color checker circles if they don't exist yet
@@ -105,6 +105,16 @@ using namespace CFAViewer;
     r.size.height /= layerSize.height;
     r.origin.y = 1-r.origin.y-r.size.height; // Flip Y so the origin is at the top-left
     return r;
+}
+
+- (void)setSampleRect:(CGRect)x {
+    const CGSize layerSize = [_imageLayer bounds].size;
+    x.origin.y = 1-x.origin.y-x.size.height; // Flip Y so the origin is at the bottom-left
+    x.origin.x *= layerSize.width;
+    x.origin.y *= layerSize.height;
+    x.size.width *= layerSize.width;
+    x.size.height *= layerSize.height;
+    [_sampleLayer setFrame:x];
 }
 
 - (std::vector<CGPoint>)colorCheckerPositions {
