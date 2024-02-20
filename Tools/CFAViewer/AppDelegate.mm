@@ -575,10 +575,98 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
     
     
     {
+        struct Img {
+            Img(int32_t w) : w(w), h(1) {
+                assert(w > 0);
+                s.resize(w);
+            }
+            
+            Img(int32_t w, int32_t h) : w(w), h(h) {
+                assert(w > 0);
+                assert(h > 0);
+                s.resize(w*h);
+            }
+            
+            float& at(int32_t x) {
+                assert(x > 0);
+                assert(x < w);
+                assert(h == 1);
+                return s.at(x);
+            }
+            
+            float& at(int32_t x, int32_t y) {
+                assert(x > 0);
+                assert(y > 0);
+                assert(x < w);
+                assert(y < h);
+                return s.at(y*w+x);
+            }
+            
+            int32_t w = 0;
+            int32_t h = 0;
+            std::vector<float> s;
+        };
+        
         auto [ samples, sampleCount ] = _SamplesRead(_renderer, FocusPosterSearchRegion, grayTxt);
         
         const int32_t W = FocusPosterSearchRegion.right-FocusPosterSearchRegion.left;
         const int32_t H = FocusPosterSearchRegion.bottom-FocusPosterSearchRegion.top;
+        
+        // Calculate `deltaX` (derivative of image in the X direction)
+        Img deltaX(W-1, H);
+        for (int32_t y=0; y<deltaX.h; y++) {
+            for (int32_t x=0; x<deltaX.w; x++) {
+                deltaX.at(x,y) = samples[y*W+x] - samples[y*W+(x+1)];
+            }
+        }
+        
+        // Calculate `deltaY` (derivative of image in the Y direction)
+        Img deltaY(W, H-1);
+        for (int32_t y=0; y<deltaY.h; y++) {
+            for (int32_t x=0; x<deltaY.w; x++) {
+                deltaY.at(x,y) = samples[y*W+x] - samples[(y+1)*W+x];
+            }
+        }
+        
+        
+//        Img deltaXMin(W-1);
+//        Img deltaXMax(W-1);
+        Img deltaXRatio(W-1);
+        for (int32_t x=0; x<deltaX.w; x++) {
+            float min = +INFINITY;
+            float max = -INFINITY;
+            for (int32_t y=0; y<deltaX.h; y++) {
+                const float s = deltaX.at(x,y);
+                min = std::min(min, s);
+                max = std::max(max, s);
+            }
+            deltaXRatio.at(x) = max/min;
+//            deltaXMin.at(x) = min;
+//            deltaXMax.at(x) = max;
+        }
+        
+//        Img deltaYMin(H-1);
+//        Img deltaYMax(H-1);
+        Img deltaYRatio(H-1);
+        for (int32_t y=0; y<deltaY.h; y++) {
+            float min = +INFINITY;
+            float max = -INFINITY;
+            for (int32_t x=0; x<deltaY.w; x++) {
+                const float s = deltaY.at(x,y);
+                min = std::min(min, s);
+                max = std::max(max, s);
+            }
+            deltaYRatio.at(y) = max/min;
+//            deltaYMin.at(y) = min;
+//            deltaYMax.at(y) = max;
+        }
+        
+        
+        
+        
+        
+        
+        
         
         // Calculate `avgRow`
         std::unique_ptr<float[]> avgRow = std::make_unique<float[]>(H);
@@ -775,25 +863,25 @@ static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& render
         printf("k: %f\n", k);
     }
     
-    static int count = 0;
-    count++;
-    if (!(count % 10)) {
-        static const fs::path ImageDir = "/Users/dave/Desktop/Focus-Train-Images";
-        static bool imageDirCreated = false;
-        if (!imageDirCreated) {
-            std::filesystem::create_directory(ImageDir);
-            imageDirCreated = true;
-        }
-        
-        const fs::path imagePath = ImageDir / (std::to_string(count) + ".png");
-        
-        id img = _renderer.imageCreate(grayTxt);
-        assert(img);
-        NSURL* outputURL = [NSURL fileURLWithPath:@(imagePath.c_str())];
-        CGImageDestinationRef imageDest = CGImageDestinationCreateWithURL((CFURLRef)outputURL, kUTTypePNG, 1, nullptr);
-        CGImageDestinationAddImage(imageDest, (__bridge CGImageRef)img, nullptr);
-        CGImageDestinationFinalize(imageDest);
-    }
+//    static int count = 0;
+//    count++;
+//    if (!(count % 10)) {
+//        static const fs::path ImageDir = "/Users/dave/Desktop/Focus-Train-Images";
+//        static bool imageDirCreated = false;
+//        if (!imageDirCreated) {
+//            std::filesystem::create_directory(ImageDir);
+//            imageDirCreated = true;
+//        }
+//        
+//        const fs::path imagePath = ImageDir / (std::to_string(count) + ".png");
+//        
+//        id img = _renderer.imageCreate(grayTxt);
+//        assert(img);
+//        NSURL* outputURL = [NSURL fileURLWithPath:@(imagePath.c_str())];
+//        CGImageDestinationRef imageDest = CGImageDestinationCreateWithURL((CFURLRef)outputURL, kUTTypePNG, 1, nullptr);
+//        CGImageDestinationAddImage(imageDest, (__bridge CGImageRef)img, nullptr);
+//        CGImageDestinationFinalize(imageDest);
+//    }
     
     
     [[_mainView imageLayer] setTexture:grayTxt];
