@@ -12,6 +12,7 @@
 - (void)setDelegate:(id<MainViewDelegate>)delegate;
 
 - (CGRect)sampleRect;
+- (void)setSampleRect:(CGRect)x;
 
 - (std::vector<CGPoint>)colorCheckerPositions;
 - (void)setColorCheckerPositions:(const std::vector<CGPoint>&)points;

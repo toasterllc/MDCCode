@@ -481,7 +481,29 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
     };
 }
 
+static std::tuple<std::unique_ptr<float[]>,size_t> _SamplesRead(Renderer& renderer, const SampleRect& rect, const Renderer::Txt& txt) {
+    const size_t w = rect.right-rect.left+1;
+    const size_t h = rect.bottom-rect.top+1;
+    const size_t sampleCount = w*h;
+    std::unique_ptr<float[]> samples = std::make_unique<float[]>(sampleCount);
+    renderer.textureRead(txt, samples.get(), sampleCount, MTLRegionMake2D(rect.left, rect.top, w, h));
+    return std::make_tuple(std::move(samples), sampleCount);
+}
+
 - (void)_render {
+    constexpr int32_t GrayWidth  = 2304/2;
+    constexpr int32_t GrayHeight = 1296/2;
+    constexpr int32_t SearchRegionWidth   =  75;
+    constexpr int32_t SearchRegionHeight  = 100;
+    constexpr int32_t SearchRegionOffsetX =   0;
+    constexpr int32_t SearchRegionOffsetY = -20;
+    constexpr SampleRect FocusPosterSearchRegion = {
+        .left   =  GrayWidth/2 -  SearchRegionWidth/2 + SearchRegionOffsetX,
+        .right  =  GrayWidth/2 +  SearchRegionWidth/2 + SearchRegionOffsetX,
+        .top    = GrayHeight/2 - SearchRegionHeight/2 + SearchRegionOffsetY,
+        .bottom = GrayHeight/2 + SearchRegionHeight/2 + SearchRegionOffsetY,
+    };
+    
     Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
     
     if (!_txt || [_txt width]!=_raw.image.width || [_txt height]!=_raw.image.height) {
@@ -517,25 +539,169 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
     );
     
     
-    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatRGBA8Unorm_sRGB, _raw.image.width/2, _raw.image.height/2);
+    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatR32Float, _raw.image.width/2, _raw.image.height/2);
     _renderer.render(grayTxt,
-        _renderer.FragmentShader("GrayscaleRGBForRaw",
+        _renderer.FragmentShader("GrayscaleForRaw",
             // Texture args
             rawTxt
         )
     );
     
+//    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatRGBA8Unorm_sRGB, _raw.image.width/2, _raw.image.height/2);
+//    _renderer.render(grayTxt,
+//        _renderer.FragmentShader("GrayscaleRGBForRaw",
+//            // Texture args
+//            rawTxt
+//        )
+//    );
+    
+    _renderer.render(grayTxt,
+        _renderer.FragmentShader("SearchRegionDarken",
+            // Buffer args
+            FocusPosterSearchRegion,
+            // Texture args
+            grayTxt
+        )
+    );
+    
+    
     _renderer.sync(grayTxt);
     _renderer.commitAndWait();
     
+    
+    
+    
+    
+    {
+        auto [ samples, sampleCount ] = _SamplesRead(_renderer, FocusPosterSearchRegion, grayTxt);
+        
+        const int32_t W = FocusPosterSearchRegion.right-FocusPosterSearchRegion.left;
+        const int32_t H = FocusPosterSearchRegion.bottom-FocusPosterSearchRegion.top;
+        
+        // Calculate `avgRow`
+        std::unique_ptr<float[]> avgRow = std::make_unique<float[]>(H);
+        for (int32_t y=0; y<H; y++) {
+            float avg = 0;
+            for (int32_t x=0; x<W; x++) {
+                const float s = samples[y*W + x];
+                avg += s;
+            }
+            avg /= W;
+            avgRow[y] = avg;
+        }
+        
+        // Calculate `avgCol`
+        std::unique_ptr<float[]> avgCol = std::make_unique<float[]>(W);
+        for (int32_t x=0; x<W; x++) {
+            float avg = 0;
+            for (int32_t y=0; y<H; y++) {
+                const float s = samples[y*W + x];
+                avg += s;
+            }
+            avg /= H;
+            avgCol[x] = avg;
+        }
+        
+        // Calculate `stdDevRow`
+        std::unique_ptr<float[]> stdDevRow = std::make_unique<float[]>(H);
+        for (int32_t y=0; y<H; y++) {
+            float sum = 0;
+            for (int32_t x=0; x<W; x++) {
+                const float s = samples[y*W + x];
+                const float d = s - avgRow[y];
+                sum += d*d;
+            }
+            sum /= W;
+            stdDevRow[y] = std::sqrt(sum);
+        }
+        
+        // Calculate `stdDevCol`
+        std::unique_ptr<float[]> stdDevCol = std::make_unique<float[]>(W);
+        for (int32_t x=0; x<W; x++) {
+            float sum = 0;
+            for (int32_t y=0; y<H; y++) {
+                const float s = samples[y*W + x];
+                const float d = s - avgCol[x];
+                sum += d*d;
+            }
+            sum /= H;
+            stdDevCol[x] = std::sqrt(sum);
+        }
+        
+        // Calculate `stdDevRowDelta`
+        std::unique_ptr<float[]> stdDevRowDelta = std::make_unique<float[]>(H-1);
+        for (int32_t y=0; y<H-1; y++) {
+            stdDevRowDelta[y] = stdDevRow[y+1] - stdDevRow[y];
+        }
+        
+        // Calculate `stdDevColDelta`
+        std::unique_ptr<float[]> stdDevColDelta = std::make_unique<float[]>(W-1);
+        for (int32_t x=0; x<W-1; x++) {
+            stdDevColDelta[x] = stdDevCol[x+1] - stdDevCol[x];
+        }
+        
+        int32_t xMinIdx = 0;
+        int32_t xMaxIdx = 0;
+        int32_t yMinIdx = 0;
+        int32_t yMaxIdx = 0;
+        float xMin = INFINITY;
+        float xMax = -INFINITY;
+        float yMin = INFINITY;
+        float yMax = -INFINITY;
+        
+        // Calculate yMinIdx / yMaxIdx
+        for (int32_t y=0; y<H-1; y++) {
+            const float s = stdDevRowDelta[y];
+            if (s < yMin) {
+                yMin = s;
+                yMinIdx = y;
+            }
+            
+            if (s > yMax) {
+                yMax = s;
+                yMaxIdx = y;
+            }
+        }
+        
+        // Calculate xMinIdx / xMaxIdx
+        for (int32_t x=0; x<W-1; x++) {
+            const float s = stdDevColDelta[x];
+            if (s < xMin) {
+                xMin = s;
+                xMinIdx = x;
+            }
+            
+            if (s > xMax) {
+                xMax = s;
+                xMaxIdx = x;
+            }
+        }
+        
+        xMinIdx += FocusPosterSearchRegion.left;
+        xMaxIdx += FocusPosterSearchRegion.left;
+        
+        yMinIdx += FocusPosterSearchRegion.top;
+        yMaxIdx += FocusPosterSearchRegion.top;
+        
+        const CGRect rect = {
+            { (float)xMinIdx / GrayWidth, (float)yMinIdx / GrayHeight },
+            { (float)(xMaxIdx-xMinIdx) / GrayWidth, (float)(yMaxIdx-yMinIdx) / GrayHeight },
+        };
+        
+        [_mainView setSampleRect:rect];
+        
+//        printf("%d %d %d %d\n", xMinIdx, xMaxIdx, yMinIdx, yMaxIdx);
+    }
+    
+    
+    
+    
+    
+    
+    
     if (_focusSampleRect) {
         const SampleRect sampleRect = _SampleRectForCGRect(*_focusSampleRect, [grayTxt width], [grayTxt height]);
-        const size_t w = sampleRect.right-sampleRect.left+1;
-        const size_t h = sampleRect.bottom-sampleRect.top+1;
-        const size_t sampleCount = w*h;
-        std::unique_ptr<float[]> samples = std::make_unique<float[]>(sampleCount);
-        
-        _renderer.textureRead(grayTxt, samples.get(), sampleCount, MTLRegionMake2D(sampleRect.left, sampleRect.top, w, h));
+        auto [ samples, sampleCount ] = _SamplesRead(_renderer, sampleRect, grayTxt);
         
         float avg = 0;
         for (size_t i=0; i<sampleCount; i++) {
