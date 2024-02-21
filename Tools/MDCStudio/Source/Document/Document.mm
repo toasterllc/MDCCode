@@ -623,7 +623,7 @@ static void _SortNewestFirst(bool x) {
         imageCount, (imageCount>1 ? "Photos" : "Photo")]];
     
     [alert setInformativeText:[NSString stringWithFormat:
-        @"Are you sure you want to delete %ju %s? Once deleted, %s will be unrecoverable.\n\nThis action cannot be undone.",
+        @"Are you sure you want to delete %ju %s?\n\nOnce deleted, %s will be unrecoverable.",
         imageCount,
         (imageCount>1 ? "photos" : "photo"),
         (imageCount>1 ? "these photos" : "this photo")
