@@ -476,9 +476,7 @@ static bool _EventPhaseChanged(NSEventPhase x) {
     const CGFloat mag = [self _presentationMagnification];
     // TODO: we need to determine the '22' dynamically, because window titlebar heights aren't always 22pt (eg when there's a toolbar it's ~150pt)
     const CGFloat heightExtra = 22/mag; // Expand the height to get the NSWindow titlebar mirror effect
-    const CGRect visibleRect = [doc visibleRect];//[doc convertRectToLayer:[doc visibleRect]];
-    
-    CGRect docFrame = visibleRect;
+    CGRect docFrame = [self documentVisibleRect];
     
     if ([doc isFlipped]) {
         docFrame.origin.y -= heightExtra;
