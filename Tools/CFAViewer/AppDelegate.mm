@@ -930,9 +930,10 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
         
         float k = 0;
         for (float s : img.s) {
-            k += pow(avg-s, 2);
+            k += pow(s-avg, 2);
         }
         k /= img.s.size();
+        k = std::sqrt(k);
         k *= 1000;
         printf("k: %f\n", k);
     }
