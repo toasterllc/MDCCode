@@ -934,7 +934,20 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
         k /= img.s.size();
         k = std::sqrt(k);
         k *= 1000;
-        printf("k: %f\n", k);
+        
+        
+        constexpr float KAccumCoeff = 0.90;
+        static float kaccum = 0;
+        static int kaccumCounter = 0;
+        kaccumCounter++;
+        
+        if (kaccumCounter > 5) {
+            kaccum = (KAccumCoeff)*kaccum + (1-KAccumCoeff)*k;
+        } else {
+            kaccum = k;
+        }
+        
+        printf("k: %f\n", kaccum);
     }
     
 //    static int count = 0;
