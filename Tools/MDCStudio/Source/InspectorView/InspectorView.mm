@@ -814,6 +814,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         _rootItem->name = @"";
         
         {
+            constexpr CGFloat ValueIndent = 95;
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = 10;
             spacer->darkBackground = true;
@@ -826,7 +827,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
                 it->name = @"Image ID";
-                it->valueIndent = 115;
+                it->valueIndent = ValueIndent;
                 it->getter = _GetterCreate(self, _Get_id);
                 it->darkBackground = true;
                 [section addItem:it];
@@ -835,7 +836,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
                 it->name = @"Timestamp";
-                it->valueIndent = 115;
+                it->valueIndent = ValueIndent;
                 it->getter = _GetterCreate(self, _Get_timestamp);
                 it->darkBackground = true;
                 [section addItem:it];
@@ -844,7 +845,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
                 it->name = @"Integration Time";
-                it->valueIndent = 115;
+                it->valueIndent = ValueIndent;
                 it->getter = _GetterCreate(self, _Get_integrationTime);
                 it->darkBackground = true;
                 [section addItem:it];
@@ -853,7 +854,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
                 it->name = @"Analog Gain";
-                it->valueIndent = 115;
+                it->valueIndent = ValueIndent;
                 it->getter = _GetterCreate(self, _Get_analogGain);
                 it->darkBackground = true;
                 [section addItem:it];
@@ -862,7 +863,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
                 it->name = @"Battery";
-                it->valueIndent = 115;
+                it->valueIndent = ValueIndent;
                 it->getter = _GetterCreate(self, _Get_batteryLevel);
                 it->darkBackground = true;
                 [section addItem:it];

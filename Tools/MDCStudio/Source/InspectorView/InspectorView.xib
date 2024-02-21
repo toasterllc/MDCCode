@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -413,15 +413,15 @@
                                             <tableCellView identifier="InspectorViewItem_Stat" translatesAutoresizingMaskIntoConstraints="NO" id="PvD-sd-A2Z" customClass="InspectorViewItem_Stat">
                                                 <rect key="frame" x="1" y="279" width="247" height="20"/>
                                                 <subviews>
-                                                    <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">
+                                                    <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">
                                                         <rect key="frame" x="0.0" y="3" width="38" height="14"/>
-                                                        <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" alignment="right" title="Label" drawsBackground="YES" id="UyD-hX-cXp">
+                                                        <textFieldCell key="cell" controlSize="small" selectable="YES" alignment="right" title="Label" drawsBackground="YES" id="UyD-hX-cXp">
                                                             <font key="font" metaFont="menu" size="11"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" red="0.11764705882352941" green="0.11764705882352941" blue="0.11764705882352941" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                                                         </textFieldCell>
                                                     </textField>
-                                                    <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="dea-aE-rs7">
+                                                    <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="dea-aE-rs7">
                                                         <rect key="frame" x="50" y="3" width="33" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" selectable="YES" title="Label" drawsBackground="YES" id="Eyq-II-qyb">
                                                             <font key="font" metaFont="menu" size="11"/>
@@ -435,10 +435,12 @@
                                                     <constraint firstItem="0kZ-EE-8AJ" firstAttribute="leading" secondItem="PvD-sd-A2Z" secondAttribute="leading" id="ACy-gA-se9"/>
                                                     <constraint firstItem="dea-aE-rs7" firstAttribute="leading" secondItem="0kZ-EE-8AJ" secondAttribute="trailing" constant="12" id="BWW-YR-Sjg"/>
                                                     <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="dea-aE-rs7" secondAttribute="trailing" constant="12" id="WR9-F6-UCK"/>
+                                                    <constraint firstAttribute="bottom" secondItem="dea-aE-rs7" secondAttribute="bottom" priority="750" constant="3" id="XKh-eR-Efa"/>
                                                     <constraint firstItem="0kZ-EE-8AJ" firstAttribute="top" secondItem="PvD-sd-A2Z" secondAttribute="top" constant="3" id="Zgo-uG-cda"/>
+                                                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="0kZ-EE-8AJ" secondAttribute="bottom" constant="3" id="e0Z-Ej-O4o"/>
                                                     <constraint firstItem="dea-aE-rs7" firstAttribute="top" secondItem="0kZ-EE-8AJ" secondAttribute="top" id="gQm-fT-dVc"/>
                                                     <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="20" id="hnN-Xo-q5h"/>
-                                                    <constraint firstAttribute="bottom" secondItem="dea-aE-rs7" secondAttribute="bottom" constant="3" id="nuz-3w-BsZ"/>
+                                                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="dea-aE-rs7" secondAttribute="bottom" constant="3" id="nuz-3w-BsZ"/>
                                                 </constraints>
                                                 <connections>
                                                     <outlet property="_indentLeft" destination="ACy-gA-se9" id="zMt-Cv-JVi"/>
@@ -460,7 +462,7 @@
                         <nil key="backgroundColor"/>
                     </clipView>
                     <constraints>
-                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="250" id="zJS-E0-FD3"/>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="210" id="zJS-E0-FD3"/>
                     </constraints>
                     <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="oaD-I2-Mvd">
                         <rect key="frame" x="0.0" y="384" width="250" height="16"/>
