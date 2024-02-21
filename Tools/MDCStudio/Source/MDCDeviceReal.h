@@ -138,18 +138,18 @@ struct MDCDeviceReal : MDCDevice {
         // Wait until _status.status is loaded
         _status.signal.wait([&] { return (bool)_status.status; });
         
+        // Disable syncing and wait for it to stop.
+        // This is necessary for 2 reasons:
+        //   1. to make sure our caches won't have stale data placed in them when we clear them below
+        //   2. to make sure our image library's imageIdEnd doesn't get clobbered by _sync_thread()
+        //      running while we do this.
+        auto syncStop = _syncStop();
+        
         // Clear the image library
         {
             auto lock = std::unique_lock(*_imageLibrary);
             _imageLibrary->clear();
             _imageLibrary->write();
-        }
-        
-        // Wait for the sync thread to exit
-        // We do this so we're sure that the caches won't have stale data
-        // placed in them when we clear them next.
-        {
-            _sync.signal.wait([&] { return !_sync.progress; });
         }
         
         // Reset MSP430 state, and erase the SD card
@@ -191,6 +191,8 @@ struct MDCDeviceReal : MDCDevice {
             auto lock = _sync.signal.lock();
             // Bail if syncing is already underway
             if (_sync.progress) return;
+            // Bail if syncing isn't allowed right now
+            if (_sync.stop) return;
             _sync.progress = 0;
             _sync.thread = Thread([&] { _sync_thread(); });
         }
@@ -594,6 +596,11 @@ struct MDCDeviceReal : MDCDevice {
         });
     }
     
+    Cleanup _syncStop() {
+        _syncStop(true);
+        return std::make_unique<_Cleanup>([=] { _syncStop(false); });
+    }
+    
     void _hostModeSet(bool en, bool interrupt=false) {
         try {
             if (en) {
@@ -681,6 +688,18 @@ struct MDCDeviceReal : MDCDevice {
         }
     }
     
+    void _syncStop(bool stop) {
+        auto lock = _sync.signal.lock();
+        if (stop) {
+            _sync.stop++;
+            _sync.signal.wait(lock, [&] { return !_sync.progress; });
+        
+        } else {
+            assert(_sync.stop);
+            _sync.stop--;
+        }
+    }
+    
     // MARK: - Sync
     
     static void _RemoveStaleImages(const std::unique_lock<ImageLibrary>& lock,
@@ -702,6 +721,8 @@ struct MDCDeviceReal : MDCDevice {
     static std::optional<size_t> _LoadImageCount(const std::unique_lock<ImageLibrary>& lock,
         ImageLibraryPtr imageLibrary, const ImageRange& deviceImageRange) {
         const Img::Id libImageIdEnd = imageLibrary->imageIdEnd();
+        printf("libImageIdEnd:%ju deviceImageRange.end:%ju\n",
+            (uintmax_t)libImageIdEnd, (uintmax_t)deviceImageRange.end);
         // If our image library claims to have newer images than the device, return an error
         if (libImageIdEnd > deviceImageRange.end) {
             return std::nullopt;
@@ -786,6 +807,7 @@ struct MDCDeviceReal : MDCDevice {
                     _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
                         {
                             auto lock = _sync.signal.lock();
+                            if (_sync.stop) throw Toastbox::Signal::Stop(); // Signalled to stop
                             _sync.progress = progress;
                             _sync.signal.signalAll();
                         }
@@ -924,6 +946,7 @@ struct MDCDeviceReal : MDCDevice {
     struct {
         Toastbox::Signal signal; // Protects this struct
         Thread thread;
+        uint32_t stop = 0;
         std::optional<float> progress;
     } _sync;
     

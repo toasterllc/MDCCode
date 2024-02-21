@@ -46,6 +46,7 @@ NSString* ConfirmationPhrase = @"nuke it";
     }
     
     [_accessoryTextField setPlaceholderString:ConfirmationPhrase];
+//    [_accessoryTextField setStringValue:ConfirmationPhrase];
     [self setAccessoryView:_accessoryView];
     
     [self layout];
