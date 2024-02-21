@@ -524,9 +524,9 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
     constexpr int32_t GrayWidth  = 2304/2;
     constexpr int32_t GrayHeight = 1296/2;
     constexpr int32_t SearchRegionWidth   =  75;
-    constexpr int32_t SearchRegionHeight  = 100;
+    constexpr int32_t SearchRegionHeight  = 140;
     constexpr int32_t SearchRegionOffsetX =   0;
-    constexpr int32_t SearchRegionOffsetY = -20;
+    constexpr int32_t SearchRegionOffsetY =   -20;
     constexpr SampleRect FocusPosterSearchRegion = {
         .left   =  GrayWidth/2 -  SearchRegionWidth/2 + SearchRegionOffsetX,
         .right  =  GrayWidth/2 +  SearchRegionWidth/2 + SearchRegionOffsetX,
@@ -1108,7 +1108,7 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
                 autoExp->update(imgStats.highlightCount, imgStats.shadowCount);
 //                exposure.coarseIntTime = autoExp->integrationTime();
 //                exposure.coarseIntTime = 1000;
-                exposure.coarseIntTime = 8000;
+                exposure.coarseIntTime = 4000;
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
