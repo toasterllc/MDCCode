@@ -900,14 +900,21 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[container]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(container)]];
     
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[container]"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(container)]];
+    
     NSLayoutConstraint* docHeightMin = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
         relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:containerSuperview attribute:NSLayoutAttributeHeight
         multiplier:1 constant:0];
     [docHeightMin setActive:true];
     
     _docHeight = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
-        relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
         multiplier:1 constant:0];
+    // _docHeight isn't Required because `docHeightMin` needs to override it
+    // We're priority==Low instead of High, because using High affects our
+    // window size for some reason.
+    [_docHeight setPriority:NSLayoutPriorityDefaultLow];
     [_docHeight setActive:true];
 }
 
