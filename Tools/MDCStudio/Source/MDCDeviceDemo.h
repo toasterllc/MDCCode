@@ -9,7 +9,6 @@ namespace MDCStudio {
 
 struct MDCDeviceDemo; using MDCDeviceDemoPtr = SharedPtr<MDCDeviceDemo>;
 struct MDCDeviceDemo : MDCDevice {
-    static constexpr const char _TmpDirTemplate[] = "llc.toaster.photon-transfer.XXXXXX";
     void init() {
         namespace fs = std::filesystem;
         printf("MDCDeviceDemo::init() %p\n", this);
@@ -54,16 +53,15 @@ struct MDCDeviceDemo : MDCDevice {
     }
     
     ~MDCDeviceDemo() {
+        printf("~MDCDeviceDemo() %p\n", this);
+        
         // Delete our temporary directory.
         // We have some sanity checks before we remove it, so a bug
         // doesn't cause us to delete the wrong directory.
         const Path d = dir();
         assert(!d.empty());
         assert(d.is_absolute());
-        assert(d.string().size() > sizeof(_TmpDirTemplate));
         std::filesystem::remove_all(d);
-        
-        printf("~MDCDeviceDemo() %p\n", this);
     }
     
     // MARK: - Device Settings
