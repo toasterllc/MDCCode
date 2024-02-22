@@ -139,10 +139,12 @@ struct MDCDeviceReal : MDCDevice {
         _status.signal.wait([&] { return (bool)_status.status; });
         
         // Disable syncing and wait for it to stop.
+        //
         // This is necessary for 2 reasons:
-        //   1. to make sure our caches won't have stale data placed in them when we clear them below
-        //   2. to make sure our image library's imageIdEnd doesn't get clobbered by _sync_thread()
-        //      running while we do this.
+        //   1. to make sure our caches won't have stale data placed in them after we clear them below,
+        //      (which is a side effect of _sync_thread())
+        //   2. to make sure _sync_thread() doesn't set our image library's imageIdEnd after we clear
+        //      it below via _imageLibrary->clear().
         auto syncStop = _syncStop();
         
         // Clear the image library
