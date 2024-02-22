@@ -41,7 +41,7 @@ struct MDCDeviceDemo : MDCDevice {
             auto it = _imageLibrary->begin();
             for (Img::Id id : thumbIds) {
                 ImageRecordPtr rec = *it;
-                ImageRecordInit(rec, id, 0, 0);
+                ImageRecordInit(*rec, id, 0, 0);
                 recs.insert(rec);
                 i++;
                 it++;

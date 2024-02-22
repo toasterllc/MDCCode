@@ -80,11 +80,11 @@ struct ImageSource : Object {
         return CPUCount;
     }
     
-    static void ImageRecordInit(ImageRecordPtr rec, Img::Id id, SD::Block addrFull, SD::Block addrThumb) {
-        rec->info.id = id;
-        rec->info.addrFull = addrFull;
-        rec->info.addrThumb = addrThumb;
-        rec->status.loadCount = 0;
+    static void ImageRecordInit(ImageRecord& rec, Img::Id id, SD::Block addrFull, SD::Block addrThumb) {
+        rec.info.id = id;
+        rec.info.addrFull = addrFull;
+        rec.info.addrThumb = addrThumb;
+        rec.status.loadCount = 0;
     }
     
     void init(const Path& dir) {
