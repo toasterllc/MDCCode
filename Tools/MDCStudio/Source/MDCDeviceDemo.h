@@ -1,8 +1,9 @@
 #import <iterator>
 #import <unistd.h>
-#import "MDCDevice.h"
 #import "Toastbox/Mmap.h"
 #import "Toastbox/NumForStr.h"
+#import "MDCDevice.h"
+#import "TmpDir.h"
 
 namespace MDCStudio {
 
@@ -13,8 +14,7 @@ struct MDCDeviceDemo : MDCDevice {
         namespace fs = std::filesystem;
         printf("MDCDeviceDemo::init() %p\n", this);
         
-        std::string tmpTemplate = fs::temp_directory_path() / _TmpDirTemplate;
-        const Path tmpDir = mkdtemp(tmpTemplate.data());
+        const Path tmpDir = TmpDir::SubDirCreate("MDCDeviceDemo");
         MDCDevice::init(tmpDir); // Call super
         name("Photon Demo");
         
