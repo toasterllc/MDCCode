@@ -604,7 +604,6 @@ public:
     // Read samples from a texture
     template <typename T>
     void textureRead(id<MTLTexture> txt, T* samples, size_t cap, MTLRegion region) {
-        const size_t w = [txt width];
         const MTLPixelFormat fmt = [txt pixelFormat];
         const size_t samplesPerPixel = SamplesPerPixel(fmt);
         assert(cap >= samplesPerPixel*region.size.width*region.size.height);
