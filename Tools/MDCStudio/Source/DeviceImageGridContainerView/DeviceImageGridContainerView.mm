@@ -93,7 +93,7 @@ using namespace MDCStudio;
         [[self imageGridScrollView] setHidden:noPhotos];
         [_noPhotosView setHidden:!noPhotos];
         [[NSNotificationCenter defaultCenter]
-            postNotificationName:@(CenterContentViewTypes::ChangedNotification)
+            postNotificationName:@(CenterContentTypes::ChangedNotification)
             object:self];
     }
 }
@@ -108,7 +108,7 @@ using namespace MDCStudio;
     return _configureDeviceButton;
 }
 
-// MARK: CenterContentView
+// MARK: CenterContent
 
 - (NSView*)initialFirstResponder {
     return [self imageGridView];

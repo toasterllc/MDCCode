@@ -1,12 +1,12 @@
 #import <Cocoa/Cocoa.h>
 
-namespace CenterContentViewTypes {
+namespace CenterContentTypes {
     // The NSNotification posted when the value of -sourceListAllowed/-inspectorAllowed changed
-    constexpr const char* ChangedNotification = "CenterContentViewTypes::ChangedNotification";
+    constexpr const char* ChangedNotification = "CenterContentTypes::ChangedNotification";
 };
 
-// CenterContentView: protocol for a content view
-@protocol CenterContentView
+// CenterContent: protocol for a content view
+@protocol CenterContent
 @optional
 - (NSView*)initialFirstResponder;
 - (bool)sourceListAllowed;
