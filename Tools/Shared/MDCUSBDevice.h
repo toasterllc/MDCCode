@@ -27,12 +27,16 @@ public:
     static bool USBDeviceMatches(const USBDevice& dev) {
         namespace USB = Toastbox::USB;
         try {
-            USB::DeviceDescriptor desc = dev.deviceDescriptor();
+//            USB::DeviceDescriptor desc = dev.deviceDescriptor();
             
 //            // TODO: legacy; remove
 //            if (desc.idVendor==1155 && desc.idProduct==57105) {
 //                return true;
 //            }
+            
+            if (dev.product()=="Photon" && dev.manufacturer()=="Toaster") {
+                return true;
+            }
             
             if (dev.product()=="Photon" && dev.manufacturer()=="Toaster LLC") {
                 return true;

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -702,12 +703,12 @@ CA
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="u1Q-F0-yZc"/>
-                            <menuItem title="Hide Devices" keyEquivalent="D" id="kIP-vf-haE">
+                            <menuItem title="Show Devices" keyEquivalent="D" id="kIP-vf-haE">
                                 <connections>
-                                    <action selector="_toggleDevices:" target="-1" id="T3I-oa-Ish"/>
+                                    <action selector="_toggleSourceList:" target="-1" id="T3I-oa-Ish"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Hide Inspector" keyEquivalent="i" id="0xU-y1-8qV">
+                            <menuItem title="Show Inspector" keyEquivalent="i" id="0xU-y1-8qV">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="_toggleInspector:" target="-1" id="bOr-9I-qq2"/>
@@ -767,7 +768,7 @@ CA
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="179" y="218" width="672" height="531"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="944"/>
             <view key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="U52-Ez-6UZ">
                 <rect key="frame" x="0.0" y="0.0" width="672" height="531"/>
                 <autoresizingMask key="autoresizingMask"/>

@@ -92,6 +92,9 @@ using namespace MDCStudio;
         const bool noPhotos = _device->imageLibrary()->empty();
         [[self imageGridScrollView] setHidden:noPhotos];
         [_noPhotosView setHidden:!noPhotos];
+        [[NSNotificationCenter defaultCenter]
+            postNotificationName:@(ContentViewableTypes::ChangedNotification)
+            object:self];
     }
 }
 
@@ -104,5 +107,23 @@ using namespace MDCStudio;
 - (NSButton*)configureDeviceButton {
     return _configureDeviceButton;
 }
+
+// MARK: ContentViewable
+
+- (NSView*)initialFirstResponder {
+    return [self imageGridView];
+}
+
+- (bool)inspectorAllowed {
+    return [_noPhotosView isHidden];
+}
+
+//- (BOOL)acceptsFirstResponder {
+//    return false;
+//}
+//
+//- (NSResponder*)nextResponder {
+//    return [self imageGridView];
+//}
 
 @end

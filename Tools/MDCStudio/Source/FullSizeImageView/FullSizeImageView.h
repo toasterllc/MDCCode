@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ImageSource.h"
 #import "FixedDocumentView.h"
+#import "ContentViewable.h"
 @class FullSizeImageView;
 
 @protocol FullSizeImageViewResponder
@@ -8,7 +9,7 @@
 - (void)_backToImages:(id)sender;
 @end
 
-@interface FullSizeImageView : NSView
+@interface FullSizeImageView : NSView <ContentViewable>
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
 - (MDCStudio::ImageRecordPtr)imageRecord;
 - (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec;

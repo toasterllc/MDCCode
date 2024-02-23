@@ -16,17 +16,37 @@
 #import "MDCDevicesManager.h"
 #import "PrintImages.h"
 #import "MDCDeviceDemo.h"
+#import "ContentViewable.h"
 
 using namespace MDCStudio;
+
+@interface NoDevicesView : NSView <ContentViewable>
+@end
+
+@implementation NoDevicesView
+
+- (bool)sourceListAllowed {
+    return false;
+}
+
+- (bool)inspectorAllowed {
+    return false;
+}
+
+@end
 
 @interface Document () <NSSplitViewDelegate, SourceListViewDelegate, DeviceSettingsViewDelegate>
 @end
 
 @implementation Document {
+    IBOutlet NSWindow* _window;
     IBOutlet NSSplitView* _splitView;
-    IBOutlet NSView* _noDevicesView;
-    MDCDeviceDemoPtr _demoDevice;
-    NSWindow* _window;
+    IBOutlet NSView<ContentViewable>* _noDevicesView;
+    
+    id _contentViewChangedOb;
+    bool _sourceListVisible;
+    bool _inspectorVisible;
+    
     Object::ObserverPtr _devicesOb;
     Object::ObserverPtr _prefsOb;
     
@@ -39,7 +59,7 @@ using namespace MDCStudio;
     
     struct {
         NSView* containerView;
-        NSView* view;
+        NSView<ContentViewable>* view;
     } _center;
     
     struct {
@@ -66,6 +86,8 @@ using namespace MDCStudio;
         MDCDevicePtr device;
         DeviceSettingsView* view;
     } _deviceSettings;
+    
+    MDCDeviceDemoPtr _demoDevice;
 }
 
 static NSMenu* _ContextMenuCreate() {
@@ -85,7 +107,7 @@ static NSMenu* _ContextMenuCreate() {
 template<typename T>
 static void _SetView(T& x, NSView* y) {
     if (x.view) [x.view removeFromSuperview];
-    x.view = y;
+    x.view = (id)y;
     if (x.view) {
         [x.containerView addSubview:x.view];
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|"
@@ -99,7 +121,16 @@ static void _SetView(T& x, NSView* y) {
 }
 
 - (void)awakeFromNib {
-    _window = [_splitView window];
+    __weak auto selfWeak = self;
+    
+    _contentViewChangedOb = [[NSNotificationCenter defaultCenter] addObserverForName:@(ContentViewableTypes::ChangedNotification)
+        object:nil queue:nil usingBlock:^(NSNotification* note) {
+        [selfWeak _updateAccessoryViewVisibility];
+    }];
+    
+    _sourceListVisible = true;
+    _inspectorVisible = true;
+    
 //    [_window setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameDarkAqua]];
     
     _left.containerView = [[NSView alloc] initWithFrame:{}];
@@ -127,22 +158,43 @@ static void _SetView(T& x, NSView* y) {
     [self sourceListViewSelectionChanged:_sourceListView];
     
     {
-        __weak auto selfWeak = self;
         _prefsOb = PrefsGlobal()->observerAdd([=] (auto, auto) { [selfWeak _prefsChanged]; });
     }
     
     // Observe devices connecting/disconnecting
     {
-        __weak auto selfWeak = self;
         _devicesOb = MDCDevicesManagerGlobal()->observerAdd([=] (auto, auto) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _updateDevices]; });
         });
     }
     
     [self _updateDevices];
+    [self _updateAccessoryViewVisibility];
 }
 
-- (NSView*)_devicesContainerView {
+- (void)_updateAccessoryViewVisibility {
+    const bool sourceListVisible = _sourceListVisible && [self _sourceListAllowed];
+    const bool inspectorVisible = _inspectorVisible && [self _inspectorAllowed];
+    
+    [[self _sourceListContainerView] setHidden:!sourceListVisible];
+    [[self _inspectorContainerView] setHidden:!inspectorVisible];
+}
+
+- (bool)_sourceListAllowed {
+    if ([_center.view respondsToSelector:@selector(sourceListAllowed)]) {
+        return [_center.view sourceListAllowed];
+    }
+    return true;
+}
+
+- (bool)_inspectorAllowed {
+    if ([_center.view respondsToSelector:@selector(inspectorAllowed)]) {
+        return [_center.view inspectorAllowed];
+    }
+    return true;
+}
+
+- (NSView*)_sourceListContainerView {
     return [_splitView arrangedSubviews][0];
 }
 
@@ -189,13 +241,13 @@ static void _SetView(T& x, NSView* y) {
         return true;
     
     // Toggle panels
-    } else if ([item action] == @selector(_toggleDevices:)) {
-        [mitem setTitle:([[self _devicesContainerView] isHidden] ? @"Show Devices" : @"Hide Devices")];
-        return true;
+    } else if ([item action] == @selector(_toggleSourceList:)) {
+        [mitem setState:(_sourceListVisible ? NSControlStateValueOn : NSControlStateValueOff)];
+        return [self _sourceListAllowed];
     
     } else if ([item action] == @selector(_toggleInspector:)) {
-        [mitem setTitle:([[self _inspectorContainerView] isHidden] ? @"Show Inspector" : @"Hide Inspector")];
-        return true;
+        [mitem setState:(_inspectorVisible ? NSControlStateValueOn : NSControlStateValueOff)];
+        return [self _inspectorAllowed];
     
     // Navigation
     } else if ([item action] == @selector(_showImage:)) {
@@ -297,9 +349,9 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     [_active.fullSizeImageView setImageRecord:imageRecord];
     
     if (_center.view != _active.fullSizeImageView) {
-        _SetView(_center, _active.fullSizeImageView);
+        [self _setCenterView:_active.fullSizeImageView];
         [_active.fullSizeImageView magnifyToFit];
-        [_window makeFirstResponder:_active.fullSizeImageView];
+//        [_window makeFirstResponder:_active.fullSizeImageView];
     }
     
     _active.selection->images({ imageRecord });
@@ -310,7 +362,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 - (void)_setActiveImageSource:(ImageSourcePtr)imageSource {
     // Short-circuit if nothing changed
-    if (_active.imageSource == imageSource) return;
+//    if (_active.imageSource == imageSource) return;
     
     // First reset our state
     _active = {};
@@ -318,52 +370,52 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     _SetView(_right, nil);
     [_window makeFirstResponder:_sourceListView];
     
-    // Short-circuit (after resetting _active) if there's no selection
-    if (!imageSource) return;
+    if (imageSource) {
+        MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>(imageSource);
+        assert(device);
+        
+        // Update _active
+        {
+            _active.imageSource = imageSource;
+            _active.imageLibrary = _active.imageSource->imageLibrary();
+            _active.selection = Object::Create<ImageSelection>(_active.imageLibrary);
+            
+            __weak auto selfWeak = self;
+            
+            // Observe image library
+            _active.deviceOb = device->observerAdd([=] (auto, const Object::Event& ev) {
+                dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _activeDeviceChanged]; });
+            });
+            
+            // Observe image library
+            _active.imageLibraryOb = _active.imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
+                const auto type = static_cast<const ImageLibrary::Event&>(ev).type;
+                dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
+            });
+            
+            DeviceImageGridContainerView* imageGridContainerView = [[DeviceImageGridContainerView alloc] initWithDevice:device
+                selection:_active.selection];
+            
+            [[imageGridContainerView configureDeviceButton] setTarget:self];
+            [[imageGridContainerView configureDeviceButton] setAction:@selector(_showSettingsForActiveDevice:)];
+            _active.imageGridContainerView = imageGridContainerView;
+            
+    //        _active.imageGridView = Toastbox::Cast<ImageGridView*>([[imageGridContainerView imageGridScrollView] document]);
+            _UpdateImageGridViewFromPrefs(PrefsGlobal(), [_active.imageGridContainerView imageGridView]);
+            [[_active.imageGridContainerView imageGridView] setMenu:_ContextMenuCreate()];
+            
+            _active.fullSizeImageView = [[FullSizeImageView alloc] initWithImageSource:device];
+            [_active.fullSizeImageView setMenu:_ContextMenuCreate()];
+            
+            _active.inspectorView = [[InspectorView alloc] initWithImageSource:device selection:_active.selection];
+        }
+        
+        [self _setCenterView:_active.imageGridContainerView];
+        _SetView(_right, _active.inspectorView);
     
-    MDCDevicePtr device = Toastbox::CastOrNull<MDCDevicePtr>(imageSource);
-    assert(device);
-    
-    // Update _active
-    {
-        _active.imageSource = imageSource;
-        _active.imageLibrary = _active.imageSource->imageLibrary();
-        _active.selection = Object::Create<ImageSelection>(_active.imageLibrary);
-        
-        __weak auto selfWeak = self;
-        
-        // Observe image library
-        _active.deviceOb = device->observerAdd([=] (auto, const Object::Event& ev) {
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _activeDeviceChanged]; });
-        });
-        
-        // Observe image library
-        _active.imageLibraryOb = _active.imageLibrary->observerAdd([=] (auto, const Object::Event& ev) {
-            const auto type = static_cast<const ImageLibrary::Event&>(ev).type;
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLibraryEventType:type]; });
-        });
-        
-        DeviceImageGridContainerView* imageGridContainerView = [[DeviceImageGridContainerView alloc] initWithDevice:device
-            selection:_active.selection];
-        
-        [[imageGridContainerView configureDeviceButton] setTarget:self];
-        [[imageGridContainerView configureDeviceButton] setAction:@selector(_showSettingsForActiveDevice:)];
-        _active.imageGridContainerView = imageGridContainerView;
-        
-//        _active.imageGridView = Toastbox::Cast<ImageGridView*>([[imageGridContainerView imageGridScrollView] document]);
-        _UpdateImageGridViewFromPrefs(PrefsGlobal(), [_active.imageGridContainerView imageGridView]);
-        [[_active.imageGridContainerView imageGridView] setMenu:_ContextMenuCreate()];
-        
-        _active.fullSizeImageView = [[FullSizeImageView alloc] initWithImageSource:device];
-        [_active.fullSizeImageView setMenu:_ContextMenuCreate()];
-        
-        _active.inspectorView = [[InspectorView alloc] initWithImageSource:device selection:_active.selection];
+    } else {
+        [self _setCenterView:_noDevicesView];
     }
-    
-    _SetView(_center, _active.imageGridContainerView);
-    _SetView(_right, _active.inspectorView);
-    
-    [_window makeFirstResponder:_active.imageGridContainerView];
 }
 
 // MARK: - Source List
@@ -433,9 +485,21 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     [_sourceListView setImageSources:imageSources];
     [self sourceListViewSelectionChanged:_sourceListView];
     
-    const bool haveDevices = !imageSources.empty();
-    [_splitView setHidden:!haveDevices];
-    [_noDevicesView setHidden:haveDevices];
+//    const bool haveDevices = !imageSources.empty();
+//    if (!haveDevices) {
+//        [self _setCenterView:_noDevicesView];
+//    }
+}
+
+- (void)_setCenterView:(NSView<ContentViewable>*)view {
+    _SetView(_center, view);
+    [self _updateAccessoryViewVisibility];
+    
+    NSView* fr = view;
+    if ([view respondsToSelector:@selector(initialFirstResponder)]) {
+        fr = [view initialFirstResponder];
+    }
+    [_window makeFirstResponder:fr];
 }
 
 // MARK: - Device Observer
@@ -472,13 +536,13 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
             auto lock = std::unique_lock(*_active.imageLibrary);
             const bool deleted = _active.imageLibrary->find([_active.fullSizeImageView imageRecord]) == _active.imageLibrary->end();
             if (deleted) {
-                _SetView(_center, _active.imageGridContainerView);
+                [self _setCenterView:_active.imageGridContainerView];
             }
         }
         break;
     case ImageLibrary::Event::Type::Clear:
         // When the image library is cleared, return to the grid view
-        _SetView(_center, _active.imageGridContainerView);
+        [self _setCenterView:_active.imageGridContainerView];
         _active.selection->images({});
         break;
     default:
@@ -511,16 +575,14 @@ static void _SortNewestFirst(bool x) {
     _SortNewestFirst(false);
 }
 
-- (IBAction)_toggleDevices:(id)sender {
-    NSView* view = [self _devicesContainerView];
-    const bool shown = [view isHidden];
-    [view setHidden:!shown];
+- (IBAction)_toggleSourceList:(id)sender {
+    _sourceListVisible = !_sourceListVisible;
+    [self _updateAccessoryViewVisibility];
 }
 
 - (IBAction)_toggleInspector:(id)sender {
-    NSView* view = [self _inspectorContainerView];
-    const bool shown = [view isHidden];
-    [view setHidden:!shown];
+    _inspectorVisible = !_inspectorVisible;
+    [self _updateAccessoryViewVisibility];
 }
 
 - (IBAction)_showSettingsForActiveDevice:(id)sender {
@@ -551,7 +613,7 @@ static void _SortNewestFirst(bool x) {
 
 - (IBAction)_backToImages:(id)sender {
     assert(_active.fullSizeImageView && _center.view==_active.fullSizeImageView);
-    _SetView(_center, _active.imageGridContainerView);
+    [self _setCenterView:_active.imageGridContainerView];
     
     // -layoutIfNeeded is necessary on the window so that we can scroll the grid
     // view to a particular spot immediately, instead of having to wait until
@@ -562,7 +624,7 @@ static void _SortNewestFirst(bool x) {
     _active.selection->images({ rec });
     
     ImageGridView* igv = [_active.imageGridContainerView imageGridView];
-    [_window makeFirstResponder:igv];
+//    [_window makeFirstResponder:igv];
     
     const std::optional<CGRect> rect = [igv rectForImageRecord:rec];
     if (rect) [igv scrollToImageRect:*rect center:true];

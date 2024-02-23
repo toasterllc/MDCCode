@@ -237,6 +237,7 @@
 		5544AE5F27B6F16E006AB473 /* DocumentController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentController.h; sourceTree = "<group>"; };
 		5544AE6027B6F16F006AB473 /* DocumentController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DocumentController.mm; sourceTree = "<group>"; };
 		55458F5B2B86C4F3008AB8B2 /* TmpDir.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TmpDir.h; sourceTree = "<group>"; };
+		55458F5D2B8882D9008AB8B2 /* ContentViewable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ContentViewable.h; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* Photon Transfer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Photon Transfer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		55496F48278CFC0600BCA739 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -712,6 +713,7 @@
 				559704E52AE0E46B006CD617 /* ImageExporter */,
 				55425B5A29A2B8C900F25D57 /* ImageCornerButton */,
 				55F8877C29D3A6E30075593F /* DeviceSettings */,
+				55458F5D2B8882D9008AB8B2 /* ContentViewable.h */,
 				554243AC2B3EC4DB00BDFE25 /* PrintImages.h */,
 				554243AD2B3EC4DB00BDFE25 /* PrintImages.mm */,
 				551453292B4116B20056A92D /* ColorButtonCell.h */,

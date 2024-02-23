@@ -8,8 +8,9 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="Document">
             <connections>
-                <outlet property="_noDevicesView" destination="WfS-w1-Plf" id="3W8-Wv-AAL"/>
+                <outlet property="_noDevicesView" destination="2j6-kp-vWE" id="s2O-zh-rFK"/>
                 <outlet property="_splitView" destination="wmp-X4-4cT" id="zYd-My-Ma5"/>
+                <outlet property="_window" destination="xOd-HO-29H" id="G75-OM-EeA"/>
                 <outlet property="window" destination="xOd-HO-29H" id="JIz-fz-R2o"/>
             </connections>
         </customObject>
@@ -24,56 +25,6 @@
                 <rect key="frame" x="0.0" y="0.0" width="960" height="400"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="WfS-w1-Plf" userLabel="No Devices View">
-                        <rect key="frame" x="273" y="117" width="415" height="167"/>
-                        <subviews>
-                            <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="bk8-K4-AVv">
-                                <rect key="frame" x="20" y="20" width="187" height="127"/>
-                                <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Connect-A-Photon" id="vFY-Fq-eNT"/>
-                            </imageView>
-                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="S2M-ej-Rco">
-                                <rect key="frame" x="215" y="84" width="182" height="28"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="Connect a Photon" id="GGq-Cu-6D2">
-                                    <font key="font" metaFont="systemThin" size="24"/>
-                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                </textFieldCell>
-                            </textField>
-                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y2u-Vd-xdg">
-                                <rect key="frame" x="272" y="56" width="17" height="16"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="or" id="ed7-tv-M0i">
-                                    <font key="font" metaFont="system"/>
-                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                </textFieldCell>
-                            </textField>
-                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9nf-1d-g0c">
-                                <rect key="frame" x="295" y="54" width="100" height="18"/>
-                                <buttonCell key="cell" type="inline" title="Try Demo…" bezelStyle="inline" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zOs-Kc-ZT0">
-                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="smallSystemBold"/>
-                                </buttonCell>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="100" id="mPW-Gi-kBb"/>
-                                </constraints>
-                                <connections>
-                                    <action selector="_tryDemo:" target="-2" id="B0B-lg-KD3"/>
-                                </connections>
-                            </button>
-                        </subviews>
-                        <constraints>
-                            <constraint firstItem="S2M-ej-Rco" firstAttribute="leading" secondItem="bk8-K4-AVv" secondAttribute="trailing" constant="10" id="FSH-7J-56l"/>
-                            <constraint firstItem="bk8-K4-AVv" firstAttribute="top" secondItem="WfS-w1-Plf" secondAttribute="top" constant="20" id="IbZ-jg-L7S"/>
-                            <constraint firstAttribute="trailing" secondItem="S2M-ej-Rco" secondAttribute="trailing" constant="20" id="K53-qq-acQ"/>
-                            <constraint firstItem="bk8-K4-AVv" firstAttribute="leading" secondItem="WfS-w1-Plf" secondAttribute="leading" constant="20" id="KMB-jg-0fu"/>
-                            <constraint firstItem="S2M-ej-Rco" firstAttribute="centerY" secondItem="bk8-K4-AVv" secondAttribute="centerY" constant="-15" id="PYx-cT-3OD"/>
-                            <constraint firstItem="9nf-1d-g0c" firstAttribute="firstBaseline" secondItem="Y2u-Vd-xdg" secondAttribute="firstBaseline" id="U34-1r-5Mf"/>
-                            <constraint firstItem="9nf-1d-g0c" firstAttribute="leading" secondItem="Y2u-Vd-xdg" secondAttribute="trailing" constant="8" id="cfy-dw-CaL"/>
-                            <constraint firstItem="9nf-1d-g0c" firstAttribute="top" secondItem="S2M-ej-Rco" secondAttribute="bottom" constant="12" id="fFz-eN-zcp"/>
-                            <constraint firstItem="9nf-1d-g0c" firstAttribute="trailing" secondItem="S2M-ej-Rco" secondAttribute="trailing" id="ldy-eP-d6M"/>
-                            <constraint firstAttribute="bottom" secondItem="bk8-K4-AVv" secondAttribute="bottom" constant="20" id="ndT-p3-Rtn"/>
-                        </constraints>
-                    </customView>
                     <splitView arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wmp-X4-4cT">
                         <rect key="frame" x="0.0" y="0.0" width="960" height="400"/>
                         <connections>
@@ -83,13 +34,9 @@
                 </subviews>
                 <constraints>
                     <constraint firstItem="wmp-X4-4cT" firstAttribute="top" secondItem="gIp-Ho-8D9" secondAttribute="top" id="BId-h8-ipU"/>
-                    <constraint firstItem="WfS-w1-Plf" firstAttribute="centerY" secondItem="gIp-Ho-8D9" secondAttribute="centerY" id="Ml5-Yr-cI8"/>
-                    <constraint firstItem="WfS-w1-Plf" firstAttribute="top" relation="greaterThanOrEqual" secondItem="gIp-Ho-8D9" secondAttribute="top" constant="20" symbolic="YES" id="XeN-Gs-kZ6"/>
                     <constraint firstItem="wmp-X4-4cT" firstAttribute="leading" secondItem="gIp-Ho-8D9" secondAttribute="leading" id="cff-kE-j1I"/>
-                    <constraint firstItem="WfS-w1-Plf" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="gIp-Ho-8D9" secondAttribute="leading" constant="20" symbolic="YES" id="k59-bA-0xr"/>
                     <constraint firstAttribute="bottom" secondItem="wmp-X4-4cT" secondAttribute="bottom" id="lMK-Vb-YnC"/>
                     <constraint firstAttribute="trailing" secondItem="wmp-X4-4cT" secondAttribute="trailing" id="qG7-K9-N8b"/>
-                    <constraint firstItem="WfS-w1-Plf" firstAttribute="centerX" secondItem="gIp-Ho-8D9" secondAttribute="centerX" id="zUq-bZ-Jsk"/>
                 </constraints>
             </view>
             <connections>
@@ -97,6 +44,68 @@
             </connections>
             <point key="canvasLocation" x="139" y="356"/>
         </window>
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="2j6-kp-vWE" userLabel="No Devices View" customClass="NoDevicesView">
+            <rect key="frame" x="0.0" y="0.0" width="455" height="207"/>
+            <subviews>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="WfS-w1-Plf">
+                    <rect key="frame" x="20" y="20" width="415" height="167"/>
+                    <subviews>
+                        <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="bk8-K4-AVv">
+                            <rect key="frame" x="20" y="20" width="187" height="127"/>
+                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Connect-A-Photon" id="vFY-Fq-eNT"/>
+                        </imageView>
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="S2M-ej-Rco">
+                            <rect key="frame" x="215" y="85" width="182" height="28"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="Connect a Photon" id="GGq-Cu-6D2">
+                                <font key="font" metaFont="systemThin" size="24"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y2u-Vd-xdg">
+                            <rect key="frame" x="272" y="57" width="17" height="16"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="or" id="ed7-tv-M0i">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9nf-1d-g0c">
+                            <rect key="frame" x="295" y="55" width="100" height="18"/>
+                            <buttonCell key="cell" type="inline" title="Try Demo…" bezelStyle="inline" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zOs-Kc-ZT0">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="smallSystemBold"/>
+                            </buttonCell>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="100" id="mPW-Gi-kBb"/>
+                            </constraints>
+                            <connections>
+                                <action selector="_tryDemo:" target="-2" id="B0B-lg-KD3"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                    <constraints>
+                        <constraint firstItem="S2M-ej-Rco" firstAttribute="leading" secondItem="bk8-K4-AVv" secondAttribute="trailing" constant="10" id="FSH-7J-56l"/>
+                        <constraint firstItem="bk8-K4-AVv" firstAttribute="top" secondItem="WfS-w1-Plf" secondAttribute="top" constant="20" id="IbZ-jg-L7S"/>
+                        <constraint firstAttribute="trailing" secondItem="S2M-ej-Rco" secondAttribute="trailing" constant="20" id="K53-qq-acQ"/>
+                        <constraint firstItem="bk8-K4-AVv" firstAttribute="leading" secondItem="WfS-w1-Plf" secondAttribute="leading" constant="20" id="KMB-jg-0fu"/>
+                        <constraint firstItem="S2M-ej-Rco" firstAttribute="centerY" secondItem="bk8-K4-AVv" secondAttribute="centerY" constant="-15" id="PYx-cT-3OD"/>
+                        <constraint firstItem="9nf-1d-g0c" firstAttribute="firstBaseline" secondItem="Y2u-Vd-xdg" secondAttribute="firstBaseline" id="U34-1r-5Mf"/>
+                        <constraint firstItem="9nf-1d-g0c" firstAttribute="leading" secondItem="Y2u-Vd-xdg" secondAttribute="trailing" constant="8" id="cfy-dw-CaL"/>
+                        <constraint firstItem="9nf-1d-g0c" firstAttribute="top" secondItem="S2M-ej-Rco" secondAttribute="bottom" constant="12" id="fFz-eN-zcp"/>
+                        <constraint firstItem="9nf-1d-g0c" firstAttribute="trailing" secondItem="S2M-ej-Rco" secondAttribute="trailing" id="ldy-eP-d6M"/>
+                        <constraint firstAttribute="bottom" secondItem="bk8-K4-AVv" secondAttribute="bottom" constant="20" id="ndT-p3-Rtn"/>
+                    </constraints>
+                </customView>
+            </subviews>
+            <constraints>
+                <constraint firstItem="WfS-w1-Plf" firstAttribute="centerX" secondItem="2j6-kp-vWE" secondAttribute="centerX" id="K4I-nJ-JNe"/>
+                <constraint firstItem="WfS-w1-Plf" firstAttribute="centerY" secondItem="2j6-kp-vWE" secondAttribute="centerY" id="MSW-Ue-W9f"/>
+                <constraint firstItem="WfS-w1-Plf" firstAttribute="top" relation="greaterThanOrEqual" secondItem="2j6-kp-vWE" secondAttribute="top" constant="20" id="gGt-zt-czv"/>
+                <constraint firstItem="WfS-w1-Plf" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="2j6-kp-vWE" secondAttribute="leading" constant="20" id="l2X-aT-3qJ"/>
+            </constraints>
+            <point key="canvasLocation" x="83" y="744"/>
+        </customView>
     </objects>
     <resources>
         <image name="Connect-A-Photon" width="187" height="127"/>
