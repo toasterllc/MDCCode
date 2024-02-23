@@ -9,6 +9,25 @@ namespace MDCStudio {
 
 struct MDCDeviceDemo; using MDCDeviceDemoPtr = SharedPtr<MDCDeviceDemo>;
 struct MDCDeviceDemo : MDCDevice {
+    static void _ImageOptionsInit(ImageOptions& opts) {
+        const ColorRaw illum{0.56862, 1, 0.70588};
+        const CCM ccm = CCM{
+            .illum = illum,
+            .matrix = ColorMatrixForIlluminant(illum).matrix,
+        };
+        
+        ImageWhiteBalanceSet(opts.whiteBalance, false, ccm);
+        
+        opts.exposure   = -0.141;
+        opts.saturation = +0.312;
+        opts.localContrast = {
+            .amount = 0.448,
+            .radius = 62.651,
+        };
+        
+        opts.reconstructHighlights = false;
+    }
+    
     void init() {
         namespace fs = std::filesystem;
         printf("MDCDeviceDemo::init() %p\n", this);
@@ -47,9 +66,25 @@ struct MDCDeviceDemo : MDCDevice {
             }
         }
         
-        // Load the images!
-        // This will cause our dataRead() functions to be called to actually supply the image data.
+        // Perform our initial image import
         _loadThumbs(Priority::Low, true, recs);
+        
+        // Set our custom ImageOptions (just for aesthetics) on every image and re-render
+        // the thumbnails.
+        //
+        // We have to render twice because the initial import populates rec.info and does
+        // our illuminant estimation. (Illuminant estimation is necessary for
+        // auto-white-balance to function, should the user modify one of the demo photos
+        // to enable AWB).
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            for (auto it=_imageLibrary->begin(); it!=_imageLibrary->end(); it++) {
+                ImageRecordPtr rec = *it;
+                _ImageOptionsInit(rec->options);
+            }
+        }
+        
+        _loadThumbs(Priority::Low, false, recs);
     }
     
     ~MDCDeviceDemo() {
