@@ -16,11 +16,11 @@
 #import "MDCDevicesManager.h"
 #import "PrintImages.h"
 #import "MDCDeviceDemo.h"
-#import "ContentViewable.h"
+#import "CenterContentView.h"
 
 using namespace MDCStudio;
 
-@interface NoDevicesView : NSView <ContentViewable>
+@interface NoDevicesView : NSView <CenterContentView>
 @end
 
 @implementation NoDevicesView
@@ -41,7 +41,7 @@ using namespace MDCStudio;
 @implementation Document {
     IBOutlet NSWindow* _window;
     IBOutlet NSSplitView* _splitView;
-    IBOutlet NSView<ContentViewable>* _noDevicesView;
+    IBOutlet NSView<CenterContentView>* _noDevicesView;
     
     id _contentViewChangedOb;
     bool _sourceListVisible;
@@ -59,7 +59,7 @@ using namespace MDCStudio;
     
     struct {
         NSView* containerView;
-        NSView<ContentViewable>* view;
+        NSView<CenterContentView>* view;
     } _center;
     
     struct {
@@ -123,7 +123,7 @@ static void _SetView(T& x, NSView* y) {
 - (void)awakeFromNib {
     __weak auto selfWeak = self;
     
-    _contentViewChangedOb = [[NSNotificationCenter defaultCenter] addObserverForName:@(ContentViewableTypes::ChangedNotification)
+    _contentViewChangedOb = [[NSNotificationCenter defaultCenter] addObserverForName:@(CenterContentViewTypes::ChangedNotification)
         object:nil queue:nil usingBlock:^(NSNotification* note) {
         [selfWeak _updateAccessoryViewVisibility];
     }];
@@ -491,7 +491,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 //    }
 }
 
-- (void)_setCenterView:(NSView<ContentViewable>*)view {
+- (void)_setCenterView:(NSView<CenterContentView>*)view {
     _SetView(_center, view);
     [self _updateAccessoryViewVisibility];
     
