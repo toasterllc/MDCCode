@@ -339,15 +339,16 @@ struct MDCDeviceReal : MDCDevice {
         if (*x) IONotificationPortDestroy(*x);
     }
     
-    static _MDCUSBDevicePtr _WaitForDeviceReenumerate(const _USBDevice& existing, std::string_view serial) {
+    static _MDCUSBDevicePtr _WaitForDeviceReenumerate(const _USBDevice& existing, const std::string& serial) {
         constexpr CFTimeInterval Timeout = 2;
         _IONotificationPtr note = _IONotificationCreate();
         
         _SendRight serviceIter;
         {
+            NSMutableDictionary* matching = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
             io_iterator_t iter = MACH_PORT_NULL;
             kern_return_t kr = IOServiceAddMatchingNotification(*note, kIOMatchedNotification,
-                IOServiceMatching(kIOUSBDeviceClassName), _Nop, nullptr, &iter);
+                (CFDictionaryRef)CFRetain((__bridge CFTypeRef)matching), _Nop, nullptr, &iter);
             if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
             serviceIter = _SendRight(_SendRight::NoRetain, iter);
         }
@@ -359,6 +360,11 @@ struct MDCDeviceReal : MDCDevice {
                 _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
                 if (!service) break;
                 
+                // Ignore this service if it's the same USB device as `existing`
+                // This is important to do before creating the _USBDevice, because if it's the same device
+                // that's disappearing, we can hang for ~5s if we try to communicate with it.
+                if (service == existing.service()) continue;
+                
                 if (dev) {
                     printf("[MDCDevice : _WaitForDevice] Multiple devices matching serial: %s\n",
                         std::string(serial).c_str());
@@ -366,7 +372,13 @@ struct MDCDeviceReal : MDCDevice {
                 }
                 
                 try {
+                    using namespace std::chrono;
+                    
+                    auto timeStart = std::chrono::steady_clock::now();
                     _USBDevicePtr usbDev = std::make_unique<_USBDevice>(service);
+                    const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+                    printf("[_WaitForDeviceReenumerate] _USBDevice creation took %ju ms\n", (uintmax_t)duration.count());
+                    
                     if (!MDCUSBDevice::USBDeviceMatches(*usbDev)) continue; // Ignore if this isn't an MDC
                     if (usbDev->serialNumber() != serial) continue; // Ignore if the serial doesn't match
                     if (*usbDev == existing) continue; // Ignore if this is the same device as `existing`
@@ -418,6 +430,8 @@ struct MDCDeviceReal : MDCDevice {
     }
     
     static _MDCUSBDevicePtr _DevicePrepare(_MDCUSBDevicePtr&& dev) {
+        using namespace std::chrono;
+        auto timeStart = steady_clock::now();
         const std::string serial = dev->serial();
         
         // Invoke bootloader
@@ -434,6 +448,8 @@ struct MDCDeviceReal : MDCDevice {
             _DeviceModeCheck(dev, STM::Status::Mode::STMApp);
         }
         
+        const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+        printf("[_DevicePrepare] took %ju ms\n", (uintmax_t)duration.count());
         return std::move(dev);
     }
     
@@ -723,8 +739,8 @@ struct MDCDeviceReal : MDCDevice {
     static std::optional<size_t> _LoadImageCount(const std::unique_lock<ImageLibrary>& lock,
         ImageLibraryPtr imageLibrary, const ImageRange& deviceImageRange) {
         const Img::Id libImageIdEnd = imageLibrary->imageIdEnd();
-        printf("libImageIdEnd:%ju deviceImageRange.end:%ju\n",
-            (uintmax_t)libImageIdEnd, (uintmax_t)deviceImageRange.end);
+//        printf("libImageIdEnd:%ju deviceImageRange.end:%ju\n",
+//            (uintmax_t)libImageIdEnd, (uintmax_t)deviceImageRange.end);
         // If our image library claims to have newer images than the device, return an error
         if (libImageIdEnd > deviceImageRange.end) {
             return std::nullopt;

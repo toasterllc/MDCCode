@@ -8,7 +8,7 @@ int main(int argc, const char* argv[]) {
     
     MDCStudio::TmpDir::Cleanup();
     
-//    std::filesystem::remove_all("/Users/dave/Library/Application Support/llc.toaster.MDCStudio");
+//    std::filesystem::remove_all("/Users/dave/Library/Containers/llc.toaster.photon-transfer/Data/Library/Application Support/llc.toaster.photon-transfer");
 //    std::filesystem::remove_all("/Users/dave/Desktop/DemoImageSource");
     try {
         return NSApplicationMain(argc, argv);
