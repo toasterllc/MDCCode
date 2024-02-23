@@ -556,6 +556,18 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     return true;
 }
 
+- (BOOL)splitView:(NSSplitView*)splitView shouldHideDividerAtIndex:(NSInteger)idx {
+    return true;
+}
+
+- (void)splitViewDidResizeSubviews:(NSNotification*)note {
+    // We only want to handle when the user is dragging the divider; short-circuit otherwise
+    if (![note userInfo][@"NSSplitViewUserResizeKey"]) return;
+    _sourceListVisible = ![[self _sourceListContainerView] isHidden];
+    _inspectorVisible = ![[self _inspectorContainerView] isHidden];
+//    NSLog(@"splitViewDidResizeSubviews: %@\n", note);
+}
+
 // MARK: - Menu Actions
 static bool _SortNewestFirst() {
     return PrefsGlobal()->get("SortNewestFirst", true);
