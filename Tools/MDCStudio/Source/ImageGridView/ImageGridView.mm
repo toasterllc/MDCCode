@@ -174,12 +174,11 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
 
 - (void)setContainerWidth:(CGFloat)x {
 //    NSLog(@"-[ImageGridLayer setContainerWidth:]");
-    _containerWidth = x*[self contentsScale];
-    _grid.setContainerWidth((int32_t)lround(_containerWidth));
+    _containerWidth = x;
+    _grid.setContainerWidth((int32_t)lround(_containerWidth * [self contentsScale]));
 }
 
 - (CGFloat)containerHeight {
-//    NSLog(@"-[ImageGridLayer containerHeight]");
     return _grid.containerHeight() / [self contentsScale];
 }
 
