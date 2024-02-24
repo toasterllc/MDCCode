@@ -3,7 +3,7 @@
 
 #define USBD_VID                        0
 #define USBD_LANGID_STRING              1033
-#define USBD_MANUFACTURER_STRING        "Toaster LLC"
+#define USBD_MANUFACTURER_STRING        "Toaster"
 #define USBD_PID_HS                     0
 #define USBD_PRODUCT_STRING_HS          "Photon"
 #define USBD_CONFIGURATION_STRING_HS    "DFU Config"
