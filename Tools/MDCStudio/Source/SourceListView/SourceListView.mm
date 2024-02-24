@@ -21,6 +21,8 @@ using namespace MDCStudio;
 @public
     NSString* name;
     __weak SourceListView* sourceListView;
+    IBOutlet NSLayoutConstraint* _indentLeft;
+    IBOutlet NSLayoutConstraint* _indentRight;
     IBOutlet NSLayoutConstraint* _height;
 //    NSLayoutConstraint* _preventClippingConstraint;
     // We keep a weak reference to the ImageSourcePtr because the NSTableView likes
@@ -32,6 +34,14 @@ using namespace MDCStudio;
 
 - (NSString*)name { return name; }
 - (bool)selectable { return true; }
+
+- (CGFloat)indent {
+    if (@available(macOS 11, *)) {
+        return 8;
+    } else {
+        return 16;
+    }
+}
 - (CGFloat)height { return 74; }
 
 - (ImageSourcePtr)imageSource {
@@ -42,11 +52,13 @@ using namespace MDCStudio;
     _imageSource = x;
     __weak auto selfWeak = self;
     _imageLibraryOb = x->imageLibrary()->observerAdd([=] (auto, auto) {
-        dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
+        dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak updateView]; });
     });
 }
 
-- (void)update {
+- (void)updateView {
+    [_indentLeft setConstant:[self indent]];
+    [_indentRight setConstant:[self indent]];
     [_height setConstant:[self height]];
     if (![[self textField] currentEditor]) {
         [[self textField] setStringValue:[self name]];
@@ -123,7 +135,7 @@ using namespace MDCStudio;
     
     __weak auto selfWeak = self;
     _deviceOb = [self device]->observerAdd([=] (auto, auto) {
-        dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak update]; });
+        dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak updateView]; });
     });
 }
 
@@ -138,8 +150,8 @@ static NSString* _BatteryLevelImage(float level) {
     }
 }
 
-- (void)update {
-    [super update];
+- (void)updateView {
+    [super updateView];
     MDCDevicePtr device = [self device];
     if (!device) return;
     std::optional<MDCDevice::Status> status = device->status();
@@ -448,7 +460,7 @@ static void _Init(SourceListView* self) {
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
     Item* it = Toastbox::Cast<Item*>(item);
-    [it update];
+    [it updateView];
 //    [it setIdentifier:nil];
     return item;
 }

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -111,32 +110,6 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="aJh-i4-bef"/>
-                            <menuItem title="Show Photo" id="WI2-8O-6SC">
-                                <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="_showImage:" target="-1" id="LIJ-Mb-jQa"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Next Photo" keyEquivalent="" id="vxk-H4-Fru">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="_nextImage:" target="-1" id="YG7-P5-oRe"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Previous Photo" keyEquivalent="" id="v8R-Qr-wUI">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="_previousImage:" target="-1" id="qO1-xM-mAh"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Back to Photos" keyEquivalent="" id="Z8W-2W-ndG">
-                                <connections>
-                                    <action selector="_backToImages:" target="-1" id="56Z-6n-pK3"/>
-                                </connections>
-                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="aBH-wc-g3D"/>
                             <menuItem title="Export…" keyEquivalent="E" id="nei-2I-dha">
                                 <connections>
@@ -682,6 +655,33 @@ CA
                                     <action selector="magnifyDecrease:" target="-1" id="H6E-PE-deJ"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="gF2-z9-1G2"/>
+                            <menuItem title="Show Photo" id="WI2-8O-6SC">
+                                <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_showImage:" target="-1" id="LIJ-Mb-jQa"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Next Photo" keyEquivalent="" id="vxk-H4-Fru">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_nextImage:" target="-1" id="YG7-P5-oRe"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Previous Photo" keyEquivalent="" id="v8R-Qr-wUI">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="_previousImage:" target="-1" id="qO1-xM-mAh"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Back to Photos" keyEquivalent="" id="Z8W-2W-ndG">
+                                <connections>
+                                    <action selector="_backToImages:" target="-1" id="56Z-6n-pK3"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="r2t-gp-ECe"/>
                             <menuItem title="Sort By" id="Qmp-iy-0Kg">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -768,7 +768,7 @@ CA
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="179" y="218" width="672" height="531"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="944"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
             <view key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="U52-Ez-6UZ">
                 <rect key="frame" x="0.0" y="0.0" width="672" height="531"/>
                 <autoresizingMask key="autoresizingMask"/>
