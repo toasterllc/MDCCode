@@ -691,9 +691,9 @@ static float _FocusValueCalc(Renderer& renderer, const Renderer::Txt& grayTxt, C
     const int32_t ImageHeightGray = (int32_t)_raw.image.height/2;
     
     constexpr int32_t SearchRegionWidth    = 150;
-    constexpr int32_t SearchRegionHeight   = 280;
+    constexpr int32_t SearchRegionHeight   = 340;
     constexpr int32_t SearchRegionOffsetX  =   0;
-    constexpr int32_t SearchRegionOffsetY  = -40;
+    constexpr int32_t SearchRegionOffsetY  = -60;
     
     const SampleRect FocusPosterSearchRegion = {
         .left   = (int32_t)(_raw.image.width/2 -  SearchRegionWidth/2 + SearchRegionOffsetX),
@@ -947,7 +947,7 @@ static float _FocusValueCalc(Renderer& renderer, const Renderer::Txt& grayTxt, C
                 autoExp->update(imgStats.highlightCount, imgStats.shadowCount);
 //                exposure.coarseIntTime = autoExp->integrationTime();
 //                exposure.coarseIntTime = 1000;
-                exposure.coarseIntTime = 4000;
+                exposure.coarseIntTime = 2000;
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
