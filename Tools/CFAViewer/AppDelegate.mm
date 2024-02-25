@@ -522,26 +522,38 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
 }
 
 - (void)_render {
-    constexpr int32_t GrayWidth  = 2304/2;
-    constexpr int32_t GrayHeight = 1296/2;
-    constexpr int32_t SearchRegionWidth   =  75;
-    constexpr int32_t SearchRegionHeight  = 140;
-    constexpr int32_t SearchRegionOffsetX =   0;
-    constexpr int32_t SearchRegionOffsetY =   -20;
-    constexpr SampleRect FocusPosterSearchRegion = {
-        .left   =  GrayWidth/2 -  SearchRegionWidth/2 + SearchRegionOffsetX,
-        .right  =  GrayWidth/2 +  SearchRegionWidth/2 + SearchRegionOffsetX,
-        .top    = GrayHeight/2 - SearchRegionHeight/2 + SearchRegionOffsetY,
-        .bottom = GrayHeight/2 + SearchRegionHeight/2 + SearchRegionOffsetY,
-    };
     
 //    constexpr int32_t FocusPosterWidth  = 26;
 //    constexpr int32_t FocusPosterHeight = 33;
-
-    constexpr int32_t FocusPosterWidth  = 52;
-    constexpr int32_t FocusPosterHeight = 68;
     
     Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
+    
+    constexpr int32_t SearchRegionWidth    = 150;
+    constexpr int32_t SearchRegionHeight   = 280;
+    constexpr int32_t SearchRegionOffsetX  =   0;
+    constexpr int32_t SearchRegionOffsetY  = -40;
+    constexpr int32_t FocusPosterWidth  = 104;
+    constexpr int32_t FocusPosterHeight = 136;
+    
+    const SampleRect FocusPosterSearchRegion = {
+        .left   = (int32_t)(_raw.image.width/2 -  SearchRegionWidth/2 + SearchRegionOffsetX),
+        .right  = (int32_t)(_raw.image.width/2 +  SearchRegionWidth/2 + SearchRegionOffsetX),
+        .top    = (int32_t)(_raw.image.height/2 - SearchRegionHeight/2 + SearchRegionOffsetY),
+        .bottom = (int32_t)(_raw.image.height/2 + SearchRegionHeight/2 + SearchRegionOffsetY),
+    };
+    
+    const int32_t ImageWidthGray  = (int32_t)_raw.image.width/2;
+    const int32_t ImageHeightGray = (int32_t)_raw.image.height/2;
+    
+    constexpr int32_t FocusPosterWidthGray  = FocusPosterWidth/2;
+    constexpr int32_t FocusPosterHeightGray = FocusPosterHeight/2;
+    
+    const SampleRect FocusPosterSearchRegionGray = {
+        .left   = FocusPosterSearchRegion.left  / 2,
+        .right  = FocusPosterSearchRegion.right / 2,
+        .top    = FocusPosterSearchRegion.top / 2,
+        .bottom = FocusPosterSearchRegion.bottom / 2,
+    };
     
     if (!_txt || [_txt width]!=_raw.image.width || [_txt height]!=_raw.image.height) {
         // _txt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
@@ -550,30 +562,76 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
         _txt = _renderer.textureCreate(rawTxt, MTLPixelFormatRGBA16Float);
     }
     
-    Pipeline::Options popts = _pipelineOptions;
-    if (!popts.illum) popts.illum = EstimateIlluminant::Run(_renderer, _raw.image.cfaDesc, rawTxt);
-    if (!popts.colorMatrix) popts.colorMatrix = MDCStudio::ColorMatrixForIlluminant(*popts.illum).matrix;
+    {
+        _renderer.sync(rawTxt);
+        _renderer.commitAndWait();
+        
+        simd::float3 rgb = {};
+        simd::float3 count = {};
+        ImgSamples raw = _SamplesRead(_renderer, FocusPosterSearchRegion, rawTxt);
+        for (int32_t y=0; y<raw.h; y++) {
+            for (int32_t x=0; x<raw.w; x++) {
+                const int32_t xAbs = x+FocusPosterSearchRegion.left;
+                const int32_t yAbs = y+FocusPosterSearchRegion.top;
+                const CFAColor c = _raw.image.cfaDesc.color(xAbs, yAbs);
+                const float s = raw.at(x,y);;
+                switch (c) {
+                case CFAColor::Red:
+                    rgb.r += s;
+                    count.r++;
+                    break;
+                case CFAColor::Green:
+                    rgb.g += s;
+                    count.g++;
+                    break;
+                case CFAColor::Blue:
+                    rgb.b += s;
+                    count.b++;
+                    break;
+                }
+            }
+        }
+        rgb /= count;
+        
+        const float factor = std::max(std::max(rgb.r, rgb.g), rgb.b);
+        const simd::float3 wb = factor / rgb;
+//        printf("WB: %f %f %f\n", wb.r, wb.g, wb.b);
+        
+        _renderer.render(rawTxt,
+            _renderer.FragmentShader("MDCTools::ImagePipeline::Shader::" "Base::WhiteBalanceRaw",
+                // Buffer args
+                _raw.image.cfaDesc,
+                wb,
+                // Texture args
+                rawTxt
+            )
+        );
+    }
     
     
-    // White balance
-    Color<ColorSpace::Raw> color = (_whiteBalanceColor ? *_whiteBalanceColor : Color<ColorSpace::Raw>{1,1,1});
-//    Color<ColorSpace::Raw> illum = (_whiteBalanceColor ? *_whiteBalanceColor : Color<ColorSpace::Raw>{1,1,1});
-//    if (_whiteBalanceColor) {
-//        illum = *_whiteBalanceColor;
-//    }
-    const double factor = std::max(std::max(color[0], color[1]), color[2]);
-//    const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-    const Mat<double,3,1> wb(factor/color[0], factor/color[1], factor/color[2]);
-    const simd::float3 simdWB = _SimdForMat(wb);
-    _renderer.render(rawTxt,
-        _renderer.FragmentShader("MDCTools::ImagePipeline::Shader::" "Base::WhiteBalanceRaw",
-            // Buffer args
-            _raw.image.cfaDesc,
-            simdWB,
-            // Texture args
-            rawTxt
-        )
-    );
+    
+    
+    
+    
+//    // White balance
+//    Color<ColorSpace::Raw> color = (_whiteBalanceColor ? *_whiteBalanceColor : Color<ColorSpace::Raw>{1,1,1});
+////    Color<ColorSpace::Raw> illum = (_whiteBalanceColor ? *_whiteBalanceColor : Color<ColorSpace::Raw>{1,1,1});
+////    if (_whiteBalanceColor) {
+////        illum = *_whiteBalanceColor;
+////    }
+//    const double factor = std::max(std::max(color[0], color[1]), color[2]);
+////    const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+//    const Mat<double,3,1> wb(factor/color[0], factor/color[1], factor/color[2]);
+//    const simd::float3 simdWB = _SimdForMat(wb);
+//    _renderer.render(rawTxt,
+//        _renderer.FragmentShader("MDCTools::ImagePipeline::Shader::" "Base::WhiteBalanceRaw",
+//            // Buffer args
+//            _raw.image.cfaDesc,
+//            simdWB,
+//            // Texture args
+//            rawTxt
+//        )
+//    );
     
     
     Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatR32Float, _raw.image.width/2, _raw.image.height/2);
@@ -595,7 +653,7 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
     _renderer.render(grayTxt,
         _renderer.FragmentShader("SearchRegionDarken",
             // Buffer args
-            FocusPosterSearchRegion,
+            FocusPosterSearchRegionGray,
             // Texture args
             grayTxt
         )
@@ -610,10 +668,10 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
     
     
     {
-        ImgSamples img = _SamplesRead(_renderer, FocusPosterSearchRegion, grayTxt);
+        ImgSamples img = _SamplesRead(_renderer, FocusPosterSearchRegionGray, grayTxt);
         
-        const int32_t W = FocusPosterSearchRegion.right-FocusPosterSearchRegion.left;
-        const int32_t H = FocusPosterSearchRegion.bottom-FocusPosterSearchRegion.top;
+        const int32_t W = FocusPosterSearchRegionGray.right-FocusPosterSearchRegionGray.left;
+        const int32_t H = FocusPosterSearchRegionGray.bottom-FocusPosterSearchRegionGray.top;
         
         // Calculate `deltaX` (derivative of image in the X direction)
         ImgSamples deltaX(W-1, H);
@@ -845,16 +903,16 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
         if (good) {
             float x = (xMinIdx + xMaxIdx) / 2;
             float y = (yMinIdx + yMaxIdx) / 2;
-            x += FocusPosterSearchRegion.left + OffsetX;
-            y += FocusPosterSearchRegion.top + OffsetY;
-            x -= FocusPosterWidth / 2;
-            y -= FocusPosterHeight / 2;
+            x += FocusPosterSearchRegionGray.left + OffsetX;
+            y += FocusPosterSearchRegionGray.top + OffsetY;
+            x -= FocusPosterWidthGray / 2;
+            y -= FocusPosterHeightGray / 2;
             x = std::floor(x);
             y = std::floor(y);
             
             _focusPosterRect = {
-                { (float)x / GrayWidth, (float)y / GrayHeight },
-                { (float)FocusPosterWidth / GrayWidth, (float)FocusPosterHeight / GrayHeight },
+                { (float)x / ImageWidthGray, (float)y / ImageHeightGray },
+                { (float)FocusPosterWidthGray / ImageWidthGray, (float)FocusPosterHeightGray / ImageHeightGray },
             };
             
             [_mainView setSampleRect:*_focusPosterRect];
@@ -973,6 +1031,10 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
     
     
     [[_mainView imageLayer] setTexture:grayTxt];
+    
+    Pipeline::Options popts = _pipelineOptions;
+    if (!popts.illum) popts.illum = EstimateIlluminant::Run(_renderer, _raw.image.cfaDesc, rawTxt);
+    if (!popts.colorMatrix) popts.colorMatrix = MDCStudio::ColorMatrixForIlluminant(*popts.illum).matrix;
     [self _renderCompleted:popts];
 }
 
