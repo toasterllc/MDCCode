@@ -34,6 +34,10 @@ public:
 //                return true;
 //            }
             
+            if (dev.product()=="Photon" && dev.manufacturer()=="Toaster") {
+                return true;
+            }
+            
             if (dev.product()=="Photon" && dev.manufacturer()=="Toaster LLC") {
                 return true;
             }
