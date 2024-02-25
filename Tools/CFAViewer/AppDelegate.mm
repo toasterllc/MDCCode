@@ -521,19 +521,180 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
     return r;
 }
 
+static std::optional<CGRect> _FindFocusPoster(Renderer& renderer, const SampleRect searchRegion, const Renderer::Txt& grayTxt) {
+    constexpr int32_t FocusPosterWidthGray  = 52;
+    constexpr int32_t FocusPosterHeightGray = 68;
+    
+    ImgSamples img = _SamplesRead(renderer, searchRegion, grayTxt);
+    
+    const int32_t W = searchRegion.right-searchRegion.left;
+    const int32_t H = searchRegion.bottom-searchRegion.top;
+    
+    // Calculate `deltaX` (derivative of image in the X direction)
+    ImgSamples deltaX(W-1, H);
+    for (int32_t y=0; y<deltaX.h; y++) {
+        for (int32_t x=0; x<deltaX.w; x++) {
+            deltaX.at(x,y) = img.at(x,y) - img.at(x+1,y);
+        }
+    }
+    
+    // Calculate `deltaY` (derivative of image in the Y direction)
+    ImgSamples deltaY(W, H-1);
+    for (int32_t y=0; y<deltaY.h; y++) {
+        for (int32_t x=0; x<deltaY.w; x++) {
+            deltaY.at(x,y) = img.at(x,y) - img.at(x,y+1);
+        }
+    }
+    
+    
+    ImgSamples deltaXMax(W-1);
+    for (int32_t x=0; x<deltaX.w; x++) {
+        float max = -INFINITY;
+        for (int32_t y=0; y<deltaX.h; y++) {
+            const float s = std::abs(deltaX.at(x,y));
+            max = std::max(max, s);
+        }
+        deltaXMax.at(x) = max;
+    }
+    
+    ImgSamples deltaYMax(H-1);
+    for (int32_t y=0; y<deltaY.h; y++) {
+        float max = -INFINITY;
+        for (int32_t x=0; x<deltaY.w; x++) {
+            const float s = std::abs(deltaY.at(x,y));
+            max = std::max(max, s);
+        }
+        deltaYMax.at(y) = max;
+    }
+    
+    
+    int32_t xMinIdx = -1;
+    int32_t xMaxIdx = -1;
+    int32_t yMinIdx = -1;
+    int32_t yMaxIdx = -1;
+    
+    constexpr float DeltaMaxThresh = 3;
+    
+    {
+        const float first = deltaXMax.at(0);
+        for (int32_t x=0; x<deltaX.w; x++) {
+            const float s = deltaXMax.at(x);
+            if (s/first > DeltaMaxThresh) {
+                xMinIdx = x;
+                break;
+            }
+        }
+        
+    }
+    
+    {
+        const float first = deltaXMax.at(deltaX.w-1);
+        for (int32_t x=deltaX.w-1; x>=0; x--) {
+            const float s = deltaXMax.at(x);
+            if (s/first > DeltaMaxThresh) {
+                xMaxIdx = x;
+                break;
+            }
+        }
+    }
+    
+    {
+        const float first = deltaYMax.at(0);
+        for (int32_t y=0; y<deltaY.h; y++) {
+            const float s = deltaYMax.at(y);
+            if (s/first > DeltaMaxThresh) {
+                yMinIdx = y;
+                break;
+            }
+        }
+    }
+    
+    {
+        const float first = deltaYMax.at(deltaY.h-1);
+        for (int32_t y=deltaY.h-1; y>=0; y--) {
+            const float s = deltaYMax.at(y);
+            if (s/first > DeltaMaxThresh) {
+                yMaxIdx = y;
+                break;
+            }
+        }
+    }
+    
+    constexpr int32_t OffsetX = +1;
+    constexpr int32_t OffsetY = +1;
+    
+    const bool good =
+        xMinIdx < xMaxIdx &&
+        yMinIdx < yMaxIdx &&
+        xMinIdx>=0 && xMaxIdx>=0 && yMinIdx>=0 && yMaxIdx>=0;
+    
+    if (!good) return std::nullopt;
+    
+    float x = (xMinIdx + xMaxIdx) / 2;
+    float y = (yMinIdx + yMaxIdx) / 2;
+    x += searchRegion.left + OffsetX;
+    y += searchRegion.top + OffsetY;
+    x -= FocusPosterWidthGray / 2;
+    y -= FocusPosterHeightGray / 2;
+    x = std::floor(x);
+    y = std::floor(y);
+    
+    return CGRect{
+        { (float)x / [grayTxt width], (float)y / [grayTxt height] },
+        { (float)FocusPosterWidthGray / [grayTxt width], (float)FocusPosterHeightGray / [grayTxt height] },
+    };
+}
+
+static float _FocusValueCalc(Renderer& renderer, const Renderer::Txt& grayTxt, CGRect focusPosterRect) {
+    const SampleRect sampleRect = _SampleRectForCGRect(focusPosterRect, [grayTxt width], [grayTxt height]);
+    ImgSamples img = _SamplesRead(renderer, sampleRect, grayTxt);
+    
+    // Apply linear adjustment to pixel values so they scale from [0,1].
+    // We determine the min/max pixel values by averaging the 10 lowest and highest values.
+    {
+        std::vector<float> sortedSamples = img.s;
+        std::sort(sortedSamples.begin(), sortedSamples.end());
+        constexpr size_t SamplesMinMaxCount = 10;
+        float samplesMin = 0;
+        float samplesMax = 0;
+        for (size_t i=0; i<SamplesMinMaxCount; i++) samplesMin += *(sortedSamples.begin()+i);
+        for (size_t i=0; i<SamplesMinMaxCount; i++) samplesMax += *(sortedSamples.rbegin()+i);
+        samplesMin /= SamplesMinMaxCount;
+        samplesMax /= SamplesMinMaxCount;
+        for (float& s : img.s) {
+            s = (s-samplesMin) / (samplesMax-samplesMin);
+        }
+    }
+    
+    float avg = 0;
+    for (float s : img.s) {
+        avg += s;
+    }
+    avg /= img.s.size();
+    
+    float k = 0;
+    for (float s : img.s) {
+        k += pow(s-avg, 2);
+    }
+    k /= img.s.size();
+    k = std::sqrt(k);
+    k *= 1000;
+    
+    
+    constexpr float KAccumCoeff = 0.90;
+    static float kaccum = 0;
+    kaccum = (KAccumCoeff)*kaccum + (1-KAccumCoeff)*k;
+    return kaccum;
+}
+
 - (void)_render {
-    
-//    constexpr int32_t FocusPosterWidth  = 26;
-//    constexpr int32_t FocusPosterHeight = 33;
-    
-    Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
+    const int32_t ImageWidthGray  = (int32_t)_raw.image.width/2;
+    const int32_t ImageHeightGray = (int32_t)_raw.image.height/2;
     
     constexpr int32_t SearchRegionWidth    = 150;
     constexpr int32_t SearchRegionHeight   = 280;
     constexpr int32_t SearchRegionOffsetX  =   0;
     constexpr int32_t SearchRegionOffsetY  = -40;
-    constexpr int32_t FocusPosterWidth  = 104;
-    constexpr int32_t FocusPosterHeight = 136;
     
     const SampleRect FocusPosterSearchRegion = {
         .left   = (int32_t)(_raw.image.width/2 -  SearchRegionWidth/2 + SearchRegionOffsetX),
@@ -542,18 +703,15 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
         .bottom = (int32_t)(_raw.image.height/2 + SearchRegionHeight/2 + SearchRegionOffsetY),
     };
     
-    const int32_t ImageWidthGray  = (int32_t)_raw.image.width/2;
-    const int32_t ImageHeightGray = (int32_t)_raw.image.height/2;
-    
-    constexpr int32_t FocusPosterWidthGray  = FocusPosterWidth/2;
-    constexpr int32_t FocusPosterHeightGray = FocusPosterHeight/2;
-    
     const SampleRect FocusPosterSearchRegionGray = {
         .left   = FocusPosterSearchRegion.left  / 2,
         .right  = FocusPosterSearchRegion.right / 2,
         .top    = FocusPosterSearchRegion.top / 2,
         .bottom = FocusPosterSearchRegion.bottom / 2,
     };
+    
+    Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer, _raw.image.width, _raw.image.height, _raw.image.pixels);
+    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatR32Float, ImageWidthGray, ImageHeightGray);
     
     if (!_txt || [_txt width]!=_raw.image.width || [_txt height]!=_raw.image.height) {
         // _txt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
@@ -562,6 +720,8 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
         _txt = _renderer.textureCreate(rawTxt, MTLPixelFormatRGBA16Float);
     }
     
+    // White balance `rawTxt` using the 'gray world' technique, but only refer to samples within FocusPosterSearchRegion,
+    // since we know those are grayscale (it's out unpainted door in our house).
     {
         _renderer.sync(rawTxt);
         _renderer.commitAndWait();
@@ -608,429 +768,46 @@ static ImgSamples _SamplesRead(Renderer& renderer, const SampleRect& rect, const
         );
     }
     
-    
-    
-    
-    
-    
-//    // White balance
-//    Color<ColorSpace::Raw> color = (_whiteBalanceColor ? *_whiteBalanceColor : Color<ColorSpace::Raw>{1,1,1});
-////    Color<ColorSpace::Raw> illum = (_whiteBalanceColor ? *_whiteBalanceColor : Color<ColorSpace::Raw>{1,1,1});
-////    if (_whiteBalanceColor) {
-////        illum = *_whiteBalanceColor;
-////    }
-//    const double factor = std::max(std::max(color[0], color[1]), color[2]);
-////    const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-//    const Mat<double,3,1> wb(factor/color[0], factor/color[1], factor/color[2]);
-//    const simd::float3 simdWB = _SimdForMat(wb);
-//    _renderer.render(rawTxt,
-//        _renderer.FragmentShader("MDCTools::ImagePipeline::Shader::" "Base::WhiteBalanceRaw",
-//            // Buffer args
-//            _raw.image.cfaDesc,
-//            simdWB,
-//            // Texture args
-//            rawTxt
-//        )
-//    );
-    
-    
-    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatR32Float, _raw.image.width/2, _raw.image.height/2);
-    _renderer.render(grayTxt,
-        _renderer.FragmentShader("GrayscaleForRaw",
-            // Texture args
-            rawTxt
-        )
-    );
-    
-//    Renderer::Txt grayTxt = _renderer.textureCreate(MTLPixelFormatRGBA8Unorm_sRGB, _raw.image.width/2, _raw.image.height/2);
-//    _renderer.render(grayTxt,
-//        _renderer.FragmentShader("GrayscaleRGBForRaw",
-//            // Texture args
-//            rawTxt
-//        )
-//    );
-    
-    _renderer.render(grayTxt,
-        _renderer.FragmentShader("SearchRegionDarken",
-            // Buffer args
-            FocusPosterSearchRegionGray,
-            // Texture args
-            grayTxt
-        )
-    );
-    
-    
-    _renderer.sync(grayTxt);
-    _renderer.commitAndWait();
-    
-    
-    
-    
-    
+    // rawTxt -> grayTxt
     {
-        ImgSamples img = _SamplesRead(_renderer, FocusPosterSearchRegionGray, grayTxt);
+        _renderer.render(grayTxt,
+            _renderer.FragmentShader("GrayscaleForRaw",
+                // Texture args
+                rawTxt
+            )
+        );
         
-        const int32_t W = FocusPosterSearchRegionGray.right-FocusPosterSearchRegionGray.left;
-        const int32_t H = FocusPosterSearchRegionGray.bottom-FocusPosterSearchRegionGray.top;
+        _renderer.render(grayTxt,
+            _renderer.FragmentShader("SearchRegionDarken",
+                // Buffer args
+                FocusPosterSearchRegionGray,
+                // Texture args
+                grayTxt
+            )
+        );
         
-        // Calculate `deltaX` (derivative of image in the X direction)
-        ImgSamples deltaX(W-1, H);
-        for (int32_t y=0; y<deltaX.h; y++) {
-            for (int32_t x=0; x<deltaX.w; x++) {
-                deltaX.at(x,y) = img.at(x,y) - img.at(x+1,y);
-            }
-        }
+        _renderer.sync(grayTxt);
+        _renderer.commitAndWait();
+    }
+    
+    // Find the focus poster, and calculate/print our focus value
+    {
+        _focusPosterRect = _FindFocusPoster(_renderer, FocusPosterSearchRegionGray, grayTxt);
         
-        // Calculate `deltaY` (derivative of image in the Y direction)
-        ImgSamples deltaY(W, H-1);
-        for (int32_t y=0; y<deltaY.h; y++) {
-            for (int32_t x=0; x<deltaY.w; x++) {
-                deltaY.at(x,y) = img.at(x,y) - img.at(x,y+1);
-            }
-        }
-        
-        
-        ImgSamples deltaXMax(W-1);
-        for (int32_t x=0; x<deltaX.w; x++) {
-            float max = -INFINITY;
-            for (int32_t y=0; y<deltaX.h; y++) {
-                const float s = std::abs(deltaX.at(x,y));
-                max = std::max(max, s);
-            }
-            deltaXMax.at(x) = max;
-        }
-        
-        ImgSamples deltaYMax(H-1);
-        for (int32_t y=0; y<deltaY.h; y++) {
-            float max = -INFINITY;
-            for (int32_t x=0; x<deltaY.w; x++) {
-                const float s = std::abs(deltaY.at(x,y));
-                max = std::max(max, s);
-            }
-            deltaYMax.at(y) = max;
-        }
-        
-        
-        int32_t xMinIdx = -1;
-        int32_t xMaxIdx = -1;
-        int32_t yMinIdx = -1;
-        int32_t yMaxIdx = -1;
-        
-        constexpr float DeltaMaxThresh = 3;
-        
-//        for (int32_t x=0; x<deltaX.w; x++) {
-//            printf("%.5f ", deltaXMax.at(x));
-//        }
-//        printf("\n\n");
-        
-//        {
-//            float first = deltaXMax.at(0);
-//            for (int32_t x=0; x<deltaX.w; x++) {
-//                const float s = deltaXMax.at(x);
-//                printf("%.5f ", s/first);
-//            }
-//            printf("\n\n");
-//        }
-        
-        
-        {
-            const float first = deltaXMax.at(0);
-            for (int32_t x=0; x<deltaX.w; x++) {
-                const float s = deltaXMax.at(x);
-//                printf("%.5f ", s/first);
-                if (s/first > DeltaMaxThresh) {
-                    xMinIdx = x;
-                    break;
-                }
-//                first = s;
-            }
-            
-//            printf("\n\n");
-        }
-        
-        {
-            const float first = deltaXMax.at(deltaX.w-1);
-            for (int32_t x=deltaX.w-1; x>=0; x--) {
-                const float s = deltaXMax.at(x);
-                if (s/first > DeltaMaxThresh) {
-                    xMaxIdx = x;
-                    break;
-                }
-//                first = s;
-            }
-        }
-        
-        {
-            const float first = deltaYMax.at(0);
-            for (int32_t y=0; y<deltaY.h; y++) {
-                const float s = deltaYMax.at(y);
-                if (s/first > DeltaMaxThresh) {
-                    yMinIdx = y;
-                    break;
-                }
-//                first = s;
-            }
-        }
-        
-        {
-            const float first = deltaYMax.at(deltaY.h-1);
-            for (int32_t y=deltaY.h-1; y>=0; y--) {
-                const float s = deltaYMax.at(y);
-                if (s/first > DeltaMaxThresh) {
-                    yMaxIdx = y;
-                    break;
-                }
-//                first = s;
-            }
-        }
-        
-        
-        
-        
-        
-        
-        
-        
-//        // Calculate `avgRow`
-//        std::unique_ptr<float[]> avgRow = std::make_unique<float[]>(H);
-//        for (int32_t y=0; y<H; y++) {
-//            float avg = 0;
-//            for (int32_t x=0; x<W; x++) {
-//                const float s = samples[y*W + x];
-//                avg += s;
-//            }
-//            avg /= W;
-//            avgRow[y] = avg;
-//        }
-//        
-//        // Calculate `avgCol`
-//        std::unique_ptr<float[]> avgCol = std::make_unique<float[]>(W);
-//        for (int32_t x=0; x<W; x++) {
-//            float avg = 0;
-//            for (int32_t y=0; y<H; y++) {
-//                const float s = samples[y*W + x];
-//                avg += s;
-//            }
-//            avg /= H;
-//            avgCol[x] = avg;
-//        }
-//        
-//        // Calculate background color
-////        const float bg = (avgRow[0] + avgRow[H-1] + avgCol[0] + avgCol[W-1]) / 4;
-//        
-//        // Calculate `stdDevRow`
-//        std::unique_ptr<float[]> stdDevRow = std::make_unique<float[]>(H);
-//        for (int32_t y=0; y<H; y++) {
-//            float sum = 0;
-//            for (int32_t x=0; x<W; x++) {
-//                const float s = samples[y*W + x];
-//                const float d = s - avgRow[y];
-//                sum += d*d;
-//            }
-//            sum /= W;
-//            stdDevRow[y] = std::sqrt(sum);
-//        }
-//        
-//        // Calculate `stdDevCol`
-//        std::unique_ptr<float[]> stdDevCol = std::make_unique<float[]>(W);
-//        for (int32_t x=0; x<W; x++) {
-//            float sum = 0;
-//            for (int32_t y=0; y<H; y++) {
-//                const float s = samples[y*W + x];
-//                const float d = s - avgCol[x];
-//                sum += d*d;
-//            }
-//            sum /= H;
-//            stdDevCol[x] = std::sqrt(sum);
-////            printf("%.5f ", std::sqrt(sum));
-//        }
-////        printf("\n");
-////        printf("\n ======================= \n");
-//        
-//        // Calculate `stdDevRowDelta`
-//        std::unique_ptr<float[]> stdDevRowDelta = std::make_unique<float[]>(H-1);
-//        for (int32_t y=0; y<H-1; y++) {
-//            stdDevRowDelta[y] = stdDevRow[y] - stdDevRow[y+1];
-//        }
-//        
-//        // Calculate `stdDevColDelta`
-//        std::unique_ptr<float[]> stdDevColDelta = std::make_unique<float[]>(W-1);
-//        for (int32_t x=0; x<W-1; x++) {
-//            stdDevColDelta[x] = stdDevCol[x] - stdDevCol[x+1];
-//        }
-//        
-//        float xMin = INFINITY;
-//        float xMax = -INFINITY;
-//        float yMin = INFINITY;
-//        float yMax = -INFINITY;
-//        
-//        // Calculate yMinIdx / yMaxIdx
-//        for (int32_t y=0; y<H-1; y++) {
-//            const float s = stdDevRowDelta[y];
-//            if (s < yMin) {
-//                yMin = s;
-//                yMinIdx = y;
-//            }
-//            
-//            if (s > yMax) {
-//                yMax = s;
-//                yMaxIdx = y;
-//            }
-//        }
-//        
-//        // Calculate xMinIdx / xMaxIdx
-//        for (int32_t x=0; x<W-1; x++) {
-//            const float s = stdDevColDelta[x];
-//            if (s < xMin) {
-//                xMin = s;
-//                xMinIdx = x;
-//            }
-//            
-//            if (s > xMax) {
-//                xMax = s;
-//                xMaxIdx = x;
-//            }
-//        }
-        
-        constexpr int32_t OffsetX = +1;
-        constexpr int32_t OffsetY = +1;
-        
-        const bool good =
-            xMinIdx < xMaxIdx &&
-            yMinIdx < yMaxIdx &&
-            xMinIdx>=0 && xMaxIdx>=0 && yMinIdx>=0 && yMaxIdx>=0;
-        
-        if (good) {
-            float x = (xMinIdx + xMaxIdx) / 2;
-            float y = (yMinIdx + yMaxIdx) / 2;
-            x += FocusPosterSearchRegionGray.left + OffsetX;
-            y += FocusPosterSearchRegionGray.top + OffsetY;
-            x -= FocusPosterWidthGray / 2;
-            y -= FocusPosterHeightGray / 2;
-            x = std::floor(x);
-            y = std::floor(y);
-            
-            _focusPosterRect = {
-                { (float)x / ImageWidthGray, (float)y / ImageHeightGray },
-                { (float)FocusPosterWidthGray / ImageWidthGray, (float)FocusPosterHeightGray / ImageHeightGray },
-            };
+        if (_focusPosterRect) {
+            const float focusValue = _FocusValueCalc(_renderer, grayTxt, *_focusPosterRect);
+            printf("Focus: %f\n", focusValue);
             
             [_mainView setSampleRect:*_focusPosterRect];
-        
         } else {
-            _focusPosterRect = std::nullopt;
             [_mainView setSampleRect:{}];
         }
-        
-//        float x = (xMaxIdx - xMinIdx) / 2;
-//        float y = (yMaxIdx - yMinIdx) / 2;
-//        x -= FocusPosterWidth / 2;
-//        y -= FocusPosterHeight / 2;
-//        
-//        
-//        
-//        constexpr int32_t DeltaXMin = 0;
-//        constexpr int32_t DeltaXMax = 0;
-//        constexpr int32_t DeltaYMin = 0;
-//        constexpr int32_t DeltaYMax = 0;
-//        
-//        xMinIdx += FocusPosterSearchRegion.left + DeltaXMin;
-//        xMaxIdx += FocusPosterSearchRegion.left + DeltaXMax;
-//        
-//        yMinIdx += FocusPosterSearchRegion.top + DeltaYMin;
-//        yMaxIdx += FocusPosterSearchRegion.top + DeltaYMax;
-//        
-//        const bool good =
-//            xMinIdx < xMaxIdx &&
-//            yMinIdx < yMaxIdx &&
-//            xMinIdx>=0 && xMaxIdx>=0 && yMinIdx>=0 && yMaxIdx>=0;
-//        
-//        if (good) {
-//            _focusPosterRect = {
-//                { (float)xMinIdx / GrayWidth, (float)yMinIdx / GrayHeight },
-//                { (float)(xMaxIdx-xMinIdx) / GrayWidth, (float)(yMaxIdx-yMinIdx) / GrayHeight },
-//            };
-//            
-//            [_mainView setSampleRect:*_focusPosterRect];
-//        
-//        } else {
-//            _focusPosterRect = std::nullopt;
-//            [_mainView setSampleRect:{}];
-//        }
     }
     
-    if (_focusPosterRect) {
-        const SampleRect sampleRect = _SampleRectForCGRect(*_focusPosterRect, [grayTxt width], [grayTxt height]);
-        ImgSamples img = _SamplesRead(_renderer, sampleRect, grayTxt);
-        
-        // Apply linear adjustment to pixel values so they scale from [0,1].
-        // We determine the min/max pixel values by averaging the 10 lowest and highest values.
-        {
-            std::vector<float> sortedSamples = img.s;
-            std::sort(sortedSamples.begin(), sortedSamples.end());
-            constexpr size_t SamplesMinMaxCount = 10;
-            float samplesMin = 0;
-            float samplesMax = 0;
-            for (size_t i=0; i<SamplesMinMaxCount; i++) samplesMin += *(sortedSamples.begin()+i);
-            for (size_t i=0; i<SamplesMinMaxCount; i++) samplesMax += *(sortedSamples.rbegin()+i);
-            samplesMin /= SamplesMinMaxCount;
-            samplesMax /= SamplesMinMaxCount;
-            for (float& s : img.s) {
-                s = (s-samplesMin) / (samplesMax-samplesMin);
-            }
-        }
-        
-        float avg = 0;
-        for (float s : img.s) {
-            avg += s;
-        }
-        avg /= img.s.size();
-        
-        float k = 0;
-        for (float s : img.s) {
-            k += pow(s-avg, 2);
-        }
-        k /= img.s.size();
-        k = std::sqrt(k);
-        k *= 1000;
-        
-        
-        constexpr float KAccumCoeff = 0.90;
-        static float kaccum = 0;
-        static int kaccumCounter = 0;
-        kaccumCounter++;
-        
-        if (kaccumCounter > 5) {
-            kaccum = (KAccumCoeff)*kaccum + (1-KAccumCoeff)*k;
-        } else {
-            kaccum = k;
-        }
-        
-        printf("k: %f\n", kaccum);
+    // Display!
+    {
+        [[_mainView imageLayer] setTexture:grayTxt];
     }
-    
-//    static int count = 0;
-//    count++;
-//    if (!(count % 10)) {
-//        static const fs::path ImageDir = "/Users/dave/Desktop/Focus-Train-Images";
-//        static bool imageDirCreated = false;
-//        if (!imageDirCreated) {
-//            std::filesystem::create_directory(ImageDir);
-//            imageDirCreated = true;
-//        }
-//        
-//        const fs::path imagePath = ImageDir / (std::to_string(count) + ".png");
-//        
-//        id img = _renderer.imageCreate(grayTxt);
-//        assert(img);
-//        NSURL* outputURL = [NSURL fileURLWithPath:@(imagePath.c_str())];
-//        CGImageDestinationRef imageDest = CGImageDestinationCreateWithURL((CFURLRef)outputURL, kUTTypePNG, 1, nullptr);
-//        CGImageDestinationAddImage(imageDest, (__bridge CGImageRef)img, nullptr);
-//        CGImageDestinationFinalize(imageDest);
-//    }
-    
-    
-    [[_mainView imageLayer] setTexture:grayTxt];
     
     Pipeline::Options popts = _pipelineOptions;
     if (!popts.illum) popts.illum = EstimateIlluminant::Run(_renderer, _raw.image.cfaDesc, rawTxt);
