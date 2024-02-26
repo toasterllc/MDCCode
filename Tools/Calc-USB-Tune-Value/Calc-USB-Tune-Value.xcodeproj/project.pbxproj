@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -23,6 +23,39 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		552731642B8D4E8F00E6BD4C /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
+		552731652B8D4E8F00E6BD4C /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
+		552731662B8D4E8F00E6BD4C /* ReadWrite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReadWrite.h; sourceTree = "<group>"; };
+		552731672B8D4E8F00E6BD4C /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
+		552731682B8D4E8F00E6BD4C /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
+		552731692B8D4E8F00E6BD4C /* SignalQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SignalQueue.h; sourceTree = "<group>"; };
+		5527316A2B8D4E8F00E6BD4C /* Scheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scheduler.h; sourceTree = "<group>"; };
+		5527316B2B8D4E8F00E6BD4C /* IterAny.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IterAny.h; sourceTree = "<group>"; };
+		5527316C2B8D4E8F00E6BD4C /* Signal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Signal.h; sourceTree = "<group>"; };
+		5527316D2B8D4E8F00E6BD4C /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
+		5527316F2B8D4E8F00E6BD4C /* ThreePartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
+		552731702B8D4E8F00E6BD4C /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		552731712B8D4E8F00E6BD4C /* ThreePartView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ThreePartView.mm; sourceTree = "<group>"; };
+		552731722B8D4E8F00E6BD4C /* LRU.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LRU.h; sourceTree = "<group>"; };
+		552731732B8D4E8F00E6BD4C /* FDStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FDStream.h; sourceTree = "<group>"; };
+		552731742B8D4E8F00E6BD4C /* Cast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cast.h; sourceTree = "<group>"; };
+		552731752B8D4E8F00E6BD4C /* FileDescriptor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileDescriptor.h; sourceTree = "<group>"; };
+		552731762B8D4E8F00E6BD4C /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		552731772B8D4E8F00E6BD4C /* USB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USB.h; sourceTree = "<group>"; };
+		552731782B8D4E8F00E6BD4C /* Math.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Math.h; sourceTree = "<group>"; };
+		552731792B8D4E8F00E6BD4C /* Defer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defer.h; sourceTree = "<group>"; };
+		5527317A2B8D4E8F00E6BD4C /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
+		5527317B2B8D4E8F00E6BD4C /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
+		5527317C2B8D4E8F00E6BD4C /* RefCounted.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RefCounted.h; sourceTree = "<group>"; };
+		5527317D2B8D4E8F00E6BD4C /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
+		5527317E2B8D4E8F00E6BD4C /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
+		5527317F2B8D4E8F00E6BD4C /* Bitfield.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bitfield.h; sourceTree = "<group>"; };
+		552731802B8D4E8F00E6BD4C /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
+		552731812B8D4E8F00E6BD4C /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
+		552731822B8D4E8F00E6BD4C /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
+		552731832B8D4E8F00E6BD4C /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
+		552731842B8D4E8F00E6BD4C /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
+		552731852B8D4E8F00E6BD4C /* Atomic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atomic.h; sourceTree = "<group>"; };
 		55458F672B8D3782008AB8B2 /* Calc-USB-Tune-Value */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Calc-USB-Tune-Value"; sourceTree = BUILT_PRODUCTS_DIR; };
 		55458F942B8D3A53008AB8B2 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -38,10 +71,59 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		552731632B8D4E8F00E6BD4C /* Toastbox */ = {
+			isa = PBXGroup;
+			children = (
+				552731642B8D4E8F00E6BD4C /* LICENSE.md */,
+				552731652B8D4E8F00E6BD4C /* DurationString.h */,
+				552731662B8D4E8F00E6BD4C /* ReadWrite.h */,
+				552731672B8D4E8F00E6BD4C /* Enum.h */,
+				552731682B8D4E8F00E6BD4C /* Endian.h */,
+				552731692B8D4E8F00E6BD4C /* SignalQueue.h */,
+				5527316A2B8D4E8F00E6BD4C /* Scheduler.h */,
+				5527316B2B8D4E8F00E6BD4C /* IterAny.h */,
+				5527316C2B8D4E8F00E6BD4C /* Signal.h */,
+				5527316D2B8D4E8F00E6BD4C /* RuntimeError.h */,
+				5527316E2B8D4E8F00E6BD4C /* Mac */,
+				552731722B8D4E8F00E6BD4C /* LRU.h */,
+				552731732B8D4E8F00E6BD4C /* FDStream.h */,
+				552731742B8D4E8F00E6BD4C /* Cast.h */,
+				552731752B8D4E8F00E6BD4C /* FileDescriptor.h */,
+				552731762B8D4E8F00E6BD4C /* Util.h */,
+				552731772B8D4E8F00E6BD4C /* USB.h */,
+				552731782B8D4E8F00E6BD4C /* Math.h */,
+				552731792B8D4E8F00E6BD4C /* Defer.h */,
+				5527317A2B8D4E8F00E6BD4C /* Mmap.h */,
+				5527317B2B8D4E8F00E6BD4C /* HashInts.h */,
+				5527317C2B8D4E8F00E6BD4C /* RefCounted.h */,
+				5527317D2B8D4E8F00E6BD4C /* Uniqued.h */,
+				5527317E2B8D4E8F00E6BD4C /* USBDevice.h */,
+				5527317F2B8D4E8F00E6BD4C /* Bitfield.h */,
+				552731802B8D4E8F00E6BD4C /* Queue.h */,
+				552731812B8D4E8F00E6BD4C /* RingBuffer.h */,
+				552731822B8D4E8F00E6BD4C /* SendRight.h */,
+				552731832B8D4E8F00E6BD4C /* String.h */,
+				552731842B8D4E8F00E6BD4C /* NumForStr.h */,
+				552731852B8D4E8F00E6BD4C /* Atomic.h */,
+			);
+			path = Toastbox;
+			sourceTree = "<group>";
+		};
+		5527316E2B8D4E8F00E6BD4C /* Mac */ = {
+			isa = PBXGroup;
+			children = (
+				5527316F2B8D4E8F00E6BD4C /* ThreePartView.h */,
+				552731702B8D4E8F00E6BD4C /* Util.h */,
+				552731712B8D4E8F00E6BD4C /* ThreePartView.mm */,
+			);
+			path = Mac;
+			sourceTree = "<group>";
+		};
 		55458F5E2B8D3782008AB8B2 = {
 			isa = PBXGroup;
 			children = (
 				55458F942B8D3A53008AB8B2 /* main.mm */,
+				552731632B8D4E8F00E6BD4C /* Toastbox */,
 				55458F682B8D3782008AB8B2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -80,7 +162,6 @@
 		55458F5F2B8D3782008AB8B2 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				BuildIndependentTargetsInParallel = 1;
 				LastUpgradeCheck = 1520;
 				TargetAttributes = {
 					55458F662B8D3782008AB8B2 = {
@@ -89,7 +170,7 @@
 				};
 			};
 			buildConfigurationList = 55458F622B8D3782008AB8B2 /* Build configuration list for PBXProject "Calc-USB-Tune-Value" */;
-			compatibilityVersion = "Xcode 12.0";
+			compatibilityVersion = "Xcode 11.4";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -125,7 +206,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++23";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -156,7 +237,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = c17;
+				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -166,7 +247,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;

@@ -20,16 +20,15 @@ int main(int argc, const char* argv[]) {
         std::string line;
         std::optional<uint32_t> tuneVal;
         while (std::getline(file, line)) {
-            
-            if (line.starts_with("USB_HS_PHYC_TUNE_VALUE")) {
+            if (Toastbox::String::StartsWith("USB_HS_PHYC_TUNE_VALUE", line)) {
                 auto parts = Toastbox::String::Split(line, " ");
                 const std::string str = parts.back();
-                assert(str.starts_with("0x"));
+                assert(Toastbox::String::StartsWith("0x", str));
                 uint32_t x = 0;
                 Toastbox::IntForStr(x, str.c_str()+2, 16);
                 tuneVal = x;
             
-            } else if (line.starts_with("Successful control request count:")) {
+            } else if (Toastbox::String::StartsWith("Successful control request count:", line)) {
                 auto parts = Toastbox::String::Split(line, " ");
                 uintmax_t tuneValIterationCount = 0;
                 Toastbox::IntForStr(tuneValIterationCount, parts.back());

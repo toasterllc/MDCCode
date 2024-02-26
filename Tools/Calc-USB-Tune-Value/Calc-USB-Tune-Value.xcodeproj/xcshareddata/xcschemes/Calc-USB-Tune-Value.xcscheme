@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
    LastUpgradeVersion = "1520"
-   version = "1.7">
+   version = "1.8">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
@@ -28,6 +28,8 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <Testables>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Release"
@@ -52,7 +54,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/dave/repos/MDCNotes/ST-USB-Debug/Log-2024-2-25/Trial-5/Find-Good-Magic-Value-Device-2-M3-Left-Rear-Port-1000.txt"
+            argument = "/Users/dave/repos/MDCNotes/ST-USB-Debug/Log-2024-2-25/Trial-7/Random-Tune-Values-Device-0-M3-Left-Rear-Port-1000.txt"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
