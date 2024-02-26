@@ -24,39 +24,6 @@
 
 /* Begin PBXFileReference section */
 		55458F672B8D3782008AB8B2 /* Calc-USB-Tune-Value */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Calc-USB-Tune-Value"; sourceTree = BUILT_PRODUCTS_DIR; };
-		55458F722B8D3A2D008AB8B2 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
-		55458F732B8D3A2D008AB8B2 /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
-		55458F742B8D3A2D008AB8B2 /* ReadWrite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReadWrite.h; sourceTree = "<group>"; };
-		55458F752B8D3A2D008AB8B2 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
-		55458F762B8D3A2D008AB8B2 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
-		55458F772B8D3A2D008AB8B2 /* SignalQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SignalQueue.h; sourceTree = "<group>"; };
-		55458F782B8D3A2D008AB8B2 /* Scheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scheduler.h; sourceTree = "<group>"; };
-		55458F792B8D3A2D008AB8B2 /* IterAny.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IterAny.h; sourceTree = "<group>"; };
-		55458F7A2B8D3A2D008AB8B2 /* Signal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Signal.h; sourceTree = "<group>"; };
-		55458F7B2B8D3A2D008AB8B2 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
-		55458F7D2B8D3A2D008AB8B2 /* ThreePartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
-		55458F7E2B8D3A2D008AB8B2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
-		55458F7F2B8D3A2D008AB8B2 /* ThreePartView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ThreePartView.mm; sourceTree = "<group>"; };
-		55458F802B8D3A2D008AB8B2 /* LRU.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LRU.h; sourceTree = "<group>"; };
-		55458F812B8D3A2D008AB8B2 /* FDStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FDStream.h; sourceTree = "<group>"; };
-		55458F822B8D3A2D008AB8B2 /* Cast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cast.h; sourceTree = "<group>"; };
-		55458F832B8D3A2D008AB8B2 /* FileDescriptor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileDescriptor.h; sourceTree = "<group>"; };
-		55458F842B8D3A2D008AB8B2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
-		55458F852B8D3A2D008AB8B2 /* USB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USB.h; sourceTree = "<group>"; };
-		55458F862B8D3A2D008AB8B2 /* Math.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Math.h; sourceTree = "<group>"; };
-		55458F872B8D3A2D008AB8B2 /* Defer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defer.h; sourceTree = "<group>"; };
-		55458F882B8D3A2D008AB8B2 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
-		55458F892B8D3A2D008AB8B2 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
-		55458F8A2B8D3A2D008AB8B2 /* RefCounted.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RefCounted.h; sourceTree = "<group>"; };
-		55458F8B2B8D3A2D008AB8B2 /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
-		55458F8C2B8D3A2D008AB8B2 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
-		55458F8D2B8D3A2D008AB8B2 /* Bitfield.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bitfield.h; sourceTree = "<group>"; };
-		55458F8E2B8D3A2D008AB8B2 /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
-		55458F8F2B8D3A2D008AB8B2 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
-		55458F902B8D3A2D008AB8B2 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
-		55458F912B8D3A2D008AB8B2 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
-		55458F922B8D3A2D008AB8B2 /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
-		55458F932B8D3A2D008AB8B2 /* Atomic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atomic.h; sourceTree = "<group>"; };
 		55458F942B8D3A53008AB8B2 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -75,7 +42,6 @@
 			isa = PBXGroup;
 			children = (
 				55458F942B8D3A53008AB8B2 /* main.mm */,
-				55458F712B8D3A2D008AB8B2 /* Toastbox */,
 				55458F682B8D3782008AB8B2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -86,54 +52,6 @@
 				55458F672B8D3782008AB8B2 /* Calc-USB-Tune-Value */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		55458F712B8D3A2D008AB8B2 /* Toastbox */ = {
-			isa = PBXGroup;
-			children = (
-				55458F722B8D3A2D008AB8B2 /* LICENSE.md */,
-				55458F732B8D3A2D008AB8B2 /* DurationString.h */,
-				55458F742B8D3A2D008AB8B2 /* ReadWrite.h */,
-				55458F752B8D3A2D008AB8B2 /* Enum.h */,
-				55458F762B8D3A2D008AB8B2 /* Endian.h */,
-				55458F772B8D3A2D008AB8B2 /* SignalQueue.h */,
-				55458F782B8D3A2D008AB8B2 /* Scheduler.h */,
-				55458F792B8D3A2D008AB8B2 /* IterAny.h */,
-				55458F7A2B8D3A2D008AB8B2 /* Signal.h */,
-				55458F7B2B8D3A2D008AB8B2 /* RuntimeError.h */,
-				55458F7C2B8D3A2D008AB8B2 /* Mac */,
-				55458F802B8D3A2D008AB8B2 /* LRU.h */,
-				55458F812B8D3A2D008AB8B2 /* FDStream.h */,
-				55458F822B8D3A2D008AB8B2 /* Cast.h */,
-				55458F832B8D3A2D008AB8B2 /* FileDescriptor.h */,
-				55458F842B8D3A2D008AB8B2 /* Util.h */,
-				55458F852B8D3A2D008AB8B2 /* USB.h */,
-				55458F862B8D3A2D008AB8B2 /* Math.h */,
-				55458F872B8D3A2D008AB8B2 /* Defer.h */,
-				55458F882B8D3A2D008AB8B2 /* Mmap.h */,
-				55458F892B8D3A2D008AB8B2 /* HashInts.h */,
-				55458F8A2B8D3A2D008AB8B2 /* RefCounted.h */,
-				55458F8B2B8D3A2D008AB8B2 /* Uniqued.h */,
-				55458F8C2B8D3A2D008AB8B2 /* USBDevice.h */,
-				55458F8D2B8D3A2D008AB8B2 /* Bitfield.h */,
-				55458F8E2B8D3A2D008AB8B2 /* Queue.h */,
-				55458F8F2B8D3A2D008AB8B2 /* RingBuffer.h */,
-				55458F902B8D3A2D008AB8B2 /* SendRight.h */,
-				55458F912B8D3A2D008AB8B2 /* String.h */,
-				55458F922B8D3A2D008AB8B2 /* NumForStr.h */,
-				55458F932B8D3A2D008AB8B2 /* Atomic.h */,
-			);
-			path = Toastbox;
-			sourceTree = "<group>";
-		};
-		55458F7C2B8D3A2D008AB8B2 /* Mac */ = {
-			isa = PBXGroup;
-			children = (
-				55458F7D2B8D3A2D008AB8B2 /* ThreePartView.h */,
-				55458F7E2B8D3A2D008AB8B2 /* Util.h */,
-				55458F7F2B8D3A2D008AB8B2 /* ThreePartView.mm */,
-			);
-			path = Mac;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
