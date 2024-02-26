@@ -1,0 +1,290 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		55458F952B8D3A53008AB8B2 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55458F942B8D3A53008AB8B2 /* main.mm */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		55458F652B8D3782008AB8B2 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		55458F672B8D3782008AB8B2 /* Calc-USB-Tune-Value */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Calc-USB-Tune-Value"; sourceTree = BUILT_PRODUCTS_DIR; };
+		55458F722B8D3A2D008AB8B2 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
+		55458F732B8D3A2D008AB8B2 /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
+		55458F742B8D3A2D008AB8B2 /* ReadWrite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReadWrite.h; sourceTree = "<group>"; };
+		55458F752B8D3A2D008AB8B2 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
+		55458F762B8D3A2D008AB8B2 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
+		55458F772B8D3A2D008AB8B2 /* SignalQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SignalQueue.h; sourceTree = "<group>"; };
+		55458F782B8D3A2D008AB8B2 /* Scheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scheduler.h; sourceTree = "<group>"; };
+		55458F792B8D3A2D008AB8B2 /* IterAny.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IterAny.h; sourceTree = "<group>"; };
+		55458F7A2B8D3A2D008AB8B2 /* Signal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Signal.h; sourceTree = "<group>"; };
+		55458F7B2B8D3A2D008AB8B2 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
+		55458F7D2B8D3A2D008AB8B2 /* ThreePartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
+		55458F7E2B8D3A2D008AB8B2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		55458F7F2B8D3A2D008AB8B2 /* ThreePartView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ThreePartView.mm; sourceTree = "<group>"; };
+		55458F802B8D3A2D008AB8B2 /* LRU.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LRU.h; sourceTree = "<group>"; };
+		55458F812B8D3A2D008AB8B2 /* FDStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FDStream.h; sourceTree = "<group>"; };
+		55458F822B8D3A2D008AB8B2 /* Cast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cast.h; sourceTree = "<group>"; };
+		55458F832B8D3A2D008AB8B2 /* FileDescriptor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileDescriptor.h; sourceTree = "<group>"; };
+		55458F842B8D3A2D008AB8B2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		55458F852B8D3A2D008AB8B2 /* USB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USB.h; sourceTree = "<group>"; };
+		55458F862B8D3A2D008AB8B2 /* Math.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Math.h; sourceTree = "<group>"; };
+		55458F872B8D3A2D008AB8B2 /* Defer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defer.h; sourceTree = "<group>"; };
+		55458F882B8D3A2D008AB8B2 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
+		55458F892B8D3A2D008AB8B2 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
+		55458F8A2B8D3A2D008AB8B2 /* RefCounted.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RefCounted.h; sourceTree = "<group>"; };
+		55458F8B2B8D3A2D008AB8B2 /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
+		55458F8C2B8D3A2D008AB8B2 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
+		55458F8D2B8D3A2D008AB8B2 /* Bitfield.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bitfield.h; sourceTree = "<group>"; };
+		55458F8E2B8D3A2D008AB8B2 /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
+		55458F8F2B8D3A2D008AB8B2 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
+		55458F902B8D3A2D008AB8B2 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
+		55458F912B8D3A2D008AB8B2 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
+		55458F922B8D3A2D008AB8B2 /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
+		55458F932B8D3A2D008AB8B2 /* Atomic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atomic.h; sourceTree = "<group>"; };
+		55458F942B8D3A53008AB8B2 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		55458F642B8D3782008AB8B2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		55458F5E2B8D3782008AB8B2 = {
+			isa = PBXGroup;
+			children = (
+				55458F942B8D3A53008AB8B2 /* main.mm */,
+				55458F712B8D3A2D008AB8B2 /* Toastbox */,
+				55458F682B8D3782008AB8B2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		55458F682B8D3782008AB8B2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				55458F672B8D3782008AB8B2 /* Calc-USB-Tune-Value */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		55458F712B8D3A2D008AB8B2 /* Toastbox */ = {
+			isa = PBXGroup;
+			children = (
+				55458F722B8D3A2D008AB8B2 /* LICENSE.md */,
+				55458F732B8D3A2D008AB8B2 /* DurationString.h */,
+				55458F742B8D3A2D008AB8B2 /* ReadWrite.h */,
+				55458F752B8D3A2D008AB8B2 /* Enum.h */,
+				55458F762B8D3A2D008AB8B2 /* Endian.h */,
+				55458F772B8D3A2D008AB8B2 /* SignalQueue.h */,
+				55458F782B8D3A2D008AB8B2 /* Scheduler.h */,
+				55458F792B8D3A2D008AB8B2 /* IterAny.h */,
+				55458F7A2B8D3A2D008AB8B2 /* Signal.h */,
+				55458F7B2B8D3A2D008AB8B2 /* RuntimeError.h */,
+				55458F7C2B8D3A2D008AB8B2 /* Mac */,
+				55458F802B8D3A2D008AB8B2 /* LRU.h */,
+				55458F812B8D3A2D008AB8B2 /* FDStream.h */,
+				55458F822B8D3A2D008AB8B2 /* Cast.h */,
+				55458F832B8D3A2D008AB8B2 /* FileDescriptor.h */,
+				55458F842B8D3A2D008AB8B2 /* Util.h */,
+				55458F852B8D3A2D008AB8B2 /* USB.h */,
+				55458F862B8D3A2D008AB8B2 /* Math.h */,
+				55458F872B8D3A2D008AB8B2 /* Defer.h */,
+				55458F882B8D3A2D008AB8B2 /* Mmap.h */,
+				55458F892B8D3A2D008AB8B2 /* HashInts.h */,
+				55458F8A2B8D3A2D008AB8B2 /* RefCounted.h */,
+				55458F8B2B8D3A2D008AB8B2 /* Uniqued.h */,
+				55458F8C2B8D3A2D008AB8B2 /* USBDevice.h */,
+				55458F8D2B8D3A2D008AB8B2 /* Bitfield.h */,
+				55458F8E2B8D3A2D008AB8B2 /* Queue.h */,
+				55458F8F2B8D3A2D008AB8B2 /* RingBuffer.h */,
+				55458F902B8D3A2D008AB8B2 /* SendRight.h */,
+				55458F912B8D3A2D008AB8B2 /* String.h */,
+				55458F922B8D3A2D008AB8B2 /* NumForStr.h */,
+				55458F932B8D3A2D008AB8B2 /* Atomic.h */,
+			);
+			path = Toastbox;
+			sourceTree = "<group>";
+		};
+		55458F7C2B8D3A2D008AB8B2 /* Mac */ = {
+			isa = PBXGroup;
+			children = (
+				55458F7D2B8D3A2D008AB8B2 /* ThreePartView.h */,
+				55458F7E2B8D3A2D008AB8B2 /* Util.h */,
+				55458F7F2B8D3A2D008AB8B2 /* ThreePartView.mm */,
+			);
+			path = Mac;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		55458F662B8D3782008AB8B2 /* Calc-USB-Tune-Value */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 55458F6E2B8D3782008AB8B2 /* Build configuration list for PBXNativeTarget "Calc-USB-Tune-Value" */;
+			buildPhases = (
+				55458F632B8D3782008AB8B2 /* Sources */,
+				55458F642B8D3782008AB8B2 /* Frameworks */,
+				55458F652B8D3782008AB8B2 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Calc-USB-Tune-Value";
+			productName = "Calc-USB-Tune-Value";
+			productReference = 55458F672B8D3782008AB8B2 /* Calc-USB-Tune-Value */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		55458F5F2B8D3782008AB8B2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					55458F662B8D3782008AB8B2 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+				};
+			};
+			buildConfigurationList = 55458F622B8D3782008AB8B2 /* Build configuration list for PBXProject "Calc-USB-Tune-Value" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 55458F5E2B8D3782008AB8B2;
+			productRefGroup = 55458F682B8D3782008AB8B2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				55458F662B8D3782008AB8B2 /* Calc-USB-Tune-Value */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		55458F632B8D3782008AB8B2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55458F952B8D3A53008AB8B2 /* main.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		55458F6D2B8D3782008AB8B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++23";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = c17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		55458F702B8D3782008AB8B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 5VXGM37B6Z;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		55458F622B8D3782008AB8B2 /* Build configuration list for PBXProject "Calc-USB-Tune-Value" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55458F6D2B8D3782008AB8B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		55458F6E2B8D3782008AB8B2 /* Build configuration list for PBXNativeTarget "Calc-USB-Tune-Value" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55458F702B8D3782008AB8B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 55458F5F2B8D3782008AB8B2 /* Project object */;
+}
