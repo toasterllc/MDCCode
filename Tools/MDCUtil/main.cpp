@@ -599,15 +599,15 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     
     const auto& triggers = state.settings.triggers;
     
-    printf(         "    event\n");
+    printf(         "    repeatEvent\n");
     for (auto it=std::begin(triggers.repeatEvent); it!=std::begin(triggers.repeatEvent)+triggers.repeatEventCount; it++) {
         printf(     "      #%ju\n",                                     (uintmax_t)(&*it-triggers.repeatEvent));
         printf(     "        time:                  %s\n",              Time::StringForTimeInstant(it->time).c_str());
         printf(     "        type:                  %s\n",              _StringForTriggerEventType(it->type));
+        printf(     "        idx:                   %ju\n",             (uintmax_t)it->idx);
         printf(     "        repeat\n");
         printf(     "          type:                %s\n",              _StringForRepeatType(it->repeat.type));
         printf(     "          arg:                 0x%jx\n",           (uintmax_t)it->repeat.Daily.interval);
-        printf(     "        idx:                   %ju\n",             (uintmax_t)it->idx);
     }
     
     printf(         "    timeTrigger\n");
@@ -638,6 +638,16 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         printf(     "          delayTicks:          %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         printf(     "          count:               %ju\n",             (uintmax_t)it->capture.count);
         printf(     "          ledFlash:            %ju\n",             (uintmax_t)it->capture.ledFlash);
+    }
+    
+    printf(         "    dstEvent\n");
+    for (auto it=std::begin(triggers.dstEvent); it!=std::begin(triggers.dstEvent)+triggers.dstEventCount; it++) {
+        printf(     "      #%ju\n",                                     (uintmax_t)(&*it-triggers.dstEvent));
+        printf(     "        time:                  %s\n",              Time::StringForTimeInstant(it->time).c_str());
+        printf(     "        type:                  %s\n",              _StringForTriggerEventType(it->type));
+        printf(     "        idx:                   %ju\n",             (uintmax_t)it->idx);
+        printf(     "        phase:                 0x%016jx\n",        (uintmax_t)it->phase.u64);
+        printf(     "        adjustmentTicks:       %+jd\n",            (intmax_t)it->adjustmentTicks);
     }
     
     printf(         "    source\n");
