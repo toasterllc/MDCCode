@@ -141,10 +141,10 @@ public:
                 (uintmax_t)STM::StatusHeader.version, (uintmax_t)status.header.version);
         }
         
-        if (status.mspVersion != MSP::StateHeader.version) {
-            throw IncompatibleVersion("invalid MSP version (expected:%ju got:%ju)",
-                (uintmax_t)MSP::StateHeader.version, (uintmax_t)status.mspVersion);
-        }
+//        if (status.mspVersion != MSP::StateHeader.version) {
+//            throw IncompatibleVersion("invalid MSP version (expected:%ju got:%ju)",
+//                (uintmax_t)MSP::StateHeader.version, (uintmax_t)status.mspVersion);
+//        }
         
         return status;
     }
