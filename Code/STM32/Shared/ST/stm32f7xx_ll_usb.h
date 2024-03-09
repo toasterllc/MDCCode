@@ -264,7 +264,7 @@ typedef struct
 #define USB_OTG_HS_EMBEDDED_PHY                3U
 
 #if !defined  (USB_HS_PHYC_TUNE_VALUE)
-#define USB_HS_PHYC_TUNE_VALUE        0x00562DF5 /*!< Value of USB HS PHY Tune */
+#define USB_HS_PHYC_TUNE_VALUE        0x0000E043 /*!< Value of USB HS PHY Tune */
 #endif /* USB_HS_PHYC_TUNE_VALUE */
 /**
   * @}
