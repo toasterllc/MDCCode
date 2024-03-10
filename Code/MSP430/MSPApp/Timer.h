@@ -110,6 +110,7 @@ public:
                     _TimerWait(_CCRForTocks(remainderTocks), 1);
                     if (_State.request.reset) continue;
                 }
+                return;
             }
         }
     }
