@@ -438,10 +438,10 @@ static_assert(!(sizeof(TimeState) % 2)); // Check alignment
 static_assert(sizeof(TimeState) == 16); // Debug
 
 struct [[gnu::packed]] TimeAdjustment {
-    int32_t value;          // Current adjustment to `time`
+    Time::TicksS32 value;    // Current adjustment to `time`
     Time::TicksU32 counter;  // Counts ticks until `counter >= `interval`
     Time::TicksU32 interval; // Interval upon which we perform `value += delta`
-    int16_t delta;          // Amount to add to `value` when `counter >= interval`
+    Time::TicksS16 delta;    // Amount to add to `value` when `counter >= interval`
 };
 static_assert(!(sizeof(TimeAdjustment) % 2)); // Check alignment
 static_assert(sizeof(TimeAdjustment) == 14); // Debug

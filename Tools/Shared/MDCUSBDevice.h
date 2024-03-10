@@ -500,21 +500,30 @@ public:
             // Clear the device's current adjustment so we can read its unadjusted time
             mspTimeAdjust(MSP::TimeAdjustment{});
             
-            // If the device currently has a time set, adjust it to reflect the current time
             const MSP::TimeState state = mspTimeGet();
+            
+            std::optional<MSP::TimeAdjustment> adj;
             if (Time::Absolute(state.time)) {
-                const MSP::TimeAdjustment adj = Time::TimeAdjustmentCalculate(state);
+                try {
+                    adj = Time::TimeAdjustmentCalculate(state);
                 
+                } catch (const std::exception& e) {
+                    printf("Time::TimeAdjustmentCalculate failed: %s\n", e.what());
+                }
+            }
+            
+            // If we have a TimeAdjustment, adjust the time to reflect the current time
+            if (adj) {
                 if (print) {
                     *print << "Applying time adjustment\n";
                     *print << "--------------------------------------------------\n";
-                    *print << Time::StringForTimeAdjustment(adj);
+                    *print << Time::StringForTimeAdjustment(*adj);
                     *print << "\n\n";
                 }
                 
-                mspTimeAdjust(adj);
+                mspTimeAdjust(*adj);
             
-            // Otherwise the device is just tracking relative time, so simply set its absolute time.
+            // If we don't have a TimeAdjustment, initialize the time
             } else {
                 const MSP::TimeState ts = mspTimeInit();
                 if (print) {

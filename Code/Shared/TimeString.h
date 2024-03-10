@@ -6,7 +6,7 @@
 
 namespace Time {
 
-static std::string StringForTimeInstant(Time::Instant t, bool relative=false) {
+inline std::string StringForTimeInstant(Time::Instant t, bool relative=false) {
     using namespace std::chrono;
     char buf[128];
     if (Time::Absolute(t)) {
@@ -28,7 +28,7 @@ static std::string StringForTimeInstant(Time::Instant t, bool relative=false) {
     return buf;
 }
 
-static std::string StringForTimeState(const MSP::TimeState& state) {
+inline std::string StringForTimeState(const MSP::TimeState& state) {
     std::stringstream ss;
     const Time::Instant deviceStart = state.start;
     const Time::Instant deviceInstant = state.time;
@@ -48,7 +48,7 @@ static std::string StringForTimeState(const MSP::TimeState& state) {
 }
 
 
-static std::string StringForTimeAdjustment(const MSP::TimeAdjustment& adj) {
+inline std::string StringForTimeAdjustment(const MSP::TimeAdjustment& adj) {
     std::stringstream ss;
     ss << "   value: " << std::to_string(adj.value) << "\n";
     ss << " counter: " << std::to_string(adj.counter) << "\n";

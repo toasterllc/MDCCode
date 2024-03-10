@@ -14,7 +14,7 @@ struct Clock {
     template<typename T>
     using _TimePoint = std::chrono::time_point<Clock, T>;
     
-    using rep = int64_t;
+    using rep = TicksS64;
     using period = Time::TicksPeriod;
     using duration = std::chrono::duration<rep, period>;
     using time_point = _TimePoint<duration>;
