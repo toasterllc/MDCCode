@@ -1,60 +1,61 @@
 {
   "images" : [
     {
+      "filename" : "Icon-MacOS-16x16@1x.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "16x16"
     },
     {
-      "filename" : "Photon-Icon-33.png",
+      "filename" : "Icon-MacOS-16x16@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "16x16"
     },
     {
-      "filename" : "Photon-Icon-32.png",
+      "filename" : "Icon-MacOS-32x32@1x.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "32x32"
     },
     {
-      "filename" : "Photon-Icon-64.png",
+      "filename" : "Icon-MacOS-32x32@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "32x32"
     },
     {
-      "filename" : "Photon-Icon-128.png",
+      "filename" : "Icon-MacOS-128x128@1x.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "128x128"
     },
     {
-      "filename" : "Photon-Icon-256.png",
+      "filename" : "Icon-MacOS-128x128@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "128x128"
     },
     {
-      "filename" : "Photon-Icon-257.png",
+      "filename" : "Icon-MacOS-256x256@1x.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "256x256"
     },
     {
-      "filename" : "Photon-Icon-512.png",
+      "filename" : "Icon-MacOS-256x256@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "256x256"
     },
     {
-      "filename" : "Photon-Icon-513.png",
+      "filename" : "Icon-MacOS-512x512@1x.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "512x512"
     },
     {
-      "filename" : "Photon-Icon-1024.png",
+      "filename" : "Icon-MacOS-512x512@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "512x512"
