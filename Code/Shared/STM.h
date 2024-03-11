@@ -46,7 +46,7 @@ enum class Op : uint8_t {
     MSPStateRead,
     MSPStateWrite,
     MSPTimeGet,
-    MSPTimeSet,
+    MSPTimeInit,
     MSPTimeAdjust,
     
     MSPLock,
@@ -124,7 +124,7 @@ struct [[gnu::packed]] Cmd {
         
         struct [[gnu::packed]] {
             MSP::TimeState state;
-        } MSPTimeSet;
+        } MSPTimeInit;
         
         struct [[gnu::packed]] {
             MSP::TimeAdjustment adjustment;

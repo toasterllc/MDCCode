@@ -2,6 +2,7 @@
 #include <vector>
 #include <chrono>
 #include <iomanip>
+#include <map>
 #include "date/date.h"
 #include "date/tz.h"
 #include "Calendar.h"
@@ -9,6 +10,7 @@
 #include "Code/Shared/Clock.h"
 #include "Code/Shared/MSP.h"
 #include "Toastbox/Cast.h"
+#include "Toastbox/Util.h"
 
 namespace MDCStudio {
 namespace DeviceSettings {
@@ -435,10 +437,11 @@ inline uint8_t _DaysOfWeekAdvance(uint8_t x, int dir) {
 //       - to add 4 years to `tp`, add 365+366+365+365     days
 //       - to add 5 years to `tp`, add 365+366+365+365+365 days
 //   ... and so on ...
-inline uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_seconds& tp) {
+template<typename T_ZonedTime>
+inline uint8_t _LeapYearPhase(const T_ZonedTime& tp) {
     using namespace std::chrono;
-    const auto days = floor<date::days>(tp);
-    const auto time = tp-days;
+    const auto days = floor<date::days>(tp.get_local_time());
+    const auto time = floor<seconds>(tp.get_local_time())-days;
     date::year_month_day ymd(days);
     
     // Try up to 8 years to find the next leap year.
@@ -460,62 +463,83 @@ inline uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_secon
     abort();
 }
 
-inline Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz, const date::local_seconds& tp) {
-    const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
+template<typename T_ZonedTime>
+inline Time::Instant _TimeInstantForZonedTime(const T_ZonedTime& t) {
+    const auto tpUtc = date::clock_cast<date::utc_clock>(t.get_sys_time());
     const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
-    return Time::Clock::TimeInstantFromTimePoint(tpDevice);
+    const Time::Instant ti = Time::Clock::TimeInstantFromTimePoint(tpDevice);
+    
+    // Test code: a more direct version of the code above.
+    // Use this version if the assert below never fails.
+    {
+        const auto tpDevice = date::clock_cast<Time::Clock>(t.get_sys_time());
+        const Time::Instant tmp = Time::Clock::TimeInstantFromTimePoint(tpDevice);
+        assert(tmp == ti);
+    }
+    
+    return ti;
 }
 
 // _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
-template<typename T>
-inline date::local_seconds _PastTime(const T& now, Calendar::TimeOfDay timeOfDay) {
-    const auto midnight = floor<date::days>(now);
+template<typename T_ZonedTime>
+inline T_ZonedTime _PastTime(
+    const T_ZonedTime& now,
+    Calendar::TimeOfDay timeOfDay) {
+    
+    const auto midnight = floor<date::days>(now.get_local_time());
     const auto t = midnight+timeOfDay;
-    if (t < now) return t;
-    return t-date::days(1);
+    const date::local_seconds sec = (t<now.get_local_time() ? t : t-date::days(1));
+    return { now.get_time_zone(), sec };
 }
 
-
-
 // _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
-template<typename T>
-inline date::local_seconds _PastDayOfWeek(const T& now, Calendar::TimeOfDay timeOfDay, Calendar::DaysOfWeek daysOfWeek) {
+template<typename T_ZonedTime>
+inline T_ZonedTime _PastDayOfWeek(
+    const T_ZonedTime& now,
+    Calendar::TimeOfDay timeOfDay,
+    Calendar::DaysOfWeek daysOfWeek) {
+    
     // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
     // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
     // then it doesn't qualify.)
-    const date::local_days midnight = floor<date::days>(now);
+    const date::local_days midnight = floor<date::days>(now.get_local_time());
     date::local_days day = midnight;
     date::local_seconds tp;
     for (;;) {
         tp = day+timeOfDay;
         // If `tp` is in the past and `day` is in x.DaysOfWeek, we're done
-        if (tp<now && DaysOfWeekGet(daysOfWeek, Calendar::DayOfWeek(day))) {
+        if (tp<now.get_local_time() && DaysOfWeekGet(daysOfWeek, Calendar::DayOfWeek(day))) {
             break;
         }
         day -= date::days(1);
     }
-    return tp;
+    return { now.get_time_zone(), tp };
 }
 
 // _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
-template<typename T>
-inline date::local_seconds _PastDayOfYear(const T& now, Calendar::TimeOfDay timeOfDay, Calendar::DayOfYear dayOfYear) {
+template<typename T_ZonedTime>
+inline T_ZonedTime _PastDayOfYear(
+    const T_ZonedTime& now,
+    Calendar::TimeOfDay timeOfDay,
+    Calendar::DayOfYear dayOfYear) {
+    
     // Determine if doy's month+day of the current year is in the past.
     // If it's in the future, subtract one year and use that.
-    const date::year nowYear = date::year_month_day(floor<date::days>(now)).year();
+    const date::year nowYear = date::year_month_day(floor<date::days>(now.get_local_time())).year();
     auto tp = date::local_days{ nowYear / dayOfYear.month() / dayOfYear.day() } + timeOfDay;
-    if (tp >= now) {
+    if (tp >= now.get_local_time()) {
         tp = date::local_days{ (nowYear-date::years(1)) / dayOfYear.month() / dayOfYear.day() } + timeOfDay;
         // Logic error if tp is still in the future, even after subtracting a year
-        assert(tp < now);
+        assert(tp < now.get_local_time());
     }
-    return tp;
+    return { now.get_time_zone(), tp };
 }
 
 // _DaysOfWeekBitfield(): Generate the days bitfield by advancing `daysOfWeek`
 // backwards until we hit whatever day of week that `tp` is.
-inline uint8_t _DaysOfWeekBitfield(const date::local_seconds& tp, Calendar::DaysOfWeek daysOfWeek) {
-    const date::local_days day = floor<date::days>(tp);
+template<typename T_ZonedTime>
+inline uint8_t _DaysOfWeekBitfield(const T_ZonedTime& tp, Calendar::DaysOfWeek daysOfWeek) {
+    const date::local_days day = floor<date::days>(tp.get_local_time());
     uint8_t days = daysOfWeek.x;
     for (Calendar::DayOfWeek i=Calendar::DayOfWeek(0); i!=Calendar::DayOfWeek(day); i--) {
         days = _DaysOfWeekAdvance(days, -1);
@@ -525,88 +549,98 @@ inline uint8_t _DaysOfWeekBitfield(const date::local_seconds& tp, Calendar::Days
     return days;
 }
 
-inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type,
+// _Repeat(): necessary to work around a Clang bug that emits a invalid error when instantiating a MSP::Repeat
+// in _EventsCreate() ("Field designator (null) does not refer to any field in type Repeat")
+inline MSP::Repeat _Repeat(MSP::Repeat::Type type, uint8_t arg=0) {
+    return MSP::Repeat{
+        .type = type,
+        .Daily = { arg },
+    };
+}
+
+template<typename T_ZonedTime>
+inline std::vector<MSP::Triggers::RepeatEvent> _EventsCreate(
+    const T_ZonedTime& now,
+    MSP::Triggers::Event::Type type,
     Calendar::TimeOfDay timeOfDay, const Repeat* repeat, uint8_t idx) {
     
     using namespace std::chrono;
-    const date::time_zone& tz = *date::current_zone();
-    const auto now = tz.to_local(system_clock::now());
-    const auto pastTimeOfDay = _PastTime(now, timeOfDay);
+    const T_ZonedTime pastTimeOfDay = _PastTime(now, timeOfDay);
     
     // Handle non-repeating events
     if (!repeat) {
-        return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
-            .type = type,
-            .repeat = { .type = MSP::Repeat::Type::Never, },
-            .idx = idx,
+        return { MSP::Triggers::RepeatEvent{
+            MSP::Triggers::Event{
+                .time = _TimeInstantForZonedTime(pastTimeOfDay),
+                .type = type,
+                .idx = idx,
+            },
+            .repeat = _Repeat(MSP::Repeat::Type::Never),
         }};
     }
     
     switch (repeat->type) {
     case Repeat::Type::Daily:
-        return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
-            .type = type,
-            .repeat = {
-                .type = MSP::Repeat::Type::Daily,
-                .Daily = { 1 },
+        return { MSP::Triggers::RepeatEvent{
+            MSP::Triggers::Event{
+                .time = _TimeInstantForZonedTime(pastTimeOfDay),
+                .type = type,
+                .idx = idx,
             },
-            .idx = idx,
+            .repeat = _Repeat(MSP::Repeat::Type::Daily, 1),
         }};
     
     case Repeat::Type::DaysOfWeek: {
         // If no days are selected, dont' return any events
         if (Calendar::DaysOfWeekEmpty(repeat->DaysOfWeek)) return {};
         
-        const date::local_seconds tp = _PastDayOfWeek(now, timeOfDay, repeat->DaysOfWeek);
+        const T_ZonedTime tp = _PastDayOfWeek(now, timeOfDay, repeat->DaysOfWeek);
         // Create the DaysOfWeek bitfield that's aligned to whatever day of
         // the week `tp` is.
         // This is necessary because the time that we return and the days
         // bitfield need to be aligned so that they represent the same day.
         const uint8_t days = _DaysOfWeekBitfield(tp, repeat->DaysOfWeek);
         
-        return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, tp),
-            .type = type,
-            .repeat = {
-                .type = MSP::Repeat::Type::Weekly,
-                .Weekly = { days },
+        return { MSP::Triggers::RepeatEvent{
+            MSP::Triggers::Event{
+                .time = _TimeInstantForZonedTime(tp),
+                .type = type,
+                .idx = idx,
             },
-            .idx = idx,
+            .repeat = _Repeat(MSP::Repeat::Type::Weekly, days),
         }};
     }
     
     case Repeat::Type::DaysOfYear: {
         const auto daysOfYear = Calendar::VectorFromDaysOfYear(repeat->DaysOfYear);
-        std::vector<MSP::Triggers::Event> events;
+        std::vector<MSP::Triggers::RepeatEvent> events;
         for (Calendar::DayOfYear doy : daysOfYear) {
             // Determine if doy's month+day of the current year is in the past.
             // If it's in the future, subtract one year and use that.
-            const date::local_seconds tp = _PastDayOfYear(now, timeOfDay, doy);
+            const T_ZonedTime tp = _PastDayOfYear(now, timeOfDay, doy);
             events.push_back({
-                .time = _TimeInstantForLocalTime(tz, tp),
-                .type = type,
-                .repeat = {
-                    .type = MSP::Repeat::Type::Yearly,
-                    .Yearly = { _LeapYearPhase(tz, tp) },
+                MSP::Triggers::Event{
+                    .time = _TimeInstantForZonedTime(tp),
+                    .type = type,
+                    .idx = idx,
                 },
-                .idx = idx,
+                .repeat = _Repeat(MSP::Repeat::Type::Yearly, _LeapYearPhase(tp)),
             });
         }
         return events;
     }
     
-    case Repeat::Type::DayInterval:
-        return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
-            .type = type,
-            .repeat = {
-                .type = MSP::Repeat::Type::Daily,
-                .Daily = { Toastbox::Cast<decltype(MSP::Repeat::Daily.interval)>(repeat->DayInterval.count()) },
+    case Repeat::Type::DayInterval: {
+        const uint8_t interval = Toastbox::Cast<decltype(MSP::Repeat::Daily.interval)>(repeat->DayInterval.count());
+        return { MSP::Triggers::RepeatEvent{
+            MSP::Triggers::Event{
+                .time = _TimeInstantForZonedTime(pastTimeOfDay),
+                .type = type,
+                .idx = idx,
             },
-            .idx = idx,
+            .repeat = _Repeat(MSP::Repeat::Type::Daily, interval),
         }};
+    }
     
     default:
         abort();
@@ -678,16 +712,161 @@ const Repeat* _MotionRepeat(const T& x) {
     return &x.schedule.repeat;
 }
 
-inline void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers::Event>& events) {
-    const size_t eventsRem = std::size(triggers.event)-triggers.eventCount;
+inline void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers::RepeatEvent>& events) {
+    const size_t eventsRem = std::size(triggers.repeatEvent)-triggers.repeatEventCount;
     if (events.size() > eventsRem) {
         throw Toastbox::RuntimeError("too many events");
     }
-    std::copy(events.begin(), events.end(), triggers.event+triggers.eventCount);
-    triggers.eventCount += events.size();
+    std::copy(events.begin(), events.end(), triggers.repeatEvent+triggers.repeatEventCount);
+    triggers.repeatEventCount += events.size();
+}
+
+inline MSP::DSTPhase _DSTPhaseCreate(std::vector<date::sys_seconds> tps) {
+    using namespace std::chrono;
+    assert(!tps.empty());
+    // Ensure that weren't given more timepoints than the number of transitions we can support.
+    // +1 because N+1 timepoints == N transitions
+    assert(tps.size() <= MSP::DSTPhase::PhaseCount+1);
+    
+    MSP::DSTPhase phase = {};
+    std::optional<date::sys_seconds> tprev;
+    for (auto t : tps) {
+//        printf("Halla: %s\n", Calendar::TimestampString(
+//            Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(t))).c_str());
+        
+        if (tprev) {
+            const seconds deltaSec = t-*tprev;
+            const date::days deltaDays = duration_cast<date::days>(deltaSec);
+            assert(deltaDays == deltaSec); // Ensure a lossless conversion; ie deltaSec must be an even multiple of days
+            const date::days p = deltaDays - date::days(365);
+            assert(p.count() >= MSP::DSTPhase::PhaseMin);
+            assert(p.count() <= MSP::DSTPhase::PhaseMax);
+            phase.push(p.count());
+        }
+        tprev = t;
+    }
+    
+    // If tps.size() < `MSP::DSTPhase::PhaseCount+1`, then we need to right-shift phase.u64 so that the
+    // first phase is placed at the very right of phase.u64.
+    const size_t phaseCount = tps.size()-1;
+    for (size_t i=0; i<MSP::DSTPhase::PhaseCount-phaseCount; i++) phase.push(0);
+    return phase;
+}
+
+template<typename T_ZonedTime>
+inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
+    using namespace std::chrono;
+    
+    const date::time_zone& tz = *now.get_time_zone();
+    
+    // Create DSTEvents
+    // TransitionTimepointCount: the number of timepoints that each vector in `transitions` should be filled with.
+    // +1 because the first time will populate Event.time, while the remaining times will populate the phase.
+    // (Ie, to get N phases, we need N+1 transitions.)
+    constexpr size_t TransitionTimepointCount = MSP::DSTPhase::PhaseCount+1;
+    
+//    printf("now: %s\n", Calendar::TimestampString(
+//        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(date::floor<seconds>(now.get_sys_time())))).c_str());
+    
+    const date::sys_seconds nowSys = date::floor<minutes>(now.get_sys_time());
+    // dayMax: cap the time into the future that we'll look at.
+    // We want TransitionTimepointCount transitions, so look TransitionTimepointCount+1 years into the future.
+    const date::sys_seconds dayMax = nowSys + date::days(365*(TransitionTimepointCount+1));
+    date::sys_seconds day = nowSys - date::days(365) - date::days(1);
+    std::chrono::seconds offPrev = tz.get_info(day).offset;
+    std::map<std::chrono::seconds, std::vector<date::sys_seconds>> transitions;
+    while (day < dayMax) {
+        day += date::days(1);
+        const date::sys_info dayInfo = tz.get_info(day);
+        
+//        printf("%ju offset = %jd\n", (uintmax_t)day.time_since_epoch().count(), (intmax_t)dayInfo.offset.count());
+        
+        if (dayInfo.offset != offPrev) {
+            date::sys_seconds t = day;
+            for (;;) {
+                const date::sys_seconds tp = t;
+                t -= std::chrono::minutes(1);
+                const date::sys_info tInfo = tz.get_info(t);
+                if (tInfo.offset != dayInfo.offset) {
+                    const std::chrono::seconds delta = tInfo.offset - dayInfo.offset;
+                    auto& vec = transitions[delta];
+                    if (vec.size() >= TransitionTimepointCount) goto full; // Never let a single vector exceed TransitionTimepointCount
+                    
+//                    printf("Transition point: %s (delta: %jd minutes)\n", Calendar::TimestampString(
+//                        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(tp))).c_str(), (intmax_t)delta.count());
+                    
+                    vec.push_back(tp);
+//                    printf("Found transition point: %ju (delta: %jd minutes)\n", (uintmax_t)transitionTime.time_since_epoch().count(), (intmax_t)delta.count());
+                    break;
+                }
+            }
+            offPrev = dayInfo.offset;
+//            printf("Found transition: ");
+        }
+    }
+full:
+    
+    // We should either have 0 deltas (for places that don't have DST) or 2 deltas
+    // (eg +1 hour / -1 hour, or some rare places that do +30 minutes / -30 minutes).
+    assert(transitions.size()==0 || transitions.size()==2);
+    
+    if (transitions.size() == 2) {
+        auto transitionIt = transitions.begin();
+        for (size_t i=0; i<2; i++, transitionIt++) {
+            const std::chrono::seconds adjustmentSec = transitionIt->first;
+            const Ticks adjustmentTicks = adjustmentSec;
+            const std::vector<date::sys_seconds>& tps = transitionIt->second;
+            const auto tp = date::clock_cast<Time::Clock>(tps.front());
+            
+            printf("DSTEvent.time = %s (adj: %jd)\n", Calendar::TimestampString(
+                Time::Clock::TimeInstantFromTimePoint(tp)).c_str(), (intmax_t)adjustmentTicks.count());
+            
+            MSP::Triggers::DSTEvent& dstEvent = t.dstEvent[i];
+            dstEvent = MSP::Triggers::DSTEvent{
+                MSP::Triggers::Event{
+                    .time = Time::Clock::TimeInstantFromTimePoint(tp),
+                    .type = MSP::Triggers::Event::Type::DST,
+                    .idx = (uint8_t)i,
+                },
+                .phase = _DSTPhaseCreate(tps),
+                .adjustmentTicks = Toastbox::Cast<decltype(MSP::Triggers::DSTEvent::adjustmentTicks)>(adjustmentTicks.count()),
+            };
+        }
+        
+        // The DSTEvent that occurs first will adjust the time of the DSTEvent that occurs second.
+        //
+        // We don't want that behavior, so we subtract the `adjustmentTicks` from the DSTEvent
+        // that occurs second, to counteract the addition of `adjustmentTicks` that the first
+        // DSTEvent will perform.
+        //
+        // This is a little ugly but it's the most elegant solution we've found so far.
+        // An alternative is to implement DSTEvent logic such that they don't affect other
+        // DSTEvents, but that could cause events in the event array to become out-of-order,
+        // since we'd be adjusting the time of some events but not others.
+        
+        // If dstEvent[1] occurs second:
+        if (t.dstEvent[1].time > t.dstEvent[0].time) {
+            t.dstEvent[1].time -= t.dstEvent[0].adjustmentTicks;
+        
+        // If dstEvent[0] occurs second:
+        } else if (t.dstEvent[0].time > t.dstEvent[1].time) {
+            t.dstEvent[0].time -= t.dstEvent[1].adjustmentTicks;
+        
+        } else {
+            // Shouldn't be possible
+            abort();
+        }
+        
+        t.dstEventCount = 2;
+    }
 }
 
 inline MSP::Triggers Convert(const Triggers& triggers) {
+    using namespace std::chrono;
+    
+    const date::time_zone& tz = *date::current_zone();
+    const date::zoned_time now(&tz, std::chrono::system_clock::now());
+    
     MSP::Triggers t = {};
     for (auto it=std::begin(triggers.triggers); it!=std::begin(triggers.triggers)+triggers.count; it++) {
         switch (it->type) {
@@ -701,7 +880,9 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             
             // Create events for the trigger
             {
-                const auto events = _EventsCreate(MSP::Triggers::Event::Type::TimeTrigger, x.schedule.time, &x.schedule.repeat, t.timeTriggerCount);
+                const auto events = _EventsCreate(now,
+                    MSP::Triggers::Event::Type::TimeTrigger,
+                    x.schedule.time, &x.schedule.repeat, t.timeTriggerCount);
                 _AddEvents(t, events);
             }
             
@@ -725,7 +906,8 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             
             // Create events for the trigger
             {
-                const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionEnable,
+                const auto events = _EventsCreate(now,
+                    MSP::Triggers::Event::Type::MotionEnable,
                     _MotionTimeOfDay(x), _MotionRepeat(x), t.motionTriggerCount);
                 _AddEvents(t, events);
             }
@@ -764,6 +946,8 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
         default: abort();
         }
     }
+    
+    _DSTEventsCreate(now, t);
     
     Serialize(t.source, triggers);
     return t;

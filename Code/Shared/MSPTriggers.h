@@ -14,7 +14,6 @@ auto& T_Base,
 typename T_MotionPowered
 >
 struct T_MSPTriggers {
-    struct Trigger;
     static constexpr auto& _T_Base = T_Base.settings.triggers;
     using _Base = std::remove_reference_t<decltype(_T_Base)>;
     
@@ -30,12 +29,15 @@ struct T_MSPTriggers {
             MotionUnsuppress,
             
             CaptureImage,
+            
+            DST,
         };
         
         static Event::Type Convert(MSP::Triggers::Event::Type x) {
             switch (x) {
             case MSP::Triggers::Event::Type::TimeTrigger:   return Type::TimeTrigger;
             case MSP::Triggers::Event::Type::MotionEnable:  return Type::MotionEnable;
+            case MSP::Triggers::Event::Type::DST:           return Type::DST;
             }
             Assert(false);
         }
@@ -54,8 +56,8 @@ struct T_MSPTriggers {
     
     struct RepeatEvent : Event {
         RepeatEvent() = default;
-        RepeatEvent(typename _Base::Event& b) : Event(Event::Convert(b.type)), repeat(b.repeat) {}
-        auto& base() { return _BaseElm(_T_Base.event, _Event, *this); }
+        RepeatEvent(typename _Base::RepeatEvent& b) : Event(Event::Convert(b.type)), repeat(b.repeat) {}
+        auto& base() { return _BaseElm(_T_Base.repeatEvent, _RepeatEvent, *this); }
         
         MSP::Repeat repeat;
     };
@@ -220,26 +222,38 @@ struct T_MSPTriggers {
         auto& base() { return _BaseElm(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
     };
     
+    struct DSTEvent : Event {
+        DSTEvent() = default;
+        DSTEvent(typename _Base::DSTEvent& b) : Event(Event::Type::DST), phase(b.phase) {}
+        auto& base() { return _BaseElm(_T_Base.dstEvent, _DSTEvent, *this); }
+        MSP::DSTPhase phase;
+    };
+    
     static void Init(const Time::Instant& t) {
         // Reset everything
         _Front = _End;
-        for (auto& x : _Event)          x = RepeatEvent(x.base());
+        for (auto& x : _RepeatEvent)    x = RepeatEvent(x.base());
         for (auto& x : _TimeTrigger)    x = TimeTrigger(x.base());
         for (auto& x : _MotionTrigger)  x = MotionTrigger(x.base());
         for (auto& x : _ButtonTrigger)  x = ButtonTrigger(x.base());
+        for (auto& x : _DSTEvent)       x = DSTEvent(x.base());
         
-        // If we don't know the absolute time, run in 'relative time mode', where we still
-        // execute events with the same relative timing as in 'absolute time mode', we just
-        // don't know the absolute time. To do so, we subtract the first event's absolute
-        // time from all events, such that the first event starts at Time::Instant=0.
-        Time::Instant sub = 0;
-        if (!Time::Absolute(t)) {
-            sub = _Event[0].base().time;
-        }
+//        // If we don't know the absolute time, run in 'relative time mode', where we still
+//        // execute events with the same relative timing as in 'absolute time mode', we just
+//        // don't know the absolute time. To do so, we subtract the first event's absolute
+//        // time from all events, such that the first event starts at Time::Instant=0.
+//        Time::Instant sub = 0;
+//        if (!Time::Absolute(t)) {
+//            sub = _RepeatEvent[0].base().time;
+//        }
         
         // Schedule events
-        for (auto it=EventBegin(); it!=EventEnd(); it++) {
-            EventInsert(*it, it->base().time-sub);
+        for (auto it=RepeatEventBegin(); it!=RepeatEventEnd(); it++) {
+            EventInsert(*it, it->base().time);
+        }
+        
+        for (auto it=DSTEventBegin(); it!=DSTEventEnd(); it++) {
+            EventInsert(*it, it->base().time);
         }
     }
     
@@ -281,14 +295,12 @@ struct T_MSPTriggers {
         ev.next = nullptr;
     }
     
-    static Event* EventFront() {
-        if (_Front == _End) return nullptr;
-        return _Front;
-    }
+    static auto EventBegin() { return _Front; }
+    static auto EventEnd()   { return _End; }
     
-    static auto EventBegin() { return std::begin(_Event); }
-    static auto EventEnd()   { return std::begin(_Event)+EventCount(); }
-    static auto EventCount() { return _T_Base.eventCount; }
+    static auto RepeatEventBegin() { return std::begin(_RepeatEvent); }
+    static auto RepeatEventEnd()   { return std::begin(_RepeatEvent)+RepeatEventCount(); }
+    static auto RepeatEventCount() { return _T_Base.repeatEventCount; }
     
     static auto TimeTriggerBegin() { return std::begin(_TimeTrigger); }
     static auto TimeTriggerEnd() { return std::begin(_TimeTrigger)+_T_Base.timeTriggerCount; }
@@ -299,8 +311,11 @@ struct T_MSPTriggers {
     static auto ButtonTriggerBegin() { return std::begin(_ButtonTrigger); }
     static auto ButtonTriggerEnd() { return std::begin(_ButtonTrigger)+_T_Base.buttonTriggerCount; }
     
-    static Time::Ticks32 RepeatAdvance(MSP::Repeat& x) {
-        static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
+    static auto DSTEventBegin() { return std::begin(_DSTEvent); }
+    static auto DSTEventEnd() { return std::begin(_DSTEvent)+_T_Base.dstEventCount; }
+    
+    static Time::TicksU32 RepeatAdvance(MSP::Repeat& x) {
+        static constexpr Time::TicksU32 YearPlusDay = Time::Year+Time::Day;
         
         switch (x.type) {
         case MSP::Repeat::Type::Never:
@@ -338,6 +353,12 @@ struct T_MSPTriggers {
         Assert(false);
     }
     
+    static Time::TicksU32 DSTPhaseAdvance(MSP::DSTPhase& x) {
+        const int8_t phase = x.pop();
+        const Time::TicksU32 ticks = Time::Year + (Time::Day * phase);
+        return ticks;
+    }
+    
     template<typename T_Dst, typename T_Src, size_t T_Count>
     static T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
         Assert(&elm>=src && &elm<(src+T_Count));
@@ -346,10 +367,11 @@ struct T_MSPTriggers {
     }
     
     // Triggers
-    static inline RepeatEvent   _Event[std::size(_T_Base.event)];
+    static inline RepeatEvent   _RepeatEvent[std::size(_T_Base.repeatEvent)];
     static inline TimeTrigger   _TimeTrigger[std::size(_T_Base.timeTrigger)];
     static inline MotionTrigger _MotionTrigger[std::size(_T_Base.motionTrigger)];
     static inline ButtonTrigger _ButtonTrigger[std::size(_T_Base.buttonTrigger)];
+    static inline DSTEvent      _DSTEvent[std::size(_T_Base.dstEvent)];
     
     // Event linked list
     // _End: a sentinel value representing the end of the linked list.
@@ -360,10 +382,10 @@ struct T_MSPTriggers {
     static inline Event*const _End = (Event*)0x0001;
     static inline Event* _Front;
     
-    static constexpr size_t _TotalSize = sizeof(_Event)         +
-                                         sizeof(_TimeTrigger)   +
-                                         sizeof(_MotionTrigger) +
-                                         sizeof(_ButtonTrigger) +
-                                         sizeof(_Front)         ;
+//    static constexpr size_t _TotalSize = sizeof(_RepeatEvent)   +
+//                                         sizeof(_TimeTrigger)   +
+//                                         sizeof(_MotionTrigger) +
+//                                         sizeof(_ButtonTrigger) +
+//                                         sizeof(_Front)         ;
 //    StaticPrint(_TotalSize);
 };

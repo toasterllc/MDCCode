@@ -299,6 +299,7 @@
 		558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminant.mm; sourceTree = "<group>"; };
 		558FFC6029CA1E520022E840 /* Prefs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Prefs.h; sourceTree = "<group>"; };
 		559704ED2AE0E481006CD617 /* ImageExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageExporter.h; sourceTree = "<group>"; };
+		55A30ECA2BA0C94A00CFAB67 /* MSPTriggers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSPTriggers.h; sourceTree = "<group>"; };
 		55A36A8E27A2951900FD0181 /* ImageSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageSource.h; sourceTree = "<group>"; };
 		55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		55A36AB727A35ABD00FD0181 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -589,6 +590,7 @@
 				5544AE0B27B5E585006AB473 /* SDCard.h */,
 				5544AE0C27B5E585006AB473 /* Img.h */,
 				5544AE0D27B5E585006AB473 /* MSP.h */,
+				55A30ECA2BA0C94A00CFAB67 /* MSPTriggers.h */,
 				5544AE0E27B5E585006AB473 /* ImgSD.h */,
 				5544AE0F27B5E585006AB473 /* ImgSensor.h */,
 				5544AE1027B5E585006AB473 /* ICE.h */,
@@ -1180,6 +1182,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -1197,6 +1200,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -1222,11 +1226,18 @@
 				CODE_SIGN_ENTITLEMENTS = Resources/MDCStudio.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 5VXGM37B6Z;
 				INFOPLIST_FILE = Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 Toaster. All rights reserved.";
+				INFOPLIST_KEY_NSMainNibFile = MainMenu;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				MARKETING_VERSION = "$(CURRENT_PROJECT_VERSION)";
 				PRODUCT_BUNDLE_IDENTIFIER = "llc.toaster.photon-transfer";
 				PRODUCT_NAME = "Photon Transfer";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};

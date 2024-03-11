@@ -80,7 +80,7 @@ using _SDCard = SD::Card<
 
 // _RTC: real time clock
 using _RTC = T_RTC<_Scheduler, _XT1FreqHz>;
-using _Watchdog = T_Watchdog<_ACLKFreqHz, (Time::Ticks64)_RTC::InterruptIntervalTicks*2>;
+using _Watchdog = T_Watchdog<_ACLKFreqHz, (Time::TicksU64)_RTC::InterruptIntervalTicks*2>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in FRAM because it needs to persist indefinitely.
@@ -109,17 +109,11 @@ struct _MotionPowered : T_AssertionCounter<_MotionPoweredUpdate> {};
 using _Triggers = T_MSPTriggers<_State, _MotionPowered::Assertion>;
 
 [[gnu::noinline]]
-static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::Ticks32 deltaTicks) {
+static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::TicksS32 deltaTicks) {
     return time + deltaTicks;
 }
 
-[[gnu::noinline]]
-static constexpr Time::Instant _TimeInstantSubtract(const Time::Instant& time, Time::Ticks32 deltaTicks) {
-    if (time < deltaTicks) return 0;
-    return time - deltaTicks;
-}
-
-static constexpr Time::Ticks32 _TicksForMs(uint64_t ms) {
+static constexpr Time::TicksU32 _TicksForMs(uint64_t ms) {
     return ((ms * Time::TicksPeriod::den) / (1000 * Time::TicksPeriod::num));
 }
 
@@ -705,11 +699,11 @@ struct _TaskI2C {
             };
             break;
         
-        case Cmd::Op::TimeSet:
+        case Cmd::Op::TimeInit:
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
             if (!_HostModeEnabled) break;
-            _RTC::Init(&cmd.arg.TimeSet.state);
+            _RTC::Init(&cmd.arg.TimeInit.state);
             resp.ok = true;
             break;
         
@@ -748,6 +742,9 @@ struct _TaskI2C {
         }
     }
     
+    // _ChargeStatusChanged() is a good size to put in the 'Information FRAM' section (a 512 byte section)
+    // to free up some space for the regular FRAM section.
+    [[gnu::section(".fram_info"), gnu::used]]
     static void _ChargeStatusChanged() {
         _TaskLED::Set(_TaskLED::PriorityChargeState, _LEDStateForChargeStatus(_ChargeStatus));
     }
@@ -1111,7 +1108,7 @@ struct _TaskEvent {
         // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
         if (_State.live) CaptureStart(trigger, ev.time);
         // Reschedule TimeTriggerEvent for its next trigger time
-        EventInsert(ev, ev.repeat);
+        EventInsert(ev);
     }
     
     static void _MotionEnablePower(_Triggers::MotionEnablePowerEvent& ev) {
@@ -1135,12 +1132,12 @@ struct _TaskEvent {
         }
         
         // Reschedule MotionEnableEvent for its next trigger time
-        const bool repeat = EventInsert(ev, ev.repeat);
+        const bool repeat = EventInsert(ev);
         
         // Schedule MotionEnablePowerEvent event `PowerOnDelayMs` before the MotionEnableEvent.
         if (repeat) {
             EventInsert(_Cast<_Triggers::MotionEnablePowerEvent>(trigger),
-                _TimeInstantSubtract(ev.time, _TicksForMs(_Motion::PowerOnDelayMs)));
+                _TimeInstantAdd(ev.time, -_TicksForMs(_Motion::PowerOnDelayMs)));
         }
     }
     
@@ -1225,16 +1222,29 @@ struct _TaskEvent {
         }
     }
     
+    static void _DST(_Triggers::DSTEvent& ev) {
+        // Re-insert the DSTEvent before adjusting all subsequent events' times,
+        // because we need to adjust the DSTEvent's time too.
+        EventInsert(ev);
+        
+        const Time::TicksS32 adj = ev.base().adjustmentTicks;
+        _Triggers::Event* x = _Triggers::EventBegin();
+        while (x != _Triggers::EventEnd()) {
+            x->time = _TimeInstantAdd(x->time, adj);
+            x = x->next;
+        }
+    }
+    
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
         _Triggers::EventInsert(ev, time);
         // If this event is now the front of the list, reschedule _EventTimer
-        if (_Triggers::EventFront() == &ev) {
+        if (_Triggers::EventBegin() == &ev) {
             _EventTimerSchedule();
         }
     }
     
-    static bool EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-        const Time::Ticks32 delta = _Triggers::RepeatAdvance(repeat);
+    static bool EventInsert(_Triggers::RepeatEvent& ev) {
+        const Time::TicksU32 delta = _Triggers::RepeatAdvance(ev.repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
             EventInsert(ev, _TimeInstantAdd(ev.time, delta));
@@ -1243,9 +1253,10 @@ struct _TaskEvent {
         return false;
     }
     
-//    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::Ticks32 deltaTicks) {
-//        EventInsert(ev, time + deltaTicks);
-//    }
+    static void EventInsert(_Triggers::DSTEvent& ev) {
+        const Time::TicksU32 delta = _Triggers::DSTPhaseAdvance(ev.phase);
+        EventInsert(ev, _TimeInstantAdd(ev.time, delta));
+    }
     
     static bool CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
         // Bail if the CaptureImageEvent is already underway
@@ -1262,17 +1273,19 @@ struct _TaskEvent {
     static void _EventTimerSchedule() {
         // Short-circuit if we're fast-forwarding through events
         if (!_State.live) return;
-        _Triggers::Event* ev = _Triggers::EventFront();
+        _Triggers::Event* ev = _Triggers::EventBegin();
         std::optional<Time::Instant> time;
-        if (ev) time = ev->time;
+        if (ev != _Triggers::EventEnd()) {
+            time = ev->time;
+        }
         _EventTimer::Schedule(time);
     }
     
     // _EventPop(): pops an event from the front of the list if it's ready to be handled
     // Interrupts must be disabled
     static _Triggers::Event& _EventPop() {
-        _Triggers::Event* ev = _Triggers::EventFront();
-        Assert(ev); // We must have an event at this point, or else we have a logic error
+        _Triggers::Event* ev = _Triggers::EventBegin();
+        Assert(ev != _Triggers::EventEnd()); // We must have an event at this point, or else we have a logic error
         _Triggers::EventPop();
         // Schedule _EventTimer for the next event
         _EventTimerSchedule();
@@ -1297,6 +1310,8 @@ struct _TaskEvent {
             _MotionUnsuppress(      _Cast<_Triggers::MotionUnsuppressEvent&>(ev)        ); break;
         case T::CaptureImage:
             _CaptureImage(          _Cast<_Triggers::CaptureImageEvent&>(ev)            ); break;
+        case T::DST:
+            _DST(                   _Cast<_Triggers::DSTEvent&>(ev)                     ); break;
         }
     }
     
@@ -1313,8 +1328,8 @@ struct _TaskEvent {
         
         // Fast-forward through events
         for (;;) {
-            _Triggers::Event* ev = _Triggers::EventFront();
-            if (!ev || (ev->time > startTime)) break;
+            _Triggers::Event* ev = _Triggers::EventBegin();
+            if (ev==_Triggers::EventEnd() || (ev->time > startTime)) break;
             _EventHandle(_EventPop());
         }
         
@@ -1509,7 +1524,7 @@ struct _TaskMotion {
             }
             
             // Suppress motion for the specified duration, if suppression is enabled
-            const Time::Ticks32 suppressTicks = trigger.base().suppressTicks;
+            const Time::TicksU32 suppressTicks = trigger.base().suppressTicks;
             if (suppressTicks) {
                 // Suppress power/motion immediately
                 trigger.suppress();
@@ -1519,7 +1534,7 @@ struct _TaskMotion {
                 _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressEvent>(trigger), unsuppressTime);
                 
                 // Schedule MotionUnsuppressPowerEvent event `PowerOnDelayMs` before the MotionUnsuppressEvent.
-                const Time::Instant prepareTime = _TimeInstantSubtract(unsuppressTime, _TicksForMs(_Motion::PowerOnDelayMs));
+                const Time::Instant prepareTime = _TimeInstantAdd(unsuppressTime, -_TicksForMs(_Motion::PowerOnDelayMs));
                 _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressPowerEvent>(trigger), prepareTime);
             }
         }

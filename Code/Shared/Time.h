@@ -7,9 +7,15 @@ namespace Time {
 using TicksFreq   = std::ratio<16>;
 using TicksPeriod = std::ratio_divide<std::ratio<1>, TicksFreq>;
 
-using Ticks64 = uint64_t;
-using Ticks32 = uint32_t;
-using Ticks16 = uint16_t;
+using TicksU64 = uint64_t;
+using TicksU32 = uint32_t;
+using TicksU16 = uint16_t;
+using TicksU8  = uint8_t;
+
+using TicksS64 = int64_t;
+using TicksS32 = int32_t;
+using TicksS16 = int16_t;
+using TicksS8  = int8_t;
 
 // Instant: represents a particular moment in time
 // Encoded as the linear count of ticks since our epoch,

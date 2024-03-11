@@ -7,19 +7,17 @@
 #include "Code/Shared/Assert.h"
 #include "Code/Shared/Time.h"
 
-// _RTCTime: the current time (either absolute or relative, depending on the
-// value supplied to Init()).
+// _RTCState: the current time (either absolute or relative, depending on the
+// value supplied to Init()) and calibration info.
 //
-// _RTCTime is volatile because it's updated from the interrupt context.
-//
-// _RTCTime is stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// _RTCState is stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep.
 //
-// _RTCTime needs to live in the _noinit variant of BAKMEM so that RTC
+// _RTCState needs to live in the _noinit variant of BAKMEM so that RTC
 // memory is never automatically initialized, because we don't want it
 // to be reset when we abort.
 //
-// _RTCTime is declared outside of RTCType because apparently with GCC, the
+// _RTCState is declared outside of RTCType because apparently with GCC, the
 // gnu::section() attribute doesn't work for static member variables within
 // templated classes.
 
@@ -51,7 +49,7 @@ private:
 //    }
     
     // _TicksForTocks(): uint16_t version (runtime)
-    static constexpr Time::Ticks16 _TicksForTocks(uint16_t tocks) {
+    static constexpr Time::TicksU16 _TicksForTocks(uint16_t tocks) {
         // uint16_t argument: verify that the max value for the argument can't overflow due to the multiplication
         static_assert(std::in_range<uint16_t>(std::numeric_limits<uint16_t>::max() * TicksPerTock::num));
         return ((tocks * (uint16_t)TicksPerTock::num) / (uint16_t)TicksPerTock::den);
@@ -59,7 +57,7 @@ private:
     
     // _TicksForTocks(): uint32_t version (compile-time)
     template<auto T_Tocks>
-    static constexpr Time::Ticks16 _TicksForTocks() {
+    static constexpr Time::TicksU16 _TicksForTocks() {
         constexpr auto ticks = ((T_Tocks * TicksPerTock::num) / TicksPerTock::den);
         static_assert(std::in_range<uint16_t>(ticks));
         return ticks;
@@ -67,7 +65,7 @@ private:
     
 public:
     static constexpr uint32_t InterruptIntervalTocks = 0x10000; // 0xFFFF+1
-    static constexpr Time::Ticks16 InterruptIntervalTicks = _TicksForTocks<InterruptIntervalTocks>();
+    static constexpr Time::TicksU16 InterruptIntervalTicks = _TicksForTocks<InterruptIntervalTocks>();
     static_assert(InterruptIntervalTicks == 32768); // Debug
     static constexpr uint16_t TocksMax = InterruptIntervalTocks-1;
     static_assert(TocksMax == 0xFFFF); // Debug
@@ -118,8 +116,8 @@ public:
         return RTCCTL != 0;
     }
     
-    // Tocks(): returns the current tocks offset from _RTCTime, as tracked by the hardware
-    // register RTCCNT.
+    // Tocks(): returns the current tocks offset from _RTCState.state.time, as tracked by the
+    // hardware register RTCCNT.
     //
     // Cannot be called from the interrupt context.
     //
@@ -198,7 +196,7 @@ public:
     
     // TicksUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
     // interrupt doesn't occur before the caller finishes using the returned value.
-    static Time::Ticks16 TicksUntilOverflow() {
+    static Time::TicksU16 TicksUntilOverflow() {
         // Note that the below calculation `(TocksMax-Tocks())+1` will never overflow a uint16_t,
         // because Tocks() never returns 0.
         return _TicksForTocks((TocksMax-Tocks())+1);
@@ -211,7 +209,14 @@ public:
     }
     
     static MSP::TimeState TimeState() {
-        MSP::TimeState x = _RTCState.state;
+        MSP::TimeState x;
+        // Disable interrupts while we copy the MSP::TimeState struct.
+        // This is necessary so that we know our ISR isn't modifying
+        // _RTCState.state while we copy it.
+        {
+            Toastbox::IntState ints(false);
+            x = _RTCState.state;
+        }
         x.time = Now();
         return x;
     }

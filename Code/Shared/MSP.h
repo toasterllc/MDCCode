@@ -222,25 +222,82 @@ static_assert(sizeof(Repeat) == 2);
 
 // Capture: describes the capture action when a trigger occurs
 struct [[gnu::packed]] Capture {
-    uint32_t delayTicks;
+    Time::TicksU32 delayTicks;
     uint16_t count;
     uint8_t ledFlash;
     uint8_t _pad;
 };
 static_assert(!(sizeof(Capture) % 2)); // Check alignment
 
+struct [[gnu::packed]] DSTPhase {
+    static constexpr size_t PhaseCount = 16; // Total number of phase elements
+    static constexpr size_t PhaseWidth = 4; // Width of individual phase element
+    static constexpr int8_t PhaseMin = -8; // Min value of individual phase element
+    static constexpr int8_t PhaseMax = +7; // Max value of individual phase element
+    static constexpr uint8_t _PhaseMask = (1<<PhaseWidth)-1;
+    static constexpr uint8_t _SignExtendBits = ~_PhaseMask;
+    
+    uint64_t u64;
+    
+    void push(int8_t x) {
+        u64 >>= 4;
+        u64 |= ((uint64_t)static_cast<uint8_t>(x)) << (64-PhaseWidth);
+    }
+    
+    int8_t pop() {
+        uint8_t phase = ((uint8_t)u64) & _PhaseMask;
+        const bool negative = phase & (1<<(PhaseWidth-1));
+        if (negative) phase |= _SignExtendBits;
+        u64 >>= 4;
+        return static_cast<int8_t>(phase);
+    }
+    
+//    int8_t phase() {
+//        uint8_t phase = ((uint8_t)u64) & _PhaseMask;
+//        const bool negative = phase & (1<<(PhaseWidth-1));
+//        if (negative) phase |= _SignExtendBits;
+//        return static_cast<int8_t>(phase);
+//    }
+    
+//    union {
+//        // u64: 'array' of 16x phase values (64/4 == 16)
+//        // u64 is used to right-shift (>>4) the lowest phase value out, to surface the next phase.
+//        uint64_t u64;
+//        struct {
+//            // end: useful when creating a DSTPhase; set `end`, then right-shift u64 by `PhaseWidth`.
+//            int8_t end : 4;
+//            uint64_t _ : 56;
+//            // phase: the number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year.
+//            // This is a signed value and, being 4 bits, can represent values in the range [-8,7].
+//            int8_t phase : 4;
+//        };
+//    };
+};
+static_assert(!(sizeof(DSTPhase) % 2)); // Check alignment
+
 struct [[gnu::packed]] Triggers {
     struct [[gnu::packed]] Event {
         enum class Type : uint8_t {
             TimeTrigger,
             MotionEnable,
+            DST,
         };
         Time::Instant time;
         Type type;
-        Repeat repeat;
         uint8_t idx;
     };
     static_assert(!(sizeof(Event) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] RepeatEvent : Event {
+        Repeat repeat;
+    };
+    static_assert(!(sizeof(RepeatEvent) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] DSTEvent : Event {
+        DSTPhase phase; // The number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year
+        Time::TicksS32 adjustmentTicks; // The number of ticks to add to subsequent events to adjust for DST
+    };
+    static_assert(!(sizeof(DSTEvent) % 2)); // Check alignment
     
     struct [[gnu::packed]] TimeTrigger {
         Capture capture;
@@ -252,9 +309,9 @@ struct [[gnu::packed]] Triggers {
         // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
         uint16_t count;
         // durationTicks: duration for which motion should be enabled (0 == forever)
-        Time::Ticks32 durationTicks;
+        Time::TicksU32 durationTicks;
         // suppressTicks: duration to suppress motion, after motion occurs (0 == no suppression)
-        Time::Ticks32 suppressTicks;
+        Time::TicksU32 suppressTicks;
     };
     static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
     
@@ -263,66 +320,56 @@ struct [[gnu::packed]] Triggers {
     };
     static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
     
-    Event         event[32];
+    RepeatEvent   repeatEvent[32];
     TimeTrigger   timeTrigger[8];
     MotionTrigger motionTrigger[8];
     ButtonTrigger buttonTrigger[2];
+    DSTEvent      dstEvent[2];
     
-    uint8_t eventCount;
+    uint8_t repeatEventCount;
     uint8_t timeTriggerCount;
     uint8_t motionTriggerCount;
     uint8_t buttonTriggerCount;
+    uint8_t dstEventCount;
+    uint8_t _pad;
     
     // source: opaque data used by software to hold its representation of this struct
     uint8_t source[256];
 };
 //StaticPrint(sizeof(Triggers));
 
-
-//struct [[gnu::packed]] Triggers {
-//    struct [[gnu::packed]] TimeTrigger {
-//        Time::Instant time = 0;
-//        Repeat repeat;
-//        Capture capture;
+//struct [[gnu::packed]] DSTPhase {
+//    union {
+//        uint64_t u64;
+//        struct {
+//            uint64_t _ : 60;
+//            int8_t phase : 4;
+//        };
 //    };
-//    static_assert(!(sizeof(TimeTrigger) % 2)); // Check alignment
-//    
-//    struct [[gnu::packed]] MotionTrigger {
-//        Time::Instant time = 0;
-//        Repeat repeat;
-//        Capture capture;
-//        // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
-//        uint16_t count = 0;
-//        // durationTicks: duration for which motion should be enabled (0 == forever)
-//        uint32_t durationTicks = 0;
-//        // suppressTicks: duration to suppress motion, after motion occurs (0 == no suppression)
-//        uint32_t suppressTicks = 0;
-//    };
-//    static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
-//    
-//    struct [[gnu::packed]] ButtonTrigger {
-//        Capture capture;
-//    };
-//    static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
-//    
-//    TimeTrigger   timeTrigger[32];
-//    MotionTrigger motionTrigger[8];
-//    ButtonTrigger buttonTrigger[2];
-//    
-//    uint8_t timeTriggerCount   = 0;
-//    uint8_t motionTriggerCount = 0;
-//    uint8_t buttonTriggerCount = 0;
-//    uint8_t _pad               = 0;
-//    
-//    // source: opaque data used by software to hold its representation of this struct
-//    uint8_t source[256] = {};
 //};
-//StaticPrint(sizeof(Triggers));
+//static_assert(!(sizeof(DSTPhase) % 2)); // Check alignment
+//
+//struct [[gnu::packed]] DSTTimePhase {
+//    Time::Instant time; // Time that DST starts or ends
+//    DSTPhase phase; // The number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year
+//    Time::TicksU16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
+//};
+//static_assert(!(sizeof(DSTTimePhase) % 2)); // Check alignment
+//
+//struct [[gnu::packed]] DSTInfo {
+//    DSTTimePhase start; // When to add `adjustmentTicks` to all subsequent events
+//    DSTTimePhase end;   // When to subtract `adjustmentTicks` to all subsequent events
+//    Time::TicksU16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
+//};
+//static_assert(!(sizeof(DSTInfo) % 2)); // Check alignment
 
 struct [[gnu::packed]] Settings {
     Triggers triggers;
 //    StaticPrint(sizeof(triggers));
-    static_assert(sizeof(triggers) == 868); // Debug
+    static_assert(sizeof(triggers) == 914); // Debug
+    
+//    DSTInfo dstInfo;
+//    static_assert(sizeof(dstInfo) == 34); // Debug
 };
 
 struct [[gnu::packed]] SDState {
@@ -363,7 +410,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 868); // Debug
+    static_assert(sizeof(settings) == 914); // Debug
     
     // resets: records resets that have occurred
     Reset resets[10];
@@ -373,7 +420,7 @@ struct [[gnu::packed]] State {
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 972); // Debug
+static_assert(sizeof(State) == 1018); // Debug
 
 constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,
@@ -392,8 +439,8 @@ static_assert(sizeof(TimeState) == 16); // Debug
 
 struct [[gnu::packed]] TimeAdjustment {
     int32_t value;          // Current adjustment to `time`
-    Time::Ticks32 counter;  // Counts ticks until `counter >= `interval`
-    Time::Ticks32 interval; // Interval upon which we perform `value += delta`
+    Time::TicksU32 counter;  // Counts ticks until `counter >= `interval`
+    Time::TicksU32 interval; // Interval upon which we perform `value += delta`
     int16_t delta;          // Amount to add to `value` when `counter >= interval`
 };
 static_assert(!(sizeof(TimeAdjustment) % 2)); // Check alignment
@@ -416,7 +463,7 @@ struct [[gnu::packed]] Cmd {
         BatteryStatusGet,
         ChargeStatusSet,
         TimeGet,
-        TimeSet,
+        TimeInit,
         TimeAdjust,
         HostModeSet,
         VDDIMGSDSet,
@@ -441,7 +488,7 @@ struct [[gnu::packed]] Cmd {
         
         struct [[gnu::packed]] {
             TimeState state;
-        } TimeSet;
+        } TimeInit;
         
         struct [[gnu::packed]] {
             TimeAdjustment adjustment;
