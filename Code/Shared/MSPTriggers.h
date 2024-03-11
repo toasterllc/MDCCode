@@ -30,6 +30,9 @@ struct T_MSPTriggers {
             MotionUnsuppress,
             
             CaptureImage,
+            
+            DSTStart,
+            DSTEnd,
         };
         
         static Event::Type Convert(MSP::Triggers::Event::Type x) {

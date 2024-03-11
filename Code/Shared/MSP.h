@@ -222,7 +222,7 @@ static_assert(sizeof(Repeat) == 2);
 
 // Capture: describes the capture action when a trigger occurs
 struct [[gnu::packed]] Capture {
-    uint32_t delayTicks;
+    Time::Ticks32 delayTicks;
     uint16_t count;
     uint8_t ledFlash;
     uint8_t _pad;
@@ -319,10 +319,26 @@ struct [[gnu::packed]] Triggers {
 //};
 //StaticPrint(sizeof(Triggers));
 
+struct [[gnu::packed]] DSTTimePhase {
+    Time::Instant time; // Time that DST starts or ends
+    int8_t phase[8]; // The number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year
+};
+static_assert(!(sizeof(DSTTimePhase) % 2)); // Check alignment
+
+struct [[gnu::packed]] DSTInfo {
+    DSTTimePhase start; // When to add `adjustmentTicks` to all subsequent events
+    DSTTimePhase end;   // When to subtract `adjustmentTicks` to all subsequent events
+    Time::Ticks16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
+};
+static_assert(!(sizeof(DSTInfo) % 2)); // Check alignment
+
 struct [[gnu::packed]] Settings {
     Triggers triggers;
 //    StaticPrint(sizeof(triggers));
     static_assert(sizeof(triggers) == 868); // Debug
+    
+    DSTInfo dstInfo;
+    static_assert(sizeof(dstInfo) == 34); // Debug
 };
 
 struct [[gnu::packed]] SDState {
@@ -363,7 +379,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 868); // Debug
+    static_assert(sizeof(settings) == 902); // Debug
     
     // resets: records resets that have occurred
     Reset resets[10];
@@ -373,7 +389,7 @@ struct [[gnu::packed]] State {
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 972); // Debug
+static_assert(sizeof(State) == 1006); // Debug
 
 constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,
