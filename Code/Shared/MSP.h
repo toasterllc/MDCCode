@@ -299,6 +299,8 @@ struct [[gnu::packed]] Triggers {
     uint8_t timeTriggerCount;
     uint8_t motionTriggerCount;
     uint8_t buttonTriggerCount;
+    uint8_t dstEventCount;
+    uint8_t _pad;
     
     // source: opaque data used by software to hold its representation of this struct
     uint8_t source[256];
@@ -333,7 +335,7 @@ struct [[gnu::packed]] Triggers {
 struct [[gnu::packed]] Settings {
     Triggers triggers;
 //    StaticPrint(sizeof(triggers));
-    static_assert(sizeof(triggers) == 908); // Debug
+    static_assert(sizeof(triggers) == 910); // Debug
     
 //    DSTInfo dstInfo;
 //    static_assert(sizeof(dstInfo) == 34); // Debug
@@ -377,7 +379,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 908); // Debug
+    static_assert(sizeof(settings) == 910); // Debug
     
     // resets: records resets that have occurred
     Reset resets[10];
@@ -387,7 +389,7 @@ struct [[gnu::packed]] State {
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 1012); // Debug
+static_assert(sizeof(State) == 1014); // Debug
 
 constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,

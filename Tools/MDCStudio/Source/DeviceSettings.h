@@ -525,7 +525,7 @@ inline uint8_t _DaysOfWeekBitfield(const date::local_seconds& tp, Calendar::Days
     return days;
 }
 
-inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Type type,
+inline std::vector<MSP::Triggers::RepeatEvent> _EventsCreate(MSP::Triggers::Event::Type type,
     Calendar::TimeOfDay timeOfDay, const Repeat* repeat, uint8_t idx) {
     
     using namespace std::chrono;
@@ -535,24 +535,28 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
     
     // Handle non-repeating events
     if (!repeat) {
-        return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
-            .type = type,
+        return { MSP::Triggers::RepeatEvent{
+            MSP::Triggers::Event{
+                .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
+                .type = type,
+                .idx = idx,
+            },
             .repeat = { .type = MSP::Repeat::Type::Never, },
-            .idx = idx,
         }};
     }
     
     switch (repeat->type) {
     case Repeat::Type::Daily:
-        return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
-            .type = type,
+        return { MSP::Triggers::RepeatEvent{
+            MSP::Triggers::Event{
+                .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
+                .type = type,
+                .idx = idx,
+            },
             .repeat = {
                 .type = MSP::Repeat::Type::Daily,
                 .Daily = { 1 },
             },
-            .idx = idx,
         }};
     
     case Repeat::Type::DaysOfWeek: {
@@ -566,46 +570,52 @@ inline std::vector<MSP::Triggers::Event> _EventsCreate(MSP::Triggers::Event::Typ
         // bitfield need to be aligned so that they represent the same day.
         const uint8_t days = _DaysOfWeekBitfield(tp, repeat->DaysOfWeek);
         
-        return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, tp),
-            .type = type,
+        return { MSP::Triggers::RepeatEvent{
+            MSP::Triggers::Event{
+                .time = _TimeInstantForLocalTime(tz, tp),
+                .type = type,
+                .idx = idx,
+            },
             .repeat = {
                 .type = MSP::Repeat::Type::Weekly,
                 .Weekly = { days },
             },
-            .idx = idx,
         }};
     }
     
     case Repeat::Type::DaysOfYear: {
         const auto daysOfYear = Calendar::VectorFromDaysOfYear(repeat->DaysOfYear);
-        std::vector<MSP::Triggers::Event> events;
+        std::vector<MSP::Triggers::RepeatEvent> events;
         for (Calendar::DayOfYear doy : daysOfYear) {
             // Determine if doy's month+day of the current year is in the past.
             // If it's in the future, subtract one year and use that.
             const date::local_seconds tp = _PastDayOfYear(now, timeOfDay, doy);
             events.push_back({
-                .time = _TimeInstantForLocalTime(tz, tp),
-                .type = type,
+                MSP::Triggers::Event{
+                    .time = _TimeInstantForLocalTime(tz, tp),
+                    .type = type,
+                    .idx = idx,
+                },
                 .repeat = {
                     .type = MSP::Repeat::Type::Yearly,
                     .Yearly = { _LeapYearPhase(tz, tp) },
                 },
-                .idx = idx,
             });
         }
         return events;
     }
     
     case Repeat::Type::DayInterval:
-        return { MSP::Triggers::Event{
-            .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
-            .type = type,
+        return { MSP::Triggers::RepeatEvent{
+            MSP::Triggers::Event{
+                .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
+                .type = type,
+                .idx = idx,
+            },
             .repeat = {
                 .type = MSP::Repeat::Type::Daily,
                 .Daily = { Toastbox::Cast<decltype(MSP::Repeat::Daily.interval)>(repeat->DayInterval.count()) },
             },
-            .idx = idx,
         }};
     
     default:
@@ -678,13 +688,13 @@ const Repeat* _MotionRepeat(const T& x) {
     return &x.schedule.repeat;
 }
 
-inline void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers::Event>& events) {
-    const size_t eventsRem = std::size(triggers.event)-triggers.eventCount;
+inline void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers::RepeatEvent>& events) {
+    const size_t eventsRem = std::size(triggers.repeatEvent)-triggers.repeatEventCount;
     if (events.size() > eventsRem) {
         throw Toastbox::RuntimeError("too many events");
     }
-    std::copy(events.begin(), events.end(), triggers.event+triggers.eventCount);
-    triggers.eventCount += events.size();
+    std::copy(events.begin(), events.end(), triggers.repeatEvent+triggers.repeatEventCount);
+    triggers.repeatEventCount += events.size();
 }
 
 inline MSP::Triggers Convert(const Triggers& triggers) {

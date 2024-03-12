@@ -314,7 +314,7 @@ struct T_MSPTriggers {
     static auto ButtonTriggerEnd() { return std::begin(_ButtonTrigger)+_T_Base.buttonTriggerCount; }
     
     static auto DSTEventBegin() { return std::begin(_DSTEvent); }
-    static auto DSTEventEnd() { return std::end(_DSTEvent); } // All (2) DSTEvents are always used
+    static auto DSTEventEnd() { return std::begin(_DSTEvent)+_T_Base.dstEventCount; }
     
     static Time::TicksU32 RepeatAdvance(MSP::Repeat& x) {
         static constexpr Time::TicksU32 YearPlusDay = Time::Year+Time::Day;

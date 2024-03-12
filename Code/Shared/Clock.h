@@ -87,11 +87,11 @@ struct Clock {
         return duration(t);
     }
     
-    static duration DurationFromTicks(Ticks64 x) {
+    static duration DurationFromTicks(TicksU64 x) {
         return duration(x);
     }
     
-    static Ticks64 TicksFromDuration(duration x) {
+    static TicksU64 TicksFromDuration(duration x) {
         return x.count();
     }
 };

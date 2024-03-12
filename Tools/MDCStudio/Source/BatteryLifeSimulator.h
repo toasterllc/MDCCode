@@ -167,10 +167,15 @@ struct Simulator {
         _Triggers::EventInsert(ev, time);
     }
     
-    void _eventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-        const Time::Ticks32 delta = _Triggers::RepeatAdvance(repeat);
+    void _eventInsert(_Triggers::RepeatEvent& ev) {
+        const Time::TicksU32 delta = _Triggers::RepeatAdvance(ev.repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) _Triggers::EventInsert(ev, ev.time+delta);
+    }
+    
+    void _eventInsert(_Triggers::DSTEvent& ev) {
+        const Time::TicksU32 delta = _Triggers::DSTPhaseAdvance(ev.phase);
+        _eventInsert(ev, ev.time+delta);
     }
     
     void _batteryDailySelfDischarge() {
@@ -235,7 +240,7 @@ struct Simulator {
             }
             
             // Suppress motion for the specified duration, if suppression is enabled
-            const Time::Ticks32 suppressTicks = trigger.base().suppressTicks;
+            const Time::TicksU32 suppressTicks = trigger.base().suppressTicks;
             if (suppressTicks) {
                 // Suppress power/motion immediately
                 trigger.suppress();
@@ -265,7 +270,7 @@ struct Simulator {
     // events that are occuring, as opposed to the stimulus occuring at LastEventTime+interval,
     // which would give an optimisic view of the battery life.
     static Time::Instant _NextInterval(Time::Instant t, std::chrono::seconds interval) {
-        const Time::Ticks64 ticks = Time::Clock::TicksFromDuration(interval);
+        const Time::TicksU64 ticks = Time::Clock::TicksFromDuration(interval);
         return ((t+ticks)/ticks)*ticks;
     }
     
@@ -308,7 +313,7 @@ struct Simulator {
         if (_live) {
             _captureStart(trigger, ev.time);
         }
-        _eventInsert(ev, ev.repeat);
+        _eventInsert(ev);
     }
     
     void _motionEnable(_Triggers::MotionEnableEvent& ev) {
@@ -324,7 +329,7 @@ struct Simulator {
         }
         
         // Reschedule MotionEnableEvent for its next trigger time
-        _eventInsert(ev, ev.repeat);
+        _eventInsert(ev);
     }
     
     void _motionDisable(_Triggers::MotionDisableEvent& ev) {
@@ -347,6 +352,19 @@ struct Simulator {
         ev.countRem--;
         if (ev.countRem) {
             _eventInsert(ev, ev.time+ev.capture->delayTicks);
+        }
+    }
+    
+    void _dst(_Triggers::DSTEvent& ev) {
+        // Re-insert the DSTEvent before adjusting all subsequent events' times,
+        // because we need to adjust the DSTEvent's time too.
+        _eventInsert(ev);
+        
+        const Time::TicksS16 adj = ev.base().adjustmentTicks;
+        _Triggers::Event* x = _Triggers::EventFront();
+        while (x) {
+            x->time = x->time+adj;
+            x = x->next;
         }
     }
     
@@ -378,6 +396,8 @@ struct Simulator {
         case T::MotionUnsuppress:
             return _motionUnsuppress(static_cast<_Triggers::MotionUnsuppressEvent&>(ev));
         case T::CaptureImage:
+            return _captureImage(static_cast<_Triggers::CaptureImageEvent&>(ev)); break;
+        case T::DST:
             return _captureImage(static_cast<_Triggers::CaptureImageEvent&>(ev)); break;
         }
     }
