@@ -44,14 +44,14 @@ struct T_MSPTriggers {
         }
         
         Event() = default;
-        Event(Type type) : time(0), next(_Unlinked), type(type) {}
+        Event(Type type) : time(0), next(nullptr), type(type) {}
         
         Time::Instant time;
         Event* next;
         Type type;
         
         bool scheduled() const {
-            return next != _Unlinked;
+            return next != nullptr;
         }
     };
     
@@ -232,7 +232,7 @@ struct T_MSPTriggers {
     
     static void Init(const Time::Instant& t) {
         // Reset everything
-        _Front = nullptr;
+        _Front = _End;
         for (auto& x : _RepeatEvent)    x = RepeatEvent(x.base());
         for (auto& x : _TimeTrigger)    x = TimeTrigger(x.base());
         for (auto& x : _MotionTrigger)  x = MotionTrigger(x.base());
@@ -264,7 +264,7 @@ struct T_MSPTriggers {
         
         Event** prev = &_Front;
         Event* curr = _Front;
-        while (curr && (ev.time > curr->time)) {
+        while (curr!=_End && (ev.time > curr->time)) {
             prev = &curr->next;
             curr = curr->next;
         }
@@ -274,7 +274,7 @@ struct T_MSPTriggers {
     }
     
     static void EventPop() {
-        Assert(_Front);
+        Assert(_Front != _End);
         EventPop(*_Front);
     }
     
@@ -286,19 +286,18 @@ struct T_MSPTriggers {
         
         Event** prev = &_Front;
         Event* curr = _Front;
-        while (curr && curr!=&ev) {
+        while (curr!=_End && curr!=&ev) {
             prev = &curr->next;
             curr = curr->next;
         }
         Assert(curr);
         
         *prev = ev.next;
-        ev.next = _Unlinked;
+        ev.next = nullptr;
     }
     
-    static Event* EventFront() {
-        return _Front;
-    }
+    static auto EventBegin() { return _Front; }
+    static auto EventEnd()   { return _End; }
     
     static auto RepeatEventBegin() { return std::begin(_RepeatEvent); }
     static auto RepeatEventEnd()   { return std::begin(_RepeatEvent)+RepeatEventCount(); }
@@ -377,12 +376,12 @@ struct T_MSPTriggers {
     static inline DSTEvent      _DSTEvent[std::size(_T_Base.dstEvent)];
     
     // Event linked list
-    // _Unlinked: a sentinel value representing an event that's not in the linked list.
-    // nullptr means 'end of list', while _Unlinked represents an event that's not
-    // in the linked list at all.
-    // Ideally _Unlinked would be `static constexpr` instead of `static inline`, but C++
-    // doesn't allow constexpr reinterpret_cast. In C++20 we could use std::bit_cast for this.
-    static inline Event*const _Unlinked = (Event*)0x0001;
+    // _End: a sentinel value representing the end of the linked list.
+    // We use nullptr to mean 'not present in linked list', while _End represents the end of the
+    // list (so LastEvent.next==_End).
+    // Ideally _End would be `static constexpr` instead of `static inline`, but C++ doesn't allow
+    // constexpr reinterpret_cast. In C++20 we could use std::bit_cast for this.
+    static inline Event*const _End = (Event*)0x0001;
     static inline Event* _Front;
     
 //    static constexpr size_t _TotalSize = sizeof(_RepeatEvent)   +

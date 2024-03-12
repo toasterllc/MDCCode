@@ -1225,8 +1225,8 @@ struct _TaskEvent {
         EventInsert(ev);
         
         const Time::TicksS16 adj = ev.base().adjustmentTicks;
-        _Triggers::Event* x = _Triggers::EventFront();
-        while (x) {
+        _Triggers::Event* x = _Triggers::EventBegin();
+        while (x != _Triggers::EventEnd()) {
             x->time = _TimeInstantAdd(x->time, adj);
             x = x->next;
         }
@@ -1235,7 +1235,7 @@ struct _TaskEvent {
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
         _Triggers::EventInsert(ev, time);
         // If this event is now the front of the list, reschedule _EventTimer
-        if (_Triggers::EventFront() == &ev) {
+        if (_Triggers::EventBegin() == &ev) {
             _EventTimerSchedule();
         }
     }
@@ -1270,17 +1270,19 @@ struct _TaskEvent {
     static void _EventTimerSchedule() {
         // Short-circuit if we're fast-forwarding through events
         if (!_State.live) return;
-        _Triggers::Event* ev = _Triggers::EventFront();
+        _Triggers::Event* ev = _Triggers::EventBegin();
         std::optional<Time::Instant> time;
-        if (ev) time = ev->time;
+        if (ev != _Triggers::EventEnd()) {
+            time = ev->time;
+        }
         _EventTimer::Schedule(time);
     }
     
     // _EventPop(): pops an event from the front of the list if it's ready to be handled
     // Interrupts must be disabled
     static _Triggers::Event& _EventPop() {
-        _Triggers::Event* ev = _Triggers::EventFront();
-        Assert(ev); // We must have an event at this point, or else we have a logic error
+        _Triggers::Event* ev = _Triggers::EventBegin();
+        Assert(ev != _Triggers::EventEnd()); // We must have an event at this point, or else we have a logic error
         _Triggers::EventPop();
         // Schedule _EventTimer for the next event
         _EventTimerSchedule();
@@ -1323,8 +1325,8 @@ struct _TaskEvent {
         
         // Fast-forward through events
         for (;;) {
-            _Triggers::Event* ev = _Triggers::EventFront();
-            if (!ev || (ev->time > startTime)) break;
+            _Triggers::Event* ev = _Triggers::EventBegin();
+            if (ev==_Triggers::EventEnd() || (ev->time > startTime)) break;
             _EventHandle(_EventPop());
         }
         

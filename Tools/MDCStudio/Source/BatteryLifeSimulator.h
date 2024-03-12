@@ -79,7 +79,7 @@ struct Simulator {
             _motionStimulusSchedule();
             _buttonStimulusSchedule();
             
-            _Triggers::Event& ev = *_Triggers::EventFront();
+            _Triggers::Event& ev = *_Triggers::EventBegin();
             _Triggers::EventPop();
             
             // Make our current time the event's time
@@ -361,8 +361,8 @@ struct Simulator {
         _eventInsert(ev);
         
         const Time::TicksS16 adj = ev.base().adjustmentTicks;
-        _Triggers::Event* x = _Triggers::EventFront();
-        while (x) {
+        _Triggers::Event* x = _Triggers::EventBegin();
+        while (x != _Triggers::EventEnd()) {
             x->time = x->time+adj;
             x = x->next;
         }
