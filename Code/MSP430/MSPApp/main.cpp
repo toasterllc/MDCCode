@@ -1111,7 +1111,7 @@ struct _TaskEvent {
         // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
         if (_State.live) CaptureStart(trigger, ev.time);
         // Reschedule TimeTriggerEvent for its next trigger time
-        EventInsert(ev, ev.repeat);
+        EventInsert(ev);
     }
     
     static void _MotionEnablePower(_Triggers::MotionEnablePowerEvent& ev) {
@@ -1135,7 +1135,7 @@ struct _TaskEvent {
         }
         
         // Reschedule MotionEnableEvent for its next trigger time
-        const bool repeat = EventInsert(ev, ev.repeat);
+        const bool repeat = EventInsert(ev);
         
         // Schedule MotionEnablePowerEvent event `PowerOnDelayMs` before the MotionEnableEvent.
         if (repeat) {
@@ -1226,7 +1226,16 @@ struct _TaskEvent {
     }
     
     static void _DST(_Triggers::DSTEvent& ev) {
+        // Re-insert the DSTEvent before adjusting all subsequent events' times,
+        // because we need to adjust the DSTEvent's time too.
+        EventInsert(ev);
         
+        const Time::TicksS16 adj = ev.base().adjustmentTicks;
+        _Triggers::Event* x = _Triggers::EventFront();
+        while (x) {
+            x->time += adj;
+            x = x->next;
+        }
     }
     
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
@@ -1237,8 +1246,8 @@ struct _TaskEvent {
         }
     }
     
-    static bool EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-        const Time::TicksU32 delta = _Triggers::RepeatAdvance(repeat);
+    static bool EventInsert(_Triggers::RepeatEvent& ev) {
+        const Time::TicksU32 delta = _Triggers::RepeatAdvance(ev.repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
             EventInsert(ev, _TimeInstantAdd(ev.time, delta));
@@ -1246,6 +1255,22 @@ struct _TaskEvent {
         }
         return false;
     }
+    
+    static void EventInsert(_Triggers::DSTEvent& ev) {
+        const Time::TicksU32 delta = _Triggers::DSTPhaseAdvance(ev.phase);
+        EventInsert(ev, _TimeInstantAdd(ev.time, delta));
+    }
+    
+    
+//    static bool EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
+//        const Time::TicksU32 delta = _Triggers::RepeatAdvance(repeat);
+//        // delta=0 means Repeat=never, in which case we don't reschedule the event
+//        if (delta) {
+//            EventInsert(ev, _TimeInstantAdd(ev.time, delta));
+//            return true;
+//        }
+//        return false;
+//    }
     
 //    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::TicksU32 deltaTicks) {
 //        EventInsert(ev, time + deltaTicks);
