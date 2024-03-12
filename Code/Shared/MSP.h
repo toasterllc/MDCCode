@@ -222,7 +222,7 @@ static_assert(sizeof(Repeat) == 2);
 
 // Capture: describes the capture action when a trigger occurs
 struct [[gnu::packed]] Capture {
-    Time::Ticks32 delayTicks;
+    Time::TicksU32 delayTicks;
     uint16_t count;
     uint8_t ledFlash;
     uint8_t _pad;
@@ -231,9 +231,13 @@ static_assert(!(sizeof(Capture) % 2)); // Check alignment
 
 struct [[gnu::packed]] DSTPhase {
     union {
+        // u64: 'array' of 16x phase values (64/4 == 16)
+        // u64 is used to right-shift (>>4) the lowest phase value out, to surface the next phase.
         uint64_t u64;
         struct {
             uint64_t _ : 60;
+            // phase: the number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year.
+            // This is a signed value and, being 4 bits, can represent values in the range [-8,7].
             int8_t phase : 4;
         };
     };
@@ -260,7 +264,7 @@ struct [[gnu::packed]] Triggers {
     
     struct [[gnu::packed]] DSTEvent : Event {
         DSTPhase phase; // The number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year
-        int16_t adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
+        Time::TicksS16 adjustmentTicks; // The number of ticks to add to subsequent events to adjust for DST
     };
     static_assert(!(sizeof(DSTEvent) % 2)); // Check alignment
     
@@ -274,9 +278,9 @@ struct [[gnu::packed]] Triggers {
         // count: the maximum number of triggers until motion is suppressed (0 == unlimited)
         uint16_t count;
         // durationTicks: duration for which motion should be enabled (0 == forever)
-        Time::Ticks32 durationTicks;
+        Time::TicksU32 durationTicks;
         // suppressTicks: duration to suppress motion, after motion occurs (0 == no suppression)
-        Time::Ticks32 suppressTicks;
+        Time::TicksU32 suppressTicks;
     };
     static_assert(!(sizeof(MotionTrigger) % 2)); // Check alignment
     
@@ -315,14 +319,14 @@ struct [[gnu::packed]] Triggers {
 //struct [[gnu::packed]] DSTTimePhase {
 //    Time::Instant time; // Time that DST starts or ends
 //    DSTPhase phase; // The number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year
-//    Time::Ticks16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
+//    Time::TicksU16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
 //};
 //static_assert(!(sizeof(DSTTimePhase) % 2)); // Check alignment
 //
 //struct [[gnu::packed]] DSTInfo {
 //    DSTTimePhase start; // When to add `adjustmentTicks` to all subsequent events
 //    DSTTimePhase end;   // When to subtract `adjustmentTicks` to all subsequent events
-//    Time::Ticks16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
+//    Time::TicksU16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
 //};
 //static_assert(!(sizeof(DSTInfo) % 2)); // Check alignment
 
@@ -402,8 +406,8 @@ static_assert(sizeof(TimeState) == 16); // Debug
 
 struct [[gnu::packed]] TimeAdjustment {
     int32_t value;          // Current adjustment to `time`
-    Time::Ticks32 counter;  // Counts ticks until `counter >= `interval`
-    Time::Ticks32 interval; // Interval upon which we perform `value += delta`
+    Time::TicksU32 counter;  // Counts ticks until `counter >= `interval`
+    Time::TicksU32 interval; // Interval upon which we perform `value += delta`
     int16_t delta;          // Amount to add to `value` when `counter >= interval`
 };
 static_assert(!(sizeof(TimeAdjustment) % 2)); // Check alignment

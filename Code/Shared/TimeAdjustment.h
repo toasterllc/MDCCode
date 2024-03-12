@@ -45,7 +45,7 @@ static MSP::TimeAdjustment TimeAdjustmentCalculate(const MSP::TimeState& state) 
     
     // Verify that the device started tracking time in the past
     if (state.start >= nowInstant) throw Toastbox::RuntimeError("MSP::TimeState.start invalid");
-    const Time::Ticks64 elapsed = nowInstant - state.start;
+    const Time::TicksU64 elapsed = nowInstant - state.start;
     const double target = (double)drift / elapsed;
     struct {
         uint64_t interval = 0;

@@ -317,8 +317,8 @@ struct T_MSPTriggers {
     static auto DSTEventBegin() { return std::begin(_DSTEvent); }
     static auto DSTEventEnd() { return std::end(_DSTEvent); } // All (2) DSTEvents are always used
     
-    static Time::Ticks32 RepeatAdvance(MSP::Repeat& x) {
-        static constexpr Time::Ticks32 YearPlusDay = Time::Year+Time::Day;
+    static Time::TicksU32 RepeatAdvance(MSP::Repeat& x) {
+        static constexpr Time::TicksU32 YearPlusDay = Time::Year+Time::Day;
         
         switch (x.type) {
         case MSP::Repeat::Type::Never:
@@ -356,11 +356,11 @@ struct T_MSPTriggers {
         Assert(false);
     }
     
-    static Time::Ticks32 DSTPhaseAdvance(MSP::DSTPhase& x) {
+    static Time::TicksU32 DSTPhaseAdvance(MSP::DSTPhase& x) {
         const int8_t phase = x.phase;
-        const int32_t = (int32_t)Time::Day * phase;
-        
-        
+        const Time::TicksU32 ticks = Time::Year + (Time::Day * phase);
+        x.u64 >>= 4;
+        return ticks;
     }
     
     template<typename T_Dst, typename T_Src, size_t T_Count>

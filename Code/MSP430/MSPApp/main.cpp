@@ -80,7 +80,7 @@ using _SDCard = SD::Card<
 
 // _RTC: real time clock
 using _RTC = T_RTC<_Scheduler, _XT1FreqHz>;
-using _Watchdog = T_Watchdog<_ACLKFreqHz, (Time::Ticks64)_RTC::InterruptIntervalTicks*2>;
+using _Watchdog = T_Watchdog<_ACLKFreqHz, (Time::TicksU64)_RTC::InterruptIntervalTicks*2>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in FRAM because it needs to persist indefinitely.
@@ -109,17 +109,17 @@ struct _MotionPowered : T_AssertionCounter<_MotionPoweredUpdate> {};
 using _Triggers = T_MSPTriggers<_State, _MotionPowered::Assertion>;
 
 [[gnu::noinline]]
-static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::Ticks32 deltaTicks) {
+static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::TicksU32 deltaTicks) {
     return time + deltaTicks;
 }
 
 [[gnu::noinline]]
-static constexpr Time::Instant _TimeInstantSubtract(const Time::Instant& time, Time::Ticks32 deltaTicks) {
+static constexpr Time::Instant _TimeInstantSubtract(const Time::Instant& time, Time::TicksU32 deltaTicks) {
     if (time < deltaTicks) return 0;
     return time - deltaTicks;
 }
 
-static constexpr Time::Ticks32 _TicksForMs(uint64_t ms) {
+static constexpr Time::TicksU32 _TicksForMs(uint64_t ms) {
     return ((ms * Time::TicksPeriod::den) / (1000 * Time::TicksPeriod::num));
 }
 
@@ -1238,7 +1238,7 @@ struct _TaskEvent {
     }
     
     static bool EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-        const Time::Ticks32 delta = _Triggers::RepeatAdvance(repeat);
+        const Time::TicksU32 delta = _Triggers::RepeatAdvance(repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
             EventInsert(ev, _TimeInstantAdd(ev.time, delta));
@@ -1247,7 +1247,7 @@ struct _TaskEvent {
         return false;
     }
     
-//    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::Ticks32 deltaTicks) {
+//    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::TicksU32 deltaTicks) {
 //        EventInsert(ev, time + deltaTicks);
 //    }
     
@@ -1515,7 +1515,7 @@ struct _TaskMotion {
             }
             
             // Suppress motion for the specified duration, if suppression is enabled
-            const Time::Ticks32 suppressTicks = trigger.base().suppressTicks;
+            const Time::TicksU32 suppressTicks = trigger.base().suppressTicks;
             if (suppressTicks) {
                 // Suppress power/motion immediately
                 trigger.suppress();

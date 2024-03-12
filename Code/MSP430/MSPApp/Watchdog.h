@@ -6,7 +6,7 @@
 // T_Watchdog: watchdog timer to reset the device if the watchdog isn't pet periodically.
 // The timeout period is defined by T_TimeoutTicks; if the watchdog isn't pet during that
 // time, a PUC is triggered, and T_Watchdog then triggers a full BOR upon the next Init().
-template<uint32_t T_ACLKFreqHz, Time::Ticks64 T_TimeoutTicks>
+template<uint32_t T_ACLKFreqHz, Time::TicksU64 T_TimeoutTicks>
 class T_Watchdog {
 public:
     using ACLKPeriod = std::ratio<1, T_ACLKFreqHz>;

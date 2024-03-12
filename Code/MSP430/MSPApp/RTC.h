@@ -51,7 +51,7 @@ private:
 //    }
     
     // _TicksForTocks(): uint16_t version (runtime)
-    static constexpr Time::Ticks16 _TicksForTocks(uint16_t tocks) {
+    static constexpr Time::TicksU16 _TicksForTocks(uint16_t tocks) {
         // uint16_t argument: verify that the max value for the argument can't overflow due to the multiplication
         static_assert(std::in_range<uint16_t>(std::numeric_limits<uint16_t>::max() * TicksPerTock::num));
         return ((tocks * (uint16_t)TicksPerTock::num) / (uint16_t)TicksPerTock::den);
@@ -59,7 +59,7 @@ private:
     
     // _TicksForTocks(): uint32_t version (compile-time)
     template<auto T_Tocks>
-    static constexpr Time::Ticks16 _TicksForTocks() {
+    static constexpr Time::TicksU16 _TicksForTocks() {
         constexpr auto ticks = ((T_Tocks * TicksPerTock::num) / TicksPerTock::den);
         static_assert(std::in_range<uint16_t>(ticks));
         return ticks;
@@ -67,7 +67,7 @@ private:
     
 public:
     static constexpr uint32_t InterruptIntervalTocks = 0x10000; // 0xFFFF+1
-    static constexpr Time::Ticks16 InterruptIntervalTicks = _TicksForTocks<InterruptIntervalTocks>();
+    static constexpr Time::TicksU16 InterruptIntervalTicks = _TicksForTocks<InterruptIntervalTocks>();
     static_assert(InterruptIntervalTicks == 32768); // Debug
     static constexpr uint16_t TocksMax = InterruptIntervalTocks-1;
     static_assert(TocksMax == 0xFFFF); // Debug
@@ -198,7 +198,7 @@ public:
     
     // TicksUntilOverflow(): must be called with interrupts disabled to ensure that the overflow
     // interrupt doesn't occur before the caller finishes using the returned value.
-    static Time::Ticks16 TicksUntilOverflow() {
+    static Time::TicksU16 TicksUntilOverflow() {
         // Note that the below calculation `(TocksMax-Tocks())+1` will never overflow a uint16_t,
         // because Tocks() never returns 0.
         return _TicksForTocks((TocksMax-Tocks())+1);
