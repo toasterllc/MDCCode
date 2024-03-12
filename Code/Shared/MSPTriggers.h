@@ -31,8 +31,7 @@ struct T_MSPTriggers {
             
             CaptureImage,
             
-            DSTStart,
-            DSTEnd,
+            DST,
         };
         
         static Event::Type Convert(MSP::Triggers::Event::Type x) {
@@ -223,6 +222,10 @@ struct T_MSPTriggers {
         auto& base() { return _BaseElm(_T_Base.buttonTrigger, _ButtonTrigger, *this); }
     };
     
+    struct DSTEvent : Event {
+        DSTEvent() : Event(Event::Type::DST) {}
+    };
+    
     static void Init(const Time::Instant& t) {
         // Reset everything
         _Front = _End;
@@ -353,6 +356,8 @@ struct T_MSPTriggers {
     static inline TimeTrigger   _TimeTrigger[std::size(_T_Base.timeTrigger)];
     static inline MotionTrigger _MotionTrigger[std::size(_T_Base.motionTrigger)];
     static inline ButtonTrigger _ButtonTrigger[std::size(_T_Base.buttonTrigger)];
+    static inline DSTEvent _DSTStart;
+    static inline DSTEvent _DSTEnd;
     
     // Event linked list
     // _End: a sentinel value representing the end of the linked list.
