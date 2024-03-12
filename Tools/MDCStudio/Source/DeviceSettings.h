@@ -9,6 +9,7 @@
 #include "Code/Shared/Clock.h"
 #include "Code/Shared/MSP.h"
 #include "Toastbox/Cast.h"
+#include "Toastbox/Util.h"
 
 namespace MDCStudio {
 namespace DeviceSettings {
@@ -435,10 +436,11 @@ inline uint8_t _DaysOfWeekAdvance(uint8_t x, int dir) {
 //       - to add 4 years to `tp`, add 365+366+365+365     days
 //       - to add 5 years to `tp`, add 365+366+365+365+365 days
 //   ... and so on ...
-inline uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_seconds& tp) {
+template<typename T_ZonedTime>
+inline uint8_t _LeapYearPhase(const T_ZonedTime& tp) {
     using namespace std::chrono;
-    const auto days = floor<date::days>(tp);
-    const auto time = tp-days;
+    const auto days = floor<date::days>(tp.get_local_time());
+    const auto time = floor<seconds>(tp.get_local_time())-days;
     date::year_month_day ymd(days);
     
     // Try up to 8 years to find the next leap year.
@@ -460,62 +462,73 @@ inline uint8_t _LeapYearPhase(const date::time_zone& tz, const date::local_secon
     abort();
 }
 
-inline Time::Instant _TimeInstantForLocalTime(const date::time_zone& tz, const date::local_seconds& tp) {
-    const auto tpUtc = date::clock_cast<date::utc_clock>(tz.to_sys(tp));
+template<typename T_ZonedTime>
+inline Time::Instant _TimeInstantForZonedTime(const T_ZonedTime& t) {
+    const auto tpUtc = date::clock_cast<date::utc_clock>(t.get_sys_time());
     const auto tpDevice = date::clock_cast<Time::Clock>(tpUtc);
     return Time::Clock::TimeInstantFromTimePoint(tpDevice);
 }
 
 // _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
-template<typename T>
-inline date::local_seconds _PastTime(const T& now, Calendar::TimeOfDay timeOfDay) {
-    const auto midnight = floor<date::days>(now);
+template<typename T_ZonedTime>
+inline T_ZonedTime _PastTime(
+    const T_ZonedTime& now,
+    Calendar::TimeOfDay timeOfDay) {
+    
+    const auto midnight = floor<date::days>(now.get_local_time());
     const auto t = midnight+timeOfDay;
-    if (t < now) return t;
-    return t-date::days(1);
+    const date::local_seconds sec = (t<now.get_local_time() ? t : t-date::days(1));
+    return { now.get_time_zone(), sec };
 }
 
-
-
 // _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
-template<typename T>
-inline date::local_seconds _PastDayOfWeek(const T& now, Calendar::TimeOfDay timeOfDay, Calendar::DaysOfWeek daysOfWeek) {
+template<typename T_ZonedTime>
+inline T_ZonedTime _PastDayOfWeek(
+    const T_ZonedTime& now,
+    Calendar::TimeOfDay timeOfDay,
+    Calendar::DaysOfWeek daysOfWeek) {
+    
     // Find the most recent time+day combo that's both in the past, and whose day is in x.DaysOfWeek.
     // (Eg the current day might be in x.DaysOfWeek, but if `time` for the current day is in the future,
     // then it doesn't qualify.)
-    const date::local_days midnight = floor<date::days>(now);
+    const date::local_days midnight = floor<date::days>(now.get_local_time());
     date::local_days day = midnight;
     date::local_seconds tp;
     for (;;) {
         tp = day+timeOfDay;
         // If `tp` is in the past and `day` is in x.DaysOfWeek, we're done
-        if (tp<now && DaysOfWeekGet(daysOfWeek, Calendar::DayOfWeek(day))) {
+        if (tp<now.get_local_time() && DaysOfWeekGet(daysOfWeek, Calendar::DayOfWeek(day))) {
             break;
         }
         day -= date::days(1);
     }
-    return tp;
+    return { now.get_time_zone(), tp };
 }
 
 // _PastTime(): returns a time_point for most recent past occurrence of `timeOfDay`
-template<typename T>
-inline date::local_seconds _PastDayOfYear(const T& now, Calendar::TimeOfDay timeOfDay, Calendar::DayOfYear dayOfYear) {
+template<typename T_ZonedTime>
+inline T_ZonedTime _PastDayOfYear(
+    const T_ZonedTime& now,
+    Calendar::TimeOfDay timeOfDay,
+    Calendar::DayOfYear dayOfYear) {
+    
     // Determine if doy's month+day of the current year is in the past.
     // If it's in the future, subtract one year and use that.
-    const date::year nowYear = date::year_month_day(floor<date::days>(now)).year();
+    const date::year nowYear = date::year_month_day(floor<date::days>(now.get_local_time())).year();
     auto tp = date::local_days{ nowYear / dayOfYear.month() / dayOfYear.day() } + timeOfDay;
-    if (tp >= now) {
+    if (tp >= now.get_local_time()) {
         tp = date::local_days{ (nowYear-date::years(1)) / dayOfYear.month() / dayOfYear.day() } + timeOfDay;
         // Logic error if tp is still in the future, even after subtracting a year
-        assert(tp < now);
+        assert(tp < now.get_local_time());
     }
-    return tp;
+    return { now.get_time_zone(), tp };
 }
 
 // _DaysOfWeekBitfield(): Generate the days bitfield by advancing `daysOfWeek`
 // backwards until we hit whatever day of week that `tp` is.
-inline uint8_t _DaysOfWeekBitfield(const date::local_seconds& tp, Calendar::DaysOfWeek daysOfWeek) {
-    const date::local_days day = floor<date::days>(tp);
+template<typename T_ZonedTime>
+inline uint8_t _DaysOfWeekBitfield(const T_ZonedTime& tp, Calendar::DaysOfWeek daysOfWeek) {
+    const date::local_days day = floor<date::days>(tp.get_local_time());
     uint8_t days = daysOfWeek.x;
     for (Calendar::DayOfWeek i=Calendar::DayOfWeek(0); i!=Calendar::DayOfWeek(day); i--) {
         days = _DaysOfWeekAdvance(days, -1);
@@ -525,23 +538,33 @@ inline uint8_t _DaysOfWeekBitfield(const date::local_seconds& tp, Calendar::Days
     return days;
 }
 
-inline std::vector<MSP::Triggers::RepeatEvent> _EventsCreate(MSP::Triggers::Event::Type type,
+// _Repeat(): necessary to work around a Clang bug that emits a invalid error when instantiating a MSP::Repeat
+// in _EventsCreate() ("Field designator (null) does not refer to any field in type Repeat")
+inline MSP::Repeat _Repeat(MSP::Repeat::Type type, uint8_t arg=0) {
+    return MSP::Repeat{
+        .type = type,
+        .Daily = { arg },
+    };
+}
+
+template<typename T_ZonedTime>
+inline std::vector<MSP::Triggers::RepeatEvent> _EventsCreate(
+    const T_ZonedTime& now,
+    MSP::Triggers::Event::Type type,
     Calendar::TimeOfDay timeOfDay, const Repeat* repeat, uint8_t idx) {
     
     using namespace std::chrono;
-    const date::time_zone& tz = *date::current_zone();
-    const auto now = tz.to_local(system_clock::now());
-    const auto pastTimeOfDay = _PastTime(now, timeOfDay);
+    const T_ZonedTime pastTimeOfDay = _PastTime(now, timeOfDay);
     
     // Handle non-repeating events
     if (!repeat) {
         return { MSP::Triggers::RepeatEvent{
             MSP::Triggers::Event{
-                .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
+                .time = _TimeInstantForZonedTime(pastTimeOfDay),
                 .type = type,
                 .idx = idx,
             },
-            .repeat = { .type = MSP::Repeat::Type::Never, },
+            .repeat = _Repeat(MSP::Repeat::Type::Never),
         }};
     }
     
@@ -549,21 +572,18 @@ inline std::vector<MSP::Triggers::RepeatEvent> _EventsCreate(MSP::Triggers::Even
     case Repeat::Type::Daily:
         return { MSP::Triggers::RepeatEvent{
             MSP::Triggers::Event{
-                .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
+                .time = _TimeInstantForZonedTime(pastTimeOfDay),
                 .type = type,
                 .idx = idx,
             },
-            .repeat = {
-                .type = MSP::Repeat::Type::Daily,
-                .Daily = { 1 },
-            },
+            .repeat = _Repeat(MSP::Repeat::Type::Daily, 1),
         }};
     
     case Repeat::Type::DaysOfWeek: {
         // If no days are selected, dont' return any events
         if (Calendar::DaysOfWeekEmpty(repeat->DaysOfWeek)) return {};
         
-        const date::local_seconds tp = _PastDayOfWeek(now, timeOfDay, repeat->DaysOfWeek);
+        const T_ZonedTime tp = _PastDayOfWeek(now, timeOfDay, repeat->DaysOfWeek);
         // Create the DaysOfWeek bitfield that's aligned to whatever day of
         // the week `tp` is.
         // This is necessary because the time that we return and the days
@@ -572,14 +592,11 @@ inline std::vector<MSP::Triggers::RepeatEvent> _EventsCreate(MSP::Triggers::Even
         
         return { MSP::Triggers::RepeatEvent{
             MSP::Triggers::Event{
-                .time = _TimeInstantForLocalTime(tz, tp),
+                .time = _TimeInstantForZonedTime(tp),
                 .type = type,
                 .idx = idx,
             },
-            .repeat = {
-                .type = MSP::Repeat::Type::Weekly,
-                .Weekly = { days },
-            },
+            .repeat = _Repeat(MSP::Repeat::Type::Weekly, days),
         }};
     }
     
@@ -589,34 +606,30 @@ inline std::vector<MSP::Triggers::RepeatEvent> _EventsCreate(MSP::Triggers::Even
         for (Calendar::DayOfYear doy : daysOfYear) {
             // Determine if doy's month+day of the current year is in the past.
             // If it's in the future, subtract one year and use that.
-            const date::local_seconds tp = _PastDayOfYear(now, timeOfDay, doy);
+            const T_ZonedTime tp = _PastDayOfYear(now, timeOfDay, doy);
             events.push_back({
                 MSP::Triggers::Event{
-                    .time = _TimeInstantForLocalTime(tz, tp),
+                    .time = _TimeInstantForZonedTime(tp),
                     .type = type,
                     .idx = idx,
                 },
-                .repeat = {
-                    .type = MSP::Repeat::Type::Yearly,
-                    .Yearly = { _LeapYearPhase(tz, tp) },
-                },
+                .repeat = _Repeat(MSP::Repeat::Type::Yearly, _LeapYearPhase(tp)),
             });
         }
         return events;
     }
     
-    case Repeat::Type::DayInterval:
+    case Repeat::Type::DayInterval: {
+        const uint8_t interval = Toastbox::Cast<decltype(MSP::Repeat::Daily.interval)>(repeat->DayInterval.count());
         return { MSP::Triggers::RepeatEvent{
             MSP::Triggers::Event{
-                .time = _TimeInstantForLocalTime(tz, pastTimeOfDay),
+                .time = _TimeInstantForZonedTime(pastTimeOfDay),
                 .type = type,
                 .idx = idx,
             },
-            .repeat = {
-                .type = MSP::Repeat::Type::Daily,
-                .Daily = { Toastbox::Cast<decltype(MSP::Repeat::Daily.interval)>(repeat->DayInterval.count()) },
-            },
+            .repeat = _Repeat(MSP::Repeat::Type::Daily, interval),
         }};
+    }
     
     default:
         abort();
@@ -698,6 +711,9 @@ inline void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
 }
 
 inline MSP::Triggers Convert(const Triggers& triggers) {
+    using namespace std::chrono;
+    const date::zoned_time now(date::current_zone(), std::chrono::system_clock::now());
+    
     MSP::Triggers t = {};
     for (auto it=std::begin(triggers.triggers); it!=std::begin(triggers.triggers)+triggers.count; it++) {
         switch (it->type) {
@@ -711,7 +727,9 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             
             // Create events for the trigger
             {
-                const auto events = _EventsCreate(MSP::Triggers::Event::Type::TimeTrigger, x.schedule.time, &x.schedule.repeat, t.timeTriggerCount);
+                const auto events = _EventsCreate(now,
+                    MSP::Triggers::Event::Type::TimeTrigger,
+                    x.schedule.time, &x.schedule.repeat, t.timeTriggerCount);
                 _AddEvents(t, events);
             }
             
@@ -735,7 +753,8 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
             
             // Create events for the trigger
             {
-                const auto events = _EventsCreate(MSP::Triggers::Event::Type::MotionEnable,
+                const auto events = _EventsCreate(now,
+                    MSP::Triggers::Event::Type::MotionEnable,
                     _MotionTimeOfDay(x), _MotionRepeat(x), t.motionTriggerCount);
                 _AddEvents(t, events);
             }
@@ -774,6 +793,9 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
         default: abort();
         }
     }
+    
+    // Create DSTEvents
+    
     
     Serialize(t.source, triggers);
     return t;
