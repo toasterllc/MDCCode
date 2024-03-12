@@ -109,14 +109,8 @@ struct _MotionPowered : T_AssertionCounter<_MotionPoweredUpdate> {};
 using _Triggers = T_MSPTriggers<_State, _MotionPowered::Assertion>;
 
 [[gnu::noinline]]
-static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::TicksU32 deltaTicks) {
+static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::TicksS32 deltaTicks) {
     return time + deltaTicks;
-}
-
-[[gnu::noinline]]
-static constexpr Time::Instant _TimeInstantSubtract(const Time::Instant& time, Time::TicksU32 deltaTicks) {
-    if (time < deltaTicks) return 0;
-    return time - deltaTicks;
 }
 
 static constexpr Time::TicksU32 _TicksForMs(uint64_t ms) {
@@ -1140,7 +1134,7 @@ struct _TaskEvent {
         // Schedule MotionEnablePowerEvent event `PowerOnDelayMs` before the MotionEnableEvent.
         if (repeat) {
             EventInsert(_Cast<_Triggers::MotionEnablePowerEvent>(trigger),
-                _TimeInstantSubtract(ev.time, _TicksForMs(_Motion::PowerOnDelayMs)));
+                _TimeInstantAdd(ev.time, -_TicksForMs(_Motion::PowerOnDelayMs)));
         }
     }
     
@@ -1233,7 +1227,7 @@ struct _TaskEvent {
         const Time::TicksS16 adj = ev.base().adjustmentTicks;
         _Triggers::Event* x = _Triggers::EventFront();
         while (x) {
-            x->time += adj;
+            x->time = _TimeInstantAdd(x->time, adj);
             x = x->next;
         }
     }
@@ -1260,21 +1254,6 @@ struct _TaskEvent {
         const Time::TicksU32 delta = _Triggers::DSTPhaseAdvance(ev.phase);
         EventInsert(ev, _TimeInstantAdd(ev.time, delta));
     }
-    
-    
-//    static bool EventInsert(_Triggers::Event& ev, MSP::Repeat& repeat) {
-//        const Time::TicksU32 delta = _Triggers::RepeatAdvance(repeat);
-//        // delta=0 means Repeat=never, in which case we don't reschedule the event
-//        if (delta) {
-//            EventInsert(ev, _TimeInstantAdd(ev.time, delta));
-//            return true;
-//        }
-//        return false;
-//    }
-    
-//    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time, Time::TicksU32 deltaTicks) {
-//        EventInsert(ev, time + deltaTicks);
-//    }
     
     static bool CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
         // Bail if the CaptureImageEvent is already underway
@@ -1550,7 +1529,7 @@ struct _TaskMotion {
                 _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressEvent>(trigger), unsuppressTime);
                 
                 // Schedule MotionUnsuppressPowerEvent event `PowerOnDelayMs` before the MotionUnsuppressEvent.
-                const Time::Instant prepareTime = _TimeInstantSubtract(unsuppressTime, _TicksForMs(_Motion::PowerOnDelayMs));
+                const Time::Instant prepareTime = _TimeInstantAdd(unsuppressTime, -_TicksForMs(_Motion::PowerOnDelayMs));
                 _TaskEvent::EventInsert(_Cast<_Triggers::MotionUnsuppressPowerEvent>(trigger), prepareTime);
             }
         }
