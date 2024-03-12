@@ -712,7 +712,9 @@ inline void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
 
 inline MSP::Triggers Convert(const Triggers& triggers) {
     using namespace std::chrono;
-    const date::zoned_time now(date::current_zone(), std::chrono::system_clock::now());
+    
+    const date::time_zone& tz = *date::current_zone();
+    const date::zoned_time now(&tz, std::chrono::system_clock::now());
     
     MSP::Triggers t = {};
     for (auto it=std::begin(triggers.triggers); it!=std::begin(triggers.triggers)+triggers.count; it++) {
@@ -795,7 +797,36 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
     }
     
     // Create DSTEvents
+    date::sys_time<seconds> x = floor<date::days>(now.get_sys_time());
+    std::chrono::seconds offPrev = tz.get_info(x).offset;
+    for (int i=0; i<1000; i++) {
+        x -= date::days(1);
+        const date::sys_info xinfo = tz.get_info(x);
+        if (xinfo.offset != offPrev) {
+            auto xx = x;
+            for (;;) {
+                xx += std::chrono::minutes(1);
+                const date::sys_info xxinfo = tz.get_info(xx);
+                if (xinfo.offset != xxinfo.offset) {
+                    printf("Found transition point: %ju (delta: %jd minutes)\n", (uintmax_t)xx.time_since_epoch().count(), (intmax_t)(xxinfo.offset-xinfo.offset).count());
+                    break;
+                }
+            }
+            offPrev = xinfo.offset;
+//            printf("Found transition: ");
+        }
+        printf("%d %d\n", (int)xinfo.offset.count(), (int)xinfo.save.count());
+    }
     
+//    date::local_seconds sec = (t<now.get_local_time() ? t : t-date::days(1));
+    
+//    date::local_seconds x = floor<date::days>(now.get_local_time());
+//    for (;;) {
+//        x -= date::days(1);
+//        const date::sys_info info = tz.get_info(x);
+//    }
+//    
+//    date::local_seconds sec = (t<now.get_local_time() ? t : t-date::days(1));
     
     Serialize(t.source, triggers);
     return t;
