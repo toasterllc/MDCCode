@@ -229,18 +229,40 @@ struct [[gnu::packed]] Capture {
 };
 static_assert(!(sizeof(Capture) % 2)); // Check alignment
 
+struct [[gnu::packed]] DSTPhase {
+    union {
+        uint64_t u64;
+        struct {
+            uint64_t _ : 60;
+            int8_t phase : 4;
+        };
+    };
+};
+static_assert(!(sizeof(DSTPhase) % 2)); // Check alignment
+
 struct [[gnu::packed]] Triggers {
     struct [[gnu::packed]] Event {
         enum class Type : uint8_t {
             TimeTrigger,
             MotionEnable,
+            DST,
         };
         Time::Instant time;
         Type type;
-        Repeat repeat;
         uint8_t idx;
     };
     static_assert(!(sizeof(Event) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] RepeatEvent : Event {
+        Repeat repeat;
+    };
+    static_assert(!(sizeof(RepeatEvent) % 2)); // Check alignment
+    
+    struct [[gnu::packed]] DSTEvent : Event {
+        DSTPhase phase; // The number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year
+        int16_t adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
+    };
+    static_assert(!(sizeof(DSTEvent) % 2)); // Check alignment
     
     struct [[gnu::packed]] TimeTrigger {
         Capture capture;
@@ -263,12 +285,13 @@ struct [[gnu::packed]] Triggers {
     };
     static_assert(!(sizeof(ButtonTrigger) % 2)); // Check alignment
     
-    Event         event[32];
+    RepeatEvent   repeatEvent[32];
     TimeTrigger   timeTrigger[8];
     MotionTrigger motionTrigger[8];
     ButtonTrigger buttonTrigger[2];
+    DSTEvent      dstEvent[2];
     
-    uint8_t eventCount;
+    uint8_t repeatEventCount;
     uint8_t timeTriggerCount;
     uint8_t motionTriggerCount;
     uint8_t buttonTriggerCount;
@@ -278,37 +301,38 @@ struct [[gnu::packed]] Triggers {
 };
 //StaticPrint(sizeof(Triggers));
 
-struct [[gnu::packed]] DSTPhase {
-    union {
-        uint64_t u64;
-        struct {
-            uint64_t _ : 60;
-            int8_t phase : 4;
-        };
-    };
-};
-static_assert(!(sizeof(DSTPhase) % 2)); // Check alignment
-
-struct [[gnu::packed]] DSTTimePhase {
-    Time::Instant time; // Time that DST starts or ends
-    DSTPhase phase; // The number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year
-};
-static_assert(!(sizeof(DSTTimePhase) % 2)); // Check alignment
-
-struct [[gnu::packed]] DSTInfo {
-    DSTTimePhase start; // When to add `adjustmentTicks` to all subsequent events
-    DSTTimePhase end;   // When to subtract `adjustmentTicks` to all subsequent events
-    Time::Ticks16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
-};
-static_assert(!(sizeof(DSTInfo) % 2)); // Check alignment
+//struct [[gnu::packed]] DSTPhase {
+//    union {
+//        uint64_t u64;
+//        struct {
+//            uint64_t _ : 60;
+//            int8_t phase : 4;
+//        };
+//    };
+//};
+//static_assert(!(sizeof(DSTPhase) % 2)); // Check alignment
+//
+//struct [[gnu::packed]] DSTTimePhase {
+//    Time::Instant time; // Time that DST starts or ends
+//    DSTPhase phase; // The number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year
+//    Time::Ticks16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
+//};
+//static_assert(!(sizeof(DSTTimePhase) % 2)); // Check alignment
+//
+//struct [[gnu::packed]] DSTInfo {
+//    DSTTimePhase start; // When to add `adjustmentTicks` to all subsequent events
+//    DSTTimePhase end;   // When to subtract `adjustmentTicks` to all subsequent events
+//    Time::Ticks16 adjustmentTicks; // The number of ticks to add/subtract to subsequent events to adjust for DST
+//};
+//static_assert(!(sizeof(DSTInfo) % 2)); // Check alignment
 
 struct [[gnu::packed]] Settings {
     Triggers triggers;
 //    StaticPrint(sizeof(triggers));
-    static_assert(sizeof(triggers) == 868); // Debug
+    static_assert(sizeof(triggers) == 908); // Debug
     
-    DSTInfo dstInfo;
-    static_assert(sizeof(dstInfo) == 34); // Debug
+//    DSTInfo dstInfo;
+//    static_assert(sizeof(dstInfo) == 34); // Debug
 };
 
 struct [[gnu::packed]] SDState {
@@ -349,7 +373,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 902); // Debug
+    static_assert(sizeof(settings) == 908); // Debug
     
     // resets: records resets that have occurred
     Reset resets[10];
@@ -359,7 +383,7 @@ struct [[gnu::packed]] State {
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 1006); // Debug
+static_assert(sizeof(State) == 1012); // Debug
 
 constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,

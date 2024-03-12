@@ -1225,6 +1225,10 @@ struct _TaskEvent {
         }
     }
     
+    static void _DST(_Triggers::DSTEvent& ev) {
+        
+    }
+    
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
         _Triggers::EventInsert(ev, time);
         // If this event is now the front of the list, reschedule _EventTimer
@@ -1297,6 +1301,8 @@ struct _TaskEvent {
             _MotionUnsuppress(      _Cast<_Triggers::MotionUnsuppressEvent&>(ev)        ); break;
         case T::CaptureImage:
             _CaptureImage(          _Cast<_Triggers::CaptureImageEvent&>(ev)            ); break;
+        case T::DST:
+            _DST(                   _Cast<_Triggers::DSTEvent&>(ev)                     ); break;
         }
     }
     
