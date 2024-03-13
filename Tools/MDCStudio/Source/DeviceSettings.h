@@ -751,6 +751,76 @@ inline MSP::DSTPhase _DSTPhaseCreate(std::vector<date::sys_time<std::chrono::sec
     return phase;
 }
 
+template<typename T_ZonedTime>
+inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
+    using namespace std::chrono;
+    
+    const date::time_zone& tz = *now.get_time_zone();
+    
+    // Create DSTEvents
+    // TransitionTimepointCount: the number of timepoints that each vector in `transitions` should be filled with.
+    // +1 because the first time will populate Event.time, while the remaining times will populate the phase.
+    constexpr size_t TransitionTimepointCount = MSP::DSTPhase::PhaseCount+1;
+    const date::sys_time<seconds> nowSys = floor<date::days>(now.get_sys_time());
+    const date::sys_time<seconds> dayMax = nowSys + date::years(TransitionTimepointCount+1);
+    date::sys_time<seconds> day = nowSys - date::years(1) - date::days(1);
+    std::chrono::seconds offPrev = tz.get_info(day).offset;
+    std::map<std::chrono::seconds, std::vector<date::sys_time<seconds>>> transitions;
+    while (day < dayMax) {
+        day += date::days(1);
+        const date::sys_info dayInfo = tz.get_info(day);
+        
+//        printf("%ju offset = %jd\n", (uintmax_t)day.time_since_epoch().count(), (intmax_t)dayInfo.offset.count());
+        
+        if (dayInfo.offset != offPrev) {
+            date::sys_time<seconds> t = day;
+            for (;;) {
+                const date::sys_time<seconds> transitionTime = t;
+                t -= std::chrono::minutes(1);
+                const date::sys_info tInfo = tz.get_info(t);
+                if (tInfo.offset != dayInfo.offset) {
+                    const std::chrono::seconds delta = dayInfo.offset-tInfo.offset;
+                    auto& vec = transitions[delta];
+                    if (vec.size() >= TransitionTimepointCount) goto full; // Never let a single vector exceed MSP::DSTPhase::Count
+                    
+                    vec.push_back(transitionTime);
+//                    printf("Found transition point: %ju (delta: %jd minutes)\n", (uintmax_t)transitionTime.time_since_epoch().count(), (intmax_t)delta.count());
+                    break;
+                }
+            }
+            offPrev = dayInfo.offset;
+//            printf("Found transition: ");
+        }
+    }
+full:
+    
+    // We should either have 0 deltas (for places that don't have DST) or 2 deltas
+    // (eg +1 hour / -1 hour, or some rare places that do +30 minutes / -30 minutes).
+    assert(transitions.size()==0 || transitions.size()==2);
+    
+    if (transitions.size() == 2) {
+        auto transitionIt = transitions.begin();
+        for (size_t i=0; i<2; i++, transitionIt++) {
+            const std::chrono::seconds adjustmentSec = transitionIt->first;
+            const Ticks adjustmentTicks = adjustmentSec;
+            const std::vector<date::sys_time<seconds>>& tps = transitionIt->second;
+            const auto tp = date::clock_cast<Time::Clock>(tps.front());
+            
+            MSP::Triggers::DSTEvent& dstEvent = t.dstEvent[i];
+            dstEvent = MSP::Triggers::DSTEvent{
+                MSP::Triggers::Event{
+                    .time = Time::Clock::TimeInstantFromTimePoint(tp),
+                    .type = MSP::Triggers::Event::Type::DST,
+                    .idx = (uint8_t)i,
+                },
+                .phase = _DSTPhaseCreate(tps),
+                .adjustmentTicks = Toastbox::Cast<decltype(MSP::Triggers::DSTEvent::adjustmentTicks)>(adjustmentTicks.count()),
+            };
+        }
+        t.dstEventCount = 2;
+    }
+}
+
 inline MSP::Triggers Convert(const Triggers& triggers) {
     using namespace std::chrono;
     
@@ -837,83 +907,7 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
         }
     }
     
-    // Create DSTEvents
-    // TransitionTimeCountMax: the number of transition times that each vector in `transitions` should be filled with.
-    // +1 because the first time will populate Event.time, while the remaining times will populate the phase.
-    constexpr size_t TransitionTimeCountMax = MSP::DSTPhase::PhaseCount+1;
-    const date::sys_time<seconds> nowSys = floor<date::days>(now.get_sys_time());
-    const date::sys_time<seconds> dayMax = nowSys + date::years(TransitionTimeCountMax+1);
-    date::sys_time<seconds> day = nowSys - date::years(1) - date::days(1);
-    std::chrono::seconds offPrev = tz.get_info(day).offset;
-    std::map<std::chrono::seconds, std::vector<date::sys_time<seconds>>> transitions;
-    while (day < dayMax) {
-        day += date::days(1);
-        const date::sys_info dayInfo = tz.get_info(day);
-        
-//        printf("%ju offset = %jd\n", (uintmax_t)day.time_since_epoch().count(), (intmax_t)dayInfo.offset.count());
-        
-        if (dayInfo.offset != offPrev) {
-            date::sys_time<seconds> t = day;
-            for (;;) {
-                const date::sys_time<seconds> transitionTime = t;
-                t -= std::chrono::minutes(1);
-                const date::sys_info tInfo = tz.get_info(t);
-                if (tInfo.offset != dayInfo.offset) {
-                    const std::chrono::seconds delta = dayInfo.offset-tInfo.offset;
-                    auto& vec = transitions[delta];
-                    if (vec.size() >= TransitionTimeCountMax) goto full; // Never let a single vector exceed MSP::DSTPhase::Count
-                    
-                    vec.push_back(transitionTime);
-//                    printf("Found transition point: %ju (delta: %jd minutes)\n", (uintmax_t)transitionTime.time_since_epoch().count(), (intmax_t)delta.count());
-                    break;
-                }
-            }
-            offPrev = dayInfo.offset;
-//            printf("Found transition: ");
-        }
-    }
-full:
-    
-    // We should either have 0 deltas (for places that don't have DST) or 2 deltas
-    // (eg +1 hour / -1 hour, or some rare places that do +30 minutes / -30 minutes).
-    assert(transitions.size()==0 || transitions.size()==2);
-    
-    if (transitions.size() == 2) {
-//        const std::chrono::seconds delta0 = transitions.begin()->first;
-//        const std::chrono::seconds delta1 = std::next(transitions.begin())->first;
-        
-        
-        auto transitionIt = transitions.begin();
-        for (size_t i=0; i<2; i++, transitionIt++) {
-            const std::chrono::seconds adjustmentSec = transitionIt->first;
-            const Ticks adjustmentTicks = adjustmentSec;
-            const std::vector<date::sys_time<seconds>>& times = transitionIt->second;
-//            const Time::Clock::time_point tp = Time::Clock::from_sys(times.front());
-//            const Time::Clock::time_point tp = Time::Clock::from_sys(times.front());
-//            date::sys_time<microseconds>
-            const auto tp = date::clock_cast<Time::Clock>(times.front());
-            
-            MSP::Triggers::DSTEvent& dstEvent = t.dstEvent[i];
-            dstEvent = MSP::Triggers::DSTEvent{
-                MSP::Triggers::Event{
-                    .time = Time::Clock::TimeInstantFromTimePoint(tp),
-                    .type = MSP::Triggers::Event::Type::DST,
-                    .idx = (uint8_t)i,
-                },
-                .phase = _DSTPhaseCreate(times),
-                .adjustmentTicks = Toastbox::Cast<decltype(MSP::Triggers::DSTEvent::adjustmentTicks)>(adjustmentTicks.count()),
-            };
-            
-//            const auto& delta = it->first;
-//            const auto& times = it->second;
-//            printf("transitions[ %+jd ]: ", (intmax_t)delta.count());
-//            for (const auto& time : times) {
-//                printf("%ju ", (uintmax_t)time.time_since_epoch().count());
-//            }
-//            printf("\n");
-        }
-        t.dstEventCount = 2;
-    }
+    _DSTEventsCreate(now, t);
     
 //    printf("%d %d\n", (int)dayInfo.offset.count(), (int)dayInfo.save.count());
     
