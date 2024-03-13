@@ -474,7 +474,7 @@ public:
             .arg = { .MSPTimeAdjust = { .adjustment = adj } },
         };
         _sendCmd(cmd);
-        _checkStatus("MSPTimeSet command failed");
+        _checkStatus("MSPTimeAdjust command failed");
     }
     
     void mspTimeAdjust(std::ostream* print=&std::cout) {

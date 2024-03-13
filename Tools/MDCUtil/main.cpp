@@ -471,6 +471,7 @@ static const char* _StringForTriggerEventType(MSP::Triggers::Event::Type x) {
     switch (x) {
     case X::TimeTrigger:  return "TimeTrigger";
     case X::MotionEnable: return "MotionEnable";
+    case X::DST:          return "DST";
     }
     return "unknown";
 }
@@ -599,8 +600,8 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     const auto& triggers = state.settings.triggers;
     
     printf(         "    event\n");
-    for (auto it=std::begin(triggers.event); it!=std::begin(triggers.event)+triggers.eventCount; it++) {
-        printf(     "      #%ju\n",                                     (uintmax_t)(&*it-triggers.event));
+    for (auto it=std::begin(triggers.repeatEvent); it!=std::begin(triggers.repeatEvent)+triggers.repeatEventCount; it++) {
+        printf(     "      #%ju\n",                                     (uintmax_t)(&*it-triggers.repeatEvent));
         printf(     "        time:                  %s\n",              Time::StringForTimeInstant(it->time).c_str());
         printf(     "        type:                  %s\n",              _StringForTriggerEventType(it->type));
         printf(     "        repeat\n");
