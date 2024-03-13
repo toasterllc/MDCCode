@@ -167,6 +167,9 @@ struct MDCDeviceReal : MDCDevice {
                 lock.unlock();
                 
                 _device.device->mspStateWrite(mspState);
+                
+                // Initialize the device's time
+                _device.device->mspTimeInit();
             }
             
             // Erase the entire SD card
