@@ -830,11 +830,28 @@ full:
             };
         }
         
-        #warning TODO: add a comment here explaining why this is necessary
-        if (t.dstEvent[0].time < t.dstEvent[1].time) {
+        // The DSTEvent that occurs first will adjust the time of the DSTEvent that occurs second.
+        //
+        // We don't want that behavior, so we subtract the `adjustmentTicks` from the DSTEvent
+        // that occurs second, to counteract the addition of `adjustmentTicks` that the first
+        // DSTEvent will perform.
+        //
+        // This is a little ugly but it's the most elegant solution we've found so far.
+        // An alternative is to implement DSTEvent logic such that they don't affect other
+        // DSTEvents, but that could cause events in the event array to become out-of-order,
+        // since we'd be adjusting the time of some events but not others.
+        
+        // If dstEvent[1] occurs second:
+        if (t.dstEvent[1].time > t.dstEvent[0].time) {
             t.dstEvent[1].time -= t.dstEvent[0].adjustmentTicks;
-        } else {
+        
+        // If dstEvent[0] occurs second:
+        } else if (t.dstEvent[0].time > t.dstEvent[1].time) {
             t.dstEvent[0].time -= t.dstEvent[1].adjustmentTicks;
+        
+        } else {
+            // Shouldn't be possible
+            abort();
         }
         
         t.dstEventCount = 2;
