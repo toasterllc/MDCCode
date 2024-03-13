@@ -699,11 +699,11 @@ struct _TaskI2C {
             };
             break;
         
-        case Cmd::Op::TimeSet:
+        case Cmd::Op::TimeInit:
             // Only allow setting the time while we're in host mode
             // and therefore _TaskEvent isn't running
             if (!_HostModeEnabled) break;
-            _RTC::Init(&cmd.arg.TimeSet.state);
+            _RTC::Init(&cmd.arg.TimeInit.state);
             resp.ok = true;
             break;
         

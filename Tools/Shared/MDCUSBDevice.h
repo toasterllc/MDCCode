@@ -457,14 +457,23 @@ public:
         return state;
     }
     
-    void mspTimeSet(const MSP::TimeState& state) {
+    MSP::TimeState mspTimeInit() {
         assert(_mode == STM::Status::Mode::STMApp);
+        
+        const Time::Instant now = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
+        const MSP::TimeState state = {
+            .start = now,
+            .time = now,
+        };
+        
         const STM::Cmd cmd = {
-            .op = STM::Op::MSPTimeSet,
-            .arg = { .MSPTimeSet = { .state = state } },
+            .op = STM::Op::MSPTimeInit,
+            .arg = { .MSPTimeInit = { .state = state } },
         };
         _sendCmd(cmd);
-        _checkStatus("MSPTimeSet command failed");
+        _checkStatus("MSPTimeInit command failed");
+        
+        return state;
     }
     
     void mspTimeAdjust(const MSP::TimeAdjustment& adj) {
@@ -507,11 +516,13 @@ public:
             
             // Otherwise the device is just tracking relative time, so simply set its absolute time.
             } else {
-                const Time::Instant now = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
-                mspTimeSet({
-                    .start = now,
-                    .time = now,
-                });
+                const MSP::TimeState ts = mspTimeInit();
+                if (print) {
+                    *print << "Initialized time\n";
+                    *print << "--------------------------------------------------\n";
+                    *print << Time::StringForTimeState(ts);
+                    *print << "\n\n";
+                }
             }
         }
         

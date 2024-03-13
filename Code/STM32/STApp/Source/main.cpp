@@ -1262,15 +1262,15 @@ static void _MSPTimeGet(const STM::Cmd& cmd) {
     _USB::Send(Endpoint::DataIn, &state, sizeof(state));
 }
 
-static void _MSPTimeSet(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.MSPTimeSet;
+static void _MSPTimeInit(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPTimeInit;
     
     // Accept command
     _System::USBAcceptCommand(true);
     
     const MSP::Cmd mspCmd = {
-        .op = MSP::Cmd::Op::TimeSet,
-        .arg = { .TimeSet = { .state = arg.state } },
+        .op = MSP::Cmd::Op::TimeInit,
+        .arg = { .TimeInit = { .state = arg.state } },
     };
     
     const auto mspResp = _System::MSPSend(mspCmd);
@@ -1755,7 +1755,7 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPStateRead:          _MSPStateRead(cmd);                 break;
     case Op::MSPStateWrite:         _MSPStateWrite(cmd);                break;
     case Op::MSPTimeGet:            _MSPTimeGet(cmd);                   break;
-    case Op::MSPTimeSet:            _MSPTimeSet(cmd);                   break;
+    case Op::MSPTimeInit:           _MSPTimeInit(cmd);                  break;
     case Op::MSPTimeAdjust:         _MSPTimeAdjust(cmd);                break;
     // MSP430 SBW
     case Op::MSPLock:               _MSPLock(cmd);                      break;

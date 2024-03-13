@@ -463,7 +463,7 @@ struct [[gnu::packed]] Cmd {
         BatteryStatusGet,
         ChargeStatusSet,
         TimeGet,
-        TimeSet,
+        TimeInit,
         TimeAdjust,
         HostModeSet,
         VDDIMGSDSet,
@@ -488,7 +488,7 @@ struct [[gnu::packed]] Cmd {
         
         struct [[gnu::packed]] {
             TimeState state;
-        } TimeSet;
+        } TimeInit;
         
         struct [[gnu::packed]] {
             TimeAdjustment adjustment;
