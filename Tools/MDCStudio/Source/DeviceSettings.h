@@ -731,8 +731,8 @@ inline MSP::DSTPhase _DSTPhaseCreate(std::vector<date::sys_seconds> tps) {
     MSP::DSTPhase phase = {};
     std::optional<date::sys_seconds> tprev;
     for (auto t : tps) {
-        printf("Halla: %s\n", Calendar::TimestampString(
-            Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(t))).c_str());
+//        printf("Halla: %s\n", Calendar::TimestampString(
+//            Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(t))).c_str());
         
         if (tprev) {
             const seconds deltaSec = t-*tprev;
@@ -762,12 +762,15 @@ inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
     // Create DSTEvents
     // TransitionTimepointCount: the number of timepoints that each vector in `transitions` should be filled with.
     // +1 because the first time will populate Event.time, while the remaining times will populate the phase.
+    // (Ie, to get N phases, we need N+1 transitions.)
     constexpr size_t TransitionTimepointCount = MSP::DSTPhase::PhaseCount+1;
     
     printf("now: %s\n", Calendar::TimestampString(
         Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(date::floor<seconds>(now.get_sys_time())))).c_str());
     
     const date::sys_seconds nowSys = date::floor<minutes>(now.get_sys_time());
+    // dayMax: cap the time into the future that we'll look at.
+    // We want TransitionTimepointCount transitions, so look TransitionTimepointCount+1 years into the future.
     const date::sys_seconds dayMax = nowSys + date::days(365*(TransitionTimepointCount+1));
     date::sys_seconds day = nowSys - date::days(365) - date::days(1);
     std::chrono::seconds offPrev = tz.get_info(day).offset;
@@ -787,10 +790,10 @@ inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
                 if (tInfo.offset != dayInfo.offset) {
                     const std::chrono::seconds delta = tInfo.offset - dayInfo.offset;
                     auto& vec = transitions[delta];
-                    if (vec.size() >= TransitionTimepointCount) goto full; // Never let a single vector exceed MSP::DSTPhase::Count
+                    if (vec.size() >= TransitionTimepointCount) goto full; // Never let a single vector exceed TransitionTimepointCount
                     
-                    printf("Transition point: %s (delta: %jd minutes)\n", Calendar::TimestampString(
-                        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(tp))).c_str(), (intmax_t)delta.count());
+//                    printf("Transition point: %s (delta: %jd minutes)\n", Calendar::TimestampString(
+//                        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(tp))).c_str(), (intmax_t)delta.count());
                     
                     vec.push_back(tp);
 //                    printf("Found transition point: %ju (delta: %jd minutes)\n", (uintmax_t)transitionTime.time_since_epoch().count(), (intmax_t)delta.count());

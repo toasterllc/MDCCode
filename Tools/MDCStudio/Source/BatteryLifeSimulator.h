@@ -347,9 +347,9 @@ struct Simulator {
         // We should never get a CaptureImageEvent event while in fast-forward mode
         assert(_live);
         
-        const std::string timeStr = Calendar::TimestampString(_time);
+//        const std::string timeStr = Calendar::TimestampString(_time);
 //        assert(Toastbox::String::EndsWith(" 9:30:00.000 AM", timeStr));
-        printf("Capturing image at %s\n", timeStr.c_str());
+//        printf("Capturing image at %s\n", timeStr.c_str());
         
 //        auto tp = Time::Clock::TimePointFromTimeInstant(_time);
 //        auto tp = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(_time));
@@ -363,7 +363,7 @@ struct Simulator {
     }
     
     void _dst(_Triggers::DSTEvent& ev) {
-        printf("DSTEvent @ %s\n", Calendar::TimestampString(_time).c_str());
+//        printf("DSTEvent @ %s\n", Calendar::TimestampString(_time).c_str());
         
         // Re-insert the DSTEvent before adjusting all subsequent events' times,
         // because we need to adjust the DSTEvent's time too.
