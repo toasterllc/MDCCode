@@ -765,8 +765,8 @@ inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
     // (Ie, to get N phases, we need N+1 transitions.)
     constexpr size_t TransitionTimepointCount = MSP::DSTPhase::PhaseCount+1;
     
-    printf("now: %s\n", Calendar::TimestampString(
-        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(date::floor<seconds>(now.get_sys_time())))).c_str());
+//    printf("now: %s\n", Calendar::TimestampString(
+//        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(date::floor<seconds>(now.get_sys_time())))).c_str());
     
     const date::sys_seconds nowSys = date::floor<minutes>(now.get_sys_time());
     // dayMax: cap the time into the future that we'll look at.
