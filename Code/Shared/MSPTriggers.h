@@ -354,9 +354,8 @@ struct T_MSPTriggers {
     }
     
     static Time::TicksU32 DSTPhaseAdvance(MSP::DSTPhase& x) {
-        const int8_t phase = x.phase;
+        const int8_t phase = x.pop();
         const Time::TicksU32 ticks = Time::Year + (Time::Day * phase);
-        x.u64 >>= 4;
         return ticks;
     }
     

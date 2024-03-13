@@ -370,6 +370,7 @@ struct Simulator {
         const Time::TicksS32 adj = ev.base().adjustmentTicks;
         _Triggers::Event* x = _Triggers::EventBegin();
         while (x != _Triggers::EventEnd()) {
+//            if (x->type != _Triggers::Event::Type::DST) {
             x->time = x->time+adj;
             x = x->next;
         }

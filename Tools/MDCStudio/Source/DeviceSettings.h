@@ -721,7 +721,7 @@ inline void _AddEvents(MSP::Triggers& triggers, const std::vector<MSP::Triggers:
     triggers.repeatEventCount += events.size();
 }
 
-inline MSP::DSTPhase _DSTPhaseCreate(std::vector<date::sys_time<std::chrono::seconds>> tps) {
+inline MSP::DSTPhase _DSTPhaseCreate(std::vector<date::sys_seconds> tps) {
     using namespace std::chrono;
     assert(!tps.empty());
     // Ensure that weren't given more timepoints than the number of transitions we can support.
@@ -729,8 +729,11 @@ inline MSP::DSTPhase _DSTPhaseCreate(std::vector<date::sys_time<std::chrono::sec
     assert(tps.size() <= MSP::DSTPhase::PhaseCount+1);
     
     MSP::DSTPhase phase = {};
-    std::optional<date::sys_time<std::chrono::seconds>> tprev;
+    std::optional<date::sys_seconds> tprev;
     for (auto t : tps) {
+        printf("Halla: %s\n", Calendar::TimestampString(
+            Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(t))).c_str());
+        
         if (tprev) {
             const seconds deltaSec = t-*tprev;
             const date::days deltaDays = duration_cast<date::days>(deltaSec);
@@ -738,8 +741,7 @@ inline MSP::DSTPhase _DSTPhaseCreate(std::vector<date::sys_time<std::chrono::sec
             const date::days p = deltaDays - date::days(365);
             assert(p.count() >= MSP::DSTPhase::PhaseMin);
             assert(p.count() <= MSP::DSTPhase::PhaseMax);
-            phase.end = p.count();
-            phase.u64 >>= MSP::DSTPhase::PhaseWidth;
+            phase.push(p.count());
         }
         tprev = t;
     }
@@ -747,7 +749,7 @@ inline MSP::DSTPhase _DSTPhaseCreate(std::vector<date::sys_time<std::chrono::sec
     // If tps.size() < `MSP::DSTPhase::PhaseCount+1`, then we need to right-shift phase.u64 so that the
     // first phase is placed at the very right of phase.u64.
     const size_t phaseCount = tps.size()-1;
-    phase.u64 >>= (MSP::DSTPhase::PhaseCount - phaseCount) * MSP::DSTPhase::PhaseWidth;
+    for (size_t i=0; i<MSP::DSTPhase::PhaseCount-phaseCount; i++) phase.push(0);
     return phase;
 }
 
@@ -763,13 +765,13 @@ inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
     constexpr size_t TransitionTimepointCount = MSP::DSTPhase::PhaseCount+1;
     
     printf("now: %s\n", Calendar::TimestampString(
-        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(floor<date::days>(now.get_sys_time())))).c_str());
+        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(date::floor<seconds>(now.get_sys_time())))).c_str());
     
-    const date::sys_time<seconds> nowSys = floor<date::days>(now.get_sys_time());
-    const date::sys_time<seconds> dayMax = nowSys + date::days(365*(TransitionTimepointCount+1));
-    date::sys_time<seconds> day = nowSys - date::days(365) - date::days(1);
+    const date::sys_seconds nowSys = date::floor<minutes>(now.get_sys_time());
+    const date::sys_seconds dayMax = nowSys + date::days(365*(TransitionTimepointCount+1));
+    date::sys_seconds day = nowSys - date::days(365) - date::days(1);
     std::chrono::seconds offPrev = tz.get_info(day).offset;
-    std::map<std::chrono::seconds, std::vector<date::sys_time<seconds>>> transitions;
+    std::map<std::chrono::seconds, std::vector<date::sys_seconds>> transitions;
     while (day < dayMax) {
         day += date::days(1);
         const date::sys_info dayInfo = tz.get_info(day);
@@ -777,18 +779,18 @@ inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
 //        printf("%ju offset = %jd\n", (uintmax_t)day.time_since_epoch().count(), (intmax_t)dayInfo.offset.count());
         
         if (dayInfo.offset != offPrev) {
-            date::sys_time<seconds> t = day;
+            date::sys_seconds t = day;
             for (;;) {
-                const date::sys_time<seconds> tp = t;
+                const date::sys_seconds tp = t;
                 t -= std::chrono::minutes(1);
                 const date::sys_info tInfo = tz.get_info(t);
                 if (tInfo.offset != dayInfo.offset) {
-                    const std::chrono::seconds delta = dayInfo.offset-tInfo.offset;
+                    const std::chrono::seconds delta = tInfo.offset - dayInfo.offset;
                     auto& vec = transitions[delta];
                     if (vec.size() >= TransitionTimepointCount) goto full; // Never let a single vector exceed MSP::DSTPhase::Count
                     
-                    printf("Transition point: %s\n", Calendar::TimestampString(
-                        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(day))).c_str());
+                    printf("Transition point: %s (delta: %jd minutes)\n", Calendar::TimestampString(
+                        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(tp))).c_str(), (intmax_t)delta.count());
                     
                     vec.push_back(tp);
 //                    printf("Found transition point: %ju (delta: %jd minutes)\n", (uintmax_t)transitionTime.time_since_epoch().count(), (intmax_t)delta.count());
@@ -810,8 +812,11 @@ full:
         for (size_t i=0; i<2; i++, transitionIt++) {
             const std::chrono::seconds adjustmentSec = transitionIt->first;
             const Ticks adjustmentTicks = adjustmentSec;
-            const std::vector<date::sys_time<seconds>>& tps = transitionIt->second;
+            const std::vector<date::sys_seconds>& tps = transitionIt->second;
             const auto tp = date::clock_cast<Time::Clock>(tps.front());
+            
+            printf("DSTEvent.time = %s (adj: %jd)\n", Calendar::TimestampString(
+                Time::Clock::TimeInstantFromTimePoint(tp)).c_str(), (intmax_t)adjustmentTicks.count());
             
             MSP::Triggers::DSTEvent& dstEvent = t.dstEvent[i];
             dstEvent = MSP::Triggers::DSTEvent{
@@ -824,6 +829,14 @@ full:
                 .adjustmentTicks = Toastbox::Cast<decltype(MSP::Triggers::DSTEvent::adjustmentTicks)>(adjustmentTicks.count()),
             };
         }
+        
+        #warning TODO: add a comment here explaining why this is necessary
+        if (t.dstEvent[0].time < t.dstEvent[1].time) {
+            t.dstEvent[1].time -= t.dstEvent[0].adjustmentTicks;
+        } else {
+            t.dstEvent[0].time -= t.dstEvent[1].adjustmentTicks;
+        }
+        
         t.dstEventCount = 2;
     }
 }

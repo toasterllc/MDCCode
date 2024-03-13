@@ -234,19 +234,44 @@ struct [[gnu::packed]] DSTPhase {
     static constexpr size_t PhaseWidth = 4; // Width of individual phase element
     static constexpr int8_t PhaseMin = -8; // Min value of individual phase element
     static constexpr int8_t PhaseMax = +7; // Max value of individual phase element
-    union {
-        // u64: 'array' of 16x phase values (64/4 == 16)
-        // u64 is used to right-shift (>>4) the lowest phase value out, to surface the next phase.
-        uint64_t u64;
-        struct {
-            // end: useful when creating a DSTPhase; set `end`, then right-shift u64 by `PhaseWidth`.
-            int8_t end : 4;
-            uint64_t _ : 56;
-            // phase: the number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year.
-            // This is a signed value and, being 4 bits, can represent values in the range [-8,7].
-            int8_t phase : 4;
-        };
-    };
+    static constexpr uint8_t _PhaseMask = (1<<PhaseWidth)-1;
+    static constexpr uint8_t _SignExtendBits = ~_PhaseMask;
+    
+    uint64_t u64;
+    
+    void push(int8_t x) {
+        u64 >>= 4;
+        u64 |= ((uint64_t)static_cast<uint8_t>(x)) << (64-PhaseWidth);
+    }
+    
+    int8_t pop() {
+        uint8_t phase = ((uint8_t)u64) & _PhaseMask;
+        const bool negative = phase & (1<<(PhaseWidth-1));
+        if (negative) phase |= _SignExtendBits;
+        u64 >>= 4;
+        return static_cast<int8_t>(phase);
+    }
+    
+//    int8_t phase() {
+//        uint8_t phase = ((uint8_t)u64) & _PhaseMask;
+//        const bool negative = phase & (1<<(PhaseWidth-1));
+//        if (negative) phase |= _SignExtendBits;
+//        return static_cast<int8_t>(phase);
+//    }
+    
+//    union {
+//        // u64: 'array' of 16x phase values (64/4 == 16)
+//        // u64 is used to right-shift (>>4) the lowest phase value out, to surface the next phase.
+//        uint64_t u64;
+//        struct {
+//            // end: useful when creating a DSTPhase; set `end`, then right-shift u64 by `PhaseWidth`.
+//            int8_t end : 4;
+//            uint64_t _ : 56;
+//            // phase: the number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year.
+//            // This is a signed value and, being 4 bits, can represent values in the range [-8,7].
+//            int8_t phase : 4;
+//        };
+//    };
 };
 static_assert(!(sizeof(DSTPhase) % 2)); // Check alignment
 
