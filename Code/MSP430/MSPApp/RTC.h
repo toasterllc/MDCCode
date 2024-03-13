@@ -7,19 +7,17 @@
 #include "Code/Shared/Assert.h"
 #include "Code/Shared/Time.h"
 
-// _RTCTime: the current time (either absolute or relative, depending on the
-// value supplied to Init()).
+// _RTCState: the current time (either absolute or relative, depending on the
+// value supplied to Init()) and calibration info.
 //
-// _RTCTime is volatile because it's updated from the interrupt context.
-//
-// _RTCTime is stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// _RTCState is stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep.
 //
-// _RTCTime needs to live in the _noinit variant of BAKMEM so that RTC
+// _RTCState needs to live in the _noinit variant of BAKMEM so that RTC
 // memory is never automatically initialized, because we don't want it
 // to be reset when we abort.
 //
-// _RTCTime is declared outside of RTCType because apparently with GCC, the
+// _RTCState is declared outside of RTCType because apparently with GCC, the
 // gnu::section() attribute doesn't work for static member variables within
 // templated classes.
 
@@ -118,8 +116,8 @@ public:
         return RTCCTL != 0;
     }
     
-    // Tocks(): returns the current tocks offset from _RTCTime, as tracked by the hardware
-    // register RTCCNT.
+    // Tocks(): returns the current tocks offset from _RTCState.state.time, as tracked by the
+    // hardware register RTCCNT.
     //
     // Cannot be called from the interrupt context.
     //
@@ -211,7 +209,13 @@ public:
     }
     
     static MSP::TimeState TimeState() {
-        MSP::TimeState x = _RTCState.state;
+        MSP::TimeState x;
+        // Disable interrupts while we copy the MSP::TimeState struct, so that we know our ISR can't
+        // modify _RTCState.state while we copy it.
+        {
+            Toastbox::IntState ints(false);
+            x = _RTCState.state;
+        }
         x.time = Now();
         return x;
     }
