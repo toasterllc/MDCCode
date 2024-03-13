@@ -1224,7 +1224,7 @@ struct _TaskEvent {
         // because we need to adjust the DSTEvent's time too.
         EventInsert(ev);
         
-        const Time::TicksS16 adj = ev.base().adjustmentTicks;
+        const Time::TicksS32 adj = ev.base().adjustmentTicks;
         _Triggers::Event* x = _Triggers::EventBegin();
         while (x != _Triggers::EventEnd()) {
             x->time = _TimeInstantAdd(x->time, adj);

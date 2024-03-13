@@ -230,12 +230,18 @@ struct [[gnu::packed]] Capture {
 static_assert(!(sizeof(Capture) % 2)); // Check alignment
 
 struct [[gnu::packed]] DSTPhase {
+    static constexpr size_t PhaseCount = 16; // Total number of phase elements
+    static constexpr size_t PhaseWidth = 4; // Width of individual phase element
+    static constexpr int8_t PhaseMin = -8; // Min value of individual phase element
+    static constexpr int8_t PhaseMax = +7; // Max value of individual phase element
     union {
         // u64: 'array' of 16x phase values (64/4 == 16)
         // u64 is used to right-shift (>>4) the lowest phase value out, to surface the next phase.
         uint64_t u64;
         struct {
-            uint64_t _ : 60;
+            // end: useful when creating a DSTPhase; set `end`, then right-shift u64 by `PhaseWidth`.
+            int8_t end : 4;
+            uint64_t _ : 56;
             // phase: the number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year.
             // This is a signed value and, being 4 bits, can represent values in the range [-8,7].
             int8_t phase : 4;
@@ -264,7 +270,7 @@ struct [[gnu::packed]] Triggers {
     
     struct [[gnu::packed]] DSTEvent : Event {
         DSTPhase phase; // The number of days (offset from 365) to add to `time` to calculate the `time` for the subsequent year
-        Time::TicksS16 adjustmentTicks; // The number of ticks to add to subsequent events to adjust for DST
+        Time::TicksS32 adjustmentTicks; // The number of ticks to add to subsequent events to adjust for DST
     };
     static_assert(!(sizeof(DSTEvent) % 2)); // Check alignment
     
@@ -335,7 +341,7 @@ struct [[gnu::packed]] Triggers {
 struct [[gnu::packed]] Settings {
     Triggers triggers;
 //    StaticPrint(sizeof(triggers));
-    static_assert(sizeof(triggers) == 910); // Debug
+    static_assert(sizeof(triggers) == 914); // Debug
     
 //    DSTInfo dstInfo;
 //    static_assert(sizeof(dstInfo) == 34); // Debug
@@ -379,7 +385,7 @@ struct [[gnu::packed]] State {
     Settings settings;
 //    StaticPrint(sizeof(settings));
     static_assert(!(sizeof(settings) % 2)); // Check alignment
-    static_assert(sizeof(settings) == 910); // Debug
+    static_assert(sizeof(settings) == 914); // Debug
     
     // resets: records resets that have occurred
     Reset resets[10];
@@ -389,7 +395,7 @@ struct [[gnu::packed]] State {
 };
 //StaticPrint(sizeof(State));
 static_assert(!(sizeof(State) % 2)); // Check alignment
-static_assert(sizeof(State) == 1014); // Debug
+static_assert(sizeof(State) == 1018); // Debug
 
 constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,

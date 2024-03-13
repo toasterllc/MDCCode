@@ -360,7 +360,7 @@ struct Simulator {
         // because we need to adjust the DSTEvent's time too.
         _eventInsert(ev);
         
-        const Time::TicksS16 adj = ev.base().adjustmentTicks;
+        const Time::TicksS32 adj = ev.base().adjustmentTicks;
         _Triggers::Event* x = _Triggers::EventBegin();
         while (x != _Triggers::EventEnd()) {
             x->time = x->time+adj;
@@ -398,7 +398,7 @@ struct Simulator {
         case T::CaptureImage:
             return _captureImage(static_cast<_Triggers::CaptureImageEvent&>(ev)); break;
         case T::DST:
-            return _captureImage(static_cast<_Triggers::CaptureImageEvent&>(ev)); break;
+            return _dst(static_cast<_Triggers::DSTEvent&>(ev)); break;
         }
     }
     
