@@ -909,45 +909,6 @@ inline MSP::Triggers Convert(const Triggers& triggers) {
     
     _DSTEventsCreate(now, t);
     
-//    printf("%d %d\n", (int)dayInfo.offset.count(), (int)dayInfo.save.count());
-    
-    
-    
-    
-    
-    
-//    // Create DSTEvents
-//    date::sys_time<seconds> x = floor<date::days>(now.get_sys_time());
-//    std::chrono::seconds offPrev = tz.get_info(x).offset;
-//    for (int i=0; i<1000; i++) {
-//        x -= date::days(1);
-//        const date::sys_info xinfo = tz.get_info(x);
-//        if (xinfo.offset != offPrev) {
-//            auto xx = x;
-//            for (;;) {
-//                xx += std::chrono::minutes(1);
-//                const date::sys_info xxinfo = tz.get_info(xx);
-//                if (xinfo.offset != xxinfo.offset) {
-//                    printf("Found transition point: %ju (delta: %jd minutes)\n", (uintmax_t)xx.time_since_epoch().count(), (intmax_t)(xxinfo.offset-xinfo.offset).count());
-//                    break;
-//                }
-//            }
-//            offPrev = xinfo.offset;
-////            printf("Found transition: ");
-//        }
-//        printf("%d %d\n", (int)xinfo.offset.count(), (int)xinfo.save.count());
-//    }
-    
-//    date::local_seconds sec = (t<now.get_local_time() ? t : t-date::days(1));
-    
-//    date::local_seconds x = floor<date::days>(now.get_local_time());
-//    for (;;) {
-//        x -= date::days(1);
-//        const date::sys_info info = tz.get_info(x);
-//    }
-//    
-//    date::local_seconds sec = (t<now.get_local_time() ? t : t-date::days(1));
-    
     Serialize(t.source, triggers);
     return t;
 }
