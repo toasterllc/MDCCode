@@ -761,9 +761,13 @@ inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
     // TransitionTimepointCount: the number of timepoints that each vector in `transitions` should be filled with.
     // +1 because the first time will populate Event.time, while the remaining times will populate the phase.
     constexpr size_t TransitionTimepointCount = MSP::DSTPhase::PhaseCount+1;
+    
+    printf("now: %s\n", Calendar::TimestampString(
+        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(floor<date::days>(now.get_sys_time())))).c_str());
+    
     const date::sys_time<seconds> nowSys = floor<date::days>(now.get_sys_time());
-    const date::sys_time<seconds> dayMax = nowSys + date::years(TransitionTimepointCount+1);
-    date::sys_time<seconds> day = nowSys - date::years(1) - date::days(1);
+    const date::sys_time<seconds> dayMax = nowSys + date::days(365*(TransitionTimepointCount+1));
+    date::sys_time<seconds> day = nowSys - date::days(365) - date::days(1);
     std::chrono::seconds offPrev = tz.get_info(day).offset;
     std::map<std::chrono::seconds, std::vector<date::sys_time<seconds>>> transitions;
     while (day < dayMax) {
@@ -775,7 +779,7 @@ inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
         if (dayInfo.offset != offPrev) {
             date::sys_time<seconds> t = day;
             for (;;) {
-                const date::sys_time<seconds> transitionTime = t;
+                const date::sys_time<seconds> tp = t;
                 t -= std::chrono::minutes(1);
                 const date::sys_info tInfo = tz.get_info(t);
                 if (tInfo.offset != dayInfo.offset) {
@@ -783,7 +787,10 @@ inline void _DSTEventsCreate(const T_ZonedTime& now, MSP::Triggers& t) {
                     auto& vec = transitions[delta];
                     if (vec.size() >= TransitionTimepointCount) goto full; // Never let a single vector exceed MSP::DSTPhase::Count
                     
-                    vec.push_back(transitionTime);
+                    printf("Transition point: %s\n", Calendar::TimestampString(
+                        Time::Clock::TimeInstantFromTimePoint(Time::Clock::from_sys(day))).c_str());
+                    
+                    vec.push_back(tp);
 //                    printf("Found transition point: %ju (delta: %jd minutes)\n", (uintmax_t)transitionTime.time_since_epoch().count(), (intmax_t)delta.count());
                     break;
                 }

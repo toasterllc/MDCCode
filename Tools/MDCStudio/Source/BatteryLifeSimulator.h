@@ -347,6 +347,11 @@ struct Simulator {
         // We should never get a CaptureImageEvent event while in fast-forward mode
         assert(_live);
         
+        printf("Capturing image at %s\n", Calendar::TimestampString(_time).c_str());
+        
+//        auto tp = Time::Clock::TimePointFromTimeInstant(_time);
+//        auto tp = Time::Clock::to_sys(Time::Clock::TimePointFromTimeInstant(_time));
+        
         _batteryLevel -= _imageCaptureCost();
         
         ev.countRem--;
@@ -356,6 +361,8 @@ struct Simulator {
     }
     
     void _dst(_Triggers::DSTEvent& ev) {
+        printf("DSTEvent @ %s\n", Calendar::TimestampString(_time).c_str());
+        
         // Re-insert the DSTEvent before adjusting all subsequent events' times,
         // because we need to adjust the DSTEvent's time too.
         _eventInsert(ev);
