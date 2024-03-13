@@ -742,6 +742,9 @@ struct _TaskI2C {
         }
     }
     
+    // _ChargeStatusChanged() is a good size to put in the 'Information FRAM' section (a 512 byte section)
+    // to free up some space for the regular FRAM section.
+    [[gnu::section(".fram_info"), gnu::used]]
     static void _ChargeStatusChanged() {
         _TaskLED::Set(_TaskLED::PriorityChargeState, _LEDStateForChargeStatus(_ChargeStatus));
     }

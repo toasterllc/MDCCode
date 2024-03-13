@@ -210,8 +210,9 @@ public:
     
     static MSP::TimeState TimeState() {
         MSP::TimeState x;
-        // Disable interrupts while we copy the MSP::TimeState struct, so that we know our ISR can't
-        // modify _RTCState.state while we copy it.
+        // Disable interrupts while we copy the MSP::TimeState struct.
+        // This is necessary so that we know our ISR isn't modifying
+        // _RTCState.state while we copy it.
         {
             Toastbox::IntState ints(false);
             x = _RTCState.state;
