@@ -1237,6 +1237,10 @@ struct _TaskEvent {
     
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
         _Triggers::EventInsert(ev, time);
+        if (&ev == _Triggers::EventBegin()) {
+            // Interrupt Run() if the new event is the first event, so that it re-schedules _EventTimer
+            _EventTimer::Schedule(0);
+        }
     }
     
     static bool EventInsert(_Triggers::RepeatEvent& ev) {
@@ -1289,6 +1293,13 @@ struct _TaskEvent {
         }
     }
     
+//    [[gnu::noinline]]
+//    static Time::Instant _WakeTime() {
+//        _Triggers::Event*const ev = _Triggers::EventBegin();
+//        if (ev == _Triggers::EventEnd()) return 0;
+//        return ev->time;
+//    }
+    
     static void Run() {
         // Reset our state
         Reset();
@@ -1300,32 +1311,32 @@ struct _TaskEvent {
         const Time::Instant startTime = _RTC::Now();
         _Triggers::Init(startTime);
         
+        // Fast-forward through events
+        for (;;) {
+            _Triggers::Event* ev = _Triggers::EventBegin();
+            if (ev==_Triggers::EventEnd() || (ev->time > startTime)) break;
+            _EventHandle(_Triggers::EventPop());
+        }
+        
+        _State.live = true;
+        
         // Handle events
         for (;;) {
+            // Wait until we have an event
+            _Scheduler::Wait([] { return _Triggers::EventBegin() != _Triggers::EventEnd(); });
             _Triggers::Event*const ev = _Triggers::EventBegin();
             
-            // If we don't have any more events, bail
-            if (ev == _Triggers::EventEnd()) break;
+            // Schedule _EventTimer for `ev`
+            _EventTimer::Schedule(ev->time);
+            // Wait for _EventTimer to fire
+            _EventTimer::Wait();
             
-            // Transition _State.live from false -> true when we hit the first event that's in the future
-            if (!_State.live) {
-                if (ev->time > startTime) {
-                    _State.live = true;
-                }
-            }
-            
-            if (_State.live) {
-                // Schedule _EventTimer for `ev`
-                _EventTimer::Schedule(ev->time);
-                // Wait for _EventTimer to fire
-                _EventTimer::Wait();
-            }
-            
-            // Pop the event off the event list
-            _Triggers::EventPop();
+            // While we waited, the front event may have been replaced by EventInsert(),
+            // in which case we need to wait again.
+            if (_Triggers::EventBegin() != ev) continue;
             
             // Handle the event
-            _EventHandle(*ev);
+            _EventHandle(_Triggers::EventPop());
         }
     }
     

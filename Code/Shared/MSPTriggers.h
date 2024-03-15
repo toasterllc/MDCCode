@@ -272,9 +272,11 @@ struct T_MSPTriggers {
         ev.next = curr;
     }
     
-    static void EventPop() {
+    static Event& EventPop() {
         Assert(_Front != _End);
-        EventPop(*_Front);
+        Event& ev = *_Front;
+        EventPop(ev);
+        return ev;
     }
     
     // EventPop(): remove event from linked list
