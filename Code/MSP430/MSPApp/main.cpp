@@ -1238,7 +1238,8 @@ struct _TaskEvent {
     static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
         _Triggers::EventInsert(ev, time);
         if (&ev == _Triggers::EventBegin()) {
-            // Interrupt Run() if the new event is the first event, so that it re-schedules _EventTimer
+            // Interrupt Run() if the new event is the first event, so that it re-schedules _EventTimer.
+            _State.changed = true;
             _EventTimer::Schedule(0);
         }
     }
@@ -1293,13 +1294,6 @@ struct _TaskEvent {
         }
     }
     
-//    [[gnu::noinline]]
-//    static Time::Instant _WakeTime() {
-//        _Triggers::Event*const ev = _Triggers::EventBegin();
-//        if (ev == _Triggers::EventEnd()) return 0;
-//        return ev->time;
-//    }
-    
     static void Run() {
         // Reset our state
         Reset();
@@ -1326,14 +1320,14 @@ struct _TaskEvent {
             _Scheduler::Wait([] { return _Triggers::EventBegin() != _Triggers::EventEnd(); });
             _Triggers::Event*const ev = _Triggers::EventBegin();
             
+            // Consume `changed` so we can determine if our events was modified while we slept.
+            _State.changed = false;
             // Schedule _EventTimer for `ev`
             _EventTimer::Schedule(ev->time);
             // Wait for _EventTimer to fire
             _EventTimer::Wait();
-            
-            // While we waited, the front event may have been replaced by EventInsert(),
-            // in which case we need to wait again.
-            if (_Triggers::EventBegin() != ev) continue;
+            // If an event was inserted while we slept, we may need to sleep again, so loop again.
+            if (_State.changed) continue;
             
             // Handle the event
             _EventHandle(_Triggers::EventPop());
@@ -1349,6 +1343,7 @@ struct _TaskEvent {
         // solely to arrive at the correct state for the current time.
         // live=true once we're done initializing and executing events normally.
         bool live = false;
+        bool changed = false;
     } _State;
     
     // Task stack
