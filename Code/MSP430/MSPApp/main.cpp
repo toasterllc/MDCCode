@@ -1079,14 +1079,15 @@ struct _TaskEvent {
     }
     
     static void Reset() {
-        // Reset our timer
-        _EventTimer::Schedule(std::nullopt);
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Reset();
         _TaskImg::Reset();
         // Stop tasks
         _Scheduler::Stop<_TaskSD, _TaskImg, _TaskEvent>();
+        // Reset our timer (do this after we stop _TaskEvent to guarantee that
+        // _TaskEvent didn't start it again after we stopped it)
+        _EventTimer::Schedule(std::nullopt);
         // Turn off power
         _TaskPower::VDDIMGSDEnabled(false);
         _TaskPower::VDDBEnabled(false);
