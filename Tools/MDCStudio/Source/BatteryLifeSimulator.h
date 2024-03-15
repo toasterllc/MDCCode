@@ -8,6 +8,7 @@
 #include "Code/Shared/TimeConstants.h"
 #include "Code/Shared/MSPTriggers.h"
 #include "date/date.h"
+#include "Code/Shared/TimeString.h"
 
 namespace MDCStudio::BatteryLifeSimulator {
 
@@ -39,9 +40,101 @@ struct Point {
 };
 
 struct Simulator {
+//    static float _SecondsForTicks(uint32_t ticks) {
+//        // Check our assumption that Time::TicksFreq is an integer
+//        static_assert(Time::TicksFreq::den == 1);
+//        return (float)ticks / Time::TicksFreq::num;
+//    }
+//    
+//    static const char* _StringForRepeatType(MSP::Repeat::Type x) {
+//        using X = MSP::Repeat::Type;
+//        switch (x) {
+//        case X::Never:  return "Never";  break;
+//        case X::Daily:  return "Daily";  break;
+//        case X::Weekly: return "Weekly"; break;
+//        case X::Yearly: return "Yearly"; break;
+//        }
+//        return "unknown";
+//    }
+//    
+//    static const char* _StringForTriggerEventType(MSP::Triggers::Event::Type x) {
+//        using X = MSP::Triggers::Event::Type;
+//        switch (x) {
+//        case X::TimeTrigger:  return "TimeTrigger";
+//        case X::MotionEnable: return "MotionEnable";
+//        case X::DST:          return "DST";
+//        }
+//        return "unknown";
+//    }
+//    
+//    static void _MSPTriggersPrint(const MSP::Triggers& triggers) {
+//        printf(         "    repeatEvent\n");
+//        for (auto it=std::begin(triggers.repeatEvent); it!=std::begin(triggers.repeatEvent)+triggers.repeatEventCount; it++) {
+//            printf(     "      #%ju\n",                                     (uintmax_t)(&*it-triggers.repeatEvent));
+//            printf(     "        time:                  %s\n",              Time::StringForTimeInstant(it->time).c_str());
+//            printf(     "        type:                  %s\n",              _StringForTriggerEventType(it->type));
+//            printf(     "        idx:                   %ju\n",             (uintmax_t)it->idx);
+//            printf(     "        repeat\n");
+//            printf(     "          type:                %s\n",              _StringForRepeatType(it->repeat.type));
+//            printf(     "          arg:                 0x%jx\n",           (uintmax_t)it->repeat.Daily.interval);
+//        }
+//        
+//        printf(         "    timeTrigger\n");
+//        for (auto it=std::begin(triggers.timeTrigger); it!=std::begin(triggers.timeTrigger)+triggers.timeTriggerCount; it++) {
+//            printf(     "      #%ju\n",                                     (uintmax_t)(&*it-triggers.timeTrigger));
+//            printf(     "        capture\n");
+//            printf(     "          delayTicks:          %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
+//            printf(     "          count:               %ju\n",             (uintmax_t)it->capture.count);
+//            printf(     "          ledFlash:            %ju\n",             (uintmax_t)it->capture.ledFlash);
+//        }
+//        
+//        printf(         "    motionTrigger\n");
+//        for (auto it=std::begin(triggers.motionTrigger); it!=std::begin(triggers.motionTrigger)+triggers.motionTriggerCount; it++) {
+//            printf(     "      #%ju\n",                                     (uintmax_t)(&*it-triggers.motionTrigger));
+//            printf(     "        capture\n");
+//            printf(     "          delayTicks:          %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
+//            printf(     "          count:               %ju\n",             (uintmax_t)it->capture.count);
+//            printf(     "          ledFlash:            %ju\n",             (uintmax_t)it->capture.ledFlash);
+//            printf(     "        count:                 %ju\n",             (uintmax_t)it->count);
+//            printf(     "        durationTicks:         %ju (%.1f)\n",      (uintmax_t)it->durationTicks, _SecondsForTicks(it->durationTicks));
+//            printf(     "        suppressTicks:         %ju (%.1f)\n",      (uintmax_t)it->suppressTicks, _SecondsForTicks(it->suppressTicks));
+//        }
+//        
+//        printf(         "    buttonTrigger\n");
+//        for (auto it=std::begin(triggers.buttonTrigger); it!=std::begin(triggers.buttonTrigger)+triggers.buttonTriggerCount; it++) {
+//            printf(     "      #%ju\n",                                     (uintmax_t)(&*it-triggers.buttonTrigger));
+//            printf(     "        capture\n");
+//            printf(     "          delayTicks:          %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
+//            printf(     "          count:               %ju\n",             (uintmax_t)it->capture.count);
+//            printf(     "          ledFlash:            %ju\n",             (uintmax_t)it->capture.ledFlash);
+//        }
+//        
+//        printf(         "    dstEvent\n");
+//        for (auto it=std::begin(triggers.dstEvent); it!=std::begin(triggers.dstEvent)+triggers.dstEventCount; it++) {
+//            printf(     "      #%ju\n",                                     (uintmax_t)(&*it-triggers.dstEvent));
+//            printf(     "        time:                  %s\n",              Time::StringForTimeInstant(it->time).c_str());
+//            printf(     "        type:                  %s\n",              _StringForTriggerEventType(it->type));
+//            printf(     "        idx:                   %ju\n",             (uintmax_t)it->idx);
+//            printf(     "        phase:                 0x%016jx\n",        (uintmax_t)it->phase.u64);
+//            printf(     "        adjustmentTicks:       %+jd\n",            (intmax_t)it->adjustmentTicks);
+//        }
+//        
+//        printf(         "    source\n");
+//        for (auto it=std::begin(triggers.source); it!=std::end(triggers.source);) {
+//            printf(     "      ");
+//            for (int i=0; i<16 && it!=std::end(triggers.source); i++, it++) {
+//                printf("%02jx ", (uintmax_t)*it);
+//            }
+//            printf("\n");
+//        }
+//        printf(         "\n");
+//    }
+    
     Simulator(const Constants& consts,
         const Parameters& params,
         const MSP::Triggers& triggers) : _consts(consts), _params(params), _triggers(triggers) {
+        
+//        _MSPTriggersPrint(triggers);
         
         assert(consts.motionStimulusInterval.count() > 0);
         assert(consts.buttonStimulusInterval.count() > 0);
@@ -63,6 +156,7 @@ struct Simulator {
         _MSPState.settings.triggers = _triggers;
         
         const Time::Instant timeStart = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
+//        printf("timeStart: 0x%jx\n", (uintmax_t)timeStart);
         
         _time = timeStart;
         _Triggers::Init(_time);
@@ -87,7 +181,7 @@ struct Simulator {
             
             // Go live when we hit the current time
             if (!_live) {
-                if (_time >= timeStart) {
+                if (_time > timeStart) {
                     _live = true;
                 }
             }
@@ -175,6 +269,7 @@ struct Simulator {
     
     void _eventInsert(_Triggers::DSTEvent& ev) {
         const Time::TicksU32 delta = _Triggers::DSTPhaseAdvance(ev.phase);
+//        printf("Reschedule DSTEvent for %s\n", Calendar::TimestampString(ev.time+delta).c_str());
         _eventInsert(ev, ev.time+delta);
     }
     
