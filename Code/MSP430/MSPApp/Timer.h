@@ -53,65 +53,69 @@ public:
     }
     
     // Wait(): waits until the timer fires
-    // Returns whether we actually waited (true), or the timer fired immediately (false)
-    static void Wait() {
+    // Returns whether we actually waited for the full duration (true), or if we were interrupted (false)
+    static bool Wait() {
+//        Assert(_State.request.reset);
+        
         // Disable interrupts while we modify our state
         Toastbox::IntState ints(false);
         
-        for (;;) {
+        // Consume pending reset
+        _State.request.reset = false;
+        
+        // If we weren't given a time, wait indefinitely to be interrupted
+        if (!_State.request.time) {
             // Wait until we get a request with a valid time
-            T_Scheduler::Wait([] { return _State.request.reset && _State.request.time; });
+            T_Scheduler::Wait([] { return _State.request.reset; });
+            return false;
+        }
+        
+        // Get our remaining ticks until we fire
+        Time::TicksU32 deltaTicks = _TicksRemaining(T_RTC::Now());
+        if (deltaTicks) {
+            // Wait for as many full RTC overflow intervals as possible
+            _State.rtc.waiting = _RTCMode(deltaTicks);
+            if (_State.rtc.waiting) {
+                T_Scheduler::Wait([] { return _State.request.reset || !_State.rtc.waiting; });
+                if (_State.request.reset) return false;
+                // Update deltaTicks
+                deltaTicks = _TicksRemaining(T_RTC::Now());
+            }
             
-            // Consume pending reset
-            _State.request.reset = false;
-            
-            // Get our remaining ticks until we fire
-            Time::TicksU32 deltaTicks = _TicksRemaining(T_RTC::Now());
-            if (deltaTicks) {
-                // Wait for as many full RTC overflow intervals as possible
-                _State.rtc.waiting = _RTCMode(deltaTicks);
-                if (_State.rtc.waiting) {
-                    T_Scheduler::Wait([] { return _State.request.reset || !_State.rtc.waiting; });
-                    if (_State.request.reset) continue;
-                    // Update deltaTicks
-                    deltaTicks = _TicksRemaining(T_RTC::Now());
-                }
-                
-                // Wait for full timer intervals for the remaining time less than the RTC overflow interval
-                {
-                    // DeltaTicksMax: the max value of `deltaTicks` at this point
-                    constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
-                    // Ensure that casting deltaTicks to Time::TicksU16 is safe
-                    static_assert(std::in_range<Time::TicksU16>(DeltaTicksMax));
-                    // Ensure that casting _TimerIntervalTicks::num to Time::TicksU16 is safe
-                    static_assert(std::in_range<Time::TicksU16>(_TimerIntervalTicks::num));
-                    const uint16_t intervalCount = (Time::TicksU16)deltaTicks / (Time::TicksU16)_TimerIntervalTicks::num;
-                    if (intervalCount) {
-                        _TimerWait(_CCRForTocks(_TimerIntervalTocks), intervalCount);
-                        if (_State.request.reset) continue;
-                    }
-                }
-                
-                // Wait for remaining time less than a full timer interval
-                {
-                    const Time::TicksU16 remainderTicks = (Time::TicksU16)deltaTicks % (Time::TicksU16)_TimerIntervalTicks::num;
-                    // RemainderTicksMax: max value of remainderTicks at this point
-                    constexpr auto RemainderTicksMax = _TimerIntervalTicks::num-1;
-                    // Ensure that casting _TicksPerTock::num/den to Time::TicksU16 is safe
-                    static_assert(std::in_range<Time::TicksU16>(_TicksPerTock::num));
-                    static_assert(std::in_range<Time::TicksU16>(_TicksPerTock::den));
-                    // Ensure that our ticks -> tocks calculation can't overflow due to the multiplication
-                    static_assert(std::in_range<Time::TicksU16>(RemainderTicksMax * _TicksPerTock::den));
-                    const _Tocks16 remainderTocks = (remainderTicks * (Time::TicksU16)_TicksPerTock::den) / (Time::TicksU16)_TicksPerTock::num;
-                    if (remainderTocks) {
-                        _TimerWait(_CCRForTocks(remainderTocks), 1);
-                        if (_State.request.reset) continue;
-                    }
+            // Wait for full timer intervals for the remaining time less than the RTC overflow interval
+            {
+                // DeltaTicksMax: the max value of `deltaTicks` at this point
+                constexpr auto DeltaTicksMax = T_RTC::InterruptIntervalTicks-1;
+                // Ensure that casting deltaTicks to Time::TicksU16 is safe
+                static_assert(std::in_range<Time::TicksU16>(DeltaTicksMax));
+                // Ensure that casting _TimerIntervalTicks::num to Time::TicksU16 is safe
+                static_assert(std::in_range<Time::TicksU16>(_TimerIntervalTicks::num));
+                const uint16_t intervalCount = (Time::TicksU16)deltaTicks / (Time::TicksU16)_TimerIntervalTicks::num;
+                if (intervalCount) {
+                    _TimerWait(_CCRForTocks(_TimerIntervalTocks), intervalCount);
+                    if (_State.request.reset) return false;
                 }
             }
             
-            return;
+            // Wait for remaining time less than a full timer interval
+            {
+                const Time::TicksU16 remainderTicks = (Time::TicksU16)deltaTicks % (Time::TicksU16)_TimerIntervalTicks::num;
+                // RemainderTicksMax: max value of remainderTicks at this point
+                constexpr auto RemainderTicksMax = _TimerIntervalTicks::num-1;
+                // Ensure that casting _TicksPerTock::num/den to Time::TicksU16 is safe
+                static_assert(std::in_range<Time::TicksU16>(_TicksPerTock::num));
+                static_assert(std::in_range<Time::TicksU16>(_TicksPerTock::den));
+                // Ensure that our ticks -> tocks calculation can't overflow due to the multiplication
+                static_assert(std::in_range<Time::TicksU16>(RemainderTicksMax * _TicksPerTock::den));
+                const _Tocks16 remainderTocks = (remainderTicks * (Time::TicksU16)_TicksPerTock::den) / (Time::TicksU16)_TicksPerTock::num;
+                if (remainderTocks) {
+                    _TimerWait(_CCRForTocks(remainderTocks), 1);
+                    if (_State.request.reset) return false;
+                }
+            }
         }
+        
+        return true;
     }
     
     static bool ISRRTC() {
