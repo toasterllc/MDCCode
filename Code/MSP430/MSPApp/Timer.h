@@ -59,11 +59,11 @@ public:
         Toastbox::IntState ints(false);
         
         for (;;) {
+            // Wait until we get a request with a valid time
+            T_Scheduler::Wait([] { return _State.request.reset && _State.request.time; });
+            
             // Consume pending reset
             _State.request.reset = false;
-            
-            // Wait until we're scheduled
-            T_Scheduler::Wait([] { return (bool)_State.request.time; });
             
             // Get our remaining ticks until we fire
             Time::TicksU32 deltaTicks = _TicksRemaining(T_RTC::Now());
