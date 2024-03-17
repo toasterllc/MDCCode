@@ -4,6 +4,7 @@
 #include "Code/Shared/MSP.h"
 #include "Code/Lib/Toastbox/Cast.h"
 #include "Code/Lib/Toastbox/DurationString.h"
+#include "Code/Lib/Toastbox/RuntimeError.h"
 
 namespace Time {
 
