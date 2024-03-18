@@ -30,7 +30,7 @@ namespace Time {
 //       The implementation searches for the .delta/.interval fixed-point ratio that's
 //       closest to the target floating-point ratio.
 //
-static MSP::TimeAdjustment TimeAdjustmentCalculate(const MSP::TimeState& state) {
+inline MSP::TimeAdjustment TimeAdjustmentCalculate(const MSP::TimeState& state) {
     assert(Time::Absolute(state.start));
     assert(Time::Absolute(state.time));
     const Time::Clock::time_point nowTime = Time::Clock::now();

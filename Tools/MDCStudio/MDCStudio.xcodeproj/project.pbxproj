@@ -253,6 +253,7 @@
 		554986302B400CBA00B68E4B /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
 		5557260A2B5F677C00B32710 /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
 		556F313E2AE069830028BF9C /* NibViewInit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NibViewInit.h; sourceTree = "<group>"; };
+		5570C80D2BA64E7E007A4C53 /* TimeAdjustment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeAdjustment.h; sourceTree = "<group>"; };
 		557ABCED29DD24230032619E /* BatteryLifeView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifeView.mm; sourceTree = "<group>"; };
 		557ABCEE29DD24230032619E /* BatteryLifeView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BatteryLifeView.xib; sourceTree = "<group>"; };
 		557ABCEF29DD24230032619E /* BatteryLifeView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BatteryLifeView.h; sourceTree = "<group>"; };
@@ -600,6 +601,7 @@
 				55D3097E29A80F2E0080BCBD /* Time.h */,
 				55838C7F2AD0903000D4B024 /* TimeConstants.h */,
 				554986302B400CBA00B68E4B /* TimeString.h */,
+				5570C80D2BA64E7E007A4C53 /* TimeAdjustment.h */,
 				55D3099229A822D60080BCBD /* Clock.h */,
 			);
 			path = Shared;
