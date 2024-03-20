@@ -50,7 +50,7 @@ void _SchedulerStackOverflow(size_t taskIdx);
 static constexpr size_t _StackGuardCount = 16;
 
 using _Scheduler = Toastbox::Scheduler<
-    std::ratio<1, _SysTickFreqHz>,              // T_TickPeriod: time period between ticks
+    std::ratio<1, _SysTickFreqHz>,              // T_TicksPeriod: time period between ticks
     
     _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                 //          invoked when no tasks have work to do
