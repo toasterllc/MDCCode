@@ -3,7 +3,7 @@
 #include <tuple>
 #include <ratio>
 #include "stm32f7xx.h"
-#include "Code/Lib/Toastbox/Scheduler.h"
+#include "Code/Lib/Scheduler/Scheduler.h"
 #include "Code/Lib/Toastbox/Util.h"
 #include "Code/Shared/STM.h"
 #include "Code/Shared/Assert.h"

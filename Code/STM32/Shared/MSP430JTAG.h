@@ -3,7 +3,7 @@
 #include <type_traits>
 #include <optional>
 #include "GPIO.h"
-#include "Code/Lib/Toastbox/Scheduler.h"
+#include "Code/Lib/Scheduler/Scheduler.h"
 
 template <typename T_TestPin, typename T_RstPin_, uint8_t T_CPUFreqMHz>
 class MSP430JTAG {

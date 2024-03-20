@@ -7,7 +7,7 @@
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "Code/Lib/Toastbox/USB.h"
-#include "Code/Lib/Toastbox/Scheduler.h"
+#include "Code/Lib/Scheduler/Scheduler.h"
 
 template <
 typename T_Scheduler,   // T_Scheduler: scheduler

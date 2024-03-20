@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <atomic>
 #include <ratio>
-#include "Code/Lib/Toastbox/Scheduler.h"
+#include "Code/Lib/Scheduler/Scheduler.h"
 #include "Code/Lib/Toastbox/Util.h"
 #include "Code/Shared/SDCard.h"
 #include "Code/Shared/ICE.h"

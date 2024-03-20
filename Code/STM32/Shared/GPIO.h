@@ -1,5 +1,5 @@
 #pragma once
-#include "Code/Lib/Toastbox/Scheduler.h"
+#include "Code/Lib/Scheduler/Scheduler.h"
 #include "stm32f7xx.h"
 
 namespace GPIO {

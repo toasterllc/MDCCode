@@ -1,7 +1,7 @@
 #pragma once
 #include <atomic>
 #include "stm32f7xx.h"
-#include "Code/Lib/Toastbox/Scheduler.h"
+#include "Code/Lib/Scheduler/Scheduler.h"
 
 template <
 typename T_Scheduler,

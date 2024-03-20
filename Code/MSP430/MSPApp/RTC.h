@@ -1,7 +1,7 @@
 #pragma once
 #include <msp430.h>
 #include <ratio>
-#include "Code/Lib/Toastbox/Scheduler.h"
+#include "Code/Lib/Scheduler/Scheduler.h"
 #include "Code/Lib/Toastbox/Util.h"
 #include "Code/Shared/MSP.h"
 #include "Code/Shared/Assert.h"
