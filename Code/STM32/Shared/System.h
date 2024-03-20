@@ -2,6 +2,7 @@
 #include <cstring>
 #include <tuple>
 #include <ratio>
+#include "stm32f7xx.h"
 #include "Code/Lib/Toastbox/Scheduler.h"
 #include "Code/Lib/Toastbox/Util.h"
 #include "Code/Shared/STM.h"
@@ -574,14 +575,3 @@ private:
         }
     }
 };
-
-// MARK: - IntState
-
-bool Toastbox::IntState::Get() {
-    return !__get_PRIMASK();
-}
-
-void Toastbox::IntState::Set(bool en) {
-    if (en) __enable_irq();
-    else __disable_irq();
-}

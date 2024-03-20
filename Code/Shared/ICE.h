@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <utility>
 #include <optional>
-#include "Code/Lib/Toastbox/Scheduler.h"
 #include "Img.h"
 #include "GetBits.h"
 #include "Code/Shared/Assert.h"

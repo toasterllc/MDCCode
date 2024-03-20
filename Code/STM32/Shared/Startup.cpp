@@ -18,9 +18,9 @@ static inline void _StackInit() {
     asm volatile("msr psp, r0" : : : );                     // psp = r0
     
     // Make PSP the active stack
-    asm volatile("mrs r0, CONTROL" : : : );             // r0 = CONTROL
+    asm volatile("mrs r0, control" : : : );             // r0 = control
     asm volatile("orrs r0, r0, #2" : : : );             // Set SPSEL bit (enable using PSP stack)
-    asm volatile("msr CONTROL, r0" : : : );             // CONTROL = r0
+    asm volatile("msr control, r0" : : : );             // control = r0
     asm volatile("isb" : : : );                         // Instruction Synchronization Barrier
 }
 

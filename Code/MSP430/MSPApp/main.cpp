@@ -1553,18 +1553,6 @@ struct _TaskMotion {
 
 
 
-
-// MARK: - IntState
-
-inline bool Toastbox::IntState::Get() {
-    return __get_SR_register() & GIE;
-}
-
-inline void Toastbox::IntState::Set(bool en) {
-    if (en) __bis_SR_register(GIE);
-    else    __bic_SR_register(GIE);
-}
-
 // MARK: - Sleep
 
 static void _Sleep() {

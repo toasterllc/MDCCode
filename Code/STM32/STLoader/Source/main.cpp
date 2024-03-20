@@ -1,6 +1,5 @@
 #include <cstring>
 #include <algorithm>
-#include "Code/Lib/Toastbox/Scheduler.h"
 #include "Code/Lib/Toastbox/Math.h"
 #include "Code/Shared/Assert.h"
 #include "Code/Shared/STM.h"

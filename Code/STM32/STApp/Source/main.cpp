@@ -1,5 +1,4 @@
 #include <cstdint>
-#include "Code/Lib/Toastbox/Scheduler.h"
 #include "Code/Lib/Toastbox/Queue.h"
 #include "Code/Lib/Toastbox/Math.h"
 #include "Code/Shared/Assert.h"
