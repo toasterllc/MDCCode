@@ -16,3 +16,6 @@
 [submodule "Code/Lib/date"]
 	path = Code/Lib/date
 	url = git@github.com:toasterllc/date-MDC.git
+[submodule "Code/Lib/Scheduler"]
+	path = Code/Lib/Scheduler
+	url = git@github.com:toasterllc/Scheduler.git
