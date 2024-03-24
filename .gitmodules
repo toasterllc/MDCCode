@@ -19,3 +19,6 @@
 [submodule "Code/Lib/Scheduler"]
 	path = Code/Lib/Scheduler
 	url = git@github.com:toasterllc/Scheduler.git
+[submodule "Code/Lib/AnchoredScrollView"]
+	path = Code/Lib/AnchoredScrollView
+	url = git@github.com:toasterllc/AnchoredScrollView.git
