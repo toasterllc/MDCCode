@@ -5,10 +5,10 @@
 #import <thread>
 #import "Util.h"
 #import "Code/Lib/Toastbox/Mac/Util.h"
+#import "Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
-#import "AnchoredMetalDocumentLayer.h"
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
 #import "ImagePipelineUtil.h"

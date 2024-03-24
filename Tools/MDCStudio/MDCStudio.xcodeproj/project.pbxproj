@@ -13,6 +13,9 @@
 		551453032B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 551453022B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf */; };
 		5514532B2B4116B20056A92D /* ColorButtonCell.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5514532A2B4116B20056A92D /* ColorButtonCell.mm */; };
 		551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */; };
+		551FFA692BAFBC4D0056263C /* AnchoredScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551FFA632BAFBC4D0056263C /* AnchoredScrollView.mm */; };
+		551FFA6A2BAFBC4D0056263C /* AnchoredMetalDocumentLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551FFA662BAFBC4D0056263C /* AnchoredMetalDocumentLayer.mm */; };
+		551FFA6B2BAFBC4D0056263C /* AnchoredDocumentView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551FFA672BAFBC4D0056263C /* AnchoredDocumentView.mm */; };
 		5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */; };
 		5530DC3D29DCDA50005FEC0A /* DeviceSettingsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5530DC3C29DCDA50005FEC0A /* DeviceSettingsView.xib */; };
 		553630FE2B7DE6B70054E321 /* Connect-A-Photon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553630FC2B7DE6B60054E321 /* Connect-A-Photon@2x.pdf */; };
@@ -81,9 +84,6 @@
 		55A884CD2B23CCD0004D6564 /* ICEApp.bin in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CB2B23CCCF004D6564 /* ICEApp.bin */; };
 		55ADD4EE2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */; };
 		55B451062ADA583000CE1C51 /* Photon-Icon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55B451042ADA583000CE1C51 /* Photon-Icon.pdf */; };
-		55C456862955A1AE00A20363 /* AnchoredScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456822955A1AE00A20363 /* AnchoredScrollView.mm */; };
-		55C456872955A1AE00A20363 /* AnchoredMetalDocumentLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456832955A1AE00A20363 /* AnchoredMetalDocumentLayer.mm */; };
-		55C456882955A1AE00A20363 /* AnchoredDocumentView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456852955A1AE00A20363 /* AnchoredDocumentView.mm */; };
 		55C6A26E2AE44559008149AF /* ImageExportSaveDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */; };
 		55C6A26F2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A26D2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib */; };
 		55C6A27A2AE44599008149AF /* ImageExportProgressDialog.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2772AE44599008149AF /* ImageExportProgressDialog.xib */; };
@@ -158,6 +158,12 @@
 		551467E52B3E1FDA00D8DF58 /* DeviceSettingsSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceSettingsSheet.h; sourceTree = "<group>"; };
 		551467E62B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsSheet.mm; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
+		551FFA632BAFBC4D0056263C /* AnchoredScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AnchoredScrollView.mm; sourceTree = "<group>"; };
+		551FFA642BAFBC4D0056263C /* AnchoredDocumentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnchoredDocumentView.h; sourceTree = "<group>"; };
+		551FFA652BAFBC4D0056263C /* AnchoredMetalDocumentLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnchoredMetalDocumentLayer.h; sourceTree = "<group>"; };
+		551FFA662BAFBC4D0056263C /* AnchoredMetalDocumentLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AnchoredMetalDocumentLayer.mm; sourceTree = "<group>"; };
+		551FFA672BAFBC4D0056263C /* AnchoredDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AnchoredDocumentView.mm; sourceTree = "<group>"; };
+		551FFA682BAFBC4D0056263C /* AnchoredScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnchoredScrollView.h; sourceTree = "<group>"; };
 		552F4BF529B28543000CEAB2 /* ImageUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageUtil.h; sourceTree = "<group>"; };
 		552F4BF629B306DB000CEAB2 /* ImageOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageOptions.h; sourceTree = "<group>"; };
 		5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsView.mm; sourceTree = "<group>"; };
@@ -310,12 +316,6 @@
 		55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Source-List-Photon-Icon@2x.pdf"; sourceTree = "<group>"; };
 		55B1658129CB9A50008D53E5 /* Cache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cache.h; sourceTree = "<group>"; };
 		55B451042ADA583000CE1C51 /* Photon-Icon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Photon-Icon.pdf"; sourceTree = "<group>"; };
-		55C456802955A1AE00A20363 /* AnchoredDocumentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnchoredDocumentView.h; sourceTree = "<group>"; };
-		55C456812955A1AE00A20363 /* AnchoredMetalDocumentLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnchoredMetalDocumentLayer.h; sourceTree = "<group>"; };
-		55C456822955A1AE00A20363 /* AnchoredScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AnchoredScrollView.mm; sourceTree = "<group>"; };
-		55C456832955A1AE00A20363 /* AnchoredMetalDocumentLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AnchoredMetalDocumentLayer.mm; sourceTree = "<group>"; };
-		55C456842955A1AE00A20363 /* AnchoredScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnchoredScrollView.h; sourceTree = "<group>"; };
-		55C456852955A1AE00A20363 /* AnchoredDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AnchoredDocumentView.mm; sourceTree = "<group>"; };
 		55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageExporterTypes.h; sourceTree = "<group>"; };
 		55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineUtil.h; sourceTree = "<group>"; };
 		55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExportSaveDialog.mm; sourceTree = "<group>"; };
@@ -433,6 +433,19 @@
 				551328B827B45D7C00CD823B /* ImageGridView.mm */,
 			);
 			path = ImageGridView;
+			sourceTree = "<group>";
+		};
+		551FFA622BAFBC4D0056263C /* AnchoredScrollView */ = {
+			isa = PBXGroup;
+			children = (
+				551FFA632BAFBC4D0056263C /* AnchoredScrollView.mm */,
+				551FFA642BAFBC4D0056263C /* AnchoredDocumentView.h */,
+				551FFA652BAFBC4D0056263C /* AnchoredMetalDocumentLayer.h */,
+				551FFA662BAFBC4D0056263C /* AnchoredMetalDocumentLayer.mm */,
+				551FFA672BAFBC4D0056263C /* AnchoredDocumentView.mm */,
+				551FFA682BAFBC4D0056263C /* AnchoredScrollView.h */,
+			);
+			path = AnchoredScrollView;
 			sourceTree = "<group>";
 		};
 		5530DC3729DCDA21005FEC0A /* CaptureTriggersView */ = {
@@ -610,6 +623,7 @@
 		5544AE1527B5E58F006AB473 /* Lib */ = {
 			isa = PBXGroup;
 			children = (
+				551FFA622BAFBC4D0056263C /* AnchoredScrollView */,
 				55D3099329A828070080BCBD /* date */,
 				5544AE1627B5E58F006AB473 /* Toastbox */,
 			);
@@ -724,12 +738,6 @@
 				5514532A2B4116B20056A92D /* ColorButtonCell.mm */,
 				55116D2F2B3CC130004617DD /* ProgressBar.h */,
 				55116D2E2B3CC130004617DD /* ProgressBar.mm */,
-				55C456802955A1AE00A20363 /* AnchoredDocumentView.h */,
-				55C456852955A1AE00A20363 /* AnchoredDocumentView.mm */,
-				55C456812955A1AE00A20363 /* AnchoredMetalDocumentLayer.h */,
-				55C456832955A1AE00A20363 /* AnchoredMetalDocumentLayer.mm */,
-				55C456842955A1AE00A20363 /* AnchoredScrollView.h */,
-				55C456822955A1AE00A20363 /* AnchoredScrollView.mm */,
 				55F8882429D8DADD0075593F /* TokenField.h */,
 				55F8882629D8DADD0075593F /* TokenField.mm */,
 				55B1658129CB9A50008D53E5 /* Cache.h */,
@@ -1088,16 +1096,14 @@
 				55F8878229D4A96B0075593F /* CaptureTriggersView.mm in Sources */,
 				55E43F9B28C00D6B00FCCEA0 /* ImagePipeline.metal in Sources */,
 				55E43F9928C00D6B00FCCEA0 /* DebayerLMMSE.metal in Sources */,
-				55C456862955A1AE00A20363 /* AnchoredScrollView.mm in Sources */,
 				55C6A27F2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm in Sources */,
 				551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */,
 				55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */,
 				55C6A26E2AE44559008149AF /* ImageExportSaveDialog.mm in Sources */,
 				557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */,
 				55D30A2E29A828E60080BCBD /* tz.cpp in Sources */,
-				55C456872955A1AE00A20363 /* AnchoredMetalDocumentLayer.mm in Sources */,
-				55C456882955A1AE00A20363 /* AnchoredDocumentView.mm in Sources */,
 				55496F4F278CFC0600BCA739 /* main.mm in Sources */,
+				551FFA692BAFBC4D0056263C /* AnchoredScrollView.mm in Sources */,
 				5544AE5D27B6EE04006AB473 /* Document.mm in Sources */,
 				55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */,
 				55E43F9628C00D6B00FCCEA0 /* FFCC.metal in Sources */,
@@ -1114,10 +1120,12 @@
 				558E200A2AC4B608001E743A /* DeviceImageGridHeaderView.mm in Sources */,
 				55F8882729D8DADD0075593F /* TokenField.mm in Sources */,
 				55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */,
+				551FFA6A2BAFBC4D0056263C /* AnchoredMetalDocumentLayer.mm in Sources */,
 				558E201B2AC8F977001E743A /* DeviceImageGridContainerView.mm in Sources */,
 				553EF5622AD7174800157484 /* FullSizeImageHeaderView.mm in Sources */,
 				55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */,
 				558FFC5829C8F26F0022E840 /* EstimateIlluminant.mm in Sources */,
+				551FFA6B2BAFBC4D0056263C /* AnchoredDocumentView.mm in Sources */,
 				55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
 				55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */,

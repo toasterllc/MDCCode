@@ -6,9 +6,9 @@
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/Mat.h"
 #import "RenderTypes.h"
-#import "Tools/MDCStudio/Source/AnchoredScrollView.h"
-#import "Tools/MDCStudio/Source/AnchoredDocumentView.h"
-#import "Tools/MDCStudio/Source/AnchoredMetalDocumentLayer.h"
+#import "Code/Lib/AnchoredScrollView/AnchoredScrollView.h"
+#import "Code/Lib/AnchoredScrollView/AnchoredDocumentView.h"
+#import "Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
 using namespace MDCTools;
 
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;

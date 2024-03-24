@@ -4,7 +4,7 @@
 #import "ImageSource.h"
 #import "ImageSelection.h"
 #import "Code/Shared/Img.h"
-#import "AnchoredDocumentView.h"
+#import "Code/Lib/AnchoredScrollView/AnchoredDocumentView.h"
 @class ImageGridView;
 
 @protocol ImageGridViewResponder

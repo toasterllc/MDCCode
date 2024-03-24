@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		551FFA4D2BAFB98A0056263C /* AnchoredDocumentView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551FFA482BAFB98A0056263C /* AnchoredDocumentView.mm */; };
-		551FFA4E2BAFB98A0056263C /* AnchoredMetalDocumentLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551FFA492BAFB98A0056263C /* AnchoredMetalDocumentLayer.mm */; };
-		551FFA4F2BAFB98A0056263C /* AnchoredScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551FFA4C2BAFB98A0056263C /* AnchoredScrollView.mm */; };
+		551FFA562BAFBBBC0056263C /* AnchoredScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551FFA532BAFBBBC0056263C /* AnchoredScrollView.mm */; };
+		551FFA572BAFBBBC0056263C /* AnchoredDocumentView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551FFA542BAFBBBC0056263C /* AnchoredDocumentView.mm */; };
+		551FFA582BAFBBBC0056263C /* AnchoredMetalDocumentLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551FFA552BAFBBBC0056263C /* AnchoredMetalDocumentLayer.mm */; };
 		55C15C2127CC566E00C70A8E /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C15C2027CC566E00C70A8E /* Renderer.metal */; };
 		55F1144827C8BFD800C24343 /* ImageView-Shadow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F1144727C8BFD800C24343 /* ImageView-Shadow@2x.png */; };
 		55F1144A27C8C0DA00C24343 /* RenderNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F1144927C8C0DA00C24343 /* RenderNoise.metal */; };
@@ -24,12 +24,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		551FFA472BAFB98A0056263C /* AnchoredMetalDocumentLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnchoredMetalDocumentLayer.h; path = ../../MDCStudio/Source/AnchoredMetalDocumentLayer.h; sourceTree = "<group>"; };
-		551FFA482BAFB98A0056263C /* AnchoredDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AnchoredDocumentView.mm; path = ../../MDCStudio/Source/AnchoredDocumentView.mm; sourceTree = "<group>"; };
-		551FFA492BAFB98A0056263C /* AnchoredMetalDocumentLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AnchoredMetalDocumentLayer.mm; path = ../../MDCStudio/Source/AnchoredMetalDocumentLayer.mm; sourceTree = "<group>"; };
-		551FFA4A2BAFB98A0056263C /* AnchoredDocumentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnchoredDocumentView.h; path = ../../MDCStudio/Source/AnchoredDocumentView.h; sourceTree = "<group>"; };
-		551FFA4B2BAFB98A0056263C /* AnchoredScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnchoredScrollView.h; path = ../../MDCStudio/Source/AnchoredScrollView.h; sourceTree = "<group>"; };
-		551FFA4C2BAFB98A0056263C /* AnchoredScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AnchoredScrollView.mm; path = ../../MDCStudio/Source/AnchoredScrollView.mm; sourceTree = "<group>"; };
+		551FFA502BAFBBBC0056263C /* AnchoredDocumentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnchoredDocumentView.h; path = ../../../Code/Lib/AnchoredScrollView/AnchoredDocumentView.h; sourceTree = "<group>"; };
+		551FFA512BAFBBBC0056263C /* AnchoredScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnchoredScrollView.h; path = ../../../Code/Lib/AnchoredScrollView/AnchoredScrollView.h; sourceTree = "<group>"; };
+		551FFA522BAFBBBC0056263C /* AnchoredMetalDocumentLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnchoredMetalDocumentLayer.h; path = ../../../Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h; sourceTree = "<group>"; };
+		551FFA532BAFBBBC0056263C /* AnchoredScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AnchoredScrollView.mm; path = ../../../Code/Lib/AnchoredScrollView/AnchoredScrollView.mm; sourceTree = "<group>"; };
+		551FFA542BAFBBBC0056263C /* AnchoredDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AnchoredDocumentView.mm; path = ../../../Code/Lib/AnchoredScrollView/AnchoredDocumentView.mm; sourceTree = "<group>"; };
+		551FFA552BAFBBBC0056263C /* AnchoredMetalDocumentLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AnchoredMetalDocumentLayer.mm; path = ../../../Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.mm; sourceTree = "<group>"; };
 		55C15C1F27CC566E00C70A8E /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../../Shared/Renderer.h; sourceTree = "<group>"; };
 		55C15C2027CC566E00C70A8E /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../../Shared/Renderer.metal; sourceTree = "<group>"; };
 		55C15C2227CC567700C70A8E /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../../Shared/Mat.h; sourceTree = "<group>"; };
@@ -85,12 +85,12 @@
 			children = (
 				55F8D0A127C594F800757165 /* AppDelegate.h */,
 				55F8D0A227C594F800757165 /* AppDelegate.mm */,
-				551FFA4A2BAFB98A0056263C /* AnchoredDocumentView.h */,
-				551FFA482BAFB98A0056263C /* AnchoredDocumentView.mm */,
-				551FFA472BAFB98A0056263C /* AnchoredMetalDocumentLayer.h */,
-				551FFA492BAFB98A0056263C /* AnchoredMetalDocumentLayer.mm */,
-				551FFA4B2BAFB98A0056263C /* AnchoredScrollView.h */,
-				551FFA4C2BAFB98A0056263C /* AnchoredScrollView.mm */,
+				551FFA542BAFBBBC0056263C /* AnchoredDocumentView.mm */,
+				551FFA522BAFBBBC0056263C /* AnchoredMetalDocumentLayer.h */,
+				551FFA552BAFBBBC0056263C /* AnchoredMetalDocumentLayer.mm */,
+				551FFA502BAFBBBC0056263C /* AnchoredDocumentView.h */,
+				551FFA512BAFBBBC0056263C /* AnchoredScrollView.h */,
+				551FFA532BAFBBBC0056263C /* AnchoredScrollView.mm */,
 				55C15C2227CC567700C70A8E /* Mat.h */,
 				55F8D0C827C635CD00757165 /* MyDocumentLayer.metal */,
 				55C15C1F27CC566E00C70A8E /* Renderer.h */,
@@ -192,10 +192,10 @@
 				55F1144A27C8C0DA00C24343 /* RenderNoise.metal in Sources */,
 				55F8D0C927C635CD00757165 /* MyDocumentLayer.metal in Sources */,
 				55C15C2127CC566E00C70A8E /* Renderer.metal in Sources */,
-				551FFA4F2BAFB98A0056263C /* AnchoredScrollView.mm in Sources */,
-				551FFA4E2BAFB98A0056263C /* AnchoredMetalDocumentLayer.mm in Sources */,
+				551FFA572BAFBBBC0056263C /* AnchoredDocumentView.mm in Sources */,
 				55F8D0A327C594F800757165 /* AppDelegate.mm in Sources */,
-				551FFA4D2BAFB98A0056263C /* AnchoredDocumentView.mm in Sources */,
+				551FFA562BAFBBBC0056263C /* AnchoredScrollView.mm in Sources */,
+				551FFA582BAFBBBC0056263C /* AnchoredMetalDocumentLayer.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
