@@ -12,7 +12,6 @@
 #import <assert.h>
 #import "Assert.h"
 #import "MetalUtil.h"
-#import "Toastbox/HashInts.h"
 
 namespace MDCTools {
 
@@ -990,14 +989,6 @@ private:
             if (_blendType != x._blendType) return _blendType < x._blendType;
             return false;
         }
-        
-//        size_t hash() const {
-//            return Toastbox::HashInts(std::hash<std::string>{}(_vertName), std::hash<std::string>{}(_fragName), _fmt, _blendType);
-//        }
-//        
-//        struct Hash {
-//            size_t operator()(const RenderPipelineStateKey& x) const { return x.hash(); }
-//        };
     
     private:
         std::string _vertName;

@@ -438,12 +438,12 @@
 		551FFA622BAFBC4D0056263C /* AnchoredScrollView */ = {
 			isa = PBXGroup;
 			children = (
+				551FFA682BAFBC4D0056263C /* AnchoredScrollView.h */,
 				551FFA632BAFBC4D0056263C /* AnchoredScrollView.mm */,
-				551FFA642BAFBC4D0056263C /* AnchoredDocumentView.h */,
 				551FFA652BAFBC4D0056263C /* AnchoredMetalDocumentLayer.h */,
 				551FFA662BAFBC4D0056263C /* AnchoredMetalDocumentLayer.mm */,
+				551FFA642BAFBC4D0056263C /* AnchoredDocumentView.h */,
 				551FFA672BAFBC4D0056263C /* AnchoredDocumentView.mm */,
-				551FFA682BAFBC4D0056263C /* AnchoredScrollView.h */,
 			);
 			path = AnchoredScrollView;
 			sourceTree = "<group>";

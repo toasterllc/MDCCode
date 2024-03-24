@@ -17,7 +17,6 @@
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "Tools/Shared/ImagePipeline/EstimateIlluminant.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
-#import "Tools/Shared/AssertionCounter.h"
 #import "Tools/Shared/ELF32Binary.h"
 #import "ImageLibrary.h"
 #import "Cache.h"
