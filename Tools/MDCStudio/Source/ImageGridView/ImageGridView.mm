@@ -17,11 +17,11 @@ using namespace MDCStudio;
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
 static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 
-// _PixelFormat == BGRA8Unorm with -setColorspace:LinearSRGB appears to be the correct
+// _PixelFormat == RGBA8Unorm with -setColorspace:LinearSRGB appears to be the correct
 // combination such that we supply color data in the linear SRGB colorspace and the
 // system handles conversion into SRGB.
 // (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatRGBA8Unorm;
 
 @interface ImageGridLayer : AnchoredMetalDocumentLayer
 
