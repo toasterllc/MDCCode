@@ -1,24 +1,24 @@
-#import "FixedScrollView.h"
+#import "AnchoredScrollView.h"
 #import <algorithm>
 #import <cmath>
 #import <optional>
 #import "Tools/Shared/AssertionCounter.h"
 
-@interface FixedScrollView_ClipView : NSClipView {
+@interface AnchoredScrollView_ClipView : NSClipView {
 @public
-    __weak FixedScrollView* fixedScrollView;
+    __weak AnchoredScrollView* anchoredScrollView;
 }
 @end
 
-@interface FixedScrollView_DocView : NSView {
+@interface AnchoredScrollView_DocView : NSView {
 @public
-    __weak FixedScrollView* fixedScrollView;
+    __weak AnchoredScrollView* anchoredScrollView;
 }
 @end
 
-@implementation FixedScrollView {
+@implementation AnchoredScrollView {
 @public
-    NSView<FixedScrollViewDocument>* _doc;
+    NSView<AnchoredScrollViewDocument>* _doc;
     CGRect _docFrame;
     CGFloat _docMagnification;
     
@@ -58,7 +58,7 @@ static NSScroller* _FirstScroller(NSView* view) {
     abort();
 }
 
-- (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
+- (instancetype)initWithAnchoredDocument:(NSView<AnchoredScrollViewDocument>*)doc {
     NSParameterAssert(doc);
     if (!(self = [super initWithFrame:{}])) return nil;
     
@@ -73,23 +73,23 @@ static NSScroller* _FirstScroller(NSView* view) {
     
     _doc = doc;
     
-    if ([_doc respondsToSelector:@selector(fixedInteractionUnderway:)]) {
+    if ([_doc respondsToSelector:@selector(anchoredInteractionUnderway:)]) {
         _interactionUnderway.counter = AssertionCounter([doc] (bool underway) {
-            [doc fixedInteractionUnderway:underway];
+            [doc anchoredInteractionUnderway:underway];
         });
     }
     
-    FixedScrollView_ClipView* clipView = [[FixedScrollView_ClipView alloc] initWithFrame:{}];
-    clipView->fixedScrollView = self;
+    AnchoredScrollView_ClipView* clipView = [[AnchoredScrollView_ClipView alloc] initWithFrame:{}];
+    clipView->anchoredScrollView = self;
     [self setContentView:clipView];
     
-    FixedScrollView_DocView* docView = [[FixedScrollView_DocView alloc] initWithFrame:{}];
-    docView->fixedScrollView = self;
+    AnchoredScrollView_DocView* docView = [[AnchoredScrollView_DocView alloc] initWithFrame:{}];
+    docView->anchoredScrollView = self;
     [self setDocumentView:docView];
     
     [docView addSubview:_doc];
-    if ([_doc respondsToSelector:@selector(fixedCreateConstraintsForContainer:)]) {
-        [_doc fixedCreateConstraintsForContainer:docView];
+    if ([_doc respondsToSelector:@selector(anchoredCreateConstraintsForContainer:)]) {
+        [_doc anchoredCreateConstraintsForContainer:docView];
     }
     
     // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
@@ -135,7 +135,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     return mag;
 }
 
-- (NSView<FixedScrollViewDocument>*)document {
+- (NSView<AnchoredScrollViewDocument>*)document {
     return _doc;
 }
 
@@ -384,7 +384,7 @@ static bool _EventPhaseChanged(NSEventPhase x) {
 // scrolling quickly, especially when scrolling near the margin
 - (void)scrollWheel:(NSEvent*)event {
     const NSEventPhase phase = [event phase];
-//    printf("FixedScrollView scrollWheel:\n");
+//    printf("AnchoredScrollView scrollWheel:\n");
     if (phase & NSEventPhaseBegan) {
         [self _scrollWheelReset];
         
@@ -489,7 +489,7 @@ static bool _EventPhaseChanged(NSEventPhase x) {
         _docFrame = docFrame;
         _docMagnification = mag;
         [_doc setFrame:_docFrame];
-        [_doc fixedTranslationChanged:_docFrame.origin magnification:_docMagnification];
+        [_doc anchoredTranslationChanged:_docFrame.origin magnification:_docMagnification];
     }
 }
 
@@ -521,7 +521,7 @@ static bool _EventPhaseChanged(NSEventPhase x) {
 
 @end
 
-@implementation FixedScrollView_ClipView
+@implementation AnchoredScrollView_ClipView
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
@@ -554,7 +554,7 @@ static bool _EventPhaseChanged(NSEventPhase x) {
 @end
 
 
-@implementation FixedScrollView_DocView
+@implementation AnchoredScrollView_DocView
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
@@ -563,21 +563,16 @@ static bool _EventPhaseChanged(NSEventPhase x) {
 }
 
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
-    FixedScrollView* sv = fixedScrollView;
+    AnchoredScrollView* sv = anchoredScrollView;
     if (!sv) return {};
     return [sv->_doc rectForSmartMagnificationAtPoint:point inRect:rect];
 }
 
-//#warning TODO: not sure how we want to handle flipping. forward message to FixedScrollView._doc? always return flipped or not flipped?
-//- (BOOL)isFlipped {
-//    return true;
-//}
-
 - (BOOL)isFlipped {
-    FixedScrollView* sv = fixedScrollView;
+    AnchoredScrollView* sv = anchoredScrollView;
     assert(sv);
     assert(sv->_doc);
-    return [sv->_doc fixedFlipped];
+    return [sv->_doc anchoredFlipped];
 }
 
 @end

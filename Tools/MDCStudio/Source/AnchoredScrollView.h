@@ -1,36 +1,37 @@
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 
-// FixedScrollView: a scroll view that holds the document (supplied to -initWithFixedDocument:)
-// fixed at the visible rect of the scroll view, but transmits the current
-// translation/magnification to the fixed document via -fixedTranslationChanged:magnification:.
+// AnchoredScrollView: a scroll view that holds the document (supplied to -initWithAnchoredDocument:)
+// anchored at the visible rect of the scroll view, but transmits the current
+// translation/magnification to the anchored document via -anchoredTranslationChanged:magnification:.
+//
 // This allows:
 //
 //   - the document to implement scrolling/magnification itself by using its
 //     own transformation math (necessary for scrollable/zoomable Metal rendering);
 //
-//   - the size of the fixed document to match the size of the viewport, instead of
+//   - the size of the anchored document to match the size of the viewport, instead of
 //     the size of the full content (necessary for Metal rendering);
 // 
 //   - consistent NSScrollView behaviors (eg rubber-banding, momentum scrolling,
 //     window titlebar underlay effects).
 
-@protocol FixedScrollViewDocument
+@protocol AnchoredScrollViewDocument
 @required
-// -fixedTranslationChanged:magnification: called whenever the translation/magnification changes
-- (void)fixedTranslationChanged:(CGPoint)t magnification:(CGFloat)m;
-- (bool)fixedFlipped;
+// -anchoredTranslationChanged:magnification: called whenever the translation/magnification changes
+- (void)anchoredTranslationChanged:(CGPoint)t magnification:(CGFloat)m;
+- (bool)anchoredFlipped;
 
 @optional
-- (void)fixedCreateConstraintsForContainer:(NSView*)container;
-- (void)fixedInteractionUnderway:(bool)underway;
+- (void)anchoredCreateConstraintsForContainer:(NSView*)container;
+- (void)anchoredInteractionUnderway:(bool)underway;
 @end
 
-@interface FixedScrollView : NSScrollView
+@interface AnchoredScrollView : NSScrollView
 
-- (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc;
+- (instancetype)initWithAnchoredDocument:(NSView<AnchoredScrollViewDocument>*)doc;
 
-- (NSView<FixedScrollViewDocument>*)document;
+- (NSView<AnchoredScrollViewDocument>*)document;
 
 - (void)setAnchorDuringResize:(bool)anchorDuringResize;
 - (void)scrollToCenter;

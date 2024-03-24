@@ -1,6 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "ImageSource.h"
-#import "FixedDocumentView.h"
+#import "AnchoredDocumentView.h"
 #import "CenterContent.h"
 @class FullSizeImageView;
 

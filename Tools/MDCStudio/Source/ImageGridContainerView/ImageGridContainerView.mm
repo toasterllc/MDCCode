@@ -11,7 +11,7 @@ using namespace MDCStudio;
     if (!(self = [super initWithFrame:{}])) return nil;
     
     _imageGridView = imageGridView;
-    _imageGridScrollView = [[ImageGridScrollView alloc] initWithFixedDocument:_imageGridView];
+    _imageGridScrollView = [[ImageGridScrollView alloc] initWithAnchoredDocument:_imageGridView];
     [self addSubview:_imageGridScrollView];
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_imageGridScrollView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_imageGridScrollView)]];

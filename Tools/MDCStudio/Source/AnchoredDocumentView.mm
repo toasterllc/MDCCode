@@ -1,18 +1,17 @@
-#import "FixedDocumentView.h"
+#import "AnchoredDocumentView.h"
 #import <algorithm>
 
-@implementation FixedDocumentView {
-    CALayer<FixedScrollViewDocument>* _layer;
+@implementation AnchoredDocumentView {
+    CALayer<AnchoredScrollViewDocument>* _layer;
 }
 
-- (instancetype)initWithFixedLayer:(CALayer<FixedScrollViewDocument>*)layer {
+- (instancetype)initWithAnchoredLayer:(CALayer<AnchoredScrollViewDocument>*)layer {
     NSParameterAssert(layer);
     if (!(self = [super initWithFrame:{}])) return nil;
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
     _layer = layer;
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-//    [_layer setGeometryFlipped:false];
     [self setLayer:_layer];
     [self setWantsLayer:true];
     return self;
@@ -23,21 +22,13 @@
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
 }
 
-//- (NSArray*)fixedConstraintsForContainer:(NSView*)container {
-//    return [_layer fixedConstraintsForContainer:container];
-//}
-
-//- (CGSize)fixedContentSize {
-//    return [_layer fixedContentSize];
-//}
-
-- (void)fixedTranslationChanged:(CGPoint)t magnification:(CGFloat)m {
-    [_layer fixedTranslationChanged:t magnification:m];
+- (void)anchoredTranslationChanged:(CGPoint)t magnification:(CGFloat)m {
+    [_layer anchoredTranslationChanged:t magnification:m];
 }
 
-- (void)fixedCreateConstraintsForContainer:(NSView*)container {
-    if ([_layer respondsToSelector:@selector(fixedCreateConstraintsForContainer:)]) {
-        [_layer fixedCreateConstraintsForContainer:container];
+- (void)anchoredCreateConstraintsForContainer:(NSView*)container {
+    if ([_layer respondsToSelector:@selector(anchoredCreateConstraintsForContainer:)]) {
+        [_layer anchoredCreateConstraintsForContainer:container];
     
     } else {
         const CGSize size = [_layer preferredFrameSize];
@@ -53,16 +44,8 @@
     }
 }
 
-- (bool)fixedFlipped {
-    return [_layer fixedFlipped];
+- (bool)anchoredFlipped {
+    return [_layer anchoredFlipped];
 }
-
-//- (CGPoint)convertPointToFixedDocument:(CGPoint)point fromView:(NSView*)view {
-//    return [[self superview] convertPoint:point fromView:view];
-//}
-//
-//- (CGRect)convertRectToFixedDocument:(CGRect)rect fromView:(NSView*)view {
-//    return [[self superview] convertRect:rect fromView:view];
-//}
 
 @end

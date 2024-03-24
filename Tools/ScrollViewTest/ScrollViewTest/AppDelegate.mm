@@ -6,9 +6,9 @@
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/Mat.h"
 #import "RenderTypes.h"
-#import "Tools/MDCStudio/Source/FixedScrollView.h"
-#import "Tools/MDCStudio/Source/FixedDocumentView.h"
-#import "Tools/MDCStudio/Source/FixedMetalDocumentLayer.h"
+#import "Tools/MDCStudio/Source/AnchoredScrollView.h"
+#import "Tools/MDCStudio/Source/AnchoredDocumentView.h"
+#import "Tools/MDCStudio/Source/AnchoredMetalDocumentLayer.h"
 using namespace MDCTools;
 
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
@@ -28,7 +28,7 @@ inline NSDictionary* LayerNullActions = @{
     @"fontSize": [NSNull null],
 };
 
-@interface MyDocLayer : FixedMetalDocumentLayer
+@interface MyDocLayer : AnchoredMetalDocumentLayer
 @end
 
 static CGColorSpaceRef _LinearSRGBColorSpace() {
@@ -76,7 +76,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     Renderer renderer(_device, _library, _commandQueue);
     renderer.clear(drawableTxt, {0,0,0,0});
     
-    const simd_float4x4 transform = [self fixedTransform];
+    const simd_float4x4 transform = [self anchoredTransform];
     renderer.render(drawableTxt, Renderer::BlendType::None,
         renderer.VertexShader("VertexShader", transform),
         renderer.FragmentShader("FragmentShader", _imageTexture)
@@ -86,16 +86,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     [drawable present];
 }
 
-//- (CGSize)fixedContentSize {
-//    return {640, 480};
-//}
-
-//- (BOOL)isGeometryFlipped {
-//    return true;
-//}
-
-
-- (bool)fixedFlipped {
+- (bool)anchoredFlipped {
     return true;
 }
 
@@ -111,13 +102,13 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
 
 
 
-@interface MyDocView : FixedDocumentView
+@interface MyDocView : AnchoredDocumentView
 @end
 
 @implementation MyDocView
 
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
-    const bool fit = [(FixedScrollView*)[self enclosingScrollView] magnifyToFit];
+    const bool fit = [(AnchoredScrollView*)[self enclosingScrollView] magnifyToFit];
     if (fit) {
         return CGRectInset({point, {0,0}}, -20, -20);
     } else {
@@ -154,7 +145,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
 
 constexpr CGFloat ShadowCenterOffset = 45;
 
-@interface MyScrollView : FixedScrollView
+@interface MyScrollView : AnchoredScrollView
 @end
 
 @implementation MyScrollView {
@@ -163,9 +154,9 @@ constexpr CGFloat ShadowCenterOffset = 45;
 }
 
 - (instancetype)init {
-    FixedDocumentView* fixedDocView = [[MyDocView alloc] initWithFixedLayer:[MyDocLayer new]];
+    AnchoredDocumentView* anchoredDocView = [[MyDocView alloc] initWithAnchoredLayer:[MyDocLayer new]];
     
-    if (!(self = [super initWithFixedDocument:fixedDocView])) return nil;
+    if (!(self = [super initWithAnchoredDocument:anchoredDocView])) return nil;
     
     constexpr uint32_t BackgroundTileSize = 256;
     constexpr uint32_t BackgroundTileLen = BackgroundTileSize*BackgroundTileSize*3;

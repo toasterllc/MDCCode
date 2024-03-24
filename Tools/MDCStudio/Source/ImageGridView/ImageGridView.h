@@ -4,7 +4,7 @@
 #import "ImageSource.h"
 #import "ImageSelection.h"
 #import "Code/Shared/Img.h"
-#import "FixedDocumentView.h"
+#import "AnchoredDocumentView.h"
 @class ImageGridView;
 
 @protocol ImageGridViewResponder
@@ -12,7 +12,7 @@
 - (void)_showImage:(id)sender;
 @end
 
-@interface ImageGridView : FixedDocumentView
+@interface ImageGridView : AnchoredDocumentView
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource
     selection:(MDCStudio::ImageSelectionPtr)selection;
@@ -28,7 +28,7 @@
 
 @end
 
-@interface ImageGridScrollView : FixedScrollView
+@interface ImageGridScrollView : AnchoredScrollView
 - (NSView*)headerView;
 - (void)setHeaderView:(NSView*)x;
 @end

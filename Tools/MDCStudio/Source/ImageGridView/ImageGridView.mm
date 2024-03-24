@@ -2,7 +2,7 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import <thread>
-#import "FixedMetalDocumentLayer.h"
+#import "AnchoredMetalDocumentLayer.h"
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "Grid.h"
@@ -23,7 +23,7 @@ static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 // (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
-@interface ImageGridLayer : FixedMetalDocumentLayer
+@interface ImageGridLayer : AnchoredMetalDocumentLayer
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
     selection:(ImageSelectionPtr)selection;
@@ -372,7 +372,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
             .idx = (uint32_t)(chunkBegin-begin),
             .sortNewestFirst = _sortNewestFirst,
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
-            .transform = [self fixedTransform],
+            .transform = [self anchoredTransform],
             .selection = {
                 .base = (uint32_t)_selectionDraw.base,
                 .count = (uint32_t)_selectionDraw.count,
@@ -564,8 +564,8 @@ struct SelectionDelta {
     [self _selectionUpdate];
 }
 
-// MARK: - FixedScrollViewDocument
-- (bool)fixedFlipped {
+// MARK: - AnchoredScrollViewDocument
+- (bool)anchoredFlipped {
     return true;
 }
 
@@ -668,7 +668,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     // Create ImageGridLayer
     ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageSource:imageSource
         selection:selection];
-    if (!(self = [super initWithFixedLayer:imageGridLayer])) return nil;
+    if (!(self = [super initWithAnchoredLayer:imageGridLayer])) return nil;
     
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
@@ -813,7 +813,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 //    const CGPoint startPoint = _ConvertPoint(_imageGridLayer, _documentView,
 //        [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil]);
     const CGPoint startPoint = [superview convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
-//    const CGPoint startPoint = [self convertPointToFixedDocument:[mouseDownEvent locationInWindow] fromView:nil];
     [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
@@ -890,9 +889,9 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     _selection->images(selection);
 }
 
-// MARK: - FixedScrollView
+// MARK: - AnchoredScrollView
 
-- (void)fixedCreateConstraintsForContainer:(NSView*)container {
+- (void)anchoredCreateConstraintsForContainer:(NSView*)container {
     NSView*const containerSuperview = [container superview];
     if (!containerSuperview) return;
     
@@ -926,10 +925,10 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     NSView* _headerView;
 }
 
-- (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
-    if (!(self = [super initWithFixedDocument:doc])) return nil;
+- (instancetype)initWithAnchoredDocument:(NSView<AnchoredScrollViewDocument>*)doc {
+    if (!(self = [super initWithAnchoredDocument:doc])) return nil;
     [self setAllowsMagnification:false];
-    // FixedScrollView's anchoring during resize doesn't work with our document because the document
+    // AnchoredScrollView's anchoring during resize doesn't work with our document because the document
     // resizes when its superviews resize (because its width needs to be the same as its superviews).
     // So disable that behavior.
     [self setAnchorDuringResize:false];

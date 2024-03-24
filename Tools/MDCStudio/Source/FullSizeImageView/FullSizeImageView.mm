@@ -8,7 +8,7 @@
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
-#import "FixedMetalDocumentLayer.h"
+#import "AnchoredMetalDocumentLayer.h"
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
 #import "ImagePipelineUtil.h"
@@ -31,7 +31,7 @@ struct _ImageLoadThreadState {
     std::function<void(ImageRecordPtr, Image&&)> callback;
 };
 
-@interface FullSizeImageLayer : FixedMetalDocumentLayer
+@interface FullSizeImageLayer : AnchoredMetalDocumentLayer
 @end
 
 @implementation FullSizeImageLayer {
@@ -193,7 +193,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
         _renderer.clear(drawableTxt, {0,0,0,0});
         
         const RenderContext ctx = {
-            .transform = [self fixedTransform],
+            .transform = [self anchoredTransform],
         };
         
         _renderer.render(drawableTxt, Renderer::BlendType::None,
@@ -244,7 +244,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     }
 }
 
-- (void)fixedCreateConstraintsForContainer:(NSView*)container {
+- (void)anchoredCreateConstraintsForContainer:(NSView*)container {
     _width = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeWidth
         relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
         constant:0];
@@ -324,7 +324,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
-@interface FullSizeImageDocumentView : FixedDocumentView
+@interface FullSizeImageDocumentView : AnchoredDocumentView
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
 @end
 
@@ -332,7 +332,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
     FullSizeImageLayer* imageLayer = [[FullSizeImageLayer alloc] initWithImageSource:imageSource];
-    if (!(self = [super initWithFixedLayer:imageLayer])) return nil;
+    if (!(self = [super initWithAnchoredLayer:imageLayer])) return nil;
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     return self;
 }
@@ -342,7 +342,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 }
 
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
-    const bool fit = [(FixedScrollView*)[self enclosingScrollView] magnifyToFit];
+    const bool fit = [(AnchoredScrollView*)[self enclosingScrollView] magnifyToFit];
     return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [[self superview] bounds]);
 }
 
@@ -352,7 +352,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 @end
 
 @implementation FullSizeImageView {
-    FixedScrollView* _scrollView;
+    AnchoredScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
 }
 
@@ -362,7 +362,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     
     {
         FullSizeImageDocumentView* doc = [[FullSizeImageDocumentView alloc] initWithImageSource:imageSource];
-        _scrollView = [[FixedScrollView alloc] initWithFixedDocument:doc];
+        _scrollView = [[AnchoredScrollView alloc] initWithAnchoredDocument:doc];
         [self addSubview:_scrollView];
         
         [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_scrollView]|"
