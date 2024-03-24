@@ -154,9 +154,6 @@ static void _SetView(T& x, NSView* y) {
     [_sourceListView setDelegate:self];
     _SetView(_left, _sourceListView);
     
-    // Handle whatever is first selected
-    [self sourceListViewSelectionChanged:_sourceListView];
-    
     {
         _prefsOb = PrefsGlobal()->observerAdd([=] (auto, auto) { [selfWeak _prefsChanged]; });
     }
@@ -168,6 +165,8 @@ static void _SetView(T& x, NSView* y) {
         });
     }
     
+    // Show the 'no devices' view by default
+    [self __setActiveImageSource:nullptr];
     [self _updateDevices];
     [self _updateAccessoryViewVisibility];
 }
@@ -362,8 +361,11 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 - (void)_setActiveImageSource:(ImageSourcePtr)imageSource {
     // Short-circuit if nothing changed
-//    if (_active.imageSource == imageSource) return;
-    
+    if (_active.imageSource==imageSource) return;
+    [self __setActiveImageSource:imageSource];
+}
+
+- (void)__setActiveImageSource:(ImageSourcePtr)imageSource {
     // First reset our state
     _active = {};
     _SetView(_center, nil);
