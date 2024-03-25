@@ -5,8 +5,8 @@
 #import <thread>
 #import "Util.h"
 #import "Code/Lib/Toastbox/Mac/Util.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
-#import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "FullSizeImageViewTypes.h"
@@ -40,13 +40,13 @@ struct _ImageLoadThreadState {
     
     ImageSourcePtr _imageSource;
     Object::ObserverPtr _imageLibraryOb;
-    Renderer _renderer;
+    Toastbox::Renderer _renderer;
     
     ImageRecordPtr _imageRecord;
     
     struct {
         Image image;
-        Renderer::Txt txt;
+        Toastbox::Renderer::Txt txt;
         bool txtValid = false;
     } _image;
     
@@ -65,7 +65,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     _imageSource = imageSource;
     
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    _renderer = Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    _renderer = Toastbox::Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     [self setDevice:device];
     [self setPixelFormat:_PixelFormat];
@@ -318,6 +318,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
         }
     
     } catch (const Toastbox::Signal::Stop&) {
+        printf("[_ImageLoadThread] STOPPED\n");
     }
     printf("[_ImageLoadThread] Exiting\n");
 }

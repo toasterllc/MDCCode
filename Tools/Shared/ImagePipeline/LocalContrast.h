@@ -2,13 +2,13 @@
 #import <Metal/Metal.h>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "ImagePipelineTypes.h"
-#import "../MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 
 namespace MDCTools::ImagePipeline {
     class LocalContrast {
     public:
-        static void Run(MDCTools::Renderer& renderer, float amount, float radius, id<MTLTexture> rgb) {
-            using namespace MDCTools;
+        static void Run(Toastbox::Renderer& renderer, float amount, float radius, id<MTLTexture> rgb) {
+            using namespace Toastbox;
             
             const size_t w = [rgb width];
             const size_t h = [rgb height];

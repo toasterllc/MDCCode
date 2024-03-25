@@ -1,15 +1,15 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import "../Color.h"
-#import "../Renderer.h"
 #import "FFCC.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 
 namespace MDCTools::ImagePipeline {
 
 class EstimateIlluminant {
 public:
     static MDCTools::Color<MDCTools::ColorSpace::Raw> Run(
-        MDCTools::Renderer& renderer,
+        Toastbox::Renderer& renderer,
         const MDCTools::CFADesc& cfaDesc,
         id<MTLTexture> raw
     ) {

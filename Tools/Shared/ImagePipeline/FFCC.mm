@@ -1,12 +1,12 @@
 #import "FFCC.h"
 #import "ImagePipelineTypes.h"
-#import "../MetalUtil.h"
 #import "../Color.h"
-#import "../Renderer.h"
 #import "../Mod.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
+using namespace Toastbox;
 using namespace MDCTools;
 using namespace MDCTools::ImagePipeline;
-using namespace MDCTools;
 
 using Mat64     = FFCC::Mat64;
 using Mat64c    = FFCC::Mat64c;

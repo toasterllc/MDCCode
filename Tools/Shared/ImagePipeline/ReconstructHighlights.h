@@ -2,20 +2,19 @@
 #import <Metal/Metal.h>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "ImagePipelineTypes.h"
-#import "../MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 
 namespace MDCTools::ImagePipeline {
 
 class ReconstructHighlights {
 public:
     static void Run(
-        MDCTools::Renderer& renderer,
+        Toastbox::Renderer& renderer,
         const MDCTools::CFADesc& cfaDesc,
         const Mat<double,3,1>& illum,
         id<MTLTexture> raw
     ) {
-        
-        using namespace MDCTools;
+        using namespace Toastbox;
         
         const size_t w = [raw width];
         const size_t h = [raw height];

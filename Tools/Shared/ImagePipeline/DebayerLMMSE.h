@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#import "../MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 #import "ImagePipelineTypes.h"
 
 namespace MDCTools::ImagePipeline {
@@ -8,14 +8,14 @@ namespace MDCTools::ImagePipeline {
 class DebayerLMMSE {
 public:
     static void Run(
-        MDCTools::Renderer& renderer,
+        Toastbox::Renderer& renderer,
         const MDCTools::CFADesc& cfaDesc,
         bool applyGamma,
         id<MTLTexture> srcRaw,
         id<MTLTexture> dstRGB
     ) {
         
-        using namespace MDCTools;
+        using namespace Toastbox;
         
         const size_t w = [srcRaw width];
         const size_t h = [srcRaw height];

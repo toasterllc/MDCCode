@@ -1,5 +1,5 @@
 #import "PrintImages.h"
-#import "Tools/Shared/Renderer.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "ImagePipelineUtil.h"
 using namespace MDCStudio;
@@ -9,11 +9,12 @@ using namespace MDCStudio;
 @end
 
 static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPtr& rec) {
+    using namespace Toastbox;
     using namespace MDCTools;
     using namespace MDCTools::ImagePipeline;
     
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    Toastbox::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     Image image = imageSource->getImage(ImageSource::Priority::High, rec);
     Pipeline::Options popts = PipelineOptionsForImage(*rec, image);

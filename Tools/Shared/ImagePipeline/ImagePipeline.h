@@ -1,10 +1,10 @@
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
-#import "../Renderer.h"
 #import "../Mat.h"
 #import "../Color.h"
 #import "Defringe.h"
 #import "ImagePipelineTypes.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 
 namespace MDCTools::ImagePipeline {
 
@@ -72,10 +72,10 @@ public:
         TimestampOptions timestamp;
     };
     
-    static Renderer::Txt TextureForRaw(MDCTools::Renderer& renderer, size_t width, size_t height, const ImagePixel* pixels) {
+    static Toastbox::Renderer::Txt TextureForRaw(Toastbox::Renderer& renderer, size_t width, size_t height, const ImagePixel* pixels) {
         constexpr size_t SamplesPerPixel = 1;
         constexpr size_t BytesPerSample = sizeof(*pixels);
-        Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
+        Toastbox::Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
         renderer.textureWrite(raw, pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
         return raw;
     }
@@ -83,10 +83,10 @@ public:
 //    static ColorRaw IlluminantEstimate(const ColorRaw& illum);
 //    static ColorMatrix ColorMatrixForIlluminant(const ColorRaw& illum);
     
-//    static Color<ColorSpace::Raw> EstimateIlluminant(MDCTools::Renderer& renderer, const MDCTools::CFADesc& cfaDesc, id<MTLTexture> srcRaw);
-    static void Run(MDCTools::Renderer& renderer, const Options& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
+//    static Color<ColorSpace::Raw> EstimateIlluminant(Toastbox::Renderer& renderer, const MDCTools::CFADesc& cfaDesc, id<MTLTexture> srcRaw);
+    static void Run(Toastbox::Renderer& renderer, const Options& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
     
-    static void TimestampOverlayRender(MDCTools::Renderer& renderer,
+    static void TimestampOverlayRender(Toastbox::Renderer& renderer,
         const TimestampOptions& opts, id<MTLTexture> txt);
 };
 

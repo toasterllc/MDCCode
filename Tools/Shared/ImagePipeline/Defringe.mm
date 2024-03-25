@@ -1,14 +1,14 @@
 #import "Defringe.h"
 #import <queue>
 #import <thread>
-#import "../Renderer.h"
 #import "../Poly2D.h"
 #import "../PixelSampler.h"
-#import "../MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 #import "ImagePipelineTypes.h"
+using namespace Toastbox;
 using namespace MDCTools;
 using namespace MDCTools::ImagePipeline;
-using namespace MDCTools;
 
 using Poly = Poly2D<double,4>;
 

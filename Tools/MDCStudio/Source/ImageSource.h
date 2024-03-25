@@ -354,7 +354,7 @@ struct ImageSource : Object {
     
     // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
     // destination buffer (dst), as BC7-compressed data
-    static CCM _ThumbRender(MDCTools::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage& tmpStorage,
+    static CCM _ThumbRender(Toastbox::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage& tmpStorage,
         const ImageOptions& opts, bool estimateIlluminant, const void* src, void* dst) {
         
         using namespace MDCTools;
@@ -751,7 +751,7 @@ struct ImageSource : Object {
     
     
     void _thumbRender_slaveThread() {
-        using namespace MDCTools;
+        using namespace Toastbox;
         
         try {
             id<MTLDevice> dev = MTLCreateSystemDefaultDevice();

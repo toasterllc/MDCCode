@@ -2,7 +2,7 @@
 #import <filesystem>
 #import <array>
 #import <MetalKit/MetalKit.h>
-#import "Tools/Shared/Renderer.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Tools/Shared/BC7Encoder.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "ImageSource.h"
@@ -56,7 +56,7 @@ public:
     static constexpr size_t TmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
     using TmpStorage = std::array<uint8_t, TmpStorageLen>;
     
-    static void ThumbRender(MDCTools::Renderer& renderer, MTKTextureLoader* txtLoader,
+    static void ThumbRender(Toastbox::Renderer& renderer, MTKTextureLoader* txtLoader,
         ThumbCompressor& compressor, TmpStorage& tmpStorage, NSURL* url, ImageRecord& rec) {
         
         using namespace MDCStudio;

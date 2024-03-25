@@ -1,8 +1,8 @@
 #import <metal_stdlib>
 #import "FullSizeImageViewTypes.h"
-#import "Tools/Shared/MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
-using namespace MDCTools::MetalUtil;
+using namespace Toastbox::MetalUtil;
 using namespace MDCStudio::FullSizeImageViewTypes;
 
 namespace MDCStudio {

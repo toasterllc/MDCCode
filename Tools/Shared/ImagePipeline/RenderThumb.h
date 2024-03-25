@@ -1,6 +1,6 @@
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "ImagePipelineTypes.h"
-#import "../Renderer.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 
 namespace MDCTools::ImagePipeline {
 
@@ -12,8 +12,8 @@ public:
         size_t dataOff = 0;
     };
     
-    static void RGB3FromTexture(MDCTools::Renderer& renderer, const Options& opts, id<MTLTexture> src, id<MTLBuffer> dst) {
-        using namespace MDCTools;
+    static void RGB3FromTexture(Toastbox::Renderer& renderer, const Options& opts, id<MTLTexture> src, id<MTLBuffer> dst) {
+        using namespace Toastbox;
         
         assert(opts.dataOff <= [dst length]);
         
@@ -45,8 +45,8 @@ public:
         );
     }
     
-    static void TextureFromRGB3(MDCTools::Renderer& renderer, const Options& opts, id<MTLBuffer> src, id<MTLTexture> dst) {
-        using namespace MDCTools;
+    static void TextureFromRGB3(Toastbox::Renderer& renderer, const Options& opts, id<MTLBuffer> src, id<MTLTexture> dst) {
+        using namespace Toastbox;
         
         assert(opts.dataOff <= [src length]);
         

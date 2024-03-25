@@ -1,9 +1,9 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import "ImagePipelineTypes.h"
-#import "../Renderer.h"
 #import "../Mat.h"
 #import "../CFA.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 
 namespace MDCTools::ImagePipeline {
 
@@ -19,7 +19,7 @@ public:
     };
     
     static void Run(
-        MDCTools::Renderer& renderer,
+        Toastbox::Renderer& renderer,
         const MDCTools::CFADesc& cfaDesc,
         const Options& opts, id<MTLTexture> raw
     );

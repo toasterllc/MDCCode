@@ -8,9 +8,10 @@
 #import "LocalContrast.h"
 #import "Saturation.h"
 #import "EstimateIlluminant.h"
-#import "../MetalUtil.h"
-#import "../Renderer.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "../Mat.h"
+using namespace Toastbox;
 using namespace MDCTools;
 
 static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
@@ -285,7 +286,7 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     }
 }
 
-void Pipeline::TimestampOverlayRender(MDCTools::Renderer& renderer,
+void Pipeline::TimestampOverlayRender(Toastbox::Renderer& renderer,
     const Pipeline::TimestampOptions& opts, id<MTLTexture> txt) {
     
     assert(!opts.string.empty());

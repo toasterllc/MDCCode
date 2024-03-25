@@ -1,9 +1,9 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import "../Mat.h"
-#import "../Renderer.h"
 #import "ImagePipelineTypes.h"
 #import "../CFA.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 
 class FFCC {
 public:
@@ -29,7 +29,7 @@ public:
     
     static Vec3 Run(
         const Model& model,
-        MDCTools::Renderer& renderer,
+        Toastbox::Renderer& renderer,
         const MDCTools::CFADesc& cfaDesc,
         id<MTLTexture> raw
     );

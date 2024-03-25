@@ -1,7 +1,7 @@
 #import <metal_stdlib>
-#import "../MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
-using namespace MDCTools::MetalUtil;
+using namespace Toastbox::MetalUtil;
 
 namespace MDCTools {
 namespace ImagePipeline {

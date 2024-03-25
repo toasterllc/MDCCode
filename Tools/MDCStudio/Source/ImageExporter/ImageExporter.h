@@ -8,16 +8,17 @@
 #import "ImageExporterTypes.h"
 #import "ImagePipelineUtil.h"
 #import "Calendar.h"
-#import "Tools/Shared/Renderer.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Signal.h"
 
 namespace MDCStudio::ImageExporter {
 
 // Single image export to file `filePath`
-inline void __Export(MDCTools::Renderer& renderer, const Format* fmt, const ImageRecord& rec, const Image& image,
+inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const ImageRecord& rec, const Image& image,
     const std::filesystem::path& filePath) {
     
     printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
+    using namespace Toastbox;
     using namespace MDCTools;
     using namespace MDCTools::ImagePipeline;
     
@@ -55,7 +56,7 @@ inline void __Export(MDCTools::Renderer& renderer, const Format* fmt, const Imag
 }
 
 // Single image export to file `filePath`
-inline void _Export(MDCTools::Renderer& renderer, ImageSourcePtr imageSource, const Format* fmt,
+inline void _Export(Toastbox::Renderer& renderer, ImageSourcePtr imageSource, const Format* fmt,
     const ImageRecordPtr& rec, const std::filesystem::path& filePath) {
     
     Image image = imageSource->getImage(ImageSource::Priority::High, rec);
@@ -70,7 +71,7 @@ inline void _Export(ImageSourcePtr imageSource, const ImageExporter::Format* fmt
     assert(recs.size() > 0);
     
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    Toastbox::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     if (recs.size() > 1) {
         for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
