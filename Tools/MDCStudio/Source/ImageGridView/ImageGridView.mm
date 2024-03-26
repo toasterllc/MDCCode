@@ -4,14 +4,14 @@
 #import <thread>
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
-#import "Grid.h"
 #import "ImageThumb.h"
 #import "Code/Shared/Img.h"
 #import "Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
-#import "Toastbox/LRU.h"
-#import "Toastbox/IterAny.h"
-#import "Toastbox/Signal.h"
-#import "Toastbox/Mac/Util.h"
+#import "Code/Lib/Toastbox/Mac/Grid.h"
+#import "Code/Lib/Toastbox/LRU.h"
+#import "Code/Lib/Toastbox/IterAny.h"
+#import "Code/Lib/Toastbox/Signal.h"
+#import "Code/Lib/Toastbox/Mac/Util.h"
 using namespace MDCStudio;
 
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
@@ -56,7 +56,7 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
     Object::ObserverPtr _selectionOb;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
-    Grid _grid;
+    Toastbox::Grid _grid;
     bool _sortNewestFirst;
     CGFloat _containerWidth;
     NSEdgeInsets _contentInsets;
@@ -168,7 +168,7 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
     printf("~ImageGridLayer\n");
 }
 
-- (Grid&)grid {
+- (Toastbox::Grid&)grid {
     return _grid;
 }
 
@@ -209,7 +209,7 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
     _grid.setElementCount((int32_t)_imageLibrary->recordCount());
 }
 
-static Grid::Rect _GridRectFromCGRect(CGRect rect, CGFloat scale) {
+static Toastbox::Grid::Rect _GridRectFromCGRect(CGRect rect, CGFloat scale) {
     const CGRect irect = CGRectIntegral({
         rect.origin.x*scale,
         rect.origin.y*scale,
@@ -217,13 +217,13 @@ static Grid::Rect _GridRectFromCGRect(CGRect rect, CGFloat scale) {
         rect.size.height*scale,
     });
     
-    return Grid::Rect{
+    return Toastbox::Grid::Rect{
         .point = {(int32_t)irect.origin.x, (int32_t)irect.origin.y},
         .size = {(int32_t)irect.size.width, (int32_t)irect.size.height},
     };
 }
 
-static CGRect _CGRectFromGridRect(Grid::Rect rect, CGFloat scale) {
+static CGRect _CGRectFromGridRect(Toastbox::Grid::Rect rect, CGFloat scale) {
     return CGRect{
         .origin = {rect.point.x / scale, rect.point.y / scale},
         .size = {rect.size.x / scale, rect.size.y / scale},
@@ -291,7 +291,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     const CGFloat contentsScale = [self contentsScale];
     const CGSize superlayerSize = [[self superlayer] bounds].size;
     const CGSize viewSize = {superlayerSize.width*contentsScale, superlayerSize.height*contentsScale};
-    const Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
+    const Toastbox::Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
     if (!visibleIndexRange.count) return;
     
     MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
@@ -436,7 +436,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
 
 - (ImageSet)imagesForRect:(CGRect)rect {
     auto lock = std::unique_lock(*_imageLibrary);
-    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, [self contentsScale]));
+    const Toastbox::Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, [self contentsScale]));
     ImageSet images;
     auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
@@ -573,11 +573,11 @@ struct SelectionDelta {
 
 using _IterRange = std::pair<ImageRecordIterAny,ImageRecordIterAny>;
 
-static Grid::IndexRange _VisibleIndexRange(Grid& grid, CGRect frame, CGFloat scale) {
+static Toastbox::Grid::IndexRange _VisibleIndexRange(Toastbox::Grid& grid, CGRect frame, CGFloat scale) {
     return grid.indexRangeForIndexRect(grid.indexRectForRect(_GridRectFromCGRect(frame, scale)));
 }
 
-static _IterRange _VisibleRange(Grid::IndexRange ir, const ImageLibrary& il, bool sortNewestFirst) {
+static _IterRange _VisibleRange(Toastbox::Grid::IndexRange ir, const ImageLibrary& il, bool sortNewestFirst) {
     ImageRecordIterAny begin = ImageLibrary::BeginSorted(il, sortNewestFirst);
     
     // It's possible for the grid element count to be out of sync with the image library

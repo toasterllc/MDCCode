@@ -5,10 +5,10 @@
 #import <array>
 #import <chrono>
 #import <AppleTextureEncoder.h>
-#import "Toastbox/Atomic.h"
-#import "Toastbox/Math.h"
-#import "Toastbox/Signal.h"
-#import "Toastbox/Util.h"
+#import "Code/Lib/Toastbox/Atomic.h"
+#import "Code/Lib/Toastbox/Math.h"
+#import "Code/Lib/Toastbox/Signal.h"
+#import "Code/Lib/Toastbox/Util.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/Clock.h"
 #import "Code/Shared/MSP.h"

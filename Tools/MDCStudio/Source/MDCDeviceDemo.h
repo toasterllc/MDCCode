@@ -1,7 +1,7 @@
 #import <iterator>
 #import <unistd.h>
-#import "Toastbox/Mmap.h"
-#import "Toastbox/NumForStr.h"
+#import "Code/Lib/Toastbox/Mmap.h"
+#import "Code/Lib/Toastbox/NumForStr.h"
 #import "MDCDevice.h"
 #import "TmpDir.h"
 

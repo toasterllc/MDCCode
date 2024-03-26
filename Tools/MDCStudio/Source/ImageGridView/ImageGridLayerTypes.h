@@ -1,6 +1,6 @@
 #pragma once
 #import <simd/simd.h>
-#import "Grid.h"
+#import "Code/Lib/Toastbox/Mac/Grid.h"
 
 namespace MDCStudio {
 namespace ImageGridLayerTypes {
@@ -19,7 +19,7 @@ struct ImageRecordRef {
 };
 
 struct RenderContext {
-    Grid grid;
+    Toastbox::Grid grid;
     uint32_t idx = 0;
     bool sortNewestFirst = false;
     simd::float2 viewSize = {};

@@ -9,8 +9,8 @@
 #include "Code/Shared/Time.h"
 #include "Code/Shared/Clock.h"
 #include "Code/Shared/MSP.h"
-#include "Toastbox/Cast.h"
-#include "Toastbox/Util.h"
+#include "Code/Lib/Toastbox/Cast.h"
+#include "Code/Lib/Toastbox/Util.h"
 
 namespace MDCStudio {
 namespace DeviceSettings {

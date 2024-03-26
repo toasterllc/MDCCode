@@ -4,10 +4,10 @@
 #import <chrono>
 #import <IOKit/IOKitLib.h>
 #import <IOKit/IOMessage.h>
-#import "Toastbox/RuntimeError.h"
-#import "Toastbox/SendRight.h"
-#import "Toastbox/USBDevice.h"
-#import "Toastbox/Signal.h"
+#import "Code/Lib/Toastbox/RuntimeError.h"
+#import "Code/Lib/Toastbox/SendRight.h"
+#import "Code/Lib/Toastbox/USBDevice.h"
+#import "Code/Lib/Toastbox/Signal.h"
 #import "MDCDevice.h"
 #import "MDCDeviceReal.h"
 #import "Object.h"

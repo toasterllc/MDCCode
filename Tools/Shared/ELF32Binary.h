@@ -2,8 +2,8 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <vector>
-#include "Toastbox/Mmap.h"
-#include "Toastbox/RuntimeError.h"
+#include "Code/Lib/Toastbox/Mmap.h"
+#include "Code/Lib/Toastbox/RuntimeError.h"
 
 class ELF32Binary {
 public:

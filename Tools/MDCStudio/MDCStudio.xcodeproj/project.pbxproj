@@ -43,7 +43,6 @@
 		55496F4F278CFC0600BCA739 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55496F4E278CFC0600BCA739 /* main.mm */; };
 		55496F5B278CFCE200BCA739 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F5A278CFCE200BCA739 /* Cocoa.framework */; };
 		55496F5F278E3E6800BCA739 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F5E278E3E6800BCA739 /* QuartzCore.framework */; };
-		55496F61278E88B800BCA739 /* Grid.h in Sources */ = {isa = PBXBuildFile; fileRef = 55496F60278E88B800BCA739 /* Grid.h */; };
 		55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F62278FCDD000BCA739 /* MetalKit.framework */; };
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
 		5557260B2B5F677E00B32710 /* demo in Copy Resources/demo */ = {isa = PBXBuildFile; fileRef = 5557260A2B5F677C00B32710 /* demo */; };
@@ -250,7 +249,6 @@
 		55496F50278CFC0600BCA739 /* MDCStudio.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MDCStudio.entitlements; sourceTree = "<group>"; };
 		55496F5A278CFCE200BCA739 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		55496F5E278E3E6800BCA739 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		55496F60278E88B800BCA739 /* Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Grid.h; sourceTree = "<group>"; };
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		554986302B400CBA00B68E4B /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
@@ -758,7 +756,6 @@
 				55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55F7556C29BC21B500241672 /* ColorMatrix.h */,
-				55496F60278E88B800BCA739 /* Grid.h */,
 				557ABD8829E7E90B0032619E /* Calendar.h */,
 				557ABD8929E7E90B0032619E /* DeviceSettings.h */,
 				55838C7E2ACF4B3A00D4B024 /* BatteryLifeSimulator.h */,
@@ -1110,7 +1107,6 @@
 				55E43F9F28C00D6B00FCCEA0 /* RenderThumb.metal in Sources */,
 				554243AE2B3EC4DB00BDFE25 /* PrintImages.mm in Sources */,
 				5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */,
-				55496F61278E88B800BCA739 /* Grid.h in Sources */,
 				55E43F9728C00D6B00FCCEA0 /* Defringe.metal in Sources */,
 				551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */,
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
