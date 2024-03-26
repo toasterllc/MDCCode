@@ -91,11 +91,11 @@ fragment float4 FragmentShader(
     constexpr float4 SelectionBorderColor1 = float4(0,0.523,1,1);
     constexpr float4 SelectionBorderColor2 = float4(1,1,1,.175);
     constexpr uint SelectionBorderSize = 10;
-    float3 c = txt.read(pos, in.idx).rgb;
+    const float4 c = txt.sample({}, in.posNorm, in.idx);
     if (in.selected && (metal::any(pos < SelectionBorderSize) || metal::any(pos > (txtSize-SelectionBorderSize)))) {
-        return blendColorDodge(SelectionBorderColor1, blendOver(SelectionBorderColor2, float4(c,1)));
+        return blendColorDodge(SelectionBorderColor1, blendOver(SelectionBorderColor2, c));
     }
-    return float4(c, 1);
+    return c;
 }
 
 } // namespace ImageGridLayerShader
