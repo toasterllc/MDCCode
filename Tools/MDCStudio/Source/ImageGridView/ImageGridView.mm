@@ -17,12 +17,6 @@ using namespace MDCStudio;
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
 static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 
-// _PixelFormat == RGBA8Unorm with -setColorspace:LinearSRGB appears to be the correct
-// combination such that we supply color data in the linear SRGB colorspace and the
-// system handles conversion into SRGB.
-// (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatRGBA8Unorm;
-
 @interface ImageGridLayer : AnchoredMetalDocumentLayer
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
@@ -111,9 +105,9 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
-    [self setDevice:_device];
-    [self setPixelFormat:_PixelFormat];
-    [self setColorspace:_LinearSRGBColorSpace()]; // See comment for _PixelFormat
+    [self setDevice:[self preferredDevice]];
+    [self setColorspace:_LinearSRGBColorSpace()];
+    [self setOpaque:false];
     
     MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:_device];
     // TODO: supply scaleFactor properly
@@ -139,16 +133,7 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
     [pipelineDescriptor setVertexFunction:vertexShader];
     [pipelineDescriptor setFragmentFunction:fragmentShader];
     
-    [[pipelineDescriptor colorAttachments][0] setPixelFormat:_PixelFormat];
-    [[pipelineDescriptor colorAttachments][0] setBlendingEnabled:true];
-    
-    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
-    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorSourceAlpha];
-    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
-
-    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
-    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorSourceAlpha];
-    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+    [[pipelineDescriptor colorAttachments][0] setPixelFormat:[self pixelFormat]];
     
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
     assert(_pipelineState);
