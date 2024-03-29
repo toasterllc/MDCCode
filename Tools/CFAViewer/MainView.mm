@@ -4,10 +4,9 @@
 //#import "HistogramLayer.h"
 #import "Util.h"
 #import "ColorChecker.h"
-#import "MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 
 using namespace CFAViewer;
-using namespace MDCTools::MetalUtil;
 
 @interface MainView () <CALayoutManager, NSGestureRecognizerDelegate>
 @end

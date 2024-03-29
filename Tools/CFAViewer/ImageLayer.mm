@@ -2,11 +2,8 @@
 #import <Metal/Metal.h>
 #import "Assert.h"
 #import "Util.h"
-#import "Renderer.h"
+#import "Code/Lib/Toastbox/Mac/Renderer.h"
 using namespace CFAViewer;
-using namespace MDCTools;
-//using namespace MDCTools::MetalUtil;
-//using namespace MDCTools::ImagePipeline;
 
 // _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
 // To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
@@ -20,7 +17,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 }
 
 @implementation ImageLayer {
-    Renderer _renderer;
+    Toastbox::Renderer _renderer;
     id<MTLTexture> _txt;
     
 //    ImagePipelineManager* _ipm;
@@ -30,7 +27,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     if (!(self = [super init])) return nil;
     
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    _renderer = Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    _renderer = Toastbox::Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     [self setActions:LayerNullActions()];
     [self setPixelFormat:_PixelFormat];

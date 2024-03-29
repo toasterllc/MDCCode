@@ -35,7 +35,6 @@
 #import "ColorMatrix.h"
 #import "MDCDevicesManager.h"
 using namespace CFAViewer;
-using namespace MDCTools::MetalUtil;
 using namespace MDCTools::ImagePipeline;
 using namespace Toastbox;
 using namespace MDCTools;

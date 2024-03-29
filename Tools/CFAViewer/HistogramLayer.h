@@ -1,5 +1,5 @@
 #import <QuartzCore/QuartzCore.h>
-#import "MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 
 @interface HistogramLayer : CAMetalLayer
 - (void)setHistogram:(const CFAViewer::MetalUtil::Histogram&)histogram;

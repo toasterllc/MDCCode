@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		552DC1492BB679F300E99941 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 552DC1482BB679DF00E99941 /* Renderer.metal */; };
 		553630EB2B7C13C90054E321 /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55BB944A2A1226CB0044C87B /* tz.cpp */; };
 		553630ED2B7C13D70054E321 /* libate.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 553630EC2B7C13D60054E321 /* libate.tbd */; };
 		553630F12B7C1CDD0054E321 /* STMApp.elf in Resources */ = {isa = PBXBuildFile; fileRef = 553630F02B7C1CDD0054E321 /* STMApp.elf */; };
@@ -14,7 +15,6 @@
 		556E460026B13CBD006681FA /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = 556E45F526B13CBD006681FA /* LICENSE.md */; };
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
 		559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E122598300700836B47 /* ApplicationServices.framework */; };
-		55AC9E0328ACBF7E00D0851E /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55AC9E0228ACBF7E00D0851E /* Renderer.metal */; };
 		55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55B9745D24C504E2000B2633 /* AppDelegate.mm */; };
 		55B9746024C504E2000B2633 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55B9745F24C504E2000B2633 /* Assets.xcassets */; };
 		55B9746324C504E2000B2633 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55B9746124C504E2000B2633 /* MainMenu.xib */; };
@@ -43,6 +43,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		552DC1472BB679DF00E99941 /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
+		552DC1482BB679DF00E99941 /* Renderer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
 		552E7D5A24C9316900438AAF /* CFAViewer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CFAViewer.entitlements; sourceTree = "<group>"; };
 		552F4BCB29B1BE82000CEAB2 /* ThreePartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
 		552F4BCC29B1BE82000CEAB2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
@@ -71,9 +73,6 @@
 		559D8E0F2594205300836B47 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		559D8E1125954F7E00836B47 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		559D8E122598300700836B47 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
-		55AC9DDB28ACAEEF00D0851E /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
-		55AC9E0128ACBF7E00D0851E /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
-		55AC9E0228ACBF7E00D0851E /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
 		55AE80C1262E7BBC00BA227C /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mod.h; sourceTree = "<group>"; };
 		55AE80CB262F5B3100BA227C /* ImagePipelineManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImagePipelineManager.h; sourceTree = "<group>"; };
 		55AE80CC262F5B3100BA227C /* ImagePipelineManager.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImagePipelineManager.mm; sourceTree = "<group>"; };
@@ -173,9 +172,11 @@
 		552F4BCA29B1BE82000CEAB2 /* Mac */ = {
 			isa = PBXGroup;
 			children = (
+				552DC1472BB679DF00E99941 /* Renderer.h */,
+				552DC1482BB679DF00E99941 /* Renderer.metal */,
 				552F4BCB29B1BE82000CEAB2 /* ThreePartView.h */,
-				552F4BCC29B1BE82000CEAB2 /* Util.h */,
 				552F4BCD29B1BE82000CEAB2 /* ThreePartView.mm */,
+				552F4BCC29B1BE82000CEAB2 /* Util.h */,
 			);
 			path = Mac;
 			sourceTree = "<group>";
@@ -184,7 +185,6 @@
 			isa = PBXGroup;
 			children = (
 				55E43FBB28C0104D00FCCEA0 /* ImagePipeline */,
-				55AC9DDB28ACAEEF00D0851E /* MetalUtil.h */,
 				559D8E1125954F7E00836B47 /* Mat.h */,
 				559C33E826165B4C001903FD /* Color.h */,
 				55EBCC8F25896F160089A441 /* Assert.h */,
@@ -194,8 +194,6 @@
 				55E98ED225A9577A0062B458 /* IOServiceWatcher.h */,
 				55DE385B25F83EFB00AD2223 /* Poly2D.h */,
 				55AE80D92630C98100BA227C /* PixelSampler.h */,
-				55AC9E0128ACBF7E00D0851E /* Renderer.h */,
-				55AC9E0228ACBF7E00D0851E /* Renderer.metal */,
 				55EBFD2528C57FDD00B3D1B5 /* MDCUSBDevice.h */,
 			);
 			name = Shared;
@@ -467,9 +465,9 @@
 				55E43FDA28C0104D00FCCEA0 /* DebayerLMMSE.metal in Sources */,
 				55E43FD828C0104D00FCCEA0 /* Defringe.metal in Sources */,
 				55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */,
-				55AC9E0328ACBF7E00D0851E /* Renderer.metal in Sources */,
 				55E43FDD28C0104D00FCCEA0 /* EstimateIlluminant.mm in Sources */,
 				55E43FDC28C0104D00FCCEA0 /* ImagePipeline.metal in Sources */,
+				552DC1492BB679F300E99941 /* Renderer.metal in Sources */,
 				55E43FD428C0104D00FCCEA0 /* Defringe.mm in Sources */,
 				55E43FE028C0104D00FCCEA0 /* RenderThumb.metal in Sources */,
 				55E43FD728C0104D00FCCEA0 /* FFCC.metal in Sources */,
