@@ -567,6 +567,7 @@ struct _TaskReadout {
         // Start the USB DataIn task
         _TaskUSBDataIn::Start();
         
+        size_t initCount = 0;
         // Read data over QSPI and write it to USB, indefinitely
         while (_LenRem.value_or(SIZE_MAX)) {
             // Wait until there's a buffer available
@@ -584,7 +585,11 @@ struct _TaskReadout {
                 #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
                 while (!_ICE_STM_SPI_D_READY::Read());
                 
-                memset(buf.data+buf.len, (int)((uint32_t)0xFFFFFFFF), lenRead);
+                if (initCount < 2) {
+                    memset(buf.data, (int)((uint32_t)0xFFFFFFFF), sizeof(buf.data));
+                    initCount++;
+                }
+                
                 buf.len += lenRead;
                 if (_LenRem) *_LenRem -= lenRead;
             }
