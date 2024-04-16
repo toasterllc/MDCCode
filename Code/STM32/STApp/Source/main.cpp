@@ -567,11 +567,6 @@ struct _TaskReadout {
         // Start the USB DataIn task
         _TaskUSBDataIn::Start();
         
-        // Send the Readout message, which causes us to enter the readout mode until
-        // we release the chip select
-        _GPIOConfigs::Manual::ICE_STM_SPI_CS_::Write(0);
-        _QSPI::Command(_QSPICmd::ICEApp(_ICE::ReadoutMsg(), 0));
-        
         // Read data over QSPI and write it to USB, indefinitely
         while (_LenRem.value_or(SIZE_MAX)) {
             // Wait until there's a buffer available
