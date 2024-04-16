@@ -595,7 +595,7 @@ struct _TaskReadout {
             // Push buffer if it has data
             if (buf.len) _Bufs.wpush();
             
-            bufCount++
+            bufCount++;
             if (bufCount >= 1000) {
                 initCount = 0;
                 bufCount = 0;
