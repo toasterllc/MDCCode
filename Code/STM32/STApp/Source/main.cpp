@@ -589,7 +589,7 @@ struct _TaskReadout {
                 #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
                 while (!_ICE_STM_SPI_D_READY::Read());
                 
-                _QSPI::Read(_QSPICmd::ICEAppReadOnly(lenRead), buf.data+buf.len);
+                memset(buf.data+buf.len, 0, lenRead);
                 buf.len += lenRead;
                 if (_LenRem) *_LenRem -= lenRead;
             }
