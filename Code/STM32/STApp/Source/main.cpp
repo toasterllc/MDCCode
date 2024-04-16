@@ -584,7 +584,7 @@ struct _TaskReadout {
                 #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
                 while (!_ICE_STM_SPI_D_READY::Read());
                 
-                memset(buf.data+buf.len, 0, lenRead);
+                memset(buf.data+buf.len, (int)((uint32_t)0xFFFFFFFF), lenRead);
                 buf.len += lenRead;
                 if (_LenRem) *_LenRem -= lenRead;
             }
