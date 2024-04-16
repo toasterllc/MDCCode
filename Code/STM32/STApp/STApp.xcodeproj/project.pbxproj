@@ -26,6 +26,7 @@
 		5563E119253A8B3D00BCC0F7 /* STApp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STApp; sourceTree = BUILT_PRODUCTS_DIR; };
 		556875D5254A165200B774CE /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
 		55844C1A2575D51A008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
+		55B33B482BCF1BA20068D8CB /* Scheduler */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Scheduler; path = ../../Lib/Scheduler; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +43,7 @@
 		5563E110253A8B3D00BCC0F7 = {
 			isa = PBXGroup;
 			children = (
+				55B33B482BCF1BA20068D8CB /* Scheduler */,
 				5529502426EC0E06007CEA80 /* Toastbox */,
 				55844C1A2575D51A008737ED /* Shared */,
 				55602AF5268EDDA2009CDA12 /* Shared */,

@@ -568,6 +568,8 @@ struct _TaskReadout {
         _TaskUSBDataIn::Start();
         
         size_t initCount = 0;
+        uint32_t initVal = 0;
+        size_t bufCount = 0;
         // Read data over QSPI and write it to USB, indefinitely
         while (_LenRem.value_or(SIZE_MAX)) {
             // Wait until there's a buffer available
@@ -577,7 +579,7 @@ struct _TaskReadout {
             
             if (initCount < 2) {
 //                memset(buf.data, (int)((uint32_t)0xFFFFFFFF), sizeof(buf.data));
-                memset(buf.data, 0, sizeof(buf.data));
+                memset(buf.data, (int)initVal, sizeof(buf.data));
                 initCount++;
             }
             
@@ -586,17 +588,19 @@ struct _TaskReadout {
                 const size_t lenBuf = sizeof(buf.data)-buf.len;
                 // If the buffer can't fit `lenRead` more bytes, we're done with this buffer
                 if (lenBuf < lenRead) break;
-                
-                // Wait until ICE40 signals that data is ready to be read
-                #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
-                while (!_ICE_STM_SPI_D_READY::Read());
-                
                 buf.len += lenRead;
                 if (_LenRem) *_LenRem -= lenRead;
             }
             
             // Push buffer if it has data
             if (buf.len) _Bufs.wpush();
+            
+            bufCount++
+            if (bufCount >= 1000) {
+                initCount = 0;
+                bufCount = 0;
+                initVal = ~initVal;
+            }
         }
         
         // Release chip-select to exit readout mode
