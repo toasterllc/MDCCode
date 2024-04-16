@@ -93,7 +93,7 @@ static void printUsage() {
     cout << "  " << MSPSBWDebugLogCmd       << "\n";
     
     cout << "  " << SDReadCmd               << " <addr> <blockcount> <output>\n";
-    cout << "  " << SDEraseCmd              << " <addr> <blockcount> <output>\n";
+    cout << "  " << SDEraseCmd              << " <addr> <blockcount>\n";
     
     cout << "  " << ImgReadFullCmd          << " <id> <output>\n";
     cout << "  " << ImgReadThumbCmd         << " <id> <output>\n";
