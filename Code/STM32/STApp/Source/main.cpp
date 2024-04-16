@@ -575,6 +575,11 @@ struct _TaskReadout {
             _Buf& buf = _Bufs.wget();
             buf.len = 0;
             
+            if (initCount < 2) {
+                memset(buf.data, (int)((uint32_t)0xFFFFFFFF), sizeof(buf.data));
+                initCount++;
+            }
+            
             while (_LenRem.value_or(SIZE_MAX)) {
                 const size_t lenRead = std::min(_LenRem.value_or(SIZE_MAX), _ICE::ReadoutMsg::ReadoutLen);
                 const size_t lenBuf = sizeof(buf.data)-buf.len;
@@ -584,11 +589,6 @@ struct _TaskReadout {
                 // Wait until ICE40 signals that data is ready to be read
                 #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
                 while (!_ICE_STM_SPI_D_READY::Read());
-                
-                if (initCount < 2) {
-                    memset(buf.data, (int)((uint32_t)0xFFFFFFFF), sizeof(buf.data));
-                    initCount++;
-                }
                 
                 buf.len += lenRead;
                 if (_LenRem) *_LenRem -= lenRead;
