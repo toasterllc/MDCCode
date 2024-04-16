@@ -576,7 +576,8 @@ struct _TaskReadout {
             buf.len = 0;
             
             if (initCount < 2) {
-                memset(buf.data, (int)((uint32_t)0xFFFFFFFF), sizeof(buf.data));
+//                memset(buf.data, (int)((uint32_t)0xFFFFFFFF), sizeof(buf.data));
+                memset(buf.data, 0, sizeof(buf.data));
                 initCount++;
             }
             
