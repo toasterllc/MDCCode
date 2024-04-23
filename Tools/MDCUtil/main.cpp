@@ -902,21 +902,23 @@ static void SDRead(const Args& args, MDCUSBDevice& device) {
     
     printf("Reading data...\n");
     
-    auto buf = std::make_unique<uint8_t[]>(len);
-    auto timeStart = std::chrono::steady_clock::now();
-    device.readout(buf.get(), len);
-    auto duration = std::chrono::steady_clock::now() - timeStart;
-    auto durationUs = std::chrono::duration_cast<std::chrono::microseconds>(duration);
-    const float throughputMBPerSec = (((double)(len*(uint64_t)1000000)) / durationUs.count()) / (1024*1024);
-    printf("-> OK (throughput: %.1f MB/sec)\n\n", throughputMBPerSec);
+    for (;;) {
+        auto buf = std::make_unique<uint8_t[]>(len);
+        auto timeStart = std::chrono::steady_clock::now();
+        device.readout(buf.get(), len);
+        auto duration = std::chrono::steady_clock::now() - timeStart;
+        auto durationUs = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+        const float throughputMBPerSec = (((double)(len*(uint64_t)1000000)) / durationUs.count()) / (1024*1024);
+        printf("-> OK (throughput: %.1f MB/sec)\n\n", throughputMBPerSec);
+    }
     
-    // Write data
-    printf("Writing data...\n");
-    std::ofstream f;
-    f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    f.open(args.SDRead.filePath.c_str());
-    f.write((char*)buf.get(), len);
-    printf("-> Wrote %ju blocks (%ju bytes)\n", (uintmax_t)args.SDRead.count, (uintmax_t)len);
+//    // Write data
+//    printf("Writing data...\n");
+//    std::ofstream f;
+//    f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+//    f.open(args.SDRead.filePath.c_str());
+//    f.write((char*)buf.get(), len);
+//    printf("-> Wrote %ju blocks (%ju bytes)\n", (uintmax_t)args.SDRead.count, (uintmax_t)len);
 }
 
 static void SDErase(const Args& args, MDCUSBDevice& device) {

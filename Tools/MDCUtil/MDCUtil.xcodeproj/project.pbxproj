@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		552F4BB329AD3AF8000CEAB2 /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 552F4B8929AD3ACB000CEAB2 /* tz.cpp */; };
+		55B33B6D2BCF75750068D8CB /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55B33B6C2BCF75750068D8CB /* AppDelegate.mm */; };
+		55B33B6F2BCF75760068D8CB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55B33B6E2BCF75760068D8CB /* Assets.xcassets */; };
+		55B33B722BCF75760068D8CB /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55B33B702BCF75760068D8CB /* MainMenu.xib */; };
+		55B33B742BCF75760068D8CB /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 55B33B732BCF75760068D8CB /* main.m */; };
 		55E1D8EA253E868000628EF6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E1D8E9253E868000628EF6 /* Foundation.framework */; };
 		55E1D8EC253E868400628EF6 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E1D8EB253E868400628EF6 /* IOKit.framework */; };
 		55E1D8EE253E892B00628EF6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55E1D8ED253E892B00628EF6 /* main.cpp */; };
@@ -83,6 +87,13 @@
 		55B2152E27091004001423C1 /* Interp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Interp.h; sourceTree = "<group>"; };
 		55B2152F27091004001423C1 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
 		55B2153327091044001423C1 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
+		55B33B692BCF75750068D8CB /* USBThroughputPlotter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = USBThroughputPlotter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		55B33B6B2BCF75750068D8CB /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		55B33B6C2BCF75750068D8CB /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
+		55B33B6E2BCF75760068D8CB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		55B33B712BCF75760068D8CB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		55B33B732BCF75760068D8CB /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		55B33B752BCF75760068D8CB /* USBThroughputPlotter.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = USBThroughputPlotter.entitlements; sourceTree = "<group>"; };
 		55B5159E2A09924200FD9F17 /* TimeAdjustment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeAdjustment.h; sourceTree = "<group>"; };
 		55B5159F2A099D8C00FD9F17 /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
 		55B66B3F271525F800AD39A5 /* Img.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Img.h; sourceTree = "<group>"; };
@@ -103,6 +114,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		55B33B662BCF75750068D8CB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		55E1D8DB253E864F00628EF6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -272,6 +290,19 @@
 			path = ../../Code/Shared;
 			sourceTree = "<group>";
 		};
+		55B33B6A2BCF75750068D8CB /* USBThroughputPlotter */ = {
+			isa = PBXGroup;
+			children = (
+				55B33B6B2BCF75750068D8CB /* AppDelegate.h */,
+				55B33B6C2BCF75750068D8CB /* AppDelegate.mm */,
+				55B33B6E2BCF75760068D8CB /* Assets.xcassets */,
+				55B33B702BCF75760068D8CB /* MainMenu.xib */,
+				55B33B732BCF75760068D8CB /* main.m */,
+				55B33B752BCF75760068D8CB /* USBThroughputPlotter.entitlements */,
+			);
+			path = USBThroughputPlotter;
+			sourceTree = "<group>";
+		};
 		55E1D8D5253E864F00628EF6 = {
 			isa = PBXGroup;
 			children = (
@@ -281,6 +312,7 @@
 				55B2151F27091003001423C1 /* Shared */,
 				55ECAFCB26B0293500A339C7 /* Makefile */,
 				55E1D8ED253E892B00628EF6 /* main.cpp */,
+				55B33B6A2BCF75750068D8CB /* USBThroughputPlotter */,
 				55E1D8E8253E868000628EF6 /* Frameworks */,
 				55E1D8DF253E864F00628EF6 /* Products */,
 			);
@@ -290,6 +322,7 @@
 			isa = PBXGroup;
 			children = (
 				55E1D8DE253E864F00628EF6 /* MDCUtil */,
+				55B33B692BCF75750068D8CB /* USBThroughputPlotter.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -306,6 +339,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		55B33B682BCF75750068D8CB /* USBThroughputPlotter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 55B33B772BCF75760068D8CB /* Build configuration list for PBXNativeTarget "USBThroughputPlotter" */;
+			buildPhases = (
+				55B33B652BCF75750068D8CB /* Sources */,
+				55B33B662BCF75750068D8CB /* Frameworks */,
+				55B33B672BCF75750068D8CB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = USBThroughputPlotter;
+			productName = USBThroughputPlotter;
+			productReference = 55B33B692BCF75750068D8CB /* USBThroughputPlotter.app */;
+			productType = "com.apple.product-type.application";
+		};
 		55E1D8DD253E864F00628EF6 /* MDCUtil */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 55E1D8E5253E864F00628EF6 /* Build configuration list for PBXNativeTarget "MDCUtil" */;
@@ -332,6 +382,9 @@
 				LastUpgradeCheck = 1140;
 				ORGANIZATIONNAME = dave;
 				TargetAttributes = {
+					55B33B682BCF75750068D8CB = {
+						CreatedOnToolsVersion = 15.2;
+					};
 					55E1D8DD253E864F00628EF6 = {
 						CreatedOnToolsVersion = 11.4;
 					};
@@ -351,11 +404,33 @@
 			projectRoot = "";
 			targets = (
 				55E1D8DD253E864F00628EF6 /* MDCUtil */,
+				55B33B682BCF75750068D8CB /* USBThroughputPlotter */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		55B33B672BCF75750068D8CB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55B33B6F2BCF75760068D8CB /* Assets.xcassets in Resources */,
+				55B33B722BCF75760068D8CB /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
+		55B33B652BCF75750068D8CB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55B33B742BCF75760068D8CB /* main.m in Sources */,
+				55B33B6D2BCF75750068D8CB /* AppDelegate.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		55E1D8DA253E864F00628EF6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -367,7 +442,52 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXVariantGroup section */
+		55B33B702BCF75760068D8CB /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				55B33B712BCF75760068D8CB /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
+		55B33B762BCF75760068D8CB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_ENTITLEMENTS = USBThroughputPlotter/USBThroughputPlotter.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5VXGM37B6Z;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 dave. All rights reserved.";
+				INFOPLIST_KEY_NSMainNibFile = MainMenu;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = llc.toaster.USBThroughputPlotter;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
 		55E1D8E4253E864F00628EF6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -439,6 +559,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		55B33B772BCF75760068D8CB /* Build configuration list for PBXNativeTarget "USBThroughputPlotter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55B33B762BCF75760068D8CB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		55E1D8D9253E864F00628EF6 /* Build configuration list for PBXProject "MDCUtil" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
