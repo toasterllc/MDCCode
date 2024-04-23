@@ -1,6 +1,6 @@
 ## About
 
-This repo contains all the firmware / software / Verilog for the Photon camera.
+This repo contains all the firmware / software / Verilog for the [Photon camera](https://toaster.llc/photon).
 
 `MDC` stands for "motion detector camera".
 
@@ -18,4 +18,3 @@ This repo contains all the firmware / software / Verilog for the Photon camera.
 
 `Tools/MDCUtil`: a swiss-army utility for interacting with the Photon camera
 
-See [toaster.llc/photon](https://toaster.llc/photon) for more info about Photon.
