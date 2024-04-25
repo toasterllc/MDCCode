@@ -14,7 +14,7 @@ This repo contains all the firmware / software / Verilog for the [Photon camera]
 
 `Code/ICE40/ICEAppMSP`: the top-level ICE40 Verilog that talks to `MSPApp` running on the MSP430
 
-`Tools/MDCStudio`: the `Photon Transfer` Mac app
+`Tools/MDCStudio`: the Photon Transfer Mac app
 
 `Tools/MDCUtil`: a swiss-army utility for interacting with the Photon camera
 
