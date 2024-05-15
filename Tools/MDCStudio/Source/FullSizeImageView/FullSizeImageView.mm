@@ -127,11 +127,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     [self setNeedsDisplay];
 }
 
-- (void)export:(NSWindow*)window {
-    printf("_export\n");
-    ImageExporter::Export(window, _imageSource, { _imageRecord });
-}
-
 - (void)display {
     using namespace MDCTools;
     using namespace MDCTools::ImagePipeline;
