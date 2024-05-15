@@ -82,7 +82,7 @@ fragment float4 FragmentShader(
 ) {
     const uint2 pos = uint2(in.posPx);
     if (!loadCounts[in.idx]) {
-        constexpr float PlaceholderAlpha = 0.15;
+        constexpr float PlaceholderAlpha = 0.05;
         const float4 c = placeholderTxt.sample({}, in.posNorm);
         return float4(c.rgb, PlaceholderAlpha*c.a);
     }
