@@ -1,7 +1,7 @@
 #pragma once
 #import "ImageSource.h"
-#import "Tools/Shared/Color.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
+#import "Code/Lib/Toastbox/Mac/Color.h"
 #import "Calendar.h"
 
 namespace MDCStudio {

@@ -1,7 +1,7 @@
 #include <vector>
 #include <cmath>
 #include <optional>
-#include "Mat.h"
+#include "Code/Lib/Toastbox/Mac/Mat.h"
 
 // Poly2D represents a 2D polynomial of a specified order, that's solved for given
 // the supplied {x,y,z} triplets, where f(x,y)=z.
@@ -39,7 +39,7 @@ public:
         // currently support since it's a templated class.
         // This way also appears to be faster than that
         // technique.
-        Mat<T,_Terms,1> k;
+        Toastbox::Mat<T,_Terms,1> k;
         for (size_t a=0, i=0; a<Order; a++) {
             for (size_t b=0; b<Order; b++, i++) {
                 // Calculate each term by raising the x,y values to the
@@ -48,7 +48,7 @@ public:
             }
         }
         
-        const Mat<T,_Terms,1> kwt = k*wt;
+        const Toastbox::Mat<T,_Terms,1> kwt = k*wt;
         _A = _A+kwt*k.trans();
         _b = _b+kwt*z;
     }
@@ -66,16 +66,16 @@ public:
         return r;
     }
     
-    const Mat<T,_Terms,1>& coeffs() {
+    const Toastbox::Mat<T,_Terms,1>& coeffs() {
         // Solve the system if we haven't done so yet
         if (!_x) _x = _A.solve(_b);
         return *_x;
     }
     
 private:
-    Mat<T,_Terms,_Terms> _A; // x,y points
-    std::optional<Mat<T,_Terms,1>> _x; // Coefficients (solution to linear system)
-    Mat<T,_Terms,1> _b; // z points
+    Toastbox::Mat<T,_Terms,_Terms> _A; // x,y points
+    std::optional<Toastbox::Mat<T,_Terms,1>> _x; // Coefficients (solution to linear system)
+    Toastbox::Mat<T,_Terms,1> _b; // z points
 };
 
 

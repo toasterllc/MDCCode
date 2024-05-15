@@ -10,8 +10,8 @@ class ReconstructHighlights {
 public:
     static void Run(
         Toastbox::Renderer& renderer,
-        const MDCTools::CFADesc& cfaDesc,
-        const Mat<double,3,1>& illum,
+        const Toastbox::CFADesc& cfaDesc,
+        const Toastbox::Mat<double,3,1>& illum,
         id<MTLTexture> raw
     ) {
         using namespace Toastbox;

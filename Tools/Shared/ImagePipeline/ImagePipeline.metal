@@ -1,10 +1,11 @@
 #import <metal_stdlib>
 #import "ImagePipelineTypes.h"
-#import "../CFA.h"
+#import "Code/Lib/Toastbox/Mac/CFA.h"
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools;
 using namespace MDCTools::ImagePipeline;
+using namespace Toastbox;
 using namespace Toastbox::MetalUtil;
 
 namespace MDCTools {
@@ -468,13 +469,6 @@ fragment float4 DisplayR(
 ) {
     const float c = Sample::R(txt, int2(in.pos.xy));
     return float4(c, c, c, 1);
-}
-
-fragment float4 Scale(
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    return float4(txt.sample({filter::linear}, in.posUnit).rgb, 1);
 }
 
 fragment float4 DebayerDownsample(

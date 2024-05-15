@@ -10,7 +10,7 @@
 #import "EstimateIlluminant.h"
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
-#import "../Mat.h"
+#import "Code/Lib/Toastbox/Mac/Mat.h"
 using namespace Toastbox;
 using namespace MDCTools;
 

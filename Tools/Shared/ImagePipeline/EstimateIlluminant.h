@@ -1,16 +1,16 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#import "../Color.h"
 #import "FFCC.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
+#import "Code/Lib/Toastbox/Mac/Color.h"
 
 namespace MDCTools::ImagePipeline {
 
 class EstimateIlluminant {
 public:
-    static MDCTools::Color<MDCTools::ColorSpace::Raw> Run(
+    static Toastbox::Color<Toastbox::ColorSpace::Raw> Run(
         Toastbox::Renderer& renderer,
-        const MDCTools::CFADesc& cfaDesc,
+        const Toastbox::CFADesc& cfaDesc,
         id<MTLTexture> raw
     ) {
         return FFCC::Run(_Model, renderer, cfaDesc, raw);

@@ -159,6 +159,8 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
                 _image.image.width, _image.image.height, (ImagePixel*)(_image.image.data.get()));
             
             Pipeline::Run(_renderer, popts, rawTxt, _image.txt);
+            
+//            _renderer.debugTextureShow(rawTxt);
         
         } else {
             const size_t w = ImageThumb::ThumbWidth;

@@ -26,7 +26,7 @@ namespace MDCStudio {
 struct Image {
     size_t width = 0;
     size_t height = 0;
-    MDCTools::CFADesc cfaDesc;
+    Toastbox::CFADesc cfaDesc;
     std::unique_ptr<uint8_t[]> data;
     operator bool() const { return (bool)data; }
 };
@@ -218,9 +218,9 @@ struct ImageSource : Object {
     
     static constexpr uint32_t _Version = 0;
     
-    static constexpr MDCTools::CFADesc _CFADesc = {
-        MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
-        MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
+    static constexpr Toastbox::CFADesc _CFADesc = {
+        Toastbox::CFAColor::Green, Toastbox::CFAColor::Red,
+        Toastbox::CFAColor::Blue, Toastbox::CFAColor::Green,
     };
     
     struct [[gnu::packed]] _SerializedState {
@@ -360,6 +360,7 @@ struct ImageSource : Object {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         using namespace Toastbox;
+        using namespace std::chrono;
         
         CCM ccm;
         
@@ -371,7 +372,14 @@ struct ImageSource : Object {
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
                 Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
             
+            auto timeStart = std::chrono::steady_clock::now();
+            
             ccm.illum = (estimateIlluminant ? EstimateIlluminant::Run(renderer, _CFADesc, rawTxt) : ColorRaw(opts.whiteBalance.illum));
+            
+            const microseconds duration = duration_cast<microseconds>(steady_clock::now()-timeStart);
+            printf("EstimateIlluminant took %ju us\n", (uintmax_t)duration.count());
+            
+            
             ccm.matrix = (estimateIlluminant ? ColorMatrixForIlluminant(ccm.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix));
             
             const Pipeline::Options popts = {

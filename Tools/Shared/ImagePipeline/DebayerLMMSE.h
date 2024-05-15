@@ -9,7 +9,7 @@ class DebayerLMMSE {
 public:
     static void Run(
         Toastbox::Renderer& renderer,
-        const MDCTools::CFADesc& cfaDesc,
+        const Toastbox::CFADesc& cfaDesc,
         bool applyGamma,
         id<MTLTexture> srcRaw,
         id<MTLTexture> dstRGB

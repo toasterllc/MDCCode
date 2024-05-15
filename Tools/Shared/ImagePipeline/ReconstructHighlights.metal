@@ -1,6 +1,6 @@
 #import <metal_stdlib>
 #import "ImagePipelineTypes.h"
-#import "../CFA.h"
+#import "Code/Lib/Toastbox/Mac/CFA.h"
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools;
@@ -103,7 +103,7 @@ fragment float2 Blur(
 }
 
 fragment float ReconstructHighlights(
-    constant MDCTools::CFADesc& cfaDesc [[buffer(0)]],
+    constant Toastbox::CFADesc& cfaDesc [[buffer(0)]],
     constant float3& illum [[buffer(1)]],
     texture2d<float> raw [[texture(0)]],
     texture2d<float> rgb [[texture(1)]],
@@ -111,16 +111,16 @@ fragment float ReconstructHighlights(
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const MDCTools::CFAColor c = cfaDesc.color(pos);
+    const Toastbox::CFAColor c = cfaDesc.color(pos);
     const float r = Sample::R(Sample::MirrorClamp, raw, pos);
     const float2 m = Sample::RG(Sample::MirrorClamp, map, pos);
     const float k = m.r; // Illuminant brightness
     const float α = m.g; // Alpha channel
     
     switch (c) {
-    case MDCTools::CFAColor::Red:       return (α)*k*illum.r + (1-α)*r;
-    case MDCTools::CFAColor::Green:     return (α)*k*illum.g + (1-α)*r;
-    case MDCTools::CFAColor::Blue:      return (α)*k*illum.b + (1-α)*r;
+    case Toastbox::CFAColor::Red:       return (α)*k*illum.r + (1-α)*r;
+    case Toastbox::CFAColor::Green:     return (α)*k*illum.g + (1-α)*r;
+    case Toastbox::CFAColor::Blue:      return (α)*k*illum.b + (1-α)*r;
     }
     return 0;
 }

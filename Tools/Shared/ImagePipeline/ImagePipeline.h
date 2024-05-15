@@ -1,20 +1,20 @@
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
-#import "../Mat.h"
-#import "../Color.h"
 #import "Defringe.h"
 #import "ImagePipelineTypes.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
+#import "Code/Lib/Toastbox/Mac/Color.h"
+#import "Code/Lib/Toastbox/Mac/Mat.h"
 
 namespace MDCTools::ImagePipeline {
 
-using ColorRaw = MDCTools::Color<MDCTools::ColorSpace::Raw>;
-using ColorMatrix = Mat<double,3,3>;
+using ColorRaw = Toastbox::Color<Toastbox::ColorSpace::Raw>;
+using ColorMatrix = Toastbox::Mat<double,3,3>;
 
 class Pipeline {
 public:
 //    struct DebayerOptions {
-//        MDCTools::CFADesc cfaDesc;
+//        Toastbox::CFADesc cfaDesc;
 //        ColorRaw illum;
 //        
 //        struct {
@@ -41,7 +41,7 @@ public:
     };
     
     struct Options {
-        MDCTools::CFADesc cfaDesc;
+        Toastbox::CFADesc cfaDesc;
         
         std::optional<ColorRaw> illum;
         std::optional<ColorMatrix> colorMatrix;
@@ -83,7 +83,7 @@ public:
 //    static ColorRaw IlluminantEstimate(const ColorRaw& illum);
 //    static ColorMatrix ColorMatrixForIlluminant(const ColorRaw& illum);
     
-//    static Color<ColorSpace::Raw> EstimateIlluminant(Toastbox::Renderer& renderer, const MDCTools::CFADesc& cfaDesc, id<MTLTexture> srcRaw);
+//    static Color<ColorSpace::Raw> EstimateIlluminant(Toastbox::Renderer& renderer, const Toastbox::CFADesc& cfaDesc, id<MTLTexture> srcRaw);
     static void Run(Toastbox::Renderer& renderer, const Options& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
     
     static void TimestampOverlayRender(Toastbox::Renderer& renderer,

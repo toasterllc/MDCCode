@@ -1,19 +1,16 @@
 #import "FFCC.h"
-#import "ImagePipelineTypes.h"
-#import "../Color.h"
-#import "../Mod.h"
+#import "Code/Lib/Toastbox/Mac/Color.h"
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
+#import "Code/Lib/Toastbox/Mac/Mod.h"
 using namespace Toastbox;
-using namespace MDCTools;
-using namespace MDCTools::ImagePipeline;
 
 using Mat64     = FFCC::Mat64;
 using Mat64c    = FFCC::Mat64c;
 using Vec2      = FFCC::Vec2;
 using Vec3      = FFCC::Vec3;
 
-#define _ShaderNamespace ImagePipelineShaderNamespace "FFCC::"
+#define _ShaderNamespace "FFCC::"
 
 static Renderer::Txt _createMaskedImage(Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt maskedImg = renderer.textureCreate(img);
@@ -251,7 +248,7 @@ FFCC::Vec3 FFCC::Run(
     {
         Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, [raw width], [raw height]);
         renderer.render(rgb,
-            renderer.FragmentShader(ImagePipelineShaderNamespace "DebayerBilinear::Debayer",
+            renderer.FragmentShader(_ShaderNamespace "Debayer",
                 // Buffer args
                 cfaDesc,
                 // Texture args
@@ -261,7 +258,7 @@ FFCC::Vec3 FFCC::Run(
         
         // Scale the image to w * h
         renderer.render(img,
-            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Scale",
+            renderer.FragmentShader(_ShaderNamespace "Scale",
                 // Texture args
                 rgb
             )
