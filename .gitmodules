@@ -22,3 +22,6 @@
 [submodule "Code/Lib/AnchoredScrollView"]
 	path = Code/Lib/AnchoredScrollView
 	url = git@github.com:toasterllc/AnchoredScrollView.git
+[submodule "Code/Lib/FFCC-Metal"]
+	path = Code/Lib/FFCC-Metal
+	url = git@github.com:toasterllc/FFCC-Metal.git

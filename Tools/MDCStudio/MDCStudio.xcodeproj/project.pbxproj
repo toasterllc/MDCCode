@@ -83,6 +83,8 @@
 		55A884CD2B23CCD0004D6564 /* ICEApp.bin in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CB2B23CCCF004D6564 /* ICEApp.bin */; };
 		55ADD4EE2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */; };
 		55B451062ADA583000CE1C51 /* Photon-Icon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55B451042ADA583000CE1C51 /* Photon-Icon.pdf */; };
+		55C1BE8E2BF5A4F8004A4FAC /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BE732BF5A4EA004A4FAC /* FFCC.metal */; };
+		55C1BE8F2BF5A4FA004A4FAC /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BE8A2BF5A4EA004A4FAC /* FFCC.mm */; };
 		55C6A26E2AE44559008149AF /* ImageExportSaveDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */; };
 		55C6A26F2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A26D2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib */; };
 		55C6A27A2AE44599008149AF /* ImageExportProgressDialog.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2772AE44599008149AF /* ImageExportProgressDialog.xib */; };
@@ -103,7 +105,6 @@
 		55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */; };
 		55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F7D28C00D6B00FCCEA0 /* LocalContrast.metal */; };
 		55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8028C00D6B00FCCEA0 /* Saturation.metal */; };
-		55E43F9628C00D6B00FCCEA0 /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8128C00D6B00FCCEA0 /* FFCC.metal */; };
 		55E43F9728C00D6B00FCCEA0 /* Defringe.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8328C00D6B00FCCEA0 /* Defringe.metal */; };
 		55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8428C00D6B00FCCEA0 /* ImagePipeline.mm */; };
 		55E43F9928C00D6B00FCCEA0 /* DebayerLMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8528C00D6B00FCCEA0 /* DebayerLMMSE.metal */; };
@@ -111,7 +112,6 @@
 		55E43F9B28C00D6B00FCCEA0 /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8928C00D6B00FCCEA0 /* ImagePipeline.metal */; };
 		55E43F9E28C00D6B00FCCEA0 /* DebayerBilinear.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8F28C00D6B00FCCEA0 /* DebayerBilinear.metal */; };
 		55E43F9F28C00D6B00FCCEA0 /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F9028C00D6B00FCCEA0 /* RenderThumb.metal */; };
-		55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F9228C00D6B00FCCEA0 /* FFCC.mm */; };
 		55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */; };
 		55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */; };
 		55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */; };
@@ -315,6 +315,9 @@
 		55C1BDA52BF578C1004A4FAC /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		55C1BDA62BF5794C004A4FAC /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
 		55C1BDA72BF57AB6004A4FAC /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mod.h; sourceTree = "<group>"; };
+		55C1BE732BF5A4EA004A4FAC /* FFCC.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = FFCC.metal; sourceTree = "<group>"; };
+		55C1BE742BF5A4EA004A4FAC /* FFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FFCC.h; sourceTree = "<group>"; };
+		55C1BE8A2BF5A4EA004A4FAC /* FFCC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
 		55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageExporterTypes.h; sourceTree = "<group>"; };
 		55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineUtil.h; sourceTree = "<group>"; };
 		55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExportSaveDialog.mm; sourceTree = "<group>"; };
@@ -359,8 +362,6 @@
 		55E43F7D28C00D6B00FCCEA0 /* LocalContrast.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
 		55E43F7F28C00D6B00FCCEA0 /* LocalContrast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
 		55E43F8028C00D6B00FCCEA0 /* Saturation.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
-		55E43F8128C00D6B00FCCEA0 /* FFCC.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FFCC.metal; sourceTree = "<group>"; };
-		55E43F8228C00D6B00FCCEA0 /* FFCC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FFCC.h; sourceTree = "<group>"; };
 		55E43F8328C00D6B00FCCEA0 /* Defringe.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
 		55E43F8428C00D6B00FCCEA0 /* ImagePipeline.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImagePipeline.mm; sourceTree = "<group>"; };
 		55E43F8528C00D6B00FCCEA0 /* DebayerLMMSE.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DebayerLMMSE.metal; sourceTree = "<group>"; };
@@ -374,7 +375,6 @@
 		55E43F8F28C00D6B00FCCEA0 /* DebayerBilinear.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DebayerBilinear.metal; sourceTree = "<group>"; };
 		55E43F9028C00D6B00FCCEA0 /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
 		55E43F9128C00D6B00FCCEA0 /* Saturation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
-		55E43F9228C00D6B00FCCEA0 /* FFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
 		55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DownsampleDiscardRaw.metal; sourceTree = "<group>"; };
 		55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageView-Shadow@2x.png"; sourceTree = "<group>"; };
 		55F7551829B955C100241672 /* MockImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MockImageSource.h; sourceTree = "<group>"; };
@@ -621,6 +621,7 @@
 		5544AE1527B5E58F006AB473 /* Lib */ = {
 			isa = PBXGroup;
 			children = (
+				55C1BE722BF5A4EA004A4FAC /* FFCC-Metal */,
 				551FFA622BAFBC4D0056263C /* AnchoredScrollView */,
 				55D3099329A828070080BCBD /* date */,
 				5544AE1627B5E58F006AB473 /* Toastbox */,
@@ -828,6 +829,16 @@
 			path = ImageExporter;
 			sourceTree = "<group>";
 		};
+		55C1BE722BF5A4EA004A4FAC /* FFCC-Metal */ = {
+			isa = PBXGroup;
+			children = (
+				55C1BE732BF5A4EA004A4FAC /* FFCC.metal */,
+				55C1BE742BF5A4EA004A4FAC /* FFCC.h */,
+				55C1BE8A2BF5A4EA004A4FAC /* FFCC.mm */,
+			);
+			path = "FFCC-Metal";
+			sourceTree = "<group>";
+		};
 		55C6A26A2AE44559008149AF /* ImageExportSaveDialog */ = {
 			isa = PBXGroup;
 			children = (
@@ -910,9 +921,6 @@
 				55E43F8D28C00D6B00FCCEA0 /* Defringe.h */,
 				55E43F8328C00D6B00FCCEA0 /* Defringe.metal */,
 				55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */,
-				55E43F8228C00D6B00FCCEA0 /* FFCC.h */,
-				55E43F9228C00D6B00FCCEA0 /* FFCC.mm */,
-				55E43F8128C00D6B00FCCEA0 /* FFCC.metal */,
 				558FFC5629C8F26F0022E840 /* EstimateIlluminant.h */,
 				558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */,
 				55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */,
@@ -1103,7 +1111,6 @@
 				551FFA692BAFBC4D0056263C /* AnchoredScrollView.mm in Sources */,
 				5544AE5D27B6EE04006AB473 /* Document.mm in Sources */,
 				55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */,
-				55E43F9628C00D6B00FCCEA0 /* FFCC.metal in Sources */,
 				55E43F9F28C00D6B00FCCEA0 /* RenderThumb.metal in Sources */,
 				554243AE2B3EC4DB00BDFE25 /* PrintImages.mm in Sources */,
 				5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */,
@@ -1112,7 +1119,6 @@
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
 				55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */,
 				5568449D2BB22954008F59AE /* Renderer.metal in Sources */,
-				55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */,
 				5536310A2B7E894B0054E321 /* ImageGridContainerView.mm in Sources */,
 				558E200A2AC4B608001E743A /* DeviceImageGridHeaderView.mm in Sources */,
 				55F8882729D8DADD0075593F /* TokenField.mm in Sources */,
@@ -1125,6 +1131,7 @@
 				551FFA6B2BAFBC4D0056263C /* AnchoredDocumentView.mm in Sources */,
 				55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */,
 				55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */,
+				55C1BE8F2BF5A4FA004A4FAC /* FFCC.mm in Sources */,
 				55C6A27B2AE44599008149AF /* ImageExportProgressDialog.mm in Sources */,
 				55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */,
 				55E43F9E28C00D6B00FCCEA0 /* DebayerBilinear.metal in Sources */,
@@ -1133,6 +1140,7 @@
 				55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */,
 				5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */,
 				55116D302B3CC130004617DD /* ProgressBar.mm in Sources */,
+				55C1BE8E2BF5A4F8004A4FAC /* FFCC.metal in Sources */,
 				5514532B2B4116B20056A92D /* ColorButtonCell.mm in Sources */,
 				55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */,
 				55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */,
@@ -1214,11 +1222,12 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/Source $PROJECT_DIR/../.. $PROJECT_DIR/../../Code/Lib";
+				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/Source $PROJECT_DIR/../.. $PROJECT_DIR/../../Code $PROJECT_DIR/../../Code/Lib";
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = (
 					$PROJECT_DIR/Source,
 					$PROJECT_DIR/../..,
+					$PROJECT_DIR/../../Code,
 					$PROJECT_DIR/../../Code/Lib,
 					$PROJECT_DIR/../../Code/Lib/date/include,
 				);
