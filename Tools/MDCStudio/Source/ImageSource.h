@@ -372,13 +372,12 @@ struct ImageSource : Object {
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
                 Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
             
-            auto timeStart = std::chrono::steady_clock::now();
+//            auto timeStart = std::chrono::steady_clock::now();
             
             ccm.illum = (estimateIlluminant ? EstimateIlluminant::Run(renderer, _CFADesc, rawTxt) : ColorRaw(opts.whiteBalance.illum));
             
-            const microseconds duration = duration_cast<microseconds>(steady_clock::now()-timeStart);
-            printf("EstimateIlluminant took %ju us\n", (uintmax_t)duration.count());
-            
+//            const microseconds duration = duration_cast<microseconds>(steady_clock::now()-timeStart);
+//            printf("EstimateIlluminant took %ju us\n", (uintmax_t)duration.count());
             
             ccm.matrix = (estimateIlluminant ? ColorMatrixForIlluminant(ccm.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix));
             
