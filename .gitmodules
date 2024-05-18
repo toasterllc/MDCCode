@@ -25,3 +25,6 @@
 [submodule "Code/Lib/FFCC-Metal"]
 	path = Code/Lib/FFCC-Metal
 	url = git@github.com:toasterllc/FFCC-Metal.git
+[submodule "Code/Lib/LMMSE-Metal"]
+	path = Code/Lib/LMMSE-Metal
+	url = git@github.com:toasterllc/LMMSE-Metal.git

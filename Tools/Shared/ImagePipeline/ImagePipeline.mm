@@ -4,10 +4,10 @@
 #import "ImagePipelineTypes.h"
 #import "Defringe.h"
 #import "ReconstructHighlights.h"
-#import "DebayerLMMSE.h"
 #import "LocalContrast.h"
 #import "Saturation.h"
 #import "EstimateIlluminant.h"
+#import "Code/Lib/LMMSE-Metal/LMMSE.h"
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Mac/Mat.h"
@@ -114,7 +114,7 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         
         // LMMSE Debayer
         {
-            DebayerLMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, srcRgb);
+            LMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, srcRgb);
         }
     }
     
