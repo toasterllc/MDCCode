@@ -99,23 +99,20 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     assert(srcRaw);
     assert(dstRgb);
     
-    // Debayer
+    // Reconstruct highlights
+    if (opts.reconstructHighlights.en) {
+        assert(opts.illum);
+        ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum->m, srcRaw);
+    }
+    
+    if (opts.defringe.en) {
+        Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
+    }
+    
+    // LMMSE Debayer
     Renderer::Txt srcRgb = renderer.textureCreate(srcRaw, MTLPixelFormatRGBA32Float);
     {
-        // Reconstruct highlights
-        if (opts.reconstructHighlights.en) {
-            assert(opts.illum);
-            ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum->m, srcRaw);
-        }
-        
-        if (opts.defringe.en) {
-            Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
-        }
-        
-        // LMMSE Debayer
-        {
-            LMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, srcRgb);
-        }
+        LMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, srcRgb);
     }
     
     // White balance
