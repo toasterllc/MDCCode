@@ -105,11 +105,12 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum->m, srcRaw);
     }
     
+    // Defringe (currently unused)
     if (opts.defringe.en) {
         Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
     }
     
-    // LMMSE Debayer
+    // Debayer (LMMSE)
     Renderer::Txt srcRgb = renderer.textureCreate(srcRaw, MTLPixelFormatRGBA32Float);
     {
         LMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, srcRgb);
@@ -131,7 +132,7 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         );
     }
     
-    // Camera raw -> ProPhotoRGB.D50
+    // Color correction (Camera raw -> ProPhotoRGB.D50)
     if (opts.colorMatrix) {
         const ColorMatrix& colorMatrix = *opts.colorMatrix;
         // If a color matrix was provided, use it.
