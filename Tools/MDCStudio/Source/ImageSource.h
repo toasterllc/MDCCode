@@ -357,8 +357,7 @@ struct ImageSource : Object {
     static CCM _ThumbRender(Toastbox::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage& tmpStorage,
         const ImageOptions& opts, bool estimateIlluminant, const void* src, void* dst) {
         
-        using namespace MDCTools;
-        using namespace ImagePipeline;
+                using namespace ImagePipeline;
         using namespace Toastbox;
         using namespace std::chrono;
         

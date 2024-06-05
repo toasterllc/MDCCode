@@ -10,8 +10,7 @@ using namespace MDCStudio;
 
 static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPtr& rec) {
     using namespace Toastbox;
-    using namespace MDCTools;
-    using namespace ImagePipeline;
+        using namespace ImagePipeline;
     
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     Toastbox::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);

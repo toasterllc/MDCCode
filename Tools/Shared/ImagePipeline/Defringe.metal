@@ -3,7 +3,6 @@
 #import "Code/Lib/Toastbox/Mac/CFA.h"
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
-using namespace MDCTools;
 using namespace ImagePipeline;
 using namespace Toastbox;
 using namespace Toastbox::MetalUtil;

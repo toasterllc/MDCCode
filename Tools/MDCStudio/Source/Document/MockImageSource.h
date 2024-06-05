@@ -60,8 +60,7 @@ public:
         ThumbCompressor& compressor, TmpStorage& tmpStorage, NSURL* url, ImageRecord& rec) {
         
         using namespace MDCStudio;
-        using namespace MDCTools;
-        using namespace ImagePipeline;
+                using namespace ImagePipeline;
         
         // Load thumbnail from `url`, store in txtRgba32
         Renderer::Txt txtRgba32;
@@ -142,8 +141,7 @@ public:
     
     void _threadRenderThumbs() {
         using namespace MDCStudio;
-        using namespace MDCTools;
-        using namespace ImagePipeline;
+                using namespace ImagePipeline;
         
         id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
         MTKTextureLoader* txtLoader = [[MTKTextureLoader alloc] initWithDevice:dev];

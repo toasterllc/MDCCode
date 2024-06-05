@@ -12,7 +12,6 @@
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Mac/Mat.h"
 using namespace Toastbox;
-using namespace MDCTools;
 
 static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
     return {

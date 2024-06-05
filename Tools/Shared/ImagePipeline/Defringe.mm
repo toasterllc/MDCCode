@@ -7,7 +7,6 @@
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 #import "ImagePipelineTypes.h"
 using namespace Toastbox;
-using namespace MDCTools;
 using namespace ImagePipeline;
 
 using Poly = Poly2D<double,4>;

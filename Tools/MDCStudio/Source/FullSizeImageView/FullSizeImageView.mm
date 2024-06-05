@@ -15,7 +15,6 @@
 #import "ImageExporter/ImageExporter.h"
 using namespace MDCStudio;
 using namespace MDCStudio::FullSizeImageViewTypes;
-using namespace MDCTools;
 
 struct _ImageLoadThreadState {
     Toastbox::Signal signal; // Protects this struct
@@ -128,8 +127,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
 }
 
 - (void)display {
-    using namespace MDCTools;
-    using namespace ImagePipeline;
+        using namespace ImagePipeline;
     using namespace Toastbox;
     
     [super display];
