@@ -3,7 +3,7 @@
 #import "ImagePipelineTypes.h"
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 
-namespace MDCTools::ImagePipeline {
+namespace ImagePipeline {
 
 class Saturation {
 public:
@@ -49,4 +49,4 @@ public:
     }
 };
 
-}; // MDCTools::ImagePipeline
+}; // ImagePipeline

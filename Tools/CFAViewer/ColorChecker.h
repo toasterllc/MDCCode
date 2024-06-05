@@ -1,12 +1,12 @@
 #import "BaseView.h"
-#import "Color.h"
+#import "Lib/Toastbox/Mac/Color.h"
 
 namespace ColorChecker {
 
 constexpr size_t Count = 24;
 constexpr size_t WhiteIdx = 18; // Index of the white square (used as the illuminant / white point)
 
-const MDCTools::Color<MDCTools::ColorSpace::SRGB> Colors[Count] {
+const Toastbox::Color<Toastbox::ColorSpace::SRGB> Colors[Count] {
     // Row 0
     {   0x73/255.   ,   0x52/255.   ,   0x44/255.   },
     {   0xc2/255.   ,   0x96/255.   ,   0x82/255.   },

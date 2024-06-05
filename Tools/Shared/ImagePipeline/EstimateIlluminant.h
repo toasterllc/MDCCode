@@ -4,7 +4,7 @@
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Mac/Color.h"
 
-namespace MDCTools::ImagePipeline {
+namespace ImagePipeline {
 
 class EstimateIlluminant {
 public:
@@ -23,4 +23,4 @@ private:
     static const uint64_t _BVals[4096];
 };
 
-} // namespace MDCTools::ImagePipeline
+} // namespace ImagePipeline

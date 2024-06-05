@@ -2,7 +2,7 @@
 #import "ImagePipelineTypes.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 
-namespace MDCTools::ImagePipeline {
+namespace ImagePipeline {
 
 class RenderThumb {
 public:
@@ -83,4 +83,4 @@ public:
 //    constexpr MTLResourceOptions _BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
 };
 
-} // namespace MDCTools::ImagePipeline
+} // namespace ImagePipeline

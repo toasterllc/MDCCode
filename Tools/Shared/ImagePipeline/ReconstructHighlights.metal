@@ -4,10 +4,9 @@
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools;
-using namespace MDCTools::ImagePipeline;
+using namespace ImagePipeline;
 using namespace Toastbox::MetalUtil;
 
-namespace MDCTools {
 namespace ImagePipeline {
 namespace Shader {
 namespace ReconstructHighlights {
@@ -128,4 +127,3 @@ fragment float ReconstructHighlights(
 } // namespace ReconstructHighlights
 } // namespace Shader
 } // namespace ImagePipeline
-} // namespace MDCTools

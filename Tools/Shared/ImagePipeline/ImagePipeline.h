@@ -6,7 +6,7 @@
 #import "Code/Lib/Toastbox/Mac/Color.h"
 #import "Code/Lib/Toastbox/Mac/Mat.h"
 
-namespace MDCTools::ImagePipeline {
+namespace ImagePipeline {
 
 using ColorRaw = Toastbox::Color<Toastbox::ColorSpace::Raw>;
 using ColorMatrix = Toastbox::Mat<double,3,3>;
@@ -90,4 +90,4 @@ public:
         const TimestampOptions& opts, id<MTLTexture> txt);
 };
 
-} // namespace MDCTools::ImagePipeline
+} // namespace ImagePipeline

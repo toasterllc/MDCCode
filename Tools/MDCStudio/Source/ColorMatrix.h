@@ -3,8 +3,8 @@
 
 namespace MDCStudio {
 
-using ColorRaw = MDCTools::ImagePipeline::ColorRaw;
-using ColorMatrix = MDCTools::ImagePipeline::ColorMatrix;
+using ColorRaw = ImagePipeline::ColorRaw;
+using ColorMatrix = ImagePipeline::ColorMatrix;
 
 struct CCM {
     ColorRaw illum;

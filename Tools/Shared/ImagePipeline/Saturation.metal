@@ -3,9 +3,8 @@
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
 using namespace Toastbox::MetalUtil;
-using namespace MDCTools::ImagePipeline;
+using namespace ImagePipeline;
 
-namespace MDCTools {
 namespace ImagePipeline {
 namespace Shader {
 namespace Saturation {
@@ -104,4 +103,3 @@ fragment float4 Saturation(
 } // namespace Saturation
 } // namespace Shader
 } // namespace ImagePipeline
-} // namespace MDCTools

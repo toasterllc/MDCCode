@@ -4,7 +4,7 @@
 #import "ImagePipelineTypes.h"
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 
-namespace MDCTools::ImagePipeline {
+namespace ImagePipeline {
     class LocalContrast {
     public:
         static void Run(Toastbox::Renderer& renderer, float amount, float radius, id<MTLTexture> rgb) {

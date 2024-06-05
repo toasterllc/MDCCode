@@ -20,7 +20,7 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
     printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
     using namespace Toastbox;
     using namespace MDCTools;
-    using namespace MDCTools::ImagePipeline;
+    using namespace ImagePipeline;
     
     Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
         image.width, image.height, (ImagePixel*)(image.data.get()));

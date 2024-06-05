@@ -4,11 +4,10 @@
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools;
-using namespace MDCTools::ImagePipeline;
+using namespace ImagePipeline;
 using namespace Toastbox;
 using namespace Toastbox::MetalUtil;
 
-namespace MDCTools {
 namespace ImagePipeline {
 namespace Shader {
 namespace Defringe {
@@ -275,4 +274,3 @@ fragment float ApplyCorrection(
 } // namespace Defringe
 } // namespace Shader
 } // namespace ImagePipeline
-} // namespace MDCTools

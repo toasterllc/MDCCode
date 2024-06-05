@@ -129,7 +129,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
 
 - (void)display {
     using namespace MDCTools;
-    using namespace MDCTools::ImagePipeline;
+    using namespace ImagePipeline;
     using namespace Toastbox;
     
     [super display];

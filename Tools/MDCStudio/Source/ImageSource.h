@@ -358,7 +358,7 @@ struct ImageSource : Object {
         const ImageOptions& opts, bool estimateIlluminant, const void* src, void* dst) {
         
         using namespace MDCTools;
-        using namespace MDCTools::ImagePipeline;
+        using namespace ImagePipeline;
         using namespace Toastbox;
         using namespace std::chrono;
         

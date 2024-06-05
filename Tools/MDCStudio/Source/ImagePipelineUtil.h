@@ -17,7 +17,7 @@ static simd::float2 _TimestampPosition(ImageOptions::Corner corner) {
     abort();
 }
 
-inline MDCTools::ImagePipeline::Pipeline::Options PipelineOptionsForImage(const ImageRecord& rec,
+inline ImagePipeline::Pipeline::Options PipelineOptionsForImage(const ImageRecord& rec,
     const Image& image) {
     
     const ImageInfo& info = rec.info;

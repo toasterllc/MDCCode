@@ -4,11 +4,10 @@
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools;
-using namespace MDCTools::ImagePipeline;
+using namespace ImagePipeline;
 using namespace Toastbox;
 using namespace Toastbox::MetalUtil;
 
-namespace MDCTools {
 namespace ImagePipeline {
 namespace Shader {
 namespace Base {
@@ -523,4 +522,3 @@ fragment float4 TimestampFragmentShader(
 } // namespace Base
 } // namespace Shader
 } // namespace ImagePipeline
-} // namespace MDCTools

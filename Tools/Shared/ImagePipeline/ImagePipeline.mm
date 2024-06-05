@@ -28,7 +28,7 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
     };
 }
 
-namespace MDCTools::ImagePipeline {
+namespace ImagePipeline {
 
 //Color<ColorSpace::Raw> Pipeline::EstimateIlluminant(Renderer& renderer, const CFADesc& cfaDesc, id<MTLTexture> srcRaw) {
 //    return EstimateIlluminant::Run(renderer, cfaDesc, srcRaw);
@@ -309,4 +309,4 @@ void Pipeline::TimestampOverlayRender(Toastbox::Renderer& renderer,
     );
 }
 
-} // namespace MDCTools::ImagePipeline
+} // namespace ImagePipeline

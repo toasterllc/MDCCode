@@ -3,7 +3,6 @@
 using namespace metal;
 using namespace Toastbox::MetalUtil;
 
-namespace MDCTools {
 namespace ImagePipeline {
 namespace Shader {
 namespace RenderThumb {
@@ -50,4 +49,3 @@ fragment float4 TextureFromRGB3(
 } // namespace RenderThumb
 } // namespace Shader
 } // namespace ImagePipeline
-} // namespace MDCTools

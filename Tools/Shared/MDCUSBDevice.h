@@ -2,7 +2,6 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
-#include "Lockable.h"
 #include "Code/Lib/Toastbox/USB.h"
 #include "Code/Lib/Toastbox/USBDevice.h"
 #include "Code/Lib/Toastbox/RuntimeError.h"

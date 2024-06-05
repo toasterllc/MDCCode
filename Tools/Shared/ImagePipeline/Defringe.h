@@ -5,7 +5,7 @@
 #import "Code/Lib/Toastbox/Mac/CFA.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 
-namespace MDCTools::ImagePipeline {
+namespace ImagePipeline {
 
 class Defringe {
 public:
@@ -25,4 +25,4 @@ public:
     );
 };
 
-}; // MDCTools::ImagePipeline
+}; // ImagePipeline
