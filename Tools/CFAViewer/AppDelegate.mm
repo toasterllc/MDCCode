@@ -12,10 +12,12 @@
 #import <set>
 #import <chrono>
 #import "ImageLayer.h"
-#import "Toastbox/Mmap.h"
-#import "Toastbox/Mac/Util.h"
+#import "Code/Lib/Toastbox/Mmap.h"
+#import "Code/Lib/Toastbox/Mac/Util.h"
+#import "Code/Lib/Toastbox/Mac/CFA.h"
+#import "Code/Lib/Toastbox/Mac/Mat.h"
+#import "Code/Lib/Toastbox/Mac/Color.h"
 #import "Util.h"
-#import "Mat.h"
 #import "MainView.h"
 #import "HistogramView.h"
 #import "ColorChecker.h"
@@ -24,7 +26,6 @@
 #import "IOServiceWatcher.h"
 #import "Assert.h"
 #import "ImagePipelineTypes.h"
-#import "Color.h"
 #import "PixelSampler.h"
 #import "Img.h"
 #import "ImgAutoExposure.h"
@@ -35,9 +36,8 @@
 #import "ColorMatrix.h"
 #import "MDCDevicesManager.h"
 using namespace CFAViewer;
-using namespace MDCTools::ImagePipeline;
+using namespace ImagePipeline;
 using namespace Toastbox;
-using namespace MDCTools;
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
@@ -52,7 +52,7 @@ struct ExposureSettings {
 };
 
 struct RawImage {
-    MDCTools::CFADesc cfaDesc;
+    Toastbox::CFADesc cfaDesc;
     size_t width = 0;
     size_t height = 0;
     const Img::Pixel* pixels = nullptr;
@@ -175,8 +175,8 @@ struct RawImage {
         Img::Pixel pixels[2200*2200];
         RawImage image = {
             .cfaDesc = {
-                MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
-                MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
+                Toastbox::CFAColor::Green, Toastbox::CFAColor::Red,
+                Toastbox::CFAColor::Blue, Toastbox::CFAColor::Green,
             },
             .width = 0,
             .height = 0,
@@ -184,9 +184,9 @@ struct RawImage {
         };
     } _raw;
     
-    MDCTools::Color<MDCTools::ColorSpace::Raw> _sampleRaw;
-    MDCTools::Color<MDCTools::ColorSpace::XYZD50> _sampleXYZD50;
-    MDCTools::Color<MDCTools::ColorSpace::LSRGB> _sampleLSRGB;
+    Toastbox::Color<Toastbox::ColorSpace::Raw> _sampleRaw;
+    Toastbox::Color<Toastbox::ColorSpace::XYZD50> _sampleXYZD50;
+    Toastbox::Color<Toastbox::ColorSpace::LSRGB> _sampleLSRGB;
     
     ImagePaths _imagePaths;
     ImagePathsIter _imagePathIter;
@@ -205,9 +205,9 @@ struct RawImage {
     _device = MTLCreateSystemDefaultDevice();
     _renderer = Renderer(_device, [_device newDefaultLibrary], [_device newCommandQueue]);
     
-    static constexpr MDCTools::CFADesc CFADesc = {
-        MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
-        MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
+    static constexpr Toastbox::CFADesc CFADesc = {
+        Toastbox::CFAColor::Green, Toastbox::CFAColor::Red,
+        Toastbox::CFAColor::Blue, Toastbox::CFAColor::Green,
     };
     
     _pipelineOptions = {
