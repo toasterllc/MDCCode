@@ -1,9 +1,9 @@
 #import <metal_stdlib>
-#import "MetalUtil.h"
+#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 #import "ImagePipeline/ImagePipelineTypes.h"
 using namespace metal;
-using namespace MDCTools::MetalUtil;
-using namespace MDCTools::ImagePipeline;
+using namespace Toastbox::MetalUtil;
+using namespace ImagePipeline;
 
 static float _GrayscaleForRaw(
     texture2d<float> raw,

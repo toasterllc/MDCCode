@@ -757,7 +757,7 @@ static float _FocusValueCalc(Renderer& renderer, const Renderer::Txt& grayTxt, C
 //        printf("WB: %f %f %f\n", wb.r, wb.g, wb.b);
         
         _renderer.render(rawTxt,
-            _renderer.FragmentShader("MDCTools::ImagePipeline::Shader::" "Base::WhiteBalanceRaw",
+            _renderer.FragmentShader("ImagePipeline::Shader::" "Base::WhiteBalanceRaw",
                 // Buffer args
                 _raw.image.cfaDesc,
                 wb,

@@ -337,8 +337,8 @@
 		55C1C0632C114F1B004A4FAC /* FFCC-Metal */ = {
 			isa = PBXGroup;
 			children = (
-				55C1C0642C114F1B004A4FAC /* FFCC.metal */,
 				55C1C0652C114F1B004A4FAC /* FFCC.h */,
+				55C1C0642C114F1B004A4FAC /* FFCC.metal */,
 				55C1C07B2C114F1B004A4FAC /* FFCC.mm */,
 			);
 			path = "FFCC-Metal";
