@@ -451,7 +451,7 @@ struct ImageSource : Object {
     Image _imageCreate(const _ImageBuffer& buf) {
 //        assert(len >= Img::Full::ImageLen);
         auto data = std::make_unique<uint8_t[]>(Img::Full::PixelLen);
-        memcpy(data.get(), *buf+Img::PixelsOffset, Img::Full::ImageLen);
+        memcpy(data.get(), *buf+Img::PixelsOffset, Img::Full::PixelLen);
         return Image{
             .width = Img::Full::PixelWidth,
             .height = Img::Full::PixelHeight,
