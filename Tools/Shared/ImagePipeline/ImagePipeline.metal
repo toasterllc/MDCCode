@@ -363,58 +363,6 @@ fragment float4 XYZD65FromLSRGBD65(
     return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
 
-fragment float4 XYZD50FromProPhotoRGBD50(
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const float3x3 M = transpose(float3x3(
-        0.7976749,  0.1351917,  0.0313534,
-        0.2880402,  0.7118741,  0.0000857,
-        0.0000000,  0.0000000,  0.8252100
-    ));
-    return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
-}
-
-fragment float4 ProPhotoRGBD50FromXYZD50(
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const float3x3 M = transpose(float3x3(
-        1.3459433,  -0.2556075, -0.0511118,
-        -0.5445989, 1.5081673,  0.0205351,
-        0.0000000,  0.0000000,  1.2118128
-    ));
-    return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
-}
-
-//fragment float4 XYZD50FromLSRGBD65(
-//    constant SampleRect& sampleRect [[buffer(0)]],
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const float3 c_LSRGBD65 = Sample::RGB(txt, int2(in.pos.xy));
-//    
-//    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-//    const float3x3 XYZD50_From_XYZD65 = transpose(float3x3(
-//        
-//    ));
-//    
-//    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-//    const float3x3 XYZD65_From_LSRGBD65 = transpose(float3x3(
-//        3.2404542,  -1.5371385, -0.4985314,
-//        -0.9692660, 1.8760108,  0.0415560,
-//        0.0556434,  -0.2040259, 1.0572252
-//    ));
-//    
-//    const float3 c_XYZD50 = LSRGBD65_From_XYZD65 * XYZD65_From_XYZD50 * c_LSRGBD65;
-//    return float4(c_XYZD50, 1);
-//}
-
-
-
-
 // Atomically sets the value at `dst` if `val` is greater than it
 void setIfGreater(volatile device atomic_uint& dst, uint val) {
     uint current = (device uint&)dst;

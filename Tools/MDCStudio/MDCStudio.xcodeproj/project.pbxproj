@@ -375,7 +375,6 @@
 		55E43F9028C00D6B00FCCEA0 /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
 		55E43F9128C00D6B00FCCEA0 /* Saturation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
 		55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageView-Shadow@2x.png"; sourceTree = "<group>"; };
-		55F7551829B955C100241672 /* MockImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MockImageSource.h; sourceTree = "<group>"; };
 		55F7556C29BC21B500241672 /* ColorMatrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorMatrix.h; sourceTree = "<group>"; };
 		55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageGrid-ImagePlaceholder.png"; sourceTree = "<group>"; };
 		55F755C829C2C9A900241672 /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
@@ -662,7 +661,6 @@
 		5544AE5927B6EE04006AB473 /* Document */ = {
 			isa = PBXGroup;
 			children = (
-				55F7551829B955C100241672 /* MockImageSource.h */,
 				5544AE5F27B6F16E006AB473 /* DocumentController.h */,
 				5544AE6027B6F16F006AB473 /* DocumentController.mm */,
 				5544AE5C27B6EE04006AB473 /* Document.h */,
