@@ -28,3 +28,6 @@
 [submodule "Code/Lib/LMMSE-Metal"]
 	path = Code/Lib/LMMSE-Metal
 	url = git@github.com:toasterllc/LMMSE-Metal.git
+[submodule "Code/Lib/tinydng"]
+	path = Code/Lib/tinydng
+	url = git@github.com:toasterllc/tinydng.git
