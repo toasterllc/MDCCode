@@ -63,28 +63,23 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             (uint8_t)image.cfaDesc.color(0,1), (uint8_t)image.cfaDesc.color(1,1),
         };
         
-        const double asShotNeutral[] = { 0.33324006798300848, 0.64255025834598356, 0.68998566839477893 };
-        
-        const double colorMatrix1[] = {
-            1.7065, -0.5080, -0.1665,
-            -0.3383,  1.2074,  0.1439,
-            -0.1981,  0.4568,  0.8897,
+        const double asShotNeutral[] = {
+            rec.options.whiteBalance.illum[0],
+            rec.options.whiteBalance.illum[1],
+            rec.options.whiteBalance.illum[2],
         };
         
-        const double colorMatrix2[] = {
-            1.7065, -0.5080, -0.1665,
-            -0.3383,  1.2074,  0.1439,
-            -0.1981,  0.4568,  0.8897,
-        };
-        
-        const auto illum1 = tinydngwriter::LIGHTSOURCE_D50;
-        const auto illum2 = tinydngwriter::LIGHTSOURCE_D50;
+        const CCM ccm1 = ColorMatrixForInterpolation(0); // Indoors
+        const CCM ccm2 = ColorMatrixForInterpolation(1); // Outdoors
         
         const uint16_t blackLevel[] = { 0 };
-        const uint16_t whiteLevel[] = { 4095 };
+        const uint16_t whiteLevel[] = { Img::PixelMax };
         
         tinydngwriter::DNGImage dng;
-        dng.SetDNGVersion(1,3,0,0);
+        
+        // "Starting with DNG 1.6.0.0, the [CalibrationIlluminant1/2] may be set to
+        // 255 (Other) to indicate a custom illuminant."
+        dng.SetDNGVersion(1,6,0,0);
         dng.SetBigEndian(false);
         dng.SetSubfileType(false, false, false); // Full-resolution image
         dng.SetImageWidth((unsigned int)image.width);
@@ -97,10 +92,12 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         dng.SetSampleFormat(std::size(sampleFormat), sampleFormat);
         dng.SetCFARepeatPatternDim(2, 2);
         dng.SetCFAPattern(std::size(cfaPattern), cfaPattern);
-        dng.SetColorMatrix1(3, colorMatrix1);
-        dng.SetColorMatrix2(3, colorMatrix2);
-        dng.SetCalibrationIlluminant1(illum1);
-        dng.SetCalibrationIlluminant2(illum2);
+        // Invert the color matrices because they're supposed to convert from XYZ->raw
+        // Transpose the color matrices to get the raw values in row-major order
+        dng.SetColorMatrix1(3, &ccm1.matrix.inv().trans()[0]);
+        dng.SetColorMatrix2(3, &ccm2.matrix.inv().trans()[0]);
+        dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_TUNGSTEN_INCANDESCENT);
+        dng.SetCalibrationIlluminant2(tinydngwriter::LIGHTSOURCE_D50);
         dng.SetAsShotNeutral(std::size(asShotNeutral), asShotNeutral);
         dng.SetBlackLevel(std::size(blackLevel), blackLevel);
         dng.SetWhiteLevel(std::size(whiteLevel), whiteLevel);
