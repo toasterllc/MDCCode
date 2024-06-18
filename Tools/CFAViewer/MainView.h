@@ -1,8 +1,11 @@
 #import <Cocoa/Cocoa.h>
 #import <vector>
 #import "BaseView.h"
+#import "ColorChecker.h"
 @class ImageLayer;
 @protocol MainViewDelegate;
+
+using ColorCheckerPositions = std::array<CGPoint,ColorChecker::Count>;
 
 @interface MainView : BaseView
 
@@ -13,8 +16,9 @@
 
 - (CGRect)sampleRect;
 
-- (std::vector<CGPoint>)colorCheckerPositions;
-- (void)setColorCheckerPositions:(const std::vector<CGPoint>&)points;
+- (const ColorCheckerPositions&)colorCheckerPositions;
+- (void)setColorCheckerPositions:(const ColorCheckerPositions&)x;
+
 - (void)resetColorCheckerPositions;
 - (void)setColorCheckerCircleRadius:(CGFloat)r;
 - (void)setColorCheckersVisible:(bool)visible;

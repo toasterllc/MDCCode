@@ -786,7 +786,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     
     Color<ColorSpace::Raw> r;
     for (size_t i=0; i<3; i++) {
-        if (counts[i]) r[i] = (double)vals[i] / (ImagePixelMax*counts[i]);
+        if (counts[i]) r[i] = (double)vals[i] / (Img::PixelMax*counts[i]);
     }
     return r;
 }
@@ -1187,8 +1187,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 - (void)_updateColorMatrix {
     assert(_colorCheckersEnabled);
     
-    const std::vector<CGPoint> points = [_mainView colorCheckerPositions];
-    assert(points.size() == ColorChecker::Count);
+    const ColorCheckerPositions points = [_mainView colorCheckerPositions];
     
     // Sample the white square to get the illuminant
     const CGPoint whitePos = points[ColorChecker::WhiteIdx];
@@ -1277,11 +1276,12 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 
 // MARK: - Prefs
 
-- (std::vector<CGPoint>)_prefsColorCheckerPositions {
+- (ColorCheckerPositions)_prefsColorCheckerPositions {
     NSArray* nspoints = [[NSUserDefaults standardUserDefaults] objectForKey:ColorCheckerPositionsKey];
-    std::vector<CGPoint> points;
-    if ([nspoints count] != ColorChecker::Count) return {};
+    ColorCheckerPositions points;
+    if ([nspoints count] != points.size()) return {};
     if (![nspoints isKindOfClass:[NSArray class]]) return {};
+    size_t i = 0;
     for (NSArray* nspoint : nspoints) {
         if (![nspoint isKindOfClass:[NSArray class]]) return {};
         if ([nspoint count] != 2) return {};
@@ -1290,14 +1290,15 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
         NSNumber* nsy = nspoint[1];
         if (![nsx isKindOfClass:[NSNumber class]]) return {};
         if (![nsy isKindOfClass:[NSNumber class]]) return {};
-        points.push_back({[nsx doubleValue], [nsy doubleValue]});
+        points[i] = {[nsx doubleValue], [nsy doubleValue]};
+        i++;
     }
     return points;
 }
 
-- (void)_prefsSetColorCheckerPositions:(const std::vector<CGPoint>&)points {
+- (void)_prefsSetColorCheckerPositions:(const ColorCheckerPositions&)x {
     NSMutableArray* nspoints = [NSMutableArray new];
-    for (const CGPoint& p : points) {
+    for (const CGPoint& p : x) {
         [nspoints addObject:@[@(p.x), @(p.y)]];
     }
     [[NSUserDefaults standardUserDefaults] setObject:nspoints forKey:ColorCheckerPositionsKey];
