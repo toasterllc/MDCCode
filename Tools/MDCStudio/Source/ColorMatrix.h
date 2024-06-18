@@ -16,11 +16,11 @@ struct CCM {
 // We're assuming this is Standard A illuminant (incandescent / tungsten lighting)
 // TODO: perform more rigorous collection; in the future, use real Standard A lighting to collect these values
 const CCM _CCM1 = {
-    .illum = { 0.879884, 0.901580, 0.341031 },
+    .illum = { 0.880159, 0.902888, 0.340842 },
     .matrix = {
-        +0.626076, +0.128755, +0.245169,
-        -0.396581, +1.438671, -0.042090,
-        -0.195309, -0.784350, +1.979659,
+        +0.253550, +0.474052, +0.272397,
+        -0.182395, +1.121929, +0.060466,
+        -0.458151, -0.017908, +1.476060,
     },
 };
 
@@ -29,11 +29,11 @@ const CCM _CCM1 = {
 // We're assuming this is D50 illuminant ("horizon light")
 // TODO: perform more rigorous collection; in the future, use D65 daylight (noon daylight) lighting to collect these values
 const CCM _CCM2 = {
-    .illum = { 0.632708, 0.891153, 0.561737 },
+    .illum = { 0.638797, 0.900519, 0.567254 },
     .matrix = {
-        +0.724397, +0.115398, +0.160204,
-        -0.238233, +1.361934, -0.123701,
-        -0.061917, -0.651388, +1.713306,
+        +0.579444, +0.247106, +0.173450,
+        +0.093154, +0.983335, -0.076489,
+        -0.171737, -0.351732, +1.523468,
     },
 };
 

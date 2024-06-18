@@ -131,7 +131,7 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         );
     }
     
-    // Color correction (Camera raw -> ProPhotoRGB.D50)
+    // Color correction (Camera raw -> XYZ.D50)
     if (opts.colorMatrix) {
         const ColorMatrix& colorMatrix = *opts.colorMatrix;
         // If a color matrix was provided, use it.
@@ -146,15 +146,15 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         );
     }
     
-    // ProPhotoRGB.D50 -> XYZ.D50
-    {
-        renderer.render(srcRgb,
-            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGBD50",
-                // Texture args
-                srcRgb
-            )
-        );
-    }
+//    // ProPhotoRGB.D50 -> XYZ.D50
+//    {
+//        renderer.render(srcRgb,
+//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGBD50",
+//                // Texture args
+//                srcRgb
+//            )
+//        );
+//    }
     
     // XYZ.D50 -> XYY.D50
     {
