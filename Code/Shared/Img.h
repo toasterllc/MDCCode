@@ -3,8 +3,7 @@
 
 namespace Img {
 
-using Word  = uint16_t;
-using Pixel = Word;
+using Pixel = uint16_t;
 using Id = uint64_t;
 
 struct [[gnu::packed]] Header {
@@ -67,5 +66,6 @@ constexpr uint16_t StatsSubsampleFactor = 16;
 constexpr uint16_t CoarseIntTimeMax     = 16383;
 constexpr uint16_t FineIntTimeMax       = 16383;
 constexpr uint16_t AnalogGainMax        = 63;
+constexpr Pixel PixelMax                = 0x0FFF; // 12 bit values
 
 } // namespace Img

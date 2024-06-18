@@ -5,7 +5,7 @@
 
 namespace Interp {
     // Returns `x` for the matrix equation `Ax=b`
-    template <size_t Order>
+    template<size_t Order>
     Mat<double,1,(Order+1)*(Order+1)> calcTerms2D(double ky, double kx) {
         // Calculate each term: ky^y * kx^x
         Mat<double,1,(Order+1)*(Order+1)> yx;
@@ -24,7 +24,7 @@ namespace Interp::Linear {
     // Since the result represents the individual terms of the interpolation,
     // it can be used as a row of `A` in the matrix equation `Ax=b`, to solve
     // for `x`.
-    template <size_t H>
+    template<size_t H>
     Mat<double,H*2,1> interp(Mat<double,H,1> a0, Mat<double,H,1> a1) {
         Mat<double,H*2,1> r;
         for (size_t y=0; y<H; y++) {
@@ -146,7 +146,7 @@ namespace Interp::Quadratic {
     // Since the result represents the individual terms of the interpolation,
     // it can be used as a row of `A` in the matrix equation `Ax=b`, to solve
     // for `x`.
-    template <size_t H>
+    template<size_t H>
     Mat<double,H*3,1> interp(Mat<double,H,1> a0, Mat<double,H,1> a1, Mat<double,H,1> a2) {
         Mat<double,H*3,1> r;
         for (size_t y=0; y<H; y++) {
@@ -192,7 +192,7 @@ namespace Interp::Cubic {
     // interp() computes:
     //   k0*x3 + k1*x2 + k2*x + k3
     // and stores the terms as separate rows in the result
-    template <size_t H>
+    template<size_t H>
     Mat<double,H*4,1> interp(Mat<double,H,1> z0, Mat<double,H,1> z1, Mat<double,H,1> z2, Mat<double,H,1> z3) {
         Mat<double,H*4,1> r;
         for (size_t y=0; y<H; y++) {

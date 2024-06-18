@@ -260,7 +260,7 @@ static _DateFormatterState _DateFormatterStateCreate() {
         [x.timestampOffsetEXIFFormatter setLocale:[NSLocale autoupdatingCurrentLocale]];
         [x.timestampOffsetEXIFFormatter setCalendar:x.cal];
         [x.timestampOffsetEXIFFormatter setTimeZone:[x.cal timeZone]];
-        [x.timestampOffsetEXIFFormatter setDateFormat:@"ZZZZZ"];
+        [x.timestampOffsetEXIFFormatter setDateFormat:@"xxx"];
         [x.timestampOffsetEXIFFormatter setLenient:true];
     }
     

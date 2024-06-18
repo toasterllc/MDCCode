@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -724,7 +725,7 @@
             <windowStyleMask key="styleMask" titled="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="335" y="390" width="480" height="360"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="944"/>
             <view key="contentView" id="EiT-Mj-1SZ" customClass="MainView">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -738,7 +739,7 @@
             <windowStyleMask key="styleMask" titled="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="179" y="218" width="400" height="1045"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="944"/>
             <view key="contentView" id="SDP-Rt-KYP">
                 <rect key="frame" x="0.0" y="0.0" width="400" height="1045"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -750,16 +751,16 @@
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Htl-ND-O3N">
-                                    <rect key="frame" x="0.0" y="-762" width="400" height="1807"/>
+                                    <rect key="frame" x="0.0" y="-825" width="400" height="1870"/>
                                     <subviews>
                                         <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="ktH-HS-6VN">
-                                            <rect key="frame" x="18" y="1744" width="42" height="24"/>
+                                            <rect key="frame" x="18" y="1806" width="42" height="25"/>
                                             <connections>
                                                 <action selector="_streamImagesSwitchAction:" target="Voe-Tx-rLC" id="W1i-lr-DP7"/>
                                             </connections>
                                         </switch>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XjO-wo-Wvg">
-                                            <rect key="frame" x="18" y="1718" width="110" height="18"/>
+                                            <rect key="frame" x="18" y="1779" width="114" height="18"/>
                                             <buttonCell key="cell" type="check" title="Auto exposure" bezelStyle="regularSquare" imagePosition="left" inset="2" id="9vB-aW-W8B">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -768,16 +769,16 @@
                                                 <action selector="_streamSettingsAction:" target="Voe-Tx-rLC" id="U9Y-QD-h4B"/>
                                             </connections>
                                         </button>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PZc-YF-PY7">
-                                            <rect key="frame" x="64" y="1749" width="95" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PZc-YF-PY7">
+                                            <rect key="frame" x="64" y="1811" width="95" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Stream Images" id="7tF-ny-LX5">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="rvZ-kB-DXu">
-                                            <rect key="frame" x="20" y="1390" width="360" height="72"/>
+                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="rvZ-kB-DXu">
+                                            <rect key="frame" x="20" y="1444" width="360" height="72"/>
                                             <constraints>
                                                 <constraint firstAttribute="height" constant="72" id="jiO-w4-Cpg"/>
                                             </constraints>
@@ -790,8 +791,8 @@
                                                 <outlet property="delegate" destination="Voe-Tx-rLC" id="5aG-CX-4br"/>
                                             </connections>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gAk-uD-BoR">
-                                            <rect key="frame" x="18" y="1115" width="66" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gAk-uD-BoR">
+                                            <rect key="frame" x="18" y="1162" width="66" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="DEBAYER" id="qRM-TH-Gfl">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -799,9 +800,9 @@
                                             </textFieldCell>
                                         </textField>
                                         <customView identifier="Histogram-CamRaw.D50" translatesAutoresizingMaskIntoConstraints="NO" id="osY-3C-qNQ" customClass="HistogramView">
-                                            <rect key="frame" x="20" y="603" width="360" height="200"/>
+                                            <rect key="frame" x="20" y="648" width="360" height="200"/>
                                             <subviews>
-                                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qwO-Ta-OP0">
+                                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qwO-Ta-OP0">
                                                     <rect key="frame" x="8" y="174" width="86" height="16"/>
                                                     <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="CamRaw.D50" id="KR3-Kh-ubW">
                                                         <font key="font" metaFont="system"/>
@@ -817,9 +818,9 @@
                                             </constraints>
                                         </customView>
                                         <customView translatesAutoresizingMaskIntoConstraints="NO" id="4k6-Ff-4m2" customClass="HistogramView">
-                                            <rect key="frame" x="20" y="391" width="360" height="200"/>
+                                            <rect key="frame" x="20" y="436" width="360" height="200"/>
                                             <subviews>
-                                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y6t-iF-1mR">
+                                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y6t-iF-1mR">
                                                     <rect key="frame" x="8" y="174" width="69" height="16"/>
                                                     <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="SRGB.D65" id="VXq-x7-ZQi">
                                                         <font key="font" metaFont="system"/>
@@ -834,16 +835,16 @@
                                                 <constraint firstItem="Y6t-iF-1mR" firstAttribute="top" secondItem="4k6-Ff-4m2" secondAttribute="top" constant="10" id="Zze-x2-ast"/>
                                             </constraints>
                                         </customView>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xoy-54-fme">
-                                            <rect key="frame" x="18" y="350" width="68" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xoy-54-fme">
+                                            <rect key="frame" x="18" y="395" width="68" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="SAMPLER" id="aIX-fK-mJJ">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kjM-IQ-0EC">
-                                            <rect key="frame" x="18" y="326" width="104" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kjM-IQ-0EC">
+                                            <rect key="frame" x="18" y="371" width="104" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="100" id="wBV-En-hJS"/>
                                             </constraints>
@@ -853,8 +854,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MO3-af-L9c">
-                                            <rect key="frame" x="18" y="302" width="104" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MO3-af-L9c">
+                                            <rect key="frame" x="18" y="347" width="104" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="100" id="1g0-J9-zSn"/>
                                             </constraints>
@@ -864,8 +865,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="A3f-eO-2vD">
-                                            <rect key="frame" x="18" y="278" width="104" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="A3f-eO-2vD">
+                                            <rect key="frame" x="18" y="323" width="104" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="100" id="ha3-y0-JzY"/>
                                             </constraints>
@@ -875,24 +876,24 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="70j-FK-iLi">
-                                            <rect key="frame" x="126" y="326" width="256" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="70j-FK-iLi">
+                                            <rect key="frame" x="126" y="371" width="256" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="color" id="w2I-gt-BNe">
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uWQ-FQ-fcu">
-                                            <rect key="frame" x="126" y="302" width="256" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uWQ-FQ-fcu">
+                                            <rect key="frame" x="126" y="347" width="256" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="color" id="Yho-Ho-DY4">
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="wL3-uf-dpp">
-                                            <rect key="frame" x="126" y="278" width="256" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="wL3-uf-dpp">
+                                            <rect key="frame" x="126" y="323" width="256" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="color" id="RdH-al-JcE">
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -900,7 +901,7 @@
                                             </textFieldCell>
                                         </textField>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="EL2-w7-89T">
-                                            <rect key="frame" x="319" y="1462" width="66" height="27"/>
+                                            <rect key="frame" x="318" y="1517" width="68" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="kWi-ZT-WfE">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="label" size="11"/>
@@ -910,28 +911,28 @@
                                             </connections>
                                         </button>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1Th-eO-8Sc">
-                                            <rect key="frame" x="18" y="230" width="304" height="19"/>
+                                            <rect key="frame" x="18" y="266" width="304" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="3" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="hva-Md-PUW"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="ZFW-Ay-lx2"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="upA-f1-hue">
-                                            <rect key="frame" x="18" y="207" width="304" height="19"/>
+                                            <rect key="frame" x="18" y="238" width="304" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="3" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="Q0d-Td-jQG"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="dCt-ZE-JVe"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zQK-wl-iSr">
-                                            <rect key="frame" x="18" y="184" width="304" height="19"/>
+                                            <rect key="frame" x="18" y="210" width="304" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="3" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="Fyy-IZ-Lc2"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="2Aw-qb-xlR"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="q61-MO-178">
-                                            <rect key="frame" x="338" y="231" width="44" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="q61-MO-178">
+                                            <rect key="frame" x="338" y="274" width="44" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="w2g-xy-ln8"/>
                                             </constraints>
@@ -941,8 +942,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SVG-zB-67p">
-                                            <rect key="frame" x="338" y="208" width="44" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SVG-zB-67p">
+                                            <rect key="frame" x="338" y="246" width="44" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="833-K3-3XP"/>
                                             </constraints>
@@ -952,8 +953,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IQj-1K-ea4">
-                                            <rect key="frame" x="338" y="185" width="44" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IQj-1K-ea4">
+                                            <rect key="frame" x="338" y="218" width="44" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="0hQ-Cv-xi7"/>
                                             </constraints>
@@ -964,28 +965,28 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Shi-kw-rTa">
-                                            <rect key="frame" x="18" y="145" width="304" height="19"/>
+                                            <rect key="frame" x="18" y="166" width="304" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="E9t-YK-KI3"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="UTA-GJ-eDs"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KIo-4m-3AR">
-                                            <rect key="frame" x="18" y="122" width="304" height="19"/>
+                                            <rect key="frame" x="18" y="138" width="304" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="Ztg-Sb-m0f"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="yan-YN-hVD"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="k5K-pT-L2W">
-                                            <rect key="frame" x="18" y="99" width="304" height="19"/>
+                                            <rect key="frame" x="18" y="110" width="304" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="OFM-Wq-V2m"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="ywM-ZS-Pa3"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xlP-aa-4HM">
-                                            <rect key="frame" x="338" y="146" width="44" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xlP-aa-4HM">
+                                            <rect key="frame" x="338" y="174" width="44" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="xlA-qJ-RZW"/>
                                             </constraints>
@@ -995,8 +996,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="AMs-PB-GWi">
-                                            <rect key="frame" x="338" y="123" width="44" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="AMs-PB-GWi">
+                                            <rect key="frame" x="338" y="146" width="44" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="xTs-mR-WCf"/>
                                             </constraints>
@@ -1006,8 +1007,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2dC-Xf-ZpL">
-                                            <rect key="frame" x="338" y="100" width="44" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2dC-Xf-ZpL">
+                                            <rect key="frame" x="338" y="118" width="44" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="BC2-xf-011"/>
                                             </constraints>
@@ -1018,28 +1019,28 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="NSW-Ho-NVP">
-                                            <rect key="frame" x="18" y="64" width="304" height="19"/>
+                                            <rect key="frame" x="18" y="70" width="304" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="LuR-mM-FuK"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="PNb-D9-1g5"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9jB-cM-ghW">
-                                            <rect key="frame" x="18" y="41" width="304" height="19"/>
+                                            <rect key="frame" x="18" y="42" width="304" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="xDZ-Hu-ZBD"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="GLQ-xe-74y"/>
                                             </connections>
                                         </slider>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2iy-ao-YZy">
-                                            <rect key="frame" x="18" y="18" width="304" height="19"/>
+                                            <rect key="frame" x="18" y="14" width="304" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="sYw-a4-a33"/>
                                             <connections>
                                                 <action selector="_highlightFactorSliderAction:" target="Voe-Tx-rLC" id="qlY-ud-hP4"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Dec-Qn-Kgz">
-                                            <rect key="frame" x="338" y="65" width="44" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Dec-Qn-Kgz">
+                                            <rect key="frame" x="338" y="78" width="44" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="8Vw-N0-1Ir"/>
                                             </constraints>
@@ -1049,8 +1050,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Xhb-vy-YOh">
-                                            <rect key="frame" x="338" y="42" width="44" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Xhb-vy-YOh">
+                                            <rect key="frame" x="338" y="50" width="44" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="hch-06-cYh"/>
                                             </constraints>
@@ -1060,8 +1061,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wg-W3-cjt">
-                                            <rect key="frame" x="338" y="19" width="44" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wg-W3-cjt">
+                                            <rect key="frame" x="338" y="22" width="44" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="flk-IU-Lz3"/>
                                             </constraints>
@@ -1072,7 +1073,7 @@
                                             </textFieldCell>
                                         </textField>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lTd-T5-f7w">
-                                            <rect key="frame" x="18" y="1565" width="113" height="18"/>
+                                            <rect key="frame" x="18" y="1624" width="117" height="18"/>
                                             <buttonCell key="cell" type="check" title="Color checkers" bezelStyle="regularSquare" imagePosition="left" inset="2" id="dLg-I6-Suw">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -1082,7 +1083,7 @@
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="TTP-R6-3Sa">
-                                            <rect key="frame" x="18" y="1087" width="118" height="18"/>
+                                            <rect key="frame" x="18" y="1133" width="122" height="18"/>
                                             <buttonCell key="cell" type="check" title="LMMSE Gamma" bezelStyle="regularSquare" imagePosition="left" inset="2" id="hXg-mM-eIE">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -1092,7 +1093,7 @@
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BTk-ZC-PdV">
-                                            <rect key="frame" x="329" y="1559" width="56" height="27"/>
+                                            <rect key="frame" x="328" y="1618" width="58" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="label" size="11"/>
@@ -1101,8 +1102,8 @@
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
                                             </connections>
                                         </button>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="mh2-nt-YqH">
-                                            <rect key="frame" x="18" y="1692" width="150" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="mh2-nt-YqH">
+                                            <rect key="frame" x="18" y="1752" width="150" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Coarse Integration Time" id="OI2-xX-Gqj">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1110,14 +1111,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4YW-P1-qrT" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="184" y="1689" width="118" height="19"/>
+                                            <rect key="frame" x="184" y="1742" width="118" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="8ha-Bj-oHg"/>
                                             <connections>
                                                 <action selector="_streamSettingsAction:" target="Voe-Tx-rLC" id="A1i-cC-haS"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Q4n-34-nSq" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="1690" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Q4n-34-nSq" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="1750" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="7fU-ga-2K0"/>
                                             </constraints>
@@ -1127,8 +1128,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="YOv-OC-Kv1">
-                                            <rect key="frame" x="18" y="1020" width="69" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="YOv-OC-Kv1">
+                                            <rect key="frame" x="18" y="1065" width="69" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Exposure" id="2Nh-D8-lUR">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1136,14 +1137,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iZs-mw-rgQ" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="103" y="1016" width="199" height="19"/>
+                                            <rect key="frame" x="103" y="1055" width="199" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-5" maxValue="5" tickMarkPosition="above" sliderType="linear" id="qYu-Ad-rx7"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="I18-VV-OHk"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fTX-tl-7Ss" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="1018" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fTX-tl-7Ss" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="1063" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="esf-Ty-ocU"/>
                                             </constraints>
@@ -1153,8 +1154,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="VuC-sM-R73">
-                                            <rect key="frame" x="18" y="992" width="69" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="VuC-sM-R73">
+                                            <rect key="frame" x="18" y="1037" width="69" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Brightness" id="y9h-LY-EX6">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1162,14 +1163,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iHy-kh-c6W" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="103" y="988" width="199" height="19"/>
+                                            <rect key="frame" x="103" y="1027" width="199" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="above" sliderType="linear" id="FR0-eA-Mcq"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="Crc-Ri-Ujz"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="FRv-mn-pu4" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="990" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="FRv-mn-pu4" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="1035" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="Rgf-B4-m5X"/>
                                             </constraints>
@@ -1179,8 +1180,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hXh-me-JP4">
-                                            <rect key="frame" x="18" y="964" width="69" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hXh-me-JP4">
+                                            <rect key="frame" x="18" y="1009" width="69" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Contrast" id="z6K-xx-see">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1188,14 +1189,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="cXS-kH-qXh" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="103" y="960" width="199" height="19"/>
+                                            <rect key="frame" x="103" y="999" width="199" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-2" maxValue="2" tickMarkPosition="above" sliderType="linear" id="cph-5p-ImK"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="8ge-FP-51I"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kzO-GG-ZYP" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="962" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kzO-GG-ZYP" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="1007" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="bvw-Q5-uqQ"/>
                                             </constraints>
@@ -1205,8 +1206,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LPZ-Ly-5gv">
-                                            <rect key="frame" x="18" y="936" width="69" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LPZ-Ly-5gv">
+                                            <rect key="frame" x="18" y="981" width="69" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Saturation" id="M6Y-A3-19K">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1214,14 +1215,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3Dl-iZ-oiG" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="103" y="932" width="199" height="19"/>
+                                            <rect key="frame" x="103" y="971" width="199" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="above" sliderType="linear" id="TYS-Vg-s4p"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="6cj-6Z-GNy"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="8bN-2G-VLm" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="934" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="8bN-2G-VLm" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="979" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="KcX-ek-Dqd"/>
                                             </constraints>
@@ -1231,8 +1232,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ojQ-A0-d2a">
-                                            <rect key="frame" x="38" y="884" width="52" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ojQ-A0-d2a">
+                                            <rect key="frame" x="38" y="929" width="52" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Amount" id="3Le-mU-pvK">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1240,14 +1241,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="yZM-Fz-P7W" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="106" y="880" width="196" height="19"/>
+                                            <rect key="frame" x="106" y="919" width="196" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="p7M-OZ-eT1"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="D7k-SZ-US4"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6sK-KP-lMd" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="884" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6sK-KP-lMd" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="929" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="OfF-SO-ceD"/>
                                             </constraints>
@@ -1257,8 +1258,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="x4z-0U-eCW">
-                                            <rect key="frame" x="38" y="856" width="52" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="x4z-0U-eCW">
+                                            <rect key="frame" x="38" y="901" width="52" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Radius" id="nsE-9X-t4P">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1266,14 +1267,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Brp-Px-E6d" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="106" y="852" width="196" height="19"/>
+                                            <rect key="frame" x="106" y="891" width="196" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="200" tickMarkPosition="above" sliderType="linear" id="rfn-T1-boj"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="xpD-FK-7iN"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sHm-KX-87O" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="856" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sHm-KX-87O" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="901" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="kiD-8q-JDb"/>
                                             </constraints>
@@ -1283,8 +1284,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xbF-fg-7FY">
-                                            <rect key="frame" x="18" y="1664" width="150" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xbF-fg-7FY">
+                                            <rect key="frame" x="18" y="1724" width="150" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Fine Integration Time" id="wfw-L5-bJK">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1292,22 +1293,22 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="92l-d2-t14" userLabel="Fine Integration Time Slider">
-                                            <rect key="frame" x="184" y="1661" width="118" height="19"/>
+                                            <rect key="frame" x="184" y="1714" width="118" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="Oh6-1K-bjw"/>
                                             <connections>
                                                 <action selector="_streamSettingsAction:" target="Voe-Tx-rLC" id="4kl-CR-Yw8"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LD1-EE-QUu" userLabel="Fine Integration Time Label">
-                                            <rect key="frame" x="318" y="1662" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LD1-EE-QUu" userLabel="Fine Integration Time Label">
+                                            <rect key="frame" x="318" y="1722" width="64" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Label" id="4b6-g1-Ehv">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="u0v-PT-iie">
-                                            <rect key="frame" x="18" y="1636" width="150" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="u0v-PT-iie">
+                                            <rect key="frame" x="18" y="1696" width="150" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Analog Gain" id="XAZ-nS-GsL">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1315,30 +1316,30 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="VIy-yc-WPP" userLabel="Analog Gain Slider">
-                                            <rect key="frame" x="184" y="1633" width="118" height="19"/>
+                                            <rect key="frame" x="184" y="1686" width="118" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="uhD-2a-4iU"/>
                                             <connections>
                                                 <action selector="_streamSettingsAction:" target="Voe-Tx-rLC" id="TEx-4b-KTl"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Yz0-oE-QrP" userLabel="Analog Gain Label">
-                                            <rect key="frame" x="318" y="1634" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Yz0-oE-QrP" userLabel="Analog Gain Label">
+                                            <rect key="frame" x="318" y="1694" width="64" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Label" id="y5O-fN-5Ii">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Rr6-mK-7nW">
-                                            <rect key="frame" x="18" y="1593" width="51" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Rr6-mK-7nW">
+                                            <rect key="frame" x="18" y="1653" width="51" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="COLOR" id="NUH-Fb-EQ7">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zAQ-vH-ZYm">
-                                            <rect key="frame" x="18" y="815" width="94" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zAQ-vH-ZYm">
+                                            <rect key="frame" x="18" y="860" width="94" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="HISTOGRAMS" id="32y-7P-S5w">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1346,35 +1347,35 @@
                                             </textFieldCell>
                                         </textField>
                                         <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="9qd-8Y-gEI">
-                                            <rect key="frame" x="0.0" y="1375" width="400" height="5"/>
+                                            <rect key="frame" x="0.0" y="1429" width="400" height="5"/>
                                         </box>
                                         <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="DVj-v8-AFJ">
-                                            <rect key="frame" x="0.0" y="1074" width="400" height="5"/>
+                                            <rect key="frame" x="0.0" y="1119" width="400" height="5"/>
                                         </box>
                                         <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="In1-oc-0pA">
-                                            <rect key="frame" x="0.0" y="841" width="400" height="5"/>
+                                            <rect key="frame" x="0.0" y="886" width="400" height="5"/>
                                         </box>
                                         <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="1GV-0H-WTo">
-                                            <rect key="frame" x="0.0" y="376" width="400" height="5"/>
+                                            <rect key="frame" x="0.0" y="421" width="400" height="5"/>
                                         </box>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="48V-lI-UpB">
-                                            <rect key="frame" x="18" y="1779" width="60" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="48V-lI-UpB">
+                                            <rect key="frame" x="18" y="1842" width="60" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="STREAM" id="wKQ-Wb-jWT">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xhF-4C-KiH">
-                                            <rect key="frame" x="18" y="1048" width="151" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xhF-4C-KiH">
+                                            <rect key="frame" x="18" y="1093" width="151" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="IMAGE ADJUSTMENTS" id="BWf-ir-QGo">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kH5-kp-tuo">
-                                            <rect key="frame" x="18" y="1349" width="101" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kH5-kp-tuo">
+                                            <rect key="frame" x="18" y="1403" width="101" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="CORRECTIONS" id="D7T-8O-wiL">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1382,7 +1383,7 @@
                                             </textFieldCell>
                                         </textField>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="q9G-lN-pAZ">
-                                            <rect key="frame" x="18" y="1321" width="75" height="18"/>
+                                            <rect key="frame" x="18" y="1374" width="79" height="18"/>
                                             <buttonCell key="cell" type="check" title="Defringe" bezelStyle="regularSquare" imagePosition="left" inset="2" id="Dqh-lu-AHg">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -1391,8 +1392,8 @@
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="BCV-ZQ-E23"/>
                                             </connections>
                                         </button>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="A1Z-Ls-8NL">
-                                            <rect key="frame" x="38" y="1295" width="77" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="A1Z-Ls-8NL">
+                                            <rect key="frame" x="38" y="1347" width="77" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Rounds" id="hVh-kc-Vpm">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1400,14 +1401,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uMC-7O-8rq" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="131" y="1290" width="171" height="24"/>
+                                            <rect key="frame" x="131" y="1337" width="171" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="1" maxValue="5" doubleValue="1" tickMarkPosition="below" numberOfTickMarks="5" allowsTickMarkValuesOnly="YES" sliderType="linear" id="cUw-fh-Wxy"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="Ofe-lQ-eVa"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="5n0-Jb-664" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="1293" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="5n0-Jb-664" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="1345" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="pEe-l4-Ug6"/>
                                             </constraints>
@@ -1417,8 +1418,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MXr-va-vh1">
-                                            <rect key="frame" x="38" y="1267" width="77" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MXr-va-vh1">
+                                            <rect key="frame" x="38" y="1319" width="77" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="α Threshold" id="Vpp-hs-9PG">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1426,14 +1427,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="knO-PS-2Af" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="131" y="1264" width="171" height="19"/>
+                                            <rect key="frame" x="131" y="1309" width="171" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="20" tickMarkPosition="above" sliderType="linear" id="oh5-KT-Jm5"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="cFb-pU-SGb"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="06E-dl-M3Q" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="1265" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="06E-dl-M3Q" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="1317" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="2LC-Is-dfv"/>
                                             </constraints>
@@ -1443,8 +1444,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y7p-mh-v4H">
-                                            <rect key="frame" x="38" y="1239" width="77" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Y7p-mh-v4H">
+                                            <rect key="frame" x="38" y="1291" width="77" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="γ Threshold" id="zUH-iP-vhS">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1452,14 +1453,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="8Rb-D1-AvB" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="131" y="1236" width="171" height="19"/>
+                                            <rect key="frame" x="131" y="1281" width="171" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="9Oq-lF-DGE"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="6YG-Gm-S6Y"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="OZV-YJ-T1U" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="1237" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="OZV-YJ-T1U" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="1289" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="ggP-5q-HhD"/>
                                             </constraints>
@@ -1469,8 +1470,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pzH-hm-Uiv">
-                                            <rect key="frame" x="38" y="1211" width="77" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pzH-hm-Uiv">
+                                            <rect key="frame" x="38" y="1263" width="77" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="γ Factor" id="D21-9A-KxD">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1478,14 +1479,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pSP-V8-bBA" userLabel="Coarse Integration Time Slider">
-                                            <rect key="frame" x="131" y="1208" width="171" height="19"/>
+                                            <rect key="frame" x="131" y="1253" width="171" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="E2a-xh-qsW"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="Crc-3Z-ddL"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gxY-El-gs1" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="1209" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gxY-El-gs1" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="1261" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="4mJ-us-HFU"/>
                                             </constraints>
@@ -1495,8 +1496,8 @@
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nIZ-CA-hDk">
-                                            <rect key="frame" x="38" y="1183" width="77" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nIZ-CA-hDk">
+                                            <rect key="frame" x="38" y="1235" width="77" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="δ Factor" id="tkj-8b-f8V">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1504,14 +1505,14 @@
                                             </textFieldCell>
                                         </textField>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="yGp-i8-JuX" userLabel="δ Factor Slider">
-                                            <rect key="frame" x="131" y="1180" width="171" height="19"/>
+                                            <rect key="frame" x="131" y="1225" width="171" height="28"/>
                                             <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="LMh-1v-sfA"/>
                                             <connections>
                                                 <action selector="_imageOptionsAction:" target="Voe-Tx-rLC" id="1In-qh-rBO"/>
                                             </connections>
                                         </slider>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LOx-1w-GuA" userLabel="Coarse Integration Time Label">
-                                            <rect key="frame" x="318" y="1181" width="64" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LOx-1w-GuA" userLabel="Coarse Integration Time Label">
+                                            <rect key="frame" x="318" y="1233" width="64" height="16"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="60" id="Fpv-1y-eb5"/>
                                             </constraints>
@@ -1522,7 +1523,7 @@
                                             </textFieldCell>
                                         </textField>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Vqb-ms-1bB">
-                                            <rect key="frame" x="18" y="1154" width="161" height="18"/>
+                                            <rect key="frame" x="18" y="1202" width="165" height="18"/>
                                             <buttonCell key="cell" type="check" title="Reconstruct Highlights" bezelStyle="regularSquare" imagePosition="left" inset="2" id="NLC-yN-u2R">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -1532,10 +1533,10 @@
                                             </connections>
                                         </button>
                                         <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="Igu-Le-QYW">
-                                            <rect key="frame" x="0.0" y="1141" width="400" height="5"/>
+                                            <rect key="frame" x="0.0" y="1188" width="400" height="5"/>
                                         </box>
-                                        <textField identifier="Illuminant" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="4lq-F3-K8B">
-                                            <rect key="frame" x="20" y="1504" width="284" height="21"/>
+                                        <textField identifier="Illuminant" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="4lq-F3-K8B">
+                                            <rect key="frame" x="20" y="1560" width="284" height="21"/>
                                             <constraints>
                                                 <constraint firstAttribute="height" constant="21" id="Y1h-ci-eK3"/>
                                             </constraints>
@@ -1549,7 +1550,7 @@
                                             </connections>
                                         </textField>
                                         <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="E0H-rt-mBu">
-                                            <rect key="frame" x="319" y="1500" width="66" height="27"/>
+                                            <rect key="frame" x="318" y="1556" width="68" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cKq-CO-v4Z">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="label" size="11"/>
@@ -1559,10 +1560,10 @@
                                             </connections>
                                         </button>
                                         <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="PeP-Zp-s42">
-                                            <rect key="frame" x="0.0" y="1619" width="400" height="5"/>
+                                            <rect key="frame" x="0.0" y="1679" width="400" height="5"/>
                                         </box>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Sf3-DK-soP">
-                                            <rect key="frame" x="18" y="1531" width="81" height="18"/>
+                                            <rect key="frame" x="18" y="1588" width="85" height="18"/>
                                             <buttonCell key="cell" type="check" title="Illuminant" bezelStyle="regularSquare" imagePosition="left" inset="2" id="fe3-AH-ttW">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -1572,8 +1573,8 @@
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="NnA-om-PEH">
-                                            <rect key="frame" x="18" y="1468" width="233" height="18"/>
-                                            <buttonCell key="cell" type="check" title="Color matrix (raw to ProPhotoRGB)" bezelStyle="regularSquare" imagePosition="left" inset="2" id="VEq-z5-9zv">
+                                            <rect key="frame" x="18" y="1523" width="210" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Color matrix (raw to XYZ.D50)" bezelStyle="regularSquare" imagePosition="left" inset="2" id="VEq-z5-9zv">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>
@@ -1581,8 +1582,8 @@
                                                 <action selector="_colorMatrixCheckboxAction:" target="Voe-Tx-rLC" id="gfZ-QT-5k8"/>
                                             </connections>
                                         </button>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="05m-rM-9QM">
-                                            <rect key="frame" x="18" y="908" width="91" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="05m-rM-9QM">
+                                            <rect key="frame" x="18" y="953" width="91" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Local Contast:" id="zUw-Pv-H7h">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1864,7 +1865,7 @@
                             <rect key="frame" x="0.0" y="1029" width="400" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="9ve-T6-sMB">
+                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="0.40000000000000002" horizontal="NO" id="9ve-T6-sMB">
                             <rect key="frame" x="384" y="0.0" width="16" height="1045"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>

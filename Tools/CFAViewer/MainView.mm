@@ -1,9 +1,9 @@
 #import "MainView.h"
 #import <vector>
+#import <array>
 #import "ImageLayer.h"
 //#import "HistogramLayer.h"
 #import "Util.h"
-#import "ColorChecker.h"
 #import "Code/Lib/Toastbox/Mac/MetalUtil.h"
 
 using namespace CFAViewer;
@@ -17,10 +17,12 @@ using namespace CFAViewer;
     CGPoint _rootLayerOffset;
     ImageLayer* _imageLayer;
     CALayer* _sampleLayer;
+    
     CGFloat _colorCheckerCircleRadius;
     bool _colorCheckersEnabled;
-    bool _colorCheckersPositioned;
-    std::vector<CAShapeLayer*> _colorCheckers;
+    std::array<CAShapeLayer*,ColorChecker::Count> _colorCheckers;
+    ColorCheckerPositions _colorCheckerPositions;
+    
     id<MainViewDelegate> _delegate;
     
     CGFloat _zoomScale;
@@ -66,10 +68,12 @@ using namespace CFAViewer;
         [circle setActions:LayerNullActions()];
         [circle setHidden:!_colorCheckersEnabled];
         [_imageLayer addSublayer:circle];
-        _colorCheckers.push_back(circle);
+        _colorCheckers[i] = circle;
         
         i++;
     }
+    
+    [self resetColorCheckerPositions];
     
     NSMagnificationGestureRecognizer* magnify = [[NSMagnificationGestureRecognizer alloc] initWithTarget:self
         action:@selector(_handleMagnify:)];
@@ -97,59 +101,102 @@ using namespace CFAViewer;
 }
 
 - (CGRect)sampleRect {
-    const CGSize layerSize = [_imageLayer bounds].size;
+    const CGSize imageLayerSize = [_imageLayer bounds].size;
     CGRect r = [_sampleLayer frame];
-    r.origin.x /= layerSize.width;
-    r.origin.y /= layerSize.height;
-    r.size.width /= layerSize.width;
-    r.size.height /= layerSize.height;
+    r.origin.x /= imageLayerSize.width;
+    r.origin.y /= imageLayerSize.height;
+    r.size.width /= imageLayerSize.width;
+    r.size.height /= imageLayerSize.height;
     r.origin.y = 1-r.origin.y-r.size.height; // Flip Y so the origin is at the top-left
     return r;
 }
 
-- (std::vector<CGPoint>)colorCheckerPositions {
-    const CGSize layerSize = [_imageLayer bounds].size;
-    std::vector<CGPoint> r;
-    for (CALayer* l : _colorCheckers) {
-        CGPoint p = [l position];
-        p.x /= layerSize.width;
-        p.y /= layerSize.height;
-        p.y = 1-p.y; // Flip Y, so that the origin of our return value is the top-left
-        r.push_back(p);
+- (const ColorCheckerPositions&)colorCheckerPositions {
+    return _colorCheckerPositions;
+}
+
+- (void)setColorCheckerPositions:(const ColorCheckerPositions&)x {
+    _colorCheckerPositions = x;
+}
+
+static ColorCheckerPositions _ColorCheckerPositionsDefault() {
+    // indoor_night2_200.cfa
+    return {
+        CGPoint{ 0.83571870285304372, 0.78818759720487419 },
+        CGPoint{ 0.84938996133631395, 0.78947454825661023 },
+        CGPoint{ 0.86338489110272809, 0.78952227858407853 },
+        CGPoint{ 0.87698007937659594, 0.79034872036524129 },
+        CGPoint{ 0.89073895956633309, 0.79166653106380491 },
+        CGPoint{ 0.90420675086084356, 0.79129537186002796 },
+        CGPoint{ 0.83532045293323065, 0.813978768041828   },
+        CGPoint{ 0.84919257654459634, 0.81429431854009027 },
+        CGPoint{ 0.86342566075744064, 0.81588002608597932 },
+        CGPoint{ 0.87703725633137553, 0.81600995864408721 },
+        CGPoint{ 0.89067023111448895, 0.81624330691170965 },
+        CGPoint{ 0.90464427886263587, 0.81645986117522296 },
+        CGPoint{ 0.83499827322282016, 0.83954189398087808 },
+        CGPoint{ 0.8499120117929978,  0.84054776643752338 },
+        CGPoint{ 0.86379059888620813, 0.84136094979438958 },
+        CGPoint{ 0.87715310181366812, 0.84156159394874674 },
+        CGPoint{ 0.89120321977121763, 0.84132912957607741 },
+        CGPoint{ 0.90458511314421153, 0.84126814082431245 },
+        CGPoint{ 0.83514643611433614, 0.8672537685509516  },
+        CGPoint{ 0.84932134899057832, 0.86678265254094122 },
+        CGPoint{ 0.86373342193142844, 0.86688695214540878 },
+        CGPoint{ 0.87737037424183084, 0.8672537685509516  },
+        CGPoint{ 0.89144684331766988, 0.8664503080385697  },
+        CGPoint{ 0.90475813558128393, 0.86654842037836555 },
+    };
+    
+    // outdoor_5pm_78.cfa
+    return {
+        CGPoint{ 0.83120797838401839, 0.81579079598887339 },
+        CGPoint{ 0.8445072520134923,  0.82021772861811726 },
+        CGPoint{ 0.85811871133799478, 0.82424906301240741 },
+        CGPoint{ 0.87244664905918201, 0.82846877751858017 },
+        CGPoint{ 0.8869058188871568,  0.83359996195070862 },
+        CGPoint{ 0.90144486912795885, 0.83825439979199545 },
+        CGPoint{ 0.82783588381395623, 0.84146120892735277 },
+        CGPoint{ 0.84152477823252603, 0.84561716401104225 },
+        CGPoint{ 0.85571170257188567, 0.85127581275644226 },
+        CGPoint{ 0.86964186844144364, 0.85431163071332139 },
+        CGPoint{ 0.88388177468727025, 0.86023256253757352 },
+        CGPoint{ 0.89816325135201724, 0.86504639893506885 },
+        CGPoint{ 0.82415730929263886, 0.86581585923822058 },
+        CGPoint{ 0.83821707705647763, 0.86982111023240383 },
+        CGPoint{ 0.85304304469845482, 0.8760883716469634  },
+        CGPoint{ 0.86603094773915335, 0.88148908454686258 },
+        CGPoint{ 0.8802871561100467,  0.88569141011963082 },
+        CGPoint{ 0.89444555173053941, 0.89045742695026353 },
+        CGPoint{ 0.82131666399975356, 0.88816063866307815 },
+        CGPoint{ 0.8349851807619898,  0.89529299951451446 },
+        CGPoint{ 0.84887459131888087, 0.90029811417945992 },
+        CGPoint{ 0.86284469739485247, 0.90557130823439225 },
+        CGPoint{ 0.87659390967616923, 0.91129806363562682 },
+        CGPoint{ 0.89101558461649033, 0.91726391687117403 },
+    };
+
+    
+    const size_t ColorCheckerWidth = 6;
+    const size_t ColorCheckerHeight = 4;
+    const CGFloat ColorCheckerSpacingX = 30./2304;
+    const CGFloat ColorCheckerSpacingY = 30./1296;
+    ColorCheckerPositions r;
+    size_t i = 0;
+    for (size_t y=0; y<ColorCheckerHeight; y++) {
+        for (size_t x=0; x<ColorCheckerWidth; x++, i++) {
+            r[i] = CGPoint{
+                .9 + x*ColorCheckerSpacingX,
+                .8 + y*ColorCheckerSpacingY
+            };
+        }
     }
     return r;
 }
 
-- (void)setColorCheckerPositions:(const std::vector<CGPoint>&)points {
-    assert(points.size() == ColorChecker::Count);
-    const CGSize layerSize = [_imageLayer bounds].size;
-    size_t i = 0;
-    for (CALayer* l : _colorCheckers) {
-        CGPoint p = points[i];
-        p.y = 1-p.y; // Flip Y, since the origin of the supplied points is the top-left
-        p.x *= layerSize.width;
-        p.y *= layerSize.height;
-        [l setPosition:p];
-        i++;
-    }
-    _colorCheckersPositioned = true;
-}
-
 - (void)resetColorCheckerPositions {
-    const size_t ColorCheckerWidth = 6;
-    const size_t ColorCheckerHeight = 4;
-    const CGSize size = [_imageLayer bounds].size;
-    size_t i = 0;
-    for (size_t y=0; y<ColorCheckerHeight; y++) {
-        for (size_t x=0; x<ColorCheckerWidth; x++, i++) {
-            const CGPoint p = {
-                .5*size.width  + x*(_colorCheckerCircleRadius+10),
-                .5*size.height - y*(_colorCheckerCircleRadius+10)
-            };
-            CAShapeLayer* circle = _colorCheckers[i];
-            [circle setPosition:p];
-        }
-    }
+    _colorCheckerPositions = _ColorCheckerPositionsDefault();
+    [_rootLayer setNeedsLayout];
 }
 
 static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
@@ -166,13 +213,6 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 
 - (void)setColorCheckersVisible:(bool)visible {
     _colorCheckersEnabled = visible;
-    
-    // Apply the initial color checker positions, if they haven't been positioned yet
-    if (!_colorCheckersPositioned) {
-        [self resetColorCheckerPositions];
-        _colorCheckersPositioned = true;
-    }
-    
     for (CAShapeLayer* circle : _colorCheckers) {
         [circle setHidden:!_colorCheckersEnabled];
     }
@@ -216,14 +256,24 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 }
 
 // `p` is in coordinates of _layer
-- (CAShapeLayer*)_findColorCheckerCircle:(CGPoint)p {
-    for (CAShapeLayer* c : _colorCheckers) {
-        const CGPoint cp = [c position];
+- (std::optional<size_t>)_colorCheckerHitTest:(CGPoint)p {
+    const CGSize imageLayerSize = [_imageLayer bounds].size;
+    size_t i = 0;
+    for (CGPoint cp : _colorCheckerPositions) {
+        cp.x = cp.x*imageLayerSize.width;
+        cp.y = (1-cp.y)*imageLayerSize.height;
         if (sqrt(pow(cp.x-p.x,2)+pow(cp.y-p.y,2)) < _colorCheckerCircleRadius) {
-            return c;
+            return i;
         }
+        i++;
     }
-    return nil;
+    return std::nullopt;
+}
+
+- (void)_colorChecker:(size_t)i setPosition:(CGPoint)p {
+    const CGSize imageLayerSize = [_imageLayer bounds].size;
+    [_colorCheckers[i] setPosition:p];
+    _colorCheckerPositions.at(i) = CGPoint{p.x/imageLayerSize.width, 1-(p.y/imageLayerSize.height)};
 }
 
 // MARK: - Overrides
@@ -245,11 +295,12 @@ static CGPoint eventPositionInLayer(NSWindow* win, CALayer* layer, NSEvent* ev) 
     
     // Handle circle being clicked
     if (_colorCheckersEnabled) {
-        CAShapeLayer* circle = [self _findColorCheckerCircle:p];
-        if (circle) {
+        std::optional<size_t> colorCheckerIdx = [self _colorCheckerHitTest:p];
+//        CAShapeLayer* circle = [self _findColorCheckerCircle:p];
+        if (colorCheckerIdx) {
             TrackMouse(win, ev, [&](NSEvent* ev, bool done) {
                 const CGPoint p = eventPositionInLayer(win, _imageLayer, ev);
-                [circle setPosition:p];
+                [self _colorChecker:*colorCheckerIdx setPosition:p];
             });
             
             [_delegate mainViewColorCheckerPositionsChanged:self];
@@ -297,8 +348,19 @@ static CGPoint eventPositionInLayer(NSWindow* win, CALayer* layer, NSEvent* ev) 
         [_rootLayer setPosition:{pos.x+_rootLayerOffset.x, pos.y+_rootLayerOffset.y}];
     
     } else if (layer == _rootLayer) {
-        CGSize layerSize = [_rootLayer bounds].size;
-        [_imageLayer setPosition:{layerSize.width/2, layerSize.height/2}];
+        const CGSize rootLayerSize = [_rootLayer bounds].size;
+        [_imageLayer setPosition:{rootLayerSize.width/2, rootLayerSize.height/2}];
+        
+        const CGSize imageLayerSize = [_imageLayer bounds].size;
+        size_t i = 0;
+        for (CAShapeLayer* circle : _colorCheckers) {
+            CGPoint p = _colorCheckerPositions[i];
+            p.x = p.x*imageLayerSize.width;
+            p.y = (1-p.y)*imageLayerSize.height;
+            [circle setPosition:p];
+            i++;
+        }
+        
     }
 }
 

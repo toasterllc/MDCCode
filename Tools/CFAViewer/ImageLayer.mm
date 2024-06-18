@@ -11,8 +11,13 @@ using namespace CFAViewer;
 // (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
-static CGColorSpaceRef _LSRGBColorSpace() {
+static CGColorSpaceRef _LinearSRGBColorSpace() {
     static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+    return cs;
+}
+
+static CGColorSpaceRef _LinearDisplayP3ColorSpace() {
+    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearDisplayP3);
     return cs;
 }
 
@@ -31,7 +36,8 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     [self setActions:LayerNullActions()];
     [self setPixelFormat:_PixelFormat];
-    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
+//    [self setColorspace:_LinearDisplayP3ColorSpace()];
+    [self setColorspace:_LinearSRGBColorSpace()];
     [self setDevice:device];
     return self;
 }

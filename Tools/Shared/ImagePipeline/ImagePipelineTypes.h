@@ -8,9 +8,6 @@ namespace ImagePipeline {
 
 #define ImagePipelineShaderNamespace "ImagePipeline::Shader::"
 
-using ImagePixel = uint16_t;
-constexpr MetalConstant ImagePixel ImagePixelMax = 0x0FFF; // 12 bit values
-
 struct Vals3 {
     uint32_t x = 0;
     uint32_t y = 0;
@@ -36,7 +33,7 @@ struct SampleRect {
             y < (int32_t)bottom  ;
     }
     
-    template <typename T>
+    template<typename T>
     bool contains(T pos) const MetalConstant {
         return contains(pos.x, pos.y);
     }

@@ -131,7 +131,7 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         );
     }
     
-    // Color correction (Camera raw -> ProPhotoRGB.D50)
+    // Color correction (Camera raw -> XYZ.D50)
     if (opts.colorMatrix) {
         const ColorMatrix& colorMatrix = *opts.colorMatrix;
         // If a color matrix was provided, use it.
@@ -140,16 +140,6 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
                 // Buffer args
                 _SimdForMat(colorMatrix),
-                // Texture args
-                srcRgb
-            )
-        );
-    }
-    
-    // ProPhotoRGB.D50 -> XYZ.D50
-    {
-        renderer.render(srcRgb,
-            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGBD50",
                 // Texture args
                 srcRgb
             )
@@ -264,6 +254,16 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
             )
         );
     }
+    
+//    // XYZ.D65 -> P3Display.D65
+//    {
+//        renderer.render(srcRgb,
+//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::P3DisplayD65FromFromXYZD65",
+//                // Texture args
+//                srcRgb
+//            )
+//        );
+//    }
     
     // Copy image from srcRgb -> dstRgb if they're different textures, resizing if needed
     if (srcRgb != dstRgb) {

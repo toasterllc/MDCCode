@@ -18,8 +18,8 @@ struct MDCDeviceDemo : MDCDevice {
         
         ImageWhiteBalanceSet(opts.whiteBalance, false, ccm);
         
-        opts.exposure   = -0.141;
-        opts.saturation = +0.312;
+        opts.exposure   = -0.110;
+        opts.saturation = +0.200;
         opts.localContrast = {
             .amount = 0.448,
             .radius = 62.651,

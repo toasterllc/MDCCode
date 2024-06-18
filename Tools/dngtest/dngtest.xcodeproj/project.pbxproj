@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		550012C12C1E672000425259 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 550012C02C1E672000425259 /* main.mm */; };
+		55670E712C233281008B1F1F /* 24.bin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 55670E702C233266008B1F1F /* 24.bin */; };
 		55C8DFBD2C20E5B400FD2448 /* 18319.bin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 55C8DFBB2C20E5A600FD2448 /* 18319.bin */; };
 /* End PBXBuildFile section */
 
@@ -19,6 +20,7 @@
 			dstSubfolderSpec = 16;
 			files = (
 				55C8DFBD2C20E5B400FD2448 /* 18319.bin in CopyFiles */,
+				55670E712C233281008B1F1F /* 24.bin in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -27,6 +29,8 @@
 /* Begin PBXFileReference section */
 		550012B42C1E670200425259 /* dngtest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dngtest; sourceTree = BUILT_PRODUCTS_DIR; };
 		550012C02C1E672000425259 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		55670E702C233266008B1F1F /* 24.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = 24.bin; sourceTree = "<group>"; };
+		55670E722C23351B008B1F1F /* output.dng */ = {isa = PBXFileReference; lastKnownFileType = file; name = output.dng; path = Build/Release/output.dng; sourceTree = "<group>"; };
 		55C8DFBB2C20E5A600FD2448 /* 18319.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = 18319.bin; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -44,6 +48,8 @@
 		550012AB2C1E670200425259 = {
 			isa = PBXGroup;
 			children = (
+				55670E722C23351B008B1F1F /* output.dng */,
+				55670E702C233266008B1F1F /* 24.bin */,
 				55C8DFBB2C20E5A600FD2448 /* 18319.bin */,
 				550012C02C1E672000425259 /* main.mm */,
 				550012B52C1E670200425259 /* Products */,

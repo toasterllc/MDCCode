@@ -232,7 +232,7 @@ using ImageSet = std::set<ImageRecordPtr>;
 
 // ImageSetsOverlap: returns whether there's an intersection between a and b.
 // This is templated so we can compare between std::set<RecordRef> and std::set<RecordStrongRef>
-template <typename T_A, typename T_B>
+template<typename T_A, typename T_B>
 bool ImageSetsOverlap(const T_A& a, const T_B& b) {
     ImageSet r;
     for (const ImageRecordPtr& x : a) {

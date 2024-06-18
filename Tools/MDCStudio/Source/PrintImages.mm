@@ -22,7 +22,7 @@ static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPt
         rec->info.imageWidth, rec->info.imageHeight);
     
     Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
-        image.width, image.height, (ImagePixel*)(image.data.get()));
+        image.width, image.height, (Img::Pixel*)(image.data.get()));
     
     Pipeline::Run(renderer, popts, rawTxt, txt);
     

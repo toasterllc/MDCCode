@@ -8,12 +8,15 @@ struct Format {
     NSString* uti;
 };
 
-static const Format FormatJPEG = { "JPEG", "jpg", (NSString*)kUTTypeJPEG };
-static const Format FormatPNG  = { "PNG",  "png", (NSString*)kUTTypePNG };
-
-static const Format* Formats[] = {
-    &FormatJPEG,
-    &FormatPNG,
+struct Formats {
+    static const inline Format JPEG = { "JPEG", "jpg", (NSString*)kUTTypeJPEG };
+    static const inline Format PNG  = { "PNG",  "png", (NSString*)kUTTypePNG };
+    static const inline Format DNG  = { "DNG",  "dng", (NSString*)kUTTypeRawImage };
+    static const inline Format* All[] = {
+        &JPEG,
+        &PNG,
+        &DNG,
+    };
 };
 
 } // namespace MDCStudio::ImageExporter

@@ -11,16 +11,19 @@ struct CCM {
     ColorMatrix matrix;
 };
 
+// ### Color matrices
+// ### Convert from raw camera colorspace -> XYZ.D50
+
 // Indoor, night
 // Calculated from indoor_night2_200.cfa
 // We're assuming this is Standard A illuminant (incandescent / tungsten lighting)
 // TODO: perform more rigorous collection; in the future, use real Standard A lighting to collect these values
 const CCM _CCM1 = {
-    .illum = { 0.879884, 0.901580, 0.341031 },
+    .illum = { 0.880159, 0.902888, 0.340842 },
     .matrix = {
-        +0.626076, +0.128755, +0.245169,
-        -0.396581, +1.438671, -0.042090,
-        -0.195309, -0.784350, +1.979659,
+        +0.289807, +0.416887, +0.257526,
+        -0.182395, +1.121929, +0.060466,
+        -0.281032, -0.297168, +1.403411,
     },
 };
 
@@ -29,15 +32,15 @@ const CCM _CCM1 = {
 // We're assuming this is D50 illuminant ("horizon light")
 // TODO: perform more rigorous collection; in the future, use D65 daylight (noon daylight) lighting to collect these values
 const CCM _CCM2 = {
-    .illum = { 0.632708, 0.891153, 0.561737 },
+    .illum = { 0.638797, 0.900519, 0.567254 },
     .matrix = {
-        +0.724397, +0.115398, +0.160204,
-        -0.238233, +1.361934, -0.123701,
-        -0.061917, -0.651388, +1.713306,
+        +0.604849, +0.207496, +0.151875,
+        +0.093154, +0.983335, -0.076489,
+        -0.047627, -0.545232, +1.418070,
     },
 };
 
-template <typename T, typename K>
+template<typename T, typename K>
 T _Interp(const T& lo, const T& hi, K k) {
     return lo*(1-k) + hi*k;
 }

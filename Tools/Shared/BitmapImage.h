@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import <filesystem>
 
-template <typename T>
+template<typename T>
 class BitmapImage {
 public:
     BitmapImage(const std::filesystem::path& path) : BitmapImage([NSData dataWithContentsOfFile:@(path.c_str())]) {}
