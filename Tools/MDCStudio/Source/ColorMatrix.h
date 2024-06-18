@@ -37,7 +37,7 @@ const CCM _CCM2 = {
     },
 };
 
-template <typename T, typename K>
+template<typename T, typename K>
 T _Interp(const T& lo, const T& hi, K k) {
     return lo*(1-k) + hi*k;
 }

@@ -20,7 +20,7 @@
 //   I(y^2)(x^0) + J(y^2)(x^1) + K(y^2)(x^2) + L(y^2)(x^3) +
 //   M(y^3)(x^0) + N(y^3)(x^1) + O(y^3)(x^2) + P(y^3)(x^3)
 // 
-template <typename T, size_t Order>
+template<typename T, size_t Order>
 class Poly2D {
 private:
     static constexpr size_t _Terms = Order*Order;
@@ -108,7 +108,7 @@ private:
 ////   I(y^2)(x^0) + J(y^2)(x^1) + K(y^2)(x^2) + L(y^2)(x^3) +
 ////   M(y^3)(x^0) + N(y^3)(x^1) + O(y^3)(x^2) + P(y^3)(x^3)
 //// 
-//template <typename T, size_t Order>
+//template<typename T, size_t Order>
 //class Poly2D {
 //public:
 //    Poly2D() = default;

@@ -16,7 +16,7 @@ enum class Dir : uint8_t {
     Y = 1,
 };
 
-template <typename T>
+template<typename T>
 class ColorDir {
 public:
     T& operator()(CFAColor color, Dir dir) {
@@ -75,7 +75,7 @@ public:
     
     // Templated to allow support for doubles, while also being usable
     // from Metal shader contexts (which doesn't support doubles).
-    template <typename T>
+    template<typename T>
     T tileNormalizedCenter(uint32_t idx) const {
         return ((T)tileOffset(idx) + (T)_tileSize/2) / _axisSize;
     }

@@ -147,7 +147,7 @@ public:
         return segs;
     }
     
-    template <typename T_Fn>
+    template<typename T_Fn>
     void enumerateLoadableSections(T_Fn fn) {
         auto segs = segments();
         for (const auto& seg : segs) {
@@ -353,7 +353,7 @@ private:
     // _read: Verify that we have enough bytes to return a `T` from offset `off`
     //   - Throws on error
     //   - Returns a copy of the data (rather than a direct pointer) so that we don't have to worry about alignment
-    template <typename T>
+    template<typename T>
     T _read(size_t off) const {
         _assertCanRead(off, sizeof(T));
         T r;

@@ -33,7 +33,7 @@ struct SampleRect {
             y < (int32_t)bottom  ;
     }
     
-    template <typename T>
+    template<typename T>
     bool contains(T pos) const MetalConstant {
         return contains(pos.x, pos.y);
     }

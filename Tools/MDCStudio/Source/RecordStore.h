@@ -17,7 +17,7 @@
 //                          the space of a randomly-deleted record is not recovered until chunk compaction occurs (currently unimplemented)
 //               threading: data can be written from one thread and read from another thread in parallel
 
-template <
+template<
 typename T_Record,      // The type of the records
 size_t T_ChunkRecordCap // Max number of records per chunk
 >
@@ -95,7 +95,7 @@ struct RecordStore {
         }
     };
     
-    template <typename T_ChunkRef>
+    template<typename T_ChunkRef>
     struct _RecordRef : T_ChunkRef {
         size_t idx = 0;
         
@@ -108,21 +108,21 @@ struct RecordStore {
         // alive(): whether the RecordRef is part of a chunk that's still alive.
         bool alive() const { return chunkRef().chunk->alive; }
         
-        template <typename T>
+        template<typename T>
         bool operator<(const T& x) const {
             if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
             if (idx != x.idx)               return idx < x.idx;
             return false;
         }
         
-        template <typename T>
+        template<typename T>
         bool operator==(const T& x) const {
             if (chunkRef() != x.chunkRef()) return false;
             if (idx != x.idx)               return false;
             return true;
         }
         
-        template <typename T>
+        template<typename T>
         bool operator!=(const T& x) const { return !(*this == x); }
         
         T_Record* operator->() const { return &record(); }
