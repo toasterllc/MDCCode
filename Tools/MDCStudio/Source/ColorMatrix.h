@@ -11,6 +11,9 @@ struct CCM {
     ColorMatrix matrix;
 };
 
+// ### Color matrices
+// ### Convert from raw camera colorspace -> XYZ.D50
+
 // Indoor, night
 // Calculated from indoor_night2_200.cfa
 // We're assuming this is Standard A illuminant (incandescent / tungsten lighting)
