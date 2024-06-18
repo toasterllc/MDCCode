@@ -71,11 +71,19 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             -0.1981,  0.4568,  0.8897,
         };
         
+        const double colorMatrix2[] = {
+            1.7065, -0.5080, -0.1665,
+            -0.3383,  1.2074,  0.1439,
+            -0.1981,  0.4568,  0.8897,
+        };
+        
+        const auto illum1 = tinydngwriter::LIGHTSOURCE_D50;
+        const auto illum2 = tinydngwriter::LIGHTSOURCE_D50;
+        
         const uint16_t blackLevel[] = { 0 };
         const uint16_t whiteLevel[] = { 4095 };
         
         tinydngwriter::DNGImage dng;
-        
         dng.SetDNGVersion(1,3,0,0);
         dng.SetBigEndian(false);
         dng.SetSubfileType(false, false, false); // Full-resolution image
@@ -90,7 +98,9 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         dng.SetCFARepeatPatternDim(2, 2);
         dng.SetCFAPattern(std::size(cfaPattern), cfaPattern);
         dng.SetColorMatrix1(3, colorMatrix1);
-        dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_D50);
+        dng.SetColorMatrix2(3, colorMatrix2);
+        dng.SetCalibrationIlluminant1(illum1);
+        dng.SetCalibrationIlluminant2(illum2);
         dng.SetAsShotNeutral(std::size(asShotNeutral), asShotNeutral);
         dng.SetBlackLevel(std::size(blackLevel), blackLevel);
         dng.SetWhiteLevel(std::size(whiteLevel), whiteLevel);
