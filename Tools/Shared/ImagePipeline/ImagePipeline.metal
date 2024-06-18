@@ -363,7 +363,7 @@ fragment float4 XYZD65FromLSRGBD65(
     return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
 
-fragment float4 XYZD50FromProPhotoRGB(
+fragment float4 XYZD50FromProPhotoRGBD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -376,7 +376,7 @@ fragment float4 XYZD50FromProPhotoRGB(
     return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
 
-fragment float4 ProPhotoRGBFromXYZD50(
+fragment float4 ProPhotoRGBD50FromXYZD50(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {

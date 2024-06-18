@@ -13,6 +13,8 @@ struct CCM {
 
 // Indoor, night
 // Calculated from indoor_night2_200.cfa
+// We're assuming this is Standard A illuminant (incandescent / tungsten lighting)
+// TODO: perform more rigorous collection; in the future, use real Standard A lighting to collect these values
 const CCM _CCM1 = {
     .illum = { 0.879884, 0.901580, 0.341031 },
     .matrix = {
@@ -24,6 +26,8 @@ const CCM _CCM1 = {
 
 // Outdoor, 5pm
 // Calculated from outdoor_5pm_78.cfa
+// We're assuming this is D50 illuminant ("horizon light")
+// TODO: perform more rigorous collection; in the future, use D65 daylight (noon daylight) lighting to collect these values
 const CCM _CCM2 = {
     .illum = { 0.632708, 0.891153, 0.561737 },
     .matrix = {
