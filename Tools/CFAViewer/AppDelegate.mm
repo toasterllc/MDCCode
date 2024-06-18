@@ -1201,8 +1201,8 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
     const Mat<double,3,1> whiteBalance(factor/illum[0], factor/illum[1], factor/illum[2]);
     
-//    constexpr size_t W = ColorChecker::Count;
-    constexpr size_t W = ColorChecker::Count+1; // λ CCM-solving technique
+    constexpr size_t W = ColorChecker::Count; // Force-sum CCM-solving technique
+//    constexpr size_t W = ColorChecker::Count+1; // λ CCM-solving technique
     Mat<double,3,W> x; // Colors that we have
     {
         size_t i = 0;
@@ -1234,33 +1234,33 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
         }
     }
     
-    // ### λ CCM-solving technique (adds an additional, large-valued column to the x,b vectors)
-    {
-        // Constrain the least squares regression so that each column sums to 1
-        // in the resulting 3x3 color matrix.
-        //
-        // How: Use the same large number in a single column of `x` and `b`
-        // Why: We don't want the CCM, which is applied after white balancing,
-        //      to disturb the white balance. (Ie, a neutral color before
-        //      applying the CCM should be neutral after applying the CCM.)
-        //      This is accomplished by ensuring that each row of the CCM
-        //      sums to 1.
-        //
-        // ### When enabling, make sure W=ColorChecker::Count+1 (see W definition, above)
-        static_assert(W == ColorChecker::Count+1);
-        
-        std::cout << "x:\n\n" << x.str() << "\n\n";
-        std::cout << "b:\n\n" << b.str() << "\n\n";
-        
-        for (int i=0; i<3; i++) {
-            const double λ = 1e8;
-            x.at(i,W-1) = λ;
-            b.at(i,W-1) = λ;
-        }
-        
-        std::cout << "x:\n\n" << x.str() << "\n\n";
-        std::cout << "b:\n\n" << b.str() << "\n\n";
-    }
+//    // ### λ CCM-solving technique: adds an additional, large-valued column to the x,b vectors
+//    {
+//        // Constrain the least squares regression so that each column sums to 1
+//        // in the resulting 3x3 color matrix.
+//        //
+//        // How: Use the same large number in a single column of `x` and `b`
+//        // Why: We don't want the CCM, which is applied after white balancing,
+//        //      to disturb the white balance. (Ie, a neutral color before
+//        //      applying the CCM should be neutral after applying the CCM.)
+//        //      This is accomplished by ensuring that each row of the CCM
+//        //      sums to 1.
+//        //
+//        // ### When enabling, make sure W=ColorChecker::Count+1 (see W definition, above)
+//        static_assert(W == ColorChecker::Count+1);
+//        
+//        std::cout << "x:\n\n" << x.str() << "\n\n";
+//        std::cout << "b:\n\n" << b.str() << "\n\n";
+//        
+//        for (int i=0; i<3; i++) {
+//            const double λ = 1e8;
+//            x.at(i,W-1) = λ;
+//            b.at(i,W-1) = λ;
+//        }
+//        
+//        std::cout << "x:\n\n" << x.str() << "\n\n";
+//        std::cout << "b:\n\n" << b.str() << "\n\n";
+//    }
     
     // Solve for the color matrix A in the standard matrix equation Ax=b.
     // In the standard equation, `x` is normally solved for, but we want to solve
@@ -1270,13 +1270,19 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     // matrix equation Ax=b), and finally transpose A' to get A (since (A')' = A).
     Mat<double,3,3> colorMatrix = x.trans().solve(b.trans()).trans();
     
-//    // Force each row of `colorMatrix` sums to 1. See comment above.
-//    const Mat<double,3,1> rowSum = colorMatrix.sumRows();
-//    for (int y=0; y<3; y++) {
-//        for (int x=0; x<3; x++) {
-//            colorMatrix.at(y,x) /= rowSum[y];
-//        }
-//    }
+    // ### Force-sum CCM-solving technique: forces each row of `colorMatrix` to sum to 1.
+    {
+        // ### When enabling, make sure W=ColorChecker::Count (see W definition, above)
+        static_assert(W == ColorChecker::Count);
+        
+        // Force each row of `colorMatrix` sums to 1. See comment above.
+        const Mat<double,3,1> rowSum = colorMatrix.sumRows();
+        for (int y=0; y<3; y++) {
+            for (int x=0; x<3; x++) {
+                colorMatrix.at(y,x) /= rowSum[y];
+            }
+        }
+    }
     
     [self _prefsSetColorCheckerPositions:points];
     
