@@ -46,6 +46,7 @@
 		55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F62278FCDD000BCA739 /* MetalKit.framework */; };
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
 		5557260B2B5F677E00B32710 /* demo in Copy Resources/demo */ = {isa = PBXBuildFile; fileRef = 5557260A2B5F677C00B32710 /* demo */; };
+		55670E6F2C221ABA008B1F1F /* ImageExporter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55670E6E2C221A9D008B1F1F /* ImageExporter.mm */; };
 		5568449D2BB22954008F59AE /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5568449C2BB22951008F59AE /* Renderer.metal */; };
 		557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557ABCED29DD24230032619E /* BatteryLifeView.mm */; };
 		557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 557ABCEE29DD24230032619E /* BatteryLifeView.xib */; };
@@ -248,6 +249,7 @@
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		554986302B400CBA00B68E4B /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
 		5557260A2B5F677C00B32710 /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
+		55670E6E2C221A9D008B1F1F /* ImageExporter.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExporter.mm; sourceTree = "<group>"; };
 		5568449A2BB22951008F59AE /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		5568449B2BB22951008F59AE /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
 		5568449C2BB22951008F59AE /* Renderer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
@@ -818,6 +820,7 @@
 			children = (
 				55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */,
 				559704ED2AE0E481006CD617 /* ImageExporter.h */,
+				55670E6E2C221A9D008B1F1F /* ImageExporter.mm */,
 				55C6A26A2AE44559008149AF /* ImageExportSaveDialog */,
 				55C6A2762AE44599008149AF /* ImageExportProgressDialog */,
 			);
@@ -1137,6 +1140,7 @@
 				553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */,
 				55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */,
 				5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */,
+				55670E6F2C221ABA008B1F1F /* ImageExporter.mm in Sources */,
 				55116D302B3CC130004617DD /* ProgressBar.mm in Sources */,
 				55C1BE8E2BF5A4F8004A4FAC /* FFCC.metal in Sources */,
 				5514532B2B4116B20056A92D /* ColorButtonCell.mm in Sources */,

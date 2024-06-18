@@ -154,7 +154,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
         // Create _image.txt if it doesn't exist yet and we have the image
         if (_image.image) {
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
-                _image.image.width, _image.image.height, (ImagePixel*)(_image.image.data.get()));
+                _image.image.width, _image.image.height, (Img::Pixel*)(_image.image.data.get()));
             
             Pipeline::Run(_renderer, popts, rawTxt, _image.txt);
             

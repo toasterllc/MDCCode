@@ -5,6 +5,7 @@
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Mac/Color.h"
 #import "Code/Lib/Toastbox/Mac/Mat.h"
+#import "Code/Shared/Img.h"
 
 namespace ImagePipeline {
 
@@ -72,11 +73,11 @@ public:
         TimestampOptions timestamp;
     };
     
-    static Toastbox::Renderer::Txt TextureForRaw(Toastbox::Renderer& renderer, size_t width, size_t height, const ImagePixel* pixels) {
+    static Toastbox::Renderer::Txt TextureForRaw(Toastbox::Renderer& renderer, size_t width, size_t height, const Img::Pixel* pixels) {
         constexpr size_t SamplesPerPixel = 1;
         constexpr size_t BytesPerSample = sizeof(*pixels);
         Toastbox::Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
-        renderer.textureWrite(raw, pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
+        renderer.textureWrite(raw, pixels, SamplesPerPixel, BytesPerSample, Img::PixelMax);
         return raw;
     }
     

@@ -10,6 +10,7 @@
 #import "Calendar.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Signal.h"
+#import "Code/Lib/tinydng/tiny_dng_writer.h"
 
 namespace MDCStudio::ImageExporter {
 
@@ -19,39 +20,92 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
     
     printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
     using namespace Toastbox;
-        using namespace ImagePipeline;
+    using namespace ImagePipeline;
     
-    Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
-        image.width, image.height, (ImagePixel*)(image.data.get()));
+    if (fmt==&Formats::JPEG || fmt==&Formats::PNG) {
+        Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+            image.width, image.height, (Img::Pixel*)(image.data.get()));
+        
+    //    Renderer::Txt rgbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm_sRGB,
+    //        image.width, image.height);
+        
+        Renderer::Txt rgbTxt = renderer.textureCreate(MTLPixelFormatRGBA16Unorm,
+            image.width, image.height);
+        
+        const Pipeline::Options popts = PipelineOptionsForImage(rec, image);
+        Pipeline::Run(renderer, popts, rawTxt, rgbTxt);
+        
+        id cgimage = renderer.imageCreate(rgbTxt);
+        
+        NSURL* url = [NSURL fileURLWithPath:@(filePath.c_str())];
+        id /* CGImageDestinationRef */ imageDest = CFBridgingRelease(CGImageDestinationCreateWithURL((CFURLRef)url,
+            (CFStringRef)fmt->uti, 1, nil));
+        
+        id /* CGMutableImageMetadataRef */ metadata = CFBridgingRelease(CGImageMetadataCreateMutable());
+        
+        CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
+            kCGImagePropertyExifDictionary, kCGImagePropertyExifDateTimeOriginal,
+            (CFTypeRef)@(Calendar::TimestampEXIFString(rec.info.timestamp).c_str()));
+        
+        CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
+            kCGImagePropertyExifDictionary, kCGImagePropertyExifOffsetTimeOriginal,
+            (CFTypeRef)@(Calendar::TimestampOffsetEXIFString(rec.info.timestamp).c_str()));
+        
+        CGImageDestinationAddImageAndMetadata((CGImageDestinationRef)imageDest, (CGImageRef)cgimage,
+            (CGImageMetadataRef)metadata, nullptr);
+        CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
     
-//    Renderer::Txt rgbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm_sRGB,
-//        image.width, image.height);
+    } else if (fmt == &Formats::DNG) {
+        const uint16_t bitsPerSample[] = { 8*sizeof(*image.data.get()) };
+        const uint16_t sampleFormat[] = { tinydngwriter::SAMPLEFORMAT_UINT };
+        const uint8_t cfaPattern[] = {
+            (uint8_t)image.cfaDesc.color(0,0), (uint8_t)image.cfaDesc.color(1,0),
+            (uint8_t)image.cfaDesc.color(0,1), (uint8_t)image.cfaDesc.color(1,1),
+        };
+        
+        const double asShotNeutral[] = { 0.33324006798300848, 0.64255025834598356, 0.68998566839477893 };
+        
+        const double colorMatrix1[] = {
+            1.7065, -0.5080, -0.1665,
+            -0.3383,  1.2074,  0.1439,
+            -0.1981,  0.4568,  0.8897,
+        };
+        
+        const uint16_t blackLevel[] = { 0 };
+        const uint16_t whiteLevel[] = { 4095 };
+        
+        tinydngwriter::DNGImage dng;
+        
+        dng.SetDNGVersion(1,3,0,0);
+        dng.SetBigEndian(false);
+        dng.SetSubfileType(false, false, false); // Full-resolution image
+        dng.SetImageWidth((unsigned int)image.width);
+        dng.SetImageLength((unsigned int)image.height);
+        dng.SetSamplesPerPixel(1);
+        dng.SetBitsPerSample(std::size(bitsPerSample), bitsPerSample);
+        dng.SetCompression(tinydngwriter::COMPRESSION_NONE);
+        dng.SetPhotometric(tinydngwriter::PHOTOMETRIC_CFA);
+        dng.SetPlanarConfig(tinydngwriter::PLANARCONFIG_CONTIG);
+        dng.SetSampleFormat(std::size(sampleFormat), sampleFormat);
+        dng.SetCFARepeatPatternDim(2, 2);
+        dng.SetCFAPattern(std::size(cfaPattern), cfaPattern);
+        dng.SetColorMatrix1(3, colorMatrix1);
+        dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_D50);
+        dng.SetAsShotNeutral(std::size(asShotNeutral), asShotNeutral);
+        dng.SetBlackLevel(std::size(blackLevel), blackLevel);
+        dng.SetWhiteLevel(std::size(whiteLevel), whiteLevel);
+        dng.SetImageData((uint8_t*)image.data.get(), image.width*image.height*sizeof(*image.data.get()));
+        
+        tinydngwriter::DNGWriter writer(false);
+        bool ret = writer.AddImage(&dng);
+        assert(ret);
+        
+        ret = writer.WriteToFile(filePath.c_str(), nullptr);
+        assert(ret);
     
-    Renderer::Txt rgbTxt = renderer.textureCreate(MTLPixelFormatRGBA16Float,
-        image.width, image.height);
-    
-    const Pipeline::Options popts = PipelineOptionsForImage(rec, image);
-    Pipeline::Run(renderer, popts, rawTxt, rgbTxt);
-    
-    id cgimage = renderer.imageCreate(rgbTxt);
-    
-    NSURL* url = [NSURL fileURLWithPath:@(filePath.c_str())];
-    id /* CGImageDestinationRef */ imageDest = CFBridgingRelease(CGImageDestinationCreateWithURL((CFURLRef)url,
-        (CFStringRef)fmt->uti, 1, nil));
-    
-    id /* CGMutableImageMetadataRef */ metadata = CFBridgingRelease(CGImageMetadataCreateMutable());
-    
-    CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-        kCGImagePropertyExifDictionary, kCGImagePropertyExifDateTimeOriginal,
-        (CFTypeRef)@(Calendar::TimestampEXIFString(rec.info.timestamp).c_str()));
-    
-    CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-        kCGImagePropertyExifDictionary, kCGImagePropertyExifOffsetTimeOriginal,
-        (CFTypeRef)@(Calendar::TimestampOffsetEXIFString(rec.info.timestamp).c_str()));
-    
-    CGImageDestinationAddImageAndMetadata((CGImageDestinationRef)imageDest, (CGImageRef)cgimage,
-        (CGImageMetadataRef)metadata, nullptr);
-    CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
+    } else {
+        abort();
+    }
 }
 
 // Single image export to file `filePath`

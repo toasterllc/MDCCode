@@ -27,7 +27,7 @@ struct Image {
     size_t width = 0;
     size_t height = 0;
     Toastbox::CFADesc cfaDesc;
-    std::unique_ptr<uint8_t[]> data;
+    std::unique_ptr<Img::Pixel[]> data;
     operator bool() const { return (bool)data; }
 };
 
@@ -357,7 +357,7 @@ struct ImageSource : Object {
     static CCM _ThumbRender(Toastbox::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage& tmpStorage,
         const ImageOptions& opts, bool estimateIlluminant, const void* src, void* dst) {
         
-                using namespace ImagePipeline;
+        using namespace ImagePipeline;
         using namespace Toastbox;
         using namespace std::chrono;
         
@@ -369,7 +369,7 @@ struct ImageSource : Object {
             ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
         {
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
-                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
+                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const Img::Pixel*)src);
             
 //            auto timeStart = std::chrono::steady_clock::now();
             
@@ -450,8 +450,9 @@ struct ImageSource : Object {
     
     Image _imageCreate(const _ImageBuffer& buf) {
 //        assert(len >= Img::Full::ImageLen);
-        auto data = std::make_unique<uint8_t[]>(Img::Full::PixelLen);
-        memcpy(data.get(), *buf+Img::PixelsOffset, Img::Full::PixelLen);
+        auto data = std::make_unique<Img::Pixel[]>(Img::Full::PixelCount);
+        const Img::Pixel* src = (Img::Pixel*)(*buf+Img::PixelsOffset);
+        std::copy(src, src+Img::Full::PixelCount, data.get());
         return Image{
             .width = Img::Full::PixelWidth,
             .height = Img::Full::PixelHeight,

@@ -8,9 +8,6 @@ namespace ImagePipeline {
 
 #define ImagePipelineShaderNamespace "ImagePipeline::Shader::"
 
-using ImagePixel = uint16_t;
-constexpr MetalConstant ImagePixel ImagePixelMax = 0x0FFF; // 12 bit values
-
 struct Vals3 {
     uint32_t x = 0;
     uint32_t y = 0;

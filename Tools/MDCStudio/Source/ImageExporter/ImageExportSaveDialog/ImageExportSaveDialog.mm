@@ -22,15 +22,15 @@ static const char* ImageExportFormatKey = "ImageExportFormat";
     if (!(self = [super initWithFrame:frame])) return nil;
     NibViewInit(self, _nibView);
     [_formatMenu removeAllItems];
-    for (const ImageExporter::Format* fmt : ImageExporter::Formats) {
+    for (const ImageExporter::Format* fmt : ImageExporter::Formats::All) {
         [_formatMenu addItemWithTitle:@(fmt->name)];
     }
-    [_formatMenu selectItemWithTitle:@(PrefsGlobal()->get(ImageExportFormatKey, ImageExporter::FormatJPEG.name))];
+    [_formatMenu selectItemWithTitle:@(PrefsGlobal()->get(ImageExportFormatKey, ImageExporter::Formats::JPEG.name))];
     return self;
 }
 
 - (const ImageExporter::Format*)_format {
-    return ImageExporter::Formats[[_formatMenu indexOfSelectedItem]];
+    return ImageExporter::Formats::All[[_formatMenu indexOfSelectedItem]];
 }
 
 - (void)_updateFormat {
