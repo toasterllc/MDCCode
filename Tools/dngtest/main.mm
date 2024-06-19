@@ -24,8 +24,9 @@ int main(int argc, char **argv) {
     const uint16_t sampleFormat[] = { tinydngwriter::SAMPLEFORMAT_UINT };
     const double ccm1[] = { 1,0,0,   0,1,0,   0,0,1 };
 //    const double ccm2[] = { 1,0,0,   0,1,0,   0,0,1 };
-//    const double asShotNatural[] = { 0.632830, 0.721197, 0.281780 };
-    const double asShotNatural[] = { 1, 1, 1 };
+    const double asShotNatural[] = { 0.635942, 0.720814, 0.275690 };
+    
+//    const double asShotNatural[] = { 1, 1, 1 };
     const uint16_t blackLevel[] = { 0 };
     const uint16_t whiteLevel[] = { 4095 };
     const uint8_t cfaPattern[] = { 1, 0, 2, 1 };

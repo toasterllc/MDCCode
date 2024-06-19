@@ -115,22 +115,23 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         LMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, srcRgb);
     }
     
-//    // White balance
-//    if (opts.illum) {
-//        Color<ColorSpace::Raw> illum = *opts.illum;
-//        const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
-//        printf("ILLUM: %f %f %f\n", illum[0], illum[1], illum[2]);
-//        const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-//        const simd::float3 simdWB = _SimdForMat(wb);
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalanceRGB",
-//                // Buffer args
-//                simdWB,
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
+    // White balance
+    if (opts.illum) {
+        Color<ColorSpace::Raw> illum = *opts.illum;
+        const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
+        printf("ILLUM: %f %f %f\n", illum[0], illum[1], illum[2]);
+        
+        const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+        const simd::float3 simdWB = _SimdForMat(wb);
+        renderer.render(srcRgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalanceRGB",
+                // Buffer args
+                simdWB,
+                // Texture args
+                srcRgb
+            )
+        );
+    }
     
 //    // Color correction (Camera raw -> XYZ.D50)
 //    if (opts.colorMatrix) {
