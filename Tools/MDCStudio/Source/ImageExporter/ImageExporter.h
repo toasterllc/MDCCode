@@ -55,7 +55,6 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
     } else if (fmt == &Formats::DNG) {
         const uint16_t bitsPerSample[] = { 8*sizeof(*image.data.get()) };
         const uint16_t sampleFormat[] = { tinydngwriter::SAMPLEFORMAT_UINT };
-//        const CCM ccm = ColorMatrixForIlluminant(ColorRaw(rec.info.illumEst));
         const CCM ccm1 = ColorMatrixForInterpolation(0);
         const CCM ccm2 = ColorMatrixForInterpolation(1);
         const uint16_t blackLevel[] = { 0 };
@@ -64,7 +63,6 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             (uint8_t)image.cfaDesc.color(0,0), (uint8_t)image.cfaDesc.color(1,0),
             (uint8_t)image.cfaDesc.color(0,1), (uint8_t)image.cfaDesc.color(1,1),
         };
-        const double analogBalance[] = { 1, 1, 1 };
         
         tinydngwriter::DNGImage dng;
         dng.SetDNGVersion(1,6,0,0);
@@ -80,53 +78,15 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         dng.SetSampleFormat(std::size(sampleFormat), sampleFormat);
         dng.SetCFARepeatPatternDim(2, 2);
         dng.SetCFAPattern(std::size(cfaPattern), cfaPattern);
-        
-        
-//        dng.SetAsShotNeutral((unsigned int)std::size(rec.options.whiteBalance.illum), rec.options.whiteBalance.illum);
-        
-        
-        
-        
-//        // Invert the matrix because they're supposed to convert from XYZ->raw
-//        // Transpose the matrix to get the raw values in row-major order
-//        dng.SetColorMatrix1(3, &ColorMatrix(&rec.options.whiteBalance.colorMatrix[0][0]).inv().trans()[0]);
-//        dng.SetColorMatrix2(3, &ColorMatrix(&rec.options.whiteBalance.colorMatrix[0][0]).inv().trans()[0]);
-        
-        
-        // Invert the matrix because they're supposed to convert from XYZ->raw
-        // Transpose the matrix to get the raw values in row-major order
-//        dng.SetColorMatrix1(3, &ccm1.matrix.inv().trans()[0]);
-//        dng.SetColorMatrix2(3, &ccm2.matrix.inv().trans()[0]);
-        
         dng.SetColorMatrix1(3, &ccm1.matrix.inv().trans()[0]);
         dng.SetColorMatrix2(3, &ccm2.matrix.inv().trans()[0]);
         
-        
-//        // Transpose the matrix to get the raw values in row-major order
-//        dng.SetColorMatrix1(3, &ccm1.matrix.inv().trans()[0]);
-//        dng.SetColorMatrix2(3, &ccm2.matrix.inv().trans()[0]);
-        
-        
-//        const double cc1[] = { 1,0,0,  0,1,0,  0,0,1 };
-//        const double cc2[] = { 1,0,0,  0,1,0,  0,0,1 };
-//        dng.SetCameraCalibration1(3, cc1);
-//        dng.SetCameraCalibration2(3, cc2);
-//        dng.SetColorMatrix2(3, &fm2.matrix.inv().trans()[0]);
-        
-//        // Transpose the matrix to get the raw values in row-major order
-//        dng.SetForwardMatrix1(3, &ccm1.matrix.trans()[0]);
-//        dng.SetForwardMatrix2(3, &ccm2.matrix.trans()[0]);
-        
         // We chose these illuminants because they empirically give the best results in
         // 3rd party apps (Preview.app, darktable, RawTherapee).
-        //
         dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_STANDARD_LIGHT_A);
         dng.SetCalibrationIlluminant2(tinydngwriter::LIGHTSOURCE_D65);
-//        dng.SetCustomIlluminant1(0.5, 0.4);
-//        dng.SetCustomIlluminant2(0.4, 0.35);
         
         dng.SetAsShotNeutral((unsigned int)std::size(rec.info.illumEst), rec.info.illumEst);
-        dng.SetAnalogBalance(std::size(analogBalance), analogBalance);
         dng.SetBlackLevel(std::size(blackLevel), blackLevel);
         dng.SetWhiteLevel(std::size(whiteLevel), whiteLevel);
         dng.SetImageData((uint8_t*)image.data.get(), image.width*image.height*sizeof(*image.data.get()));
