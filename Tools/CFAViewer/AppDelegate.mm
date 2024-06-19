@@ -1226,7 +1226,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     {
         size_t i = 0;
         for (const auto& c : ColorChecker::Colors) {
-            const Color<ColorSpace::XYZD50> want(c);
+            const Color<ColorSpace::ProPhotoRGB> want(c);
             b.at(0,i) = want[0];
             b.at(1,i) = want[1];
             b.at(2,i) = want[2];
