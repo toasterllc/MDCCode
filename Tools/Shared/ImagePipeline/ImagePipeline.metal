@@ -382,12 +382,31 @@ fragment float4 ProPhotoRGBD50FromXYZD50(
 ) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     const float3x3 M = transpose(float3x3(
-        1.3459433,  -0.2556075, -0.0511118,
-        -0.5445989, 1.5081673,  0.0205351,
-        0.0000000,  0.0000000,  1.2118128
+        +1.3459433, -0.2556075, -0.0511118,
+        -0.5445989, +1.5081673, +0.0205351,
+        +0.0000000, +0.0000000, +1.2118128
     ));
     return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
+
+fragment float4 P3DisplayD65FromFromXYZD65(
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    const float3x3 M = transpose(float3x3(
+        +0.486633, +0.265663, +0.1981740,
+        +0.229004, +0.691727, +0.0792697,
+        +0.000000, +0.045112, +1.0437200
+    ));
+    return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
+}
+
+
+
+//[ 0.486633 0.265663 0.198174 ;
+//0.229004 0.691727 0.0792697 ;
+//-3.97258e-17 0.0451126 1.04372 ]
 
 // Atomically sets the value at `dst` if `val` is greater than it
 void setIfGreater(volatile device atomic_uint& dst, uint val) {
