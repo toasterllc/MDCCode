@@ -133,20 +133,24 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         );
     }
     
-//    // Color correction (Camera raw -> XYZ.D50)
-//    if (opts.colorMatrix) {
-//        const ColorMatrix& colorMatrix = *opts.colorMatrix;
-//        // If a color matrix was provided, use it.
-//        // Otherwise estimate it by interpolating between known color matrices.
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
-//                // Buffer args
-//                _SimdForMat(colorMatrix),
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
+    // Color correction (Camera raw -> XYZ.D50)
+    if (opts.colorMatrix) {
+        const ColorMatrix& colorMatrix = *opts.colorMatrix;
+        printf("Color matrix:\n");
+        colorMatrix.inv().print();
+        colorMatrix.print();
+        printf("\n\n\n");
+        // If a color matrix was provided, use it.
+        // Otherwise estimate it by interpolating between known color matrices.
+        renderer.render(srcRgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
+                // Buffer args
+                _SimdForMat(colorMatrix),
+                // Texture args
+                srcRgb
+            )
+        );
+    }
     
 //    // ProPhotoRGB.D50 -> XYZ.D50
 //    {

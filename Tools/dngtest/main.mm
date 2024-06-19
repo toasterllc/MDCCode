@@ -22,9 +22,62 @@ int main(int argc, char **argv) {
     
     const uint16_t bitsPerSample[] = { 16 };
     const uint16_t sampleFormat[] = { tinydngwriter::SAMPLEFORMAT_UINT };
-    const double ccm1[] = { 1,0,0,   0,1,0,   0,0,1 };
+    
+//    const double ccm1[] = {
+//        1,0,0,
+//        0,1,0,
+//        0,0,1,
+//    };
+    
+    const double ccm1[] = {
+       2.452946 , -1.042994 , -0.409949 ,
+       0.357515 ,  0.738724 , -0.096238 ,
+       0.765702 , -0.314770 ,  0.549068 ,
+    };
+    
+//    const double ccm1[] = {
+//        +2.118560, -0.778840, -0.3198240,
+//        +0.138040, +0.886655, -0.0239412,
+//        +0.318496, +0.147789, +0.6605720,
+//    };
+    
+//    const double ccm1[] = {
+//       0.457735 ,  0.292954  , 0.249311 ,
+//      -0.110034 ,  1.080498  , 0.029536 ,
+//      -0.190691 , -0.796240  , 1.986931 ,
+//    };
+    
+    
+//    const double ccm1[] = {
+//       2.118560 ,  0.138040  , 0.318496,
+//      -0.778840 ,  0.886655  , 0.147789,
+//      -0.319824 , -0.023941  , 0.660572,
+//    };
+    
+    
+//    [ 2.11856 -0.77884 -0.319824 ;
+//    0.13804 0.886655 -0.0239412 ;
+//    0.318496 0.147789 0.660572 ]
+//
+//    [ 0.418169 0.331572 0.214479 ;
+//    -0.0701238 1.06546 0.00466428 ;
+//    -0.185932 -0.398241 1.40938 ]
+    
+    
+    
+//    const double ccm1[] = {
+//           4.1817e-01  ,  3.3157e-01  , 2.1448e-01 ,
+//          -7.0124e-02  ,  1.0655e+00  , 4.6643e-03 ,
+//          -1.8593e-01  , -3.9824e-01  , 1.4094e+00 ,
+//    };
+    
+    
+    
+//    const double ccm1[] = { 1,0,0,   0,1,0,   0,0,1 };
 //    const double ccm2[] = { 1,0,0,   0,1,0,   0,0,1 };
     const double asShotNatural[] = { 0.635942, 0.720814, 0.275690 };
+//    const double asShotNatural[] = { 1, 1, 1 };
+    
     
 //    const double asShotNatural[] = { 1, 1, 1 };
     const uint16_t blackLevel[] = { 0 };
@@ -45,11 +98,16 @@ int main(int argc, char **argv) {
     dng.SetSampleFormat(std::size(sampleFormat), sampleFormat);
     dng.SetCFARepeatPatternDim(2, 2);
     dng.SetCFAPattern(std::size(cfaPattern), cfaPattern);
+    dng.SetAsShotNeutral(std::size(asShotNatural), asShotNatural);
+    
     dng.SetColorMatrix1(3, ccm1);
+    dng.SetColorMatrix2(3, ccm1);
+    
+//    dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_D65);
+    
 //    dng.SetColorMatrix2(3, ccm2);
 //    dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_STANDARD_LIGHT_A);
 //    dng.SetCalibrationIlluminant2(tinydngwriter::LIGHTSOURCE_D65);
-    dng.SetAsShotNeutral(std::size(asShotNatural), asShotNatural);
     dng.SetBlackLevel(std::size(blackLevel), blackLevel);
     dng.SetWhiteLevel(std::size(whiteLevel), whiteLevel);
     dng.SetImageData(imageData.data(), imageData.len());
