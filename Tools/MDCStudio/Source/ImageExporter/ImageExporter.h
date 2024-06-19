@@ -26,9 +26,6 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
             image.width, image.height, (Img::Pixel*)(image.data.get()));
         
-    //    Renderer::Txt rgbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm_sRGB,
-    //        image.width, image.height);
-        
         Renderer::Txt rgbTxt = renderer.textureCreate(MTLPixelFormatRGBA16Unorm,
             image.width, image.height);
         
@@ -58,14 +55,13 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
     } else if (fmt == &Formats::DNG) {
         const uint16_t bitsPerSample[] = { 8*sizeof(*image.data.get()) };
         const uint16_t sampleFormat[] = { tinydngwriter::SAMPLEFORMAT_UINT };
+        const CCM ccm = ColorMatrixForIlluminant(ColorRaw(rec.info.illumEst));
+        const uint16_t blackLevel[] = { 0 };
+        const uint16_t whiteLevel[] = { Img::PixelMax };
         const uint8_t cfaPattern[] = {
             (uint8_t)image.cfaDesc.color(0,0), (uint8_t)image.cfaDesc.color(1,0),
             (uint8_t)image.cfaDesc.color(0,1), (uint8_t)image.cfaDesc.color(1,1),
         };
-        
-        const CCM ccm = ColorMatrixForIlluminant(ColorRaw(rec.info.illumEst));
-        const uint16_t blackLevel[] = { 0 };
-        const uint16_t whiteLevel[] = { Img::PixelMax };
         
         tinydngwriter::DNGImage dng;
         dng.SetDNGVersion(1,3,0,0);
@@ -81,8 +77,8 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         dng.SetSampleFormat(std::size(sampleFormat), sampleFormat);
         dng.SetCFARepeatPatternDim(2, 2);
         dng.SetCFAPattern(std::size(cfaPattern), cfaPattern);
-        // Invert the color matrices because they're supposed to convert from XYZ->raw
-        // Transpose the color matrices to get the raw values in row-major order
+        // Invert the matrix because they're supposed to convert from XYZ->raw
+        // Transpose the matrix to get the raw values in row-major order
         dng.SetColorMatrix1(3, &ccm.matrix.inv().trans()[0]);
         dng.SetAsShotNeutral((unsigned int)std::size(rec.info.illumEst), rec.info.illumEst);
         dng.SetBlackLevel(std::size(blackLevel), blackLevel);
