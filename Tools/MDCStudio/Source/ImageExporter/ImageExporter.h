@@ -63,23 +63,12 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             (uint8_t)image.cfaDesc.color(0,1), (uint8_t)image.cfaDesc.color(1,1),
         };
         
-        const double asShotNeutral[] = {
-            rec.options.whiteBalance.illum[0],
-            rec.options.whiteBalance.illum[1],
-            rec.options.whiteBalance.illum[2],
-        };
-        
-        const CCM ccm1 = ColorMatrixForInterpolation(0); // Indoors
-        const CCM ccm2 = ColorMatrixForInterpolation(1); // Outdoors
-        
+        const CCM ccm = ColorMatrixForIlluminant(ColorRaw(rec.info.illumEst));
         const uint16_t blackLevel[] = { 0 };
         const uint16_t whiteLevel[] = { Img::PixelMax };
         
         tinydngwriter::DNGImage dng;
-        
-        // "Starting with DNG 1.6.0.0, the [CalibrationIlluminant1/2] may be set to
-        // 255 (Other) to indicate a custom illuminant."
-        dng.SetDNGVersion(1,6,0,0);
+        dng.SetDNGVersion(1,3,0,0);
         dng.SetBigEndian(false);
         dng.SetSubfileType(false, false, false); // Full-resolution image
         dng.SetImageWidth((unsigned int)image.width);
@@ -94,11 +83,8 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         dng.SetCFAPattern(std::size(cfaPattern), cfaPattern);
         // Invert the color matrices because they're supposed to convert from XYZ->raw
         // Transpose the color matrices to get the raw values in row-major order
-        dng.SetColorMatrix1(3, &ccm1.matrix.inv().trans()[0]);
-        dng.SetColorMatrix2(3, &ccm2.matrix.inv().trans()[0]);
-        dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_TUNGSTEN_INCANDESCENT);
-        dng.SetCalibrationIlluminant2(tinydngwriter::LIGHTSOURCE_D50);
-        dng.SetAsShotNeutral(std::size(asShotNeutral), asShotNeutral);
+        dng.SetColorMatrix1(3, &ccm.matrix.inv().trans()[0]);
+        dng.SetAsShotNeutral((unsigned int)std::size(rec.info.illumEst), rec.info.illumEst);
         dng.SetBlackLevel(std::size(blackLevel), blackLevel);
         dng.SetWhiteLevel(std::size(whiteLevel), whiteLevel);
         dng.SetImageData((uint8_t*)image.data.get(), image.width*image.height*sizeof(*image.data.get()));
