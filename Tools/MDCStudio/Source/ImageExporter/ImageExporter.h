@@ -83,6 +83,8 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         
         // We chose these illuminants because they empirically give the best results in
         // 3rd party apps (Preview.app, darktable, RawTherapee).
+        // Ideally we'd use CalibrationIlluminant1/IlluminantData1 to supply the xy chromaticity
+        // of the illuminant, but it doesn't seem like that's actually supported anywhere.
         dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_STANDARD_LIGHT_A);
         dng.SetCalibrationIlluminant2(tinydngwriter::LIGHTSOURCE_D65);
         
