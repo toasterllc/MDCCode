@@ -395,9 +395,9 @@ fragment float4 P3DisplayD65FromFromXYZD65(
 ) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     const float3x3 M = transpose(float3x3(
-        +0.486633, +0.265663, +0.1981740,
-        +0.229004, +0.691727, +0.0792697,
-        +0.000000, +0.045112, +1.0437200
+        +2.4931800, -0.931266, -0.4026600,
+        -0.8295030, +1.762690, +0.0236251,
+        +0.0358536, -0.076189, +0.9570930
     ));
     return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
 }

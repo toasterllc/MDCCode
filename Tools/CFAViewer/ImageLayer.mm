@@ -36,8 +36,8 @@ static CGColorSpaceRef _LinearDisplayP3ColorSpace() {
     
     [self setActions:LayerNullActions()];
     [self setPixelFormat:_PixelFormat];
-//    [self setColorspace:_LinearDisplayP3ColorSpace()];
-    [self setColorspace:_LinearSRGBColorSpace()];
+    [self setColorspace:_LinearDisplayP3ColorSpace()];
+//    [self setColorspace:_LinearSRGBColorSpace()];
     [self setDevice:device];
     return self;
 }
