@@ -119,8 +119,6 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     if (opts.illum) {
         Color<ColorSpace::Raw> illum = *opts.illum;
         const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
-        printf("ILLUM: %f %f %f\n", illum[0], illum[1], illum[2]);
-        
         const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
         const simd::float3 simdWB = _SimdForMat(wb);
         renderer.render(srcRgb,
@@ -136,10 +134,6 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     // Color correction (Camera raw -> XYZ.D50)
     if (opts.colorMatrix) {
         const ColorMatrix& colorMatrix = *opts.colorMatrix;
-        printf("Color matrix:\n");
-        colorMatrix.inv().print();
-        colorMatrix.print();
-        printf("\n\n\n");
         // If a color matrix was provided, use it.
         // Otherwise estimate it by interpolating between known color matrices.
         renderer.render(srcRgb,

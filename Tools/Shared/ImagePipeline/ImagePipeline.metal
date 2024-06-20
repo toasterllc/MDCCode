@@ -402,12 +402,6 @@ fragment float4 P3DisplayD65FromFromXYZD65(
     return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
 }
 
-
-
-//[ 0.486633 0.265663 0.198174 ;
-//0.229004 0.691727 0.0792697 ;
-//-3.97258e-17 0.0451126 1.04372 ]
-
 // Atomically sets the value at `dst` if `val` is greater than it
 void setIfGreater(volatile device atomic_uint& dst, uint val) {
     uint current = (device uint&)dst;
