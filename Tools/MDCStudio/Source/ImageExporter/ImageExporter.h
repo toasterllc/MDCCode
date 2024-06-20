@@ -10,9 +10,22 @@
 #import "Calendar.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Signal.h"
+#import "Code/Lib/Toastbox/RuntimeError.h"
 #import "Code/Lib/tinydng/tiny_dng_writer.h"
 
 namespace MDCStudio::ImageExporter {
+
+inline struct timeval _TimevalForTimeInstant(Time::Instant t) {
+    const auto tpDevice = Time::Clock::TimePointFromTimeInstant(t);
+    const auto tpSystem = date::clock_cast<std::chrono::system_clock>(tpDevice);
+    std::chrono::microseconds usec = tpSystem.time_since_epoch();
+    const std::chrono::seconds sec = std::chrono::duration_cast<std::chrono::seconds>(usec);
+    usec -= sec;
+    return {
+        .tv_sec = (__darwin_time_t)sec.count(),
+        .tv_usec = (__darwin_suseconds_t)usec.count(),
+    };
+}
 
 // Single image export to file `filePath`
 inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const ImageRecord& rec, const Image& image,
@@ -95,14 +108,19 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         
         tinydngwriter::DNGWriter writer(false);
         bool ret = writer.AddImage(&dng);
-        assert(ret);
+        if (!ret) throw Toastbox::RuntimeError("tinydngwriter::DNGWriter::AddImage failed");
         
         ret = writer.WriteToFile(filePath.c_str(), nullptr);
-        assert(ret);
+        if (!ret) throw Toastbox::RuntimeError("tinydngwriter::DNGWriter::WriteToFile failed");
     
     } else {
         abort();
     }
+    
+    struct timeval tv = _TimevalForTimeInstant(rec.info.timestamp);
+    const struct timeval times[] = { tv, tv };
+    int ir = utimes(filePath.c_str(), times);
+    if (ir) throw Toastbox::RuntimeError("utimes failed: %s", strerror(errno));
 }
 
 // Single image export to file `filePath`
