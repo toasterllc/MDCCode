@@ -23,17 +23,31 @@ int main(int argc, char **argv) {
     const uint16_t bitsPerSample[] = { 16 };
     const uint16_t sampleFormat[] = { tinydngwriter::SAMPLEFORMAT_UINT };
     
+    const double ccm1[] = {
+        2.426472 , -1.008062 , -0.401825 ,
+        0.364135 ,  0.729987 , -0.098270 ,
+        0.563004 , -0.047291 ,  0.611276 ,
+    };
+    
+    const double ccm2[] = {
+         1.7103e+00 , -4.7671e-01 , -2.0888e-01 ,
+        -1.6241e-01 ,  1.0936e+00 ,  7.6380e-02 ,
+        -5.0032e-03 ,  4.0445e-01 ,  7.2754e-01 ,
+    };
+    
+    
+    
 //    const double ccm1[] = {
 //        1,0,0,
 //        0,1,0,
 //        0,0,1,
 //    };
     
-    const double ccm1[] = {
-       2.452946 , -1.042994 , -0.409949 ,
-       0.357515 ,  0.738724 , -0.096238 ,
-       0.765702 , -0.314770 ,  0.549068 ,
-    };
+//    const double ccm1[] = {
+//       2.452946 , -1.042994 , -0.409949 ,
+//       0.357515 ,  0.738724 , -0.096238 ,
+//       0.765702 , -0.314770 ,  0.549068 ,
+//    };
     
 //    const double ccm1[] = {
 //        +2.118560, -0.778840, -0.3198240,
@@ -101,13 +115,13 @@ int main(int argc, char **argv) {
     dng.SetAsShotNeutral(std::size(asShotNatural), asShotNatural);
     
     dng.SetColorMatrix1(3, ccm1);
-    dng.SetColorMatrix2(3, ccm1);
+    dng.SetColorMatrix2(3, ccm2);
     
 //    dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_D65);
     
 //    dng.SetColorMatrix2(3, ccm2);
-//    dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_STANDARD_LIGHT_A);
-//    dng.SetCalibrationIlluminant2(tinydngwriter::LIGHTSOURCE_D65);
+    dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_STANDARD_LIGHT_A);
+    dng.SetCalibrationIlluminant2(tinydngwriter::LIGHTSOURCE_D65);
     dng.SetBlackLevel(std::size(blackLevel), blackLevel);
     dng.SetWhiteLevel(std::size(whiteLevel), whiteLevel);
     dng.SetImageData(imageData.data(), imageData.len());

@@ -1226,7 +1226,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     {
         size_t i = 0;
         for (const auto& c : ColorChecker::Colors) {
-            const Color<ColorSpace::XYZD50> want(c);
+            const Color<ColorSpace::ProPhotoRGB> want(c);
             b.at(0,i) = want[0];
             b.at(1,i) = want[1];
             b.at(2,i) = want[2];
@@ -1262,28 +1262,28 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
         std::cout << "b:\n\n" << b.str() << "\n\n";
     }
     
-//    // Solve for the color matrix A in the standard matrix equation Ax=b.
-//    // In the standard equation, `x` is normally solved for, but we want to solve
-//    // for A instead. To do so, we manipulate the equation as follows:
-//    //   Ax=b  =>  (Ax)'=b'  =>  x'A'=b'
-//    // and solve for A' (which is now in the position that x is in, in the standard
-//    // matrix equation Ax=b), and finally transpose A' to get A (since (A')' = A).
-//    const Mat<double,3,3> ProPhotoRGBD50FromCameraRaw = x.trans().solve(b.trans()).trans();
-//    
-//    // ### Combine the solved `ProPhotoRGBD50FromCameraRaw` matrix with the `XYZD50FromProPhotoRGBD50` matrix.
-//    // Empirically we get better results (ie CCM's that deliver higher-quality output) by solving for
-//    // `want` values in the ProPhotoRGB colorspace (and then converting the matrix to XYZ.D50),
-//    // rather than solving for `want` values in the XYZ.D50 colorspace.
-//    const Mat<double,3,3> XYZD50FromProPhotoRGBD50 = {
-//        0.7976749,  0.1351917,  0.0313534,
-//        0.2880402,  0.7118741,  0.0000857,
-//        0.0000000,  0.0000000,  0.8252100,
-//    };
-//
-//    Mat<double,3,3> colorMatrix = XYZD50FromProPhotoRGBD50 * ProPhotoRGBD50FromCameraRaw;
+    // Solve for the color matrix A in the standard matrix equation Ax=b.
+    // In the standard equation, `x` is normally solved for, but we want to solve
+    // for A instead. To do so, we manipulate the equation as follows:
+    //   Ax=b  =>  (Ax)'=b'  =>  x'A'=b'
+    // and solve for A' (which is now in the position that x is in, in the standard
+    // matrix equation Ax=b), and finally transpose A' to get A (since (A')' = A).
+    const Mat<double,3,3> ProPhotoRGBD50FromCameraRaw = x.trans().solve(b.trans()).trans();
     
-    const Mat<double,3,3> XYZD50FromCameraRaw = x.trans().solve(b.trans()).trans();
-    Mat<double,3,3> colorMatrix = XYZD50FromCameraRaw;
+    // ### Combine the solved `ProPhotoRGBD50FromCameraRaw` matrix with the `XYZD50FromProPhotoRGBD50` matrix.
+    // Empirically we get better results (ie CCM's that deliver higher-quality output) by solving for
+    // `want` values in the ProPhotoRGB colorspace (and then converting the matrix to XYZ.D50),
+    // rather than solving for `want` values in the XYZ.D50 colorspace.
+    const Mat<double,3,3> XYZD50FromProPhotoRGBD50 = {
+        0.7976749,  0.1351917,  0.0313534,
+        0.2880402,  0.7118741,  0.0000857,
+        0.0000000,  0.0000000,  0.8252100,
+    };
+
+    Mat<double,3,3> colorMatrix = XYZD50FromProPhotoRGBD50 * ProPhotoRGBD50FromCameraRaw;
+    
+//    const Mat<double,3,3> XYZD50FromCameraRaw = x.trans().solve(b.trans()).trans();
+//    Mat<double,3,3> colorMatrix = XYZD50FromCameraRaw;
     
 //    Mat<double,3,3> colorMatrix = XYZD50FromProPhotoRGBD50 * ProPhotoRGBD50FromCameraRaw;
 //    Mat<double,3,3> colorMatrix = XYZD50FromProPhotoRGBD50 * ProPhotoRGBD50FromCameraRaw;
