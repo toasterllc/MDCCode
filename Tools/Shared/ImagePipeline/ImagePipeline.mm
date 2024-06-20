@@ -98,16 +98,16 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     assert(srcRaw);
     assert(dstRgb);
     
-//    // Reconstruct highlights
-//    if (opts.reconstructHighlights.en) {
-//        assert(opts.illum);
-//        ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum->m, srcRaw);
-//    }
-//    
-//    // Defringe (currently unused)
-//    if (opts.defringe.en) {
-//        Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
-//    }
+    // Reconstruct highlights
+    if (opts.reconstructHighlights.en) {
+        assert(opts.illum);
+        ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum->m, srcRaw);
+    }
+    
+    // Defringe (currently unused)
+    if (opts.defringe.en) {
+        Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
+    }
     
     // Debayer (LMMSE)
     Renderer::Txt srcRgb = renderer.textureCreate(srcRaw, MTLPixelFormatRGBA32Float);
@@ -152,109 +152,94 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         );
     }
     
-//    // ProPhotoRGB.D50 -> XYZ.D50
-//    {
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGBD50",
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
+    // XYZ.D50 -> XYY.D50
+    {
+        renderer.render(srcRgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYYFromXYZ",
+                // Texture args
+                srcRgb
+            )
+        );
+    }
     
-//    // XYZ.D50 -> XYY.D50
-//    {
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYYFromXYZ",
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
-//    
-//    // Exposure
-//    {
-//        constexpr float ExposureCoeff = 4;
-//        const float exposure = pow(2, ExposureCoeff*opts.exposure);
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Exposure",
-//                // Buffer args
-//                exposure,
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
-//    
-//    // XYY.D50 -> XYZ.D50
-//    {
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZFromXYY",
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
-//    
-//    // XYZ.D50 -> Lab.D50
-//    {
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
-//    
-//    // Brightness
-//    {
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Brightness",
-//                // Buffer args
-//                opts.brightness,
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
-//    
-//    // Contrast
-//    {
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Contrast",
-//                // Buffer args
-//                opts.contrast,
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
-//    
-//    // Local contrast
-//    if (opts.localContrast.amount != 0) {
-//        LocalContrast::Run(renderer, opts.localContrast.amount, opts.localContrast.radius, srcRgb);
-//    }
-//    
-//    // Lab.D50 -> XYZ.D50
-//    {
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
-//    
-//    // Saturation
-//    {
-//        constexpr float SaturationCoeff = 2;
-//        Saturation::Run(renderer, SaturationCoeff*opts.saturation, srcRgb);
-//    }
+    // Exposure
+    {
+        constexpr float ExposureCoeff = 4;
+        const float exposure = pow(2, ExposureCoeff*opts.exposure);
+        renderer.render(srcRgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Exposure",
+                // Buffer args
+                exposure,
+                // Texture args
+                srcRgb
+            )
+        );
+    }
     
-//    const ColorMatrix mat = Toastbox::ColorSpace::RGBFromXYZMatrix<ColorSpace::P3Display>();
-//    mat.print();
-//    Toastbox::ColorSpace<ColorSpace::P3Display>;
-//    RGBFromXYZMatrix
+    // XYY.D50 -> XYZ.D50
+    {
+        renderer.render(srcRgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZFromXYY",
+                // Texture args
+                srcRgb
+            )
+        );
+    }
+    
+    // XYZ.D50 -> Lab.D50
+    {
+        renderer.render(srcRgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
+                // Texture args
+                srcRgb
+            )
+        );
+    }
+    
+    // Brightness
+    {
+        renderer.render(srcRgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Brightness",
+                // Buffer args
+                opts.brightness,
+                // Texture args
+                srcRgb
+            )
+        );
+    }
+    
+    // Contrast
+    {
+        renderer.render(srcRgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Contrast",
+                // Buffer args
+                opts.contrast,
+                // Texture args
+                srcRgb
+            )
+        );
+    }
+    
+    // Local contrast
+    if (opts.localContrast.amount != 0) {
+        LocalContrast::Run(renderer, opts.localContrast.amount, opts.localContrast.radius, srcRgb);
+    }
+    
+    // Lab.D50 -> XYZ.D50
+    {
+        renderer.render(srcRgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
+                // Texture args
+                srcRgb
+            )
+        );
+    }
+    
+    // Saturation
+    {
+        constexpr float SaturationCoeff = 2;
+        Saturation::Run(renderer, SaturationCoeff*opts.saturation, srcRgb);
+    }
     
     // XYZ.D50 -> XYZ.D65
     {
