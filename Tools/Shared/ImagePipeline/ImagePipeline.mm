@@ -266,25 +266,25 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
         );
     }
     
-//    // XYZ.D65 -> LSRGB.D65
-//    {
-//        renderer.render(srcRgb,
-//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LSRGBD65FromXYZD65",
-//                // Texture args
-//                srcRgb
-//            )
-//        );
-//    }
-    
-    // XYZ.D65 -> P3Display.D65
+    // XYZ.D65 -> LSRGB.D65
     {
         renderer.render(srcRgb,
-            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::P3DisplayD65FromFromXYZD65",
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LSRGBD65FromXYZD65",
                 // Texture args
                 srcRgb
             )
         );
     }
+    
+//    // XYZ.D65 -> P3Display.D65
+//    {
+//        renderer.render(srcRgb,
+//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::P3DisplayD65FromFromXYZD65",
+//                // Texture args
+//                srcRgb
+//            )
+//        );
+//    }
     
     // Copy image from srcRgb -> dstRgb if they're different textures, resizing if needed
     if (srcRgb != dstRgb) {
