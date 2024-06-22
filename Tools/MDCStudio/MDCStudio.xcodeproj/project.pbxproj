@@ -162,6 +162,7 @@
 		551FFA662BAFBC4D0056263C /* AnchoredMetalDocumentLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AnchoredMetalDocumentLayer.mm; sourceTree = "<group>"; };
 		551FFA672BAFBC4D0056263C /* AnchoredDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AnchoredDocumentView.mm; sourceTree = "<group>"; };
 		551FFA682BAFBC4D0056263C /* AnchoredScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnchoredScrollView.h; sourceTree = "<group>"; };
+		552209F12C26BB790062CC77 /* TIFF.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TIFF.h; sourceTree = "<group>"; };
 		552F4BF529B28543000CEAB2 /* ImageUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageUtil.h; sourceTree = "<group>"; };
 		552F4BF629B306DB000CEAB2 /* ImageOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageOptions.h; sourceTree = "<group>"; };
 		5530DC3929DCDA3E005FEC0A /* DeviceSettingsView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeviceSettingsView.mm; sourceTree = "<group>"; };
@@ -250,6 +251,7 @@
 		554986302B400CBA00B68E4B /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
 		5557260A2B5F677C00B32710 /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
 		55670E6E2C221A9D008B1F1F /* ImageExporter.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExporter.mm; sourceTree = "<group>"; };
+		55670E7C2C24D3F6008B1F1F /* tiny_dng_writer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tiny_dng_writer.h; sourceTree = "<group>"; };
 		5568449A2BB22951008F59AE /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		5568449B2BB22951008F59AE /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
 		5568449C2BB22951008F59AE /* Renderer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
@@ -616,10 +618,11 @@
 		5544AE1527B5E58F006AB473 /* Lib */ = {
 			isa = PBXGroup;
 			children = (
-				55C1BE722BF5A4EA004A4FAC /* FFCC-Metal */,
-				55C1BE932BF909B6004A4FAC /* LMMSE-Metal */,
 				551FFA622BAFBC4D0056263C /* AnchoredScrollView */,
 				55D3099329A828070080BCBD /* date */,
+				55C1BE722BF5A4EA004A4FAC /* FFCC-Metal */,
+				55C1BE932BF909B6004A4FAC /* LMMSE-Metal */,
+				55670E732C24D3F6008B1F1F /* tinydng */,
 				5544AE1627B5E58F006AB473 /* Toastbox */,
 			);
 			path = Lib;
@@ -636,12 +639,12 @@
 				5544AE1927B5E58F006AB473 /* Enum.h */,
 				5544AE1D27B5E58F006AB473 /* FileDescriptor.h */,
 				5544AE2127B5E58F006AB473 /* HashInts.h */,
-				5544AE1C27B5E58F006AB473 /* NumForStr.h */,
 				558FFC4629C7EF920022E840 /* IterAny.h */,
 				5544AE1727B5E58F006AB473 /* LICENSE.md */,
 				55C90C6329B70494007CC97E /* LRU.h */,
 				55425B1729A01BE000F25D57 /* Mac */,
 				5544AE2027B5E58F006AB473 /* Mmap.h */,
+				5544AE1C27B5E58F006AB473 /* NumForStr.h */,
 				55F755C829C2C9A900241672 /* Queue.h */,
 				5544AE2227B5E58F006AB473 /* RefCounted.h */,
 				5544AE2627B5E58F006AB473 /* RingBuffer.h */,
@@ -650,6 +653,7 @@
 				55F755C929C2CA4000241672 /* Signal.h */,
 				55F755CA29C2CA4000241672 /* SignalQueue.h */,
 				55A417DD29DC9804003A68A4 /* String.h */,
+				552209F12C26BB790062CC77 /* TIFF.h */,
 				5544AE2327B5E58F006AB473 /* Uniqued.h */,
 				5544AE1E27B5E58F006AB473 /* USB.h */,
 				5544AE2427B5E58F006AB473 /* USBDevice.h */,
@@ -776,6 +780,14 @@
 				55496F5A278CFCE200BCA739 /* Cocoa.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		55670E732C24D3F6008B1F1F /* tinydng */ = {
+			isa = PBXGroup;
+			children = (
+				55670E7C2C24D3F6008B1F1F /* tiny_dng_writer.h */,
+			);
+			path = tinydng;
 			sourceTree = "<group>";
 		};
 		557ABCEC29DD24230032619E /* BatteryLifeView */ = {

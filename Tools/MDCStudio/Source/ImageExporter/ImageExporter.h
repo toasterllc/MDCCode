@@ -11,6 +11,7 @@
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Signal.h"
 #import "Code/Lib/Toastbox/RuntimeError.h"
+#import "Code/Lib/Toastbox/TIFF.h"
 #import "Code/Lib/tinydng/tiny_dng_writer.h"
 
 namespace MDCStudio::ImageExporter {
@@ -66,52 +67,124 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
     
     } else if (fmt == &Formats::DNG) {
-        const uint16_t bitsPerSample[] = { 8*sizeof(*image.data.get()) };
-        const uint16_t sampleFormat[] = { tinydngwriter::SAMPLEFORMAT_UINT };
-        const CCM ccm1 = ColorMatrixForInterpolation(0);
-        const CCM ccm2 = ColorMatrixForInterpolation(1);
-        const uint16_t blackLevel[] = { 0 };
-        const uint16_t whiteLevel[] = { Img::PixelMax };
-        const uint8_t cfaPattern[] = {
-            (uint8_t)image.cfaDesc.color(0,0), (uint8_t)image.cfaDesc.color(1,0),
-            (uint8_t)image.cfaDesc.color(0,1), (uint8_t)image.cfaDesc.color(1,1),
-        };
+        const size_t imageDataLen = image.width*image.height*sizeof(*image.data.get());
         
-        tinydngwriter::DNGImage dng;
-        dng.SetDNGVersion(1,6,0,0);
-        dng.SetBigEndian(false);
-        dng.SetSubfileType(false, false, false); // Full-resolution image
-        dng.SetImageWidth((unsigned int)image.width);
-        dng.SetImageLength((unsigned int)image.height);
-        dng.SetSamplesPerPixel(1);
-        dng.SetBitsPerSample(std::size(bitsPerSample), bitsPerSample);
-        dng.SetCompression(tinydngwriter::COMPRESSION_NONE);
-        dng.SetPhotometric(tinydngwriter::PHOTOMETRIC_CFA);
-        dng.SetPlanarConfig(tinydngwriter::PLANARCONFIG_CONTIG);
-        dng.SetSampleFormat(std::size(sampleFormat), sampleFormat);
-        dng.SetCFARepeatPatternDim(2, 2);
-        dng.SetCFAPattern(std::size(cfaPattern), cfaPattern);
-        dng.SetColorMatrix1(3, &ccm1.matrix.inv().trans()[0]);
-        dng.SetColorMatrix2(3, &ccm2.matrix.inv().trans()[0]);
+        TIFF tiff;
         
-        // We chose these illuminants because they empirically give the best results in
-        // 3rd party apps (Preview.app, darktable, RawTherapee).
-        // Ideally we'd use CalibrationIlluminant1/IlluminantData1 to supply the xy chromaticity
-        // of the illuminant, but it doesn't seem like that's actually supported anywhere.
-        dng.SetCalibrationIlluminant1(tinydngwriter::LIGHTSOURCE_STANDARD_LIGHT_A);
-        dng.SetCalibrationIlluminant2(tinydngwriter::LIGHTSOURCE_D65);
+        // Push header
+        TIFF::Val<uint32_t> nextIFDOffset;
+        tiff.push((uint16_t)0x4949);
+        tiff.push((uint16_t)0x002A);
+        tiff.push(nextIFDOffset);
         
-        dng.SetAsShotNeutral((unsigned int)std::size(rec.info.illumEst), rec.info.illumEst);
-        dng.SetBlackLevel(std::size(blackLevel), blackLevel);
-        dng.SetWhiteLevel(std::size(whiteLevel), whiteLevel);
-        dng.SetImageData((uint8_t*)image.data.get(), image.width*image.height*sizeof(*image.data.get()));
+        // IFD0
+        TIFF::Val<uint32_t> exifOffset;
+        TIFF::Val<uint32_t> imageDataOffset;
+        {
+            tiff.set(nextIFDOffset, tiff.off());
+            
+            uint16_t tc = 0;
+            TIFF::Val<uint16_t> tagCount;
+            TIFF::Val<uint32_t> colorMatrixPointer1;
+            TIFF::Val<uint32_t> colorMatrixPointer2;
+            TIFF::Val<uint32_t> asShotNeutralPointer;
+            
+            tiff.push(tagCount);
+            tiff.push( 254,   TIFF::Long,       1, 0x00000000 );                tc++; // SubFiletype
+            tiff.push( 256,   TIFF::Long,       1, (uint32_t)image.width );     tc++; // ImageWidth
+            tiff.push( 257,   TIFF::Long,       1, (uint32_t)image.height );    tc++; // ImageLength
+            tiff.push( 258,   TIFF::Short,      1, 0x00000010 );                tc++; // BitsPerSample
+            tiff.push( 259,   TIFF::Short,      1, 0x00000001 );                tc++; // Compression
+            tiff.push( 262,   TIFF::Short,      1, 0x00008023 );                tc++; // PhotometricInterpretation
+            tiff.push( 273,   TIFF::Long,       1, imageDataOffset );           tc++; // StripOffsets
+            tiff.push( 277,   TIFF::Short,      1, 0x00000001 );                tc++; // SamplesPerPixel
+            tiff.push( 278,   TIFF::Long,       1, (uint32_t)image.height );    tc++; // RowsPerStrip
+            tiff.push( 279,   TIFF::Long,       1, (uint32_t)imageDataLen );    tc++; // StripByteCounts
+            tiff.push( 284,   TIFF::Short,      1, 0x00000001 );                tc++; // PlanarConfig
+            tiff.push( 339,   TIFF::Short,      1, 0x00000001 );                tc++; // SampleFormat
+            tiff.push( 33421, TIFF::Short,      2, 0x00020002 );                tc++; // CFARepeatPatternDim
+            tiff.push( 33422, TIFF::Byte,       4, 0x01020001 );                tc++; // CFAPattern
+            tiff.push( 34665, TIFF::Long,       1, exifOffset );                tc++; // EXIFIFD
+            tiff.push( 50706, TIFF::Byte,       4, 0x00000601 );                tc++; // DNGVersion
+            tiff.push( 50714, TIFF::Short,      1, 0x00000000 );                tc++; // BlackLevel
+            tiff.push( 50717, TIFF::Short,      1, Img::PixelMax );             tc++; // WhiteLevel
+            tiff.push( 50721, TIFF::SRational,  9, colorMatrixPointer1 );       tc++; // ColorMatrix1
+            tiff.push( 50722, TIFF::SRational,  9, colorMatrixPointer2 );       tc++; // ColorMatrix2
+            tiff.push( 50728, TIFF::Rational,   3, asShotNeutralPointer );      tc++; // AsShotNeutral
+            tiff.push( 50778, TIFF::Short,      1, 0x00000011 );                tc++; // CalibrationIlluminant1
+            tiff.push( 50779, TIFF::Short,      1, 0x00000015 );                tc++; // CalibrationIlluminant2
+            tiff.push(nextIFDOffset);
+            tiff.set(tagCount, tc);
+            
+            // ColorMatrix1
+            {
+                ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix.inv();
+                tiff.set(colorMatrixPointer1, tiff.off());
+                tiff.push(ccm.beginRow(), ccm.endRow());
+            }
+            
+            // ColorMatrix2
+            {
+                ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix.inv();
+                tiff.set(colorMatrixPointer2, tiff.off());
+                tiff.push(ccm.beginRow(), ccm.endRow());
+            }
+            
+            // AsShotNeutral
+            {
+                tiff.set(asShotNeutralPointer, tiff.off());
+                tiff.push(std::begin(rec.info.illumEst), std::end(rec.info.illumEst));
+            }
+        }
         
-        tinydngwriter::DNGWriter writer(false);
-        bool ret = writer.AddImage(&dng);
-        if (!ret) throw Toastbox::RuntimeError("tinydngwriter::DNGWriter::AddImage failed");
+        // ExifIFD
+        {
+            tiff.set(nextIFDOffset, tiff.off());
+            tiff.set(exifOffset, tiff.off());
+            
+            uint16_t tc = 0;
+            TIFF::Val<uint16_t> tagCount;
+            TIFF::Val<uint32_t> dateTimeOriginalPointer;
+            TIFF::Val<uint32_t> offsetTimeOriginalPointer;
+            constexpr size_t DateTimeOriginalLen = 20;
+            constexpr size_t OffsetTimeOriginalLen = 7;
+            
+            tiff.push(tagCount);
+            tiff.push( 36864, TIFF::Undefined,  4,                      0x32333230 );                   tc++; // EXIF version
+            tiff.push( 36867, TIFF::ASCII,      DateTimeOriginalLen,    dateTimeOriginalPointer );      tc++; // DateTimeOriginal
+            tiff.push( 36881, TIFF::ASCII,      OffsetTimeOriginalLen,  offsetTimeOriginalPointer );    tc++; // OffsetTimeOriginal
+            tiff.push(nextIFDOffset);
+            tiff.set(tagCount, tc);
+            
+            // DateTimeOriginal
+            {
+                const std::string str = Calendar::TimestampEXIFString(rec.info.timestamp);
+                assert(str.size()+1 == DateTimeOriginalLen);
+                tiff.set(dateTimeOriginalPointer, tiff.off());
+                tiff.push(str.c_str(), str.c_str()+DateTimeOriginalLen);
+            }
+            
+            // OffsetTimeOriginal
+            {
+                const std::string str = Calendar::TimestampOffsetEXIFString(rec.info.timestamp);
+                assert(str.size()+1 == OffsetTimeOriginalLen);
+                tiff.set(offsetTimeOriginalPointer, tiff.off());
+                tiff.push(str.c_str(), str.c_str()+OffsetTimeOriginalLen);
+            }
+        }
         
-        ret = writer.WriteToFile(filePath.c_str(), nullptr);
-        if (!ret) throw Toastbox::RuntimeError("tinydngwriter::DNGWriter::WriteToFile failed");
+        {
+            // Terminate IFDs
+            tiff.set(nextIFDOffset, (uint32_t)0);
+        }
+        
+        // Image data
+        {
+            tiff.set(imageDataOffset, tiff.off());
+            tiff.push(image.data.get(), imageDataLen);
+        }
+        
+        tiff.write(filePath);
     
     } else {
         abort();
