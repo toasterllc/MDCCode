@@ -137,9 +137,13 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             }
         }
         
-        // ExifIFD
         {
-            tiff.set(nextIFDOffset, tiff.off());
+            // Terminate IFDs
+            tiff.set(nextIFDOffset, (uint32_t)0);
+        }
+        
+        // ExifIFD subdirectory
+        {
             tiff.set(exifOffset, tiff.off());
             
             uint16_t tc = 0;
@@ -153,6 +157,8 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             tiff.push( 36864, TIFF::Undefined,  4,                      0x32333230 );                   tc++; // EXIF version
             tiff.push( 36867, TIFF::ASCII,      DateTimeOriginalLen,    dateTimeOriginalPointer );      tc++; // DateTimeOriginal
             tiff.push( 36881, TIFF::ASCII,      OffsetTimeOriginalLen,  offsetTimeOriginalPointer );    tc++; // OffsetTimeOriginal
+            tiff.push( 40962, TIFF::Long,       1,                      (uint32_t)image.width );        tc++; // ExifImageWidth
+            tiff.push( 40963, TIFF::Long,       1,                      (uint32_t)image.height );       tc++; // ExifImageHeight
             tiff.push(nextIFDOffset);
             tiff.set(tagCount, tc);
             
@@ -171,11 +177,6 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
                 tiff.set(offsetTimeOriginalPointer, tiff.off());
                 tiff.push(str.c_str(), str.c_str()+OffsetTimeOriginalLen);
             }
-        }
-        
-        {
-            // Terminate IFDs
-            tiff.set(nextIFDOffset, (uint32_t)0);
         }
         
         // Image data
