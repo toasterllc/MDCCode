@@ -12,7 +12,6 @@
 #import "Code/Lib/Toastbox/Signal.h"
 #import "Code/Lib/Toastbox/RuntimeError.h"
 #import "Code/Lib/Toastbox/TIFF.h"
-#import "Code/Lib/tinydng/tiny_dng_writer.h"
 
 namespace MDCStudio::ImageExporter {
 
