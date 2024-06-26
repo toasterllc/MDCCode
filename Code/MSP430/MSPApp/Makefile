@@ -61,11 +61,7 @@ MSPApp.hex: $(EXE_OUTPUTS)
 
 # Other Targets
 clean:
-	rm -rf $(BIN_OUTPUTS) $(EXE_OUTPUTS)
-	rm -rf *.o
-	rm -rf *.d
-	-@echo 'Finished clean'
-	-@echo ' '
+	rm -rf $(BIN_OUTPUTS) $(EXE_OUTPUTS) *.o *.d *.d_raw *.map
 
 pre-build:
 	-make clean
