@@ -1,1 +1,0 @@
--T"../msp430fr2433.ld" -T"../Linker.ld" "./InterruptVector.o" "./main.o" -Wl,--start-group -lgcc -lc -Wl,--end-group 
