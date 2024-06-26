@@ -13,15 +13,17 @@ ORDERED_OBJS :=				\
 
 EXE_OUTPUT := MSPApp.elf
 
+GCC := "/Users/dave/Desktop/msp430-gcc-9.3.1.11_macos/bin/msp430-elf-gcc-9.3.1"
+
 %.o: %.cpp | $(GEN_FILES) $(GEN_MISC_FILES)
-	"msp430-elf-gcc-9.3.1" -c -mmcu=msp430fr2433 -mhwmult=f5series -fno-exceptions						\
+	$(GCC) -c -mmcu=msp430fr2433 -mhwmult=f5series -fno-exceptions										\
 		-I"." -I"../../../" -I"/Users/dave/Desktop/msp430-gcc-support-files/include"					\
 		-Os -ffunction-sections -fdata-sections -g -gdwarf-4 -Wall -flto -MMD -MP						\
 		-MF"$(basename $(<F)).d_raw" -MT"$(@)" -std=c++17 -fno-rtti -fno-threadsafe-statics				\
 		-o"$@" "$(shell echo $<)"
 
 $(EXE_OUTPUT): $(OBJS) $(GEN_CMDS)
-	"msp430-elf-gcc-9.3.1" -mhwmult=f5series -fno-exceptions -Os -ffunction-sections -fdata-sections	\
+	$(GCC) -mhwmult=f5series -fno-exceptions -Os -ffunction-sections -fdata-sections					\
 		-g -gdwarf-4 -Wall -flto -mmcu=msp430fr2433 -Wl,-Map,"MSPApp.map" -nostartfiles -static			\
 		-Wl,--gc-sections -mmcu=msp430fr2433 -L"/Users/dave/Desktop/msp430-gcc-support-files/include"	\
 		-Wl,-flto -o$(EXE_OUTPUT) $(ORDERED_OBJS)
