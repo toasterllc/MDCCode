@@ -6,26 +6,169 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
--T"../msp430fr2433.ld" \
--T"../Linker.ld" \
-"./InterruptVector.o" \
-"./main.o" \
+-T"msp430fr2433.ld" \
+-T"Linker.ld" \
+"InterruptVector.o" \
+"main.o" \
 $(GEN_CMDS__FLAG) \
 -Wl,--start-group \
 -lgcc \
 -lc \
 -Wl,--end-group \
 
--include ../makefile.init
-
 RM := rm -rf
 RMDIR := rm -rf
 
-# All of the sources participating in the build are defined here
--include sources.mk
--include subdir_vars.mk
--include subdir_rules.mk
--include objects.mk
+C55_SRCS := 
+A_SRCS := 
+ASM_UPPER_SRCS := 
+EXE_SRCS := 
+LDS_UPPER_SRCS := 
+CPP_SRCS := 
+CMD_SRCS := 
+O_SRCS := 
+ELF_SRCS := 
+C??_SRCS := 
+C64_SRCS := 
+C67_SRCS := 
+SA_SRCS := 
+S64_SRCS := 
+OPT_SRCS := 
+CXX_SRCS := 
+S67_SRCS := 
+S??_SRCS := 
+PDE_SRCS := 
+SV7A_SRCS := 
+K_SRCS := 
+CLA_SRCS := 
+S55_SRCS := 
+LD_UPPER_SRCS := 
+OUT_SRCS := 
+INO_SRCS := 
+LIB_SRCS := 
+ASM_SRCS := 
+S_UPPER_SRCS := 
+S43_SRCS := 
+LD_SRCS := 
+CMD_UPPER_SRCS := 
+C_UPPER_SRCS := 
+C++_SRCS := 
+C43_SRCS := 
+OBJ_SRCS := 
+LDS_SRCS := 
+S_SRCS := 
+CC_SRCS := 
+S62_SRCS := 
+C62_SRCS := 
+C_SRCS := 
+C55_DEPS := 
+C_UPPER_DEPS := 
+S67_DEPS := 
+S62_DEPS := 
+S_DEPS := 
+OPT_DEPS := 
+C??_DEPS := 
+ASM_UPPER_DEPS := 
+S??_DEPS := 
+C64_DEPS := 
+CXX_DEPS := 
+S64_DEPS := 
+INO_DEPS := 
+CLA_DEPS := 
+S55_DEPS := 
+SV7A_DEPS := 
+EXE_OUTPUTS := 
+C62_DEPS := 
+C67_DEPS := 
+PDE_DEPS := 
+K_DEPS := 
+C_DEPS := 
+CC_DEPS := 
+BIN_OUTPUTS := 
+C++_DEPS := 
+C43_DEPS := 
+S43_DEPS := 
+OBJS := 
+ASM_DEPS := 
+S_UPPER_DEPS := 
+CPP_DEPS := 
+SA_DEPS := 
+C++_DEPS__QUOTED := 
+OPT_DEPS__QUOTED := 
+S_UPPER_DEPS__QUOTED := 
+SA_DEPS__QUOTED := 
+C??_DEPS__QUOTED := 
+S67_DEPS__QUOTED := 
+C55_DEPS__QUOTED := 
+CC_DEPS__QUOTED := 
+ASM_UPPER_DEPS__QUOTED := 
+SV7A_DEPS__QUOTED := 
+S??_DEPS__QUOTED := 
+OBJS__QUOTED := 
+C67_DEPS__QUOTED := 
+K_DEPS__QUOTED := 
+S55_DEPS__QUOTED := 
+INO_DEPS__QUOTED := 
+C62_DEPS__QUOTED := 
+C_DEPS__QUOTED := 
+C_UPPER_DEPS__QUOTED := 
+C43_DEPS__QUOTED := 
+CPP_DEPS__QUOTED := 
+BIN_OUTPUTS__QUOTED := 
+C64_DEPS__QUOTED := 
+CXX_DEPS__QUOTED := 
+CLA_DEPS__QUOTED := 
+S_DEPS__QUOTED := 
+ASM_DEPS__QUOTED := 
+S43_DEPS__QUOTED := 
+EXE_OUTPUTS__QUOTED := 
+S64_DEPS__QUOTED := 
+S62_DEPS__QUOTED := 
+PDE_DEPS__QUOTED := 
+
+CPP_SRCS += \
+InterruptVector.cpp \
+main.cpp 
+
+LD_SRCS += \
+Linker.ld \
+msp430fr2433.ld 
+
+OBJS += \
+InterruptVector.o \
+main.o 
+
+CPP_DEPS += \
+InterruptVector.d \
+main.d 
+
+OBJS__QUOTED += \
+"InterruptVector.o" \
+"main.o" 
+
+CPP_DEPS__QUOTED += \
+"InterruptVector.d" \
+"main.d" 
+
+CPP_SRCS__QUOTED += \
+"InterruptVector.cpp" \
+"main.cpp" 
+
+
+
+
+%.o: %.cpp $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
+	@echo 'Building file: "$<"'
+	@echo 'Invoking: GNU Compiler'
+	"msp430-elf-gcc-9.3.1" -c -mmcu=msp430fr2433 -mhwmult=f5series -fno-exceptions -I"." -I"../../../" -I"/Users/dave/Desktop/msp430-gcc-support-files/include" -Os -ffunction-sections -fdata-sections -g -gdwarf-4 -Wall -flto -MMD -MP -MF"$(basename $(<F)).d_raw" -MT"$(@)" -std=c++17 -fno-rtti -fno-threadsafe-statics $(GEN_OPTS__FLAG) -o"$@" "$(shell echo $<)"
+	@echo 'Finished building: "$<"'
+	@echo ' '
+
+
+
+USER_OBJS :=
+
+LIBS := -lgcc -lc
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(C55_DEPS)),)
@@ -117,8 +260,6 @@ ifneq ($(strip $(SA_DEPS)),)
 endif
 endif
 
--include ../makefile.defs
-
 # Add inputs and outputs from these tool invocations to the build variables 
 EXE_OUTPUTS += \
 MSPApp.out \
@@ -171,6 +312,3 @@ pre-build:
 
 .PHONY: all clean dependents
 .SECONDARY:
-
--include ../makefile.targets
-
