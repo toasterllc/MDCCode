@@ -35,6 +35,7 @@ $(EXE_OUTPUT): $(OBJS) $(GEN_CMDS)
 		-o"$@" "$(shell echo $<)"
 
 $(GCC):
+	# Unpack the toolchain as needed
 	$(TOOLCHAIN)/unpack.sh
 
 clean:
