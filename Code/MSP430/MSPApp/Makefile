@@ -1,4 +1,4 @@
-ORDERED_OBJS +=				\
+ORDERED_OBJS :=				\
     -T"msp430fr2433.ld"     \
     -T"Linker.ld"			\
     "InterruptVector.o" 	\
@@ -9,30 +9,21 @@ ORDERED_OBJS +=				\
     -Wl,--end-group
 
 RM := rm -rf
-RMDIR := rm -rf
+BIN_OUTPUTS := MSPApp.hex
+LIBS := -lgcc -lc
+EXE_OUTPUTS := MSPApp.out
 
-CPP_SRCS :=
-LD_SRCS :=
-
-BIN_OUTPUTS :=
-
-OBJS :=
-CPP_DEPS := 			\
-	InterruptVector.d 	\
-	main.d
-
-CPP_SRCS += 			\
+CPP_SRCS := 			\
 	InterruptVector.cpp \
 	main.cpp
 
-LD_SRCS += \
-Linker.ld \
-msp430fr2433.ld 
+LD_SRCS := 				\
+	Linker.ld 			\
+	msp430fr2433.ld
 
-OBJS += 				\
+OBJS := 				\
 	InterruptVector.o 	\
 	main.o
-
 
 
 %.o: %.cpp $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
@@ -42,23 +33,6 @@ OBJS += 				\
 	@echo 'Finished building: "$<"'
 	@echo ' '
 
-
-
-USER_OBJS :=
-
-LIBS := -lgcc -lc
-
-ifneq ($(MAKECMDGOALS),clean)
-
-ifneq ($(strip $(CPP_DEPS)),)
--include $(CPP_DEPS)
-endif
-
-endif
-
-EXE_OUTPUTS := MSPApp.out
-
-BIN_OUTPUTS := MSPApp.hex
 
 
 # All Target
@@ -87,9 +61,9 @@ MSPApp.hex: $(EXE_OUTPUTS)
 
 # Other Targets
 clean:
-	-$(RM) $(BIN_OUTPUTS) $(EXE_OUTPUTS)
-	-$(RM) "InterruptVector.o" "main.o"
-	-$(RM) "InterruptVector.d" "main.d" 
+	rm -rf $(BIN_OUTPUTS) $(EXE_OUTPUTS)
+	rm -rf *.o
+	rm -rf *.d
 	-@echo 'Finished clean'
 	-@echo ' '
 
