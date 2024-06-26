@@ -28,3 +28,6 @@
 [submodule "Code/Lib/LMMSE-Metal"]
 	path = Code/Lib/LMMSE-Metal
 	url = git@github.com:toasterllc/LMMSE-Metal.git
+[submodule "Tools/msp430-gcc"]
+	path = Tools/msp430-gcc
+	url = git@github.com:toasterllc/msp430-gcc.git

@@ -1,6 +1,8 @@
+TOOLCHAIN := "../../../Tools/msp430-gcc"
+
 OBJS := 					\
 	InterruptVector.o 		\
-	main.o
+	main.o					\
 
 ORDERED_OBJS :=				\
     -T"msp430fr2433.ld"     \
@@ -9,15 +11,23 @@ ORDERED_OBJS :=				\
     -Wl,--start-group 		\
     -lgcc 					\
     -lc 					\
-    -Wl,--end-group
+    -Wl,--end-group			\
+
+INCLUDES :=								\
+	-I$(TOOLCHAIN)/platform/include		\
+	-I"."								\	# MSPApp
+	-I"../../.."						\	# MDCCode
 
 EXE_OUTPUT := MSPApp.elf
 
-GCC := "/Users/dave/Desktop/msp430-gcc-9.3.1.11_macos/bin/msp430-elf-gcc-9.3.1"
+GCC := $(TOOLCHAIN)/platform/bin/msp430-elf-gcc
+
+$(GCC):
+	$(TOOLCHAIN)/unpack.sh
 
 %.o: %.cpp | $(GEN_FILES) $(GEN_MISC_FILES)
 	$(GCC) -c -mmcu=msp430fr2433 -mhwmult=f5series -fno-exceptions										\
-		-I"." -I"../../../" -I"/Users/dave/Desktop/msp430-gcc-support-files/include"					\
+		-I(INCLUDES)																					\
 		-Os -ffunction-sections -fdata-sections -g -gdwarf-4 -Wall -flto -MMD -MP						\
 		-MF"$(basename $(<F)).d_raw" -MT"$(@)" -std=c++17 -fno-rtti -fno-threadsafe-statics				\
 		-o"$@" "$(shell echo $<)"
@@ -31,4 +41,4 @@ $(EXE_OUTPUT): $(OBJS) $(GEN_CMDS)
 clean:
 	rm -rf $(EXE_OUTPUT) *.o *.d *.d_raw *.map
 
-.PHONY: all clean dependents
+.PHONY: all clean
