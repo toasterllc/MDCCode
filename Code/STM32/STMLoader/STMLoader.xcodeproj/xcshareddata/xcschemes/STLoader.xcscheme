@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5563E118253A8B3D00BCC0F7"
-               BuildableName = "STLoader"
-               BlueprintName = "STLoader"
-               ReferencedContainer = "container:STLoader.xcodeproj">
+               BuildableName = "STMLoader"
+               BlueprintName = "STMLoader"
+               ReferencedContainer = "container:STMLoader.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5563E118253A8B3D00BCC0F7"
-            BuildableName = "STLoader"
-            BlueprintName = "STLoader"
-            ReferencedContainer = "container:STLoader.xcodeproj">
+            BuildableName = "STMLoader"
+            BlueprintName = "STMLoader"
+            ReferencedContainer = "container:STMLoader.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5563E118253A8B3D00BCC0F7"
-            BuildableName = "STLoader"
-            BlueprintName = "STLoader"
-            ReferencedContainer = "container:STLoader.xcodeproj">
+            BuildableName = "STMLoader"
+            BlueprintName = "STMLoader"
+            ReferencedContainer = "container:STMLoader.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

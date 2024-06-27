@@ -1,2 +1,2 @@
-OUTPUT := STLoader.elf
+OUTPUT := STMApp.elf
 -include ../Makefile.mk

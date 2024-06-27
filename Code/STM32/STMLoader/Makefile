@@ -1,2 +1,2 @@
-OUTPUT := STApp.elf
+OUTPUT := STMLoader.elf
 -include ../Makefile.mk

@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:STLoader.xcodeproj">
+      location = "self:STMLoader.xcodeproj">
    </FileRef>
 </Workspace>

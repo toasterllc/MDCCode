@@ -23,7 +23,7 @@
 		554F17882543ED5400F67066 /* ST */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ST; sourceTree = "<group>"; };
 		554F17892543ED5400F67066 /* Source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Source; sourceTree = "<group>"; };
 		55602AF5268EDDA2009CDA12 /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
-		5563E119253A8B3D00BCC0F7 /* STApp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STApp; sourceTree = BUILT_PRODUCTS_DIR; };
+		5563E119253A8B3D00BCC0F7 /* STMApp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = STMApp; sourceTree = BUILT_PRODUCTS_DIR; };
 		556875D5254A165200B774CE /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
 		55844C1A2575D51A008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -55,7 +55,7 @@
 		5563E11A253A8B3D00BCC0F7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5563E119253A8B3D00BCC0F7 /* STApp */,
+				5563E119253A8B3D00BCC0F7 /* STMApp */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -63,9 +63,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5563E118253A8B3D00BCC0F7 /* STApp */ = {
+		5563E118253A8B3D00BCC0F7 /* STMApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STApp" */;
+			buildConfigurationList = 5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STMApp" */;
 			buildPhases = (
 				5563E115253A8B3D00BCC0F7 /* Sources */,
 				5563E116253A8B3D00BCC0F7 /* Frameworks */,
@@ -75,9 +75,9 @@
 			);
 			dependencies = (
 			);
-			name = STApp;
-			productName = STApp;
-			productReference = 5563E119253A8B3D00BCC0F7 /* STApp */;
+			name = STMApp;
+			productName = STMApp;
+			productReference = 5563E119253A8B3D00BCC0F7 /* STMApp */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -94,7 +94,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STApp" */;
+			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMApp" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -107,7 +107,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5563E118253A8B3D00BCC0F7 /* STApp */,
+				5563E118253A8B3D00BCC0F7 /* STMApp */,
 			);
 		};
 /* End PBXProject section */
@@ -251,7 +251,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STApp" */ = {
+		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5563E11E253A8B3D00BCC0F7 /* Debug */,
@@ -260,7 +260,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STApp" */ = {
+		5563E120253A8B3D00BCC0F7 /* Build configuration list for PBXNativeTarget "STMApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5563E121253A8B3D00BCC0F7 /* Debug */,
