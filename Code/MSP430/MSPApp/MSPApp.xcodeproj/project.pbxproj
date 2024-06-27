@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXFileReference section */
@@ -33,7 +33,6 @@
 		55FD016B275F25BA005505B5 /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
 		55FD016C27605D4F005505B5 /* Startup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Startup.h; sourceTree = "<group>"; };
 		55FD016D27609F93005505B5 /* RegLocker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RegLocker.h; sourceTree = "<group>"; };
-		55FD01EE27699F08005505B5 /* Release */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Release; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -42,7 +41,6 @@
 			children = (
 				556E45F226B12050006681FA /* Shared */,
 				556E45F126B1204A006681FA /* Lib */,
-				55FD01EE27699F08005505B5 /* Release */,
 				55FD016B275F25BA005505B5 /* Linker.ld */,
 				55B9EC95293AA2A300318243 /* msp430fr2433.ld */,
 				55B9EC94293AA2A300318243 /* msp430fr2433.txt */,
@@ -72,11 +70,33 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXLegacyTarget section */
+		552EA4242C2DDC0500E70714 /* MSPApp */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 552EA4252C2DDC0500E70714 /* Build configuration list for PBXLegacyTarget "MSPApp" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			dependencies = (
+			);
+			name = MSPApp;
+			passBuildSettingsInEnvironment = 1;
+			productName = MSPApp;
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXProject section */
 		556E45E426B1200D006681FA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1140;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					552EA4242C2DDC0500E70714 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+				};
 			};
 			buildConfigurationList = 556E45E726B1200D006681FA /* Build configuration list for PBXProject "MSPApp" */;
 			compatibilityVersion = "Xcode 9.3";
@@ -90,11 +110,24 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				552EA4242C2DDC0500E70714 /* MSPApp */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin XCBuildConfiguration section */
+		552EA4262C2DDC0500E70714 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		552EA4272C2DDC0500E70714 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
 		556E45E826B1200D006681FA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -110,6 +143,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		552EA4252C2DDC0500E70714 /* Build configuration list for PBXLegacyTarget "MSPApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				552EA4262C2DDC0500E70714 /* Debug */,
+				552EA4272C2DDC0500E70714 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		556E45E726B1200D006681FA /* Build configuration list for PBXProject "MSPApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
