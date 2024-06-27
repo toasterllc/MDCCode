@@ -28,15 +28,14 @@ $(EXE_OUTPUT): $(OBJS) $(GEN_CMDS)
 		-Wl,--gc-sections -mmcu=msp430fr2433 -L$(TOOLCHAIN)/include										\
 		-Wl,-flto -o$(EXE_OUTPUT) $(ORDERED_OBJS)
 
-%.o: %.cpp | $(GCC)
+%.o: %.cpp
+	# Unpack the toolchain as needed
+	$(TOOLCHAIN)/unpack.sh
+	
 	$(GCC) $(INCLUDES) -c -mmcu=msp430fr2433 -mhwmult=f5series -fno-exceptions							\
 		-Os -ffunction-sections -fdata-sections -g -gdwarf-4 -Wall -flto -MMD -MP						\
 		-MF"$(basename $(<F)).d_raw" -MT"$(@)" -std=c++17 -fno-rtti -fno-threadsafe-statics				\
 		-o"$@" "$(shell echo $<)"
-
-$(GCC):
-	# Unpack the toolchain as needed
-	$(TOOLCHAIN)/unpack.sh
 
 clean:
 	rm -rf $(EXE_OUTPUT) *.o *.d *.d_raw *.map
