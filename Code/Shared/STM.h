@@ -172,9 +172,10 @@ struct [[gnu::packed]] Cmd {
 static_assert(sizeof(Cmd) == 64); // Verify that Cmd is exactly the size of a EP0 packet
 
 struct [[gnu::packed]] Status {
-    struct Header {
+    struct [[gnu::packed]] Header {
         uint32_t magic = 0;
         Version version = 0;
+        uint16_t _pad = 0; // Necessary because our shipped `Header` type wasn't actually packed
     };
     
     enum class Mode : uint32_t {
