@@ -7,24 +7,24 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		5529502426EC0E06007CEA80 /* Toastbox */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Toastbox; path = ../../Lib/Toastbox; sourceTree = "<group>"; };
 		554F17892543ED5400F67066 /* Source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Source; sourceTree = "<group>"; };
+		55602AF5268EDDA2009CDA12 /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
 		556875D5254A165200B774CE /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
-		55844C192575D2A2008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
-		558FFF8226900AB6000897AA /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
-		55B2150826F839B9001423C1 /* Toastbox */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Toastbox; path = ../../Lib/Toastbox; sourceTree = "<group>"; };
-		55E021D12C2D695A00551028 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		55E021D62C2D6A6400551028 /* Makefile.mk */ = {isa = PBXFileReference; lastKnownFileType = text; name = Makefile.mk; path = ../Makefile.mk; sourceTree = "<group>"; };
+		55844C1A2575D51A008737ED /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../Shared; sourceTree = "<group>"; };
+		55E021D92C2D6BE200551028 /* Makefile.mk */ = {isa = PBXFileReference; lastKnownFileType = text; name = Makefile.mk; path = ../Makefile.mk; sourceTree = "<group>"; };
+		55E021DA2C2D6BF600551028 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		5563E110253A8B3D00BCC0F7 = {
 			isa = PBXGroup;
 			children = (
-				55E021D62C2D6A6400551028 /* Makefile.mk */,
-				55E021D12C2D695A00551028 /* Makefile */,
-				55B2150826F839B9001423C1 /* Toastbox */,
-				55844C192575D2A2008737ED /* Shared */,
-				558FFF8226900AB6000897AA /* Shared */,
+				55E021D92C2D6BE200551028 /* Makefile.mk */,
+				55E021DA2C2D6BF600551028 /* Makefile */,
+				5529502426EC0E06007CEA80 /* Toastbox */,
+				55844C1A2575D51A008737ED /* Shared */,
+				55602AF5268EDDA2009CDA12 /* Shared */,
 				554F17892543ED5400F67066 /* Source */,
 				556875D5254A165200B774CE /* Linker.ld */,
 				5563E11A253A8B3D00BCC0F7 /* Products */,
@@ -41,19 +41,19 @@
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
-		55E021D22C2D697000551028 /* STMLoader */ = {
+		55E021DB2C2D6C3B00551028 /* STMApp */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "-j8 $(ACTION)";
-			buildConfigurationList = 55E021D32C2D697000551028 /* Build configuration list for PBXLegacyTarget "STMLoader" */;
+			buildConfigurationList = 55E021DE2C2D6C3B00551028 /* Build configuration list for PBXLegacyTarget "STMApp" */;
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
 			buildWorkingDirectory = "";
 			dependencies = (
 			);
-			name = STMLoader;
+			name = STMApp;
 			passBuildSettingsInEnvironment = 1;
-			productName = STMLoader;
+			productName = STMApp;
 		};
 /* End PBXLegacyTarget section */
 
@@ -65,12 +65,12 @@
 				LastUpgradeCheck = 1520;
 				ORGANIZATIONNAME = dave;
 				TargetAttributes = {
-					55E021D22C2D697000551028 = {
+					55E021DB2C2D6C3B00551028 = {
 						CreatedOnToolsVersion = 15.2;
 					};
 				};
 			};
-			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMLoader" */;
+			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMApp" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -83,7 +83,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				55E021D22C2D697000551028 /* STMLoader */,
+				55E021DB2C2D6C3B00551028 /* STMApp */,
 			);
 		};
 /* End PBXProject section */
@@ -95,7 +95,7 @@
 			};
 			name = Release;
 		};
-		55E021D52C2D697000551028 /* Release */ = {
+		55E021DD2C2D6C3B00551028 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 			};
@@ -104,7 +104,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMLoader" */ = {
+		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5563E11F253A8B3D00BCC0F7 /* Release */,
@@ -112,10 +112,10 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		55E021D32C2D697000551028 /* Build configuration list for PBXLegacyTarget "STMLoader" */ = {
+		55E021DE2C2D6C3B00551028 /* Build configuration list for PBXLegacyTarget "STMApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				55E021D52C2D697000551028 /* Release */,
+				55E021DD2C2D6C3B00551028 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
