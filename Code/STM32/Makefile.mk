@@ -12,7 +12,7 @@ OBJS := $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SRCS))))
 $(BUILDDIR)/$(OUTPUT): $(OBJS)
 	$(TOOLCHAINBIN)/arm-none-eabi-g++ -o $@ $(OBJS) -mcpu=cortex-m7 -T'Linker.ld' -Wl,-Map=$(BUILDDIR)/$(OUTPUT:.elf=.map)	\
 		-Wl,--gc-sections -static -L../Shared --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb								\
-		-Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+		-Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group -Wl,--no-warn-rwx-segments
 
 # C++ rules
 $(BUILDDIR)/Shared/%.o: ../Shared/%.cpp
