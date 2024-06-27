@@ -1,2 +1,2 @@
-/Debug/
-/Release/
+*.d_raw
+*.map
