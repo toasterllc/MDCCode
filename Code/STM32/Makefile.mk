@@ -4,10 +4,10 @@ TOOLCHAIN := "../../../Tools/gcc-stm32"
 TOOLCHAINSETUP := $(shell $(TOOLCHAIN)/setup.sh) # Prepare toolchain
 TOOLCHAINBIN := $(TOOLCHAIN)/platform/bin
 
-SRC := $(shell find Source -name '*.cpp' -o -name '*.s')			\
-	   $(shell cd ..; find Shared -name '*.cpp' -o -name '*.s')
+SRCS := $(shell find Source -name '*.cpp' -o -name '*.s')			\
+		$(shell cd ..; find Shared -name '*.cpp' -o -name '*.s')
 
-OBJS := $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SRC))))
+OBJS := $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SRCS))))
 
 # Link final product
 $(BUILDDIR)/$(OUTPUT): $(OBJS)
