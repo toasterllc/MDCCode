@@ -1,4 +1,4 @@
-TOOLCHAIN := "../../../Tools/msp430-gcc"
+TOOLCHAIN := "../../../Tools/gcc-msp430"
 
 OBJS := 					\
 	InterruptVector.o 		\
@@ -22,7 +22,7 @@ EXE_OUTPUT := MSPApp.elf
 
 GCC := $(TOOLCHAIN)/platform/bin/msp430-elf-gcc
 
-$(EXE_OUTPUT): $(OBJS) $(GEN_CMDS)
+$(EXE_OUTPUT): $(OBJS)
 	$(GCC) -mhwmult=f5series -fno-exceptions -Os -ffunction-sections -fdata-sections					\
 		-g -gdwarf-4 -Wall -flto -mmcu=msp430fr2433 -Wl,-Map,"MSPApp.map" -nostartfiles -static			\
 		-Wl,--gc-sections -mmcu=msp430fr2433 -L$(TOOLCHAIN)/include										\

@@ -31,3 +31,6 @@
 [submodule "Tools/gcc-msp430"]
 	path = Tools/gcc-msp430
 	url = git@github.com:toasterllc/gcc-msp430.git
+[submodule "Tools/gcc-stm32"]
+	path = Tools/gcc-stm32
+	url = git@github.com:toasterllc/gcc-stm32.git
