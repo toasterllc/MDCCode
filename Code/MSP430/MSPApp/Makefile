@@ -30,7 +30,7 @@ $(EXE_OUTPUT): $(OBJS) $(GEN_CMDS)
 
 %.o: %.cpp
 	# Unpack the toolchain as needed
-	$(TOOLCHAIN)/unpack.sh
+	$(TOOLCHAIN)/setup.sh
 	
 	$(GCC) $(INCLUDES) -c -mmcu=msp430fr2433 -mhwmult=f5series -fno-exceptions							\
 		-Os -ffunction-sections -fdata-sections -g -gdwarf-4 -Wall -flto -MMD -MP						\
