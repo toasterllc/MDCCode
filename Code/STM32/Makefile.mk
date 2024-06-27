@@ -1,4 +1,3 @@
-OUTPUT := STApp.elf
 BUILDDIR := Build
 TOOLCHAIN := "../../../Tools/gcc-stm32"
 TOOLCHAINSETUP := $(shell $(TOOLCHAIN)/setup.sh) # Prepare toolchain
@@ -11,7 +10,7 @@ OBJS := $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SRCS))))
 
 # Link final product
 $(BUILDDIR)/$(OUTPUT): $(OBJS)
-	$(TOOLCHAINBIN)/arm-none-eabi-g++ -o $@ $(OBJS) -mcpu=cortex-m7 -T'Linker.ld' --specs=nosys.specs -Wl,-Map=$(BUILDDIR)/$(OUTPUT:.elf=.map)	\
+	$(TOOLCHAINBIN)/arm-none-eabi-g++ -o $@ $(OBJS) -mcpu=cortex-m7 -T'Linker.ld' -Wl,-Map=$(BUILDDIR)/$(OUTPUT:.elf=.map)	\
 		-Wl,--gc-sections -static -L../Shared --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb								\
 		-Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 
