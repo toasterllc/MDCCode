@@ -9,6 +9,7 @@ SRCS := $(shell find Source -name '*.c' -o -name '*.s')
 OBJS := $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SRCS))))
 
 INCS :=																		\
+	-iquote 'Source'														\
 	-iquote 'Source/Middlewares/Third_Party/FatFs/src'						\
 	-iquote 'Source/FATFS/Target'											\
 	-iquote 'Source/FATFS/App'												\
