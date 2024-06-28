@@ -1,6 +1,6 @@
-OUTPUT := ThumbdriveTest.elf
+OUTPUT := STMThumbdrive.elf
 BUILDDIR := Build
-TOOLCHAIN := "/Users/dave/repos/MDCCode/Tools/gcc-stm32"
+TOOLCHAIN := "../../../Tools/gcc-stm32"
 TOOLCHAINSETUP := $(shell $(TOOLCHAIN)/setup.sh) # Prepare toolchain
 TOOLCHAINBIN := $(TOOLCHAIN)/platform/bin
 
