@@ -59,6 +59,65 @@ static void MX_GPIO_Init(void);
 
 /* USER CODE END 0 */
 
+
+
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+static void _ClockInit() {
+    // Configure the main internal regulator output voltage
+    {
+        __HAL_RCC_PWR_CLK_ENABLE();
+        __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+    }
+    
+    // Initialize RCC oscillators
+    {
+        RCC_OscInitTypeDef cfg = {};
+        cfg.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+        cfg.HSEState = RCC_HSE_BYPASS;
+        cfg.PLL.PLLState = RCC_PLL_ON;
+        cfg.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+        cfg.PLL.PLLM = 8;
+        cfg.PLL.PLLN = 128;
+        cfg.PLL.PLLP = RCC_PLLP_DIV2;
+        cfg.PLL.PLLQ = 2;
+        
+        HAL_StatusTypeDef hr = HAL_RCC_OscConfig(&cfg);
+        assert(hr == HAL_OK);
+    }
+    
+    // Initialize bus clocks for CPU, AHB, APB
+    {
+        RCC_ClkInitTypeDef cfg = {};
+        cfg.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+        cfg.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+        cfg.AHBCLKDivider = RCC_SYSCLK_DIV1;
+        cfg.APB1CLKDivider = RCC_HCLK_DIV4;
+        cfg.APB2CLKDivider = RCC_HCLK_DIV2;
+        
+        HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_6);
+        assert(hr == HAL_OK);
+    }
+    
+    {
+        RCC_PeriphCLKInitTypeDef cfg = {};
+        cfg.PeriphClockSelection = RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_CLK48;
+        cfg.PLLSAI.PLLSAIN = 96;
+        cfg.PLLSAI.PLLSAIQ = 2;
+        cfg.PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV4;
+        cfg.PLLSAIDivQ = 1;
+        cfg.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+        cfg.Clk48ClockSelection = RCC_CLK48SOURCE_PLLSAIP;
+        
+        HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);
+        assert(hr == HAL_OK);
+    }
+}
+
+
+
 /**
   * @brief  The application entry point.
   * @retval int
@@ -79,7 +138,8 @@ int main(void)
   /* USER CODE END Init */
 
   /* Configure the system clock */
-  SystemClock_Config();
+  void _ClockInit();
+  _ClockInit();
 
   /* USER CODE BEGIN SysInit */
 
@@ -102,57 +162,6 @@ int main(void)
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
-}
-
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 192;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_CLK48;
-  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
 }
 
 /**
