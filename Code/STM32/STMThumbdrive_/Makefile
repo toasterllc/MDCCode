@@ -4,11 +4,13 @@ TOOLCHAIN := "../../../Tools/gcc-stm32"
 TOOLCHAINSETUP := $(shell $(TOOLCHAIN)/setup.sh) # Prepare toolchain
 TOOLCHAINBIN := $(TOOLCHAIN)/platform/bin
 
-SRCS := $(shell find Source -name '*.c' -o -name '*.s')
+SRCS := $(shell find Source -name '*.c' -o -name '*.cpp' -o -name '*.s')
 
 OBJS := $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SRCS))))
 
 INCS :=																		\
+	-iquote '../../..'														\
+	-iquote '../Shared'														\
 	-iquote 'Source'														\
 	-iquote 'Source/Middlewares/Third_Party/FatFs/src'						\
 	-iquote 'Source/FATFS/Target'											\
@@ -34,6 +36,14 @@ $(BUILDDIR)/$(OUTPUT): $(OBJS)
 $(BUILDDIR)/Source/%.o: Source/%.c
 	mkdir -p $(dir $@)
 	$(TOOLCHAINBIN)/arm-none-eabi-gcc "$<" -mcpu=cortex-m7 -std=c17 -g3 -DUSE_HAL_DRIVER -DSTM32F730xx -c -Os -ffunction-sections -fdata-sections		\
+		-fno-exceptions -Wall																															\
+		$(INCS) -fstack-usage -MMD -MP -MF"$(@:.o=.d)" -MT"$@"																							\
+		--specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
+
+# C++ rules
+$(BUILDDIR)/Source/%.o: Source/%.cpp
+	mkdir -p $(dir $@)
+	$(TOOLCHAINBIN)/arm-none-eabi-g++ "$<" -mcpu=cortex-m7 -std=c++17 -g3 -DUSE_HAL_DRIVER -DSTM32F730xx -c -Os -ffunction-sections -fdata-sections		\
 		-fno-exceptions -Wall																															\
 		$(INCS) -fstack-usage -MMD -MP -MF"$(@:.o=.d)" -MT"$@"																							\
 		--specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
