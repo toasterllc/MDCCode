@@ -21,6 +21,7 @@
 #include "main.h"
 #include "fatfs.h"
 #include "usb_device.h"
+#include "GPIO.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -117,6 +118,33 @@ static void _ClockInit() {
 }
 
 
+// LEDs
+using LED0 = GPIO::PortB::Pin<11, GPIO::Option::Output0>;
+using LED1 = GPIO::PortB::Pin<13, GPIO::Option::Output0>;
+
+using _USB_DM   = GPIO::PortB::Pin<14, GPIO::Option::Speed3, GPIO::Option::AltFn12>;
+using _USB_DP   = GPIO::PortB::Pin<15, GPIO::Option::Speed3, GPIO::Option::AltFn12>;
+
+// _OSC_IN / _OSC_OUT: used for providing external clock
+// There's no alt function to configure here; we just need these to exist so that GPIO
+// enables the clock for the relevent port (PortH)
+using _OSC_IN   = GPIO::PortH::Pin<0>;
+using _OSC_OUT  = GPIO::PortH::Pin<1>;
+
+
+
+#warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
+[[noreturn]]
+static void Abort() {
+    Toastbox::IntState ints(false);
+    
+    for (bool x=true;; x=!x) {
+        LED0::Write(x);
+        LED1::Write(x);
+        for (volatile uint32_t i=0; i<(uint32_t)500000; i++);
+    }
+}
+
 
 /**
   * @brief  The application entry point.
@@ -130,6 +158,17 @@ int main(void)
 
   /* MCU Configuration--------------------------------------------------------*/
 
+    GPIO::Init<
+        LED0,
+        LED1,
+
+        _USB_DM,
+        _USB_DP,
+
+        _OSC_IN,
+        _OSC_OUT
+    >();
+
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
@@ -140,15 +179,14 @@ int main(void)
   /* Configure the system clock */
   void _ClockInit();
   _ClockInit();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  
+  
   MX_FATFS_Init();
+  
   MX_USB_DEVICE_Init();
+  
+    Abort();
+  
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -161,6 +199,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
   }
+  
   /* USER CODE END 3 */
 }
 
