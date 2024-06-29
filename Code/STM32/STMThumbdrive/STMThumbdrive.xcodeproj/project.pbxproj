@@ -41,19 +41,19 @@
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
-		55E021DB2C2D6C3B00551028 /* STMApp */ = {
+		55E021DB2C2D6C3B00551028 /* STMThumbdrive */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "-j8 $(ACTION)";
-			buildConfigurationList = 55E021DE2C2D6C3B00551028 /* Build configuration list for PBXLegacyTarget "STMApp" */;
+			buildConfigurationList = 55E021DE2C2D6C3B00551028 /* Build configuration list for PBXLegacyTarget "STMThumbdrive" */;
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
 			buildWorkingDirectory = "";
 			dependencies = (
 			);
-			name = STMApp;
+			name = STMThumbdrive;
 			passBuildSettingsInEnvironment = 1;
-			productName = STMApp;
+			productName = STMThumbdrive;
 		};
 /* End PBXLegacyTarget section */
 
@@ -70,7 +70,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMApp" */;
+			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMThumbdrive" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -83,7 +83,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				55E021DB2C2D6C3B00551028 /* STMApp */,
+				55E021DB2C2D6C3B00551028 /* STMThumbdrive */,
 			);
 		};
 /* End PBXProject section */
@@ -104,7 +104,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMApp" */ = {
+		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMThumbdrive" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5563E11F253A8B3D00BCC0F7 /* Release */,
@@ -112,7 +112,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		55E021DE2C2D6C3B00551028 /* Build configuration list for PBXLegacyTarget "STMApp" */ = {
+		55E021DE2C2D6C3B00551028 /* Build configuration list for PBXLegacyTarget "STMThumbdrive" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				55E021DD2C2D6C3B00551028 /* Release */,

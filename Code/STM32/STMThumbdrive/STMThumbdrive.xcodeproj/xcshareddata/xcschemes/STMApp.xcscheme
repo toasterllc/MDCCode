@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "55E021DB2C2D6C3B00551028"
-               BuildableName = "STMApp"
-               BlueprintName = "STMApp"
-               ReferencedContainer = "container:STMApp.xcodeproj">
+               BuildableName = "STMThumbdrive"
+               BlueprintName = "STMThumbdrive"
+               ReferencedContainer = "container:STMThumbdrive.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -50,9 +50,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "55E021DB2C2D6C3B00551028"
-            BuildableName = "STMApp"
-            BlueprintName = "STMApp"
-            ReferencedContainer = "container:STMApp.xcodeproj">
+            BuildableName = "STMThumbdrive"
+            BlueprintName = "STMThumbdrive"
+            ReferencedContainer = "container:STMThumbdrive.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>

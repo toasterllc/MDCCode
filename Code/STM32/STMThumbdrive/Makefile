@@ -1,2 +1,2 @@
-OUTPUT := STMApp.elf
+OUTPUT := STMThumbdrive.elf
 -include ../Makefile.mk
