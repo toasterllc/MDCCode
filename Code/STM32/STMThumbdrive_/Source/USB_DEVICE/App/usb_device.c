@@ -73,6 +73,8 @@ void MX_USB_DEVICE_Init(void)
   {
     Error_Handler();
   }
+  
+  
   if (USBD_RegisterClass(&hUsbDeviceHS, &USBD_MSC) != USBD_OK)
   {
     Error_Handler();

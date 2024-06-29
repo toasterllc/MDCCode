@@ -49,8 +49,7 @@
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
+extern "C" void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -66,7 +65,7 @@ static void MX_GPIO_Init(void);
   * @brief System Clock Configuration
   * @retval None
   */
-static void _ClockInit() {
+extern "C" void SystemClock_Config() {
     // Configure the main internal regulator output voltage
     {
         __HAL_RCC_PWR_CLK_ENABLE();
@@ -134,8 +133,9 @@ using _OSC_OUT  = GPIO::PortH::Pin<1>;
 
 
 #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
+extern "C"
 [[noreturn]]
-static void Abort() {
+void abort() {
     Toastbox::IntState ints(false);
     
     for (bool x=true;; x=!x) {
@@ -168,24 +168,39 @@ int main(void)
         _OSC_IN,
         _OSC_OUT
     >();
+        
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+        __HAL_RCC_GPIOC_CLK_ENABLE();
+        __HAL_RCC_GPIOD_CLK_ENABLE();
+        __HAL_RCC_GPIOE_CLK_ENABLE();
+        __HAL_RCC_GPIOF_CLK_ENABLE();
+        __HAL_RCC_GPIOG_CLK_ENABLE();
+        __HAL_RCC_GPIOH_CLK_ENABLE();
+        __HAL_RCC_GPIOI_CLK_ENABLE();
+        __HAL_RCC_SYSCFG_CLK_ENABLE();
+        __HAL_RCC_OTGPHYC_CLK_ENABLE();
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
+  
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  Toastbox::IntState ints(true);
+  HAL_Delay(2);
+  abort();
 
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
-
-  /* Configure the system clock */
-  void _ClockInit();
-  _ClockInit();
   
   
   MX_FATFS_Init();
   
   MX_USB_DEVICE_Init();
   
-    Abort();
+  abort();
   
   /* USER CODE BEGIN 2 */
 
@@ -201,19 +216,6 @@ int main(void)
   }
   
   /* USER CODE END 3 */
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-
 }
 
 /* USER CODE BEGIN 4 */
