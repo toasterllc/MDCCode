@@ -196,8 +196,6 @@ int main(void)
   
   MX_USB_DEVICE_Init();
   
-  abort();
-  
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
