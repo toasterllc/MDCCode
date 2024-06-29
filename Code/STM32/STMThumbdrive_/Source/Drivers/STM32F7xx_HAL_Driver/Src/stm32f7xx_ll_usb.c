@@ -1504,7 +1504,6 @@ static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx)
   /* 2ms Delay required to get internal phy clock stable */
   __enable_irq();
   HAL_Delay(2U);
-  abort();
 
   return HAL_OK;
 }

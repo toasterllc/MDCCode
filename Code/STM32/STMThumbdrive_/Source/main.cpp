@@ -187,10 +187,6 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-  Toastbox::IntState ints(true);
-  HAL_Delay(2);
-  abort();
-
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
