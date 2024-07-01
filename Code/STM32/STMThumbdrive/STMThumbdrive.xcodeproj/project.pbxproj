@@ -1,0 +1,116 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXFileReference section */
+		5568AE4C2C333B9B0038285D /* Source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Source; sourceTree = "<group>"; };
+		55E021D12C2D695A00551028 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		5563E110253A8B3D00BCC0F7 = {
+			isa = PBXGroup;
+			children = (
+				5568AE4C2C333B9B0038285D /* Source */,
+				55E021D12C2D695A00551028 /* Makefile */,
+				5563E11A253A8B3D00BCC0F7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5563E11A253A8B3D00BCC0F7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		55E021D22C2D697000551028 /* STMThumbdrive */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "-j8 $(ACTION)";
+			buildConfigurationList = 55E021D32C2D697000551028 /* Build configuration list for PBXLegacyTarget "STMThumbdrive" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "";
+			dependencies = (
+			);
+			name = STMThumbdrive;
+			passBuildSettingsInEnvironment = 1;
+			productName = STMThumbdrive;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		5563E111253A8B3D00BCC0F7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1520;
+				ORGANIZATIONNAME = dave;
+				TargetAttributes = {
+					55E021D22C2D697000551028 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+				};
+			};
+			buildConfigurationList = 5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMThumbdrive" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5563E110253A8B3D00BCC0F7;
+			productRefGroup = 5563E11A253A8B3D00BCC0F7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				55E021D22C2D697000551028 /* STMThumbdrive */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		5563E11F253A8B3D00BCC0F7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+		55E021D52C2D697000551028 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5563E114253A8B3D00BCC0F7 /* Build configuration list for PBXProject "STMThumbdrive" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5563E11F253A8B3D00BCC0F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		55E021D32C2D697000551028 /* Build configuration list for PBXLegacyTarget "STMThumbdrive" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55E021D52C2D697000551028 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5563E111253A8B3D00BCC0F7 /* Project object */;
+}
