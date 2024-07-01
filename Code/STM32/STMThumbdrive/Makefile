@@ -12,17 +12,9 @@ INCS :=																		\
 	-iquote '../../..'														\
 	-iquote '../Shared'														\
 	-iquote 'Source'														\
-	-iquote 'Source/Middlewares/Third_Party/FatFs/src'						\
-	-iquote 'Source/FATFS/Target'											\
-	-iquote 'Source/FATFS/App'												\
-	-iquote 'Source/Core/Inc'												\
-	-iquote 'Source/Drivers/STM32F7xx_HAL_Driver/Inc'						\
-	-iquote 'Source/Drivers/CMSIS/Device/ST/STM32F7xx/Include'				\
-	-iquote 'Source/Drivers/CMSIS/Include'									\
-	-iquote 'Source/USB_DEVICE/App'											\
-	-iquote 'Source/Middlewares/ST/STM32_USB_Device_Library/Core/Inc'		\
-	-iquote 'Source/USB_DEVICE/Target'										\
-	-iquote 'Source/Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Inc'	\
+	-iquote 'Source/FATFS'													\
+	-iquote 'Source/ST'														\
+	-iquote 'Source/USB'													\
 
 
 
