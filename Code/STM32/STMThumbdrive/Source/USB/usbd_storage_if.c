@@ -21,6 +21,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_storage_if.h"
+#include "storage.h"
 
 /* USER CODE BEGIN INCLUDE */
 
@@ -64,8 +65,8 @@
   */
 
 #define STORAGE_LUN_NBR                  1
-#define STORAGE_BLK_NBR                  0x10000
-#define STORAGE_BLK_SIZ                  0x200
+#define STORAGE_BLK_SIZ                  STORAGE_SECTOR_SIZE
+#define STORAGE_BLK_NBR                  STORAGE_SECTOR_COUNT
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
 
