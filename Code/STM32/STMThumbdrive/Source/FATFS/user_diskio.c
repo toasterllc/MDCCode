@@ -41,10 +41,6 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 
-/* Private variables ---------------------------------------------------------*/
-/* Disk status */
-static volatile DSTATUS Stat = STA_NOINIT;
-
 /* USER CODE END DECL */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -83,8 +79,7 @@ DSTATUS USER_initialize (
 )
 {
   /* USER CODE BEGIN INIT */
-    Stat = STA_NOINIT;
-    return Stat;
+    return RES_OK;
   /* USER CODE END INIT */
 }
 
@@ -98,8 +93,7 @@ DSTATUS USER_status (
 )
 {
   /* USER CODE BEGIN STATUS */
-    Stat = STA_NOINIT;
-    return Stat;
+    return RES_OK;
   /* USER CODE END STATUS */
 }
 
@@ -162,10 +156,24 @@ DRESULT USER_ioctl (
 	void *buff      /* Buffer to send/receive control data */
 )
 {
-  /* USER CODE BEGIN IOCTL */
-    DRESULT res = RES_ERROR;
-    return res;
-  /* USER CODE END IOCTL */
+    DWORD out;
+    switch (cmd) {
+    case CTRL_SYNC:
+        return RES_OK;
+    case GET_SECTOR_COUNT:
+        out = STORAGE_SECTOR_COUNT;
+        break;
+    case GET_SECTOR_SIZE:
+        out = STORAGE_SECTOR_SIZE;
+        break;
+    case GET_BLOCK_SIZE:
+        out = 1;
+        break;
+    case CTRL_TRIM:
+        return RES_PARERR;
+    }
+    memcpy(buff, &out, sizeof(out));
+    return RES_OK;
 }
 #endif /* _USE_IOCTL == 1 */
 
