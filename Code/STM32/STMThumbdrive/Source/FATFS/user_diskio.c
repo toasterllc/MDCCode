@@ -169,7 +169,7 @@ DRESULT USER_ioctl (
     case GET_BLOCK_SIZE:
         out = 1;
         break;
-    case CTRL_TRIM:
+    default:
         return RES_PARERR;
     }
     memcpy(buff, &out, sizeof(out));
