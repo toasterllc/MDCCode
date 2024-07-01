@@ -159,14 +159,14 @@ static int8_t STORAGE_GetMaxLun_HS(void);
 
 USBD_StorageTypeDef USBD_Storage_Interface_fops_HS =
 {
-  STORAGE_Init_HS,
-  STORAGE_GetCapacity_HS,
-  STORAGE_IsReady_HS,
-  STORAGE_IsWriteProtected_HS,
-  STORAGE_Read_HS,
-  STORAGE_Write_HS,
-  STORAGE_GetMaxLun_HS,
-  (int8_t *)STORAGE_Inquirydata_HS
+    .Init               = STORAGE_Init_HS,
+    .GetCapacity        = STORAGE_GetCapacity_HS,
+    .IsReady            = STORAGE_IsReady_HS,
+    .IsWriteProtected   = STORAGE_IsWriteProtected_HS,
+    .Read               = STORAGE_Read_HS,
+    .Write              = STORAGE_Write_HS,
+    .GetMaxLun          = STORAGE_GetMaxLun_HS,
+    .pInquiry           = STORAGE_Inquirydata_HS,
 };
 
 /* Private functions ---------------------------------------------------------*/
