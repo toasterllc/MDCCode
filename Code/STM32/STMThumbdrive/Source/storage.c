@@ -1,3 +1,3 @@
 #include "storage.h"
 
-uint8_t Storage[32768];
+uint8_t Storage[STORAGE_SIZE];

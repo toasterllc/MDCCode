@@ -235,6 +235,7 @@ int8_t STORAGE_IsWriteProtected_HS(uint8_t lun)
 int8_t STORAGE_Read_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 13 */
+  memcpy(buf, Storage+(blk_addr*STORAGE_SECTOR_SIZE), blk_len*STORAGE_SECTOR_SIZE);
   return (USBD_OK);
   /* USER CODE END 13 */
 }
@@ -250,6 +251,7 @@ int8_t STORAGE_Read_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
 int8_t STORAGE_Write_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 14 */
+  memcpy(Storage+(blk_addr*STORAGE_SECTOR_SIZE), buf, blk_len*STORAGE_SECTOR_SIZE);
   return (USBD_OK);
   /* USER CODE END 14 */
 }
