@@ -36,6 +36,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
 #include "ff_gen_drv.h"
+#include "storage.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -59,14 +60,14 @@ DRESULT USER_read (BYTE pdrv, BYTE *buff, DWORD sector, UINT count);
 
 Diskio_drvTypeDef  USER_Driver =
 {
-  USER_initialize,
-  USER_status,
-  USER_read,
+  .disk_initialize = USER_initialize,
+  .disk_status = USER_status,
+  .disk_read = USER_read,
 #if  _USE_WRITE
-  USER_write,
+  .disk_write = USER_write,
 #endif  /* _USE_WRITE == 1 */
 #if  _USE_IOCTL == 1
-  USER_ioctl,
+  .disk_ioctl = USER_ioctl,
 #endif /* _USE_IOCTL == 1 */
 };
 
@@ -117,6 +118,7 @@ DRESULT USER_read (
 	UINT count      /* Number of sectors to read */
 )
 {
+  memcpy(buff, Storage+(sector*STORAGE_SECTOR_SIZE), count*STORAGE_SECTOR_SIZE);
   /* USER CODE BEGIN READ */
     return RES_OK;
   /* USER CODE END READ */
@@ -138,6 +140,7 @@ DRESULT USER_write (
 	UINT count          /* Number of sectors to write */
 )
 {
+  memcpy(Storage+(sector*STORAGE_SECTOR_SIZE), buff, count*STORAGE_SECTOR_SIZE);
   /* USER CODE BEGIN WRITE */
   /* USER CODE HERE */
     return RES_OK;
