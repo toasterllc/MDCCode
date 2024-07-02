@@ -93,6 +93,7 @@ DSTATUS USER_status (
 )
 {
   /* USER CODE BEGIN STATUS */
+//    return STA_PROTECT;
     return RES_OK;
   /* USER CODE END STATUS */
 }

@@ -236,6 +236,33 @@ static int8_t SCSI_TestUnitReady(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t 
 }
 
 
+
+/* USB Mass storage Page 0 Inquiry Data */
+static uint8_t MSC_Page00_Inquiry_Data[] =
+{
+    0x00,
+    0x00,
+    0x00,
+    0x02,
+    0x00,
+    0x80,
+};
+
+/* USB Mass storage VPD Page 0x80 Inquiry Data for Unit Serial Number */
+static uint8_t MSC_Page80_Inquiry_Data[] =
+{
+    0x00,
+    0x80,
+    0x00,
+    0x08,
+    0x20,     /* Put Product Serial number */
+    0x20,
+    0x20,
+    0x20,
+ };
+
+
+
 /**
 * @brief  SCSI_Inquiry
 *         Process Inquiry command
@@ -259,11 +286,11 @@ static int8_t SCSI_Inquiry(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *param
   {
     if (params[2] == 0U) /* Request for Supported Vital Product Data Pages*/
     {
-      (void)SCSI_UpdateBotData(hmsc, MSC_Page00_Inquiry_Data, LENGTH_INQUIRY_PAGE00);
+      (void)SCSI_UpdateBotData(hmsc, MSC_Page00_Inquiry_Data, sizeof(MSC_Page00_Inquiry_Data));
     }
     else if (params[2] == 0x80U) /* Request for VPD page 0x80 Unit Serial Number */
     {
-      (void)SCSI_UpdateBotData(hmsc, MSC_Page80_Inquiry_Data, LENGTH_INQUIRY_PAGE80);
+      (void)SCSI_UpdateBotData(hmsc, MSC_Page80_Inquiry_Data, sizeof(MSC_Page80_Inquiry_Data));
     }
     else /* Request Not supported */
     {
@@ -425,6 +452,32 @@ static int8_t SCSI_ReadFormatCapacity(USBD_HandleTypeDef *pdev, uint8_t lun, uin
 }
 
 
+/* USB Mass storage sense 6 Data */
+// "Mode parameter header(6)"
+static uint8_t MSC_Mode_Sense6_data[] =
+{
+  0x03,
+  0x00,
+  0x00, // Readonly==0x80, Readwrite==0x00
+  0x00,
+};
+
+
+/* USB Mass storage sense 10  Data */
+// "Mode parameter header(10)"
+static uint8_t MSC_Mode_Sense10_data[] =
+{
+  0x00,
+  0x06,
+  0x00,
+  0x80,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+};
+
+
 /**
 * @brief  SCSI_ModeSense6
 *         Process Mode Sense6 command
@@ -436,7 +489,7 @@ static int8_t SCSI_ModeSense6(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *pa
 {
   UNUSED(lun);
   USBD_MSC_BOT_HandleTypeDef *hmsc = (USBD_MSC_BOT_HandleTypeDef *)pdev->pClassData;
-  uint16_t len = MODE_SENSE6_LEN;
+  uint16_t len = sizeof(MSC_Mode_Sense6_data);
 
   if (params[4] <= len)
   {
@@ -460,7 +513,7 @@ static int8_t SCSI_ModeSense10(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *p
 {
   UNUSED(lun);
   USBD_MSC_BOT_HandleTypeDef *hmsc = (USBD_MSC_BOT_HandleTypeDef *)pdev->pClassData;
-  uint16_t len = MODE_SENSE10_LEN;
+  uint16_t len = sizeof(MSC_Mode_Sense10_data);
 
   if (params[8] <= len)
   {

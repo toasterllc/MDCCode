@@ -29,12 +29,14 @@ void MX_FATFS_Init(void)
     /*## FatFS: Link the USER driver ###########################*/
     FATFS_LinkDriver(&USER_Driver, "");
     
-    // Create filesystem
     FRESULT fr = 0;
-    uint8_t work[1024];
-//    uint8_t work[32*1024];
-    fr = f_mkfs("", FM_FAT, STORAGE_SECTOR_SIZE, work, sizeof(work));
-    assert(fr == FR_OK);
+    
+    // Create filesystem
+    {
+        uint8_t work[1024];
+        fr = f_mkfs("", FM_FAT, STORAGE_SECTOR_SIZE, work, sizeof(work));
+        assert(fr == FR_OK);
+    }
     
     // Mount filesystem
     FATFS FatFS = {};
@@ -86,19 +88,21 @@ void MX_FATFS_Init(void)
     
     
     // Write file
-    FIL f;
-    fr = f_open(&f, "test.txt", FA_WRITE | FA_CREATE_ALWAYS);
-    assert(fr == FR_OK);
+    {
+        FIL f;
+        fr = f_open(&f, ".0", FA_WRITE | FA_CREATE_ALWAYS);
+        assert(fr == FR_OK);
+        
+        UINT x;
+        const char text[] = "hello";
+        fr = f_write(&f, text, strlen(text), &x);
+        assert(fr == FR_OK);
+        
+        fr = f_close(&f);
+        assert(fr == FR_OK);
+    }
     
-    UINT x;
-    const char text[] = "hello";
-    fr = f_write(&f, text, strlen(text), &x);
-    assert(fr == FR_OK);
-    
-    fr = f_close(&f);
-    assert(fr == FR_OK);
-    
-    // Unmount
+    // Unmount filesystem
     fr = f_mount(&FatFS, "", 0);
     assert(fr == FR_OK);
   
