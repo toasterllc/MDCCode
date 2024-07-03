@@ -21,7 +21,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_storage_if.h"
-#include "storage.h"
+#include "Filesystem.h"
 
 /* USER CODE BEGIN INCLUDE */
 
@@ -64,10 +64,6 @@
   * @{
   */
 
-#define STORAGE_LUN_NBR                  1
-#define STORAGE_BLK_SIZ                  STORAGE_SECTOR_SIZE
-#define STORAGE_BLK_NBR                  STORAGE_SECTOR_COUNT
-
 /* USER CODE BEGIN PRIVATE_DEFINES */
 
 /* USER CODE END PRIVATE_DEFINES */
@@ -96,7 +92,8 @@
 
 /* USER CODE BEGIN INQUIRY_DATA_HS */
 /** USB Mass storage Standard Inquiry Data. */
-const int8_t STORAGE_Inquirydata_HS[] = {/* 36 */
+
+static const uint8_t STORAGE_Inquirydata_HS[] = {/* 36 */
 
   /* LUN 0 */
   0x00,
@@ -112,6 +109,7 @@ const int8_t STORAGE_Inquirydata_HS[] = {/* 36 */
   ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
   '0', '.', '0' ,'1'                      /* Version      : 4 Bytes */
 };
+
 /* USER CODE END INQUIRY_DATA_HS */
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
@@ -193,9 +191,9 @@ int8_t STORAGE_Init_HS(uint8_t lun)
   */
 int8_t STORAGE_GetCapacity_HS(uint8_t lun, uint32_t *block_num, uint16_t *block_size)
 {
-  /* USER CODE BEGIN 10 */
-  *block_num  = STORAGE_BLK_NBR;
-  *block_size = STORAGE_BLK_SIZ;
+//  /* USER CODE BEGIN 10 */
+  *block_num  = Filesystem::_SectorCount;
+  *block_size = Filesystem::_BytesPerSector;
   return (USBD_OK);
   /* USER CODE END 10 */
 }
@@ -235,7 +233,8 @@ int8_t STORAGE_IsWriteProtected_HS(uint8_t lun)
 int8_t STORAGE_Read_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 13 */
-  memcpy(buf, Storage+(blk_addr*STORAGE_SECTOR_SIZE), blk_len*STORAGE_SECTOR_SIZE);
+  const uint8_t* fs = (const uint8_t*)&Filesystem::_Data;
+  memcpy(buf, fs+(blk_addr*Filesystem::_BytesPerSector), blk_len*Filesystem::_BytesPerSector);
   return (USBD_OK);
   /* USER CODE END 13 */
 }
@@ -251,7 +250,8 @@ int8_t STORAGE_Read_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
 int8_t STORAGE_Write_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 14 */
-  memcpy(Storage+(blk_addr*STORAGE_SECTOR_SIZE), buf, blk_len*STORAGE_SECTOR_SIZE);
+  uint8_t* fs = (uint8_t*)&Filesystem::_Data;
+  memcpy(fs+(blk_addr*Filesystem::_BytesPerSector), buf, blk_len*Filesystem::_BytesPerSector);
   return (USBD_OK);
   /* USER CODE END 14 */
 }
@@ -264,7 +264,7 @@ int8_t STORAGE_Write_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t b
 int8_t STORAGE_GetMaxLun_HS(void)
 {
   /* USER CODE BEGIN 15 */
-  return (STORAGE_LUN_NBR - 1);
+  return 0;
   /* USER CODE END 15 */
 }
 

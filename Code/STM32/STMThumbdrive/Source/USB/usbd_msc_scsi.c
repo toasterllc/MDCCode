@@ -99,7 +99,7 @@ static int8_t SCSI_ProcessRead(USBD_HandleTypeDef *pdev, uint8_t lun);
 static int8_t SCSI_ProcessWrite(USBD_HandleTypeDef *pdev, uint8_t lun);
 
 static int8_t SCSI_UpdateBotData(USBD_MSC_BOT_HandleTypeDef *hmsc,
-                                 uint8_t *pBuff, uint16_t length);
+                                 const uint8_t *pBuff, uint16_t length);
 /**
   * @}
   */
@@ -272,7 +272,7 @@ static uint8_t MSC_Page80_Inquiry_Data[] =
 */
 static int8_t SCSI_Inquiry(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params)
 {
-  uint8_t *pPage;
+  const uint8_t *pPage;
   uint16_t len;
   USBD_MSC_BOT_HandleTypeDef *hmsc = (USBD_MSC_BOT_HandleTypeDef *)pdev->pClassData;
 
@@ -302,7 +302,7 @@ static int8_t SCSI_Inquiry(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *param
   }
   else
   {
-    pPage = (uint8_t *)&((USBD_StorageTypeDef *)pdev->pUserData)->pInquiry[lun * STANDARD_INQUIRY_DATA_LEN];
+    pPage = &((USBD_StorageTypeDef *)pdev->pUserData)->pInquiry[lun * STANDARD_INQUIRY_DATA_LEN];
     len = (uint16_t)pPage[4] + 5U;
 
     if (params[4] <= len)
@@ -1097,7 +1097,7 @@ static int8_t SCSI_ProcessWrite(USBD_HandleTypeDef *pdev, uint8_t lun)
 * @retval status
 */
 static int8_t SCSI_UpdateBotData(USBD_MSC_BOT_HandleTypeDef *hmsc,
-                                 uint8_t *pBuff, uint16_t length)
+                                 const uint8_t *pBuff, uint16_t length)
 {
   uint16_t len = length;
 

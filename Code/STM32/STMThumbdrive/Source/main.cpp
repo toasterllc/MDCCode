@@ -19,7 +19,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "fatfs.h"
 #include "usb_device.h"
 #include "GPIO.h"
 
@@ -190,9 +189,6 @@ int main(void)
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
-  
-  
-  MX_FATFS_Init();
   
   MX_USB_DEVICE_Init();
   
