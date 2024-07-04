@@ -250,8 +250,8 @@ int8_t STORAGE_Read_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
 int8_t STORAGE_Write_HS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 14 */
-  uint8_t* fs = (uint8_t*)&Filesystem::_Data;
-  memcpy(fs+(blk_addr*Filesystem::_BytesPerSector), buf, blk_len*Filesystem::_BytesPerSector);
+//  uint8_t* fs = (uint8_t*)&Filesystem::_Data;
+//  memcpy(fs+(blk_addr*Filesystem::_BytesPerSector), buf, blk_len*Filesystem::_BytesPerSector);
   return (USBD_OK);
   /* USER CODE END 14 */
 }
