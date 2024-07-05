@@ -175,7 +175,7 @@ __ALIGN_BEGIN static uint8_t USBD_MSC_CfgFSDesc[USB_MSC_CONFIG_DESC_SIZ]  __ALIG
   0x01,                                            /* bConfigurationValue: */
   0x04,                                            /* iConfiguration: */
   0xC0,                                            /* bmAttributes: */
-  0x32,                                            /* MaxPower 100 mA */
+  0x02,                                            /* MaxPower 100 mA */
 
   /********************  Mass Storage interface ********************/
   0x09,                                            /* bLength: Interface Descriptor size */
@@ -216,7 +216,7 @@ __ALIGN_BEGIN static uint8_t USBD_MSC_OtherSpeedCfgDesc[USB_MSC_CONFIG_DESC_SIZ]
   0x01,                                           /* bConfigurationValue: */
   0x04,                                           /* iConfiguration: */
   0xC0,                                           /* bmAttributes: */
-  0x32,                                           /* MaxPower 100 mA */
+  0x02,                                           /* MaxPower 100 mA */
 
   /********************  Mass Storage interface ********************/
   0x09,                                           /* bLength: Interface Descriptor size */
