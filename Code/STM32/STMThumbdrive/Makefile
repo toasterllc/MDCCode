@@ -20,7 +20,7 @@ INCS :=																		\
 
 # Link final product
 $(BUILDDIR)/$(OUTPUT): $(OBJS)
-	$(TOOLCHAINBIN)/arm-none-eabi-g++ -o $@ $(OBJS) -mcpu=cortex-m7 -T'Source/STM32F730I8KX_RAM.ld' -Wl,-Map=$(BUILDDIR)/$(OUTPUT:.elf=.map)	\
+	$(TOOLCHAINBIN)/arm-none-eabi-g++ -o $@ $(OBJS) -mcpu=cortex-m7 -T'Source/STM32F730I8KX_FLASH.ld' -Wl,-Map=$(BUILDDIR)/$(OUTPUT:.elf=.map)	\
 		-Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb					\
 		-Wl,--start-group -lc -lm -Wl,--end-group -Wl,--no-warn-rwx-segments
 
