@@ -458,7 +458,7 @@ static uint8_t MSC_Mode_Sense6_data[] =
 {
   0x03,
   0x00,
-  0x00, // Readonly==0x80, Readwrite==0x00
+  0x00, // Read-only==0x80, Read-write==0x00
   0x00,
 };
 

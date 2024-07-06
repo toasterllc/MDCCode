@@ -185,6 +185,18 @@ int main(void)
   
   /* Configure the system clock */
   SystemClock_Config();
+  
+  HAL_Delay(1000);
+
+//  const uint32_t rcc = RCC->PLLSAICFGR;
+//  const uint32_t PLLSAIN = (rcc>>6)&0x1FF;
+//  const uint32_t PLLSAIP = (rcc>>16)&0x3;
+//  const uint32_t PLLSAIQ = (rcc>>24)&0xF;
+//  if (PLLSAIN==96 && PLLSAIP==0x1 && PLLSAIQ==0x2) {
+//    abort_real();
+//  } else {
+//    for(;;);
+//  }
 
   /* USER CODE BEGIN Init */
 

@@ -1105,6 +1105,8 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
           }
           if ((epint & USB_OTG_DIEPINT_TOC) == USB_OTG_DIEPINT_TOC)
           {
+            extern void abort();
+            abort();
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_TOC);
           }
           if ((epint & USB_OTG_DIEPINT_ITTXFE) == USB_OTG_DIEPINT_ITTXFE)
@@ -1453,7 +1455,7 @@ __weak void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
 {
   /* Prevent unused argument(s) compilation warning */
   UNUSED(hpcd);
-
+//  abort_real();
   /* NOTE : This function should not be modified, when the callback is needed,
             the HAL_PCD_SuspendCallback could be implemented in the user file
    */
