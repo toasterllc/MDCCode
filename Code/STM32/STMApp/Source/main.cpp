@@ -396,7 +396,7 @@ static void _ICEAppInit() {
         // Init ICE comms
         ok = _ICE::Init();
     }
-    AssertY(ok);
+    Assert(ok);
 }
 
 // MARK: - SD Card
@@ -482,7 +482,7 @@ static void _ICEAppInit() {
 struct _TaskUSBDataIn {
     static void Start() {
         // Make sure this task isn't already running
-        AssertY(!_Scheduler::Running<_TaskUSBDataIn>());
+        Assert(!_Scheduler::Running<_TaskUSBDataIn>());
         _Scheduler::Start<_TaskUSBDataIn>(Run);
     }
     
@@ -509,7 +509,7 @@ struct _TaskUSBDataIn {
 struct _TaskUSBDataOut {
     static void Start(size_t len) {
         // Make sure this task isn't already running
-        AssertY(!_Scheduler::Running<_TaskUSBDataOut>());
+        Assert(!_Scheduler::Running<_TaskUSBDataOut>());
         _LenRem = len;
         _Scheduler::Start<_TaskUSBDataOut>(Run);
     }
@@ -527,7 +527,7 @@ struct _TaskUSBDataOut {
                 // Ensure that after rounding up to the nearest packet size, we don't
                 // exceed the buffer capacity. (This should always be safe as long as
                 // the buffer capacity is a multiple of the max packet size.)
-                AssertY(cap <= sizeof(buf.data));
+                Assert(cap <= sizeof(buf.data));
                 const std::optional<size_t> recvLenOpt = _USB::Recv(Endpoint::DataOut, buf.data, cap);
                 #warning TODO: handle errors somehow
                 if (!recvLenOpt) break;
@@ -556,7 +556,7 @@ struct _TaskUSBDataOut {
 struct _TaskReadout {
     static void Start(std::optional<size_t> len) {
         // Make sure this task isn't already running
-        AssertY(!_Scheduler::Running<_TaskReadout>());
+        Assert(!_Scheduler::Running<_TaskReadout>());
         _LenRem = len;
         _Scheduler::Start<_TaskReadout>(Run);
     }
@@ -993,13 +993,13 @@ static size_t __STMFlashWrite_WritableAddress(uint32_t addr) {
     
     // Anything else: invalid address
     } else {
-        AssertY(false);
+        Assert(false);
     }
 }
 
 static uint8_t __STMFlashWrite_SectorForAddress(uint32_t addr) {
     if (addr < 0x08000000) {
-        AssertY(false);
+        Assert(false);
     } else if (addr < 0x08004000) {
         return 0;
     } else if (addr < 0x08008000) {
@@ -1009,7 +1009,7 @@ static uint8_t __STMFlashWrite_SectorForAddress(uint32_t addr) {
     } else if (addr < 0x08010000) {
         return 3;
     } else {
-        AssertY(false);
+        Assert(false);
     }
 }
 
@@ -1516,7 +1516,7 @@ static void _MSPSBWDebugHandleCmd(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& 
     case MSPSBWDebugCmd::Op::RstSet:        _MSPJTAG::DebugRstSet(cmd.pinValGet());     break;
     case MSPSBWDebugCmd::Op::TestPulse:     _MSPJTAG::DebugTestPulse();                 break;
     case MSPSBWDebugCmd::Op::SBWIO:         _MSPSBWDebugHandleSBWIO(cmd, state, buf);	break;
-    default:                                AssertY(false);
+    default:                                Assert(false);
     }
 }
 

@@ -2,8 +2,6 @@
 #include <cstdint>
 
 #define Assert(x)       if (!(x)) for (;;)
-#define AssertY(x)      if (!(x)) for (;;)
-#define AssertX(x)      if (!(x)) _Abort()
 #define AssertArg(x)    if (!(x)) _Abort()
 
 // Abort(): provided by client to log the abort and trigger crash

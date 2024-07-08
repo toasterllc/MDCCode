@@ -95,7 +95,7 @@ private:
 //            for (volatile uint32_t i=0; i<(uint32_t)2000000; i++);
 //        }
         
-        AssertX(false);
+        Assert(false);
     }
     
     static void _Sleep() {
@@ -294,7 +294,7 @@ private:
             case _I2C::Status::NAK:     return std::nullopt;
             case _I2C::Status::Error:   return std::nullopt;
             }
-            AssertX(false);
+            Assert(false);
         }
         
         enum class _State {
@@ -478,7 +478,7 @@ private:
             cfg.PLL.PLLQ = 2;
             
             HAL_StatusTypeDef hr = HAL_RCC_OscConfig(&cfg);
-            AssertX(hr == HAL_OK);
+            Assert(hr == HAL_OK);
         }
         
         // Initialize bus clocks for CPU, AHB, APB
@@ -491,7 +491,7 @@ private:
             cfg.APB2CLKDivider = RCC_HCLK_DIV2;
             
             HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_6);
-            AssertX(hr == HAL_OK);
+            Assert(hr == HAL_OK);
         }
         
         {
@@ -505,7 +505,7 @@ private:
             cfg.Clk48ClockSelection = RCC_CLK48SOURCE_PLLSAIP;
             
             HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);
-            AssertX(hr == HAL_OK);
+            Assert(hr == HAL_OK);
         }
     }
     
@@ -563,7 +563,7 @@ private:
         USBAcceptCommand(true);
         Reset();
         // Unreachable
-        AssertX(false);
+        Assert(false);
     }
     
     static void _LEDSet(const STM::Cmd& cmd) {

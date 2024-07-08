@@ -65,4 +65,4 @@ void _Startup() {
 }
 
 extern "C" [[noreturn, gnu::naked, gnu::section(".isr")]] void ISR_Reset()      { _Startup(); }
-extern "C" [[noreturn, gnu::naked, gnu::section(".isr")]] void ISR_Default()    { AssertX(false); }
+extern "C" [[noreturn, gnu::naked, gnu::section(".isr")]] void ISR_Default()    { Assert(false); }

@@ -116,10 +116,10 @@ public:
         _Device.pData = &_PCD;
         
         USBD_StatusTypeDef us = USBD_Init(&_Device, &HS_Desc, DEVICE_HS);
-        AssertX(us == USBD_OK);
+        Assert(us == USBD_OK);
         
         HAL_StatusTypeDef hs = HAL_PCD_Init(&_PCD);
-        AssertX(hs == HAL_OK);
+        Assert(hs == HAL_OK);
         
 #define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return _USBD_##name(); }
 #define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return _USBD_##name(t0); }
@@ -150,10 +150,10 @@ public:
 #undef Fwd2
         
         us = USBD_RegisterClass(&_Device, &usbClass);
-        AssertX(us == USBD_OK);
+        Assert(us == USBD_OK);
         
         us = USBD_Start(&_Device);
-        AssertX(us == USBD_OK);
+        Assert(us == USBD_OK);
         
         // ## Set Rx/Tx FIFO sizes. Notes:
         //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
@@ -792,7 +792,7 @@ public:
 
           if (LOBYTE(req.wIndex) <= USBD_MAX_NUM_INTERFACES)
           {
-            AssertX(false);
+            Assert(false);
 //            ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
 
             if ((req.wLength == 0U) && (ret == USBD_OK))
@@ -831,7 +831,7 @@ public:
       {
       case USB_REQ_TYPE_CLASS:
       case USB_REQ_TYPE_VENDOR:
-        AssertX(false);
+        Assert(false);
 //        ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
         break;
 
@@ -894,7 +894,7 @@ public:
                 (void)USBD_LL_ClearStallEP(pdev, ep_addr);
               }
               _CmdAccept(true);
-              AssertX(false);
+              Assert(false);
 //              (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
             }
             break;
@@ -1032,17 +1032,17 @@ public:
     }
     
     static std::optional<size_t> Recv(uint8_t ep, void* data, size_t len) {
-        AssertY(EndpointOut(ep));
+        Assert(EndpointOut(ep));
         _EndpointState& eps = _EndpointStateGet(ep);
         
         Toastbox::IntState ints(false);
         if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
         
-        AssertY(_Ready(eps));
+        Assert(_Ready(eps));
         _AdvanceStateOut(ep);
         
         const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
-        AssertY(us == USBD_OK);
+        Assert(us == USBD_OK);
         
         _WaitState ws = { .ep = ep };
         T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
@@ -1052,17 +1052,23 @@ public:
     }
     
     static bool Send(uint8_t ep, const void* data, size_t len) {
-        AssertY(EndpointIn(ep));
+        Assert(EndpointIn(ep));
         _EndpointState& eps = _EndpointStateGet(ep);
         
         Toastbox::IntState ints(false);
         if (_State != State::Connected) return false; // Short-circuit if we're not Connected
         
-        AssertY(_Ready(eps));
+        Assert(_Ready(eps));
         _AdvanceStateIn(ep);
         
-        const USBD_StatusTypeDef us = USBD_LL_Transmit(&_Device, ep, (uint8_t*)data, len);
-        AssertY(us == USBD_OK);
+        if (len) {
+            const USBD_StatusTypeDef us = USBD_LL_Transmit(&_Device, ep, (uint8_t*)data, len);
+            Assert(us == USBD_OK);
+        
+        } else {
+            const USBD_StatusTypeDef us = USBD_LL_TransmitZeroLen(&_Device, ep);
+            Assert(us == USBD_OK);
+        }
         
         _WaitState ws = { .ep = ep };
         T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
@@ -1160,7 +1166,7 @@ private:
         const uint8_t ep = Toastbox::USB::Endpoint::DirectionIn | epidx;
         // Sanity-check the endpoint state
         _EndpointState& eps = _EndpointStateGet(ep);
-        AssertY(
+        Assert(
             eps.stage == _EndpointStage::ResetZLP1     ||
             eps.stage == _EndpointStage::ResetZLP2     ||
             eps.stage == _EndpointStage::ResetSentinel ||
@@ -1174,7 +1180,7 @@ private:
         const uint8_t ep = Toastbox::USB::Endpoint::DirectionOut | epidx;
         _EndpointState& eps = _EndpointStateGet(ep);
         // Sanity-check the endpoint state
-        AssertY(
+        Assert(
             eps.stage == _EndpointStage::ResetZLP1     ||
             eps.stage == _EndpointStage::ResetZLP2     ||
             eps.stage == _EndpointStage::ResetSentinel ||
@@ -1221,8 +1227,8 @@ private:
     static void _CmdAccept(bool accept) {
         if (accept) {
 //            USBD_CtlSendStatus(&_Device);
-            
-            USBD_LL_TransmitZeroLen(&_Device, 0U);
+            // Send a zero-length packet (ZLP)
+            Send(0x80, nullptr, 0);
         
         } else {
 //            USBD_CtlError(&_Device);
@@ -1336,7 +1342,7 @@ private:
             if (eps.len == sizeof(_ResetSentinel)) eps.stage = _EndpointStage::Ready;
             break;
         default:
-            AssertY(false);
+            Assert(false);
         }
         
         // State actions
@@ -1378,7 +1384,7 @@ private:
         case _EndpointStage::ResetZLP1:     eps.stage = _EndpointStage::ResetZLP2;     break;
         case _EndpointStage::ResetZLP2:     eps.stage = _EndpointStage::ResetSentinel; break;
         case _EndpointStage::ResetSentinel: eps.stage = _EndpointStage::Ready;         break;
-        default:                            AssertY(false);
+        default:                            Assert(false);
         }
         
         // State actions
@@ -1397,9 +1403,9 @@ private:
     
     static _EndpointState& _EndpointStateGet(uint8_t ep) {
         if (EndpointOut(ep)) {
-            return _EndpointsOut[EndpointIdx(ep)-1];
+            return _EndpointsOut[EndpointIdx(ep)];
         } else {
-            return _EndpointsIn[EndpointIdx(ep)-1];
+            return _EndpointsIn[EndpointIdx(ep)];
         }
     }
     
@@ -1422,8 +1428,8 @@ private:
     
     static inline std::optional<Toastbox::USB::SetupRequest> _SetupRequest;
     
-    static inline _EndpointState _EndpointsOut[EndpointCountOut()] = {};
-    static inline _EndpointState _EndpointsIn[EndpointCountIn()] = {};
+    static inline _EndpointState _EndpointsOut[1+EndpointCountOut()] = {};
+    static inline _EndpointState _EndpointsIn[1+EndpointCountIn()] = {};
     static inline USBD_HandleTypeDef _Device;
     static inline PCD_HandleTypeDef _PCD;
     static inline State _State = State::Disconnected;
