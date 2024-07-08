@@ -653,11 +653,11 @@ public:
           }
         }
 
-        static void USBD_CtlError(USBD_HandleTypeDef *pdev)
-        {
-          (void)USBD_LL_StallEP(pdev, 0x80U);
-          (void)USBD_LL_StallEP(pdev, 0U);
-        }
+//        static void USBD_CtlError(USBD_HandleTypeDef *pdev)
+//        {
+//          (void)USBD_LL_StallEP(pdev, 0x80U);
+//          (void)USBD_LL_StallEP(pdev, 0U);
+//        }
 
 
         /**
@@ -1221,8 +1221,17 @@ private:
     
     // Ints must be disabled
     static void _CmdAccept(bool accept) {
-        if (accept) USBD_CtlSendStatus(&_Device);
-        else        USBD_CtlError(&_Device);
+        if (accept) {
+//            USBD_CtlSendStatus(&_Device);
+            
+            USBD_LL_TransmitZeroLen(&_Device, 0U);
+        
+        } else {
+//            USBD_CtlError(&_Device);
+            
+            USBD_LL_StallEP(&_Device, 0x80);
+            USBD_LL_StallEP(&_Device, 0x00);
+        }
     }
     
     struct _WaitState {
