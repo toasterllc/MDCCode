@@ -130,7 +130,7 @@ public:
             .DeInit                         = Fwd1(DeInit, uint8_t),
             .Suspend                        = Fwd0(Suspend),
             .Resume                         = Fwd0(Resume),
-            .Setup                          = Fwd1(Setup, USBD_SetupReqTypedef*),
+            .Setup                          = Fwd1(Setup, const Toastbox::USB::SetupRequest&),
             .EP0_TxSent                     = Fwd0(EP0_TxSent),
             .EP0_RxReady                    = Fwd0(EP0_RxReady),
             .DataIn                         = Fwd1(DataIn, uint8_t),
@@ -243,44 +243,793 @@ public:
         T_Scheduler::Wait([] { return _EndpointsReady(); });
     }
     
-    template <typename T>
-    static void CmdRecv(T& cmd) {
+    
+    
+    
+    
+        static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+        {
+          uint16_t len = 0U;
+          uint8_t *pbuf = NULL;
+          uint8_t err = 0U;
+
+          switch (req.wValue >> 8)
+          {
+        #if ((USBD_LPM_ENABLED == 1U) || (USBD_CLASS_BOS_ENABLED == 1U))
+          case USB_DESC_TYPE_BOS:
+            if (pdev->pDesc->GetBOSDescriptor != NULL)
+            {
+              pbuf = pdev->pDesc->GetBOSDescriptor(pdev->dev_speed, &len);
+            }
+            else
+            {
+              _CmdAccept(false);
+              err++;
+            }
+            break;
+        #endif
+          case USB_DESC_TYPE_DEVICE:
+            pbuf = pdev->pDesc->GetDeviceDescriptor(pdev->dev_speed, &len);
+            break;
+
+          case USB_DESC_TYPE_CONFIGURATION:
+            if (pdev->dev_speed == USBD_SPEED_HIGH)
+            {
+              pbuf = pdev->pClass->GetHSConfigDescriptor(pdev, &len);
+            }
+            else
+            {
+              pbuf = pdev->pClass->GetFSConfigDescriptor(pdev, &len);
+            }
+            break;
+
+          case USB_DESC_TYPE_STRING:
+            switch ((uint8_t)(req.wValue))
+            {
+            case USBD_IDX_LANGID_STR:
+              if (pdev->pDesc->GetLangIDStrDescriptor != NULL)
+              {
+                pbuf = pdev->pDesc->GetLangIDStrDescriptor(pdev->dev_speed, &len);
+              }
+              else
+              {
+                _CmdAccept(false);
+                err++;
+              }
+              break;
+
+            case USBD_IDX_MFC_STR:
+              if (pdev->pDesc->GetManufacturerStrDescriptor != NULL)
+              {
+                pbuf = pdev->pDesc->GetManufacturerStrDescriptor(pdev->dev_speed, &len);
+              }
+              else
+              {
+                _CmdAccept(false);
+                err++;
+              }
+              break;
+
+            case USBD_IDX_PRODUCT_STR:
+              if (pdev->pDesc->GetProductStrDescriptor != NULL)
+              {
+                pbuf = pdev->pDesc->GetProductStrDescriptor(pdev->dev_speed, &len);
+              }
+              else
+              {
+                _CmdAccept(false);
+                err++;
+              }
+              break;
+
+            case USBD_IDX_SERIAL_STR:
+              if (pdev->pDesc->GetSerialStrDescriptor != NULL)
+              {
+                pbuf = pdev->pDesc->GetSerialStrDescriptor(pdev->dev_speed, &len);
+              }
+              else
+              {
+                _CmdAccept(false);
+                err++;
+              }
+              break;
+
+            case USBD_IDX_CONFIG_STR:
+              if (pdev->pDesc->GetConfigurationStrDescriptor != NULL)
+              {
+                pbuf = pdev->pDesc->GetConfigurationStrDescriptor(pdev->dev_speed, &len);
+              }
+              else
+              {
+                _CmdAccept(false);
+                err++;
+              }
+              break;
+
+            case USBD_IDX_INTERFACE_STR:
+              if (pdev->pDesc->GetInterfaceStrDescriptor != NULL)
+              {
+                pbuf = pdev->pDesc->GetInterfaceStrDescriptor(pdev->dev_speed, &len);
+              }
+              else
+              {
+                _CmdAccept(false);
+                err++;
+              }
+              break;
+
+            default:
+              if (pdev->pClass->GetUsrStrDescriptor != NULL)
+              {
+                pbuf = pdev->pClass->GetUsrStrDescriptor(pdev, (req.wValue), &len);
+              }
+              else
+              {
+                _CmdAccept(false);
+                err++;
+              }
+              break;
+            }
+            break;
+
+          default:
+            _CmdAccept(false);
+            err++;
+            break;
+          }
+
+          if (err != 0U)
+          {
+            return;
+          }
+          else
+          {
+            if (req.wLength != 0U)
+            {
+              if (len != 0U)
+              {
+                len = MIN(len, req.wLength);
+                (void)USBD_CtlSendData(pdev, pbuf, len);
+              }
+              else
+              {
+                _CmdAccept(false);
+              }
+            }
+            else
+            {
+              (void)USBD_CtlSendStatus(pdev);
+            }
+          }
+        }
+
+        /**
+        * @brief  USBD_SetAddress
+        *         Set device address
+        * @param  pdev: device instance
+        * @param  req: usb request
+        * @retval status
+        */
+        static void USBD_SetAddress(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+        {
+          uint8_t  dev_addr;
+
+          if ((req.wIndex == 0U) && (req.wLength == 0U) && (req.wValue < 128U))
+          {
+            dev_addr = (uint8_t)(req.wValue) & 0x7FU;
+
+            if (pdev->dev_state == USBD_STATE_CONFIGURED)
+            {
+              _CmdAccept(false);
+            }
+            else
+            {
+              pdev->dev_address = dev_addr;
+              (void)USBD_LL_SetUSBAddress(pdev, dev_addr);
+              (void)USBD_CtlSendStatus(pdev);
+
+              if (dev_addr != 0U)
+              {
+                pdev->dev_state = USBD_STATE_ADDRESSED;
+              }
+              else
+              {
+                pdev->dev_state = USBD_STATE_DEFAULT;
+              }
+            }
+          }
+          else
+          {
+            _CmdAccept(false);
+          }
+        }
+
+        /**
+        * @brief  USBD_SetConfig
+        *         Handle Set device configuration request
+        * @param  pdev: device instance
+        * @param  req: usb request
+        * @retval status
+        */
+        static USBD_StatusTypeDef USBD_SetConfig(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+        {
+          USBD_StatusTypeDef ret = USBD_OK;
+          static uint8_t cfgidx;
+
+          cfgidx = (uint8_t)(req.wValue);
+
+          if (cfgidx > USBD_MAX_NUM_CONFIGURATION)
+          {
+            _CmdAccept(false);
+            return USBD_FAIL;
+          }
+
+          switch (pdev->dev_state)
+          {
+          case USBD_STATE_ADDRESSED:
+            if (cfgidx != 0U)
+            {
+              pdev->dev_config = cfgidx;
+
+              ret = USBD_SetClassConfig(pdev, cfgidx);
+
+              if (ret != USBD_OK)
+              {
+                _CmdAccept(false);
+              }
+              else
+              {
+                (void)USBD_CtlSendStatus(pdev);
+                pdev->dev_state = USBD_STATE_CONFIGURED;
+              }
+            }
+            else
+            {
+              (void)USBD_CtlSendStatus(pdev);
+            }
+            break;
+
+          case USBD_STATE_CONFIGURED:
+            if (cfgidx == 0U)
+            {
+              pdev->dev_state = USBD_STATE_ADDRESSED;
+              pdev->dev_config = cfgidx;
+              (void)USBD_ClrClassConfig(pdev, cfgidx);
+              (void)USBD_CtlSendStatus(pdev);
+            }
+            else if (cfgidx != pdev->dev_config)
+            {
+              /* Clear old configuration */
+              (void)USBD_ClrClassConfig(pdev, (uint8_t)pdev->dev_config);
+
+              /* set new configuration */
+              pdev->dev_config = cfgidx;
+
+              ret = USBD_SetClassConfig(pdev, cfgidx);
+
+              if (ret != USBD_OK)
+              {
+                _CmdAccept(false);
+                (void)USBD_ClrClassConfig(pdev, (uint8_t)pdev->dev_config);
+                pdev->dev_state = USBD_STATE_ADDRESSED;
+              }
+              else
+              {
+                (void)USBD_CtlSendStatus(pdev);
+              }
+            }
+            else
+            {
+              (void)USBD_CtlSendStatus(pdev);
+            }
+            break;
+
+          default:
+            _CmdAccept(false);
+            (void)USBD_ClrClassConfig(pdev, cfgidx);
+            ret = USBD_FAIL;
+            break;
+          }
+
+          return ret;
+        }
+
+        /**
+        * @brief  USBD_GetConfig
+        *         Handle Get device configuration request
+        * @param  pdev: device instance
+        * @param  req: usb request
+        * @retval status
+        */
+        static void USBD_GetConfig(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+        {
+          if (req.wLength != 1U)
+          {
+            _CmdAccept(false);
+          }
+          else
+          {
+            switch (pdev->dev_state)
+            {
+            case USBD_STATE_DEFAULT:
+            case USBD_STATE_ADDRESSED:
+              pdev->dev_default_config = 0U;
+              (void)USBD_CtlSendData(pdev, (uint8_t *)&pdev->dev_default_config, 1U);
+              break;
+
+            case USBD_STATE_CONFIGURED:
+              (void)USBD_CtlSendData(pdev, (uint8_t *)&pdev->dev_config, 1U);
+              break;
+
+            default:
+              _CmdAccept(false);
+              break;
+            }
+          }
+        }
+
+        /**
+        * @brief  USBD_GetStatus
+        *         Handle Get Status request
+        * @param  pdev: device instance
+        * @param  req: usb request
+        * @retval status
+        */
+        static void USBD_GetStatus(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+        {
+          switch (pdev->dev_state)
+          {
+          case USBD_STATE_DEFAULT:
+          case USBD_STATE_ADDRESSED:
+          case USBD_STATE_CONFIGURED:
+            if (req.wLength != 0x2U)
+            {
+              _CmdAccept(false);
+              break;
+            }
+
+        #if (USBD_SELF_POWERED == 1U)
+            pdev->dev_config_status = USB_CONFIG_SELF_POWERED;
+        #else
+            pdev->dev_config_status = 0U;
+        #endif
+
+            if (pdev->dev_remote_wakeup != 0U)
+            {
+              pdev->dev_config_status |= USB_CONFIG_REMOTE_WAKEUP;
+            }
+
+            (void)USBD_CtlSendData(pdev, (uint8_t *)&pdev->dev_config_status, 2U);
+            break;
+
+          default:
+            _CmdAccept(false);
+            break;
+          }
+        }
+
+
+        /**
+        * @brief  USBD_SetFeature
+        *         Handle Set device feature request
+        * @param  pdev: device instance
+        * @param  req: usb request
+        * @retval status
+        */
+        static void USBD_SetFeature(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+        {
+          if (req.wValue == USB_FEATURE_REMOTE_WAKEUP)
+          {
+            pdev->dev_remote_wakeup = 1U;
+            (void)USBD_CtlSendStatus(pdev);
+          }
+        }
+
+
+        /**
+        * @brief  USBD_ClrFeature
+        *         Handle clear device feature request
+        * @param  pdev: device instance
+        * @param  req: usb request
+        * @retval status
+        */
+        static void USBD_ClrFeature(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+        {
+          switch (pdev->dev_state)
+          {
+            case USBD_STATE_DEFAULT:
+            case USBD_STATE_ADDRESSED:
+            case USBD_STATE_CONFIGURED:
+              if (req.wValue == USB_FEATURE_REMOTE_WAKEUP)
+              {
+                pdev->dev_remote_wakeup = 0U;
+                (void)USBD_CtlSendStatus(pdev);
+              }
+              break;
+
+            default:
+              _CmdAccept(false);
+              break;
+          }
+        }
+
+        /**
+        * @brief  USBD_CtlError
+        *         Handle USB low level Error
+        * @param  pdev: device instance
+        * @param  req: usb request
+        * @retval None
+        */
+
+        static void USBD_CtlError(USBD_HandleTypeDef *pdev)
+        {
+          (void)USBD_LL_StallEP(pdev, 0x80U);
+          (void)USBD_LL_StallEP(pdev, 0U);
+        }
+
+
+        /**
+          * @brief  USBD_GetLen
+          *         return the string length
+           * @param  buf : pointer to the ascii string buffer
+          * @retval string length
+          */
+        static uint8_t USBD_GetLen(uint8_t *buf)
+        {
+          uint8_t  len = 0U;
+          uint8_t *pbuff = buf;
+
+          while (*pbuff != (uint8_t)'\0')
+          {
+            len++;
+            pbuff++;
+          }
+
+          return len;
+        }
+
+        /**
+          * @brief  USBD_GetString
+          *         Convert Ascii string into unicode one
+          * @param  desc : descriptor buffer
+          * @param  unicode : Formatted string buffer (unicode)
+          * @param  len : descriptor length
+          * @retval None
+          */
+        static void USBD_GetString(uint8_t *desc, uint8_t *unicode, uint16_t *len)
+        {
+          uint8_t idx = 0U;
+          uint8_t *pdesc;
+
+          if (desc == NULL)
+          {
+            return;
+          }
+
+          pdesc = desc;
+          *len = ((uint16_t)USBD_GetLen(pdesc) * 2U) + 2U;
+
+          unicode[idx] = *(uint8_t *)len;
+          idx++;
+          unicode[idx] = USB_DESC_TYPE_STRING;
+          idx++;
+
+          while (*pdesc != (uint8_t)'\0')
+          {
+            unicode[idx] = *pdesc;
+            pdesc++;
+            idx++;
+
+            unicode[idx] = 0U;
+            idx++;
+          }
+        }
+
+    
+    
+    
+    
+    static USBD_StatusTypeDef USBD_StdDevReq(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+    {
+      USBD_StatusTypeDef ret = USBD_OK;
+
+      switch (req.bmRequestType & USB_REQ_TYPE_MASK)
+      {
+      case USB_REQ_TYPE_CLASS:
+      case USB_REQ_TYPE_VENDOR:
+        _CmdAccept(false);
+        break;
+
+      case USB_REQ_TYPE_STANDARD:
+        switch (req.bRequest)
+        {
+        case USB_REQ_GET_DESCRIPTOR:
+          USBD_GetDescriptor(pdev, req);
+          break;
+
+        case USB_REQ_SET_ADDRESS:
+          USBD_SetAddress(pdev, req);
+          break;
+
+        case USB_REQ_SET_CONFIGURATION:
+          ret = USBD_SetConfig(pdev, req);
+          break;
+
+        case USB_REQ_GET_CONFIGURATION:
+          USBD_GetConfig(pdev, req);
+          break;
+
+        case USB_REQ_GET_STATUS:
+          USBD_GetStatus(pdev, req);
+          break;
+
+        case USB_REQ_SET_FEATURE:
+          USBD_SetFeature(pdev, req);
+          break;
+
+        case USB_REQ_CLEAR_FEATURE:
+          USBD_ClrFeature(pdev, req);
+          break;
+
+        default:
+          _CmdAccept(false);
+          break;
+        }
+        break;
+
+      default:
+        _CmdAccept(false);
+        break;
+      }
+
+      return ret;
+    }
+
+    static USBD_StatusTypeDef USBD_StdItfReq(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+    {
+      USBD_StatusTypeDef ret = USBD_OK;
+
+      switch (req.bmRequestType & USB_REQ_TYPE_MASK)
+      {
+      case USB_REQ_TYPE_CLASS:
+      case USB_REQ_TYPE_VENDOR:
+      case USB_REQ_TYPE_STANDARD:
+        switch (pdev->dev_state)
+        {
+        case USBD_STATE_DEFAULT:
+        case USBD_STATE_ADDRESSED:
+        case USBD_STATE_CONFIGURED:
+
+          if (LOBYTE(req.wIndex) <= USBD_MAX_NUM_INTERFACES)
+          {
+            ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
+
+            if ((req.wLength == 0U) && (ret == USBD_OK))
+            {
+                _CmdAccept(true);
+            }
+          }
+          else
+          {
+            _CmdAccept(false);
+          }
+          break;
+
+        default:
+          _CmdAccept(false);
+          break;
+        }
+        break;
+
+      default:
+        _CmdAccept(false);
+        break;
+      }
+
+      return ret;
+    }
+
+    static USBD_StatusTypeDef USBD_StdEPReq(USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req)
+    {
+      USBD_EndpointTypeDef *pep;
+      uint8_t ep_addr;
+      USBD_StatusTypeDef ret = USBD_OK;
+      ep_addr = LOBYTE(req.wIndex);
+
+      switch (req.bmRequestType & USB_REQ_TYPE_MASK)
+      {
+      case USB_REQ_TYPE_CLASS:
+      case USB_REQ_TYPE_VENDOR:
+        ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
+        break;
+
+      case USB_REQ_TYPE_STANDARD:
+        switch (req.bRequest)
+        {
+        case USB_REQ_SET_FEATURE:
+          switch (pdev->dev_state)
+          {
+          case USBD_STATE_ADDRESSED:
+            if ((ep_addr != 0x00U) && (ep_addr != 0x80U))
+            {
+              (void)USBD_LL_StallEP(pdev, ep_addr);
+              (void)USBD_LL_StallEP(pdev, 0x80U);
+            }
+            else
+            {
+              _CmdAccept(false);
+            }
+            break;
+
+          case USBD_STATE_CONFIGURED:
+            if (req.wValue == USB_FEATURE_EP_HALT)
+            {
+              if ((ep_addr != 0x00U) && (ep_addr != 0x80U) && (req.wLength == 0x00U))
+              {
+                (void)USBD_LL_StallEP(pdev, ep_addr);
+              }
+            }
+            _CmdAccept(true);
+            break;
+
+          default:
+            _CmdAccept(false);
+            break;
+          }
+          break;
+
+        case USB_REQ_CLEAR_FEATURE:
+
+          switch (pdev->dev_state)
+          {
+          case USBD_STATE_ADDRESSED:
+            if ((ep_addr != 0x00U) && (ep_addr != 0x80U))
+            {
+              (void)USBD_LL_StallEP(pdev, ep_addr);
+              (void)USBD_LL_StallEP(pdev, 0x80U);
+            }
+            else
+            {
+              _CmdAccept(false);
+            }
+            break;
+
+          case USBD_STATE_CONFIGURED:
+            if (req.wValue == USB_FEATURE_EP_HALT)
+            {
+              if ((ep_addr & 0x7FU) != 0x00U)
+              {
+                (void)USBD_LL_ClearStallEP(pdev, ep_addr);
+              }
+              _CmdAccept(true);
+              (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
+            }
+            break;
+
+          default:
+            _CmdAccept(false);
+            break;
+          }
+          break;
+
+        case USB_REQ_GET_STATUS:
+          switch (pdev->dev_state)
+          {
+          case USBD_STATE_ADDRESSED:
+            if ((ep_addr != 0x00U) && (ep_addr != 0x80U))
+            {
+              _CmdAccept(false);
+              break;
+            }
+            pep = ((ep_addr & 0x80U) == 0x80U) ? &pdev->ep_in[ep_addr & 0x7FU] : \
+                  &pdev->ep_out[ep_addr & 0x7FU];
+
+            pep->status = 0x0000U;
+
+            (void)USBD_CtlSendData(pdev, (uint8_t *)&pep->status, 2U);
+            break;
+
+          case USBD_STATE_CONFIGURED:
+            if ((ep_addr & 0x80U) == 0x80U)
+            {
+              if (pdev->ep_in[ep_addr & 0xFU].is_used == 0U)
+              {
+                _CmdAccept(false);
+                break;
+              }
+            }
+            else
+            {
+              if (pdev->ep_out[ep_addr & 0xFU].is_used == 0U)
+              {
+                _CmdAccept(false);
+                break;
+              }
+            }
+
+            pep = ((ep_addr & 0x80U) == 0x80U) ? &pdev->ep_in[ep_addr & 0x7FU] : \
+                  &pdev->ep_out[ep_addr & 0x7FU];
+
+              if ((ep_addr == 0x00U) || (ep_addr == 0x80U))
+              {
+                pep->status = 0x0000U;
+              }
+              else if (USBD_LL_IsStallEP(pdev, ep_addr) != 0U)
+              {
+                pep->status = 0x0001U;
+              }
+              else
+              {
+                pep->status = 0x0000U;
+              }
+
+              (void)USBD_CtlSendData(pdev, (uint8_t *)&pep->status, 2U);
+              break;
+
+          default:
+            _CmdAccept(false);
+            break;
+          }
+          break;
+
+        default:
+          _CmdAccept(false);
+          break;
+        }
+        break;
+
+      default:
+        _CmdAccept(false);
+        break;
+      }
+
+      return ret;
+    }
+
+    static USBD_StatusTypeDef _SetupRequestHandle(const Toastbox::USB::SetupRequest& req) {
+        switch (req.bmRequestType & 0x1FU) {
+        case USB_REQ_RECIPIENT_DEVICE:
+            return USBD_StdDevReq(&_Device, req);
+            break;
+        case USB_REQ_RECIPIENT_INTERFACE:
+            return USBD_StdItfReq(&_Device, req);
+            break;
+        case USB_REQ_RECIPIENT_ENDPOINT:
+            return USBD_StdEPReq(&_Device, req);
+            break;
+        default:
+            return USBD_LL_StallEP(&_Device, (req.bmRequestType & 0x80U));
+            break;
+      }
+    }
+    
+    static Toastbox::USB::SetupRequest SetupRequestRecv() {
         for (;;) {
+            Toastbox::IntState ints(false);
+            
             // Wait until we're in the Connecting state
             {
-                Toastbox::IntState ints(false);
                 T_Scheduler::Wait([] { return _State == State::Connecting || _State == State::Connected; });
                 if (_State == State::Connecting) {
                     // Update our state
                     _State = State::Connected;
-                    _CmdRecvLen = std::nullopt;
+                    _SetupRequest = std::nullopt;
                 }
             }
             
             // Wait for a command
             for (;;) {
-                // Disable interrupts
-                Toastbox::IntState ints(false);
-                
                 // Wait for a new command to arrive, or for our state to change
-                T_Scheduler::Wait([] { return _CmdRecvLen || _State!=State::Connected; });
+                T_Scheduler::Wait([] { return _SetupRequest || _State!=State::Connected; });
                 
                 // If we're no longer connected, bail and wait to be connected again
                 if (_State != State::Connected) break;
                 
+                // Handle the setup request
+                _SetupRequestHandle(*_SetupRequest);
+                
                 // Consume the command
-                const size_t len = *_CmdRecvLen;
-                _CmdRecvLen = std::nullopt;
-                
-                // Reject command if the length isn't valid
-                if (len != sizeof(T)) {
-                    _CmdAccept(false);
-                    continue;
-                }
-                
-                // Return command to caller
-                memcpy(&cmd, _CmdRecvBuf, len);
-                return;
+                _SetupRequest = std::nullopt;
             }
         }
     }
@@ -370,16 +1119,53 @@ private:
         return (uint8_t)USBD_OK;
     }
     
-    static uint8_t _USBD_Setup(USBD_SetupReqTypedef* req) {
-        switch (req->bmRequest & USB_REQ_TYPE_MASK) {
-        case USB_REQ_TYPE_VENDOR:
-            USBD_CtlPrepareRx(&_Device, _CmdRecvBuf, sizeof(_CmdRecvBuf));
-            return USBD_OK;
-        
-        default:
-            USBD_CtlError(&_Device, req);
-            return USBD_FAIL;
+//  USBD_StatusTypeDef ret;
+//
+//  USBD_ParseSetupRequest(&pdev->request, psetup);
+//
+//  pdev->ep0_state = USBD_EP0_SETUP;
+//
+//  pdev->ep0_data_len = pdev->request.wLength;
+//
+//  switch (pdev->request.bmRequestType & 0x1FU)
+//  {
+//    case USB_REQ_RECIPIENT_DEVICE:
+//      ret = USBD_StdDevReq(pdev, &pdev->request);
+//      break;
+//
+//    case USB_REQ_RECIPIENT_INTERFACE:
+//      ret = USBD_StdItfReq(pdev, &pdev->request);
+//      break;
+//
+//    case USB_REQ_RECIPIENT_ENDPOINT:
+//      ret = USBD_StdEPReq(pdev, &pdev->request);
+//      break;
+//
+//    default:
+//      ret = USBD_LL_StallEP(pdev, (pdev->request.bmRequestType & 0x80U));
+//      break;
+//  }
+//
+//  return ret;
+    
+    static uint8_t _USBD_Setup(const Toastbox::USB::SetupRequest& req) {
+        if (_SetupRequest) {
+            _CmdAccept(false);
+            return (uint8_t)USBD_FAIL;
         }
+        
+        _SetupRequest = req;
+        return (uint8_t)USBD_OK;
+        
+//        switch (req->bmRequestType & USB_REQ_TYPE_MASK) {
+//        case USB_REQ_TYPE_VENDOR:
+//            USBD_CtlPrepareRx(&_Device, _CmdRecvBuf, sizeof(_CmdRecvBuf));
+//            return USBD_OK;
+//        
+//        default:
+//            USBD_CtlError(&_Device, req);
+//            return USBD_FAIL;
+//        }
     }
     
     static uint8_t _USBD_EP0_TxSent() {
@@ -387,14 +1173,16 @@ private:
     }
     
     static uint8_t _USBD_EP0_RxReady() {
-        const size_t recvLen = USBD_LL_GetRxDataSize(&_Device, 0);
-        if (!_CmdRecvLen) {
-            _CmdRecvLen = recvLen;
-        } else {
-            // If a command is already underway, respond to the request with an error
-            USBD_CtlError(&_Device, nullptr);
-        }
         return (uint8_t)USBD_OK;
+        
+//        const size_t recvLen = USBD_LL_GetRxDataSize(&_Device, 0);
+//        if (!_CmdRecvLen) {
+//            _CmdRecvLen = recvLen;
+//        } else {
+//            // If a command is already underway, respond to the request with an error
+//            USBD_CtlError(&_Device, nullptr);
+//        }
+//        return (uint8_t)USBD_OK;
     }
     
     static uint8_t _USBD_DataIn(uint8_t epidx) {
@@ -461,7 +1249,7 @@ private:
     // Ints must be disabled
     static void _CmdAccept(bool accept) {
         if (accept) USBD_CtlSendStatus(&_Device);
-        else        USBD_CtlError(&_Device, nullptr);
+        else        USBD_CtlError(&_Device);
     }
     
     struct _WaitState {
@@ -647,10 +1435,13 @@ private:
     // ignored as long as the flash isn't unlocked.
     static constexpr uint32_t _DevNullAddr = 0x08000000;
     
-    alignas(void*) // Aligned to receive via USB
-    static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl];
+//    alignas(void*) // Aligned to receive via USB
+//    static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl];
+//    
+//    static inline std::optional<size_t> _CmdRecvLen;
     
-    static inline std::optional<size_t> _CmdRecvLen;
+    static inline std::optional<Toastbox::USB::SetupRequest> _SetupRequest;
+    
     static inline _EndpointState _EndpointsOut[EndpointCountOut()] = {};
     static inline _EndpointState _EndpointsIn[EndpointCountIn()] = {};
     static inline USBD_HandleTypeDef _Device;

@@ -1,6 +1,8 @@
 #include "usbd_core.h"
 #include "stm32f7xx.h"
 #include "stm32f7xx_hal.h"
+#include "Code/Lib/Toastbox/USB.h"
+#include <string.h>
 
 USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status);
 
@@ -413,34 +415,9 @@ USBD_StatusTypeDef USBD_ClrClassConfig(USBD_HandleTypeDef* pdev, uint8_t cfgidx)
 // Handle the setup stage
 USBD_StatusTypeDef USBD_LL_SetupStage(USBD_HandleTypeDef* pdev, uint8_t* psetup)
 {
-  USBD_StatusTypeDef ret;
-
-  USBD_ParseSetupRequest(&pdev->request, psetup);
-
-  pdev->ep0_state = USBD_EP0_SETUP;
-
-  pdev->ep0_data_len = pdev->request.wLength;
-
-  switch (pdev->request.bmRequest & 0x1FU)
-  {
-    case USB_REQ_RECIPIENT_DEVICE:
-      ret = USBD_StdDevReq(pdev, &pdev->request);
-      break;
-
-    case USB_REQ_RECIPIENT_INTERFACE:
-      ret = USBD_StdItfReq(pdev, &pdev->request);
-      break;
-
-    case USB_REQ_RECIPIENT_ENDPOINT:
-      ret = USBD_StdEPReq(pdev, &pdev->request);
-      break;
-
-    default:
-      ret = USBD_LL_StallEP(pdev, (pdev->request.bmRequest & 0x80U));
-      break;
-  }
-
-  return ret;
+    Toastbox::USB::SetupRequest setupReq;
+    memcpy(&setupReq, psetup, sizeof(setupReq));
+    return (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, setupReq);
 }
 
 // Handle data OUT stage

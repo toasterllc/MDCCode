@@ -201,13 +201,12 @@ private:
             _Init();
             
             for (;;) {
-                STM::Cmd cmd;
-                USB::CmdRecv(cmd);
+                USB::SetupRequestRecv();
                 
-                // Dispatch the command to our handler task
-                const bool accepted = _TaskCmdHandle::Handle(cmd);
-                // Tell the host whether we accepted the command
-                USB::CmdAccept(accepted);
+//                // Dispatch the command to our handler task
+//                const bool accepted = _TaskCmdHandle::Handle(cmd);
+//                // Tell the host whether we accepted the command
+//                USB::CmdAccept(accepted);
             }
         }
         

@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "stm32f7xx.h"
+#include "Code/Lib/Toastbox/USB.h"
 
 #define USBD_MAX_NUM_INTERFACES         1U
 #define USBD_MAX_NUM_CONFIGURATION      1U
@@ -135,7 +136,7 @@ typedef struct _Device_cb
   uint8_t (*Suspend)(struct _USBD_HandleTypeDef *pdev);
   uint8_t (*Resume)(struct _USBD_HandleTypeDef *pdev);
   /* Control Endpoints*/
-  uint8_t (*Setup)(struct _USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef  *req);
+  uint8_t (*Setup)(struct _USBD_HandleTypeDef *pdev, const Toastbox::USB::SetupRequest& req);
   uint8_t (*EP0_TxSent)(struct _USBD_HandleTypeDef *pdev);
   uint8_t (*EP0_RxReady)(struct _USBD_HandleTypeDef *pdev);
   /* Class Specific Endpoints*/
