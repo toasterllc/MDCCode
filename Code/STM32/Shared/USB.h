@@ -398,7 +398,7 @@ public:
             }
             else
             {
-              (void)USBD_CtlSendStatus(pdev);
+              _CmdAccept(true);
             }
           }
         }
@@ -426,7 +426,7 @@ public:
             {
               pdev->dev_address = dev_addr;
               (void)USBD_LL_SetUSBAddress(pdev, dev_addr);
-              (void)USBD_CtlSendStatus(pdev);
+              _CmdAccept(true);
 
               if (dev_addr != 0U)
               {
@@ -479,13 +479,13 @@ public:
               }
               else
               {
-                (void)USBD_CtlSendStatus(pdev);
+                _CmdAccept(true);
                 pdev->dev_state = USBD_STATE_CONFIGURED;
               }
             }
             else
             {
-              (void)USBD_CtlSendStatus(pdev);
+              _CmdAccept(true);
             }
             break;
 
@@ -495,7 +495,7 @@ public:
               pdev->dev_state = USBD_STATE_ADDRESSED;
               pdev->dev_config = cfgidx;
               (void)USBD_ClrClassConfig(pdev, cfgidx);
-              (void)USBD_CtlSendStatus(pdev);
+              _CmdAccept(true);
             }
             else if (cfgidx != pdev->dev_config)
             {
@@ -515,12 +515,12 @@ public:
               }
               else
               {
-                (void)USBD_CtlSendStatus(pdev);
+                _CmdAccept(true);
               }
             }
             else
             {
-              (void)USBD_CtlSendStatus(pdev);
+              _CmdAccept(true);
             }
             break;
 
@@ -621,7 +621,7 @@ public:
           if (req.wValue == USB_FEATURE_REMOTE_WAKEUP)
           {
             pdev->dev_remote_wakeup = 1U;
-            (void)USBD_CtlSendStatus(pdev);
+            _CmdAccept(true);
           }
         }
 
@@ -643,7 +643,7 @@ public:
               if (req.wValue == USB_FEATURE_REMOTE_WAKEUP)
               {
                 pdev->dev_remote_wakeup = 0U;
-                (void)USBD_CtlSendStatus(pdev);
+                _CmdAccept(true);
               }
               break;
 
@@ -652,14 +652,6 @@ public:
               break;
           }
         }
-
-        /**
-        * @brief  USBD_CtlError
-        *         Handle USB low level Error
-        * @param  pdev: device instance
-        * @param  req: usb request
-        * @retval None
-        */
 
         static void USBD_CtlError(USBD_HandleTypeDef *pdev)
         {
@@ -1156,16 +1148,6 @@ private:
         
         _SetupRequest = req;
         return (uint8_t)USBD_OK;
-        
-//        switch (req->bmRequestType & USB_REQ_TYPE_MASK) {
-//        case USB_REQ_TYPE_VENDOR:
-//            USBD_CtlPrepareRx(&_Device, _CmdRecvBuf, sizeof(_CmdRecvBuf));
-//            return USBD_OK;
-//        
-//        default:
-//            USBD_CtlError(&_Device, req);
-//            return USBD_FAIL;
-//        }
     }
     
     static uint8_t _USBD_EP0_TxSent() {
@@ -1174,15 +1156,6 @@ private:
     
     static uint8_t _USBD_EP0_RxReady() {
         return (uint8_t)USBD_OK;
-        
-//        const size_t recvLen = USBD_LL_GetRxDataSize(&_Device, 0);
-//        if (!_CmdRecvLen) {
-//            _CmdRecvLen = recvLen;
-//        } else {
-//            // If a command is already underway, respond to the request with an error
-//            USBD_CtlError(&_Device, nullptr);
-//        }
-//        return (uint8_t)USBD_OK;
     }
     
     static uint8_t _USBD_DataIn(uint8_t epidx) {
