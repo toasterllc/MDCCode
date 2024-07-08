@@ -116,10 +116,10 @@ public:
         _Device.pData = &_PCD;
         
         USBD_StatusTypeDef us = USBD_Init(&_Device, &HS_Desc, DEVICE_HS);
-        Assert(us == USBD_OK);
+        AssertY(us == USBD_OK);
         
         HAL_StatusTypeDef hs = HAL_PCD_Init(&_PCD);
-        Assert(hs == HAL_OK);
+        AssertY(hs == HAL_OK);
         
 #define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return _USBD_##name(); }
 #define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return _USBD_##name(t0); }
@@ -150,10 +150,10 @@ public:
 #undef Fwd2
         
         us = USBD_RegisterClass(&_Device, &usbClass);
-        Assert(us == USBD_OK);
+        AssertY(us == USBD_OK);
         
         us = USBD_Start(&_Device);
-        Assert(us == USBD_OK);
+        AssertY(us == USBD_OK);
         
         // ## Set Rx/Tx FIFO sizes. Notes:
         //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
@@ -792,7 +792,7 @@ public:
 
           if (LOBYTE(req.wIndex) <= USBD_MAX_NUM_INTERFACES)
           {
-            Assert(false);
+            AssertY(false);
 //            ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
 
             if ((req.wLength == 0U) && (ret == USBD_OK))
@@ -831,7 +831,7 @@ public:
       {
       case USB_REQ_TYPE_CLASS:
       case USB_REQ_TYPE_VENDOR:
-        Assert(false);
+        AssertY(false);
 //        ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
         break;
 
@@ -894,7 +894,7 @@ public:
                 (void)USBD_LL_ClearStallEP(pdev, ep_addr);
               }
               _CmdAccept(true);
-              Assert(false);
+              AssertY(false);
 //              (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
             }
             break;
@@ -1032,17 +1032,17 @@ public:
     }
     
     static std::optional<size_t> Recv(uint8_t ep, void* data, size_t len) {
-        Assert(EndpointOut(ep));
+        AssertY(EndpointOut(ep));
         _EndpointState& eps = _EndpointStateGet(ep);
         
         Toastbox::IntState ints(false);
         if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
         
-        Assert(_Ready(eps));
+        AssertY(_Ready(eps));
         _AdvanceStateOut(ep);
         
         const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
-        Assert(us == USBD_OK);
+        AssertY(us == USBD_OK);
         
         _WaitState ws = { .ep = ep };
         T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
@@ -1052,17 +1052,17 @@ public:
     }
     
     static bool Send(uint8_t ep, const void* data, size_t len) {
-        Assert(EndpointIn(ep));
+        AssertY(EndpointIn(ep));
         _EndpointState& eps = _EndpointStateGet(ep);
         
         Toastbox::IntState ints(false);
         if (_State != State::Connected) return false; // Short-circuit if we're not Connected
         
-        Assert(_Ready(eps));
+        AssertY(_Ready(eps));
         _AdvanceStateIn(ep);
         
         const USBD_StatusTypeDef us = USBD_LL_Transmit(&_Device, ep, (uint8_t*)data, len);
-        Assert(us == USBD_OK);
+        AssertY(us == USBD_OK);
         
         _WaitState ws = { .ep = ep };
         T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
@@ -1160,7 +1160,7 @@ private:
         const uint8_t ep = Toastbox::USB::Endpoint::DirectionIn | epidx;
         // Sanity-check the endpoint state
         _EndpointState& eps = _EndpointStateGet(ep);
-        Assert(
+        AssertY(
             eps.stage == _EndpointStage::ResetZLP1     ||
             eps.stage == _EndpointStage::ResetZLP2     ||
             eps.stage == _EndpointStage::ResetSentinel ||
@@ -1174,7 +1174,7 @@ private:
         const uint8_t ep = Toastbox::USB::Endpoint::DirectionOut | epidx;
         _EndpointState& eps = _EndpointStateGet(ep);
         // Sanity-check the endpoint state
-        Assert(
+        AssertY(
             eps.stage == _EndpointStage::ResetZLP1     ||
             eps.stage == _EndpointStage::ResetZLP2     ||
             eps.stage == _EndpointStage::ResetSentinel ||
@@ -1336,7 +1336,7 @@ private:
             if (eps.len == sizeof(_ResetSentinel)) eps.stage = _EndpointStage::Ready;
             break;
         default:
-            Assert(false);
+            AssertY(false);
         }
         
         // State actions
@@ -1378,7 +1378,7 @@ private:
         case _EndpointStage::ResetZLP1:     eps.stage = _EndpointStage::ResetZLP2;     break;
         case _EndpointStage::ResetZLP2:     eps.stage = _EndpointStage::ResetSentinel; break;
         case _EndpointStage::ResetSentinel: eps.stage = _EndpointStage::Ready;         break;
-        default:                            Assert(false);
+        default:                            AssertY(false);
         }
         
         // State actions

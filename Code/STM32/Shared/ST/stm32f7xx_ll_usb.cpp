@@ -830,7 +830,7 @@ HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count)
                     while (!(DIEPINT & USB_OTG_DIEPINT_EPDISD));
                     // Verify that EPDIS is cleared: "The core clears [EPDIS] before
                     // setting the endpoint disabled interrupt."
-                    Assert(!(DIEPCTL & USB_OTG_DIEPCTL_EPDIS));
+                    AssertY(!(DIEPCTL & USB_OTG_DIEPCTL_EPDIS));
                     // Clear EPDISD
                     DIEPINT = USB_OTG_DIEPINT_EPDISD;
                 }
@@ -865,7 +865,7 @@ HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count)
                         while (!(DOEPINT & USB_OTG_DOEPINT_EPDISD));
                         // Verify that EPDIS is cleared: "The core clears [EPDIS] before
                         // setting the endpoint disabled interrupt."
-                        Assert(!(DOEPCTL & USB_OTG_DOEPCTL_EPDIS));
+                        AssertY(!(DOEPCTL & USB_OTG_DOEPCTL_EPDIS));
                         // Clear EPDISD
                         DOEPINT = USB_OTG_DOEPINT_EPDISD;
                     }
