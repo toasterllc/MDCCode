@@ -116,10 +116,10 @@ public:
         _Device.pData = &_PCD;
         
         USBD_StatusTypeDef us = USBD_Init(&_Device, &HS_Desc, DEVICE_HS);
-        AssertY(us == USBD_OK);
+        AssertX(us == USBD_OK);
         
         HAL_StatusTypeDef hs = HAL_PCD_Init(&_PCD);
-        AssertY(hs == HAL_OK);
+        AssertX(hs == HAL_OK);
         
 #define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return _USBD_##name(); }
 #define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return _USBD_##name(t0); }
@@ -150,10 +150,10 @@ public:
 #undef Fwd2
         
         us = USBD_RegisterClass(&_Device, &usbClass);
-        AssertY(us == USBD_OK);
+        AssertX(us == USBD_OK);
         
         us = USBD_Start(&_Device);
-        AssertY(us == USBD_OK);
+        AssertX(us == USBD_OK);
         
         // ## Set Rx/Tx FIFO sizes. Notes:
         //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
@@ -792,7 +792,7 @@ public:
 
           if (LOBYTE(req.wIndex) <= USBD_MAX_NUM_INTERFACES)
           {
-            AssertY(false);
+            AssertX(false);
 //            ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
 
             if ((req.wLength == 0U) && (ret == USBD_OK))
@@ -831,7 +831,7 @@ public:
       {
       case USB_REQ_TYPE_CLASS:
       case USB_REQ_TYPE_VENDOR:
-        AssertY(false);
+        AssertX(false);
 //        ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
         break;
 
@@ -894,7 +894,7 @@ public:
                 (void)USBD_LL_ClearStallEP(pdev, ep_addr);
               }
               _CmdAccept(true);
-              AssertY(false);
+              AssertX(false);
 //              (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
             }
             break;
