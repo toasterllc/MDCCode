@@ -389,7 +389,7 @@ public:
               if (len != 0U)
               {
                 len = MIN(len, req.wLength);
-                (void)USBD_CtlSendData(pdev, pbuf, len);
+                Send(0x80, pbuf, len);
               }
               else
               {
@@ -554,13 +554,11 @@ public:
             case USBD_STATE_DEFAULT:
             case USBD_STATE_ADDRESSED:
               pdev->dev_default_config = 0U;
-              (void)USBD_CtlSendData(pdev, (uint8_t *)&pdev->dev_default_config, 1U);
+              Send(0x80, (uint8_t*)&pdev->dev_default_config, 1);
               break;
-
             case USBD_STATE_CONFIGURED:
-              (void)USBD_CtlSendData(pdev, (uint8_t *)&pdev->dev_config, 1U);
+              Send(0x80, (uint8_t*)&pdev->dev_config, 1);
               break;
-
             default:
               _CmdAccept(false);
               break;
@@ -599,7 +597,7 @@ public:
               pdev->dev_config_status |= USB_CONFIG_REMOTE_WAKEUP;
             }
 
-            (void)USBD_CtlSendData(pdev, (uint8_t *)&pdev->dev_config_status, 2U);
+            Send(0x80, (uint8_t*)&pdev->dev_config_status, 2);
             break;
 
           default:
@@ -794,7 +792,8 @@ public:
 
           if (LOBYTE(req.wIndex) <= USBD_MAX_NUM_INTERFACES)
           {
-            ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
+            Assert(false);
+//            ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
 
             if ((req.wLength == 0U) && (ret == USBD_OK))
             {
@@ -832,7 +831,8 @@ public:
       {
       case USB_REQ_TYPE_CLASS:
       case USB_REQ_TYPE_VENDOR:
-        ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
+        Assert(false);
+//        ret = (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
         break;
 
       case USB_REQ_TYPE_STANDARD:
@@ -894,7 +894,8 @@ public:
                 (void)USBD_LL_ClearStallEP(pdev, ep_addr);
               }
               _CmdAccept(true);
-              (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
+              Assert(false);
+//              (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
             }
             break;
 
@@ -918,7 +919,7 @@ public:
 
             pep->status = 0x0000U;
 
-            (void)USBD_CtlSendData(pdev, (uint8_t *)&pep->status, 2U);
+            Send(0x80, (uint8_t*)&pep->status, 2);
             break;
 
           case USBD_STATE_CONFIGURED:
@@ -955,7 +956,7 @@ public:
                 pep->status = 0x0000U;
               }
 
-              (void)USBD_CtlSendData(pdev, (uint8_t *)&pep->status, 2U);
+              Send(0x80, (uint8_t*)&pep->status, 2);
               break;
 
           default:
@@ -982,16 +983,13 @@ public:
         switch (req.bmRequestType & 0x1FU) {
         case USB_REQ_RECIPIENT_DEVICE:
             return USBD_StdDevReq(&_Device, req);
-            break;
         case USB_REQ_RECIPIENT_INTERFACE:
             return USBD_StdItfReq(&_Device, req);
-            break;
         case USB_REQ_RECIPIENT_ENDPOINT:
             return USBD_StdEPReq(&_Device, req);
-            break;
         default:
-            return USBD_LL_StallEP(&_Device, (req.bmRequestType & 0x80U));
-            break;
+            _CmdAccept(false);
+            return (USBD_StatusTypeDef)USBD_FAIL;
       }
     }
     

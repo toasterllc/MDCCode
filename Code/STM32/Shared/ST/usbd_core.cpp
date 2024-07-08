@@ -424,126 +424,130 @@ USBD_StatusTypeDef USBD_LL_SetupStage(USBD_HandleTypeDef* pdev, uint8_t* psetup)
 USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef* pdev,
                                         uint8_t epnum, uint8_t* pdata)
 {
-  USBD_EndpointTypeDef* pep;
-  USBD_StatusTypeDef ret;
-
-  if (epnum == 0U)
-  {
-    pep = &pdev->ep_out[0];
-
-    if (pdev->ep0_state == USBD_EP0_DATA_OUT)
-    {
-      if (pep->rem_length > pep->maxpacket)
-      {
-        pep->rem_length -= pep->maxpacket;
-
-        (void)USBD_CtlContinueRx(pdev, pdata, MIN(pep->rem_length, pep->maxpacket));
-      }
-      else
-      {
-        if ((pdev->pClass->EP0_RxReady != NULL) && (pdev->dev_state == USBD_STATE_CONFIGURED))
-        {
-          pdev->pClass->EP0_RxReady(pdev);
-        }
-        else
-        {
-          // DKeck: only send status if we're not calling the client's callback.
-          // DKeck: if we are calling the client's callback, let the it handle sending the status.
-          (void)USBD_CtlSendStatus(pdev);
-        }
-      }
-    }
-  }
-  else if ((pdev->pClass->DataOut != NULL) &&
-           (pdev->dev_state == USBD_STATE_CONFIGURED))
-  {
-    ret = (USBD_StatusTypeDef)pdev->pClass->DataOut(pdev, epnum);
-
-    if (ret != USBD_OK)
-    {
-      return ret;
-    }
-  }
-  else
-  {
-    // should never be in this condition
-    return USBD_FAIL;
-  }
-
-  return USBD_OK;
+  return (USBD_StatusTypeDef)pdev->pClass->DataOut(pdev, epnum);
+  
+//  USBD_EndpointTypeDef* pep;
+//  USBD_StatusTypeDef ret;
+//
+//  if (epnum == 0U)
+//  {
+//    pep = &pdev->ep_out[0];
+//
+//    if (pdev->ep0_state == USBD_EP0_DATA_OUT)
+//    {
+//      if (pep->rem_length > pep->maxpacket)
+//      {
+//        pep->rem_length -= pep->maxpacket;
+//
+//        (void)USBD_CtlContinueRx(pdev, pdata, MIN(pep->rem_length, pep->maxpacket));
+//      }
+//      else
+//      {
+//        if ((pdev->pClass->EP0_RxReady != NULL) && (pdev->dev_state == USBD_STATE_CONFIGURED))
+//        {
+//          pdev->pClass->EP0_RxReady(pdev);
+//        }
+//        else
+//        {
+//          // DKeck: only send status if we're not calling the client's callback.
+//          // DKeck: if we are calling the client's callback, let the it handle sending the status.
+//          (void)USBD_CtlSendStatus(pdev);
+//        }
+//      }
+//    }
+//  }
+//  else if ((pdev->pClass->DataOut != NULL) &&
+//           (pdev->dev_state == USBD_STATE_CONFIGURED))
+//  {
+//    ret = (USBD_StatusTypeDef)pdev->pClass->DataOut(pdev, epnum);
+//
+//    if (ret != USBD_OK)
+//    {
+//      return ret;
+//    }
+//  }
+//  else
+//  {
+//    // should never be in this condition
+//    return USBD_FAIL;
+//  }
+//
+//  return USBD_OK;
 }
 
 // Handle data in stage
 USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef* pdev,
                                        uint8_t epnum, uint8_t* pdata)
 {
-  USBD_EndpointTypeDef* pep;
-  USBD_StatusTypeDef ret;
-
-  if (epnum == 0U)
-  {
-    pep = &pdev->ep_in[0];
-
-    if (pdev->ep0_state == USBD_EP0_DATA_IN)
-    {
-      if (pep->rem_length > pep->maxpacket)
-      {
-        pep->rem_length -= pep->maxpacket;
-
-        (void)USBD_CtlContinueSendData(pdev, pdata, pep->rem_length);
-
-        // Prepare endpoint for premature end of transfer
-       (void)USBD_LL_PrepareReceiveZeroLen(pdev, 0U);
-      }
-      else
-      {
-        // last packet is MPS multiple, so send ZLP packet
-        if ((pep->maxpacket == pep->rem_length) &&
-            (pep->total_length >= pep->maxpacket) &&
-            (pep->total_length < pdev->ep0_data_len))
-        {
-          (void)USBD_CtlContinueSendData(pdev, NULL, 0U);
-          pdev->ep0_data_len = 0U;
-
-          // Prepare endpoint for premature end of transfer
-          (void)USBD_LL_PrepareReceiveZeroLen(pdev, 0U);
-        }
-        else
-        {
-          if ((pdev->pClass->EP0_TxSent != NULL) &&
-              (pdev->dev_state == USBD_STATE_CONFIGURED))
-          {
-            pdev->pClass->EP0_TxSent(pdev);
-          }
-          (void)USBD_LL_StallEP(pdev, 0x80U);
-          (void)USBD_CtlReceiveStatus(pdev);
-        }
-      }
-    }
-
-    if (pdev->dev_test_mode == 1U)
-    {
-      (void)USBD_RunTestMode(pdev);
-      pdev->dev_test_mode = 0U;
-    }
-  }
-  else if ((pdev->pClass->DataIn != NULL) &&
-           (pdev->dev_state == USBD_STATE_CONFIGURED))
-  {
-    ret = (USBD_StatusTypeDef)pdev->pClass->DataIn(pdev, epnum);
-
-    if (ret != USBD_OK)
-    {
-      return ret;
-    }
-  }
-  else
-  {
-    // should never be in this condition
-    return USBD_FAIL;
-  }
-
-  return USBD_OK;
+  return (USBD_StatusTypeDef)pdev->pClass->DataIn(pdev, epnum);
+  
+//  USBD_EndpointTypeDef* pep;
+//  USBD_StatusTypeDef ret;
+//
+//  if (epnum == 0U)
+//  {
+//    pep = &pdev->ep_in[0];
+//
+//    if (pdev->ep0_state == USBD_EP0_DATA_IN)
+//    {
+//      if (pep->rem_length > pep->maxpacket)
+//      {
+//        pep->rem_length -= pep->maxpacket;
+//
+//        (void)USBD_CtlContinueSendData(pdev, pdata, pep->rem_length);
+//
+//        // Prepare endpoint for premature end of transfer
+//       (void)USBD_LL_PrepareReceiveZeroLen(pdev, 0U);
+//      }
+//      else
+//      {
+//        // last packet is MPS multiple, so send ZLP packet
+//        if ((pep->maxpacket == pep->rem_length) &&
+//            (pep->total_length >= pep->maxpacket) &&
+//            (pep->total_length < pdev->ep0_data_len))
+//        {
+//          (void)USBD_CtlContinueSendData(pdev, NULL, 0U);
+//          pdev->ep0_data_len = 0U;
+//
+//          // Prepare endpoint for premature end of transfer
+//          (void)USBD_LL_PrepareReceiveZeroLen(pdev, 0U);
+//        }
+//        else
+//        {
+//          if ((pdev->pClass->EP0_TxSent != NULL) &&
+//              (pdev->dev_state == USBD_STATE_CONFIGURED))
+//          {
+//            pdev->pClass->EP0_TxSent(pdev);
+//          }
+//          (void)USBD_LL_StallEP(pdev, 0x80U);
+//          (void)USBD_CtlReceiveStatus(pdev);
+//        }
+//      }
+//    }
+//
+//    if (pdev->dev_test_mode == 1U)
+//    {
+//      (void)USBD_RunTestMode(pdev);
+//      pdev->dev_test_mode = 0U;
+//    }
+//  }
+//  else if ((pdev->pClass->DataIn != NULL) &&
+//           (pdev->dev_state == USBD_STATE_CONFIGURED))
+//  {
+//    ret = (USBD_StatusTypeDef)pdev->pClass->DataIn(pdev, epnum);
+//
+//    if (ret != USBD_OK)
+//    {
+//      return ret;
+//    }
+//  }
+//  else
+//  {
+//    // should never be in this condition
+//    return USBD_FAIL;
+//  }
+//
+//  return USBD_OK;
 }
 
 // Handle Reset event
