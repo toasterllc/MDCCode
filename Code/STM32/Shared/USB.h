@@ -243,386 +243,291 @@ public:
         T_Scheduler::Wait([] { return _EndpointsReady(); });
     }
     
+    static void USBD_GetDescriptor(const Toastbox::USB::SetupRequest& req) {
+        uint16_t len = 0U;
+        uint8_t *pbuf = NULL;
+        uint8_t err = 0U;
+        
+        switch (req.wValue >> 8) {
+        case USB_DESC_TYPE_BOS:
+            if (_Device.pDesc->GetBOSDescriptor != NULL) {
+                pbuf = _Device.pDesc->GetBOSDescriptor(_Device.dev_speed, &len);
+            } else {
+                _CmdAccept(false);
+                err++;
+            }
+            break;
+        
+        case USB_DESC_TYPE_DEVICE:
+            pbuf = _Device.pDesc->GetDeviceDescriptor(_Device.dev_speed, &len);
+            break;
+        
+        case USB_DESC_TYPE_CONFIGURATION:
+            if (_Device.dev_speed == USBD_SPEED_HIGH) {
+                pbuf = _Device.pClass->GetHSConfigDescriptor(&_Device, &len);
+            } else {
+                pbuf = _Device.pClass->GetFSConfigDescriptor(&_Device, &len);
+            }
+            break;
+        
+        case USB_DESC_TYPE_STRING:
+            switch ((uint8_t)(req.wValue)) {
+            case USBD_IDX_LANGID_STR:
+                if (_Device.pDesc->GetLangIDStrDescriptor != NULL) {
+                    pbuf = _Device.pDesc->GetLangIDStrDescriptor(_Device.dev_speed, &len);
+                } else {
+                    _CmdAccept(false);
+                    err++;
+                }
+                break;
+            
+            case USBD_IDX_MFC_STR:
+                if (_Device.pDesc->GetManufacturerStrDescriptor != NULL) {
+                    pbuf = _Device.pDesc->GetManufacturerStrDescriptor(_Device.dev_speed, &len);
+                } else {
+                    _CmdAccept(false);
+                    err++;
+                }
+                break;
+            
+            case USBD_IDX_PRODUCT_STR:
+                if (_Device.pDesc->GetProductStrDescriptor != NULL) {
+                    pbuf = _Device.pDesc->GetProductStrDescriptor(_Device.dev_speed, &len);
+                } else {
+                    _CmdAccept(false);
+                    err++;
+                }
+                break;
+            
+            case USBD_IDX_SERIAL_STR:
+                if (_Device.pDesc->GetSerialStrDescriptor != NULL) {
+                    pbuf = _Device.pDesc->GetSerialStrDescriptor(_Device.dev_speed, &len);
+                
+                } else {
+                    _CmdAccept(false);
+                    err++;
+                }
+                break;
+            
+            case USBD_IDX_CONFIG_STR:
+                if (_Device.pDesc->GetConfigurationStrDescriptor != NULL) {
+                    pbuf = _Device.pDesc->GetConfigurationStrDescriptor(_Device.dev_speed, &len);
+                } else {
+                    _CmdAccept(false);
+                    err++;
+                }
+                break;
+            
+            case USBD_IDX_INTERFACE_STR:
+                if (_Device.pDesc->GetInterfaceStrDescriptor != NULL) {
+                    pbuf = _Device.pDesc->GetInterfaceStrDescriptor(_Device.dev_speed, &len);
+                } else {
+                    _CmdAccept(false);
+                    err++;
+                }
+                break;
+            
+            default:
+                if (_Device.pClass->GetUsrStrDescriptor != NULL) {
+                    pbuf = _Device.pClass->GetUsrStrDescriptor(&_Device, (req.wValue), &len);
+                
+                } else {
+                    _CmdAccept(false);
+                    err++;
+                }
+                break;
+            }
+            break;
+
+        default:
+            _CmdAccept(false);
+            err++;
+            break;
+        }
+        
+        if (err != 0U) {
+            return;
+        
+        } else {
+            if (req.wLength != 0U) {
+                if (len != 0U) {
+                    len = MIN(len, req.wLength);
+                    Send(0x80, pbuf, len);
+                    Recv(0x00, nullptr, 0);
+                } else {
+                    _CmdAccept(false);
+                }
+            
+            } else {
+                _CmdAccept(true);
+            }
+        }
+    }
     
-    
-    
-    
-    static void USBD_GetDescriptor(const Toastbox::USB::SetupRequest& req)
-    {
-    uint16_t len = 0U;
-    uint8_t *pbuf = NULL;
-    uint8_t err = 0U;
-
-    switch (req.wValue >> 8)
-    {
-    #if ((USBD_LPM_ENABLED == 1U) || (USBD_CLASS_BOS_ENABLED == 1U))
-    case USB_DESC_TYPE_BOS:
-    if (_Device.pDesc->GetBOSDescriptor != NULL)
-    {
-    pbuf = _Device.pDesc->GetBOSDescriptor(_Device.dev_speed, &len);
-    }
-    else
-    {
-    _CmdAccept(false);
-    err++;
-    }
-    break;
-    #endif
-    case USB_DESC_TYPE_DEVICE: {
-    pbuf = _Device.pDesc->GetDeviceDescriptor(_Device.dev_speed, &len);
-    break;
+    static void USBD_SetAddress(const Toastbox::USB::SetupRequest& req) {
+        if (req.wIndex==0 && req.wLength==0 && req.wValue<128) {
+            const uint8_t dev_addr = (uint8_t)(req.wValue) & 0x7F;
+            if (_Device.dev_state != USBD_STATE_CONFIGURED) {
+                _Device.dev_address = dev_addr;
+                (void)USBD_LL_SetUSBAddress(&_Device, dev_addr);
+                
+                if (dev_addr) {
+                    _Device.dev_state = USBD_STATE_ADDRESSED;
+                } else {
+                    _Device.dev_state = USBD_STATE_DEFAULT;
+                }
+                return _CmdAccept(true);
+            }
+        }
+        _CmdAccept(false);
     }
 
-    case USB_DESC_TYPE_CONFIGURATION:
-    if (_Device.dev_speed == USBD_SPEED_HIGH)
-    {
-    pbuf = _Device.pClass->GetHSConfigDescriptor(&_Device, &len);
-    }
-    else
-    {
-    pbuf = _Device.pClass->GetFSConfigDescriptor(&_Device, &len);
-    }
-    break;
+    static void USBD_SetConfig(const Toastbox::USB::SetupRequest& req) {
+        USBD_StatusTypeDef ret = USBD_OK;
+        static uint8_t cfgidx;
+        
+        cfgidx = (uint8_t)(req.wValue);
+        
+        if (cfgidx > USBD_MAX_NUM_CONFIGURATION) {
+            return _CmdAccept(false);
+        }
 
-    case USB_DESC_TYPE_STRING:
-    switch ((uint8_t)(req.wValue))
-    {
-    case USBD_IDX_LANGID_STR:
-    if (_Device.pDesc->GetLangIDStrDescriptor != NULL)
-    {
-    pbuf = _Device.pDesc->GetLangIDStrDescriptor(_Device.dev_speed, &len);
-    }
-    else
-    {
-    _CmdAccept(false);
-    err++;
-    }
-    break;
+        switch (_Device.dev_state) {
+        case USBD_STATE_ADDRESSED:
+            if (cfgidx != 0U) {
+                _Device.dev_config = cfgidx;
 
-    case USBD_IDX_MFC_STR:
-    if (_Device.pDesc->GetManufacturerStrDescriptor != NULL)
-    {
-    pbuf = _Device.pDesc->GetManufacturerStrDescriptor(_Device.dev_speed, &len);
-    }
-    else
-    {
-    _CmdAccept(false);
-    err++;
-    }
-    break;
+                ret = USBD_SetClassConfig(&_Device, cfgidx);
 
-    case USBD_IDX_PRODUCT_STR:
-    if (_Device.pDesc->GetProductStrDescriptor != NULL)
-    {
-    pbuf = _Device.pDesc->GetProductStrDescriptor(_Device.dev_speed, &len);
-    }
-    else
-    {
-    _CmdAccept(false);
-    err++;
-    }
-    break;
-
-    case USBD_IDX_SERIAL_STR:
-    if (_Device.pDesc->GetSerialStrDescriptor != NULL)
-    {
-    pbuf = _Device.pDesc->GetSerialStrDescriptor(_Device.dev_speed, &len);
-    }
-    else
-    {
-    _CmdAccept(false);
-    err++;
-    }
-    break;
-
-    case USBD_IDX_CONFIG_STR:
-    if (_Device.pDesc->GetConfigurationStrDescriptor != NULL)
-    {
-    pbuf = _Device.pDesc->GetConfigurationStrDescriptor(_Device.dev_speed, &len);
-    }
-    else
-    {
-    _CmdAccept(false);
-    err++;
-    }
-    break;
-
-    case USBD_IDX_INTERFACE_STR:
-    if (_Device.pDesc->GetInterfaceStrDescriptor != NULL)
-    {
-    pbuf = _Device.pDesc->GetInterfaceStrDescriptor(_Device.dev_speed, &len);
-    }
-    else
-    {
-    _CmdAccept(false);
-    err++;
-    }
-    break;
-
-    default:
-    if (_Device.pClass->GetUsrStrDescriptor != NULL)
-    {
-    pbuf = _Device.pClass->GetUsrStrDescriptor(&_Device, (req.wValue), &len);
-    }
-    else
-    {
-    _CmdAccept(false);
-    err++;
-    }
-    break;
-    }
-    break;
-
-    default:
-    _CmdAccept(false);
-    err++;
-    break;
+                if (ret != USBD_OK) {
+                    _CmdAccept(false);
+                } else {
+                    _CmdAccept(true);
+                    _Device.dev_state = USBD_STATE_CONFIGURED;
+                }
+            
+            } else {
+                _CmdAccept(true);
+            }
+            break;
+        
+        case USBD_STATE_CONFIGURED:
+            if (cfgidx == 0U) {
+                _Device.dev_state = USBD_STATE_ADDRESSED;
+                _Device.dev_config = cfgidx;
+                (void)USBD_ClrClassConfig(&_Device, cfgidx);
+                _CmdAccept(true);
+            
+            } else if (cfgidx != _Device.dev_config) {
+                /* Clear old configuration */
+                (void)USBD_ClrClassConfig(&_Device, (uint8_t)_Device.dev_config);
+                /* set new configuration */
+                _Device.dev_config = cfgidx;
+                ret = USBD_SetClassConfig(&_Device, cfgidx);
+                if (ret != USBD_OK) {
+                    _CmdAccept(false);
+                    (void)USBD_ClrClassConfig(&_Device, (uint8_t)_Device.dev_config);
+                    _Device.dev_state = USBD_STATE_ADDRESSED;
+                
+                } else {
+                    _CmdAccept(true);
+                }
+            
+            } else {
+                _CmdAccept(true);
+            }
+            break;
+        
+        default:
+            _CmdAccept(false);
+            (void)USBD_ClrClassConfig(&_Device, cfgidx);
+            ret = USBD_FAIL;
+            break;
+        }
     }
 
-    if (err != 0U)
-    {
-    return;
-    }
-    else
-    {
-    if (req.wLength != 0U)
-    {
-    if (len != 0U)
-    {
-    len = MIN(len, req.wLength);
-    Send(0x80, pbuf, len);
-    Recv(0x00, nullptr, 0);
-    }
-    else
-    {
-    _CmdAccept(false);
-    }
-    }
-    else
-    {
-    _CmdAccept(true);
-    }
-    }
-    }
-
-    static void USBD_SetAddress(const Toastbox::USB::SetupRequest& req)
-    {
-    uint8_t  dev_addr;
-
-    if ((req.wIndex == 0U) && (req.wLength == 0U) && (req.wValue < 128U))
-    {
-    dev_addr = (uint8_t)(req.wValue) & 0x7FU;
-
-    if (_Device.dev_state == USBD_STATE_CONFIGURED)
-    {
-    _CmdAccept(false);
-    }
-    else
-    {
-    _Device.dev_address = dev_addr;
-    (void)USBD_LL_SetUSBAddress(&_Device, dev_addr);
-    _CmdAccept(true);
-
-    if (dev_addr != 0U)
-    {
-    _Device.dev_state = USBD_STATE_ADDRESSED;
-    }
-    else
-    {
-    _Device.dev_state = USBD_STATE_DEFAULT;
-    }
-    }
-    }
-    else
-    {
-    _CmdAccept(false);
-    }
+    static void USBD_GetConfig(const Toastbox::USB::SetupRequest& req) {
+        Assert(false);
+//        if (req.wLength != 1U)
+//        {
+//        _CmdAccept(false);
+//        }
+//        else
+//        {
+//        switch (_Device.dev_state)
+//        {
+//        case USBD_STATE_DEFAULT:
+//        case USBD_STATE_ADDRESSED:
+//        _Device.dev_default_config = 0U;
+//        Send(0x80, (uint8_t*)&_Device.dev_default_config, 1);
+//        Assert(false);
+//        break;
+//        case USBD_STATE_CONFIGURED:
+//        Send(0x80, (uint8_t*)&_Device.dev_config, 1);
+//        Assert(false);
+//        break;
+//        default:
+//        _CmdAccept(false);
+//        break;
+//        }
+//        }
     }
 
-    static void USBD_SetConfig(const Toastbox::USB::SetupRequest& req)
-    {
-    USBD_StatusTypeDef ret = USBD_OK;
-    static uint8_t cfgidx;
-
-    cfgidx = (uint8_t)(req.wValue);
-
-    if (cfgidx > USBD_MAX_NUM_CONFIGURATION)
-    {
-    return _CmdAccept(false);
-    }
-
-    switch (_Device.dev_state)
-    {
-    case USBD_STATE_ADDRESSED:
-    if (cfgidx != 0U)
-    {
-    _Device.dev_config = cfgidx;
-
-    ret = USBD_SetClassConfig(&_Device, cfgidx);
-
-    if (ret != USBD_OK)
-    {
-    _CmdAccept(false);
-    }
-    else
-    {
-    _CmdAccept(true);
-    _Device.dev_state = USBD_STATE_CONFIGURED;
-    }
-    }
-    else
-    {
-    _CmdAccept(true);
-    }
-    break;
-
-    case USBD_STATE_CONFIGURED:
-    if (cfgidx == 0U)
-    {
-    _Device.dev_state = USBD_STATE_ADDRESSED;
-    _Device.dev_config = cfgidx;
-    (void)USBD_ClrClassConfig(&_Device, cfgidx);
-    _CmdAccept(true);
-    }
-    else if (cfgidx != _Device.dev_config)
-    {
-    /* Clear old configuration */
-    (void)USBD_ClrClassConfig(&_Device, (uint8_t)_Device.dev_config);
-
-    /* set new configuration */
-    _Device.dev_config = cfgidx;
-
-    ret = USBD_SetClassConfig(&_Device, cfgidx);
-
-    if (ret != USBD_OK)
-    {
-    _CmdAccept(false);
-    (void)USBD_ClrClassConfig(&_Device, (uint8_t)_Device.dev_config);
-    _Device.dev_state = USBD_STATE_ADDRESSED;
-    }
-    else
-    {
-    _CmdAccept(true);
-    }
-    }
-    else
-    {
-    _CmdAccept(true);
-    }
-    break;
-
-    default:
-    _CmdAccept(false);
-    (void)USBD_ClrClassConfig(&_Device, cfgidx);
-    ret = USBD_FAIL;
-    break;
-    }
-    }
-
-    static void USBD_GetConfig(const Toastbox::USB::SetupRequest& req)
-    {
-    if (req.wLength != 1U)
-    {
-    _CmdAccept(false);
-    }
-    else
-    {
-    switch (_Device.dev_state)
-    {
-    case USBD_STATE_DEFAULT:
-    case USBD_STATE_ADDRESSED:
-    _Device.dev_default_config = 0U;
-    Send(0x80, (uint8_t*)&_Device.dev_default_config, 1);
-    Assert(false);
-    break;
-    case USBD_STATE_CONFIGURED:
-    Send(0x80, (uint8_t*)&_Device.dev_config, 1);
-    Assert(false);
-    break;
-    default:
-    _CmdAccept(false);
-    break;
-    }
-    }
-    }
-
-    static void USBD_GetStatus(const Toastbox::USB::SetupRequest& req)
-    {
-    switch (_Device.dev_state)
-    {
-    case USBD_STATE_DEFAULT:
-    case USBD_STATE_ADDRESSED:
-    case USBD_STATE_CONFIGURED:
-    if (req.wLength != 0x2U)
-    {
-    _CmdAccept(false);
-    break;
-    }
-
-    #if (USBD_SELF_POWERED == 1U)
-    _Device.dev_config_status = USB_CONFIG_SELF_POWERED;
-    #else
-    _Device.dev_config_status = 0U;
-    #endif
-
-    if (_Device.dev_remote_wakeup != 0U)
-    {
-    _Device.dev_config_status |= USB_CONFIG_REMOTE_WAKEUP;
-    }
-
-    Send(0x80, (uint8_t*)&_Device.dev_config_status, 2);
-    Assert(false);
-    break;
-
-    default:
-    _CmdAccept(false);
-    break;
-    }
+    static void USBD_GetStatus(const Toastbox::USB::SetupRequest& req) {
+        Assert(false);
+//        switch (_Device.dev_state) {
+//        case USBD_STATE_DEFAULT:
+//        case USBD_STATE_ADDRESSED:
+//        case USBD_STATE_CONFIGURED:
+//            if (req.wLength != 0x2U) {
+//                _CmdAccept(false);
+//                break;
+//            }
+//            
+//#if (USBD_SELF_POWERED == 1U)
+//                _Device.dev_config_status = USB_CONFIG_SELF_POWERED;
+//#else
+//                _Device.dev_config_status = 0U;
+//#endif
+//            
+//            if (_Device.dev_remote_wakeup != 0U) {
+//                _Device.dev_config_status |= USB_CONFIG_REMOTE_WAKEUP;
+//            }
+//            
+//            Send(0x80, (uint8_t*)&_Device.dev_config_status, 2);
+//            Assert(false);
+//            break;
+//        
+//        default:
+//            _CmdAccept(false);
+//            break;
+//        }
     }
 
 
-    static void USBD_SetFeature(const Toastbox::USB::SetupRequest& req)
-    {
-    if (req.wValue == USB_FEATURE_REMOTE_WAKEUP)
-    {
-    _Device.dev_remote_wakeup = 1U;
-    _CmdAccept(true);
-    }
-    }
-
-
-    static void USBD_ClrFeature(const Toastbox::USB::SetupRequest& req)
-    {
-    switch (_Device.dev_state)
-    {
-    case USBD_STATE_DEFAULT:
-    case USBD_STATE_ADDRESSED:
-    case USBD_STATE_CONFIGURED:
-    if (req.wValue == USB_FEATURE_REMOTE_WAKEUP)
-    {
-    _Device.dev_remote_wakeup = 0U;
-    _CmdAccept(true);
-    }
-    break;
-
-    default:
-    _CmdAccept(false);
-    break;
-    }
+    static void USBD_SetFeature(const Toastbox::USB::SetupRequest& req) {
+        Assert(false);
+//    if (req.wValue == USB_FEATURE_REMOTE_WAKEUP)
+//    {
+//    _Device.dev_remote_wakeup = 1U;
+//    _CmdAccept(true);
+//    }
     }
 
-    static uint8_t USBD_GetLen(uint8_t *buf)
-    {
-    uint8_t  len = 0U;
-    uint8_t *pbuff = buf;
 
-    while (*pbuff != (uint8_t)'\0')
-    {
-    len++;
-    pbuff++;
-    }
-
-    return len;
+    static void USBD_ClrFeature(const Toastbox::USB::SetupRequest& req) {
+        Assert(false);
+//        switch (_Device.dev_state) {
+//        case USBD_STATE_DEFAULT:
+//        case USBD_STATE_ADDRESSED:
+//        case USBD_STATE_CONFIGURED:
+//            if (req.wValue == USB_FEATURE_REMOTE_WAKEUP) {
+//                _Device.dev_remote_wakeup = 0U;
+//                return _CmdAccept(true);
+//            }
+//            break;
+//        }
+//        _CmdAccept(false);
     }
 
     static void USBD_StdDevReq(const Toastbox::USB::SetupRequest& req) {
