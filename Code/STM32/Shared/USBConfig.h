@@ -31,7 +31,7 @@ public:
             .bConfigurationValue            = _LFH_U8(0x01),                                             // bConfigurationValue: config 1
             .iConfiguration                 = _LFH_U8(0x00),                                             // iConfiguration: string descriptor index
             .bmAttributes                   = _LFH_U8(0x80),                                             // bmAttributes: bus powered
-            .bMaxPower                      = _LFH_U8(0xFA),                                             // bMaxPower: 500 mA (2 mA units)
+            .bMaxPower                      = _LFH_U8(0x01),                                             // bMaxPower: 2 mA (2 mA units)
         },
         
             .iface0Desc = {
@@ -40,9 +40,9 @@ public:
                 .bInterfaceNumber           = _LFH_U8(0x00),                                             // bInterfaceNumber: interface index
                 .bAlternateSetting          = _LFH_U8(0x00),                                             // bAlternateSetting: alternate setting
                 .bNumEndpoints              = _LFH_U8(std::size(Endpoints)),                             // bNumEndpoints
-                .bInterfaceClass            = _LFH_U8(0xFF),                                             // bInterfaceClass: vendor specific
-                .bInterfaceSubClass         = _LFH_U8(0x00),                                             // bInterfaceSubClass
-                .bInterfaceProtocol         = _LFH_U8(0x00),                                             // nInterfaceProtocol
+                .bInterfaceClass            = _LFH_U8(0x08),                                             // bInterfaceClass: vendor specific
+                .bInterfaceSubClass         = _LFH_U8(0x06),                                             // bInterfaceSubClass
+                .bInterfaceProtocol         = _LFH_U8(0x50),                                             // nInterfaceProtocol
                 .iInterface                 = _LFH_U8(0x00),                                             // iInterface: string descriptor index
             },
             

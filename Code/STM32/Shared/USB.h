@@ -243,6 +243,8 @@ public:
         T_Scheduler::Wait([] { return _EndpointsReady(); });
     }
     
+    #include "USB-MSC.h"
+    
     static void USBD_GetDescriptor(const Toastbox::USB::SetupRequest& req) {
         uint16_t len = 0U;
         uint8_t *pbuf = NULL;
@@ -532,7 +534,8 @@ public:
 
     static void USBD_StdDevReq(const Toastbox::USB::SetupRequest& req) {
         switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
-//        case USB_REQ_TYPE_CLASS:
+        case USB_REQ_TYPE_CLASS:
+            return USBD_MSC_Setup(req);
 //        case USB_REQ_TYPE_VENDOR:
 //            _CmdAccept(false);
 //            break;
