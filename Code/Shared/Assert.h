@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-#define Assert(x)       if (!(x)) for (;;)
+#define Assert(x)       if (!(x)) _Abort()
 #define AssertArg(x)    if (!(x)) _Abort()
 
 // Abort(): provided by client to log the abort and trigger crash

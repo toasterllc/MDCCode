@@ -268,9 +268,20 @@ public:
             }
             break;
         #endif
-          case USB_DESC_TYPE_DEVICE:
+          case USB_DESC_TYPE_DEVICE: {
             pbuf = pdev->pDesc->GetDeviceDescriptor(pdev->dev_speed, &len);
+            
+//            Assert(len == 18);
+//            
+//            len = MIN(len, req.wLength);
+//            Send(0x80, pbuf, len);
+//            Recv(0x00, nullptr, 0);
+            
+//            for (;;);
+//            Assert(false);
+            
             break;
+          }
 
           case USB_DESC_TYPE_CONFIGURATION:
             if (pdev->dev_speed == USBD_SPEED_HIGH)
@@ -390,6 +401,7 @@ public:
               {
                 len = MIN(len, req.wLength);
                 Send(0x80, pbuf, len);
+                Recv(0x00, nullptr, 0);
               }
               else
               {
@@ -1041,8 +1053,14 @@ public:
         Assert(_Ready(eps));
         _AdvanceStateOut(ep);
         
-        const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
-        Assert(us == USBD_OK);
+        if (len) {
+            const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
+            Assert(us == USBD_OK);
+        
+        } else {
+            const USBD_StatusTypeDef us = USBD_LL_PrepareReceiveZeroLen(&_Device, ep);
+            Assert(us == USBD_OK);
+        }
         
         _WaitState ws = { .ep = ep };
         T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
