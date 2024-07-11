@@ -14,6 +14,22 @@ static int8_t SCSI_UpdateBotData(USBD_MSC_BOT_HandleTypeDef *hmsc,
   return 0;
 }
 
+static void SCSI_SenseCode(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t sKey, uint8_t ASC)
+{
+  UNUSED(lun);
+  USBD_MSC_BOT_HandleTypeDef *hmsc = (USBD_MSC_BOT_HandleTypeDef *)pdev->pClassData;
+
+  hmsc->scsi_sense[hmsc->scsi_sense_tail].Skey = sKey;
+  hmsc->scsi_sense[hmsc->scsi_sense_tail].w.b.ASC = ASC;
+  hmsc->scsi_sense[hmsc->scsi_sense_tail].w.b.ASCQ = 0U;
+  hmsc->scsi_sense_tail++;
+
+  if (hmsc->scsi_sense_tail == SENSE_LIST_DEEPTH)
+  {
+    hmsc->scsi_sense_tail = 0U;
+  }
+}
+
 static int8_t SCSI_TestUnitReady(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params)
 {
   UNUSED(params);
@@ -166,22 +182,6 @@ static int8_t SCSI_ModeSense6(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *pa
   (void)SCSI_UpdateBotData(hmsc, MSC_Mode_Sense6_data, len);
 
   return 0;
-}
-
-void SCSI_SenseCode(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t sKey, uint8_t ASC)
-{
-  UNUSED(lun);
-  USBD_MSC_BOT_HandleTypeDef *hmsc = (USBD_MSC_BOT_HandleTypeDef *)pdev->pClassData;
-
-  hmsc->scsi_sense[hmsc->scsi_sense_tail].Skey = sKey;
-  hmsc->scsi_sense[hmsc->scsi_sense_tail].w.b.ASC = ASC;
-  hmsc->scsi_sense[hmsc->scsi_sense_tail].w.b.ASCQ = 0U;
-  hmsc->scsi_sense_tail++;
-
-  if (hmsc->scsi_sense_tail == SENSE_LIST_DEEPTH)
-  {
-    hmsc->scsi_sense_tail = 0U;
-  }
 }
 
 static int8_t SCSI_AllowPreventRemovable(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *params)
