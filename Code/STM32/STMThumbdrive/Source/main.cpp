@@ -187,6 +187,8 @@ int main(void)
   SystemClock_Config();
   
   HAL_Delay(1000);
+  
+  abort();
 
 //  const uint32_t rcc = RCC->PLLSAICFGR;
 //  const uint32_t PLLSAIN = (rcc>>6)&0x1FF;
