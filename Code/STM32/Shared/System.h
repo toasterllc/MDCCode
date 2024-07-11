@@ -28,14 +28,14 @@ uint8_t _StackInterrupt[_StackInterruptSize];
 asm(".global _StartupStackInterrupt");
 asm(".equ _StartupStackInterrupt, _StackInterrupt+" Stringify(_StackInterruptSize));
 
-#define _TaskCmdRecvStackSize 512
+#define _TaskEP0StackSize 512
 
-[[gnu::section(".stack._TaskCmdRecv")]]
+[[gnu::section(".stack._TaskEP0")]]
 alignas(void*)
-uint8_t _TaskCmdRecvStack[_TaskCmdRecvStackSize];
+uint8_t _TaskEP0Stack[_TaskEP0StackSize];
 
 asm(".global _StartupStack");
-asm(".equ _StartupStack, _TaskCmdRecvStack+" Stringify(_TaskCmdRecvStackSize));
+asm(".equ _StartupStack, _TaskEP0Stack+" Stringify(_TaskEP0StackSize));
 
 // MARK: - System
 
@@ -102,7 +102,8 @@ private:
         __WFI();
     }
     
-    struct _TaskCmdRecv;
+    struct _TaskEP0;
+    struct _TaskEP1;
     struct _TaskCmdHandle;
     struct _TaskMSPComms;
     struct _TaskBatteryStatus;
@@ -123,7 +124,8 @@ public:
         _StackInterrupt,                            // T_StackInterrupt: stack used for handling interrupts;
                                                     //                   Scheduler only uses this to detect stack overflow
         
-        _TaskCmdRecv,                               // T_Tasks: list of tasks
+        _TaskEP0,                                   // T_Tasks: list of tasks
+        _TaskEP1,
         _TaskCmdHandle,
         _TaskMSPComms,
         _TaskBatteryStatus,
@@ -188,7 +190,7 @@ private:
     static constexpr uint32_t _I2CTimeoutMs = 2000;
     using _I2C = T_I2C<Scheduler, _I2C_SCL, _I2C_SDA, MSP::I2CAddr, _I2CTimeoutMs>;
     
-    struct _TaskCmdRecv {
+    struct _TaskEP0 {
         static void Run() {
             // Init system
             // We have to call _Init from within a task, instead of before running the scheduler,
@@ -200,18 +202,22 @@ private:
             // require HAL_Delay to work, which requires the SysTick interrupt to fire.)
             _Init();
             
-            for (;;) {
-                USB::SetupRequestRecv();
-                
-//                // Dispatch the command to our handler task
-//                const bool accepted = _TaskCmdHandle::Handle(cmd);
-//                // Tell the host whether we accepted the command
-//                USB::CmdAccept(accepted);
-            }
+            USB::TaskEP0();
         }
         
         // Task stack
-        static constexpr auto& Stack = _TaskCmdRecvStack;
+        static constexpr auto& Stack = _TaskEP0Stack;
+    };
+    
+    struct _TaskEP1 {
+        static void Run() {
+            USB::TaskEP1();
+        }
+        
+        // Task stack
+        [[gnu::section(".stack._TaskEP1")]]
+        alignas(void*)
+        static inline uint8_t Stack[1024];
     };
     
     struct _TaskCmdHandle {
@@ -455,7 +461,7 @@ private:
         USB::Init();
         
         // Start _TaskMSPComms task
-        Scheduler::template Start<_TaskMSPComms, _TaskBatteryStatus>();
+        Scheduler::template Start<_TaskEP1, _TaskMSPComms, _TaskBatteryStatus>();
     }
     
     static void _ClockInit() {

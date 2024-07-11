@@ -1,5 +1,5 @@
-#define BOT_GET_MAX_LUN              0xFE
-#define BOT_RESET                    0xFF
+#define BOT_GET_MAX_LUN     0xFE
+#define BOT_RESET           0xFF
 
 static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
     switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {

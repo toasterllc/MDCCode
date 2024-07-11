@@ -703,7 +703,7 @@ public:
         _CmdAccept(false);
     }
     
-    static Toastbox::USB::SetupRequest SetupRequestRecv() {
+    static void TaskEP0() {
         for (;;) {
             Toastbox::IntState ints(false);
             
@@ -731,6 +731,56 @@ public:
                 // Consume the command
                 _SetupRequest = std::nullopt;
             }
+        }
+    }
+    
+    struct [[gnu::packed]] CBW {
+        uint32_t dSignature;
+        uint32_t dTag;
+        uint32_t dDataLength;
+        uint8_t  bmFlags;
+        uint8_t  bLUN;
+        uint8_t  bCBLength;
+        uint8_t  CB[16];
+    };
+    
+    struct [[gnu::packed]] CSW {
+        uint32_t dSignature;
+        uint32_t dTag;
+        uint32_t dDataResidue;
+        uint8_t  bStatus;
+    };
+    
+    static void MSC_BOT_SendCSW(uint32_t tag, uint32_t residue, uint8_t status) {
+        const CSW csw = {
+            .dSignature     = 0x53425355,
+            .dTag           = tag,
+            .dDataResidue   = residue,
+            .bStatus        = status,
+        };
+        
+        Send(0x81, &csw, sizeof(csw));
+    }
+    
+    static void TaskEP1() {
+        for (;;) {
+            CBW cbw;
+            const std::optional<size_t> len = Recv(0x01, &cbw, sizeof(cbw));
+            Assert(len);
+            Assert(*len == sizeof(CBW));
+            
+            Assert(cbw.dSignature == 0x43425355);
+            Assert(cbw.bLUN == 0);
+            Assert(cbw.bCBLength > 0);
+            Assert(cbw.bCBLength < 16);
+            
+            int8_t ir = SCSI_ProcessCmd(pdev, cbw.bLUN, &cbw.CB[0]);
+            Assert(ir == 0);
+            
+            // Send data
+            Send(0x81, pbuf, len);
+            
+            MSC_BOT_SendCSW(cbw.dTag, 0, 0);
         }
     }
     
