@@ -126,66 +126,82 @@ int8_t SCSI_ProcessCmd(USBD_HandleTypeDef *pdev, uint8_t lun, uint8_t *cmd)
   switch (cmd[0])
   {
   case SCSI_TEST_UNIT_READY:
+    // USED
     ret = SCSI_TestUnitReady(pdev, lun, cmd);
     break;
 
-  case SCSI_REQUEST_SENSE:
-    ret = SCSI_RequestSense(pdev, lun, cmd);
-    break;
+//  case SCSI_REQUEST_SENSE:
+//    abort();
+//    ret = SCSI_RequestSense(pdev, lun, cmd);
+//    break;
 
   case SCSI_INQUIRY:
+    // USED
     ret = SCSI_Inquiry(pdev, lun, cmd);
     break;
 
-  case SCSI_START_STOP_UNIT:
-    ret = SCSI_StartStopUnit(pdev, lun, cmd);
-    break;
+//  case SCSI_START_STOP_UNIT:
+//    abort();
+//    ret = SCSI_StartStopUnit(pdev, lun, cmd);
+//    break;
 
   case SCSI_ALLOW_MEDIUM_REMOVAL:
+    // USED
     ret = SCSI_AllowPreventRemovable(pdev, lun, cmd);
     break;
 
   case SCSI_MODE_SENSE6:
+    // USED
     ret = SCSI_ModeSense6(pdev, lun, cmd);
     break;
 
-  case SCSI_MODE_SENSE10:
-    ret = SCSI_ModeSense10(pdev, lun, cmd);
-    break;
+//  case SCSI_MODE_SENSE10:
+//    abort();
+//    ret = SCSI_ModeSense10(pdev, lun, cmd);
+//    break;
 
-  case SCSI_READ_FORMAT_CAPACITIES:
-    ret = SCSI_ReadFormatCapacity(pdev, lun, cmd);
-    break;
+//  case SCSI_READ_FORMAT_CAPACITIES:
+//    abort();
+//    ret = SCSI_ReadFormatCapacity(pdev, lun, cmd);
+//    break;
 
   case SCSI_READ_CAPACITY10:
+    // USED
     ret = SCSI_ReadCapacity10(pdev, lun, cmd);
     break;
 
-  case SCSI_READ_CAPACITY16:
-    ret = SCSI_ReadCapacity16(pdev, lun, cmd);
-    break;
+//  case SCSI_READ_CAPACITY16:
+//    abort();
+//    ret = SCSI_ReadCapacity16(pdev, lun, cmd);
+//    break;
 
   case SCSI_READ10:
+    // USED
     ret = SCSI_Read10(pdev, lun, cmd);
     break;
 
-  case SCSI_READ12:
-    ret = SCSI_Read12(pdev, lun, cmd);
-    break;
+//  case SCSI_READ12:
+//    abort();
+//    ret = SCSI_Read12(pdev, lun, cmd);
+//    break;
 
-  case SCSI_WRITE10:
-    ret = SCSI_Write10(pdev, lun, cmd);
-    break;
+//  case SCSI_WRITE10:
+//    abort();
+//    ret = SCSI_Write10(pdev, lun, cmd);
+//    break;
 
-  case SCSI_WRITE12:
-    ret = SCSI_Write12(pdev, lun, cmd);
-    break;
+//  case SCSI_WRITE12:
+//    abort();
+//    ret = SCSI_Write12(pdev, lun, cmd);
+//    break;
 
-  case SCSI_VERIFY10:
-    ret = SCSI_Verify10(pdev, lun, cmd);
-    break;
+//  case SCSI_VERIFY10:
+//    abort();
+//    ret = SCSI_Verify10(pdev, lun, cmd);
+//    break;
 
   default:
+    abort();
     SCSI_SenseCode(pdev, lun, ILLEGAL_REQUEST, INVALID_CDB);
     hmsc->bot_status = USBD_BOT_STATUS_ERROR;
     ret = -1;
