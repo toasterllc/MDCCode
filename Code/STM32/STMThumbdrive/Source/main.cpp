@@ -186,8 +186,8 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
   
-  Toastbox::IntState ints(true);
-  HAL_Delay(1000);
+//  Toastbox::IntState ints(true);
+//  HAL_Delay(1000);
 
 //  const uint32_t rcc = RCC->PLLSAICFGR;
 //  const uint32_t PLLSAIN = (rcc>>6)&0x1FF;
