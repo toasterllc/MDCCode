@@ -795,13 +795,12 @@ public:
             
             // XXX: wait for enumeration
             // XXX: fixme
-            T_Scheduler::Sleep(T_Scheduler::template Ms<1000>);
+            T_Scheduler::Sleep(T_Scheduler::template Ms<100>);
             
             for (;;) {
                 const std::optional<size_t> len = Recv(0x01, &packet, sizeof(packet));
                 if (!len) break;
                 
-                for (;;);
                 AssertLED(*len == sizeof(CBW));
                 
                 AssertLED(packet.cbw.dSignature == 0x43425355);
