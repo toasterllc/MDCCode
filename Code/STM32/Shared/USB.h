@@ -8,6 +8,7 @@
 #include "usbd_desc.h"
 #include "Code/Lib/Toastbox/USB.h"
 #include "Code/Lib/Scheduler/Scheduler.h"
+#include "Filesystem.h"
 
 template <
 typename T_Scheduler,   // T_Scheduler: scheduler
@@ -244,6 +245,7 @@ public:
     }
     
     #include "USB-MSC.h"
+    #include "USB-SCSI.h"
     
     static void USBD_GetDescriptor(const Toastbox::USB::SetupRequest& req) {
         uint16_t len = 0U;
@@ -774,11 +776,7 @@ public:
             Assert(cbw.bCBLength > 0);
             Assert(cbw.bCBLength < 16);
             
-            int8_t ir = SCSI_ProcessCmd(pdev, cbw.bLUN, &cbw.CB[0]);
-            Assert(ir == 0);
-            
-            // Send data
-            Send(0x81, pbuf, len);
+            SCSI_ProcessCmd(cbw.bLUN, &cbw.CB[0]);
             
             MSC_BOT_SendCSW(cbw.dTag, 0, 0);
         }
