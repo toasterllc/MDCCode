@@ -291,7 +291,7 @@ static QSPI_CommandTypeDef ICEApp(const _ICE::Msg& msg, size_t respLen) {
     // By doing so, we throw out the high bit of `msg`, however we
     // wrote the ICE40 Verilog to fake the first bit as 1, so verify
     // that the first bit is indeed 1.
-    AssertArgNoLED(b[0] & 0x80);
+    AssertArgLED(b[0] & 0x80);
     
     return QSPI_CommandTypeDef{
         // Use instruction stage to introduce 2 dummy cycles, to workaround an
@@ -375,7 +375,7 @@ _Pragma("GCC diagnostic pop")
 
 template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
-    AssertArgNoLED((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
+    AssertArgLED((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
     
     _GPIOConfigs::Manual::ICE_STM_SPI_CS_::Write(0);
     if (resp) {
