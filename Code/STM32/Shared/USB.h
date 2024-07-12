@@ -790,26 +790,30 @@ public:
     }
     
     static void TaskEP1() {
+        static union [[gnu::packed]] {
+            CBW cbw;
+            uint8_t _[512];
+        } packet = {};
+        
         Toastbox::IntState ints(false);
         for (;;) {
             _WaitUntilConnected();
             
             for (;;) {
-                CBW cbw;
-                const std::optional<size_t> len = Recv(0x01, &cbw, sizeof(cbw));
+                const std::optional<size_t> len = Recv(0x01, &packet, sizeof(packet));
                 if (!len) break;
                 
                 for (;;);
                 AssertLED(*len == sizeof(CBW));
                 
-                AssertLED(cbw.dSignature == 0x43425355);
-                AssertLED(cbw.bLUN == 0);
-                AssertLED(cbw.bCBLength > 0);
-                AssertLED(cbw.bCBLength < 16);
+                AssertLED(packet.cbw.dSignature == 0x43425355);
+                AssertLED(packet.cbw.bLUN == 0);
+                AssertLED(packet.cbw.bCBLength > 0);
+                AssertLED(packet.cbw.bCBLength < 16);
                 
-                SCSI_ProcessCmd(cbw.bLUN, &cbw.CB[0]);
+                SCSI_ProcessCmd(packet.cbw.bLUN, &packet.cbw.CB[0]);
                 
-                MSC_BOT_SendCSW(cbw.dTag, 0, 0);
+                MSC_BOT_SendCSW(packet.cbw.dTag, 0, 0);
             }
         }
     }
