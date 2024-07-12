@@ -557,25 +557,66 @@ public:
     }
     
     static void USBD_StdItfReq(const Toastbox::USB::SetupRequest& req) {
-        Assert(false);
-//        switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
-//        case USB_REQ_TYPE_STANDARD:
-//            switch (pdev->dev_state) {
-//            case USBD_STATE_DEFAULT:
-//            case USBD_STATE_ADDRESSED:
-//            case USBD_STATE_CONFIGURED:
-//                if (LOBYTE(req.wIndex) <= USBD_MAX_NUM_INTERFACES) {
-//                    if (req.wLength == 0) {
-//                        return _CmdAccept(true);
-//                    }
-//                }
-//            }
-//        }
-//        _CmdAccept(false);
+        const uint8_t status[2] = {};
+        switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
+        case USB_REQ_TYPE_STANDARD: {
+            switch (req.bRequest) {
+            case USB_REQ_GET_STATUS:
+                Send(0x80, status, sizeof(status));
+                Recv(0x00, nullptr, 0);
+                return;
+                
+            case USB_REQ_CLEAR_FEATURE:     Assert(false);
+            case USB_REQ_SET_FEATURE:       Assert(false);
+            case USB_REQ_GET_INTERFACE:     Assert(false);
+            case USB_REQ_SET_INTERFACE:     Assert(false);
+            default:                        break;
+            }
+            break;
+        }}
+        _CmdAccept(false);
     }
 
     static void USBD_StdEPReq(const Toastbox::USB::SetupRequest& req) {
-        Assert(false);
+        const uint8_t status[2] = {};
+        switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
+        case USB_REQ_TYPE_STANDARD: {
+            switch (req.bRequest) {
+            case USB_REQ_GET_STATUS:
+                Send(0x80, status, sizeof(status));
+                Recv(0x00, nullptr, 0);
+                return;
+                
+            case USB_REQ_CLEAR_FEATURE:     Assert(false);
+            case USB_REQ_SET_FEATURE:       Assert(false);
+            case USB_REQ_GET_INTERFACE:     Assert(false);
+            case USB_REQ_SET_INTERFACE:     Assert(false);
+            default:                        break;
+            }
+            break;
+        }}
+        _CmdAccept(false);
+        
+        
+        
+//        for (;;); Assert(false);
+        
+//        switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
+//        case USB_REQ_TYPE_STANDARD: {
+//            switch (req.bRequest) {
+//            case USB_REQ_GET_STATUS:        Assert(false);
+//            case USB_REQ_CLEAR_FEATURE:     Assert(false);
+//            case USB_REQ_SET_FEATURE:       Assert(false);
+//            case USB_REQ_GET_INTERFACE:     Assert(false);
+//            case USB_REQ_SET_INTERFACE:     Assert(false);
+//            default:                        break;
+//            }
+//            break;
+//        }}
+//        _CmdAccept(false);
+        
+        
+//        Assert(false);
 //        USBD_EndpointTypeDef *pep;
 //        uint8_t ep_addr;
 //        USBD_StatusTypeDef ret = USBD_OK;
