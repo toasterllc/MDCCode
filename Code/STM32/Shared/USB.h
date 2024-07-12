@@ -705,37 +705,6 @@ public:
         _CmdAccept(false);
     }
     
-    static void TaskEP0() {
-        for (;;) {
-            Toastbox::IntState ints(false);
-            
-            // Wait until we're in the Connecting state
-            {
-                T_Scheduler::Wait([] { return _State == State::Connecting || _State == State::Connected; });
-                if (_State == State::Connecting) {
-                    // Update our state
-                    _State = State::Connected;
-                    _SetupRequest = std::nullopt;
-                }
-            }
-            
-            // Wait for a command
-            for (;;) {
-                // Wait for a new command to arrive, or for our state to change
-                T_Scheduler::Wait([] { return _SetupRequest || _State!=State::Connected; });
-                
-                // If we're no longer connected, bail and wait to be connected again
-                if (_State != State::Connected) break;
-                
-                // Handle the setup request
-                _SetupRequestHandle(*_SetupRequest);
-                
-                // Consume the command
-                _SetupRequest = std::nullopt;
-            }
-        }
-    }
-    
     struct [[gnu::packed]] CBW {
         uint32_t dSignature;
         uint32_t dTag;
@@ -781,6 +750,43 @@ public:
             MSC_BOT_SendCSW(cbw.dTag, 0, 0);
         }
     }
+    
+    static void TaskEP0() {
+        for (;;) {
+            Toastbox::IntState ints(false);
+            
+            T_Scheduler::template Stop<TaskEP1>();
+            
+            // Wait until we're in the Connecting state
+            {
+                T_Scheduler::Wait([] { return _State == State::Connecting || _State == State::Connected; });
+                if (_State == State::Connecting) {
+                    // Update our state
+                    _State = State::Connected;
+                    _SetupRequest = std::nullopt;
+                }
+            }
+            
+            T_Scheduler::template Start<TaskEP1>();
+            
+            // Wait for a command
+            for (;;) {
+                // Wait for a new command to arrive, or for our state to change
+                T_Scheduler::Wait([] { return _SetupRequest || _State!=State::Connected; });
+                
+                // If we're no longer connected, bail and wait to be connected again
+                if (_State != State::Connected) break;
+                
+                // Handle the setup request
+                _SetupRequestHandle(*_SetupRequest);
+                
+                // Consume the command
+                _SetupRequest = std::nullopt;
+            }
+        }
+    }
+    
+    
     
     static void CmdAccept(bool accept) {
         Toastbox::IntState ints(false);

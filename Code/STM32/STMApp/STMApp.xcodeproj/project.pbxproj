@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		55141E212C40E10D00E40AB4 /* Scheduler */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Scheduler; path = ../../Lib/Scheduler; sourceTree = "<group>"; };
 		5529502426EC0E06007CEA80 /* Toastbox */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Toastbox; path = ../../Lib/Toastbox; sourceTree = "<group>"; };
 		554F17892543ED5400F67066 /* Source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Source; sourceTree = "<group>"; };
 		55602AF5268EDDA2009CDA12 /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
@@ -22,6 +23,7 @@
 			children = (
 				55E021D92C2D6BE200551028 /* Makefile.mk */,
 				55E021DA2C2D6BF600551028 /* Makefile */,
+				55141E212C40E10D00E40AB4 /* Scheduler */,
 				5529502426EC0E06007CEA80 /* Toastbox */,
 				55844C1A2575D51A008737ED /* Shared */,
 				55602AF5268EDDA2009CDA12 /* Shared */,

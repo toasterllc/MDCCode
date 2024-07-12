@@ -103,7 +103,6 @@ private:
     }
     
     struct _TaskEP0;
-    struct _TaskEP1;
     struct _TaskCmdHandle;
     struct _TaskMSPComms;
     struct _TaskBatteryStatus;
@@ -207,17 +206,6 @@ private:
         
         // Task stack
         static constexpr auto& Stack = _TaskEP0Stack;
-    };
-    
-    struct _TaskEP1 {
-        static void Run() {
-            USB::TaskEP1();
-        }
-        
-        // Task stack
-        [[gnu::section(".stack._TaskEP1")]]
-        alignas(void*)
-        static inline uint8_t Stack[1024];
     };
     
     struct _TaskCmdHandle {
@@ -461,7 +449,7 @@ private:
         USB::Init();
         
         // Start _TaskMSPComms task
-        Scheduler::template Start<_TaskEP1, _TaskMSPComms, _TaskBatteryStatus>();
+        Scheduler::template Start<_TaskMSPComms, _TaskBatteryStatus>();
     }
     
     static void _ClockInit() {
