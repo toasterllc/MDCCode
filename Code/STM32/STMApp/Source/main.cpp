@@ -16,8 +16,6 @@ using namespace STM;
 static void _Reset();
 static void _CmdHandle(const STM::Cmd& cmd);
 
-struct _TaskEP0;
-struct _TaskEP1;
 struct _TaskUSBDataOut;
 struct _TaskUSBDataIn;
 struct _TaskReadout;
@@ -128,7 +126,6 @@ using _System = System<
     
     // T_Tasks
     std::tuple<
-        _TaskEP0,
         _TaskUSBDataOut,
         _TaskUSBDataIn,
         _TaskReadout
@@ -401,82 +398,6 @@ static void _ICEAppInit() {
     }
     Assert(ok);
 }
-
-
-
-struct _TaskEP0 {
-    static void Run() {
-        for (;;) {
-            Toastbox::IntState ints(false);
-            
-            _Scheduler::Stop<_TaskEP1>();
-            
-            // Wait until we're in the Connecting state
-            {
-                _Scheduler::Wait([] { return _State == State::Connecting || _State == State::Connected; });
-                if (_State == State::Connecting) {
-                    // Update our state
-                    _State = State::Connected;
-                    _SetupRequest = std::nullopt;
-                }
-            }
-            
-            _Scheduler::Start<_TaskEP1>();
-            
-            // Wait for a command
-            for (;;) {
-                // Wait for a new command to arrive, or for our state to change
-                _Scheduler::Wait([] { return _SetupRequest || _State!=State::Connected; });
-                
-                // If we're no longer connected, bail and wait to be connected again
-                if (_State != State::Connected) break;
-                
-                // Handle the setup request
-                _SetupRequestHandle(*_SetupRequest);
-                
-                // Consume the command
-                _SetupRequest = std::nullopt;
-            }
-        }
-    }
-    
-    // Task stack
-    [[gnu::section(".stack._TaskEP0")]]
-    alignas(void*)
-    static inline uint8_t Stack[1024];
-};
-
-
-
-struct _TaskEP1 {
-    static void Run() {
-        for (;;) {
-            CBW cbw;
-            const std::optional<size_t> len = Recv(0x01, &cbw, sizeof(cbw));
-            Assert(len);
-            Assert(*len == sizeof(CBW));
-            
-            Assert(cbw.dSignature == 0x43425355);
-            Assert(cbw.bLUN == 0);
-            Assert(cbw.bCBLength > 0);
-            Assert(cbw.bCBLength < 16);
-            
-            SCSI_ProcessCmd(cbw.bLUN, &cbw.CB[0]);
-            
-            MSC_BOT_SendCSW(cbw.dTag, 0, 0);
-        }
-    }
-    
-    // Task stack
-    [[gnu::section(".stack._TaskEP1")]]
-    alignas(void*)
-    static inline uint8_t Stack[1024];
-};
-
-
-
-
-
 
 
 // MARK: - SD Card
