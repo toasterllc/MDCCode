@@ -10,6 +10,7 @@ static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
                 alignas(void*)
                 static uint8_t maxLun = 0;
                 
+                AssertLED(false);
                 Send(0x80, (uint8_t*)&maxLun, sizeof(maxLun));
                 Recv(0x00, nullptr, 0);
                 return;
@@ -23,6 +24,8 @@ static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
 //                return MSC_BOT_Reset(pdev);
 //            }
 //            break;
+        
+        default: break;
         }
     }
     AssertLED(false);

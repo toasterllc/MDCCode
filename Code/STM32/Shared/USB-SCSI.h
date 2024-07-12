@@ -113,6 +113,12 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
         rem -= chunkLen;
         addr += chunkLen;
     }
+    
+    if (!(len % 512)) {
+        Send(0x81, nullptr, 0);
+    }
+    
+//    AssertLED(false);
 }
 
 #define SCSI_TEST_UNIT_READY                        0x00U

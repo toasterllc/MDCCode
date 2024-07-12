@@ -537,6 +537,7 @@ public:
     static void USBD_StdDevReq(const Toastbox::USB::SetupRequest& req) {
         switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
         case USB_REQ_TYPE_CLASS:
+            AssertLED(false);
             return USBD_MSC_Setup(req);
 //        case USB_REQ_TYPE_VENDOR:
 //            _CmdAccept(false);
