@@ -182,23 +182,23 @@ HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma)
   }
 
   /* Check the parameters */
-  AssertArgLED(IS_DMA_STREAM_ALL_INSTANCE(hdma->Instance));
-  AssertArgLED(IS_DMA_CHANNEL(hdma->Init.Channel));
-  AssertArgLED(IS_DMA_DIRECTION(hdma->Init.Direction));
-  AssertArgLED(IS_DMA_PERIPHERAL_INC_STATE(hdma->Init.PeriphInc));
-  AssertArgLED(IS_DMA_MEMORY_INC_STATE(hdma->Init.MemInc));
-  AssertArgLED(IS_DMA_PERIPHERAL_DATA_SIZE(hdma->Init.PeriphDataAlignment));
-  AssertArgLED(IS_DMA_MEMORY_DATA_SIZE(hdma->Init.MemDataAlignment));
-  AssertArgLED(IS_DMA_MODE(hdma->Init.Mode));
-  AssertArgLED(IS_DMA_PRIORITY(hdma->Init.Priority));
-  AssertArgLED(IS_DMA_FIFO_MODE_STATE(hdma->Init.FIFOMode));
+  AssertArgXXX(IS_DMA_STREAM_ALL_INSTANCE(hdma->Instance));
+  AssertArgXXX(IS_DMA_CHANNEL(hdma->Init.Channel));
+  AssertArgXXX(IS_DMA_DIRECTION(hdma->Init.Direction));
+  AssertArgXXX(IS_DMA_PERIPHERAL_INC_STATE(hdma->Init.PeriphInc));
+  AssertArgXXX(IS_DMA_MEMORY_INC_STATE(hdma->Init.MemInc));
+  AssertArgXXX(IS_DMA_PERIPHERAL_DATA_SIZE(hdma->Init.PeriphDataAlignment));
+  AssertArgXXX(IS_DMA_MEMORY_DATA_SIZE(hdma->Init.MemDataAlignment));
+  AssertArgXXX(IS_DMA_MODE(hdma->Init.Mode));
+  AssertArgXXX(IS_DMA_PRIORITY(hdma->Init.Priority));
+  AssertArgXXX(IS_DMA_FIFO_MODE_STATE(hdma->Init.FIFOMode));
   /* Check the memory burst, peripheral burst and FIFO threshold parameters only
      when FIFO mode is enabled */
   if(hdma->Init.FIFOMode != DMA_FIFOMODE_DISABLE)
   {
-    AssertArgLED(IS_DMA_FIFO_THRESHOLD(hdma->Init.FIFOThreshold));
-    AssertArgLED(IS_DMA_MEMORY_BURST(hdma->Init.MemBurst));
-    AssertArgLED(IS_DMA_PERIPHERAL_BURST(hdma->Init.PeriphBurst));
+    AssertArgXXX(IS_DMA_FIFO_THRESHOLD(hdma->Init.FIFOThreshold));
+    AssertArgXXX(IS_DMA_MEMORY_BURST(hdma->Init.MemBurst));
+    AssertArgXXX(IS_DMA_PERIPHERAL_BURST(hdma->Init.PeriphBurst));
   }
   
   /* Allocate lock resource */
@@ -326,7 +326,7 @@ HAL_StatusTypeDef HAL_DMA_DeInit(DMA_HandleTypeDef *hdma)
   }
 
   /* Check the parameters */
-  AssertArgLED(IS_DMA_STREAM_ALL_INSTANCE(hdma->Instance));
+  AssertArgXXX(IS_DMA_STREAM_ALL_INSTANCE(hdma->Instance));
 
   /* Disable the selected DMA Streamx */
   __HAL_DMA_DISABLE(hdma);
@@ -411,7 +411,7 @@ HAL_StatusTypeDef HAL_DMA_Start(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, ui
   HAL_StatusTypeDef status = HAL_OK;
   
   /* Check the parameters */
-  AssertArgLED(IS_DMA_BUFFER_SIZE(DataLength));
+  AssertArgXXX(IS_DMA_BUFFER_SIZE(DataLength));
 
   /* Process locked */
   __HAL_LOCK(hdma);
@@ -458,7 +458,7 @@ HAL_StatusTypeDef HAL_DMA_Start_IT(DMA_HandleTypeDef *hdma, uint32_t SrcAddress,
   DMA_Base_Registers *regs = (DMA_Base_Registers *)hdma->StreamBaseAddress;
   
   /* Check the parameters */
-  AssertArgLED(IS_DMA_BUFFER_SIZE(DataLength));
+  AssertArgXXX(IS_DMA_BUFFER_SIZE(DataLength));
  
   /* Process locked */
   __HAL_LOCK(hdma);

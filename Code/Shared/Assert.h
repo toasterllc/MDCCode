@@ -1,6 +1,9 @@
 #pragma once
 #include <cstdint>
 
+#define AssertXXX(x)        if (!(x)) _AbortLED()
+#define AssertArgXXX(x)     if (!(x)) _AbortLED()
+
 #define AssertLED(x)        if (!(x)) _AbortLED()
 #define AssertNoLED(x)      if (!(x)) _AbortNoLED()
 

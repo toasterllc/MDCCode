@@ -54,10 +54,10 @@ public:
             HAL_QSPI_Abort(&_Device);
             
             HAL_StatusTypeDef hs = HAL_DMA_DeInit(&_DMA);
-            AssertLED(hs == HAL_OK);
+            AssertXXX(hs == HAL_OK);
             
             hs = HAL_QSPI_DeInit(&_Device);
-            AssertLED(hs == HAL_OK);
+            AssertXXX(hs == HAL_OK);
             
             // Reset state
             _Busy = false;
@@ -86,22 +86,22 @@ public:
         _Device.Init.DualFlash = (_Config->mode==Mode::Single ? QSPI_DUALFLASH_DISABLE : QSPI_DUALFLASH_ENABLE);
         
         HAL_StatusTypeDef hs = HAL_QSPI_Init(&_Device);
-        AssertLED(hs == HAL_OK);
+        AssertXXX(hs == HAL_OK);
         
         // Init DMA
         _DMA.Init.PeriphDataAlignment = (_Config->align==Align::Byte ? DMA_PDATAALIGN_BYTE : DMA_PDATAALIGN_WORD),
         _DMA.Init.MemDataAlignment = (_Config->align==Align::Byte ? DMA_MDATAALIGN_BYTE : DMA_MDATAALIGN_WORD),
         
         hs = HAL_DMA_Init(&_DMA);
-        AssertLED(hs == HAL_OK);
+        AssertXXX(hs == HAL_OK);
         
         __HAL_LINKDMA(&_Device, hdma, _DMA);
     }
     
     static void Command(const QSPI_CommandTypeDef& cmd) {
-        AssertArgLED(_Config);
-        AssertArgLED(cmd.DataMode == QSPI_DATA_NONE);
-        AssertArgLED(!cmd.NbData);
+        AssertArgXXX(_Config);
+        AssertArgXXX(cmd.DataMode == QSPI_DATA_NONE);
+        AssertArgXXX(!cmd.NbData);
         
         // Dummy cycles don't appear to work correctly when no data is transferred.
         // (For some reason, only DummyCycles=0 and DummyCycles=2 work correctly,
@@ -133,7 +133,7 @@ public:
                 // In single mode, we can only fake even values for the number of dummy cycles.
                 // This is because we can only read whole bytes, and each byte requires 2 cycles
                 // when using 4 lines (QSPI_DATA_4_LINES).
-                AssertArgLED(!(cmd.DummyCycles % 2));
+                AssertArgXXX(!(cmd.DummyCycles % 2));
                 readLen = cmd.DummyCycles/2;
             } else {
                 readLen = cmd.DummyCycles;
@@ -146,7 +146,7 @@ public:
             Read(readCmd, buf);
         
         } else {
-            AssertLED(!_Busy);
+            AssertXXX(!_Busy);
             
             // Update _Busy before the interrupt can occur, otherwise `_Busy = true`
             // could occur after the transaction is complete, cloberring the `_Busy = false`
@@ -158,7 +158,7 @@ public:
             // synchronously performs the SPI transaction, instead asynchronously
             // like we want.
             HAL_StatusTypeDef hs = HAL_QSPI_Command_IT(&_Device, &cmd);
-            AssertLED(hs == HAL_OK);
+            AssertXXX(hs == HAL_OK);
         }
         
         // Wait until we're done
@@ -167,16 +167,16 @@ public:
     
     static void Read(const QSPI_CommandTypeDef& cmd, void* data) {
         const size_t len = cmd.NbData;
-        AssertArgLED(_Config);
-        AssertArgLED(cmd.DataMode != QSPI_DATA_NONE);
-        AssertArgLED(data);
-        AssertArgLED(len);
+        AssertArgXXX(_Config);
+        AssertArgXXX(cmd.DataMode != QSPI_DATA_NONE);
+        AssertArgXXX(data);
+        AssertArgXXX(len);
         // Validate pointer/length alignment
         if (_Config->align == Align::Word) {
-            AssertArgLED(!((uintptr_t)data % sizeof(uint32_t)));
-            AssertArgLED(!(len % sizeof(uint32_t)));
+            AssertArgXXX(!((uintptr_t)data % sizeof(uint32_t)));
+            AssertArgXXX(!(len % sizeof(uint32_t)));
         }
-        AssertLED(!_Busy);
+        AssertXXX(!_Busy);
         
         // Update _Busy before the interrupt can occur, otherwise `_Busy = true`
         // could occur after the transaction is complete, cloberring the `_Busy = false`
@@ -184,10 +184,10 @@ public:
         _Busy = true;
         
         HAL_StatusTypeDef hs = HAL_QSPI_Command(&_Device, &cmd, HAL_MAX_DELAY);
-        AssertLED(hs == HAL_OK);
+        AssertXXX(hs == HAL_OK);
         
         hs = HAL_QSPI_Receive_DMA(&_Device, (uint8_t*)data);
-        AssertLED(hs == HAL_OK);
+        AssertXXX(hs == HAL_OK);
         
         // Wait until we're done
         T_Scheduler::Wait([] { return !_Busy; });
@@ -195,16 +195,16 @@ public:
     
     static void Write(const QSPI_CommandTypeDef& cmd, const void* data) {
         const size_t len = cmd.NbData;
-        AssertArgLED(_Config);
-        AssertArgLED(cmd.DataMode != QSPI_DATA_NONE);
-        AssertArgLED(data);
-        AssertArgLED(len);
+        AssertArgXXX(_Config);
+        AssertArgXXX(cmd.DataMode != QSPI_DATA_NONE);
+        AssertArgXXX(data);
+        AssertArgXXX(len);
         // Validate pointer/length alignment
         if (_Config->align == Align::Word) {
-            AssertArgLED(!((uintptr_t)data % sizeof(uint32_t)));
-            AssertArgLED(!(len % sizeof(uint32_t)));
+            AssertArgXXX(!((uintptr_t)data % sizeof(uint32_t)));
+            AssertArgXXX(!(len % sizeof(uint32_t)));
         }
-        AssertLED(!_Busy);
+        AssertXXX(!_Busy);
         
         // Update _Busy before the interrupt can occur, otherwise `_Busy = true`
         // could occur after the transaction is complete, cloberring the `_Busy = false`
@@ -212,10 +212,10 @@ public:
         _Busy = true;
         
         HAL_StatusTypeDef hs = HAL_QSPI_Command(&_Device, &cmd, HAL_MAX_DELAY);
-        AssertLED(hs == HAL_OK);
+        AssertXXX(hs == HAL_OK);
         
         hs = HAL_QSPI_Transmit_DMA(&_Device, (uint8_t*)data);
-        AssertLED(hs == HAL_OK);
+        AssertXXX(hs == HAL_OK);
         
         // Wait until we're done
         T_Scheduler::Wait([] { return !_Busy; });
@@ -243,7 +243,7 @@ private:
     }
     
     static void _CallbackError(QSPI_HandleTypeDef* me) {
-        AssertLED(false);
+        AssertXXX(false);
     }
     
     static inline const Config* _Config = nullptr;

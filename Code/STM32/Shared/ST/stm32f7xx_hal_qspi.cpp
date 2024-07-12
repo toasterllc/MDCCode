@@ -300,18 +300,18 @@ HAL_StatusTypeDef HAL_QSPI_Init(QSPI_HandleTypeDef *hqspi)
   }
 
   /* Check the parameters */
-  AssertArgLED(IS_QSPI_ALL_INSTANCE(hqspi->Instance));
-  AssertArgLED(IS_QSPI_CLOCK_PRESCALER(hqspi->Init.ClockPrescaler));
-  AssertArgLED(IS_QSPI_FIFO_THRESHOLD(hqspi->Init.FifoThreshold));
-  AssertArgLED(IS_QSPI_SSHIFT(hqspi->Init.SampleShifting));
-  AssertArgLED(IS_QSPI_FLASH_SIZE(hqspi->Init.FlashSize));
-  AssertArgLED(IS_QSPI_CS_HIGH_TIME(hqspi->Init.ChipSelectHighTime));
-  AssertArgLED(IS_QSPI_CLOCK_MODE(hqspi->Init.ClockMode));
-  AssertArgLED(IS_QSPI_DUAL_FLASH_MODE(hqspi->Init.DualFlash));
+  AssertArgXXX(IS_QSPI_ALL_INSTANCE(hqspi->Instance));
+  AssertArgXXX(IS_QSPI_CLOCK_PRESCALER(hqspi->Init.ClockPrescaler));
+  AssertArgXXX(IS_QSPI_FIFO_THRESHOLD(hqspi->Init.FifoThreshold));
+  AssertArgXXX(IS_QSPI_SSHIFT(hqspi->Init.SampleShifting));
+  AssertArgXXX(IS_QSPI_FLASH_SIZE(hqspi->Init.FlashSize));
+  AssertArgXXX(IS_QSPI_CS_HIGH_TIME(hqspi->Init.ChipSelectHighTime));
+  AssertArgXXX(IS_QSPI_CLOCK_MODE(hqspi->Init.ClockMode));
+  AssertArgXXX(IS_QSPI_DUAL_FLASH_MODE(hqspi->Init.DualFlash));
 
   if (hqspi->Init.DualFlash != QSPI_DUALFLASH_ENABLE )
   {
-    AssertArgLED(IS_QSPI_FLASH_ID(hqspi->Init.FlashID));
+    AssertArgXXX(IS_QSPI_FLASH_ID(hqspi->Init.FlashID));
   }
 
   if(hqspi->State == HAL_QSPI_STATE_RESET)
@@ -804,30 +804,30 @@ HAL_StatusTypeDef HAL_QSPI_Command(QSPI_HandleTypeDef *hqspi, const QSPI_Command
   uint32_t tickstart = HAL_GetTick();
 
   /* Check the parameters */
-  AssertArgLED(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
+  AssertArgXXX(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
   if (cmd->InstructionMode != QSPI_INSTRUCTION_NONE)
   {
-    AssertArgLED(IS_QSPI_INSTRUCTION(cmd->Instruction));
+    AssertArgXXX(IS_QSPI_INSTRUCTION(cmd->Instruction));
   }
 
-  AssertArgLED(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
+  AssertArgXXX(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
   if (cmd->AddressMode != QSPI_ADDRESS_NONE)
   {
-    AssertArgLED(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
+    AssertArgXXX(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
   }
 
-  AssertArgLED(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
+  AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
   if (cmd->AlternateByteMode != QSPI_ALTERNATE_BYTES_NONE)
   {
-    AssertArgLED(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
+    AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
   }
 
-  AssertArgLED(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
-  AssertArgLED(IS_QSPI_DATA_MODE(cmd->DataMode));
+  AssertArgXXX(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
+  AssertArgXXX(IS_QSPI_DATA_MODE(cmd->DataMode));
 
-  AssertArgLED(IS_QSPI_DDR_MODE(cmd->DdrMode));
-  AssertArgLED(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
-  AssertArgLED(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
+  AssertArgXXX(IS_QSPI_DDR_MODE(cmd->DdrMode));
+  AssertArgXXX(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
+  AssertArgXXX(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
 
   /* Process locked */
   __HAL_LOCK(hqspi);
@@ -893,30 +893,30 @@ HAL_StatusTypeDef HAL_QSPI_Command_IT(QSPI_HandleTypeDef *hqspi, const QSPI_Comm
   uint32_t tickstart = HAL_GetTick();
 
   /* Check the parameters */
-  AssertArgLED(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
+  AssertArgXXX(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
   if (cmd->InstructionMode != QSPI_INSTRUCTION_NONE)
   {
-    AssertArgLED(IS_QSPI_INSTRUCTION(cmd->Instruction));
+    AssertArgXXX(IS_QSPI_INSTRUCTION(cmd->Instruction));
   }
 
-  AssertArgLED(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
+  AssertArgXXX(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
   if (cmd->AddressMode != QSPI_ADDRESS_NONE)
   {
-    AssertArgLED(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
+    AssertArgXXX(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
   }
 
-  AssertArgLED(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
+  AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
   if (cmd->AlternateByteMode != QSPI_ALTERNATE_BYTES_NONE)
   {
-    AssertArgLED(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
+    AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
   }
 
-  AssertArgLED(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
-  AssertArgLED(IS_QSPI_DATA_MODE(cmd->DataMode));
+  AssertArgXXX(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
+  AssertArgXXX(IS_QSPI_DATA_MODE(cmd->DataMode));
 
-  AssertArgLED(IS_QSPI_DDR_MODE(cmd->DdrMode));
-  AssertArgLED(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
-  AssertArgLED(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
+  AssertArgXXX(IS_QSPI_DDR_MODE(cmd->DdrMode));
+  AssertArgXXX(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
+  AssertArgXXX(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
 
   /* Process locked */
   __HAL_LOCK(hqspi);
@@ -1587,34 +1587,34 @@ HAL_StatusTypeDef HAL_QSPI_AutoPolling(QSPI_HandleTypeDef *hqspi, QSPI_CommandTy
   uint32_t tickstart = HAL_GetTick();
 
   /* Check the parameters */
-  AssertArgLED(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
+  AssertArgXXX(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
   if (cmd->InstructionMode != QSPI_INSTRUCTION_NONE)
   {
-    AssertArgLED(IS_QSPI_INSTRUCTION(cmd->Instruction));
+    AssertArgXXX(IS_QSPI_INSTRUCTION(cmd->Instruction));
   }
 
-  AssertArgLED(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
+  AssertArgXXX(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
   if (cmd->AddressMode != QSPI_ADDRESS_NONE)
   {
-    AssertArgLED(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
+    AssertArgXXX(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
   }
 
-  AssertArgLED(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
+  AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
   if (cmd->AlternateByteMode != QSPI_ALTERNATE_BYTES_NONE)
   {
-    AssertArgLED(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
+    AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
   }
 
-  AssertArgLED(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
-  AssertArgLED(IS_QSPI_DATA_MODE(cmd->DataMode));
+  AssertArgXXX(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
+  AssertArgXXX(IS_QSPI_DATA_MODE(cmd->DataMode));
 
-  AssertArgLED(IS_QSPI_DDR_MODE(cmd->DdrMode));
-  AssertArgLED(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
-  AssertArgLED(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
+  AssertArgXXX(IS_QSPI_DDR_MODE(cmd->DdrMode));
+  AssertArgXXX(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
+  AssertArgXXX(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
 
-  AssertArgLED(IS_QSPI_INTERVAL(cfg->Interval));
-  AssertArgLED(IS_QSPI_STATUS_BYTES_SIZE(cfg->StatusBytesSize));
-  AssertArgLED(IS_QSPI_MATCH_MODE(cfg->MatchMode));
+  AssertArgXXX(IS_QSPI_INTERVAL(cfg->Interval));
+  AssertArgXXX(IS_QSPI_STATUS_BYTES_SIZE(cfg->StatusBytesSize));
+  AssertArgXXX(IS_QSPI_MATCH_MODE(cfg->MatchMode));
 
   /* Process locked */
   __HAL_LOCK(hqspi);
@@ -1687,35 +1687,35 @@ HAL_StatusTypeDef HAL_QSPI_AutoPolling_IT(QSPI_HandleTypeDef *hqspi, QSPI_Comman
   uint32_t tickstart = HAL_GetTick();
 
   /* Check the parameters */
-  AssertArgLED(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
+  AssertArgXXX(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
   if (cmd->InstructionMode != QSPI_INSTRUCTION_NONE)
   {
-    AssertArgLED(IS_QSPI_INSTRUCTION(cmd->Instruction));
+    AssertArgXXX(IS_QSPI_INSTRUCTION(cmd->Instruction));
   }
 
-  AssertArgLED(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
+  AssertArgXXX(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
   if (cmd->AddressMode != QSPI_ADDRESS_NONE)
   {
-    AssertArgLED(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
+    AssertArgXXX(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
   }
 
-  AssertArgLED(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
+  AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
   if (cmd->AlternateByteMode != QSPI_ALTERNATE_BYTES_NONE)
   {
-    AssertArgLED(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
+    AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
   }
 
-  AssertArgLED(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
-  AssertArgLED(IS_QSPI_DATA_MODE(cmd->DataMode));
+  AssertArgXXX(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
+  AssertArgXXX(IS_QSPI_DATA_MODE(cmd->DataMode));
 
-  AssertArgLED(IS_QSPI_DDR_MODE(cmd->DdrMode));
-  AssertArgLED(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
-  AssertArgLED(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
+  AssertArgXXX(IS_QSPI_DDR_MODE(cmd->DdrMode));
+  AssertArgXXX(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
+  AssertArgXXX(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
 
-  AssertArgLED(IS_QSPI_INTERVAL(cfg->Interval));
-  AssertArgLED(IS_QSPI_STATUS_BYTES_SIZE(cfg->StatusBytesSize));
-  AssertArgLED(IS_QSPI_MATCH_MODE(cfg->MatchMode));
-  AssertArgLED(IS_QSPI_AUTOMATIC_STOP(cfg->AutomaticStop));
+  AssertArgXXX(IS_QSPI_INTERVAL(cfg->Interval));
+  AssertArgXXX(IS_QSPI_STATUS_BYTES_SIZE(cfg->StatusBytesSize));
+  AssertArgXXX(IS_QSPI_MATCH_MODE(cfg->MatchMode));
+  AssertArgXXX(IS_QSPI_AUTOMATIC_STOP(cfg->AutomaticStop));
 
   /* Process locked */
   __HAL_LOCK(hqspi);
@@ -1791,32 +1791,32 @@ HAL_StatusTypeDef HAL_QSPI_MemoryMapped(QSPI_HandleTypeDef *hqspi, QSPI_CommandT
   uint32_t tickstart = HAL_GetTick();
 
   /* Check the parameters */
-  AssertArgLED(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
+  AssertArgXXX(IS_QSPI_INSTRUCTION_MODE(cmd->InstructionMode));
   if (cmd->InstructionMode != QSPI_INSTRUCTION_NONE)
   {
-  AssertArgLED(IS_QSPI_INSTRUCTION(cmd->Instruction));
+  AssertArgXXX(IS_QSPI_INSTRUCTION(cmd->Instruction));
   }
 
-  AssertArgLED(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
+  AssertArgXXX(IS_QSPI_ADDRESS_MODE(cmd->AddressMode));
   if (cmd->AddressMode != QSPI_ADDRESS_NONE)
   {
-    AssertArgLED(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
+    AssertArgXXX(IS_QSPI_ADDRESS_SIZE(cmd->AddressSize));
   }
 
-  AssertArgLED(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
+  AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_MODE(cmd->AlternateByteMode));
   if (cmd->AlternateByteMode != QSPI_ALTERNATE_BYTES_NONE)
   {
-    AssertArgLED(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
+    AssertArgXXX(IS_QSPI_ALTERNATE_BYTES_SIZE(cmd->AlternateBytesSize));
   }
 
-  AssertArgLED(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
-  AssertArgLED(IS_QSPI_DATA_MODE(cmd->DataMode));
+  AssertArgXXX(IS_QSPI_DUMMY_CYCLES(cmd->DummyCycles));
+  AssertArgXXX(IS_QSPI_DATA_MODE(cmd->DataMode));
 
-  AssertArgLED(IS_QSPI_DDR_MODE(cmd->DdrMode));
-  AssertArgLED(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
-  AssertArgLED(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
+  AssertArgXXX(IS_QSPI_DDR_MODE(cmd->DdrMode));
+  AssertArgXXX(IS_QSPI_DDR_HHC(cmd->DdrHoldHalfCycle));
+  AssertArgXXX(IS_QSPI_SIOO_MODE(cmd->SIOOMode));
 
-  AssertArgLED(IS_QSPI_TIMEOUT_ACTIVATION(cfg->TimeOutActivation));
+  AssertArgXXX(IS_QSPI_TIMEOUT_ACTIVATION(cfg->TimeOutActivation));
 
   /* Process locked */
   __HAL_LOCK(hqspi);
@@ -1838,7 +1838,7 @@ HAL_StatusTypeDef HAL_QSPI_MemoryMapped(QSPI_HandleTypeDef *hqspi, QSPI_CommandT
 
     if (cfg->TimeOutActivation == QSPI_TIMEOUT_COUNTER_ENABLE)
       {
-        AssertArgLED(IS_QSPI_TIMEOUT_PERIOD(cfg->TimeOutPeriod));
+        AssertArgXXX(IS_QSPI_TIMEOUT_PERIOD(cfg->TimeOutPeriod));
 
         /* Configure QSPI: LPTR register with the low-power timeout value */
         WRITE_REG(hqspi->Instance->LPTR, cfg->TimeOutPeriod);
@@ -2456,7 +2456,7 @@ HAL_StatusTypeDef HAL_QSPI_SetFlashID(QSPI_HandleTypeDef *hqspi, uint32_t FlashI
   HAL_StatusTypeDef status = HAL_OK;
 
   /* Check the parameter */
-  AssertArgLED(IS_QSPI_FLASH_ID(FlashID));
+  AssertArgXXX(IS_QSPI_FLASH_ID(FlashID));
 
   /* Process locked */
   __HAL_LOCK(hqspi);
@@ -2661,7 +2661,7 @@ static HAL_StatusTypeDef QSPI_WaitFlagStateUntilTimeout(QSPI_HandleTypeDef *hqsp
   */
 static void QSPI_Config(QSPI_HandleTypeDef *hqspi, const QSPI_CommandTypeDef *cmd, uint32_t FunctionalMode)
 {
-  AssertArgLED(IS_QSPI_FUNCTIONAL_MODE(FunctionalMode));
+  AssertArgXXX(IS_QSPI_FUNCTIONAL_MODE(FunctionalMode));
 
   if ((cmd->DataMode != QSPI_DATA_NONE) && (FunctionalMode != QSPI_FUNCTIONAL_MODE_MEMORY_MAPPED))
   {

@@ -143,7 +143,7 @@
 void HAL_NVIC_SetPriorityGrouping(uint32_t PriorityGroup)
 {
   /* Check the parameters */
-  AssertArgLED(IS_NVIC_PRIORITY_GROUP(PriorityGroup));
+  AssertArgXXX(IS_NVIC_PRIORITY_GROUP(PriorityGroup));
   
   /* Set the PRIGROUP[10:8] bits according to the PriorityGroup parameter value */
   NVIC_SetPriorityGrouping(PriorityGroup);
@@ -167,8 +167,8 @@ void HAL_NVIC_SetPriority(IRQn_Type IRQn, uint32_t PreemptPriority, uint32_t Sub
   uint32_t prioritygroup = 0x00;
   
   /* Check the parameters */
-  AssertArgLED(IS_NVIC_SUB_PRIORITY(SubPriority));
-  AssertArgLED(IS_NVIC_PREEMPTION_PRIORITY(PreemptPriority));
+  AssertArgXXX(IS_NVIC_SUB_PRIORITY(SubPriority));
+  AssertArgXXX(IS_NVIC_PREEMPTION_PRIORITY(PreemptPriority));
   
   prioritygroup = NVIC_GetPriorityGrouping();
   
@@ -187,7 +187,7 @@ void HAL_NVIC_SetPriority(IRQn_Type IRQn, uint32_t PreemptPriority, uint32_t Sub
 void HAL_NVIC_EnableIRQ(IRQn_Type IRQn)
 {
   /* Check the parameters */
-  AssertArgLED(IS_NVIC_DEVICE_IRQ(IRQn));
+  AssertArgXXX(IS_NVIC_DEVICE_IRQ(IRQn));
   
   /* Enable interrupt */
   NVIC_EnableIRQ(IRQn);
@@ -203,7 +203,7 @@ void HAL_NVIC_EnableIRQ(IRQn_Type IRQn)
 void HAL_NVIC_DisableIRQ(IRQn_Type IRQn)
 {
   /* Check the parameters */
-  AssertArgLED(IS_NVIC_DEVICE_IRQ(IRQn));
+  AssertArgXXX(IS_NVIC_DEVICE_IRQ(IRQn));
   
   /* Disable interrupt */
   NVIC_DisableIRQ(IRQn);
@@ -300,8 +300,8 @@ void HAL_MPU_Enable(uint32_t MPU_Control)
 void HAL_MPU_ConfigRegion(MPU_Region_InitTypeDef *MPU_Init)
 {
   /* Check the parameters */
-  AssertArgLED(IS_MPU_REGION_NUMBER(MPU_Init->Number));
-  AssertArgLED(IS_MPU_REGION_ENABLE(MPU_Init->Enable));
+  AssertArgXXX(IS_MPU_REGION_NUMBER(MPU_Init->Number));
+  AssertArgXXX(IS_MPU_REGION_ENABLE(MPU_Init->Enable));
 
   /* Set the Region number */
   MPU->RNR = MPU_Init->Number;
@@ -309,14 +309,14 @@ void HAL_MPU_ConfigRegion(MPU_Region_InitTypeDef *MPU_Init)
   if ((MPU_Init->Enable) != RESET)
   {
     /* Check the parameters */
-    AssertArgLED(IS_MPU_INSTRUCTION_ACCESS(MPU_Init->DisableExec));
-    AssertArgLED(IS_MPU_REGION_PERMISSION_ATTRIBUTE(MPU_Init->AccessPermission));
-    AssertArgLED(IS_MPU_TEX_LEVEL(MPU_Init->TypeExtField));
-    AssertArgLED(IS_MPU_ACCESS_SHAREABLE(MPU_Init->IsShareable));
-    AssertArgLED(IS_MPU_ACCESS_CACHEABLE(MPU_Init->IsCacheable));
-    AssertArgLED(IS_MPU_ACCESS_BUFFERABLE(MPU_Init->IsBufferable));
-    AssertArgLED(IS_MPU_SUB_REGION_DISABLE(MPU_Init->SubRegionDisable));
-    AssertArgLED(IS_MPU_REGION_SIZE(MPU_Init->Size));
+    AssertArgXXX(IS_MPU_INSTRUCTION_ACCESS(MPU_Init->DisableExec));
+    AssertArgXXX(IS_MPU_REGION_PERMISSION_ATTRIBUTE(MPU_Init->AccessPermission));
+    AssertArgXXX(IS_MPU_TEX_LEVEL(MPU_Init->TypeExtField));
+    AssertArgXXX(IS_MPU_ACCESS_SHAREABLE(MPU_Init->IsShareable));
+    AssertArgXXX(IS_MPU_ACCESS_CACHEABLE(MPU_Init->IsCacheable));
+    AssertArgXXX(IS_MPU_ACCESS_BUFFERABLE(MPU_Init->IsBufferable));
+    AssertArgXXX(IS_MPU_SUB_REGION_DISABLE(MPU_Init->SubRegionDisable));
+    AssertArgXXX(IS_MPU_REGION_SIZE(MPU_Init->Size));
     
     MPU->RBAR = MPU_Init->BaseAddress;
     MPU->RASR = ((uint32_t)MPU_Init->DisableExec             << MPU_RASR_XN_Pos)   |
@@ -371,7 +371,7 @@ uint32_t HAL_NVIC_GetPriorityGrouping(void)
 void HAL_NVIC_GetPriority(IRQn_Type IRQn, uint32_t PriorityGroup, uint32_t *pPreemptPriority, uint32_t *pSubPriority)
 {
   /* Check the parameters */
-  AssertArgLED(IS_NVIC_PRIORITY_GROUP(PriorityGroup));
+  AssertArgXXX(IS_NVIC_PRIORITY_GROUP(PriorityGroup));
  /* Get priority for Cortex-M system or device specific interrupts */
   NVIC_DecodePriority(NVIC_GetPriority(IRQn), PriorityGroup, pPreemptPriority, pSubPriority);
 }
@@ -386,7 +386,7 @@ void HAL_NVIC_GetPriority(IRQn_Type IRQn, uint32_t PriorityGroup, uint32_t *pPre
 void HAL_NVIC_SetPendingIRQ(IRQn_Type IRQn)
 {
   /* Check the parameters */
-  AssertArgLED(IS_NVIC_DEVICE_IRQ(IRQn));
+  AssertArgXXX(IS_NVIC_DEVICE_IRQ(IRQn));
   
   /* Set interrupt pending */
   NVIC_SetPendingIRQ(IRQn);
@@ -404,7 +404,7 @@ void HAL_NVIC_SetPendingIRQ(IRQn_Type IRQn)
 uint32_t HAL_NVIC_GetPendingIRQ(IRQn_Type IRQn)
 {
   /* Check the parameters */
-  AssertArgLED(IS_NVIC_DEVICE_IRQ(IRQn));
+  AssertArgXXX(IS_NVIC_DEVICE_IRQ(IRQn));
   
   /* Return 1 if pending else 0 */
   return NVIC_GetPendingIRQ(IRQn);
@@ -420,7 +420,7 @@ uint32_t HAL_NVIC_GetPendingIRQ(IRQn_Type IRQn)
 void HAL_NVIC_ClearPendingIRQ(IRQn_Type IRQn)
 {
   /* Check the parameters */
-  AssertArgLED(IS_NVIC_DEVICE_IRQ(IRQn));
+  AssertArgXXX(IS_NVIC_DEVICE_IRQ(IRQn));
   
   /* Clear pending interrupt */
   NVIC_ClearPendingIRQ(IRQn);
@@ -437,7 +437,7 @@ void HAL_NVIC_ClearPendingIRQ(IRQn_Type IRQn)
 uint32_t HAL_NVIC_GetActive(IRQn_Type IRQn)
 {
   /* Check the parameters */
-  AssertArgLED(IS_NVIC_DEVICE_IRQ(IRQn));
+  AssertArgXXX(IS_NVIC_DEVICE_IRQ(IRQn));
   
   /* Return 1 if active else 0 */
   return NVIC_GetActive(IRQn);
@@ -454,7 +454,7 @@ uint32_t HAL_NVIC_GetActive(IRQn_Type IRQn)
 void HAL_SYSTICK_CLKSourceConfig(uint32_t CLKSource)
 {
   /* Check the parameters */
-  AssertArgLED(IS_SYSTICK_CLK_SOURCE(CLKSource));
+  AssertArgXXX(IS_SYSTICK_CLK_SOURCE(CLKSource));
   if (CLKSource == SYSTICK_CLKSOURCE_HCLK)
   {
     SysTick->CTRL |= SYSTICK_CLKSOURCE_HCLK;

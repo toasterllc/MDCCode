@@ -318,7 +318,7 @@ HAL_StatusTypeDef HAL_SetTickFreq(HAL_TickFreqTypeDef Freq)
   HAL_StatusTypeDef status  = HAL_OK;
   HAL_TickFreqTypeDef prevTickFreq;
 
-  AssertArgLED(IS_TICKFREQ(Freq));
+  AssertArgXXX(IS_TICKFREQ(Freq));
 
   if (uwTickFreq != Freq)
   {

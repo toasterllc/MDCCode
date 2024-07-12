@@ -343,12 +343,12 @@ public:
                 continue;
             }
             const uint32_t imgPixelCount = status.pixelCount();
-            AssertLED(imgPixelCount == Img::Full::PixelCount);
+            AssertXXX(imgPixelCount == Img::Full::PixelCount);
             return status;
         }
         // Timeout capturing image
         // This should never happen, since it indicates a Verilog error or a hardware failure.
-        AssertLED(false);
+        AssertXXX(false);
     }
     
     static ImgCaptureStatusResp ImgCaptureStatus() {
@@ -370,7 +370,7 @@ public:
         }
         // Timeout getting response from ICE40
         // This should never happen, since it indicates a Verilog error or a hardware failure.
-        AssertLED(false);
+        AssertXXX(false);
     }
     
     static void ImgI2CInit() {
@@ -384,13 +384,13 @@ public:
     
     static uint16_t ImgI2CRead(uint16_t addr) {
         const ImgI2CStatusResp resp = ImgI2C(false, addr, 0);
-        AssertLED(!resp.err());
+        AssertXXX(!resp.err());
         return resp.readData();
     }
     
     static void ImgI2CWrite(uint16_t addr, uint16_t val) {
         const ImgI2CStatusResp resp = ImgI2C(true, addr, val);
-        AssertLED(!resp.err());
+        AssertXXX(!resp.err());
     }
     
     static ImgI2CStatusResp ImgI2CStatus() {

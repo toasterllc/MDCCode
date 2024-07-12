@@ -51,9 +51,9 @@ public:
             constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
             const _SDStatusResp status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
             const uint8_t replyVoltage = status.template respGetBits<19,16>();
-            AssertLED(replyVoltage == Voltage);
+            AssertXXX(replyVoltage == Voltage);
             const uint8_t replyCheckPattern = status.template respGetBits<15,8>();
-            AssertLED(replyCheckPattern == CheckPattern);
+            AssertXXX(replyCheckPattern == CheckPattern);
         }
         
         // ====================
@@ -76,7 +76,7 @@ public:
                     if (!ready) continue;
                     // Check S18A; for LVS initialization, it's expected to be 0
                     const bool S18A = status.template respGetBit<32>();
-                    AssertLED(S18A == 1);
+                    AssertXXX(S18A == 1);
                     break;
                 }
             }
@@ -94,7 +94,7 @@ public:
             // Verify this by checking DAT[0]
             {
                 const _SDStatusResp status = T_ICE::SDStatus();
-                AssertLED(!status.dat0Idle());
+                AssertXXX(!status.dat0Idle());
             }
             
             // Reset SDController (which turns off the clock)
@@ -112,7 +112,7 @@ public:
             
             // Check that SD card is indicating that it's ready (DAT0=1)
             const _SDStatusResp status = T_ICE::SDStatus();
-            AssertLED(status.dat0Idle());
+            AssertXXX(status.dat0Idle());
         }
         
         // ====================
@@ -191,9 +191,9 @@ public:
             
             {
                 const _SDStatusResp status = _SendCmd(_CMD6, 0x80FF3FF3, _RespType::Len48, _DatInType::Len512x1);
-                AssertLED(!status.datInCRCErr());
+                AssertXXX(!status.datInCRCErr());
                 const uint8_t accessMode = status.datInCMD6AccessMode();
-                AssertLED(accessMode == 3);
+                AssertXXX(accessMode == 3);
             }
         }
         
@@ -280,7 +280,7 @@ public:
         for (uint16_t i=0; i<MaxAttempts; i++) {
             const _SDStatusResp status = T_ICE::SDStatus();
             if (status.datOutDone()) {
-                AssertLED(!status.datOutCRCErr());
+                AssertXXX(!status.datOutCRCErr());
                 break;
             }
             // Let other tasks run
@@ -393,13 +393,13 @@ private:
             case _CMD41:
                 break;
             default:
-                AssertLED(!s.respCRCErr());
+                AssertXXX(!s.respCRCErr());
                 break;
             }
             return s;
         }
         // Timeout sending SD command
-        AssertLED(false);
+        AssertXXX(false);
     }
     
     static void _ReadWriteStop() {

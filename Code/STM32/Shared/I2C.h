@@ -40,10 +40,10 @@ public:
         _Reset();
         
         HAL_StatusTypeDef hs = HAL_I2CEx_ConfigAnalogFilter(&_Device, I2C_ANALOGFILTER_ENABLE);
-        AssertLED(hs == HAL_OK);
+        AssertXXX(hs == HAL_OK);
         
         hs = HAL_I2CEx_ConfigDigitalFilter(&_Device, 0);
-        AssertLED(hs == HAL_OK);
+        AssertXXX(hs == HAL_OK);
     }
     
     template <typename T_Send, typename T_Recv>
@@ -61,7 +61,7 @@ public:
         {
             _St = _State::Busy;
             HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, _Addr, (uint8_t*)&send, sizeof(send));
-            AssertLED(hs == HAL_OK);
+            AssertXXX(hs == HAL_OK);
             const auto ok = T_Scheduler::Wait(T_Scheduler::template Ms<T_TimeoutMs>, [] { return _St.load() != _State::Busy; });
             if (!ok) return Status::Error; // Error: slave is holding clock low
             if (_St.load() != _State::Idle) return Status::NAK;
@@ -71,7 +71,7 @@ public:
         {
             _St = _State::Busy;
             HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, _Addr, (uint8_t*)&recv, sizeof(recv));
-            AssertLED(hs == HAL_OK);
+            AssertXXX(hs == HAL_OK);
             const auto ok = T_Scheduler::Wait(T_Scheduler::template Ms<T_TimeoutMs>, [] { return _St.load() != _State::Busy; });
             if (!ok) return Status::Error; // Error: slave is holding clock low
             if (_St.load() != _State::Idle) return Status::NAK;
@@ -100,7 +100,7 @@ private:
     
     static void _Reset() {
         HAL_StatusTypeDef hs = HAL_I2C_Init(&_Device);
-        AssertLED(hs == HAL_OK);
+        AssertXXX(hs == HAL_OK);
         
         // Issue a START+STOP condition to reset our comms with MSP430.
         //
@@ -143,7 +143,7 @@ private:
 ////            LED1::Write(1);
 //            HAL_StatusTypeDef hs = HAL_I2C_Master_Abort_IT(&_Device, _Addr);
 ////            LED2::Write(1);
-//            AssertLED(hs == HAL_OK);
+//            AssertXXX(hs == HAL_OK);
 ////            LED3::Write(1);
 //            LED0::Write(1);
 //            _St = _State::Aborting;
@@ -154,24 +154,24 @@ private:
 //            _St = _State::Idle;
 //            break;
 //        default:
-//            AssertLED(false);
+//            AssertXXX(false);
 //            break;
 //        }
 //    }
     
     static void _CallbackTxRx(I2C_HandleTypeDef* me) {
-        AssertLED(_St.load() == _State::Busy);
+        AssertXXX(_St.load() == _State::Busy);
         _St = _State::Idle;
     }
     
     static void _CallbackError(I2C_HandleTypeDef* me) {
-        AssertLED(_St.load() == _State::Busy);
+        AssertXXX(_St.load() == _State::Busy);
         _St = _State::Error;
     }
     
     static void _CallbackAbort(I2C_HandleTypeDef* me) {
         // Should never happen
-        AssertLED(false);
+        AssertXXX(false);
     }
     
     static inline std::atomic<_State> _St = _State::Idle;

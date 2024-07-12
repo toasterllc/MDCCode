@@ -55,7 +55,7 @@ public:
             const uint16_t chipVersion = T_ICE::ImgI2CRead(0x3000);
             // TODO: we probably don't want to check the version number in production, in case the version number changes?
             // also the 0x3000 isn't read-only, so in theory it could change
-            AssertLED(chipVersion == 0x2604);
+            AssertXXX(chipVersion == 0x2604);
         }
         
         // Enable parallel interface (R0x301A[7]=1), disable serial interface to save power (R0x301A[12]=1)
