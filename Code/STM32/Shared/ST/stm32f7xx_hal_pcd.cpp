@@ -133,7 +133,7 @@ HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
   }
 
   /* Check the parameters */
-  AssertArgNoLED(IS_PCD_ALL_INSTANCE(hpcd->Instance));
+  AssertArgLED(IS_PCD_ALL_INSTANCE(hpcd->Instance));
 
   USBx = hpcd->Instance;
 
@@ -1647,8 +1647,8 @@ HAL_StatusTypeDef HAL_PCD_EP_Close(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
 HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint8_t *pBuf, uint32_t len)
 {
   // pBuf==0x0 is allowed, since that's where ITCM RAM is!
-  AssertArgNoLED(!((uintptr_t)pBuf & (4-1))); // Ensure `pBuf` is 4-byte aligned (required for DMA)
-  AssertArgNoLED(len); // We don't support zero-length packets
+  AssertArgLED(!((uintptr_t)pBuf & (4-1))); // Ensure `pBuf` is 4-byte aligned (required for DMA)
+  AssertArgLED(len); // We don't support zero-length packets
   PCD_EPTypeDef *ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
   
   /*setup and start the Xfer */
@@ -1671,7 +1671,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, u
     // (This is because OTG_DIEPTSIZ0.PKTCNT is 2 bits, while OTG_DIEPTSIZx.PKTCNT is 10 bits.)
     // USB_EP0StartXfer assumes that we're sending exactly one packet, so we enforce that here
     // by checking that len==MPS
-    AssertArgNoLED(len == ep->maxpacket);
+    AssertArgLED(len == ep->maxpacket);
     (void)USB_EP0StartXfer(hpcd->Instance, ep, (uint8_t)hpcd->Init.dma_enable);
   }
   else
