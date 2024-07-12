@@ -103,6 +103,7 @@ private:
     }
     
     struct _TaskEP0;
+    struct _TaskEP1;
     struct _TaskCmdHandle;
     struct _TaskMSPComms;
     struct _TaskBatteryStatus;
@@ -189,6 +190,25 @@ private:
     static constexpr uint32_t _I2CTimeoutMs = 2000;
     using _I2C = T_I2C<Scheduler, _I2C_SCL, _I2C_SDA, MSP::I2CAddr, _I2CTimeoutMs>;
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     struct _TaskEP0 {
         static void Run() {
             // Init system
@@ -207,6 +227,29 @@ private:
         // Task stack
         static constexpr auto& Stack = _TaskEP0Stack;
     };
+    
+    
+    
+    
+    struct _TaskEP1 {
+        static void Run() {
+            USB::TaskEP1();
+        }
+        
+        // Task stack
+        [[gnu::section(".stack._TaskEP1")]]
+        alignas(void*)
+        static inline uint8_t Stack[1024];
+    };
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     struct _TaskCmdHandle {
         static bool Handle(const STM::Cmd& c) {

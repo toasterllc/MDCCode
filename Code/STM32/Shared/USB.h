@@ -733,41 +733,42 @@ public:
         Send(0x81, &csw, sizeof(csw));
     }
     
+    static void _WaitUntilConnected() {
+        T_Scheduler::Wait([] { return _State == State::Connecting || _State == State::Connected; });
+        if (_State == State::Connecting) {
+            // Update our state
+            _State = State::Connected;
+            _SetupRequest = std::nullopt;
+        }
+    }
+    
     static void TaskEP1() {
+        Toastbox::IntState ints(false);
         for (;;) {
-            CBW cbw;
-            const std::optional<size_t> len = Recv(0x01, &cbw, sizeof(cbw));
-            Assert(len);
-            Assert(*len == sizeof(CBW));
+            _WaitUntilConnected();
             
-            Assert(cbw.dSignature == 0x43425355);
-            Assert(cbw.bLUN == 0);
-            Assert(cbw.bCBLength > 0);
-            Assert(cbw.bCBLength < 16);
-            
-            SCSI_ProcessCmd(cbw.bLUN, &cbw.CB[0]);
-            
-            MSC_BOT_SendCSW(cbw.dTag, 0, 0);
+            for (;;) {
+                CBW cbw;
+                const std::optional<size_t> len = Recv(0x01, &cbw, sizeof(cbw));
+                if (!len) break;
+                Assert(*len == sizeof(CBW));
+                
+                Assert(cbw.dSignature == 0x43425355);
+                Assert(cbw.bLUN == 0);
+                Assert(cbw.bCBLength > 0);
+                Assert(cbw.bCBLength < 16);
+                
+                SCSI_ProcessCmd(cbw.bLUN, &cbw.CB[0]);
+                
+                MSC_BOT_SendCSW(cbw.dTag, 0, 0);
+            }
         }
     }
     
     static void TaskEP0() {
+        Toastbox::IntState ints(false);
         for (;;) {
-            Toastbox::IntState ints(false);
-            
-            T_Scheduler::template Stop<TaskEP1>();
-            
-            // Wait until we're in the Connecting state
-            {
-                T_Scheduler::Wait([] { return _State == State::Connecting || _State == State::Connected; });
-                if (_State == State::Connecting) {
-                    // Update our state
-                    _State = State::Connected;
-                    _SetupRequest = std::nullopt;
-                }
-            }
-            
-            T_Scheduler::template Start<TaskEP1>();
+            _WaitUntilConnected();
             
             // Wait for a command
             for (;;) {
