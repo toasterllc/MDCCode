@@ -6,7 +6,7 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
     {
         if (params[2] == 0U) /* Request for Supported Vital Product Data Pages*/
         {
-            static inline uint8_t MSC_Page00_Inquiry_Data[] = {
+            static const uint8_t MSC_Page00_Inquiry_Data[] = {
                 0x00,
                 0x00,
                 0x00,
@@ -19,7 +19,7 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
         }
         else if (params[2] == 0x80U) /* Request for VPD page 0x80 Unit Serial Number */
         {
-            static inline uint8_t MSC_Page80_Inquiry_Data[] = {
+            static const uint8_t MSC_Page80_Inquiry_Data[] = {
                 0x00,
                 0x80,
                 0x00,
