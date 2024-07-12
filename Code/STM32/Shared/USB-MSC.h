@@ -8,12 +8,14 @@ static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
         case BOT_GET_MAX_LUN:
             if (!req.wValue && req.wLength==1 && (req.bmRequestType & 0x80)) {
                 static uint8_t maxLun = 0;
-                Send(0x80, (uint8_t*)&maxLun, 1);
+                Send(0x80, (uint8_t*)&maxLun, sizeof(maxLun));
                 Recv(0x00, nullptr, 0);
+                return;
             }
             break;
         
         case BOT_RESET:
+            Assert(false);
             break;
 //            if ((req.wValue  == 0U) && (req.wLength == 0U) && ((req.bmRequestType & 0x80U) != 0x80U)) {
 //                return MSC_BOT_Reset(pdev);
