@@ -587,7 +587,13 @@ public:
                 Recv(0x00, nullptr, 0);
                 return;
                 
-            case USB_REQ_CLEAR_FEATURE:     Assert(false);
+            case USB_REQ_CLEAR_FEATURE:
+                if (req.wValue == USB_FEATURE_EP_HALT) {
+                    return _CmdAccept(true);
+                } else {
+                    Assert(false);
+                }
+                
             case USB_REQ_SET_FEATURE:       Assert(false);
             case USB_REQ_GET_INTERFACE:     Assert(false);
             case USB_REQ_SET_INTERFACE:     Assert(false);
@@ -599,7 +605,7 @@ public:
         
         
         
-//        for (;;); Assert(false);
+//        Assert(false);
         
 //        switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
 //        case USB_REQ_TYPE_STANDARD: {
