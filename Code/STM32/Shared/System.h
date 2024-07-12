@@ -95,7 +95,7 @@ private:
 //            for (volatile uint32_t i=0; i<(uint32_t)2000000; i++);
 //        }
         
-        Assert(false);
+        AssertLED(false);
     }
     
     static void _Sleep() {
@@ -168,12 +168,22 @@ public:
     
     #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
     [[noreturn]]
-    static void Abort() {
+    static void AbortLED() {
         Toastbox::IntState ints(false);
         
         for (bool x=true;; x=!x) {
             LED0::Write(x);
             LED1::Write(x);
+            for (volatile uint32_t i=0; i<(uint32_t)500000; i++);
+        }
+    }
+    
+    #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
+    [[noreturn]]
+    static void AbortNoLED() {
+        Toastbox::IntState ints(false);
+        
+        for (bool x=true;; x=!x) {
             for (volatile uint32_t i=0; i<(uint32_t)500000; i++);
         }
     }
@@ -331,7 +341,7 @@ private:
             case _I2C::Status::NAK:     return std::nullopt;
             case _I2C::Status::Error:   return std::nullopt;
             }
-            Assert(false);
+            AssertLED(false);
         }
         
         enum class _State {
@@ -492,7 +502,7 @@ private:
         USB::Init();
         
         // Start _TaskMSPComms task
-        Scheduler::template Start<_TaskMSPComms, _TaskBatteryStatus>();
+        Scheduler::template Start<_TaskEP1, _TaskMSPComms, _TaskBatteryStatus>();
     }
     
     static void _ClockInit() {
@@ -515,7 +525,7 @@ private:
             cfg.PLL.PLLQ = 2;
             
             HAL_StatusTypeDef hr = HAL_RCC_OscConfig(&cfg);
-            Assert(hr == HAL_OK);
+            AssertLED(hr == HAL_OK);
         }
         
         // Initialize bus clocks for CPU, AHB, APB
@@ -528,7 +538,7 @@ private:
             cfg.APB2CLKDivider = RCC_HCLK_DIV2;
             
             HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_6);
-            Assert(hr == HAL_OK);
+            AssertLED(hr == HAL_OK);
         }
         
         {
@@ -542,7 +552,7 @@ private:
             cfg.Clk48ClockSelection = RCC_CLK48SOURCE_PLLSAIP;
             
             HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);
-            Assert(hr == HAL_OK);
+            AssertLED(hr == HAL_OK);
         }
     }
     
@@ -600,7 +610,7 @@ private:
         USBAcceptCommand(true);
         Reset();
         // Unreachable
-        Assert(false);
+        AssertLED(false);
     }
     
     static void _LEDSet(const STM::Cmd& cmd) {

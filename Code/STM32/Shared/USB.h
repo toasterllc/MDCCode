@@ -117,10 +117,10 @@ public:
         _Device.pData = &_PCD;
         
         USBD_StatusTypeDef us = USBD_Init(&_Device, &HS_Desc, DEVICE_HS);
-        Assert(us == USBD_OK);
+        AssertLED(us == USBD_OK);
         
         HAL_StatusTypeDef hs = HAL_PCD_Init(&_PCD);
-        Assert(hs == HAL_OK);
+        AssertLED(hs == HAL_OK);
         
 #define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return _USBD_##name(); }
 #define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return _USBD_##name(t0); }
@@ -151,10 +151,10 @@ public:
 #undef Fwd2
         
         us = USBD_RegisterClass(&_Device, &usbClass);
-        Assert(us == USBD_OK);
+        AssertLED(us == USBD_OK);
         
         us = USBD_Start(&_Device);
-        Assert(us == USBD_OK);
+        AssertLED(us == USBD_OK);
         
         // ## Set Rx/Tx FIFO sizes. Notes:
         //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
@@ -451,7 +451,7 @@ public:
     }
 
     static void USBD_GetConfig(const Toastbox::USB::SetupRequest& req) {
-        Assert(false);
+        AssertLED(false);
 //        if (req.wLength != 1U)
 //        {
 //        _CmdAccept(false);
@@ -464,11 +464,11 @@ public:
 //        case USBD_STATE_ADDRESSED:
 //        _Device.dev_default_config = 0U;
 //        Send(0x80, (uint8_t*)&_Device.dev_default_config, 1);
-//        Assert(false);
+//        AssertLED(false);
 //        break;
 //        case USBD_STATE_CONFIGURED:
 //        Send(0x80, (uint8_t*)&_Device.dev_config, 1);
-//        Assert(false);
+//        AssertLED(false);
 //        break;
 //        default:
 //        _CmdAccept(false);
@@ -478,7 +478,7 @@ public:
     }
 
     static void USBD_GetStatus(const Toastbox::USB::SetupRequest& req) {
-        Assert(false);
+        AssertLED(false);
 //        switch (_Device.dev_state) {
 //        case USBD_STATE_DEFAULT:
 //        case USBD_STATE_ADDRESSED:
@@ -499,7 +499,7 @@ public:
 //            }
 //            
 //            Send(0x80, (uint8_t*)&_Device.dev_config_status, 2);
-//            Assert(false);
+//            AssertLED(false);
 //            break;
 //        
 //        default:
@@ -510,7 +510,7 @@ public:
 
 
     static void USBD_SetFeature(const Toastbox::USB::SetupRequest& req) {
-        Assert(false);
+        AssertLED(false);
 //    if (req.wValue == USB_FEATURE_REMOTE_WAKEUP)
 //    {
 //    _Device.dev_remote_wakeup = 1U;
@@ -520,7 +520,7 @@ public:
 
 
     static void USBD_ClrFeature(const Toastbox::USB::SetupRequest& req) {
-        Assert(false);
+        AssertLED(false);
 //        switch (_Device.dev_state) {
 //        case USBD_STATE_DEFAULT:
 //        case USBD_STATE_ADDRESSED:
@@ -566,10 +566,10 @@ public:
                 Recv(0x00, nullptr, 0);
                 return;
                 
-            case USB_REQ_CLEAR_FEATURE:     Assert(false);
-            case USB_REQ_SET_FEATURE:       Assert(false);
-            case USB_REQ_GET_INTERFACE:     Assert(false);
-            case USB_REQ_SET_INTERFACE:     Assert(false);
+            case USB_REQ_CLEAR_FEATURE:     AssertLED(false);
+            case USB_REQ_SET_FEATURE:       AssertLED(false);
+            case USB_REQ_GET_INTERFACE:     AssertLED(false);
+            case USB_REQ_SET_INTERFACE:     AssertLED(false);
             default:                        break;
             }
             break;
@@ -591,12 +591,12 @@ public:
                 if (req.wValue == USB_FEATURE_EP_HALT) {
                     return _CmdAccept(true);
                 } else {
-                    Assert(false);
+                    AssertLED(false);
                 }
                 
-            case USB_REQ_SET_FEATURE:       Assert(false);
-            case USB_REQ_GET_INTERFACE:     Assert(false);
-            case USB_REQ_SET_INTERFACE:     Assert(false);
+            case USB_REQ_SET_FEATURE:       AssertLED(false);
+            case USB_REQ_GET_INTERFACE:     AssertLED(false);
+            case USB_REQ_SET_INTERFACE:     AssertLED(false);
             default:                        break;
             }
             break;
@@ -605,16 +605,16 @@ public:
         
         
         
-//        Assert(false);
+//        AssertLED(false);
         
 //        switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
 //        case USB_REQ_TYPE_STANDARD: {
 //            switch (req.bRequest) {
-//            case USB_REQ_GET_STATUS:        Assert(false);
-//            case USB_REQ_CLEAR_FEATURE:     Assert(false);
-//            case USB_REQ_SET_FEATURE:       Assert(false);
-//            case USB_REQ_GET_INTERFACE:     Assert(false);
-//            case USB_REQ_SET_INTERFACE:     Assert(false);
+//            case USB_REQ_GET_STATUS:        AssertLED(false);
+//            case USB_REQ_CLEAR_FEATURE:     AssertLED(false);
+//            case USB_REQ_SET_FEATURE:       AssertLED(false);
+//            case USB_REQ_GET_INTERFACE:     AssertLED(false);
+//            case USB_REQ_SET_INTERFACE:     AssertLED(false);
 //            default:                        break;
 //            }
 //            break;
@@ -622,7 +622,7 @@ public:
 //        _CmdAccept(false);
         
         
-//        Assert(false);
+//        AssertLED(false);
 //        USBD_EndpointTypeDef *pep;
 //        uint8_t ep_addr;
 //        USBD_StatusTypeDef ret = USBD_OK;
@@ -667,7 +667,7 @@ public:
 //                            (void)USBD_LL_ClearStallEP(pdev, ep_addr);
 //                        }
 //                        _CmdAccept(true);
-//                        Assert(false);
+//                        AssertLED(false);
 //                    //              (USBD_StatusTypeDef)pdev->pClass->Setup(pdev, req);
 //                    }
 //                    break;
@@ -690,7 +690,7 @@ public:
 //                    pep->status = 0x0000U;
 //
 //                    Send(0x80, (uint8_t*)&pep->status, 2);
-//                    Assert(false);
+//                    AssertLED(false);
 //                    break;
 //                
 //                case USBD_STATE_CONFIGURED:
@@ -718,7 +718,7 @@ public:
 //                    }
 //                    
 //                    Send(0x80, (uint8_t*)&pep->status, 2);
-//                    Assert(false);
+//                    AssertLED(false);
 //                    break;
 //                
 //                default:
@@ -798,12 +798,14 @@ public:
                 CBW cbw;
                 const std::optional<size_t> len = Recv(0x01, &cbw, sizeof(cbw));
                 if (!len) break;
-                Assert(*len == sizeof(CBW));
                 
-                Assert(cbw.dSignature == 0x43425355);
-                Assert(cbw.bLUN == 0);
-                Assert(cbw.bCBLength > 0);
-                Assert(cbw.bCBLength < 16);
+                for (;;);
+                AssertLED(*len == sizeof(CBW));
+                
+                AssertLED(cbw.dSignature == 0x43425355);
+                AssertLED(cbw.bLUN == 0);
+                AssertLED(cbw.bCBLength > 0);
+                AssertLED(cbw.bCBLength < 16);
                 
                 SCSI_ProcessCmd(cbw.bLUN, &cbw.CB[0]);
                 
@@ -844,22 +846,22 @@ public:
     }
     
     static std::optional<size_t> Recv(uint8_t ep, void* data, size_t len) {
-        Assert(EndpointOut(ep));
+        AssertLED(EndpointOut(ep));
         _EndpointState& eps = _EndpointStateGet(ep);
         
         Toastbox::IntState ints(false);
         if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
         
-        Assert(_Ready(eps));
+        AssertLED(_Ready(eps));
         _AdvanceStateOut(ep);
         
         if (len) {
             const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
-            Assert(us == USBD_OK);
+            AssertLED(us == USBD_OK);
         
         } else {
             const USBD_StatusTypeDef us = USBD_LL_PrepareReceiveZeroLen(&_Device, ep);
-            Assert(us == USBD_OK);
+            AssertLED(us == USBD_OK);
         }
         
         _WaitState ws = { .ep = ep };
@@ -870,22 +872,22 @@ public:
     }
     
     static bool Send(uint8_t ep, const void* data, size_t len) {
-        Assert(EndpointIn(ep));
+        AssertLED(EndpointIn(ep));
         _EndpointState& eps = _EndpointStateGet(ep);
         
         Toastbox::IntState ints(false);
         if (_State != State::Connected) return false; // Short-circuit if we're not Connected
         
-        Assert(_Ready(eps));
+        AssertLED(_Ready(eps));
         _AdvanceStateIn(ep);
         
         if (len) {
             const USBD_StatusTypeDef us = USBD_LL_Transmit(&_Device, ep, (uint8_t*)data, len);
-            Assert(us == USBD_OK);
+            AssertLED(us == USBD_OK);
         
         } else {
             const USBD_StatusTypeDef us = USBD_LL_TransmitZeroLen(&_Device, ep);
-            Assert(us == USBD_OK);
+            AssertLED(us == USBD_OK);
         }
         
         _WaitState ws = { .ep = ep };
@@ -984,7 +986,7 @@ private:
         const uint8_t ep = Toastbox::USB::Endpoint::DirectionIn | epidx;
         // Sanity-check the endpoint state
         _EndpointState& eps = _EndpointStateGet(ep);
-        Assert(
+        AssertLED(
             eps.stage == _EndpointStage::ResetZLP1     ||
             eps.stage == _EndpointStage::ResetZLP2     ||
             eps.stage == _EndpointStage::ResetSentinel ||
@@ -998,7 +1000,7 @@ private:
         const uint8_t ep = Toastbox::USB::Endpoint::DirectionOut | epidx;
         _EndpointState& eps = _EndpointStateGet(ep);
         // Sanity-check the endpoint state
-        Assert(
+        AssertLED(
             eps.stage == _EndpointStage::ResetZLP1     ||
             eps.stage == _EndpointStage::ResetZLP2     ||
             eps.stage == _EndpointStage::ResetSentinel ||
@@ -1160,7 +1162,7 @@ private:
             if (eps.len == sizeof(_ResetSentinel)) eps.stage = _EndpointStage::Ready;
             break;
         default:
-            Assert(false);
+            AssertLED(false);
         }
         
         // State actions
@@ -1202,7 +1204,7 @@ private:
         case _EndpointStage::ResetZLP1:     eps.stage = _EndpointStage::ResetZLP2;     break;
         case _EndpointStage::ResetZLP2:     eps.stage = _EndpointStage::ResetSentinel; break;
         case _EndpointStage::ResetSentinel: eps.stage = _EndpointStage::Ready;         break;
-        default:                            Assert(false);
+        default:                            AssertLED(false);
         }
         
         // State actions

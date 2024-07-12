@@ -31,15 +31,15 @@ public:
     }
     
     void lock() {
-        Assert(!_locked);
+        AssertLED(!_locked);
         T_Scheduler::Wait([] { return !T_Lock; });
         T_Lock = true;
         _locked = true;
     }
     
     void unlock() {
-        Assert(_locked);
-        Assert(T_Lock);
+        AssertLED(_locked);
+        AssertLED(T_Lock);
         T_Lock = false;
         _locked = false;
     }

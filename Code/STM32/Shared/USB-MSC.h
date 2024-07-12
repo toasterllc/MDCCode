@@ -15,7 +15,7 @@ static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
             break;
         
         case BOT_RESET:
-            Assert(false);
+            AssertLED(false);
             break;
 //            if ((req.wValue  == 0U) && (req.wLength == 0U) && ((req.bmRequestType & 0x80U) != 0x80U)) {
 //                return MSC_BOT_Reset(pdev);
@@ -23,5 +23,6 @@ static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
 //            break;
         }
     }
+    AssertLED(false);
     _CmdAccept(false);
 }

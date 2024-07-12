@@ -39,7 +39,7 @@ struct T_MSPTriggers {
             case MSP::Triggers::Event::Type::MotionEnable:  return Type::MotionEnable;
             case MSP::Triggers::Event::Type::DST:           return Type::DST;
             }
-            Assert(false);
+            AssertLED(false);
         }
         
         Event() = default;
@@ -273,7 +273,7 @@ struct T_MSPTriggers {
     }
     
     static Event& EventPop() {
-        Assert(_Front != _End);
+        AssertLED(_Front != _End);
         Event& ev = *_Front;
         EventPop(ev);
         return ev;
@@ -291,7 +291,7 @@ struct T_MSPTriggers {
             prev = &curr->next;
             curr = curr->next;
         }
-        Assert(curr);
+        AssertLED(curr);
         
         *prev = ev.next;
         ev.next = nullptr;
@@ -324,13 +324,13 @@ struct T_MSPTriggers {
             return 0;
         
         case MSP::Repeat::Type::Daily:
-            Assert(x.Daily.interval);
+            AssertLED(x.Daily.interval);
             return Time::Day*x.Daily.interval;
         
         case MSP::Repeat::Type::Weekly: {
             #warning TODO: verify this works properly
             // Determine the next trigger day, calculating the duration of time until then
-            Assert(x.Weekly.days & 1); // Weekly.days must always rest on an active day
+            AssertLED(x.Weekly.days & 1); // Weekly.days must always rest on an active day
             x.Weekly.days |= 0x80;
             uint8_t count = 0;
             do {
@@ -352,7 +352,7 @@ struct T_MSPTriggers {
                 return YearPlusDay;
             }
         }
-        Assert(false);
+        AssertLED(false);
     }
     
     static Time::TicksU32 DSTPhaseAdvance(MSP::DSTPhase& x) {
@@ -363,7 +363,7 @@ struct T_MSPTriggers {
     
     template<typename T_Dst, typename T_Src, size_t T_Count>
     static T_Dst& _BaseElm(T_Dst (&dst)[T_Count], T_Src (&src)[T_Count], T_Src& elm) {
-        Assert(&elm>=src && &elm<(src+T_Count));
+        AssertLED(&elm>=src && &elm<(src+T_Count));
         const size_t idx = &elm-src;
         return dst[idx];
     }
