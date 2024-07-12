@@ -557,7 +557,9 @@ public:
     }
     
     static void USBD_StdItfReq(const Toastbox::USB::SetupRequest& req) {
+        alignas(void*)
         const uint8_t status[2] = {};
+        
         switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
         case USB_REQ_TYPE_STANDARD: {
             switch (req.bRequest) {
@@ -578,7 +580,9 @@ public:
     }
 
     static void USBD_StdEPReq(const Toastbox::USB::SetupRequest& req) {
+        alignas(void*)
         const uint8_t status[2] = {};
+        
         switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
         case USB_REQ_TYPE_STANDARD: {
             switch (req.bRequest) {
@@ -770,6 +774,7 @@ public:
     };
     
     static void MSC_BOT_SendCSW(uint32_t tag, uint32_t residue, uint8_t status) {
+        alignas(void*)
         const CSW csw = {
             .dSignature     = 0x53425355,
             .dTag           = tag,
