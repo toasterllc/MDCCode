@@ -780,24 +780,22 @@ public:
         Send(0x81, &csw, sizeof(csw));
     }
     
-    static void _WaitUntilConnected() {
-        T_Scheduler::Wait([] { return _State == State::Connecting || _State == State::Connected; });
-        if (_State == State::Connecting) {
-            // Update our state
-            _State = State::Connected;
-            _SetupRequest = std::nullopt;
-        }
-    }
-    
     static void TaskEP1() {
+        alignas(void*)
         static union [[gnu::packed]] {
             CBW cbw;
             uint8_t _[512];
         } packet = {};
+        static_assert(sizeof(packet) == MaxPacketSizeIn());
+        static_assert(sizeof(packet) == 512);
         
         Toastbox::IntState ints(false);
         for (;;) {
-            _WaitUntilConnected();
+            T_Scheduler::Wait([] { return _State == State::Connected; });
+            
+            // XXX: wait for enumeration
+            // XXX: fixme
+            T_Scheduler::Sleep(T_Scheduler::template Ms<1000>);
             
             for (;;) {
                 const std::optional<size_t> len = Recv(0x01, &packet, sizeof(packet));
@@ -821,7 +819,12 @@ public:
     static void TaskEP0() {
         Toastbox::IntState ints(false);
         for (;;) {
-            _WaitUntilConnected();
+            T_Scheduler::Wait([] { return _State == State::Connecting || _State == State::Connected; });
+            if (_State == State::Connecting) {
+                // Update our state
+                _State = State::Connected;
+                _SetupRequest = std::nullopt;
+            }
             
             // Wait for a command
             for (;;) {
