@@ -586,7 +586,7 @@ private:
     template <typename T>
     static T _Read(uint32_t addr) {
         static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
-        AssertArg(!(addr % sizeof(T))); // Address must be naturally aligned
+        AssertArgLED(!(addr % sizeof(T))); // Address must be naturally aligned
         
         // This is the 'quick' read implementation, because the non-quick
         // version doesn't appear to work with some addresses. (Specifically,
@@ -665,7 +665,7 @@ private:
     template <typename T>
     static void _Write(uint32_t addr, T val) {
         static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
-        AssertArg(!(addr % sizeof(T))); // Address must be naturally aligned
+        AssertArgLED(!(addr % sizeof(T))); // Address must be naturally aligned
         
         // Activate write mode (clear read bit in JTAG control register)
         _TclkSet(0);

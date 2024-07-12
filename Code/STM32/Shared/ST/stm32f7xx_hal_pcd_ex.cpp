@@ -71,7 +71,7 @@
   */
 HAL_StatusTypeDef HAL_PCDEx_SetTxFiFo(PCD_HandleTypeDef *hpcd, uint8_t fifo, uint16_t size)
 {
-  AssertArg(size >= 16); // OTG_DIEPTXFx.INEPTXFD: "Minimum value is 16"
+  AssertArgLED(size >= 16); // OTG_DIEPTXFx.INEPTXFD: "Minimum value is 16"
   
   uint8_t i;
   uint32_t Tx_Offset;
@@ -115,8 +115,8 @@ HAL_StatusTypeDef HAL_PCDEx_SetTxFiFo(PCD_HandleTypeDef *hpcd, uint8_t fifo, uin
   */
 HAL_StatusTypeDef HAL_PCDEx_SetRxFiFo(PCD_HandleTypeDef *hpcd, uint16_t size)
 {
-  AssertArg(size >= 16); // OTG_GRXFSIZ.RXFD: "Minimum value is 16"
-  AssertArg(size <= 1024); // OTG_GRXFSIZ.RXFD: "Maximum value is 1024"
+  AssertArgLED(size >= 16); // OTG_GRXFSIZ.RXFD: "Minimum value is 16"
+  AssertArgLED(size <= 1024); // OTG_GRXFSIZ.RXFD: "Maximum value is 1024"
   hpcd->Instance->GRXFSIZ = size;
 
   return HAL_OK;

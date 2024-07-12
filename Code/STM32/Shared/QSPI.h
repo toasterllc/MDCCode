@@ -99,9 +99,9 @@ public:
     }
     
     static void Command(const QSPI_CommandTypeDef& cmd) {
-        AssertArg(_Config);
-        AssertArg(cmd.DataMode == QSPI_DATA_NONE);
-        AssertArg(!cmd.NbData);
+        AssertArgLED(_Config);
+        AssertArgLED(cmd.DataMode == QSPI_DATA_NONE);
+        AssertArgLED(!cmd.NbData);
         
         // Dummy cycles don't appear to work correctly when no data is transferred.
         // (For some reason, only DummyCycles=0 and DummyCycles=2 work correctly,
@@ -133,7 +133,7 @@ public:
                 // In single mode, we can only fake even values for the number of dummy cycles.
                 // This is because we can only read whole bytes, and each byte requires 2 cycles
                 // when using 4 lines (QSPI_DATA_4_LINES).
-                AssertArg(!(cmd.DummyCycles % 2));
+                AssertArgLED(!(cmd.DummyCycles % 2));
                 readLen = cmd.DummyCycles/2;
             } else {
                 readLen = cmd.DummyCycles;
@@ -167,14 +167,14 @@ public:
     
     static void Read(const QSPI_CommandTypeDef& cmd, void* data) {
         const size_t len = cmd.NbData;
-        AssertArg(_Config);
-        AssertArg(cmd.DataMode != QSPI_DATA_NONE);
-        AssertArg(data);
-        AssertArg(len);
+        AssertArgLED(_Config);
+        AssertArgLED(cmd.DataMode != QSPI_DATA_NONE);
+        AssertArgLED(data);
+        AssertArgLED(len);
         // Validate pointer/length alignment
         if (_Config->align == Align::Word) {
-            AssertArg(!((uintptr_t)data % sizeof(uint32_t)));
-            AssertArg(!(len % sizeof(uint32_t)));
+            AssertArgLED(!((uintptr_t)data % sizeof(uint32_t)));
+            AssertArgLED(!(len % sizeof(uint32_t)));
         }
         AssertLED(!_Busy);
         
@@ -195,14 +195,14 @@ public:
     
     static void Write(const QSPI_CommandTypeDef& cmd, const void* data) {
         const size_t len = cmd.NbData;
-        AssertArg(_Config);
-        AssertArg(cmd.DataMode != QSPI_DATA_NONE);
-        AssertArg(data);
-        AssertArg(len);
+        AssertArgLED(_Config);
+        AssertArgLED(cmd.DataMode != QSPI_DATA_NONE);
+        AssertArgLED(data);
+        AssertArgLED(len);
         // Validate pointer/length alignment
         if (_Config->align == Align::Word) {
-            AssertArg(!((uintptr_t)data % sizeof(uint32_t)));
-            AssertArg(!(len % sizeof(uint32_t)));
+            AssertArgLED(!((uintptr_t)data % sizeof(uint32_t)));
+            AssertArgLED(!(len % sizeof(uint32_t)));
         }
         AssertLED(!_Busy);
         

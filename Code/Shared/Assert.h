@@ -1,11 +1,10 @@
 #pragma once
 #include <cstdint>
 
-#define AssertLED(x)    if (!(x)) _AbortLED()
-#define AssertNoLED(x)  if (!(x)) _AbortNoLED()
-
-#define Assert(x)       if (!(x)) _AbortLED()
-#define AssertArg(x)    if (!(x)) _AbortLED()
+#define AssertLED(x)        if (!(x)) _AbortLED()
+#define AssertNoLED(x)      if (!(x)) _AbortNoLED()
+#define AssertArgLED(x)     if (!(x)) _AbortLED()
+#define AssertArgNoLED(x)   if (!(x)) _AbortNoLED()
 
 // Abort(): provided by client to log the abort and trigger crash
 extern "C"
