@@ -7,7 +7,9 @@ static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
         switch (req.bRequest) {
         case BOT_GET_MAX_LUN:
             if (!req.wValue && req.wLength==1 && (req.bmRequestType & 0x80)) {
+                alignas(void*)
                 static uint8_t maxLun = 0;
+                
                 Send(0x80, (uint8_t*)&maxLun, sizeof(maxLun));
                 Recv(0x00, nullptr, 0);
                 return;
