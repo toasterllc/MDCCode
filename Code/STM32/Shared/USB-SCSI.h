@@ -6,6 +6,7 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
     {
         if (params[2] == 0U) /* Request for Supported Vital Product Data Pages*/
         {
+            alignas(void*)
             static const uint8_t MSC_Page00_Inquiry_Data[] = {
                 0x00,
                 0x00,
@@ -19,6 +20,7 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
         }
         else if (params[2] == 0x80U) /* Request for VPD page 0x80 Unit Serial Number */
         {
+            alignas(void*)
             static const uint8_t MSC_Page80_Inquiry_Data[] = {
                 0x00,
                 0x80,
@@ -40,6 +42,8 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
     else
     {
         static constexpr size_t STANDARD_INQUIRY_DATA_LEN = 0x24;
+        
+        alignas(void*)
         static const uint8_t STORAGE_Inquirydata_HS[] = {
             0x00,
             0x80,
@@ -61,6 +65,7 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
 }
 
 static void SCSI_ReadCapacity10(uint8_t lun, uint8_t *params) {
+    alignas(void*)
     struct [[gnu::packed]] {
         uint32_t blockCount;
         uint32_t blockSize;
@@ -74,6 +79,7 @@ static void SCSI_ReadCapacity10(uint8_t lun, uint8_t *params) {
 }
 
 static void SCSI_ModeSense6(uint8_t lun, uint8_t *params) {
+    alignas(void*)
     static uint8_t resp[] = {
         0x03,
         0x00,

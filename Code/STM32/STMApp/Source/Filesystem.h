@@ -24,6 +24,7 @@ struct Filesystem {
     using FATTable = Toastbox::FAT12::FATTable<_BytesPerSector>;
     using DirTable = Toastbox::FAT12::DirTable<_BytesPerSector>;
     
+    alignas(void*)
     static inline struct [[gnu::packed]] {
         BootRecord boot;
         FATTable fat;

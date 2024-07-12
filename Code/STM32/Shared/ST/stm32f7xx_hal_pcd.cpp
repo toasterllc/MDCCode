@@ -133,7 +133,7 @@ HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
   }
 
   /* Check the parameters */
-  AssertNoLED(IS_PCD_ALL_INSTANCE(hpcd->Instance));
+  AssertLED(IS_PCD_ALL_INSTANCE(hpcd->Instance));
 
   USBx = hpcd->Instance;
 
@@ -1647,8 +1647,8 @@ HAL_StatusTypeDef HAL_PCD_EP_Close(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
 HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint8_t *pBuf, uint32_t len)
 {
   // pBuf==0x0 is allowed, since that's where ITCM RAM is!
-  AssertNoLED(!((uintptr_t)pBuf & (4-1))); // Ensure `pBuf` is 4-byte aligned (required for DMA)
-  AssertNoLED(len); // We don't support zero-length packets
+  AssertLED(!((uintptr_t)pBuf & (4-1))); // Ensure `pBuf` is 4-byte aligned (required for DMA)
+  AssertLED(len); // We don't support zero-length packets
   PCD_EPTypeDef *ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
   
   /*setup and start the Xfer */
@@ -1671,7 +1671,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, u
     // (This is because OTG_DIEPTSIZ0.PKTCNT is 2 bits, while OTG_DIEPTSIZx.PKTCNT is 10 bits.)
     // USB_EP0StartXfer assumes that we're sending exactly one packet, so we enforce that here
     // by checking that len==MPS
-    AssertNoLED(len == ep->maxpacket);
+    AssertLED(len == ep->maxpacket);
     (void)USB_EP0StartXfer(hpcd->Instance, ep, (uint8_t)hpcd->Init.dma_enable);
   }
   else
@@ -1679,8 +1679,8 @@ HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, u
     // Verify that `len` is a multiple of the max packet size.
     // (The hardware doesn't restrict itself to non-packet boundaries,
     // so `len` can only be used to control the packet count.)
-    AssertNoLED(ep->maxpacket);
-    AssertNoLED(!(len % ep->maxpacket));
+    AssertLED(ep->maxpacket);
+    AssertLED(!(len % ep->maxpacket));
     (void)USB_EPStartXfer(hpcd->Instance, ep, (uint8_t)hpcd->Init.dma_enable);
   }
 
@@ -1737,7 +1737,7 @@ uint32_t HAL_PCD_EP_GetRxCount(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   */
 HAL_StatusTypeDef HAL_PCD_EP_Transmit(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint8_t *pBuf, uint32_t len)
 {
-  AssertNoLED(pBuf);
+  AssertLED(pBuf);
   AssertLED(!((uintptr_t)pBuf & (4-1))); // Ensure `pBuf` is 4-byte aligned (required for DMA)
   AssertLED(len); // We don't support zero-length packets
   PCD_EPTypeDef *ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
