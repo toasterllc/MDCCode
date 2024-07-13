@@ -11,11 +11,16 @@ struct Filesystem {
     //constexpr size_t _DataSize = 128*1024;
     
     static constexpr size_t _SectorsPerCluster = _DataSize / _BytesPerSector;
+    static_assert(_SectorsPerCluster == 32); // Debug
+    
     //constexpr size_t _SectorsPerCluster = 1;
     static_assert(_SectorsPerCluster <= 128);
     
     static constexpr size_t _DataSectorCount = _DataSize / _BytesPerSector;
+    static_assert(_DataSectorCount == 32); // Debug
+    
     static constexpr size_t _DataClusterCount = _DataSectorCount / _SectorsPerCluster;
+    static_assert(_DataClusterCount == 1); // Debug
     
     static constexpr size_t _HeaderSectorCount = 3;
     static constexpr size_t _SectorCount = _HeaderSectorCount + _DataSectorCount;

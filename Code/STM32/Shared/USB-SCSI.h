@@ -65,14 +65,42 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
 }
 
 static void SCSI_ReadCapacity10(uint8_t lun, uint8_t *params) {
+    
+//    UNUSED(params);
+//    int8_t ret;
+//    USBD_MSC_BOT_HandleTypeDef *hmsc = (USBD_MSC_BOT_HandleTypeDef *)pdev->pClassData;
+//
+//    ret = ((USBD_StorageTypeDef *)pdev->pUserData)->GetCapacity(lun, &hmsc->scsi_blk_nbr, &hmsc->scsi_blk_size);
+//
+//    if ((ret != 0) || (hmsc->scsi_medium_state == SCSI_MEDIUM_EJECTED))
+//    {
+//    SCSI_SenseCode(pdev, lun, NOT_READY, MEDIUM_NOT_PRESENT);
+//    return -1;
+//    }
+//
+//
+//    hmsc->bot_data[0] = (uint8_t)((hmsc->scsi_blk_nbr - 1U) >> 24);
+//    hmsc->bot_data[1] = (uint8_t)((hmsc->scsi_blk_nbr - 1U) >> 16);
+//    hmsc->bot_data[2] = (uint8_t)((hmsc->scsi_blk_nbr - 1U) >>  8);
+//    hmsc->bot_data[3] = (uint8_t)(hmsc->scsi_blk_nbr - 1U);
+//
+//    hmsc->bot_data[4] = (uint8_t)(hmsc->scsi_blk_size >>  24);
+//    hmsc->bot_data[5] = (uint8_t)(hmsc->scsi_blk_size >>  16);
+//    hmsc->bot_data[6] = (uint8_t)(hmsc->scsi_blk_size >>  8);
+//    hmsc->bot_data[7] = (uint8_t)(hmsc->scsi_blk_size);
+//
+//    hmsc->bot_data_length = 8U;
+//
+//    return 0;
+    
     alignas(void*)
     struct [[gnu::packed]] {
         uint32_t blockCount;
         uint32_t blockSize;
     
     } resp = {
-        .blockCount = Filesystem::_SectorCount-1,
-        .blockSize  = Filesystem::_BytesPerSector,
+        .blockCount = Toastbox::Endian::BFH_U32(Filesystem::_SectorCount-1),
+        .blockSize  = Toastbox::Endian::BFH_U32(Filesystem::_BytesPerSector),
     };
     
     Send(0x81, &resp, sizeof(resp));
@@ -96,16 +124,25 @@ static void SCSI_AllowPreventRemovable(uint8_t lun, uint8_t *params) {
 }
 
 static void SCSI_Read10(uint8_t lun, uint8_t* params) {
-    const uint32_t blockAddr = ((uint32_t)params[2] << 24) |
-                               ((uint32_t)params[3] << 16) |
-                               ((uint32_t)params[4] <<  8) |
-                               ((uint32_t)params[5] <<  0) ;
+    struct [[gnu::packed]] {
+        uint8_t op;
+        uint8_t flags;
+        uint32_t blockAddr;
+        uint8_t groupNumber;
+        uint16_t blockLen;
+        uint8_t control;
+    } cmd;
     
-    const size_t blockLen = ((uint32_t)params[7] << 8) | (uint32_t)params[8];
+    memcpy(&cmd, params, sizeof(cmd));
+    cmd.blockAddr = Toastbox::Endian::HFB_U32(cmd.blockAddr);
+    cmd.blockLen = Toastbox::Endian::HFB_U16(cmd.blockLen);
+    
     constexpr size_t ChunkLen = 512;
     const uint8_t* fs = (const uint8_t*)&Filesystem::_Data;
-    const uint8_t* addr = fs+(blockAddr*Filesystem::_BytesPerSector);
-    const size_t len = blockLen*Filesystem::_BytesPerSector;
+    const uint8_t* addr = fs+(cmd.blockAddr*Filesystem::_BytesPerSector);
+    const size_t len = cmd.blockLen*Filesystem::_BytesPerSector;
+    
+    AssertLED(addr+len <= fs+sizeof(Filesystem::_Data));
     
     for (size_t rem=len; rem;) {
         const size_t chunkLen = std::min(rem, ChunkLen);
@@ -116,6 +153,16 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
     
     if (!(len % 512)) {
         Send(0x81, nullptr, 0);
+    }
+    
+    AssertLED(len == 512);
+//    AssertLED((len % 512) == 0);
+//    AssertLED(len == sizeof(Filesystem::_Data));
+    
+    static int i = 0;
+    i++;
+    if (i > 1) {
+        AssertLED(false);
     }
     
 //    AssertLED(false);
