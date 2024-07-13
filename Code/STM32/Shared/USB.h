@@ -258,7 +258,7 @@ public:
             if (_Device.pDesc->GetBOSDescriptor != NULL) {
                 pbuf = _Device.pDesc->GetBOSDescriptor(_Device.dev_speed, &len);
             } else {
-                AssertLED(false);
+                AssertNoLED(false);
                 _CmdAccept(false);
                 err++;
             }
@@ -282,7 +282,7 @@ public:
                 if (_Device.pDesc->GetLangIDStrDescriptor != NULL) {
                     pbuf = _Device.pDesc->GetLangIDStrDescriptor(_Device.dev_speed, &len);
                 } else {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                     err++;
                 }
@@ -292,7 +292,7 @@ public:
                 if (_Device.pDesc->GetManufacturerStrDescriptor != NULL) {
                     pbuf = _Device.pDesc->GetManufacturerStrDescriptor(_Device.dev_speed, &len);
                 } else {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                     err++;
                 }
@@ -302,7 +302,7 @@ public:
                 if (_Device.pDesc->GetProductStrDescriptor != NULL) {
                     pbuf = _Device.pDesc->GetProductStrDescriptor(_Device.dev_speed, &len);
                 } else {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                     err++;
                 }
@@ -313,7 +313,7 @@ public:
                     pbuf = _Device.pDesc->GetSerialStrDescriptor(_Device.dev_speed, &len);
                 
                 } else {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                     err++;
                 }
@@ -323,7 +323,7 @@ public:
                 if (_Device.pDesc->GetConfigurationStrDescriptor != NULL) {
                     pbuf = _Device.pDesc->GetConfigurationStrDescriptor(_Device.dev_speed, &len);
                 } else {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                     err++;
                 }
@@ -333,7 +333,7 @@ public:
                 if (_Device.pDesc->GetInterfaceStrDescriptor != NULL) {
                     pbuf = _Device.pDesc->GetInterfaceStrDescriptor(_Device.dev_speed, &len);
                 } else {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                     err++;
                 }
@@ -344,7 +344,7 @@ public:
                     pbuf = _Device.pClass->GetUsrStrDescriptor(&_Device, (req.wValue), &len);
                 
                 } else {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                     err++;
                 }
@@ -353,7 +353,7 @@ public:
             break;
 
         default:
-            AssertLED(false);
+            AssertNoLED(false);
             _CmdAccept(false);
             err++;
             break;
@@ -369,7 +369,7 @@ public:
                     Send(0x80, pbuf, len);
                     Recv(0x00, nullptr, 0);
                 } else {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                 }
             
@@ -394,7 +394,7 @@ public:
                 return _CmdAccept(true);
             }
         }
-        AssertLED(false);
+        AssertNoLED(false);
         _CmdAccept(false);
     }
 
@@ -405,7 +405,7 @@ public:
         cfgidx = (uint8_t)(req.wValue);
         
         if (cfgidx > USBD_MAX_NUM_CONFIGURATION) {
-            AssertLED(false);
+            AssertNoLED(false);
             return _CmdAccept(false);
         }
 
@@ -417,7 +417,7 @@ public:
                 ret = USBD_SetClassConfig(&_Device, cfgidx);
 
                 if (ret != USBD_OK) {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                 } else {
                     _CmdAccept(true);
@@ -443,7 +443,7 @@ public:
                 _Device.dev_config = cfgidx;
                 ret = USBD_SetClassConfig(&_Device, cfgidx);
                 if (ret != USBD_OK) {
-                    AssertLED(false);
+                    AssertNoLED(false);
                     _CmdAccept(false);
                     (void)USBD_ClrClassConfig(&_Device, (uint8_t)_Device.dev_config);
                     _Device.dev_state = USBD_STATE_ADDRESSED;
@@ -458,7 +458,7 @@ public:
             break;
         
         default:
-            AssertLED(false);
+            AssertNoLED(false);
             _CmdAccept(false);
             (void)USBD_ClrClassConfig(&_Device, cfgidx);
             ret = USBD_FAIL;
@@ -467,7 +467,7 @@ public:
     }
 
     static void USBD_GetConfig(const Toastbox::USB::SetupRequest& req) {
-        AssertLED(false);
+        AssertNoLED(false);
 //        if (req.wLength != 1U)
 //        {
 //        _CmdAccept(false);

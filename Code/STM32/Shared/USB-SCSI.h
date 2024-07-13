@@ -36,7 +36,7 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
         }
         else /* Request Not supported */
         {
-            AssertLED(false);
+            AssertNoLED(false);
         }
     }
     else
@@ -162,10 +162,10 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
     static int i = 0;
     i++;
     if (i > 1) {
-        AssertLED(false);
+        AssertNoLED(false);
     }
     
-//    AssertLED(false);
+//    AssertNoLED(false);
 }
 
 #define SCSI_TEST_UNIT_READY                        0x00U
