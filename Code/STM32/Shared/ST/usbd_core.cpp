@@ -91,7 +91,7 @@ void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
   }
   else
   {
-    AssertNoLED(false);
+    AssertLED(false);
   }
     // Set Speed
   USBD_LL_SetSpeed((USBD_HandleTypeDef*)hpcd->pData, speed);
@@ -265,7 +265,7 @@ void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
 // enable HSI, PLL and select PLL as system clock source.
 static void SystemClockConfig_Resume() {
     // DKeck: unimplemented
-    AssertNoLED(false);
+    AssertLED(false);
 }
 
 // Retuns the USB status depending on the HAL status:
