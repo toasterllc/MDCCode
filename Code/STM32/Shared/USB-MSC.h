@@ -14,6 +14,7 @@ static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
                 Recv(0x00, nullptr, 0);
                 return;
             }
+            AssertLED(false);
             break;
         
         case BOT_RESET:

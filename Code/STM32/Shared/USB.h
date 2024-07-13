@@ -492,7 +492,7 @@ public:
 //        }
 //        }
     }
-
+    
     static void USBD_GetStatus(const Toastbox::USB::SetupRequest& req) {
         AssertLED(false);
 //        switch (_Device.dev_state) {
@@ -523,8 +523,7 @@ public:
 //            break;
 //        }
     }
-
-
+    
     static void USBD_SetFeature(const Toastbox::USB::SetupRequest& req) {
         AssertLED(false);
 //    if (req.wValue == USB_FEATURE_REMOTE_WAKEUP)
@@ -533,8 +532,7 @@ public:
 //    _CmdAccept(true);
 //    }
     }
-
-
+    
     static void USBD_ClrFeature(const Toastbox::USB::SetupRequest& req) {
         AssertLED(false);
 //        switch (_Device.dev_state) {
@@ -549,7 +547,7 @@ public:
 //        }
 //        _CmdAccept(false);
     }
-
+    
     static void USBD_StdDevReq(const Toastbox::USB::SetupRequest& req) {
         switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
         case USB_REQ_TYPE_CLASS:
@@ -1090,6 +1088,8 @@ private:
         
         } else {
 //            USBD_CtlError(&_Device);
+            
+            AssertLED(false);
             
             USBD_LL_StallEP(&_Device, 0x80);
             USBD_LL_StallEP(&_Device, 0x00);

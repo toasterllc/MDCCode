@@ -146,6 +146,7 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
     
     for (size_t rem=len; rem;) {
         const size_t chunkLen = std::min(rem, ChunkLen);
+        AssertLED(chunkLen == 512);
         Send(0x81, addr, chunkLen);
         rem -= chunkLen;
         addr += chunkLen;
