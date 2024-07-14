@@ -6,6 +6,8 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
     {
         if (params[2] == 0U) /* Request for Supported Vital Product Data Pages*/
         {
+            toaster_printf("SCSI_Inquiry-Page00\n");
+            
             alignas(void*)
             static const uint8_t MSC_Page00_Inquiry_Data[] = {
                 0x00,
@@ -20,6 +22,8 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
         }
         else if (params[2] == 0x80U) /* Request for VPD page 0x80 Unit Serial Number */
         {
+            toaster_printf("SCSI_Inquiry-Page80\n");
+            
             alignas(void*)
             static const uint8_t MSC_Page80_Inquiry_Data[] = {
                 0x00,
@@ -42,6 +46,8 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
     else
     {
         static constexpr size_t STANDARD_INQUIRY_DATA_LEN = 0x24;
+        
+        toaster_printf("SCSI_Inquiry-Standard\n");
         
         alignas(void*)
         static const uint8_t STORAGE_Inquirydata_HS[] = {
@@ -93,6 +99,8 @@ static void SCSI_ReadCapacity10(uint8_t lun, uint8_t *params) {
 //
 //    return 0;
     
+    toaster_printf("SCSI_ReadCapacity10\n");
+    
     alignas(void*)
     struct [[gnu::packed]] {
         uint32_t blockCount;
@@ -107,6 +115,9 @@ static void SCSI_ReadCapacity10(uint8_t lun, uint8_t *params) {
 }
 
 static void SCSI_ModeSense6(uint8_t lun, uint8_t *params) {
+    
+    toaster_printf("SCSI_ModeSense6\n");
+    
     alignas(void*)
     static uint8_t resp[] = {
         0x03,
@@ -119,6 +130,8 @@ static void SCSI_ModeSense6(uint8_t lun, uint8_t *params) {
 }
 
 static void SCSI_AllowPreventRemovable(uint8_t lun, uint8_t *params) {
+    toaster_printf("SCSI_AllowPreventRemovable\n");
+    
 //    hmsc->scsi_medium_state = (params[4] ? SCSI_MEDIUM_LOCKED : SCSI_MEDIUM_UNLOCKED);
 //    hmsc->bot_data_length = 0U;
 }
@@ -142,6 +155,11 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
     const uint8_t* addr = fs+(cmd.blockAddr*Filesystem::_BytesPerSector);
     const size_t len = cmd.blockLen*Filesystem::_BytesPerSector;
     
+    toaster_printf("SCSI_Read10 %u %u (0x%x %u)\n",
+        (uint32_t)cmd.blockAddr, (uint32_t)cmd.blockLen,
+        (uint32_t)addr, (uint32_t)len
+    );
+    
     AssertLED(addr+len <= fs+sizeof(Filesystem::_Data));
     
     for (size_t rem=len; rem;) {
@@ -152,19 +170,21 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
         addr += chunkLen;
     }
     
-    if (!(len % 512)) {
-        Send(0x81, nullptr, 0);
-    }
+    toaster_printf("SCSI_Read10 SENT\n");
     
-    AssertLED(len == 512);
+//    if (!(len % 512)) {
+//        Send(0x81, nullptr, 0);
+//    }
+    
+//    AssertLED(len == 512);
 //    AssertLED((len % 512) == 0);
 //    AssertLED(len == sizeof(Filesystem::_Data));
     
-    static int i = 0;
-    i++;
-    if (i > 1) {
-        AssertLED(false);
-    }
+//    static int i = 0;
+//    i++;
+//    if (i > 1) {
+//        AssertLED(false);
+//    }
     
 //    AssertLED(false);
 }
@@ -185,4 +205,6 @@ static void SCSI_ProcessCmd(uint8_t lun, uint8_t *cmd) {
     case SCSI_READ_CAPACITY10:        return SCSI_ReadCapacity10(lun, cmd);
     case SCSI_READ10:                 return SCSI_Read10(lun, cmd);
     }
+    
+    toaster_printf("SCSI_ProcessCmd-UNKNOWN\n");
 }

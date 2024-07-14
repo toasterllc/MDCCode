@@ -781,6 +781,8 @@ public:
     }
 
     static void _SetupRequestHandle(const Toastbox::USB::SetupRequest& req) {
+        toaster_printf("_SetupRequestHandle 0x%x 0x%x\n", req.bmRequestType, req.bRequest);
+        
         switch (req.bmRequestType & Toastbox::USB::RequestType::RecipientMask) {
         case USB_REQ_RECIPIENT_DEVICE:    return USBD_StdDevReq(req);
         case USB_REQ_RECIPIENT_INTERFACE: return USBD_StdItfReq(req);
@@ -946,6 +948,8 @@ public:
     
 private:
     static uint8_t _USBD_Init(uint8_t cfgidx) {
+        toaster_printf("_USBD_Init\n");
+        
         // Open endpoints
         for (uint8_t ep : T_Config::Endpoints) {
             if (EndpointOut(ep)) {
@@ -966,15 +970,18 @@ private:
     }
     
     static uint8_t _USBD_DeInit(uint8_t cfgidx) {
+        toaster_printf("_USBD_DeInit\n");
         return (uint8_t)USBD_OK;
     }
     
     static uint8_t _USBD_Suspend() {
+        toaster_printf("_USBD_Suspend\n");
         _State = State::Disconnected;
         return (uint8_t)USBD_OK;
     }
     
     static uint8_t _USBD_Resume() {
+        toaster_printf("_USBD_Suspend\n");
         _State = State::Connected;
         return (uint8_t)USBD_OK;
     }
