@@ -122,7 +122,7 @@ static void SCSI_ModeSense6(uint8_t lun, uint8_t *params) {
     static uint8_t resp[] = {
         0x03,
         0x00,
-        0x00, // Read-only==0x80, Read-write==0x00
+        0x80, // Read-only==0x80, Read-write==0x00
         0x00,
     };
     const size_t len = std::min((size_t)params[4], sizeof(resp));
@@ -150,25 +150,47 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
     cmd.blockAddr = Toastbox::Endian::HFB_U32(cmd.blockAddr);
     cmd.blockLen = Toastbox::Endian::HFB_U16(cmd.blockLen);
     
-    constexpr size_t ChunkLen = 512;
-    const uint8_t* fs = (const uint8_t*)&Filesystem::_Data;
-    const uint8_t* addr = fs+(cmd.blockAddr*Filesystem::_BytesPerSector);
-    const size_t len = cmd.blockLen*Filesystem::_BytesPerSector;
+//    constexpr size_t ChunkLen = 512;
+    const uint8_t* Fs = (const uint8_t*)&Filesystem::_Data;
+    const uint8_t* DataStartAddr = (const uint8_t*)&Filesystem::_Data.data;
+    
+    const uint8_t* addr = Fs+(cmd.blockAddr*Filesystem::_BytesPerSector);
+    size_t rem = cmd.blockLen*Filesystem::_BytesPerSector;
+    
+//    const uint8_t* massData = (const uint8_t*)0x20010000;
     
     toaster_printf("SCSI_Read10 %u %u (0x%x %u)\n",
         (uint32_t)cmd.blockAddr, (uint32_t)cmd.blockLen,
-        (uint32_t)addr, (uint32_t)len
+        (uint32_t)addr, (uint32_t)rem
     );
     
-    AssertLED(addr+len <= fs+sizeof(Filesystem::_Data));
+//    AssertLED(addr+len <= fs+sizeof(Filesystem::_Data));
     
-    for (size_t rem=len; rem;) {
-        const size_t chunkLen = std::min(rem, ChunkLen);
-        AssertLED(chunkLen == 512);
+    if (addr < DataStartAddr) {
+        const size_t chunkLen = std::min(rem, (size_t)(DataStartAddr-addr));
         Send(0x81, addr, chunkLen);
         rem -= chunkLen;
         addr += chunkLen;
     }
+    
+    while (rem) {
+        const uint8_t* MassData = (const uint8_t*)0x20010000;
+        constexpr size_t ChunkLen = 63*1024;
+        
+        const size_t chunkLen = std::min(rem, ChunkLen);
+        Send(0x81, MassData, chunkLen);
+        rem -= chunkLen;
+    } 
+    
+//    while (addr < DataStartAddr) {
+//        for (size_t rem=len; rem;) {
+//            const size_t chunkLen = std::min(rem, ChunkLen);
+//            AssertLED(chunkLen == 512);
+//            Send(0x81, addr, chunkLen);
+//            rem -= chunkLen;
+//            addr += chunkLen;
+//        }
+//    }
     
     toaster_printf("SCSI_Read10 SENT\n");
     
