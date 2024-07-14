@@ -146,8 +146,10 @@ static inline void _out_null(char character, void* buffer, size_t idx, size_t ma
   (void)character; (void)buffer; (void)idx; (void)maxlen;
 }
 
+[[gnu::section(".printf_buffer"), gnu::used]]
 static uint8_t PrintBuf[1024] = {};
 static size_t PrintBufIdx = {};
+
 static void toaster_putchar(char character) {
     Toastbox::IntState ints(false);
     

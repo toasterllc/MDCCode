@@ -256,6 +256,8 @@ public:
         
         switch (req.wValue >> 8) {
         case USB_DESC_TYPE_BOS:
+            toaster_printf("GetDescriptor-BOS\n");
+            
             if (_Device.pDesc->GetBOSDescriptor != NULL) {
                 pbuf = _Device.pDesc->GetBOSDescriptor(_Device.dev_speed, &len);
             } else {
@@ -266,10 +268,14 @@ public:
             break;
         
         case USB_DESC_TYPE_DEVICE:
+            toaster_printf("GetDescriptor-Device\n");
+            
             pbuf = _Device.pDesc->GetDeviceDescriptor(_Device.dev_speed, &len);
             break;
         
         case USB_DESC_TYPE_CONFIGURATION:
+            toaster_printf("GetDescriptor-Config\n");
+            
             if (_Device.dev_speed == USBD_SPEED_HIGH) {
                 pbuf = _Device.pClass->GetHSConfigDescriptor(&_Device, &len);
             } else {
@@ -381,6 +387,7 @@ public:
     }
     
     static void USBD_SetAddress(const Toastbox::USB::SetupRequest& req) {
+        toaster_printf("USBD_SetAddress\n");
         if (req.wIndex==0 && req.wLength==0 && req.wValue<128) {
             const uint8_t dev_addr = (uint8_t)(req.wValue) & 0x7F;
             if (_Device.dev_state != USBD_STATE_CONFIGURED) {
@@ -400,6 +407,7 @@ public:
     }
 
     static void USBD_SetConfig(const Toastbox::USB::SetupRequest& req) {
+        toaster_printf("USBD_SetConfig\n");
         USBD_StatusTypeDef ret = USBD_OK;
         static uint8_t cfgidx;
         

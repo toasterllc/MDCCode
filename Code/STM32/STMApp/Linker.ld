@@ -11,6 +11,12 @@ SECTIONS {
         . = ALIGN(4);
     } >ITCM_RAM
     
+    .printf_buffer : {
+        . = ALIGN(4);
+        *(.printf_buffer)
+        . = ALIGN(4);
+    } >DTCM_RAM
+    
     .text : {
         . = ALIGN(4);
         *(.text)

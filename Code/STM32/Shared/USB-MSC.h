@@ -6,6 +6,8 @@ static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
     case USB_REQ_TYPE_CLASS:
         switch (req.bRequest) {
         case BOT_GET_MAX_LUN:
+            toaster_printf("USBD_MSC_Setup-BOT_GET_MAX_LUN\n");
+            
             if (!req.wValue && req.wLength==1 && (req.bmRequestType & 0x80)) {
                 alignas(void*)
                 static uint8_t maxLun = 0;
