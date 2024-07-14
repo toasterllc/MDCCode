@@ -10,6 +10,7 @@
 #include "Code/Lib/Toastbox/Endian.h"
 #include "Code/Lib/Scheduler/Scheduler.h"
 #include "Filesystem.h"
+#include "toaster_printf.h"
 
 template <
 typename T_Scheduler,   // T_Scheduler: scheduler

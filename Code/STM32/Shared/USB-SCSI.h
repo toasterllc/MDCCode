@@ -43,6 +43,8 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
     {
         static constexpr size_t STANDARD_INQUIRY_DATA_LEN = 0x24;
         
+        toaster_printf("hello\n");
+        
         alignas(void*)
         static const uint8_t STORAGE_Inquirydata_HS[] = {
             0x00,
