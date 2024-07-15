@@ -9,7 +9,7 @@ SECTIONS {
         KEEP(*(.isr.VectorTable))
         KEEP(*(.isr))
         . = ALIGN(4);
-    } >ITCM_RAM
+    } >ITCM_FLASH
     
     .printf_buffer : {
         . = ALIGN(4);
@@ -27,34 +27,34 @@ SECTIONS {
         KEEP(*(.init))
         KEEP(*(.fini))
         . = ALIGN(4);
-    } >DTCM_RAM
+    } >ITCM_FLASH
     
     .rodata : {
         . = ALIGN(4);
         *(.rodata)
         *(.rodata*)
         . = ALIGN(4);
-    } >DTCM_RAM
+    } >ITCM_FLASH
     
     .ARM.extab : {
         . = ALIGN(4);
         *(.ARM.extab*)
         *(.gnu.linkonce.armextab.*)
         . = ALIGN(4);
-    } >DTCM_RAM
+    } >ITCM_FLASH
     
     .ARM : {
         . = ALIGN(4);
         *(.ARM.exidx*)
         . = ALIGN(4);
-    } >DTCM_RAM
+    } >ITCM_FLASH
     
     .preinit_array : {
         . = ALIGN(4);
         PROVIDE_HIDDEN(__preinit_array_start = .);
         KEEP(*(.preinit_array*))
         PROVIDE_HIDDEN(__preinit_array_end = .);
-    } >DTCM_RAM
+    } >ITCM_FLASH
     
     .init_array : {
         . = ALIGN(4);
@@ -62,7 +62,7 @@ SECTIONS {
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array*))
         PROVIDE_HIDDEN(__init_array_end = .);
-    } >DTCM_RAM
+    } >ITCM_FLASH
     
     .fini_array : {
         . = ALIGN(4);
@@ -70,7 +70,7 @@ SECTIONS {
         KEEP(*(SORT(.fini_array.*)))
         KEEP(*(.fini_array*))
         PROVIDE_HIDDEN(__fini_array_end = .);
-    } >DTCM_RAM
+    } >ITCM_FLASH
     
     .data : {
         . = ALIGN(4);
@@ -80,7 +80,7 @@ SECTIONS {
         *(.data*)
         . = ALIGN(4);
         _edata_ram = .;
-    } >DTCM_RAM
+    } >SRAM2 AT> ITCM_FLASH
     
     .bss : {
         . = ALIGN(4);
@@ -90,21 +90,21 @@ SECTIONS {
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;
-    } >DTCM_RAM
+    } >SRAM2
     
     .uninit (NOLOAD) : {
         . = ALIGN(4);
         *(.uninit)
         *(.uninit*)
         . = ALIGN(4);
-    } >DTCM_RAM
+    } >SRAM2
     
     .stack (NOLOAD) : {
         . = ALIGN(4);
         *(.stack)
         *(.stack.*)
         . = ALIGN(4);
-    } >DTCM_RAM
+    } >SRAM2
     
     .sram1 : {
         . = ALIGN(4);
