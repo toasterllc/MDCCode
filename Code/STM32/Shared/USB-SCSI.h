@@ -122,7 +122,7 @@ static void SCSI_ModeSense6(uint8_t lun, uint8_t *params) {
     static uint8_t resp[] = {
         0x03,
         0x00,
-        0x80, // Read-only==0x80, Read-write==0x00
+        0x00, // Read-only==0x80, Read-write==0x00
         0x00,
     };
     const size_t len = std::min((size_t)params[4], sizeof(resp));
@@ -180,7 +180,7 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
         const size_t chunkLen = std::min(rem, ChunkLen);
         Send(0x81, MassData, chunkLen);
         rem -= chunkLen;
-    } 
+    }
     
 //    while (addr < DataStartAddr) {
 //        for (size_t rem=len; rem;) {
@@ -211,21 +211,66 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
 //    AssertLED(false);
 }
 
+
+
+static void SCSI_Write10(uint8_t lun, uint8_t* params) {
+    toaster_printf("SCSI_Write10-START\n");
+    
+    struct [[gnu::packed]] {
+        uint8_t op;
+        uint8_t flags;
+        uint32_t blockAddr;
+        uint8_t groupNumber;
+        uint16_t blockLen;
+        uint8_t control;
+    } cmd;
+    
+    memcpy(&cmd, params, sizeof(cmd));
+    cmd.blockAddr = Toastbox::Endian::HFB_U32(cmd.blockAddr);
+    cmd.blockLen = Toastbox::Endian::HFB_U16(cmd.blockLen);
+    
+    const uint8_t* Fs = (const uint8_t*)&Filesystem::_Data;
+    const uint8_t* DataStartAddr = (const uint8_t*)&Filesystem::_Data.data;
+    const uint8_t* addr = Fs+(cmd.blockAddr*Filesystem::_BytesPerSector);
+    size_t rem = cmd.blockLen*Filesystem::_BytesPerSector;
+    
+//    if (addr < DataStartAddr) {
+//        toaster_printf("SCSI_Write10-addr < DataStartAddr\n");
+//        AssertLED(false);
+//    }
+    
+    while (rem) {
+        uint8_t* MassData = (uint8_t*)0x20010000;
+        constexpr size_t ChunkLen = 63*1024;
+        
+        const size_t chunkLen = std::min(rem, ChunkLen);
+        Recv(0x01, MassData, chunkLen);
+        rem -= chunkLen;
+    }
+    
+    toaster_printf("SCSI_Write10-END\n");
+}
+
+
+
+
 #define SCSI_TEST_UNIT_READY                        0x00U
 #define SCSI_INQUIRY                                0x12U
 #define SCSI_MODE_SENSE6                            0x1AU
 #define SCSI_ALLOW_MEDIUM_REMOVAL                   0x1EU
 #define SCSI_READ_CAPACITY10                        0x25U
 #define SCSI_READ10                                 0x28U
+#define SCSI_WRITE10                                0x2AU
 
 static void SCSI_ProcessCmd(uint8_t lun, uint8_t *cmd) {
     switch (cmd[0]) {
-    case SCSI_TEST_UNIT_READY:        return SCSI_TestUnitReady(lun, cmd);
-    case SCSI_INQUIRY:                return SCSI_Inquiry(lun, cmd);
-    case SCSI_ALLOW_MEDIUM_REMOVAL:   return SCSI_AllowPreventRemovable(lun, cmd);
-    case SCSI_MODE_SENSE6:            return SCSI_ModeSense6(lun, cmd);
-    case SCSI_READ_CAPACITY10:        return SCSI_ReadCapacity10(lun, cmd);
-    case SCSI_READ10:                 return SCSI_Read10(lun, cmd);
+    case SCSI_TEST_UNIT_READY:          return SCSI_TestUnitReady(lun, cmd);
+    case SCSI_INQUIRY:                  return SCSI_Inquiry(lun, cmd);
+    case SCSI_ALLOW_MEDIUM_REMOVAL:     return SCSI_AllowPreventRemovable(lun, cmd);
+    case SCSI_MODE_SENSE6:              return SCSI_ModeSense6(lun, cmd);
+    case SCSI_READ_CAPACITY10:          return SCSI_ReadCapacity10(lun, cmd);
+    case SCSI_READ10:                   return SCSI_Read10(lun, cmd);
+    case SCSI_WRITE10:                  return SCSI_Write10(lun, cmd);
     }
     
     toaster_printf("SCSI_ProcessCmd-UNKNOWN\n");
