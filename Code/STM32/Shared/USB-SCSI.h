@@ -1,41 +1,68 @@
-static void SCSI_TestUnitReady(uint8_t lun, uint8_t *params) {
+alignas(void*)
+static const inline uint8_t MSC_Page00_Inquiry_Data[] = {
+    0x00,
+    0x00,
+    0x00,
+    0x02,
+    0x00,
+    0x80,
+};
+
+alignas(void*)
+static const inline uint8_t MSC_Page80_Inquiry_Data[] = {
+    0x00,
+    0x80,
+    0x00,
+    0x08,
+    0x20,     /* Put Product Serial number */
+    0x20,
+    0x20,
+    0x20,
+};
+
+static constexpr size_t STANDARD_INQUIRY_DATA_LEN = 0x24;
+alignas(void*)
+static const inline uint8_t STORAGE_Inquirydata_HS[] = {
+    0x00,
+    0x80,
+    0x02,
+    0x02,
+    (STANDARD_INQUIRY_DATA_LEN - 5),
+    0x00,
+    0x00,
+    0x00,
+    'S', 'T', 'M', ' ', ' ', ' ', ' ', ' ',
+    'P', 'r', 'o', 'd', 'u', 'c', 't', ' ',
+    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+    '0', '.', '0' ,'1',
+};
+
+alignas(void*)
+static inline uint8_t ModeSense6[] = {
+    0x03,
+    0x00,
+    0x00, // Read-only==0x80, Read-write==0x00
+    0x00,
+};
+
+
+
+static void SCSI_TestUnitReady(uint8_t lun, const uint8_t *params) {
 }
 
-static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
+static_assert(sizeof(STORAGE_Inquirydata_HS) == STANDARD_INQUIRY_DATA_LEN);
+
+static void SCSI_Inquiry(uint8_t lun, const uint8_t *params) {
     if ((params[1] & 0x01U) != 0U) /* Evpd is set */
     {
         if (params[2] == 0U) /* Request for Supported Vital Product Data Pages*/
         {
             toaster_printf("SCSI_Inquiry-Page00\n");
-            
-            alignas(void*)
-            static const uint8_t MSC_Page00_Inquiry_Data[] = {
-                0x00,
-                0x00,
-                0x00,
-                0x02,
-                0x00,
-                0x80,
-            };
-            
             Send(0x81, MSC_Page00_Inquiry_Data, sizeof(MSC_Page00_Inquiry_Data));
         }
         else if (params[2] == 0x80U) /* Request for VPD page 0x80 Unit Serial Number */
         {
             toaster_printf("SCSI_Inquiry-Page80\n");
-            
-            alignas(void*)
-            static const uint8_t MSC_Page80_Inquiry_Data[] = {
-                0x00,
-                0x80,
-                0x00,
-                0x08,
-                0x20,     /* Put Product Serial number */
-                0x20,
-                0x20,
-                0x20,
-             };
-            
             Send(0x81, MSC_Page80_Inquiry_Data, sizeof(MSC_Page80_Inquiry_Data));
         }
         else /* Request Not supported */
@@ -45,32 +72,13 @@ static void SCSI_Inquiry(uint8_t lun, uint8_t *params) {
     }
     else
     {
-        static constexpr size_t STANDARD_INQUIRY_DATA_LEN = 0x24;
-        
         toaster_printf("SCSI_Inquiry-Standard\n");
-        
-        alignas(void*)
-        static const uint8_t STORAGE_Inquirydata_HS[] = {
-            0x00,
-            0x80,
-            0x02,
-            0x02,
-            (STANDARD_INQUIRY_DATA_LEN - 5),
-            0x00,
-            0x00,
-            0x00,
-            'S', 'T', 'M', ' ', ' ', ' ', ' ', ' ',
-            'P', 'r', 'o', 'd', 'u', 'c', 't', ' ',
-            ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-            '0', '.', '0' ,'1',
-        };
-        static_assert(sizeof(STORAGE_Inquirydata_HS) == STANDARD_INQUIRY_DATA_LEN);
         const size_t len = std::min((size_t)params[4], sizeof(STORAGE_Inquirydata_HS));
         Send(0x81, STORAGE_Inquirydata_HS, len);
     }
 }
 
-static void SCSI_ReadCapacity10(uint8_t lun, uint8_t *params) {
+static void SCSI_ReadCapacity10(uint8_t lun, const uint8_t *params) {
     
 //    UNUSED(params);
 //    int8_t ret;
@@ -114,29 +122,20 @@ static void SCSI_ReadCapacity10(uint8_t lun, uint8_t *params) {
     Send(0x81, &resp, sizeof(resp));
 }
 
-static void SCSI_ModeSense6(uint8_t lun, uint8_t *params) {
-    
+static void SCSI_ModeSense6(uint8_t lun, const uint8_t *params) {
     toaster_printf("SCSI_ModeSense6\n");
-    
-    alignas(void*)
-    static uint8_t resp[] = {
-        0x03,
-        0x00,
-        0x00, // Read-only==0x80, Read-write==0x00
-        0x00,
-    };
-    const size_t len = std::min((size_t)params[4], sizeof(resp));
-    Send(0x81, resp, len);
+    const size_t len = std::min((size_t)params[4], sizeof(ModeSense6));
+    Send(0x81, ModeSense6, len);
 }
 
-static void SCSI_AllowPreventRemovable(uint8_t lun, uint8_t *params) {
+static void SCSI_AllowPreventRemovable(uint8_t lun, const uint8_t *params) {
     toaster_printf("SCSI_AllowPreventRemovable\n");
     
 //    hmsc->scsi_medium_state = (params[4] ? SCSI_MEDIUM_LOCKED : SCSI_MEDIUM_UNLOCKED);
 //    hmsc->bot_data_length = 0U;
 }
 
-static void SCSI_Read10(uint8_t lun, uint8_t* params) {
+static void SCSI_Read10(uint8_t lun, const uint8_t* params) {
     struct [[gnu::packed]] {
         uint8_t op;
         uint8_t flags;
@@ -213,7 +212,7 @@ static void SCSI_Read10(uint8_t lun, uint8_t* params) {
 
 
 
-static void SCSI_Write10(uint8_t lun, uint8_t* params) {
+static void SCSI_Write10(uint8_t lun, const uint8_t* params) {
     toaster_printf("SCSI_Write10-START\n");
     
     struct [[gnu::packed]] {
@@ -254,24 +253,24 @@ static void SCSI_Write10(uint8_t lun, uint8_t* params) {
 
 
 
-#define SCSI_TEST_UNIT_READY                        0x00U
-#define SCSI_INQUIRY                                0x12U
-#define SCSI_MODE_SENSE6                            0x1AU
-#define SCSI_ALLOW_MEDIUM_REMOVAL                   0x1EU
-#define SCSI_READ_CAPACITY10                        0x25U
-#define SCSI_READ10                                 0x28U
-#define SCSI_WRITE10                                0x2AU
-
-static void SCSI_ProcessCmd(uint8_t lun, uint8_t *cmd) {
-    switch (cmd[0]) {
-    case SCSI_TEST_UNIT_READY:          return SCSI_TestUnitReady(lun, cmd);
-    case SCSI_INQUIRY:                  return SCSI_Inquiry(lun, cmd);
-    case SCSI_ALLOW_MEDIUM_REMOVAL:     return SCSI_AllowPreventRemovable(lun, cmd);
-    case SCSI_MODE_SENSE6:              return SCSI_ModeSense6(lun, cmd);
-    case SCSI_READ_CAPACITY10:          return SCSI_ReadCapacity10(lun, cmd);
-    case SCSI_READ10:                   return SCSI_Read10(lun, cmd);
-    case SCSI_WRITE10:                  return SCSI_Write10(lun, cmd);
-    }
-    
-    toaster_printf("SCSI_ProcessCmd-UNKNOWN\n");
-}
+//#define SCSI_TEST_UNIT_READY                        0x00U
+//#define SCSI_INQUIRY                                0x12U
+//#define SCSI_MODE_SENSE6                            0x1AU
+//#define SCSI_ALLOW_MEDIUM_REMOVAL                   0x1EU
+//#define SCSI_READ_CAPACITY10                        0x25U
+//#define SCSI_READ10                                 0x28U
+//#define SCSI_WRITE10                                0x2AU
+//
+//static void SCSI_ProcessCmd(uint8_t lun, uint8_t *cmd) {
+//    switch (cmd[0]) {
+//    case SCSI_TEST_UNIT_READY:          return SCSI_TestUnitReady(lun, cmd);
+//    case SCSI_INQUIRY:                  return SCSI_Inquiry(lun, cmd);
+//    case SCSI_ALLOW_MEDIUM_REMOVAL:     return SCSI_AllowPreventRemovable(lun, cmd);
+//    case SCSI_MODE_SENSE6:              return SCSI_ModeSense6(lun, cmd);
+//    case SCSI_READ_CAPACITY10:          return SCSI_ReadCapacity10(lun, cmd);
+//    case SCSI_READ10:                   return SCSI_Read10(lun, cmd);
+//    case SCSI_WRITE10:                  return SCSI_Write10(lun, cmd);
+//    }
+//    
+//    toaster_printf("SCSI_ProcessCmd-UNKNOWN\n");
+//}

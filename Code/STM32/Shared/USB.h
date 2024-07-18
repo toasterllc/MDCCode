@@ -2,6 +2,7 @@
 #include <initializer_list>
 #include <optional>
 #include "Code/Shared/Assert.h"
+#include "Code/Shared/STM.h"
 #include "stm32f7xx.h"
 #include "usbd_def.h"
 #include "usbd_core.h"
@@ -821,6 +822,32 @@ public:
         Send(0x81, &csw, sizeof(csw));
     }
     
+//    static const CBW* CBWRead() {
+//        alignas(void*)
+//        static union [[gnu::packed]] {
+//            CBW cbw;
+//            uint8_t _[512];
+//        } packet = {};
+//        static_assert(sizeof(packet) == MaxPacketSizeIn());
+//        static_assert(sizeof(packet) == 512);
+//        
+//        const std::optional<size_t> len = Recv(0x01, &packet, sizeof(packet));
+//        if (!len) break;
+//        
+//        AssertLED(*len == sizeof(CBW));
+//        AssertLED(packet.cbw.dSignature == 0x43425355);
+//        AssertLED(packet.cbw.bLUN == 0);
+//        AssertLED(packet.cbw.bCBLength > 0);
+//        AssertLED(packet.cbw.bCBLength < 16);
+//        
+//        return &packet.cbw;
+//    }
+    
+    
+//    static const CmdRead() {
+//        
+//    }
+    
     static void TaskEP1() {
         alignas(void*)
         static union [[gnu::packed]] {
@@ -835,6 +862,7 @@ public:
             T_Scheduler::Wait([] { return _State == State::Connected; });
             
             // XXX: wait for enumeration
+            // XXX: why is this necessary?
             // XXX: fixme
             T_Scheduler::Sleep(T_Scheduler::template Ms<100>);
             
@@ -848,7 +876,25 @@ public:
                 AssertLED(packet.cbw.bCBLength > 0);
                 AssertLED(packet.cbw.bCBLength < 16);
                 
-                SCSI_ProcessCmd(packet.cbw.bLUN, &packet.cbw.CB[0]);
+                #define SCSI_TEST_UNIT_READY                        0x00U
+                #define SCSI_INQUIRY                                0x12U
+                #define SCSI_MODE_SENSE6                            0x1AU
+                #define SCSI_ALLOW_MEDIUM_REMOVAL                   0x1EU
+                #define SCSI_READ_CAPACITY10                        0x25U
+                #define SCSI_READ10                                 0x28U
+                #define SCSI_WRITE10                                0x2AU
+                
+                const uint8_t lun = packet.cbw.bLUN;
+                const uint8_t* cmd = &packet.cbw.CB[0];
+                switch (cmd[0]) {
+                case SCSI_TEST_UNIT_READY:          return SCSI_TestUnitReady(lun, cmd);
+                case SCSI_INQUIRY:                  return SCSI_Inquiry(lun, cmd);
+                case SCSI_ALLOW_MEDIUM_REMOVAL:     return SCSI_AllowPreventRemovable(lun, cmd);
+                case SCSI_MODE_SENSE6:              return SCSI_ModeSense6(lun, cmd);
+                case SCSI_READ_CAPACITY10:          return SCSI_ReadCapacity10(lun, cmd);
+                case SCSI_READ10:                   return SCSI_Read10(lun, cmd);
+                case SCSI_WRITE10:                  return SCSI_Write10(lun, cmd);
+                }
                 
                 MSC_BOT_SendCSW(packet.cbw.dTag, 0, 0);
             }
