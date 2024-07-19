@@ -247,8 +247,41 @@ public:
         T_Scheduler::Wait([] { return _EndpointsReady(); });
     }
     
-    #include "USB-MSC.h"
-    #include "USB-SCSI.h"
+    #define BOT_GET_MAX_LUN     0xFE
+    #define BOT_RESET           0xFF
+    
+    static void USBD_MSC_Setup(const Toastbox::USB::SetupRequest& req) {
+        switch (req.bmRequestType & Toastbox::USB::RequestType::TypeMask) {
+        case USB_REQ_TYPE_CLASS:
+            switch (req.bRequest) {
+            case BOT_GET_MAX_LUN:
+                toaster_printf("USBD_MSC_Setup-BOT_GET_MAX_LUN\n");
+                
+                if (!req.wValue && req.wLength==1 && (req.bmRequestType & 0x80)) {
+                    alignas(void*)
+                    static uint8_t maxLun = 0;
+                    
+                    Send(0x80, (uint8_t*)&maxLun, sizeof(maxLun));
+                    Recv(0x00, nullptr, 0);
+                    return;
+                }
+                AssertLED(false);
+                break;
+            
+            case BOT_RESET:
+                AssertLED(false);
+                break;
+    //            if ((req.wValue  == 0U) && (req.wLength == 0U) && ((req.bmRequestType & 0x80U) != 0x80U)) {
+    //                return MSC_BOT_Reset(pdev);
+    //            }
+    //            break;
+            
+            default: break;
+            }
+        }
+        AssertLED(false);
+        _CmdAccept(false);
+    }
     
     static void USBD_GetDescriptor(const Toastbox::USB::SetupRequest& req) {
         uint16_t len = 0U;
@@ -822,31 +855,208 @@ public:
         Send(0x81, &csw, sizeof(csw));
     }
     
-//    static const CBW* CBWRead() {
-//        alignas(void*)
-//        static union [[gnu::packed]] {
-//            CBW cbw;
-//            uint8_t _[512];
-//        } packet = {};
-//        static_assert(sizeof(packet) == MaxPacketSizeIn());
-//        static_assert(sizeof(packet) == 512);
-//        
-//        const std::optional<size_t> len = Recv(0x01, &packet, sizeof(packet));
-//        if (!len) break;
-//        
-//        AssertLED(*len == sizeof(CBW));
-//        AssertLED(packet.cbw.dSignature == 0x43425355);
-//        AssertLED(packet.cbw.bLUN == 0);
-//        AssertLED(packet.cbw.bCBLength > 0);
-//        AssertLED(packet.cbw.bCBLength < 16);
-//        
-//        return &packet.cbw;
-//    }
     
     
-//    static const CmdRead() {
-//        
-//    }
+    
+    
+    
+    
+    
+    alignas(void*)
+    static const inline uint8_t MSC_Page00_Inquiry_Data[] = {
+        0x00,
+        0x00,
+        0x00,
+        0x02,
+        0x00,
+        0x80,
+    };
+    
+    alignas(void*)
+    static const inline uint8_t MSC_Page80_Inquiry_Data[] = {
+        0x00,
+        0x80,
+        0x00,
+        0x08,
+        0x20,     /* Put Product Serial number */
+        0x20,
+        0x20,
+        0x20,
+    };
+    
+    static constexpr size_t STANDARD_INQUIRY_DATA_LEN = 0x24;
+    
+    alignas(void*)
+    static const inline uint8_t STORAGE_Inquirydata_HS[] = {
+        0x00,
+        0x80,
+        0x02,
+        0x02,
+        (STANDARD_INQUIRY_DATA_LEN - 5),
+        0x00,
+        0x00,
+        0x00,
+        'S', 'T', 'M', ' ', ' ', ' ', ' ', ' ',
+        'P', 'r', 'o', 'd', 'u', 'c', 't', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        '0', '.', '0' ,'1',
+    };
+    
+    static_assert(sizeof(STORAGE_Inquirydata_HS) == STANDARD_INQUIRY_DATA_LEN);
+
+    alignas(void*)
+    static inline uint8_t ModeSense6[] = {
+        0x03,
+        0x00,
+        0x00, // Read-only==0x80, Read-write==0x00
+        0x00,
+    };
+    
+    static void SCSI_TestUnitReady(uint8_t lun, const uint8_t *params) {
+    }
+    
+    static void SCSI_Inquiry(uint8_t lun, const uint8_t *params) {
+        if ((params[1] & 0x01U) != 0U) /* Evpd is set */
+        {
+            if (params[2] == 0U) /* Request for Supported Vital Product Data Pages*/
+            {
+                toaster_printf("SCSI_Inquiry-Page00\n");
+                Send(0x81, MSC_Page00_Inquiry_Data, sizeof(MSC_Page00_Inquiry_Data));
+            }
+            else if (params[2] == 0x80U) /* Request for VPD page 0x80 Unit Serial Number */
+            {
+                toaster_printf("SCSI_Inquiry-Page80\n");
+                Send(0x81, MSC_Page80_Inquiry_Data, sizeof(MSC_Page80_Inquiry_Data));
+            }
+            else /* Request Not supported */
+            {
+                AssertLED(false);
+            }
+        }
+        else
+        {
+            toaster_printf("SCSI_Inquiry-Standard\n");
+            const size_t len = std::min((size_t)params[4], sizeof(STORAGE_Inquirydata_HS));
+            Send(0x81, STORAGE_Inquirydata_HS, len);
+        }
+    }
+    
+    static void SCSI_ReadCapacity10(uint8_t lun, const uint8_t *params) {
+        toaster_printf("SCSI_ReadCapacity10\n");
+        
+        alignas(void*)
+        struct [[gnu::packed]] {
+            uint32_t blockCount;
+            uint32_t blockSize;
+        
+        } resp = {
+            .blockCount = Toastbox::Endian::BFH_U32(Filesystem::_SectorCount-1),
+            .blockSize  = Toastbox::Endian::BFH_U32(Filesystem::_BytesPerSector),
+        };
+        
+        Send(0x81, &resp, sizeof(resp));
+    }
+    
+    static void SCSI_ModeSense6(uint8_t lun, const uint8_t *params) {
+        toaster_printf("SCSI_ModeSense6\n");
+        const size_t len = std::min((size_t)params[4], sizeof(ModeSense6));
+        Send(0x81, ModeSense6, len);
+    }
+    
+    static void SCSI_AllowPreventRemovable(uint8_t lun, const uint8_t *params) {
+        toaster_printf("SCSI_AllowPreventRemovable\n");
+    }
+    
+    static void SCSI_Read10(uint8_t lun, const uint8_t* params) {
+        struct [[gnu::packed]] {
+            uint8_t op;
+            uint8_t flags;
+            uint32_t blockAddr;
+            uint8_t groupNumber;
+            uint16_t blockLen;
+            uint8_t control;
+        } cmd;
+        
+        memcpy(&cmd, params, sizeof(cmd));
+        cmd.blockAddr = Toastbox::Endian::HFB_U32(cmd.blockAddr);
+        cmd.blockLen = Toastbox::Endian::HFB_U16(cmd.blockLen);
+        
+        const uint8_t* Fs = (const uint8_t*)&Filesystem::_Data;
+        const uint8_t* DataStartAddr = (const uint8_t*)&Filesystem::_Data.data;
+        
+        const uint8_t* addr = Fs+(cmd.blockAddr*Filesystem::_BytesPerSector);
+        size_t rem = cmd.blockLen*Filesystem::_BytesPerSector;
+        
+        toaster_printf("SCSI_Read10 %u %u (0x%x %u)\n",
+            (uint32_t)cmd.blockAddr, (uint32_t)cmd.blockLen,
+            (uint32_t)addr, (uint32_t)rem
+        );
+        
+        if (addr < DataStartAddr) {
+            const size_t chunkLen = std::min(rem, (size_t)(DataStartAddr-addr));
+            Send(0x81, addr, chunkLen);
+            rem -= chunkLen;
+            addr += chunkLen;
+        }
+        
+        while (rem) {
+            const uint8_t* MassData = (const uint8_t*)0x20010000;
+            constexpr size_t ChunkLen = 63*1024;
+            
+            const size_t chunkLen = std::min(rem, ChunkLen);
+            Send(0x81, MassData, chunkLen);
+            rem -= chunkLen;
+        }
+        
+        toaster_printf("SCSI_Read10 SENT\n");
+    }
+    
+    static void SCSI_Write10(uint8_t lun, const uint8_t* params) {
+        toaster_printf("SCSI_Write10-START\n");
+        
+        struct [[gnu::packed]] {
+            uint8_t op;
+            uint8_t flags;
+            uint32_t blockAddr;
+            uint8_t groupNumber;
+            uint16_t blockLen;
+            uint8_t control;
+        } cmd;
+        
+        memcpy(&cmd, params, sizeof(cmd));
+        cmd.blockAddr = Toastbox::Endian::HFB_U32(cmd.blockAddr);
+        cmd.blockLen = Toastbox::Endian::HFB_U16(cmd.blockLen);
+        
+        const uint8_t* Fs = (const uint8_t*)&Filesystem::_Data;
+        const uint8_t* DataStartAddr = (const uint8_t*)&Filesystem::_Data.data;
+        const uint8_t* addr = Fs+(cmd.blockAddr*Filesystem::_BytesPerSector);
+        size_t rem = cmd.blockLen*Filesystem::_BytesPerSector;
+        
+    //    if (addr < DataStartAddr) {
+    //        toaster_printf("SCSI_Write10-addr < DataStartAddr\n");
+    //        AssertLED(false);
+    //    }
+        
+        while (rem) {
+            uint8_t* MassData = (uint8_t*)0x20010000;
+            constexpr size_t ChunkLen = 63*1024;
+            
+            const size_t chunkLen = std::min(rem, ChunkLen);
+            Recv(0x01, MassData, chunkLen);
+            rem -= chunkLen;
+        }
+        
+        toaster_printf("SCSI_Write10-END\n");
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
     
     static void TaskEP1() {
         alignas(void*)
