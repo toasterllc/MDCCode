@@ -1033,13 +1033,13 @@ public:
                 const uint8_t lun = packet.cbw.bLUN;
                 const uint8_t* cb = &packet.cbw.CB[0];
                 switch (cb[0]) {
-                case SCSI_TEST_UNIT_READY:          SCSI_TestUnitReady(lun, cb);
-                case SCSI_INQUIRY:                  SCSI_Inquiry(lun, cb);
-                case SCSI_ALLOW_MEDIUM_REMOVAL:     SCSI_AllowPreventRemovable(lun, cb);
-                case SCSI_MODE_SENSE6:              SCSI_ModeSense6(lun, cb);
-                case SCSI_READ_CAPACITY10:          SCSI_ReadCapacity10(lun, cb);
-                case SCSI_READ10:                   SCSI_Read10(lun, cb, s);
-                case SCSI_WRITE10:                  SCSI_Write10(lun, cb);
+                case SCSI_TEST_UNIT_READY:          SCSI_TestUnitReady(lun, cb); break;
+                case SCSI_INQUIRY:                  SCSI_Inquiry(lun, cb); break;
+                case SCSI_ALLOW_MEDIUM_REMOVAL:     SCSI_AllowPreventRemovable(lun, cb); break;
+                case SCSI_MODE_SENSE6:              SCSI_ModeSense6(lun, cb); break;
+                case SCSI_READ_CAPACITY10:          SCSI_ReadCapacity10(lun, cb); break;
+                case SCSI_READ10:                   SCSI_Read10(lun, cb, s); break;
+                case SCSI_WRITE10:                  SCSI_Write10(lun, cb); break;
                 }
                 
                 MSC_BOT_SendCSW(packet.cbw.dTag, 0, 0);
@@ -1096,15 +1096,16 @@ public:
                 const uint8_t* cb = &packet.cbw.CB[0];
                 const STM::Cmd* cmd = nullptr;
                 switch (cb[0]) {
-                case SCSI_TEST_UNIT_READY:          SCSI_TestUnitReady(lun, cb);
-                case SCSI_INQUIRY:                  SCSI_Inquiry(lun, cb);
-                case SCSI_ALLOW_MEDIUM_REMOVAL:     SCSI_AllowPreventRemovable(lun, cb);
-                case SCSI_MODE_SENSE6:              SCSI_ModeSense6(lun, cb);
-                case SCSI_READ_CAPACITY10:          SCSI_ReadCapacity10(lun, cb);
-                case SCSI_READ10:                   SCSI_Read10(lun, cb);
+                case SCSI_TEST_UNIT_READY:          SCSI_TestUnitReady(lun, cb); break;
+                case SCSI_INQUIRY:                  SCSI_Inquiry(lun, cb); break;
+                case SCSI_ALLOW_MEDIUM_REMOVAL:     SCSI_AllowPreventRemovable(lun, cb); break;
+                case SCSI_MODE_SENSE6:              SCSI_ModeSense6(lun, cb); break;
+                case SCSI_READ_CAPACITY10:          SCSI_ReadCapacity10(lun, cb); break;
+                case SCSI_READ10:                   SCSI_Read10(lun, cb); break;
                 case SCSI_WRITE10: {
                     cmd = SCSI_Write10(lun, cb);
                     if (cmd) return *cmd;
+                    break;
                 }}
                 
                 MSC_BOT_SendCSW(packet.cbw.dTag, 0, 0);
