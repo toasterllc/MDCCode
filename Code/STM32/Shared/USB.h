@@ -828,7 +828,7 @@ public:
         toaster_printf("SCSI_AllowPreventRemovable\n");
     }
     
-    static void SCSI_Read10(uint8_t lun, const uint8_t* params) {
+    static void SCSI_Read10(uint8_t lun, const uint8_t* params, bool status=false) {
         struct [[gnu::packed]] {
             uint8_t op;
             uint8_t flags;
@@ -844,35 +844,99 @@ public:
         
         const uint8_t* Fs = (const uint8_t*)&Filesystem::_Data;
         const uint8_t* DataStartAddr = (const uint8_t*)&Filesystem::_Data.data;
+        const size_t off = cmd.blockAddr*Filesystem::_BytesPerSector;
+        const uint8_t* addr = Fs+off;
+        const size_t len = cmd.blockLen*Filesystem::_BytesPerSector;
+        size_t rem = len;
         
-        const uint8_t* addr = Fs+(cmd.blockAddr*Filesystem::_BytesPerSector);
-        size_t rem = cmd.blockLen*Filesystem::_BytesPerSector;
+        constexpr size_t DataOffset = offsetof(decltype(Filesystem::_Data), data);
         
         toaster_printf("SCSI_Read10 %u %u (0x%x %u)\n",
             (uint32_t)cmd.blockAddr, (uint32_t)cmd.blockLen,
             (uint32_t)addr, (uint32_t)rem
         );
         
-        if (addr < DataStartAddr) {
-            const size_t chunkLen = std::min(rem, (size_t)(DataStartAddr-addr));
-            Send(0x81, addr, chunkLen);
-            rem -= chunkLen;
-            addr += chunkLen;
+        // Magic offset
+        if (off==DataOffset && len==512) {
+            alignas(void*)
+            static union [[gnu::packed]] {
+                uint8_t status;
+                uint8_t _[512];
+            } resp = {};
+            
+            resp.status = status;
+            
+            Send(0x81, &resp, sizeof(resp));
+        
+        } else {
+            if (off < DataOffset) {
+                const size_t chunkLen = std::min(rem, (size_t)(DataStartAddr-addr));
+                Send(0x81, addr, chunkLen);
+                rem -= chunkLen;
+                addr += chunkLen;
+            }
+            
+            while (rem) {
+                const uint8_t* MassData = (const uint8_t*)0x20010000;
+                constexpr size_t ChunkLen = 63*1024;
+                
+                const size_t chunkLen = std::min(rem, ChunkLen);
+                Send(0x81, MassData, chunkLen);
+                rem -= chunkLen;
+            }
         }
         
-        while (rem) {
-            const uint8_t* MassData = (const uint8_t*)0x20010000;
-            constexpr size_t ChunkLen = 63*1024;
-            
-            const size_t chunkLen = std::min(rem, ChunkLen);
-            Send(0x81, MassData, chunkLen);
-            rem -= chunkLen;
-        }
+//        if (off < DataOffset) {
+//            const size_t chunkLen = std::min(rem, (size_t)(DataStartAddr-addr));
+//            Send(0x81, addr, chunkLen);
+//            rem -= chunkLen;
+//            addr += chunkLen;
+//        
+//        } else if (off == DataOffset) {
+//            
+//            
+//        } else {
+//            
+//        }
+//        
+//        while (rem) {
+//            const uint8_t* MassData = (const uint8_t*)0x20010000;
+//            constexpr size_t ChunkLen = 63*1024;
+//            
+//            const size_t chunkLen = std::min(rem, ChunkLen);
+//            Send(0x81, MassData, chunkLen);
+//            rem -= chunkLen;
+//        }
+//        
+//        
+//        
+//        if (off == DataOffset) {
+//            
+//        }
+//        
+//        if (addr < DataStartAddr) {
+//            const size_t chunkLen = std::min(rem, (size_t)(DataStartAddr-addr));
+//            Send(0x81, addr, chunkLen);
+//            rem -= chunkLen;
+//            addr += chunkLen;
+//        
+//        } else {
+//            
+//        }
+//        
+//        while (rem) {
+//            const uint8_t* MassData = (const uint8_t*)0x20010000;
+//            constexpr size_t ChunkLen = 63*1024;
+//            
+//            const size_t chunkLen = std::min(rem, ChunkLen);
+//            Send(0x81, MassData, chunkLen);
+//            rem -= chunkLen;
+//        }
         
         toaster_printf("SCSI_Read10 SENT\n");
     }
     
-    static void SCSI_Write10(uint8_t lun, const uint8_t* params) {
+    static const STM::Cmd* SCSI_Write10(uint8_t lun, const uint8_t* params) {
         toaster_printf("SCSI_Write10-START\n");
         
         struct [[gnu::packed]] {
@@ -888,46 +952,48 @@ public:
         cmd.blockAddr = Toastbox::Endian::HFB_U32(cmd.blockAddr);
         cmd.blockLen = Toastbox::Endian::HFB_U16(cmd.blockLen);
         
-        const uint8_t* Fs = (const uint8_t*)&Filesystem::_Data;
-        const uint8_t* DataStartAddr = (const uint8_t*)&Filesystem::_Data.data;
-        const uint8_t* addr = Fs+(cmd.blockAddr*Filesystem::_BytesPerSector);
-        size_t rem = cmd.blockLen*Filesystem::_BytesPerSector;
+//        const uint8_t* Fs = (const uint8_t*)&Filesystem::_Data;
+//        const uint8_t* DataStartAddr = (const uint8_t*)&Filesystem::_Data.data;
+        const size_t off = cmd.blockAddr*Filesystem::_BytesPerSector;
+//        const uint8_t* addr = Fs+off;
+        const size_t len = cmd.blockLen*Filesystem::_BytesPerSector;
+        size_t rem = len;
+        
+        constexpr size_t DataOffset = offsetof(decltype(Filesystem::_Data), data);
+        
+        alignas(void*)
+        static STM::Cmd Cmd;
         
     //    if (addr < DataStartAddr) {
     //        toaster_printf("SCSI_Write10-addr < DataStartAddr\n");
     //        AssertLED(false);
     //    }
         
-        while (rem) {
-            uint8_t* MassData = (uint8_t*)0x20010000;
-            constexpr size_t ChunkLen = 63*1024;
-            
-            const size_t chunkLen = std::min(rem, ChunkLen);
-            Recv(0x01, MassData, chunkLen);
-            rem -= chunkLen;
-        }
+        // This is a STM::Cmd being written
+        if (off==DataOffset && len==sizeof(Cmd)) {
+            Recv(0x01, &Cmd, sizeof(Cmd));
+            return &Cmd;
         
-        toaster_printf("SCSI_Write10-END\n");
+        // This is something else being written
+        } else {
+            while (rem) {
+                uint8_t* MassData = (uint8_t*)0x20010000;
+                constexpr size_t ChunkLen = 63*1024;
+                
+                const size_t chunkLen = std::min(rem, ChunkLen);
+                Recv(0x01, MassData, chunkLen);
+                rem -= chunkLen;
+            }
+            
+            return nullptr;
+        }
     }
 
     
     
     
     
-    
-    
-    
-    
-    
-    static void TaskEP1() {
-        alignas(void*)
-        static union [[gnu::packed]] {
-            CBW cbw;
-            uint8_t _[512];
-        } packet = {};
-        static_assert(sizeof(packet) == MaxPacketSizeIn());
-        static_assert(sizeof(packet) == 512);
-        
+    static void SendStatus(bool s) {
         Toastbox::IntState ints(false);
         for (;;) {
             T_Scheduler::Wait([] { return _State == State::Connected; });
@@ -938,6 +1004,15 @@ public:
             T_Scheduler::Sleep(T_Scheduler::template Ms<100>);
             
             for (;;) {
+                alignas(void*)
+                static union [[gnu::packed]] {
+                    CBW cbw;
+                    uint8_t _[512];
+                } packet = {};
+                
+                static_assert(sizeof(packet) == MaxPacketSizeIn());
+                static_assert(sizeof(packet) == 512);
+                
                 const std::optional<size_t> len = Recv(0x01, &packet, sizeof(packet));
                 if (!len) break;
                 
@@ -956,16 +1031,81 @@ public:
                 #define SCSI_WRITE10                                0x2AU
                 
                 const uint8_t lun = packet.cbw.bLUN;
-                const uint8_t* cmd = &packet.cbw.CB[0];
-                switch (cmd[0]) {
-                case SCSI_TEST_UNIT_READY:          return SCSI_TestUnitReady(lun, cmd);
-                case SCSI_INQUIRY:                  return SCSI_Inquiry(lun, cmd);
-                case SCSI_ALLOW_MEDIUM_REMOVAL:     return SCSI_AllowPreventRemovable(lun, cmd);
-                case SCSI_MODE_SENSE6:              return SCSI_ModeSense6(lun, cmd);
-                case SCSI_READ_CAPACITY10:          return SCSI_ReadCapacity10(lun, cmd);
-                case SCSI_READ10:                   return SCSI_Read10(lun, cmd);
-                case SCSI_WRITE10:                  return SCSI_Write10(lun, cmd);
+                const uint8_t* cb = &packet.cbw.CB[0];
+                switch (cb[0]) {
+                case SCSI_TEST_UNIT_READY:          SCSI_TestUnitReady(lun, cb);
+                case SCSI_INQUIRY:                  SCSI_Inquiry(lun, cb);
+                case SCSI_ALLOW_MEDIUM_REMOVAL:     SCSI_AllowPreventRemovable(lun, cb);
+                case SCSI_MODE_SENSE6:              SCSI_ModeSense6(lun, cb);
+                case SCSI_READ_CAPACITY10:          SCSI_ReadCapacity10(lun, cb);
+                case SCSI_READ10:                   SCSI_Read10(lun, cb, s);
+                case SCSI_WRITE10:                  SCSI_Write10(lun, cb);
                 }
+                
+                MSC_BOT_SendCSW(packet.cbw.dTag, 0, 0);
+            }
+        }
+    }
+    
+    static void AcceptCommand(bool s) {
+        SendStatus(s);
+    }
+    
+    
+    
+    
+    
+    static const STM::Cmd& SCSIHandle() {
+        Toastbox::IntState ints(false);
+        for (;;) {
+            T_Scheduler::Wait([] { return _State == State::Connected; });
+            
+            // XXX: wait for enumeration
+            // XXX: why is this necessary?
+            // XXX: fixme
+            T_Scheduler::Sleep(T_Scheduler::template Ms<100>);
+            
+            for (;;) {
+                alignas(void*)
+                static union [[gnu::packed]] {
+                    CBW cbw;
+                    uint8_t _[512];
+                } packet = {};
+                
+                static_assert(sizeof(packet) == MaxPacketSizeIn());
+                static_assert(sizeof(packet) == 512);
+                
+                const std::optional<size_t> len = Recv(0x01, &packet, sizeof(packet));
+                if (!len) break;
+                
+                AssertLED(*len == sizeof(CBW));
+                AssertLED(packet.cbw.dSignature == 0x43425355);
+                AssertLED(packet.cbw.bLUN == 0);
+                AssertLED(packet.cbw.bCBLength > 0);
+                AssertLED(packet.cbw.bCBLength < 16);
+                
+                #define SCSI_TEST_UNIT_READY                        0x00U
+                #define SCSI_INQUIRY                                0x12U
+                #define SCSI_MODE_SENSE6                            0x1AU
+                #define SCSI_ALLOW_MEDIUM_REMOVAL                   0x1EU
+                #define SCSI_READ_CAPACITY10                        0x25U
+                #define SCSI_READ10                                 0x28U
+                #define SCSI_WRITE10                                0x2AU
+                
+                const uint8_t lun = packet.cbw.bLUN;
+                const uint8_t* cb = &packet.cbw.CB[0];
+                const STM::Cmd* cmd = nullptr;
+                switch (cb[0]) {
+                case SCSI_TEST_UNIT_READY:          SCSI_TestUnitReady(lun, cb);
+                case SCSI_INQUIRY:                  SCSI_Inquiry(lun, cb);
+                case SCSI_ALLOW_MEDIUM_REMOVAL:     SCSI_AllowPreventRemovable(lun, cb);
+                case SCSI_MODE_SENSE6:              SCSI_ModeSense6(lun, cb);
+                case SCSI_READ_CAPACITY10:          SCSI_ReadCapacity10(lun, cb);
+                case SCSI_READ10:                   SCSI_Read10(lun, cb);
+                case SCSI_WRITE10: {
+                    cmd = SCSI_Write10(lun, cb);
+                    if (cmd) return *cmd;
+                }}
                 
                 MSC_BOT_SendCSW(packet.cbw.dTag, 0, 0);
             }

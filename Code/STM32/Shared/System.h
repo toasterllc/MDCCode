@@ -104,7 +104,7 @@ private:
     
     struct _TaskEP0;
     struct _TaskEP1;
-    struct _TaskCmdHandle;
+//    struct _TaskCmdHandle;
     struct _TaskMSPComms;
     struct _TaskBatteryStatus;
     
@@ -126,7 +126,7 @@ public:
         
         _TaskEP0,                                   // T_Tasks: list of tasks
         _TaskEP1,
-        _TaskCmdHandle,
+//        _TaskCmdHandle,
         _TaskMSPComms,
         _TaskBatteryStatus,
         T_Tasks...
@@ -143,14 +143,11 @@ public:
     >;
     
     static void USBSendStatus(bool s) {
-        alignas(void*) // Aligned to send via USB
-        bool status = s;
-        
-        USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
+        USB::SendStatus(s);
     }
     
     static void USBAcceptCommand(bool s) {
-        USBSendStatus(s);
+        USB::SendStatus(s);
     }
     
     static std::optional<MSP::Resp> MSPSend(const MSP::Cmd& cmd) {
@@ -243,7 +240,16 @@ private:
     
     struct _TaskEP1 {
         static void Run() {
-            USB::TaskEP1();
+            using namespace STM;
+            const STM::Cmd cmd = USB::SCSIHandle();
+            switch (cmd.op) {
+            case Op::Reset:             _Reset(cmd);            break;
+            case Op::StatusGet:         _StatusGet(cmd);        break;
+            case Op::BatteryStatusGet:  _BatteryStatusGet(cmd); break;
+            case Op::BootloaderInvoke:  _BootloaderInvoke(cmd); break;
+            case Op::LEDSet:            _LEDSet(cmd);           break;
+            default:                    T_CmdHandle(cmd);       break;
+            }
         }
         
         // Task stack
@@ -261,41 +267,41 @@ private:
     
     
     
-    struct _TaskCmdHandle {
-        static bool Handle(const STM::Cmd& c) {
-            using namespace STM;
-            // Short-circuit if we already have a command, and the new command isn't a Reset command.
-            // We specifically allow Reset commands to interrupt whatever command is currently
-            // underway, since Reset commands are meant to recover from a broken state and
-            // _TaskCmdHandle might be hung.
-            if (_Cmd && c.op!=Op::Reset) return false;
-            _Cmd = c;
-            Scheduler::template Start<_TaskCmdHandle>(Run);
-            return true;
-        }
-        
-        static void Run() {
-            using namespace STM;
-            
-            switch (_Cmd->op) {
-            case Op::Reset:             _Reset(*_Cmd);              break;
-            case Op::StatusGet:         _StatusGet(*_Cmd);          break;
-            case Op::BatteryStatusGet:  _BatteryStatusGet(*_Cmd);   break;
-            case Op::BootloaderInvoke:  _BootloaderInvoke(*_Cmd);   break;
-            case Op::LEDSet:            _LEDSet(*_Cmd);             break;
-            default:                    T_CmdHandle(*_Cmd);         break;
-            }
-            
-            _Cmd = std::nullopt;
-        }
-        
-        static inline std::optional<STM::Cmd> _Cmd;
-        
-        // Task stack
-        [[gnu::section(".stack._TaskCmdHandle")]]
-        alignas(void*)
-        static inline uint8_t Stack[1024];
-    };
+//    struct _TaskCmdHandle {
+//        static bool Handle(const STM::Cmd& c) {
+//            using namespace STM;
+//            // Short-circuit if we already have a command, and the new command isn't a Reset command.
+//            // We specifically allow Reset commands to interrupt whatever command is currently
+//            // underway, since Reset commands are meant to recover from a broken state and
+//            // _TaskCmdHandle might be hung.
+//            if (_Cmd && c.op!=Op::Reset) return false;
+//            _Cmd = c;
+//            Scheduler::template Start<_TaskCmdHandle>(Run);
+//            return true;
+//        }
+//        
+//        static void Run() {
+//            using namespace STM;
+//            
+//            switch (_Cmd->op) {
+//            case Op::Reset:             _Reset(*_Cmd);              break;
+//            case Op::StatusGet:         _StatusGet(*_Cmd);          break;
+//            case Op::BatteryStatusGet:  _BatteryStatusGet(*_Cmd);   break;
+//            case Op::BootloaderInvoke:  _BootloaderInvoke(*_Cmd);   break;
+//            case Op::LEDSet:            _LEDSet(*_Cmd);             break;
+//            default:                    T_CmdHandle(*_Cmd);         break;
+//            }
+//            
+//            _Cmd = std::nullopt;
+//        }
+//        
+//        static inline std::optional<STM::Cmd> _Cmd;
+//        
+//        // Task stack
+//        [[gnu::section(".stack._TaskCmdHandle")]]
+//        alignas(void*)
+//        static inline uint8_t Stack[1024];
+//    };
     
     struct _TaskMSPComms {
         static inline bool Lock = false;
