@@ -241,14 +241,16 @@ private:
     struct _TaskEP1 {
         static void Run() {
             using namespace STM;
-            const STM::Cmd cmd = USB::SCSIHandle();
-            switch (cmd.op) {
-            case Op::Reset:             _Reset(cmd);            break;
-            case Op::StatusGet:         _StatusGet(cmd);        break;
-            case Op::BatteryStatusGet:  _BatteryStatusGet(cmd); break;
-            case Op::BootloaderInvoke:  _BootloaderInvoke(cmd); break;
-            case Op::LEDSet:            _LEDSet(cmd);           break;
-            default:                    T_CmdHandle(cmd);       break;
+            for (;;) {
+                const STM::Cmd cmd = USB::SCSIHandle();
+                switch (cmd.op) {
+                case Op::Reset:             _Reset(cmd);            break;
+                case Op::StatusGet:         _StatusGet(cmd);        break;
+                case Op::BatteryStatusGet:  _BatteryStatusGet(cmd); break;
+                case Op::BootloaderInvoke:  _BootloaderInvoke(cmd); break;
+                case Op::LEDSet:            _LEDSet(cmd);           break;
+                default:                    T_CmdHandle(cmd);       break;
+                }
             }
         }
         
@@ -620,9 +622,10 @@ private:
     }
     
     static void _LEDSet(const STM::Cmd& cmd) {
+//        AssertXXX(false);
         switch (cmd.arg.LEDSet.idx) {
-        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
-        case 1:  USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
+        case 0:  USBAcceptCommand(true);  LED0::Write(cmd.arg.LEDSet.on); break;
+        case 1:  USBAcceptCommand(true);  LED1::Write(cmd.arg.LEDSet.on); break;
         default: USBAcceptCommand(false); return;
         }
     }
