@@ -65,6 +65,8 @@
 		556E45FF26B13CBD006681FA /* SendRight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		556E460126B1562F006681FA /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
 		5588910D2736258A0004458F /* ImgAutoExposure.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgAutoExposure.h; sourceTree = "<group>"; };
+		558E0DBD2C5D8AA80084F4DC /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MDCDevice.h; path = ../MDCStudio/Source/MDCDevice.h; sourceTree = "<group>"; };
+		558E0DBE2C5D8AB40084F4DC /* MDCDeviceReal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MDCDeviceReal.h; path = ../MDCStudio/Source/MDCDeviceReal.h; sourceTree = "<group>"; };
 		558FFC5929C907180022E840 /* ColorMatrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ColorMatrix.h; path = ../MDCStudio/Source/ColorMatrix.h; sourceTree = "<group>"; };
 		559D8E0E2593EAB200836B47 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		559D8E0F2594205300836B47 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -232,6 +234,8 @@
 				559D8E0E2593EAB200836B47 /* Util.h */,
 				55E98EBB25A921D80062B458 /* ColorChecker.h */,
 				558FFC5929C907180022E840 /* ColorMatrix.h */,
+				558E0DBD2C5D8AA80084F4DC /* MDCDevice.h */,
+				558E0DBE2C5D8AB40084F4DC /* MDCDeviceReal.h */,
 				553630EA2B7C11B40054E321 /* MDCDevicesManager.h */,
 				55B9745D24C504E2000B2633 /* AppDelegate.mm */,
 				55E98EB525A920030062B458 /* MainView.h */,

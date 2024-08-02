@@ -334,12 +334,13 @@ public:
         Transfer(ImgCaptureMsg(dstRAMBlock, skipCount));
         
         // Wait for image to be captured
-        constexpr uint16_t MaxAttempts = 1000;
-        for (uint16_t i=0; i<MaxAttempts; i++) {
+        constexpr uint16_t TimeoutMs = 2000;
+        constexpr uint16_t Attempts = 1000;
+        for (uint16_t i=0; i<Attempts; i++) {
             const auto status = ImgCaptureStatus();
             // Try again if the image hasn't been captured yet
             if (!status.done()) {
-                _Sleep(_Ms<1>);
+                _Sleep(_Ms<TimeoutMs/Attempts>);
                 continue;
             }
             const uint32_t imgPixelCount = status.pixelCount();
