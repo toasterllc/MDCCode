@@ -334,7 +334,7 @@ public:
         Transfer(ImgCaptureMsg(dstRAMBlock, skipCount));
         
         // Wait for image to be captured
-        constexpr uint16_t TimeoutMs = 2000;
+        constexpr uint16_t TimeoutMs = 3000;
         constexpr uint16_t Attempts = 1000;
         for (uint16_t i=0; i<Attempts; i++) {
             const auto status = ImgCaptureStatus();

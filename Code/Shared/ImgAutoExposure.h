@@ -16,27 +16,30 @@ public:
         const int8_t delta = _Log2(shadows)-_Log2(highlights);
         const uint16_t tprev = _t;
         
-//        printf("DELTA: %d\n", delta);
+//        printf("\n\nDELTA: %d\n", delta);
+        
+        uint32_t t = _t; // u32 to prevent overflow in our math below
         if (delta > AdjustThreshold) {
-            _t *= delta;
-            _t /= AdjustThreshold;
+            t *= delta;
+            t /= AdjustThreshold;
             
-//            _t *= 3;
-//            _t /= 2;
+//            t *= 3;
+//            t /= 2;
             
-//            _t <<= 1;
+//            t <<= 1;
 
         } else if (delta < -AdjustThreshold) {
-            _t *= AdjustThreshold;
-            _t /= -delta;
+            t *= AdjustThreshold;
+            t /= -delta;
             
-//            _t *= 2;
-//            _t /= 3;
+//            t *= 2;
+//            t /= 3;
             
-//            _t >>= 1;
+//            t >>= 1;
         }
         
-        _t = std::clamp(_t, (uint16_t)1, (uint16_t)Img::CoarseIntTimeMax);
+        _t = std::clamp(t, (uint32_t)1, (uint32_t)Img::CoarseIntTimeMax);
+//        printf("_t %d -> %d\n", tprev, _t);
         
 //        int32_t quantum = 0;
 //        if (delta > AdjustThreshold) {
