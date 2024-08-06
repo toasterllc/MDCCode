@@ -185,7 +185,8 @@ static NSString* _BatteryLevelImage(float level) {
     }
     
     [_batteryImageView setImage:[NSImage imageNamed:batteryImage]];
-    [_percentageLabel setStringValue:[NSString stringWithFormat:@"%ju%%", (uintmax_t)std::round(status->batteryLevel*100)]];
+    const int percent = std::min(99, (int)std::round(status->batteryLevel*100));
+    [_percentageLabel setStringValue:[NSString stringWithFormat:@"%ju%%", (uintmax_t)percent]];
     [_percentageLabel setTextColor:percentageColor];
     [_descriptionLabel setStringValue:@(ImageLibraryStatus(device->imageLibrary()).c_str())];
     
