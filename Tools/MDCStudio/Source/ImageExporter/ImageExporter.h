@@ -110,16 +110,13 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             tiff.push( 50721, TIFF::SRational,  9, colorMatrixPointer1 );       tc++; // ColorMatrix1
             tiff.push( 50722, TIFF::SRational,  9, colorMatrixPointer2 );       tc++; // ColorMatrix2
             tiff.push( 50728, TIFF::Rational,   3, asShotNeutralPointer );      tc++; // AsShotNeutral
-            tiff.push( 50778, TIFF::Short,      1, 0x00000011 );                tc++; // CalibrationIlluminant1
-            tiff.push( 50779, TIFF::Short,      1, 0x00000015 );                tc++; // CalibrationIlluminant2
+            tiff.push( 50778, TIFF::Short,      1, 0x00000011 );                tc++; // CalibrationIlluminant1 (StandardA)
+            tiff.push( 50779, TIFF::Short,      1, 0x00000017 );                tc++; // CalibrationIlluminant2 (D50)
             tiff.push(nextIFDOffset);
             tiff.set(tagCount, tc);
             
-            
             const double illumEst[3] = { rec.info.illumEst[0], rec.info.illumEst[1], rec.info.illumEst[2] };
-//            const double illumEst[3] = { 1/rec.info.illumEst[0], 1/rec.info.illumEst[1], 1/rec.info.illumEst[2] };
-            
-            
+//            const double illumEst2[3] = { 1/rec.info.illumEst[0], 1/rec.info.illumEst[1], 1/rec.info.illumEst[2] };
             
 //            // ### 1
 //            {
@@ -153,9 +150,9 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
 //                    tiff.push(ccm.beginRow(), ccm.endRow());
 //                }
 //            }
-            
-            
-            
+//            
+//            
+//            
             // ### 2
             {
                 // ColorMatrix1
