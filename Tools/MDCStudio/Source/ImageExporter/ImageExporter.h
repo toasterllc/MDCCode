@@ -92,6 +92,7 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             
             uint16_t tc = 0;
             TIFF::Val<uint16_t> tagCount;
+            TIFF::Val<uint32_t> batteryLevelPointer;
             TIFF::Val<uint32_t> colorMatrixPointer1;
             TIFF::Val<uint32_t> colorMatrixPointer2;
             TIFF::Val<uint32_t> asShotNeutralPointer;
@@ -111,6 +112,7 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             tiff.push( 339,   TIFF::Short,      1, 0x00000001 );                tc++; // SampleFormat
             tiff.push( 33421, TIFF::Short,      2, 0x00020002 );                tc++; // CFARepeatPatternDim
             tiff.push( 33422, TIFF::Byte,       4, 0x01020001 );                tc++; // CFAPattern
+            tiff.push( 33423, TIFF::Rational,   1, batteryLevelPointer );       tc++; // BatteryLevel
             tiff.push( 34665, TIFF::Long,       1, exifOffset );                tc++; // EXIFIFD
             tiff.push( 50706, TIFF::Byte,       4, 0x00000301 );                tc++; // DNGVersion
             tiff.push( 50714, TIFF::Short,      1, 0x00000000 );                tc++; // BlackLevel
@@ -123,13 +125,20 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             tiff.push(nextIFDOffset);
             tiff.set(tagCount, tc);
             
+            // BatteryLevel
+            {
+                tiff.set(batteryLevelPointer, tiff.off());
+                const float batteryPercentage = MSP::BatteryLevelFloat(MSP::BatteryLevelLinearize(rec.info.batteryLevelMv));
+                tiff.push(batteryPercentage);
+            }
+            
             {
                 // ColorMatrix1
                 {
                     ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
                     _WhiteBalanceApply(ccm, rec.info.illumEst);
-                    
                     ccm = ccm.inv();
+                    
                     tiff.set(colorMatrixPointer1, tiff.off());
                     tiff.push(ccm.beginRow(), ccm.endRow());
                 }
@@ -138,8 +147,8 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
                 {
                     ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
                     _WhiteBalanceApply(ccm, rec.info.illumEst);
-                    
                     ccm = ccm.inv();
+                    
                     tiff.set(colorMatrixPointer2, tiff.off());
                     tiff.push(ccm.beginRow(), ccm.endRow());
                 }

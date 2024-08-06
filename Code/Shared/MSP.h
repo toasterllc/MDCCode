@@ -24,6 +24,12 @@ constexpr BatteryLevel BatteryLevelInvalid = 0x0000;
 constexpr BatteryLevel BatteryLevelMin     = 0x0001;
 constexpr BatteryLevel BatteryLevelMax     = 0xFFFF;
 
+inline float BatteryLevelFloat(BatteryLevel l) {
+    if (l == BatteryLevelInvalid) return 0;
+    return std::clamp(((float)(l-MSP::BatteryLevelMin) /
+        (MSP::BatteryLevelMax-MSP::BatteryLevelMin))*100, 0.f, 100.f);
+}
+
 // BatteryLevelLinearize(): converts a voltage (in millivolts) into a linear
 // range between BatteryLevelMin and BatteryLevelMax
 inline BatteryLevel BatteryLevelLinearize(BatteryLevelMv mv) {
