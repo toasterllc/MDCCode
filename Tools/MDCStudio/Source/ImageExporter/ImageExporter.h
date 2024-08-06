@@ -49,6 +49,8 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
     using namespace Toastbox;
     using namespace ImagePipeline;
     
+    const Time::Instant timestamp = rec.info.timestamp;
+    
     if (fmt==&Formats::JPEG || fmt==&Formats::PNG) {
         Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
             image.width, image.height, (Img::Pixel*)(image.data.get()));
@@ -67,13 +69,15 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         
         id /* CGMutableImageMetadataRef */ metadata = CFBridgingRelease(CGImageMetadataCreateMutable());
         
-        CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-            kCGImagePropertyExifDictionary, kCGImagePropertyExifDateTimeOriginal,
-            (CFTypeRef)@(Calendar::TimestampEXIFString(rec.info.timestamp).c_str()));
-        
-        CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
-            kCGImagePropertyExifDictionary, kCGImagePropertyExifOffsetTimeOriginal,
-            (CFTypeRef)@(Calendar::TimestampOffsetEXIFString(rec.info.timestamp).c_str()));
+        if (Time::Absolute(timestamp)) {
+            CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
+                kCGImagePropertyExifDictionary, kCGImagePropertyExifDateTimeOriginal,
+                (CFTypeRef)@(Calendar::TimestampEXIFString(timestamp).c_str()));
+            
+            CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
+                kCGImagePropertyExifDictionary, kCGImagePropertyExifOffsetTimeOriginal,
+                (CFTypeRef)@(Calendar::TimestampOffsetEXIFString(timestamp).c_str()));
+        }
         
         CGImageDestinationAddImageAndMetadata((CGImageDestinationRef)imageDest, (CGImageRef)cgimage,
             (CGImageMetadataRef)metadata, nullptr);
@@ -196,28 +200,34 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             constexpr size_t OffsetTimeOriginalLen = 6+1; // +1 for null byte
             
             tiff.push(tagCount);
-            tiff.push( 36864, TIFF::Undefined,  4,                      0x32333230 );                   tc++; // EXIF version
-            tiff.push( 36867, TIFF::ASCII,      DateTimeOriginalLen,    dateTimeOriginalPointer );      tc++; // DateTimeOriginal
-            tiff.push( 36881, TIFF::ASCII,      OffsetTimeOriginalLen,  offsetTimeOriginalPointer );    tc++; // OffsetTimeOriginal
-            tiff.push( 40962, TIFF::Long,       1,                      (uint32_t)image.width );        tc++; // ExifImageWidth
-            tiff.push( 40963, TIFF::Long,       1,                      (uint32_t)image.height );       tc++; // ExifImageHeight
+            tiff.push( 36864, TIFF::Undefined,  4,                      0x32333230 );                       tc++; // EXIF version
+            
+            if (Time::Absolute(timestamp)) {
+                tiff.push( 36867, TIFF::ASCII,      DateTimeOriginalLen,    dateTimeOriginalPointer );      tc++; // DateTimeOriginal
+                tiff.push( 36881, TIFF::ASCII,      OffsetTimeOriginalLen,  offsetTimeOriginalPointer );    tc++; // OffsetTimeOriginal
+            }
+            
+            tiff.push( 40962, TIFF::Long,       1,                      (uint32_t)image.width );            tc++; // ExifImageWidth
+            tiff.push( 40963, TIFF::Long,       1,                      (uint32_t)image.height );           tc++; // ExifImageHeight
             tiff.push(nextIFDOffset);
             tiff.set(tagCount, tc);
             
-            // DateTimeOriginal
-            {
-                const std::string str = Calendar::TimestampEXIFString(rec.info.timestamp);
-                assert(str.size()+1 == DateTimeOriginalLen);
-                tiff.set(dateTimeOriginalPointer, tiff.off());
-                tiff.push(str.c_str(), str.c_str()+DateTimeOriginalLen);
-            }
-            
-            // OffsetTimeOriginal
-            {
-                const std::string str = Calendar::TimestampOffsetEXIFString(rec.info.timestamp);
-                assert(str.size()+1 == OffsetTimeOriginalLen);
-                tiff.set(offsetTimeOriginalPointer, tiff.off());
-                tiff.push(str.c_str(), str.c_str()+OffsetTimeOriginalLen);
+            if (Time::Absolute(timestamp)) {
+                // DateTimeOriginal
+                {
+                    const std::string str = Calendar::TimestampEXIFString(timestamp);
+                    assert(str.size()+1 == DateTimeOriginalLen);
+                    tiff.set(dateTimeOriginalPointer, tiff.off());
+                    tiff.push(str.c_str(), str.c_str()+DateTimeOriginalLen);
+                }
+                
+                // OffsetTimeOriginal
+                {
+                    const std::string str = Calendar::TimestampOffsetEXIFString(timestamp);
+                    assert(str.size()+1 == OffsetTimeOriginalLen);
+                    tiff.set(offsetTimeOriginalPointer, tiff.off());
+                    tiff.push(str.c_str(), str.c_str()+OffsetTimeOriginalLen);
+                }
             }
         }
         
@@ -233,10 +243,12 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         abort();
     }
     
-    struct timeval tv = _TimevalForTimeInstant(rec.info.timestamp);
-    const struct timeval times[] = { tv, tv };
-    int ir = utimes(filePath.c_str(), times);
-    if (ir) throw Toastbox::RuntimeError("utimes failed: %s", strerror(errno));
+    if (Time::Absolute(timestamp)) {
+        struct timeval tv = _TimevalForTimeInstant(timestamp);
+        const struct timeval times[] = { tv, tv };
+        int ir = utimes(filePath.c_str(), times);
+        if (ir) throw Toastbox::RuntimeError("utimes failed: %s", strerror(errno));
+    }
 }
 
 // Single image export to file `filePath`
