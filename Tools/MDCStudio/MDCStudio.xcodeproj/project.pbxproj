@@ -22,6 +22,7 @@
 		553630FF2B7DE6B70054E321 /* Photon-Settings@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553630FD2B7DE6B60054E321 /* Photon-Settings@2x.pdf */; };
 		553631012B7DF3E10054E321 /* Hello-Photon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553631002B7DF3DC0054E321 /* Hello-Photon@2x.pdf */; };
 		5536310A2B7E894B0054E321 /* ImageGridContainerView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 553631032B7E894B0054E321 /* ImageGridContainerView.mm */; };
+		5537FCF52C62CBAC006230F1 /* SourceList-Battery-Charging-Lightning.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 5537FCF42C62CBAC006230F1 /* SourceList-Battery-Charging-Lightning.pdf */; };
 		553EAB792B2452FB00C2B4C8 /* libate.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 553EAB772B2452FB00C2B4C8 /* libate.tbd */; };
 		553EF5522AD325E100157484 /* BatteryLifeView-BestIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */; };
 		553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */; };
@@ -82,7 +83,6 @@
 		55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CA2B23CCCF004D6564 /* STMApp.elf */; };
 		55A884CD2B23CCD0004D6564 /* ICEApp.bin in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CB2B23CCCF004D6564 /* ICEApp.bin */; };
 		55ADD4EE2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */; };
-		55B451062ADA583000CE1C51 /* Photon-Icon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55B451042ADA583000CE1C51 /* Photon-Icon.pdf */; };
 		55C1BE8E2BF5A4F8004A4FAC /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BE732BF5A4EA004A4FAC /* FFCC.metal */; };
 		55C1BE8F2BF5A4FA004A4FAC /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BE8A2BF5A4EA004A4FAC /* FFCC.mm */; };
 		55C1BEA62BF909C8004A4FAC /* LMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BEA12BF909B6004A4FAC /* LMMSE.metal */; };
@@ -172,6 +172,7 @@
 		553631002B7DF3DC0054E321 /* Hello-Photon@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Hello-Photon@2x.pdf"; sourceTree = "<group>"; };
 		553631032B7E894B0054E321 /* ImageGridContainerView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridContainerView.mm; sourceTree = "<group>"; };
 		553631092B7E894B0054E321 /* ImageGridContainerView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridContainerView.h; sourceTree = "<group>"; };
+		5537FCF42C62CBAC006230F1 /* SourceList-Battery-Charging-Lightning.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Battery-Charging-Lightning.pdf"; sourceTree = "<group>"; };
 		553EAB772B2452FB00C2B4C8 /* libate.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libate.tbd; path = usr/lib/libate.tbd; sourceTree = SDKROOT; };
 		553EF54F2AD325E100157484 /* BatteryLifeView-BestIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-BestIcon.pdf"; sourceTree = "<group>"; };
 		553EF5512AD325E100157484 /* BatteryLifeView-WorstIcon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "BatteryLifeView-WorstIcon.pdf"; sourceTree = "<group>"; };
@@ -309,7 +310,6 @@
 		55A884CB2B23CCCF004D6564 /* ICEApp.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = ICEApp.bin; sourceTree = "<group>"; };
 		55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Source-List-Photon-Icon@2x.pdf"; sourceTree = "<group>"; };
 		55B1658129CB9A50008D53E5 /* Cache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cache.h; sourceTree = "<group>"; };
-		55B451042ADA583000CE1C51 /* Photon-Icon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Photon-Icon.pdf"; sourceTree = "<group>"; };
 		55C1BDA42BF5770F004A4FAC /* CFA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFA.h; sourceTree = "<group>"; };
 		55C1BDA52BF578C1004A4FAC /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		55C1BDA62BF5794C004A4FAC /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
@@ -545,6 +545,7 @@
 				55838C8A2AD0BE7200D4B024 /* SourceList-Battery-Charging-80.pdf */,
 				55838C8D2AD0BE7200D4B024 /* SourceList-Battery-Charging-90.pdf */,
 				551453022B4091CE0056A92D /* SourceList-Battery-Charging-100.pdf */,
+				5537FCF42C62CBAC006230F1 /* SourceList-Battery-Charging-Lightning.pdf */,
 				55838C852AD0BE7100D4B024 /* SourceList-Battery-Error.pdf */,
 				55838C822AD0BE7100D4B024 /* SourceList-Gear.pdf */,
 			);
@@ -699,7 +700,6 @@
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
 				550CA8032B4F1EFA0061A367 /* ArtworkPlaceholder.pdf */,
 				55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */,
-				55B451042ADA583000CE1C51 /* Photon-Icon.pdf */,
 				553630FC2B7DE6B60054E321 /* Connect-A-Photon@2x.pdf */,
 				553630FD2B7DE6B60054E321 /* Photon-Settings@2x.pdf */,
 				553631002B7DF3DC0054E321 /* Hello-Photon@2x.pdf */,
@@ -1033,6 +1033,7 @@
 				55ADD4EE2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf in Resources */,
 				558E20092AC4B608001E743A /* DeviceImageGridHeaderView.xib in Resources */,
 				55838C932AD0BE7200D4B024 /* SourceList-Battery-Error.pdf in Resources */,
+				5537FCF52C62CBAC006230F1 /* SourceList-Battery-Charging-Lightning.pdf in Resources */,
 				553EF5532AD325E100157484 /* BatteryLifeView-WorstIcon.pdf in Resources */,
 				553631012B7DF3E10054E321 /* Hello-Photon@2x.pdf in Resources */,
 				55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */,
@@ -1069,7 +1070,6 @@
 				55D30A4029A96D670080BCBD /* ImageCornerButton-4.pdf in Resources */,
 				55F8883B29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf in Resources */,
 				553EF5612AD7174800157484 /* FullSizeImageHeaderView.xib in Resources */,
-				55B451062ADA583000CE1C51 /* Photon-Icon.pdf in Resources */,
 				55D30A3F29A96D670080BCBD /* ImageCornerButton-3.pdf in Resources */,
 				55838C9C2AD0BE7200D4B024 /* SourceList-Battery-Charging-20.pdf in Resources */,
 				55838C942AD0BE7200D4B024 /* SourceList-Battery-Charging-40.pdf in Resources */,
