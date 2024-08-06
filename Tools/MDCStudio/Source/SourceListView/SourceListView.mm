@@ -115,10 +115,9 @@ using namespace MDCStudio;
     IBOutlet NSImageView* _lightningImageView;
     IBOutlet NSImageView* _batteryImageView;
     IBOutlet NSTextField* _percentageLabel;
-    IBOutlet NSTextField* _percentageSymbolLabel;
     IBOutlet NSTextField* _descriptionLabel;
     Object::ObserverPtr _deviceOb;
-    NSTrackingArea* _trackingArea;
+    NSTrackingArea* _batteryImageTrackingArea;
     bool _mouseInsideBattery;
 }
 
@@ -193,8 +192,6 @@ static NSString* _BatteryLevelImage(float level) {
     [_batteryImageView setHidden:!battery];
     [_lightningImageView setHidden:!lightning];
     [_percentageLabel setHidden:!percentage];
-    [_percentageSymbolLabel setHidden:true];
-//    [_percentageSymbolLabel setHidden:!percentage];
 }
 
 - (IBAction)_textFieldChanged:(id)sender {
@@ -209,15 +206,15 @@ static NSString* _BatteryLevelImage(float level) {
 
 - (void)updateTrackingAreas {
     [super updateTrackingAreas];
-    if (_trackingArea) {
-        [self removeTrackingArea:_trackingArea];
-        _trackingArea = nil;
+    if (_batteryImageTrackingArea) {
+        [self removeTrackingArea:_batteryImageTrackingArea];
+        _batteryImageTrackingArea = nil;
     }
     
-    _trackingArea = [[NSTrackingArea alloc] initWithRect:[_batteryImageView frame]
+    _batteryImageTrackingArea = [[NSTrackingArea alloc] initWithRect:CGRectInset([_batteryImageView frame], -20, -10)
         options:NSTrackingMouseEnteredAndExited|NSTrackingActiveInKeyWindow
         owner:self userInfo:nil];
-    [self addTrackingArea:_trackingArea];
+    [self addTrackingArea:_batteryImageTrackingArea];
 }
 
 - (void)mouseEntered:(NSEvent*)event {

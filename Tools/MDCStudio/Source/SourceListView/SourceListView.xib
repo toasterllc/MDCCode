@@ -109,17 +109,6 @@
                                                             <action selector="_textFieldChanged:" target="08g-eg-N7V" id="JdA-5q-eGs"/>
                                                         </connections>
                                                     </textField>
-                                                    <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="6Tm-dg-HMi" userLabel="% Symbol">
-                                                        <rect key="frame" x="369" y="38" width="12" height="10"/>
-                                                        <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="%" id="Xfz-0A-ZIl">
-                                                            <font key="font" size="8" name="HelveticaNeue-Medium"/>
-                                                            <color key="textColor" red="0.98039215800000001" green="0.89019608500000003" blue="0.40784314269999999" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
-                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                        </textFieldCell>
-                                                        <connections>
-                                                            <action selector="_textFieldChanged:" target="08g-eg-N7V" id="cbP-oT-XZX"/>
-                                                        </connections>
-                                                    </textField>
                                                 </subviews>
                                                 <constraints>
                                                     <constraint firstItem="MZn-BH-IiQ" firstAttribute="leading" secondItem="7cJ-fN-hbY" secondAttribute="trailing" constant="7" id="1zf-B5-EyI"/>
@@ -138,9 +127,7 @@
                                                     <constraint firstItem="YYE-UM-oso" firstAttribute="centerX" secondItem="lNY-zL-nIn" secondAttribute="centerX" id="gtn-uh-JYe"/>
                                                     <constraint firstItem="cuS-aa-uKX" firstAttribute="top" secondItem="MZn-BH-IiQ" secondAttribute="bottom" constant="6" id="kb8-i7-3af"/>
                                                     <constraint firstItem="MZn-BH-IiQ" firstAttribute="top" secondItem="08g-eg-N7V" secondAttribute="top" constant="12" id="n5B-JE-T5y"/>
-                                                    <constraint firstItem="6Tm-dg-HMi" firstAttribute="leading" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="2" id="qFR-ib-a5q"/>
                                                     <constraint firstItem="YYE-UM-oso" firstAttribute="leading" secondItem="MZn-BH-IiQ" secondAttribute="trailing" constant="8" id="qQx-fS-mN8"/>
-                                                    <constraint firstItem="6Tm-dg-HMi" firstAttribute="centerY" secondItem="YYE-UM-oso" secondAttribute="centerY" id="vOL-v3-yPI"/>
                                                 </constraints>
                                                 <connections>
                                                     <outlet property="_batteryImageView" destination="YYE-UM-oso" id="Whg-Rx-g6c"/>
@@ -149,7 +136,6 @@
                                                     <outlet property="_indentRight" destination="4IY-c9-aI9" id="7of-Is-xhd"/>
                                                     <outlet property="_lightningImageView" destination="99I-WW-0xt" id="Jyn-Bm-tR5"/>
                                                     <outlet property="_percentageLabel" destination="lNY-zL-nIn" id="EeM-XR-vvj"/>
-                                                    <outlet property="_percentageSymbolLabel" destination="6Tm-dg-HMi" id="hlc-z8-kV3"/>
                                                     <outlet property="imageView" destination="7cJ-fN-hbY" id="U5o-92-vYm"/>
                                                     <outlet property="textField" destination="MZn-BH-IiQ" id="mUE-hG-002"/>
                                                 </connections>
