@@ -27,6 +27,14 @@ inline struct timeval _TimevalForTimeInstant(Time::Instant t) {
     };
 }
 
+inline void _WhiteBalanceApply(ColorMatrix& m, const double* wb) {
+    for (int y=0; y<3; y++) {
+        for (int x=0; x<3; x++) {
+            m.at(y,x) /= wb[x];
+        }
+    }
+}
+
 // Single image export to file `filePath`
 inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const ImageRecord& rec, const Image& image,
     const std::filesystem::path& filePath) {
@@ -115,55 +123,11 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             tiff.push(nextIFDOffset);
             tiff.set(tagCount, tc);
             
-            const double illumEst[3] = { rec.info.illumEst[0], rec.info.illumEst[1], rec.info.illumEst[2] };
-//            const double illumEst2[3] = { 1/rec.info.illumEst[0], 1/rec.info.illumEst[1], 1/rec.info.illumEst[2] };
-            
-//            // ### 1
-//            {
-//                // ColorMatrix1
-//                {
-//                    ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
-//                    
-//                    for (int y=0; y<3; y++) {
-//                        for (int x=0; x<3; x++) {
-//                            ccm.at(y,x) *= illumEst[x];
-//                        }
-//                    }
-//                    
-//                    ccm = ccm.inv();
-//                    tiff.set(colorMatrixPointer1, tiff.off());
-//                    tiff.push(ccm.beginRow(), ccm.endRow());
-//                }
-//                
-//                // ColorMatrix2
-//                {
-//                    ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
-//                    
-//                    for (int y=0; y<3; y++) {
-//                        for (int x=0; x<3; x++) {
-//                            ccm.at(y,x) *= illumEst[x];
-//                        }
-//                    }
-//                    
-//                    ccm = ccm.inv();
-//                    tiff.set(colorMatrixPointer2, tiff.off());
-//                    tiff.push(ccm.beginRow(), ccm.endRow());
-//                }
-//            }
-//            
-//            
-//            
-            // ### 2
             {
                 // ColorMatrix1
                 {
                     ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
-                    
-                    for (int y=0; y<3; y++) {
-                        for (int x=0; x<3; x++) {
-                            ccm.at(y,x) /= illumEst[x];
-                        }
-                    }
+                    _WhiteBalanceApply(ccm, rec.info.illumEst);
                     
                     ccm = ccm.inv();
                     tiff.set(colorMatrixPointer1, tiff.off());
@@ -173,117 +137,19 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
                 // ColorMatrix2
                 {
                     ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
-                    
-                    for (int y=0; y<3; y++) {
-                        for (int x=0; x<3; x++) {
-                            ccm.at(y,x) /= illumEst[x];
-                        }
-                    }
+                    _WhiteBalanceApply(ccm, rec.info.illumEst);
                     
                     ccm = ccm.inv();
                     tiff.set(colorMatrixPointer2, tiff.off());
                     tiff.push(ccm.beginRow(), ccm.endRow());
                 }
             }
-//            
-//            
-//            
-//            
-//            
-//            
-//            
-//            // ### 3
-//            {
-//                // ColorMatrix1
-//                {
-//                    ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
-//                    ccm = ccm.inv();
-//                    
-//                    for (int y=0; y<3; y++) {
-//                        for (int x=0; x<3; x++) {
-//                            ccm.at(y,x) *= illumEst[x];
-//                        }
-//                    }
-//                    
-//                    tiff.set(colorMatrixPointer1, tiff.off());
-//                    tiff.push(ccm.beginRow(), ccm.endRow());
-//                }
-//                
-//                // ColorMatrix2
-//                {
-//                    ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
-//                    ccm = ccm.inv();
-//                    
-//                    for (int y=0; y<3; y++) {
-//                        for (int x=0; x<3; x++) {
-//                            ccm.at(y,x) *= illumEst[x];
-//                        }
-//                    }
-//                    
-//                    tiff.set(colorMatrixPointer2, tiff.off());
-//                    tiff.push(ccm.beginRow(), ccm.endRow());
-//                }
-//            }
-//            
-//            
-//            
-//            
-//            
-//            
-//            
-//            // ### 4
-//            {
-//                // ColorMatrix1
-//                {
-//                    ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
-//                    ccm = ccm.inv();
-//                    
-//                    for (int y=0; y<3; y++) {
-//                        for (int x=0; x<3; x++) {
-//                            ccm.at(y,x) /= illumEst[x];
-//                        }
-//                    }
-//                    
-//                    tiff.set(colorMatrixPointer1, tiff.off());
-//                    tiff.push(ccm.beginRow(), ccm.endRow());
-//                }
-//                
-//                // ColorMatrix2
-//                {
-//                    ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
-//                    ccm = ccm.inv();
-//                    
-//                    for (int y=0; y<3; y++) {
-//                        for (int x=0; x<3; x++) {
-//                            ccm.at(y,x) /= illumEst[x];
-//                        }
-//                    }
-//                    
-//                    tiff.set(colorMatrixPointer2, tiff.off());
-//                    tiff.push(ccm.beginRow(), ccm.endRow());
-//                }
-//            }
-            
-            
-            
-            
-            
-            
-            
-            
             
             // AsShotNeutral
             {
                 tiff.set(asShotNeutralPointer, tiff.off());
-                tiff.push(std::begin(illumEst), std::end(illumEst));
+                tiff.push(std::begin(rec.info.illumEst), std::end(rec.info.illumEst));
             }
-            
-//            // AsShotNeutral
-//            {
-//                tiff.set(asShotNeutralPointer, tiff.off());
-//                double illumEst[3] = {1,1,1};
-//                tiff.push(std::begin(illumEst), std::end(illumEst));
-//            }
         }
         
         {
