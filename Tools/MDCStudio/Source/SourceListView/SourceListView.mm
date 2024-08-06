@@ -114,7 +114,7 @@ using namespace MDCStudio;
 @public
     IBOutlet NSImageView* _lightningImageView;
     IBOutlet NSImageView* _batteryImageView;
-    IBOutlet NSTextField* _percentageLabel;
+    IBOutlet NSTextField* _percentLabel;
     IBOutlet NSTextField* _descriptionLabel;
     Object::ObserverPtr _deviceOb;
     NSTrackingArea* _batteryImageTrackingArea;
@@ -160,39 +160,41 @@ static NSString* _BatteryLevelImage(float level) {
     if (!device) return;
     std::optional<MDCDevice::Status> status = device->status();
     NSString* batteryImage = nil;
-    bool battery = false;
-    bool lightning = false;
-    bool percentage = false;
-    NSColor* percentageColor = nil;
+    bool batteryShow = false;
+    bool lightningShow = false;
+    bool percentShow = false;
+    int percent = 0;
+    NSColor* percentColor = nil;
     
     if (status) {
         if (status->batteryLevel == 1) {
             batteryImage = @"SourceList-Battery-Charged";
-            battery = !_mouseInsideBattery;
-            percentage = _mouseInsideBattery;
-            percentageColor = [NSColor colorWithSRGBRed:129/255. green:242/255. blue:163/255. alpha:1];
+            batteryShow = !_mouseInsideBattery;
+            percent = 100;
+            percentShow = _mouseInsideBattery;
+            percentColor = [NSColor colorWithSRGBRed:129/255. green:242/255. blue:163/255. alpha:1];
         } else if (status->batteryLevel == 0) {
-            battery = true;
+            batteryShow = true;
             batteryImage = @"SourceList-Battery-Error";
         } else {
             const int levelInt = (!_mouseInsideBattery ? ((int)std::round(status->batteryLevel*10))*10 : 0);
             batteryImage = [NSString stringWithFormat:@"SourceList-Battery-Charging-%d", levelInt];
-            lightning = true;
-            battery = !_mouseInsideBattery;
-            percentage = _mouseInsideBattery;
-            percentageColor = [NSColor colorWithSRGBRed:255/255. green:226/255. blue:76/255. alpha:1];
+            lightningShow = true;
+            batteryShow = !_mouseInsideBattery;
+            percent = std::min(99, (int)std::round(status->batteryLevel*100));
+            percentShow = _mouseInsideBattery;
+            percentColor = [NSColor colorWithSRGBRed:255/255. green:226/255. blue:76/255. alpha:1];
         }
     }
     
     [_batteryImageView setImage:[NSImage imageNamed:batteryImage]];
-    const int percent = std::min(99, (int)std::round(status->batteryLevel*100));
-    [_percentageLabel setStringValue:[NSString stringWithFormat:@"%ju%%", (uintmax_t)percent]];
-    [_percentageLabel setTextColor:percentageColor];
+    [_percentLabel setStringValue:[NSString stringWithFormat:@"%ju%%", (uintmax_t)percent]];
+    [_percentLabel setTextColor:percentColor];
     [_descriptionLabel setStringValue:@(ImageLibraryStatus(device->imageLibrary()).c_str())];
     
-    [_batteryImageView setHidden:!battery];
-    [_lightningImageView setHidden:!lightning];
-    [_percentageLabel setHidden:!percentage];
+    [_batteryImageView setHidden:!batteryShow];
+    [_lightningImageView setHidden:!lightningShow];
+    [_percentLabel setHidden:!percentShow];
 }
 
 - (IBAction)_textFieldChanged:(id)sender {

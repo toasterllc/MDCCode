@@ -135,7 +135,7 @@
                                                     <outlet property="_indentLeft" destination="Kje-qB-Fxx" id="9cL-7S-9nM"/>
                                                     <outlet property="_indentRight" destination="4IY-c9-aI9" id="7of-Is-xhd"/>
                                                     <outlet property="_lightningImageView" destination="99I-WW-0xt" id="Jyn-Bm-tR5"/>
-                                                    <outlet property="_percentageLabel" destination="lNY-zL-nIn" id="EeM-XR-vvj"/>
+                                                    <outlet property="_percentLabel" destination="lNY-zL-nIn" id="EeM-XR-vvj"/>
                                                     <outlet property="imageView" destination="7cJ-fN-hbY" id="U5o-92-vYm"/>
                                                     <outlet property="textField" destination="MZn-BH-IiQ" id="mUE-hG-002"/>
                                                 </connections>
