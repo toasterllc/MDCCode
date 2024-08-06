@@ -167,17 +167,19 @@ static NSString* _BatteryLevelImage(float level) {
     NSColor* percentageColor = nil;
     
     if (status) {
-        battery = true;
         if (status->batteryLevel == 1) {
             batteryImage = @"SourceList-Battery-Charged";
+            battery = !_mouseInsideBattery;
             percentage = _mouseInsideBattery;
             percentageColor = [NSColor colorWithSRGBRed:129/255. green:242/255. blue:163/255. alpha:1];
         } else if (status->batteryLevel == 0) {
+            battery = true;
             batteryImage = @"SourceList-Battery-Error";
         } else {
             const int levelInt = (!_mouseInsideBattery ? ((int)std::round(status->batteryLevel*10))*10 : 0);
             batteryImage = [NSString stringWithFormat:@"SourceList-Battery-Charging-%d", levelInt];
             lightning = true;
+            battery = !_mouseInsideBattery;
             percentage = _mouseInsideBattery;
             percentageColor = [NSColor colorWithSRGBRed:255/255. green:226/255. blue:76/255. alpha:1];
         }

@@ -99,9 +99,9 @@
                                                         <imageCell key="cell" refusesFirstResponder="YES" image="SourceList-Battery-Charging-50" id="4Gd-m7-o2q"/>
                                                     </imageView>
                                                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="lNY-zL-nIn" userLabel="Battery Percentage">
-                                                        <rect key="frame" x="350" y="38" width="13" height="10"/>
+                                                        <rect key="frame" x="349" y="35" width="18" height="15"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="75" id="qPa-BR-eJ1">
-                                                            <font key="font" size="8" name="HelveticaNeue-Medium"/>
+                                                            <font key="font" size="12" name="HelveticaNeue-Light"/>
                                                             <color key="textColor" red="0.98039215800000001" green="0.89019608500000003" blue="0.40784314269999999" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -135,7 +135,7 @@
                                                     <constraint firstItem="YYE-UM-oso" firstAttribute="centerY" secondItem="lNY-zL-nIn" secondAttribute="centerY" id="U1Y-VC-1tc"/>
                                                     <constraint firstItem="YYE-UM-oso" firstAttribute="leading" secondItem="99I-WW-0xt" secondAttribute="trailing" constant="4" id="aY0-Uc-qNL"/>
                                                     <constraint firstItem="g8q-te-9OC" firstAttribute="top" secondItem="YYE-UM-oso" secondAttribute="bottom" constant="4" id="fnt-jE-AJb"/>
-                                                    <constraint firstItem="YYE-UM-oso" firstAttribute="centerX" secondItem="lNY-zL-nIn" secondAttribute="centerX" constant="2" id="gtn-uh-JYe"/>
+                                                    <constraint firstItem="YYE-UM-oso" firstAttribute="centerX" secondItem="lNY-zL-nIn" secondAttribute="centerX" id="gtn-uh-JYe"/>
                                                     <constraint firstItem="cuS-aa-uKX" firstAttribute="top" secondItem="MZn-BH-IiQ" secondAttribute="bottom" constant="6" id="kb8-i7-3af"/>
                                                     <constraint firstItem="MZn-BH-IiQ" firstAttribute="top" secondItem="08g-eg-N7V" secondAttribute="top" constant="12" id="n5B-JE-T5y"/>
                                                     <constraint firstItem="6Tm-dg-HMi" firstAttribute="leading" secondItem="YYE-UM-oso" secondAttribute="trailing" constant="2" id="qFR-ib-a5q"/>

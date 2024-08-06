@@ -130,7 +130,7 @@ struct MDCDeviceDemo : MDCDevice {
     
     std::optional<Status> status() override {
         return Status{
-            .batteryLevel = 0.75,
+            .batteryLevel = .57,
         };
     }
     
