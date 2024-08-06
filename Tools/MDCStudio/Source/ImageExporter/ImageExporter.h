@@ -35,6 +35,12 @@ inline void _WhiteBalanceApply(ColorMatrix& m, const double* wb) {
     }
 }
 
+inline std::string _ExifImageUniqueIDForImageId(Img::Id id) {
+    char buf[48];
+    snprintf(buf, sizeof(buf), "%032jX", (uintmax_t)id);
+    return buf;
+}
+
 // Single image export to file `filePath`
 inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const ImageRecord& rec, const Image& image,
     const std::filesystem::path& filePath) {
@@ -88,40 +94,44 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         TIFF::Val<uint32_t> exifOffset;
         TIFF::Val<uint32_t> imageDataOffset;
         {
+            constexpr size_t ImageUniqueIDLen = 32+1; // +1 for null byte
+            
             tiff.set(nextIFDOffset, tiff.off());
             
             uint16_t tc = 0;
             TIFF::Val<uint16_t> tagCount;
             TIFF::Val<uint32_t> batteryLevelPointer;
+            TIFF::Val<uint32_t> imageUniqueIDPointer;
             TIFF::Val<uint32_t> colorMatrixPointer1;
             TIFF::Val<uint32_t> colorMatrixPointer2;
             TIFF::Val<uint32_t> asShotNeutralPointer;
             
             tiff.push(tagCount);
-            tiff.push( 254,   TIFF::Long,       1, 0x00000000 );                tc++; // SubFiletype
-            tiff.push( 256,   TIFF::Long,       1, (uint32_t)image.width );     tc++; // ImageWidth
-            tiff.push( 257,   TIFF::Long,       1, (uint32_t)image.height );    tc++; // ImageLength
-            tiff.push( 258,   TIFF::Short,      1, 0x00000010 );                tc++; // BitsPerSample
-            tiff.push( 259,   TIFF::Short,      1, 0x00000001 );                tc++; // Compression
-            tiff.push( 262,   TIFF::Short,      1, 0x00008023 );                tc++; // PhotometricInterpretation
-            tiff.push( 273,   TIFF::Long,       1, imageDataOffset );           tc++; // StripOffsets
-            tiff.push( 277,   TIFF::Short,      1, 0x00000001 );                tc++; // SamplesPerPixel
-            tiff.push( 278,   TIFF::Long,       1, (uint32_t)image.height );    tc++; // RowsPerStrip
-            tiff.push( 279,   TIFF::Long,       1, (uint32_t)imageDataLen );    tc++; // StripByteCounts
-            tiff.push( 284,   TIFF::Short,      1, 0x00000001 );                tc++; // PlanarConfig
-            tiff.push( 339,   TIFF::Short,      1, 0x00000001 );                tc++; // SampleFormat
-            tiff.push( 33421, TIFF::Short,      2, 0x00020002 );                tc++; // CFARepeatPatternDim
-            tiff.push( 33422, TIFF::Byte,       4, 0x01020001 );                tc++; // CFAPattern
-            tiff.push( 33423, TIFF::Rational,   1, batteryLevelPointer );       tc++; // BatteryLevel
-            tiff.push( 34665, TIFF::Long,       1, exifOffset );                tc++; // EXIFIFD
-            tiff.push( 50706, TIFF::Byte,       4, 0x00000301 );                tc++; // DNGVersion
-            tiff.push( 50714, TIFF::Short,      1, 0x00000000 );                tc++; // BlackLevel
-            tiff.push( 50717, TIFF::Short,      1, Img::PixelMax );             tc++; // WhiteLevel
-            tiff.push( 50721, TIFF::SRational,  9, colorMatrixPointer1 );       tc++; // ColorMatrix1
-            tiff.push( 50722, TIFF::SRational,  9, colorMatrixPointer2 );       tc++; // ColorMatrix2
-            tiff.push( 50728, TIFF::Rational,   3, asShotNeutralPointer );      tc++; // AsShotNeutral
-            tiff.push( 50778, TIFF::Short,      1, 0x00000011 );                tc++; // CalibrationIlluminant1 (StandardA)
-            tiff.push( 50779, TIFF::Short,      1, 0x00000017 );                tc++; // CalibrationIlluminant2 (D50)
+            tiff.push( 254,   TIFF::Long,       1, 0x00000000 );                            tc++; // SubFiletype
+            tiff.push( 256,   TIFF::Long,       1, (uint32_t)image.width );                 tc++; // ImageWidth
+            tiff.push( 257,   TIFF::Long,       1, (uint32_t)image.height );                tc++; // ImageLength
+            tiff.push( 258,   TIFF::Short,      1, 0x00000010 );                            tc++; // BitsPerSample
+            tiff.push( 259,   TIFF::Short,      1, 0x00000001 );                            tc++; // Compression
+            tiff.push( 262,   TIFF::Short,      1, 0x00008023 );                            tc++; // PhotometricInterpretation
+            tiff.push( 273,   TIFF::Long,       1, imageDataOffset );                       tc++; // StripOffsets
+            tiff.push( 277,   TIFF::Short,      1, 0x00000001 );                            tc++; // SamplesPerPixel
+            tiff.push( 278,   TIFF::Long,       1, (uint32_t)image.height );                tc++; // RowsPerStrip
+            tiff.push( 279,   TIFF::Long,       1, (uint32_t)imageDataLen );                tc++; // StripByteCounts
+            tiff.push( 284,   TIFF::Short,      1, 0x00000001 );                            tc++; // PlanarConfig
+            tiff.push( 339,   TIFF::Short,      1, 0x00000001 );                            tc++; // SampleFormat
+            tiff.push( 33421, TIFF::Short,      2, 0x00020002 );                            tc++; // CFARepeatPatternDim
+            tiff.push( 33422, TIFF::Byte,       4, 0x01020001 );                            tc++; // CFAPattern
+            tiff.push( 33423, TIFF::Rational,   1, batteryLevelPointer );                   tc++; // BatteryLevel
+            tiff.push( 34665, TIFF::Long,       1, exifOffset );                            tc++; // EXIFIFD
+            tiff.push( 42016, TIFF::ASCII,      ImageUniqueIDLen, imageUniqueIDPointer );   tc++; // ImageUniqueID
+            tiff.push( 50706, TIFF::Byte,       4, 0x00000301 );                            tc++; // DNGVersion
+            tiff.push( 50714, TIFF::Short,      1, 0x00000000 );                            tc++; // BlackLevel
+            tiff.push( 50717, TIFF::Short,      1, Img::PixelMax );                         tc++; // WhiteLevel
+            tiff.push( 50721, TIFF::SRational,  9, colorMatrixPointer1 );                   tc++; // ColorMatrix1
+            tiff.push( 50722, TIFF::SRational,  9, colorMatrixPointer2 );                   tc++; // ColorMatrix2
+            tiff.push( 50728, TIFF::Rational,   3, asShotNeutralPointer );                  tc++; // AsShotNeutral
+            tiff.push( 50778, TIFF::Short,      1, 0x00000011 );                            tc++; // CalibrationIlluminant1 (StandardA)
+            tiff.push( 50779, TIFF::Short,      1, 0x00000017 );                            tc++; // CalibrationIlluminant2 (D50)
             tiff.push(nextIFDOffset);
             tiff.set(tagCount, tc);
             
@@ -130,6 +140,14 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
                 tiff.set(batteryLevelPointer, tiff.off());
                 const float batteryPercentage = MSP::BatteryLevelFloat(MSP::BatteryLevelLinearize(rec.info.batteryLevelMv));
                 tiff.push(batteryPercentage);
+            }
+            
+            // ImageUniqueID
+            {
+                const std::string str = _ExifImageUniqueIDForImageId(rec.info.id);
+                assert(str.size()+1 == ImageUniqueIDLen);
+                tiff.set(imageUniqueIDPointer, tiff.off());
+                tiff.push(str.c_str(), str.c_str()+ImageUniqueIDLen);
             }
             
             {
@@ -174,8 +192,8 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             TIFF::Val<uint16_t> tagCount;
             TIFF::Val<uint32_t> dateTimeOriginalPointer;
             TIFF::Val<uint32_t> offsetTimeOriginalPointer;
-            constexpr size_t DateTimeOriginalLen = 20;
-            constexpr size_t OffsetTimeOriginalLen = 7;
+            constexpr size_t DateTimeOriginalLen = 19+1; // +1 for null byte
+            constexpr size_t OffsetTimeOriginalLen = 6+1; // +1 for null byte
             
             tiff.push(tagCount);
             tiff.push( 36864, TIFF::Undefined,  4,                      0x32333230 );                   tc++; // EXIF version
