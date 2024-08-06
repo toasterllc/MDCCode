@@ -104,7 +104,7 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             tiff.push( 33421, TIFF::Short,      2, 0x00020002 );                tc++; // CFARepeatPatternDim
             tiff.push( 33422, TIFF::Byte,       4, 0x01020001 );                tc++; // CFAPattern
             tiff.push( 34665, TIFF::Long,       1, exifOffset );                tc++; // EXIFIFD
-            tiff.push( 50706, TIFF::Byte,       4, 0x00000601 );                tc++; // DNGVersion
+            tiff.push( 50706, TIFF::Byte,       4, 0x00000301 );                tc++; // DNGVersion
             tiff.push( 50714, TIFF::Short,      1, 0x00000000 );                tc++; // BlackLevel
             tiff.push( 50717, TIFF::Short,      1, Img::PixelMax );             tc++; // WhiteLevel
             tiff.push( 50721, TIFF::SRational,  9, colorMatrixPointer1 );       tc++; // ColorMatrix1
@@ -115,25 +115,178 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             tiff.push(nextIFDOffset);
             tiff.set(tagCount, tc);
             
-            // ColorMatrix1
-            {
-                ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix.inv();
-                tiff.set(colorMatrixPointer1, tiff.off());
-                tiff.push(ccm.beginRow(), ccm.endRow());
-            }
             
-            // ColorMatrix2
+            const double illumEst[3] = { rec.info.illumEst[0], rec.info.illumEst[1], rec.info.illumEst[2] };
+//            const double illumEst[3] = { 1/rec.info.illumEst[0], 1/rec.info.illumEst[1], 1/rec.info.illumEst[2] };
+            
+            
+            
+//            // ### 1
+//            {
+//                // ColorMatrix1
+//                {
+//                    ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
+//                    
+//                    for (int y=0; y<3; y++) {
+//                        for (int x=0; x<3; x++) {
+//                            ccm.at(y,x) *= illumEst[x];
+//                        }
+//                    }
+//                    
+//                    ccm = ccm.inv();
+//                    tiff.set(colorMatrixPointer1, tiff.off());
+//                    tiff.push(ccm.beginRow(), ccm.endRow());
+//                }
+//                
+//                // ColorMatrix2
+//                {
+//                    ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
+//                    
+//                    for (int y=0; y<3; y++) {
+//                        for (int x=0; x<3; x++) {
+//                            ccm.at(y,x) *= illumEst[x];
+//                        }
+//                    }
+//                    
+//                    ccm = ccm.inv();
+//                    tiff.set(colorMatrixPointer2, tiff.off());
+//                    tiff.push(ccm.beginRow(), ccm.endRow());
+//                }
+//            }
+            
+            
+            
+            // ### 2
             {
-                ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix.inv();
-                tiff.set(colorMatrixPointer2, tiff.off());
-                tiff.push(ccm.beginRow(), ccm.endRow());
+                // ColorMatrix1
+                {
+                    ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
+                    
+                    for (int y=0; y<3; y++) {
+                        for (int x=0; x<3; x++) {
+                            ccm.at(y,x) /= illumEst[x];
+                        }
+                    }
+                    
+                    ccm = ccm.inv();
+                    tiff.set(colorMatrixPointer1, tiff.off());
+                    tiff.push(ccm.beginRow(), ccm.endRow());
+                }
+                
+                // ColorMatrix2
+                {
+                    ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
+                    
+                    for (int y=0; y<3; y++) {
+                        for (int x=0; x<3; x++) {
+                            ccm.at(y,x) /= illumEst[x];
+                        }
+                    }
+                    
+                    ccm = ccm.inv();
+                    tiff.set(colorMatrixPointer2, tiff.off());
+                    tiff.push(ccm.beginRow(), ccm.endRow());
+                }
             }
+//            
+//            
+//            
+//            
+//            
+//            
+//            
+//            // ### 3
+//            {
+//                // ColorMatrix1
+//                {
+//                    ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
+//                    ccm = ccm.inv();
+//                    
+//                    for (int y=0; y<3; y++) {
+//                        for (int x=0; x<3; x++) {
+//                            ccm.at(y,x) *= illumEst[x];
+//                        }
+//                    }
+//                    
+//                    tiff.set(colorMatrixPointer1, tiff.off());
+//                    tiff.push(ccm.beginRow(), ccm.endRow());
+//                }
+//                
+//                // ColorMatrix2
+//                {
+//                    ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
+//                    ccm = ccm.inv();
+//                    
+//                    for (int y=0; y<3; y++) {
+//                        for (int x=0; x<3; x++) {
+//                            ccm.at(y,x) *= illumEst[x];
+//                        }
+//                    }
+//                    
+//                    tiff.set(colorMatrixPointer2, tiff.off());
+//                    tiff.push(ccm.beginRow(), ccm.endRow());
+//                }
+//            }
+//            
+//            
+//            
+//            
+//            
+//            
+//            
+//            // ### 4
+//            {
+//                // ColorMatrix1
+//                {
+//                    ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
+//                    ccm = ccm.inv();
+//                    
+//                    for (int y=0; y<3; y++) {
+//                        for (int x=0; x<3; x++) {
+//                            ccm.at(y,x) /= illumEst[x];
+//                        }
+//                    }
+//                    
+//                    tiff.set(colorMatrixPointer1, tiff.off());
+//                    tiff.push(ccm.beginRow(), ccm.endRow());
+//                }
+//                
+//                // ColorMatrix2
+//                {
+//                    ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
+//                    ccm = ccm.inv();
+//                    
+//                    for (int y=0; y<3; y++) {
+//                        for (int x=0; x<3; x++) {
+//                            ccm.at(y,x) /= illumEst[x];
+//                        }
+//                    }
+//                    
+//                    tiff.set(colorMatrixPointer2, tiff.off());
+//                    tiff.push(ccm.beginRow(), ccm.endRow());
+//                }
+//            }
+            
+            
+            
+            
+            
+            
+            
+            
             
             // AsShotNeutral
             {
                 tiff.set(asShotNeutralPointer, tiff.off());
-                tiff.push(std::begin(rec.info.illumEst), std::end(rec.info.illumEst));
+                tiff.push(std::begin(illumEst), std::end(illumEst));
             }
+            
+//            // AsShotNeutral
+//            {
+//                tiff.set(asShotNeutralPointer, tiff.off());
+//                double illumEst[3] = {1,1,1};
+//                tiff.push(std::begin(illumEst), std::end(illumEst));
+//            }
         }
         
         {
