@@ -79,6 +79,10 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
                 (CFTypeRef)@(Calendar::TimestampOffsetEXIFString(timestamp).c_str()));
         }
         
+        CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
+            kCGImagePropertyExifDictionary, kCGImagePropertyExifImageUniqueID,
+            (CFTypeRef)@(_ExifImageUniqueIDForImageId(rec.info.id).c_str()));
+        
         CGImageDestinationAddImageAndMetadata((CGImageDestinationRef)imageDest, (CGImageRef)cgimage,
             (CGImageMetadataRef)metadata, nullptr);
         CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
@@ -142,8 +146,8 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             // BatteryLevel
             {
                 tiff.set(batteryLevelPointer, tiff.off());
-                const float batteryPercentage = MSP::BatteryLevelFloat(MSP::BatteryLevelLinearize(rec.info.batteryLevelMv));
-                tiff.push(batteryPercentage);
+                const float batteryLevel = MSP::BatteryLevelFloat(MSP::BatteryLevelLinearize(rec.info.batteryLevelMv));
+                tiff.push(batteryLevel);
             }
             
             // ImageUniqueID

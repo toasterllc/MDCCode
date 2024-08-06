@@ -1168,7 +1168,7 @@ static id _Get_analogGain(const ImageRecord& rec) {
 static id _Get_batteryLevel(const ImageRecord& rec) {
     const MSP::BatteryLevel batteryLevel = MSP::BatteryLevelLinearize(rec.info.batteryLevelMv);
     if (batteryLevel == MSP::BatteryLevelInvalid) return @"Invalid";
-    const float percentage = MSP::BatteryLevelFloat(batteryLevel);
+    const float percentage = MSP::BatteryLevelFloat(batteryLevel)*100;
     return [NSString stringWithFormat:@"%ju%%", (uintmax_t)std::round(percentage)];
 }
 
