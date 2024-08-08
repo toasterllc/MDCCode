@@ -124,7 +124,25 @@
 		55F8883B29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F8883529D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf */; };
 		55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* FullSizeImageView.mm */; };
 		55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* FullSizeImageView.metal */; };
+		55FEE7A92C657FF70051BC6B /* MDCUtil in Copy MDCUtil */ = {isa = PBXBuildFile; fileRef = 55FEE7A32C657FCD0051BC6B /* MDCUtil */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		55FEE7A22C657FCD0051BC6B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 55E1D8DE253E864F00628EF6;
+			remoteInfo = MDCUtil;
+		};
+		55FEE7A52C657FDC0051BC6B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 55E1D8DD253E864F00628EF6;
+			remoteInfo = MDCUtil;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		550C47402B5E3A8300CFBE09 /* Copy Resources/demo */ = {
@@ -136,6 +154,17 @@
 				5557260B2B5F677E00B32710 /* demo in Copy Resources/demo */,
 			);
 			name = "Copy Resources/demo";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		55FEE7A82C657FE80051BC6B /* Copy MDCUtil */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				55FEE7A92C657FF70051BC6B /* MDCUtil in Copy MDCUtil */,
+			);
+			name = "Copy MDCUtil";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -395,6 +424,7 @@
 		55F8D01327BEF3E500757165 /* FullSizeImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FullSizeImageView.mm; sourceTree = "<group>"; };
 		55F8D01627BEF97200757165 /* FullSizeImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FullSizeImageView.metal; sourceTree = "<group>"; };
 		55F8D01827BEF97200757165 /* FullSizeImageViewTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FullSizeImageViewTypes.h; sourceTree = "<group>"; };
+		55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MDCUtil.xcodeproj; path = ../MDCUtil/MDCUtil.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -674,6 +704,7 @@
 		55496F39278CFC0400BCA739 = {
 			isa = PBXGroup;
 			children = (
+				55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */,
 				5544AB4D27B5E3DF006AB473 /* Code */,
 				5544A7F127B5E3B3006AB473 /* Tools */,
 				55496F58278CFC7600BCA739 /* Source */,
@@ -967,6 +998,14 @@
 			path = FullSizeImageView;
 			sourceTree = "<group>";
 		};
+		55FEE79F2C657FCD0051BC6B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				55FEE7A32C657FCD0051BC6B /* MDCUtil */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -978,10 +1017,12 @@
 				55496F3F278CFC0400BCA739 /* Frameworks */,
 				55496F40278CFC0400BCA739 /* Resources */,
 				550C47402B5E3A8300CFBE09 /* Copy Resources/demo */,
+				55FEE7A82C657FE80051BC6B /* Copy MDCUtil */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				55FEE7A62C657FDC0051BC6B /* PBXTargetDependency */,
 			);
 			name = MDCStudio;
 			productName = MDCStudio;
@@ -1013,12 +1054,28 @@
 			mainGroup = 55496F39278CFC0400BCA739;
 			productRefGroup = 55496F43278CFC0400BCA739 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 55FEE79F2C657FCD0051BC6B /* Products */;
+					ProjectRef = 55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				55496F41278CFC0400BCA739 /* MDCStudio */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		55FEE7A32C657FCD0051BC6B /* MDCUtil */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = MDCUtil;
+			remoteRef = 55FEE7A22C657FCD0051BC6B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		55496F40278CFC0400BCA739 /* Resources */ = {
@@ -1146,6 +1203,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		55FEE7A62C657FDC0051BC6B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MDCUtil;
+			targetProxy = 55FEE7A52C657FDC0051BC6B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		55496F4A278CFC0600BCA739 /* MainMenu.xib */ = {
