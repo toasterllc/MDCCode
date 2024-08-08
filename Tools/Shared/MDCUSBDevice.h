@@ -140,11 +140,7 @@ public:
                 (uintmax_t)STM::StatusHeader.version, (uintmax_t)status.header.version);
         }
         
-        if (status.mspVersion != MSP::StateHeader.version) {
-            throw IncompatibleVersion("invalid MSP version (expected:%ju got:%ju)",
-                (uintmax_t)MSP::StateHeader.version, (uintmax_t)status.mspVersion);
-        }
-        
+        _MSPVersionValidate(status.mspVersion);
         return status;
     }
     
@@ -371,6 +367,22 @@ public:
         _checkStatus("ICEFlashWrite command failed");
     }
     
+    static void _MSPVersionValidate(MSP::Version v) {
+        if (v == MSP::VersionInvalid) {
+            throw IncompatibleVersion("invalid MSP version (MSP::VersionInvalid)",
+                (uintmax_t)MSP::StateHeader.version,
+                (uintmax_t)v
+            );
+        }
+        
+        if (v > MSP::StateHeader.version) {
+            throw IncompatibleVersion("invalid MSP version (expected:<=%ju, got:%ju)",
+                (uintmax_t)MSP::StateHeader.version,
+                (uintmax_t)v
+            );
+        }
+    }
+    
     static void _MSPStateHeaderValidate(const MSP::State::Header& header) {
         if (header.magic != MSP::StateHeader.magic) {
             throw Toastbox::RuntimeError("invalid MSP::State magic number (expected:0x%08jx, got:0x%08jx)",
@@ -379,12 +391,7 @@ public:
             );
         }
         
-        if (header.version != MSP::StateHeader.version) {
-            throw IncompatibleVersion("invalid MSP::State version (expected:%ju, got:%ju)",
-                (uintmax_t)MSP::StateHeader.version,
-                (uintmax_t)header.version
-            );
-        }
+        _MSPVersionValidate(header.version);
         
         if (header.length != sizeof(MSP::State)) {
             throw Toastbox::RuntimeError("invalid MSP::State length (expected:%ju, got:%ju)",
