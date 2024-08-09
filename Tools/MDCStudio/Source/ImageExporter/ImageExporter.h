@@ -50,6 +50,7 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
     using namespace ImagePipeline;
     
     const Time::Instant timestamp = rec.info.timestamp;
+    const float batteryLevel = MSP::BatteryLevelFloat(MSP::BatteryLevelLinearize(rec.info.batteryLevelMv));
     
     if (fmt==&Formats::JPEG || fmt==&Formats::PNG) {
         Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
@@ -83,6 +84,11 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             kCGImagePropertyExifDictionary, kCGImagePropertyExifImageUniqueID,
             (CFTypeRef)@(_ExifImageUniqueIDForImageId(rec.info.id).c_str()));
         
+        // No kCGImagePropertyExifBatteryLevel key, and manually specifying "BatteryLevel" doesn't work
+//        CGImageMetadataSetValueMatchingImageProperty((CGMutableImageMetadataRef)metadata,
+//            kCGImagePropertyExifDictionary, CFSTR("BatteryLevel"),
+//            (CFTypeRef)@(batteryLevel));
+        
         CGImageDestinationAddImageAndMetadata((CGImageDestinationRef)imageDest, (CGImageRef)cgimage,
             (CGImageMetadataRef)metadata, nullptr);
         CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
@@ -102,14 +108,11 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         TIFF::Val<uint32_t> exifOffset;
         TIFF::Val<uint32_t> imageDataOffset;
         {
-            constexpr size_t ImageUniqueIDLen = 32+1; // +1 for null byte
-            
             tiff.set(nextIFDOffset, tiff.off());
             
             uint16_t tc = 0;
             TIFF::Val<uint16_t> tagCount;
             TIFF::Val<uint32_t> batteryLevelPointer;
-            TIFF::Val<uint32_t> imageUniqueIDPointer;
             TIFF::Val<uint32_t> colorMatrixPointer1;
             TIFF::Val<uint32_t> colorMatrixPointer2;
             TIFF::Val<uint32_t> asShotNeutralPointer;
@@ -131,7 +134,6 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             tiff.push( 33422, TIFF::Byte,       4, 0x01020001 );                            tc++; // CFAPattern
             tiff.push( 33423, TIFF::Rational,   1, batteryLevelPointer );                   tc++; // BatteryLevel
             tiff.push( 34665, TIFF::Long,       1, exifOffset );                            tc++; // EXIFIFD
-            tiff.push( 42016, TIFF::ASCII,      ImageUniqueIDLen, imageUniqueIDPointer );   tc++; // ImageUniqueID
             tiff.push( 50706, TIFF::Byte,       4, 0x00000601 );                            tc++; // DNGVersion
             tiff.push( 50714, TIFF::Short,      1, 0x00000000 );                            tc++; // BlackLevel
             tiff.push( 50717, TIFF::Short,      1, Img::PixelMax );                         tc++; // WhiteLevel
@@ -146,16 +148,7 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             // BatteryLevel
             {
                 tiff.set(batteryLevelPointer, tiff.off());
-                const float batteryLevel = MSP::BatteryLevelFloat(MSP::BatteryLevelLinearize(rec.info.batteryLevelMv));
                 tiff.push(batteryLevel);
-            }
-            
-            // ImageUniqueID
-            {
-                const std::string str = _ExifImageUniqueIDForImageId(rec.info.id);
-                assert(str.size()+1 == ImageUniqueIDLen);
-                tiff.set(imageUniqueIDPointer, tiff.off());
-                tiff.push(str.c_str(), str.c_str()+ImageUniqueIDLen);
             }
             
             const double illumEstMax = std::max(std::max(rec.info.illumEst[0], rec.info.illumEst[1]), rec.info.illumEst[2]);
@@ -207,8 +200,10 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             TIFF::Val<uint16_t> tagCount;
             TIFF::Val<uint32_t> dateTimeOriginalPointer;
             TIFF::Val<uint32_t> offsetTimeOriginalPointer;
+            TIFF::Val<uint32_t> imageUniqueIDPointer;
             constexpr size_t DateTimeOriginalLen = 19+1; // +1 for null byte
             constexpr size_t OffsetTimeOriginalLen = 6+1; // +1 for null byte
+            constexpr size_t ImageUniqueIDLen = 32+1; // +1 for null byte
             
             tiff.push(tagCount);
             tiff.push( 36864, TIFF::Undefined,  4,                      0x32333230 );                       tc++; // EXIF version
@@ -220,6 +215,7 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
             
             tiff.push( 40962, TIFF::Long,       1,                      (uint32_t)image.width );            tc++; // ExifImageWidth
             tiff.push( 40963, TIFF::Long,       1,                      (uint32_t)image.height );           tc++; // ExifImageHeight
+            tiff.push( 42016, TIFF::ASCII,      ImageUniqueIDLen,       imageUniqueIDPointer );             tc++; // ImageUniqueID
             tiff.push(nextIFDOffset);
             tiff.set(tagCount, tc);
             
@@ -239,6 +235,14 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
                     tiff.set(offsetTimeOriginalPointer, tiff.off());
                     tiff.push(str.c_str(), str.c_str()+OffsetTimeOriginalLen);
                 }
+            }
+            
+            // ImageUniqueID
+            {
+                const std::string str = _ExifImageUniqueIDForImageId(rec.info.id);
+                assert(str.size()+1 == ImageUniqueIDLen);
+                tiff.set(imageUniqueIDPointer, tiff.off());
+                tiff.push(str.c_str(), str.c_str()+ImageUniqueIDLen);
             }
         }
         
