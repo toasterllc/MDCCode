@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		552F4BB329AD3AF8000CEAB2 /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 552F4B8929AD3ACB000CEAB2 /* tz.cpp */; };
-		5558BF762C659D3E00F8FAD6 /* MDCUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5558BF752C659D3E00F8FAD6 /* MDCUtil.cpp */; };
 		55E1D8EA253E868000628EF6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E1D8E9253E868000628EF6 /* Foundation.framework */; };
 		55E1D8EC253E868400628EF6 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E1D8EB253E868400628EF6 /* IOKit.framework */; };
 		55E1D8EE253E892B00628EF6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55E1D8ED253E892B00628EF6 /* main.cpp */; };
@@ -64,8 +63,6 @@
 		552F4BA529AD3ACB000CEAB2 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		552F4BA629AD3ACB000CEAB2 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
 		55496F38278BAC5000BCA739 /* MSP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
-		5558BF742C659D3E00F8FAD6 /* MDCUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
-		5558BF752C659D3E00F8FAD6 /* MDCUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MDCUtil.cpp; sourceTree = "<group>"; };
 		557ABD2529E61A3D0032619E /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
 		557ABD8A29E9C3210032619E /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
 		557ABD8F29EA1BE70032619E /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
@@ -283,8 +280,6 @@
 				55B2151027090FD1001423C1 /* Shared */,
 				55B2151F27091003001423C1 /* Shared */,
 				55ECAFCB26B0293500A339C7 /* Makefile */,
-				5558BF742C659D3E00F8FAD6 /* MDCUtil.h */,
-				5558BF752C659D3E00F8FAD6 /* MDCUtil.cpp */,
 				55E1D8ED253E892B00628EF6 /* main.cpp */,
 				55E1D8E8253E868000628EF6 /* Frameworks */,
 				55E1D8DF253E864F00628EF6 /* Products */,
@@ -367,7 +362,6 @@
 			files = (
 				55E1D8EE253E892B00628EF6 /* main.cpp in Sources */,
 				552F4BB329AD3AF8000CEAB2 /* tz.cpp in Sources */,
-				5558BF762C659D3E00F8FAD6 /* MDCUtil.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -439,7 +433,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
