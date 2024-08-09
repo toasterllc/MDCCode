@@ -47,6 +47,7 @@
 		55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F62278FCDD000BCA739 /* MetalKit.framework */; };
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
 		5557260B2B5F677E00B32710 /* demo in Copy Resources/demo */ = {isa = PBXBuildFile; fileRef = 5557260A2B5F677C00B32710 /* demo */; };
+		5558C0052C659ED400F8FAD6 /* MDCUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5558BFC52C659ED400F8FAD6 /* MDCUtil.cpp */; };
 		5568449D2BB22954008F59AE /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5568449C2BB22951008F59AE /* Renderer.metal */; };
 		557ABCF029DD24230032619E /* BatteryLifeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557ABCED29DD24230032619E /* BatteryLifeView.mm */; };
 		557ABCF129DD24230032619E /* BatteryLifeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 557ABCEE29DD24230032619E /* BatteryLifeView.xib */; };
@@ -124,25 +125,7 @@
 		55F8883B29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55F8883529D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Large.pdf */; };
 		55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* FullSizeImageView.mm */; };
 		55F8D01927BEF97200757165 /* FullSizeImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* FullSizeImageView.metal */; };
-		55FEE7A92C657FF70051BC6B /* MDCUtil in Copy MDCUtil */ = {isa = PBXBuildFile; fileRef = 55FEE7A32C657FCD0051BC6B /* MDCUtil */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		55FEE7A22C657FCD0051BC6B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 55E1D8DE253E864F00628EF6;
-			remoteInfo = MDCUtil;
-		};
-		55FEE7A52C657FDC0051BC6B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 55E1D8DD253E864F00628EF6;
-			remoteInfo = MDCUtil;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		550C47402B5E3A8300CFBE09 /* Copy Resources/demo */ = {
@@ -154,17 +137,6 @@
 				5557260B2B5F677E00B32710 /* demo in Copy Resources/demo */,
 			);
 			name = "Copy Resources/demo";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		55FEE7A82C657FE80051BC6B /* Copy MDCUtil */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 6;
-			files = (
-				55FEE7A92C657FF70051BC6B /* MDCUtil in Copy MDCUtil */,
-			);
-			name = "Copy MDCUtil";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -279,6 +251,8 @@
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		554986302B400CBA00B68E4B /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
 		5557260A2B5F677C00B32710 /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
+		5558BFC52C659ED400F8FAD6 /* MDCUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MDCUtil.cpp; sourceTree = "<group>"; };
+		5558BFC62C659ED400F8FAD6 /* MDCUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
 		5568449A2BB22951008F59AE /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		5568449B2BB22951008F59AE /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
 		5568449C2BB22951008F59AE /* Renderer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
@@ -424,7 +398,6 @@
 		55F8D01327BEF3E500757165 /* FullSizeImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FullSizeImageView.mm; sourceTree = "<group>"; };
 		55F8D01627BEF97200757165 /* FullSizeImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = FullSizeImageView.metal; sourceTree = "<group>"; };
 		55F8D01827BEF97200757165 /* FullSizeImageViewTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FullSizeImageViewTypes.h; sourceTree = "<group>"; };
-		55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MDCUtil.xcodeproj; path = ../MDCUtil/MDCUtil.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -704,7 +677,7 @@
 		55496F39278CFC0400BCA739 = {
 			isa = PBXGroup;
 			children = (
-				55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */,
+				5558BFC82C659ED400F8FAD6 /* MDCUtil */,
 				5544AB4D27B5E3DF006AB473 /* Code */,
 				5544A7F127B5E3B3006AB473 /* Tools */,
 				55496F58278CFC7600BCA739 /* Source */,
@@ -807,6 +780,16 @@
 				55496F5A278CFCE200BCA739 /* Cocoa.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		5558BFC82C659ED400F8FAD6 /* MDCUtil */ = {
+			isa = PBXGroup;
+			children = (
+				5558BFC62C659ED400F8FAD6 /* MDCUtil.h */,
+				5558BFC52C659ED400F8FAD6 /* MDCUtil.cpp */,
+			);
+			name = MDCUtil;
+			path = ../MDCUtil;
 			sourceTree = "<group>";
 		};
 		557ABCEC29DD24230032619E /* BatteryLifeView */ = {
@@ -998,14 +981,6 @@
 			path = FullSizeImageView;
 			sourceTree = "<group>";
 		};
-		55FEE79F2C657FCD0051BC6B /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				55FEE7A32C657FCD0051BC6B /* MDCUtil */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1017,12 +992,10 @@
 				55496F3F278CFC0400BCA739 /* Frameworks */,
 				55496F40278CFC0400BCA739 /* Resources */,
 				550C47402B5E3A8300CFBE09 /* Copy Resources/demo */,
-				55FEE7A82C657FE80051BC6B /* Copy MDCUtil */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				55FEE7A62C657FDC0051BC6B /* PBXTargetDependency */,
 			);
 			name = MDCStudio;
 			productName = MDCStudio;
@@ -1054,28 +1027,12 @@
 			mainGroup = 55496F39278CFC0400BCA739;
 			productRefGroup = 55496F43278CFC0400BCA739 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 55FEE79F2C657FCD0051BC6B /* Products */;
-					ProjectRef = 55FEE79E2C657FCD0051BC6B /* MDCUtil.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				55496F41278CFC0400BCA739 /* MDCStudio */,
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		55FEE7A32C657FCD0051BC6B /* MDCUtil */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = MDCUtil;
-			remoteRef = 55FEE7A22C657FCD0051BC6B /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		55496F40278CFC0400BCA739 /* Resources */ = {
@@ -1192,6 +1149,7 @@
 				55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */,
 				5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */,
 				553EF5562AD4953400157484 /* BatteryLifePlotView.mm in Sources */,
+				5558C0052C659ED400F8FAD6 /* MDCUtil.cpp in Sources */,
 				55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */,
 				5530DC3B29DCDA3E005FEC0A /* DeviceSettingsView.mm in Sources */,
 				55116D302B3CC130004617DD /* ProgressBar.mm in Sources */,
@@ -1203,14 +1161,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		55FEE7A62C657FDC0051BC6B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = MDCUtil;
-			targetProxy = 55FEE7A52C657FDC0051BC6B /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		55496F4A278CFC0600BCA739 /* MainMenu.xib */ = {
