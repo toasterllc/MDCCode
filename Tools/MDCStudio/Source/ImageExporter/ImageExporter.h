@@ -62,7 +62,7 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         const Pipeline::Options popts = PipelineOptionsForImage(rec, image);
         Pipeline::Run(renderer, popts, rawTxt, rgbTxt);
         
-        id cgimage = renderer.imageCreate(rgbTxt);
+        id cgimage = renderer.imageCreate(rgbTxt, true);
         
         NSURL* url = [NSURL fileURLWithPath:@(filePath.c_str())];
         id /* CGImageDestinationRef */ imageDest = CFBridgingRelease(CGImageDestinationCreateWithURL((CFURLRef)url,

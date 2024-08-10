@@ -70,18 +70,6 @@ fragment void SampleRGB(
     }
 }
 
-float SRGBGammaForward(float x) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    if (x <= 0.0031308) return 12.92*x;
-    return 1.055*pow(x, 1/2.4)-.055;
-}
-
-float SRGBGammaReverse(float x) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    if (x <= 0.04045) return x/12.92;
-    return pow((x+.055)/1.055, 2.4);
-}
-
 fragment float4 XYZD50FromCamRaw(
     constant float3x3& colorMatrix [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
@@ -424,20 +412,6 @@ fragment float4 FindMaxVals(
     setIfGreater((device atomic_uint&)highlights.z, lsrgb.b);
     
     return float4(lsrgbfloat, 1);
-}
-
-fragment float4 SRGBGamma(
-    constant SampleRect& sampleRect [[buffer(0)]],
-    texture2d<float> txt [[texture(0)]],
-    VertexOutput in [[stage_in]]
-) {
-    const float3 c_LSRGB = Sample::RGB(txt, int2(in.pos.xy));
-    const float3 c_SRGB = float3{
-        SRGBGammaForward(c_LSRGB.r),
-        SRGBGammaForward(c_LSRGB.g),
-        SRGBGammaForward(c_LSRGB.b)
-    };
-    return float4(c_SRGB, 1);
 }
 
 fragment float4 Display(
