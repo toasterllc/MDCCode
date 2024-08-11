@@ -441,6 +441,10 @@ done:
     [self setNeedsDisplay];
 }
 
+- (bool)sortNewestFirst {
+    return _sortNewestFirst;
+}
+
 - (void)setSortNewestFirst:(bool)x {
     _sortNewestFirst = x;
     // Trigger selection update (_selection buffer needs to be cleared)
@@ -464,81 +468,6 @@ struct SelectionDelta {
     if (it == end) return std::nullopt;
     const size_t idx = it-begin;
     return [self rectForImageIndex:idx];
-}
-
-- (std::optional<CGRect>)moveSelection:(SelectionDelta)delta extend:(bool)extend {
-    ssize_t newIdx = 0;
-    ImageRecordPtr newImg;
-    ImageSet selection = _selection->images();
-    {
-        auto lock = std::unique_lock(*_imageLibrary);
-        
-        auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-        auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
-        const size_t imgCount = _imageLibrary->recordCount();
-        if (!imgCount) return std::nullopt;
-        
-        if (!selection.empty()) {
-            const auto it = ImageLibrary::Find(begin, end, *std::prev(selection.end()));
-            if (it == end) {
-                NSLog(@"Image no longer in library");
-                return std::nullopt;
-            }
-            
-            const size_t idx = it-begin;
-            const size_t colCount = _grid.columnCount();
-            const size_t rem = (imgCount % colCount);
-            const size_t lastRowCount = (rem ? rem : colCount);
-            const bool firstRow = (idx < colCount);
-            const bool lastRow = (idx >= (imgCount-lastRowCount));
-            const bool firstCol = !(idx % colCount);
-            const bool lastCol = ((idx % colCount) == (colCount-1));
-            const bool lastElm = (idx == (imgCount-1));
-            
-            newIdx = idx;
-            if (delta.x > 0) {
-                // Right
-                if (lastCol || lastElm) return std::nullopt;
-                newIdx += 1;
-            
-            } else if (delta.x < 0) {
-                // Left
-                if (firstCol) return std::nullopt;
-                newIdx -= 1;
-            
-            } else if (delta.y > 0) {
-                // Down
-                if (lastRow) return std::nullopt;
-                newIdx += colCount;
-            
-            } else if (delta.y < 0) {
-                // Up
-                if (firstRow) return std::nullopt;
-                newIdx -= colCount;
-            }
-            
-            newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
-        
-        } else {
-            if (delta.x>0 || delta.y>0) {
-                // Select first element
-                newIdx = 0;
-            } else if (delta.x<0 || delta.y<0) {
-                // Select last element
-                newIdx = imgCount-1;
-            } else {
-                return std::nullopt;
-            }
-        }
-        
-    //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-        newImg = *(begin+newIdx);
-    }
-    
-    if (!extend) selection.clear();
-    selection.insert(newImg);
-    _selection->images(std::move(selection));
-    return [self rectForImageIndex:newIdx];
 }
 
 // MARK: - ImageSelection Observer
@@ -641,6 +570,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     CALayer* _selectionRectLayer;
     ImageSourcePtr _imageSource;
     ImageSelectionPtr _selection;
+    ImageRecordPtr _selectionHead;
     ImageLibraryPtr _imageLibrary;
     Object::ObserverPtr _imageLibraryOb;
     NSLayoutConstraint* _docHeight;
@@ -722,10 +652,163 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     }
 }
 
+//- (std::optional<CGRect>)__moveSelection:(SelectionDelta)delta extend:(bool)extend {
+//    ssize_t newIdx = 0;
+//    ImageRecordPtr newImg;
+//    ImageSet selection = _selection->images();
+//    {
+//        auto lock = std::unique_lock(*_imageLibrary);
+//        
+//        auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+//        auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
+//        const size_t imgCount = _imageLibrary->recordCount();
+//        if (!imgCount) return std::nullopt;
+//        
+//        if (!selection.empty()) {
+//            const auto it = ImageLibrary::Find(begin, end, *std::prev(selection.end()));
+//            if (it == end) {
+//                NSLog(@"Image no longer in library");
+//                return std::nullopt;
+//            }
+//            
+//            const size_t idx = it-begin;
+//            const size_t colCount = _grid.columnCount();
+//            const size_t rem = (imgCount % colCount);
+//            const size_t lastRowCount = (rem ? rem : colCount);
+//            const bool firstRow = (idx < colCount);
+//            const bool lastRow = (idx >= (imgCount-lastRowCount));
+//            const bool firstCol = !(idx % colCount);
+//            const bool lastCol = ((idx % colCount) == (colCount-1));
+//            const bool lastElm = (idx == (imgCount-1));
+//            
+//            newIdx = idx;
+//            if (delta.x > 0) {
+//                // Right
+//                if (lastCol || lastElm) return std::nullopt;
+//                newIdx += 1;
+//            
+//            } else if (delta.x < 0) {
+//                // Left
+//                if (firstCol) return std::nullopt;
+//                newIdx -= 1;
+//            
+//            } else if (delta.y > 0) {
+//                // Down
+//                if (lastRow) return std::nullopt;
+//                newIdx += colCount;
+//            
+//            } else if (delta.y < 0) {
+//                // Up
+//                if (firstRow) return std::nullopt;
+//                newIdx -= colCount;
+//            }
+//            
+//            newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
+//        
+//        } else {
+//            if (delta.x>0 || delta.y>0) {
+//                // Select first element
+//                newIdx = 0;
+//            } else if (delta.x<0 || delta.y<0) {
+//                // Select last element
+//                newIdx = imgCount-1;
+//            } else {
+//                return std::nullopt;
+//            }
+//        }
+//        
+//    //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
+//        newImg = *(begin+newIdx);
+//    }
+//    
+//    if (!extend) selection.clear();
+//    selection.insert(newImg);
+//    _selection->images(std::move(selection));
+//    return [self rectForImageIndex:newIdx];
+//}
+
 - (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
-    std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
-    if (!rect) return;
-    [self scrollToImageRect:*rect center:false];
+    assert(_selectionHead);
+    
+    ImageSet selection;
+    const ImageSet oldSelection = _selection->images();
+    {
+        auto lock = std::unique_lock(*_imageLibrary);
+        
+        ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+        ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+        ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _selectionHead);
+        assert(newSelectionFirst != end);
+        
+        ssize_t deltaCount = delta.y*[_imageGridLayer columnCount] + delta.x;
+        if (deltaCount < 0) {
+//            newSelectionBegin--;
+            deltaCount = std::max(deltaCount, -(newSelectionFirst-begin));
+//            deltaCount--;
+        } else {
+//            newSelectionBegin++;
+            deltaCount = std::min(deltaCount, end-newSelectionFirst-1);
+//            deltaCount++;
+        }
+        
+        ImageRecordIterAny newSelectionLast = newSelectionFirst+deltaCount;
+        _selectionHead = *newSelectionLast;
+        
+        if (extend) {
+            ImageRecordIterAny newSelectionEnd = newSelectionLast;
+            if (newSelectionFirst > newSelectionEnd) {
+                std::swap(newSelectionFirst, newSelectionEnd);
+                printf("SWAP\n");
+            } else {
+                newSelectionFirst++;
+                newSelectionEnd++;
+            }
+            
+//            if (deltaCount < 0) {
+//                newSelectionFirst--;
+//            } else {
+//                newSelectionEnd++;
+//            }
+            
+    //        ImageRecordIterAny newSelectionLast = newSelectionBegin+deltaCount;
+            
+            const ImageSet newSelection(newSelectionFirst, newSelectionEnd);
+//            selection = newSelection;
+            selection = ImageSetsXOR(oldSelection, newSelection);
+        
+        } else {
+            selection = { *newSelectionLast };
+        }
+        
+//        _selectionHead = *newSelectionLast;
+        
+        
+        
+//        selection.insert(newSelection.begin(), newSelection.end());
+//        _selection->images(ImageSetsXOR(oldSelection, newSelection));
+//        _selectionHead = ;
+        
+//        selection = _selection->images();
+//        
+//        {
+//            auto lock = std::unique_lock(*_imageLibrary);
+//            auto begin = _imageLibrary->find(*oldSelection.begin());
+//            auto last = _imageLibrary->find(*std::prev(newSelection.end()));
+//            if (begin > last) std::swap(begin, last);
+//            auto end = std::next(last);
+//            selection = ImageSet(begin, end);
+//        }
+    }
+    
+    _selection->images(selection);
+    
+//    auto last = _imageLibrary->find(*std::prev(newSelection.end()));
+//    
+//    _selectionHead
+    
+//    std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
+//    if (!rect) return;
+//    [self scrollToImageRect:*rect center:false];
 }
 
 - (void)_updateDocumentHeight {
@@ -809,14 +892,14 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         
         if (flags&NSEventModifierFlagShift && !oldSelection.empty()) {
             if (!newSelection.empty()) {
-                auto begin = _imageLibrary->find(*oldSelection.begin());
-                auto last = _imageLibrary->find(*std::prev(newSelection.end()));
-                if (begin > last) std::swap(begin, last);
-                
                 ImageSet selection;
-                for (auto it=begin;; it++) {
-                    selection.insert(*it);
-                    if (it == last) break;
+                {
+                    auto lock = std::unique_lock(*_imageLibrary);
+                    auto begin = _imageLibrary->find(*oldSelection.begin());
+                    auto last = _imageLibrary->find(*std::prev(newSelection.end()));
+                    if (begin > last) std::swap(begin, last);
+                    auto end = std::next(last);
+                    selection = ImageSet(begin, end);
                 }
                 
                 _selection->images(selection);
@@ -834,6 +917,8 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 //        NSLog(@"mouseDown:");
     });
     [_selectionRectLayer setHidden:true];
+    
+    _selectionHead = *std::prev(_selection->images().end());
 }
 
 - (void)mouseUp:(NSEvent*)event {
@@ -860,22 +945,22 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 }
 
 - (void)moveDown:(id)sender {
-    const bool extend = false;//[[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    const bool extend = [[[self window] currentEvent] modifierFlags] & NSEventModifierFlagShift;
     [self _moveSelection:{0,1} extend:extend];
 }
 
 - (void)moveUp:(id)sender {
-    const bool extend = false;//[[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    const bool extend = [[[self window] currentEvent] modifierFlags] & NSEventModifierFlagShift;
     [self _moveSelection:{0,-1} extend:extend];
 }
 
 - (void)moveLeft:(id)sender {
-    const bool extend = false;//[[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    const bool extend = [[[self window] currentEvent] modifierFlags] & NSEventModifierFlagShift;
     [self _moveSelection:{-1,0} extend:extend];
 }
 
 - (void)moveRight:(id)sender {
-    const bool extend = false;//[[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    const bool extend = [[[self window] currentEvent] modifierFlags] & NSEventModifierFlagShift;
     [self _moveSelection:{1,0} extend:extend];
 }
 
