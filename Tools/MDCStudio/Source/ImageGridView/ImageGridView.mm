@@ -800,18 +800,34 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     const CGPoint startPoint = [superview convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
     [_selectionRectLayer setHidden:false];
     
-    const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    const NSEventModifierFlags flags = [[[self window] currentEvent] modifierFlags];
     const ImageSet oldSelection = _selection->images();
     Toastbox::TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
-//        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
         const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
-        if (extend) {
+        
+        if (flags&NSEventModifierFlagShift && !oldSelection.empty()) {
+            if (!newSelection.empty()) {
+                auto begin = _imageLibrary->find(*oldSelection.begin());
+                auto last = _imageLibrary->find(*std::prev(newSelection.end()));
+                if (begin > last) std::swap(begin, last);
+                
+                ImageSet selection;
+                for (auto it=begin;; it++) {
+                    selection.insert(*it);
+                    if (it == last) break;
+                }
+                
+                _selection->images(selection);
+            }
+            
+        } else if (flags & NSEventModifierFlagCommand) {
             _selection->images(ImageSetsXOR(oldSelection, newSelection));
         } else {
             _selection->images(std::move(newSelection));
         }
+        
         [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
         
         [self autoscroll:event];
