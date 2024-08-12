@@ -9,7 +9,7 @@
         <customObject id="-2" userLabel="File's Owner" customClass="SettingsWindow"/>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application"/>
-        <window title="Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" appearanceType="darkAqua" frameAutosaveName="" animationBehavior="default" id="wzQ-YT-BhH" customClass="SettingsWindow">
+        <window title="Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="" animationBehavior="default" id="wzQ-YT-BhH" customClass="SettingsWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="140" y="176" width="258" height="401"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1512" height="944"/>

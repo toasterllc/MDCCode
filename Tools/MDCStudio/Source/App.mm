@@ -24,6 +24,10 @@ using namespace MDCStudio;
 //    [super showSettingsWindow]
 }
 
+- (NSAppearance*)appearance {
+    return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+}
+
 @end
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
