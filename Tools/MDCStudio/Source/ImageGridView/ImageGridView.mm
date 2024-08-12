@@ -794,6 +794,11 @@ static int SelectionVectorAbs(SelectionVector a) {
     
     _selection->images(selection);
     
+    std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:_selectionHead];
+    if (rect) [self scrollToImageRect:*rect center:false];
+    
+    
+    
 //    auto last = _imageLibrary->find(*std::prev(newSelection.end()));
 //    
 //    _shiftSelection.head
