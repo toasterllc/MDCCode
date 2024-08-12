@@ -243,6 +243,22 @@ bool ImageSetsOverlap(const T_A& a, const T_B& b) {
     return false;
 }
 
+inline ImageSet ImageSetsUnion(const ImageSet& a, const ImageSet& b) {
+    ImageSet r = a;
+    r.insert(b.begin(), b.end());
+    return r;
+}
+
+inline ImageSet ImageSetsSubtract(const ImageSet& a, const ImageSet& b) {
+    ImageSet r;
+    for (const ImageRecordPtr& x : a) {
+        if (b.find(x) == b.end()) {
+            r.insert(x);
+        }
+    }
+    return r;
+}
+
 inline ImageSet ImageSetsIntersect(const ImageSet& a, const ImageSet& b) {
     ImageSet r;
     for (const ImageRecordPtr& x : a) {

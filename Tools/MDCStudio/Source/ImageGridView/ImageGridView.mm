@@ -2,6 +2,7 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import <thread>
+#import <simd/simd.h>
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "ImageThumb.h"
@@ -451,11 +452,6 @@ done:
     [self _selectionUpdate];
 }
 
-struct SelectionDelta {
-    int x = 0;
-    int y = 0;
-};
-
 - (CGRect)rectForImageIndex:(size_t)idx {
     return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
 }
@@ -560,17 +556,34 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 
 
 
+using SelectionVector = simd::int2;
 
+static int SelectionVectorAbs(SelectionVector a) {
+    return std::abs(a.x) + std::abs(a.y);
+}
 
-
+//struct SelectionVector {
+//    int x = 0;
+//    int y = 0;
+//    
+//    int abs() const {
+//        return std::abs(x)+std::abs(y);
+//    }
+//};
 
 // MARK: - ImageGridView
 @implementation ImageGridView {
     ImageGridLayer* _imageGridLayer;
     CALayer* _selectionRectLayer;
     ImageSourcePtr _imageSource;
+    
     ImageSelectionPtr _selection;
-    ImageRecordPtr _selectionHead;
+    struct {
+        ImageRecordPtr head;
+        SelectionVector vector;
+        ImageSet set;
+    } _shiftKeyboardSelection;
+    
     ImageLibraryPtr _imageLibrary;
     Object::ObserverPtr _imageLibraryOb;
     NSLayoutConstraint* _docHeight;
@@ -727,8 +740,9 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 //    return [self rectForImageIndex:newIdx];
 //}
 
-- (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
-    assert(_selectionHead);
+- (void)_moveSelection:(SelectionVector)delta extend:(bool)extend {
+    assert(_shiftKeyboardSelection.head);
+    assert(delta.x==0 || delta.y==0); // Prohibit diagonal changes
     
     ImageSet selection;
     const ImageSet oldSelection = _selection->images();
@@ -737,8 +751,66 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         
         ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
         ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
-        ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _selectionHead);
+        ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _shiftKeyboardSelection.head);
         assert(newSelectionFirst != end);
+        
+        SelectionVector vectorPrev = _shiftKeyboardSelection.vector;
+        _shiftKeyboardSelection.vector += delta;
+        
+        printf("_shiftSelection.vector: %d %d\n", _shiftKeyboardSelection.vector.x, _shiftKeyboardSelection.vector.y);
+        
+//        bool select = false;
+//        
+//        if (delta.x) {
+//            select = std::abs(_shiftKeyboardSelection.vector.x) > std::abs(vectorPrev.x);
+//        
+//        } else if (delta.y) {
+//            select = std::abs(_shiftKeyboardSelection.vector.y) > std::abs(vectorPrev.y);
+//        
+//        } else {
+//            abort();
+//        }
+        
+//        if (_shiftKeyboardSelection.vector.y) {
+//            if (delta.x) {
+//                if (_shiftKeyboardSelection.vector.y > 0) {
+//                    select = delta.x >= 0;
+//                } else if (_shiftKeyboardSelection.vector.y < 0) {
+//                    select = delta.x <= 0;
+//                } else {
+//                    select = true;
+//                }
+//            
+//            } else if (delta.y) {
+//                select = std::abs(_shiftKeyboardSelection.vector.y) > std::abs(vectorPrev.y);
+//            
+//            } else {
+//                abort();
+//            }
+//        
+//        } else {
+//            if (delta.x) {
+//                select = std::abs(_shiftKeyboardSelection.vector.x) > std::abs(vectorPrev.x);
+//            
+//            } else if (delta.y) {
+//                select = std::abs(_shiftKeyboardSelection.vector.y) > std::abs(vectorPrev.y);
+//            
+//            } else {
+//                abort();
+//            }
+//        }
+        
+        // Add to the selection if the selection vector increased in magnitude
+//        const bool select = SelectionVectorAbs(_shiftSelection.vector) > SelectionVectorAbs(vectorPrev);
+//        
+//        SelectionVector abs = simd::abs(selectionVector);
+//        int absTotal = abs.x + abs.y;
+//        
+//        SelectionVector absPrev = simd::abs(vectorPrev);
+//        int absTotalPrev = absPrev.x + absPrev.y;
+//        
+//        simd::abs(_shiftSelection.vector);
+////        if (simd::ma)
         
         ssize_t deltaCount = delta.y*[_imageGridLayer columnCount] + delta.x;
         if (deltaCount < 0) {
@@ -752,17 +824,25 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         }
         
         ImageRecordIterAny newSelectionLast = newSelectionFirst+deltaCount;
-        _selectionHead = *newSelectionLast;
+        ImageRecordPtr headPrev = _shiftKeyboardSelection.head;
+        _shiftKeyboardSelection.head = *newSelectionLast;
         
         if (extend) {
-            ImageRecordIterAny newSelectionEnd = newSelectionLast;
-            if (newSelectionFirst > newSelectionEnd) {
-                std::swap(newSelectionFirst, newSelectionEnd);
+            if (newSelectionFirst > newSelectionLast) {
+                std::swap(newSelectionFirst, newSelectionLast);
                 printf("SWAP\n");
-            } else {
-                newSelectionFirst++;
-                newSelectionEnd++;
             }
+            
+            ImageRecordIterAny newSelectionEnd = newSelectionLast+1;
+            
+//            ImageRecordIterAny newSelectionEnd = newSelectionLast;
+//            if (newSelectionFirst > newSelectionEnd) {
+//                std::swap(newSelectionFirst, newSelectionEnd);
+//                printf("SWAP\n");
+//            } else {
+//                newSelectionFirst++;
+//                newSelectionEnd++;
+//            }
             
 //            if (deltaCount < 0) {
 //                newSelectionFirst--;
@@ -772,21 +852,49 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
             
     //        ImageRecordIterAny newSelectionLast = newSelectionBegin+deltaCount;
             
-            const ImageSet newSelection(newSelectionFirst, newSelectionEnd);
+            ImageSet newSelection(newSelectionFirst, newSelectionEnd);
+            
+//            for (auto it=newSelection.begin(); it!=newSelection.end(); it++) {
+//                printf("newSelection: %ju\n", (uintmax_t)it->idx);
+//            }
+            
+//            if (select) {
+//                selection = ImageSetsUnion(oldSelection, newSelection);
+//            } else {
+//                selection = ImageSetsSubtract(oldSelection, newSelection);
+//            }
+//            
+//            selection.insert(_shiftKeyboardSelection.head);
+            
+            newSelection.erase(headPrev);
+//            newSelection.insert(_shiftKeyboardSelection.head);
 //            selection = newSelection;
-            selection = ImageSetsXOR(oldSelection, newSelection);
+            
+//            selection = ImageSetsXOR(oldSelection, newSelection);
+//            selection.insert(_shiftKeyboardSelection.head);
+            
+            const bool headWasSelected = (oldSelection.find(_shiftKeyboardSelection.head) != oldSelection.end());
+            if (headWasSelected) {
+                selection = ImageSetsSubtract(oldSelection, newSelection);
+                selection.erase(headPrev);
+            } else {
+                selection = ImageSetsUnion(oldSelection, newSelection);
+                selection.insert(headPrev);
+            }
+            
+            selection.insert(_shiftKeyboardSelection.head);
         
         } else {
             selection = { *newSelectionLast };
         }
         
-//        _selectionHead = *newSelectionLast;
+//        _shiftSelection.head = *newSelectionLast;
         
         
         
 //        selection.insert(newSelection.begin(), newSelection.end());
 //        _selection->images(ImageSetsXOR(oldSelection, newSelection));
-//        _selectionHead = ;
+//        _shiftSelection.head = ;
         
 //        selection = _selection->images();
 //        
@@ -804,7 +912,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     
 //    auto last = _imageLibrary->find(*std::prev(newSelection.end()));
 //    
-//    _selectionHead
+//    _shiftSelection.head
     
 //    std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
 //    if (!rect) return;
@@ -918,7 +1026,14 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     });
     [_selectionRectLayer setHidden:true];
     
-    _selectionHead = *std::prev(_selection->images().end());
+    if (!_selection->images().empty()) {
+        _shiftKeyboardSelection = {
+            .head = *std::prev(_selection->images().end()),
+        };
+    
+    } else {
+        _shiftKeyboardSelection = {};
+    }
 }
 
 - (void)mouseUp:(NSEvent*)event {
