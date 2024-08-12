@@ -737,8 +737,18 @@ static int SelectionVectorAbs(SelectionVector a) {
 //}
 
 - (void)_moveSelection:(SelectionVector)delta extend:(bool)extend {
-    assert(_selectionHead);
     assert(delta.x==0 || delta.y==0); // Prohibit diagonal changes
+    
+    if (!_selectionHead) {
+        ImageRecordPtr first = *_selection->images().begin();
+        ImageRecordPtr last = *std::prev(_selection->images().end());
+        
+        if (delta.x>0 || delta.y>0) {
+            _selectionHead = ([_imageGridLayer sortNewestFirst] ? first : last);
+        } else {
+            _selectionHead = ([_imageGridLayer sortNewestFirst] ? last : first);
+        }
+    }
     
     ImageSet selection;
     const ImageSet oldSelection = _selection->images();
@@ -900,12 +910,7 @@ static int SelectionVectorAbs(SelectionVector a) {
     });
     [_selectionRectLayer setHidden:true];
     
-    if (!_selection->images().empty()) {
-        _selectionHead = *std::prev(_selection->images().end());
-    
-    } else {
-        _selectionHead = {};
-    }
+    _selectionHead = {};
 }
 
 - (void)mouseUp:(NSEvent*)event {
