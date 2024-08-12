@@ -578,11 +578,7 @@ static int SelectionVectorAbs(SelectionVector a) {
     ImageSourcePtr _imageSource;
     
     ImageSelectionPtr _selection;
-    struct {
-        ImageRecordPtr head;
-        SelectionVector vector;
-        ImageSet set;
-    } _shiftKeyboardSelection;
+    ImageRecordPtr _selectionHead;
     
     ImageLibraryPtr _imageLibrary;
     Object::ObserverPtr _imageLibraryOb;
@@ -741,7 +737,7 @@ static int SelectionVectorAbs(SelectionVector a) {
 //}
 
 - (void)_moveSelection:(SelectionVector)delta extend:(bool)extend {
-    assert(_shiftKeyboardSelection.head);
+    assert(_selectionHead);
     assert(delta.x==0 || delta.y==0); // Prohibit diagonal changes
     
     ImageSet selection;
@@ -751,161 +747,39 @@ static int SelectionVectorAbs(SelectionVector a) {
         
         ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
         ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
-        ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _shiftKeyboardSelection.head);
+        ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _selectionHead);
         assert(newSelectionFirst != end);
         
-        SelectionVector vectorPrev = _shiftKeyboardSelection.vector;
-        _shiftKeyboardSelection.vector += delta;
-        
-        printf("_shiftSelection.vector: %d %d\n", _shiftKeyboardSelection.vector.x, _shiftKeyboardSelection.vector.y);
-        
-//        bool select = false;
-//        
-//        if (delta.x) {
-//            select = std::abs(_shiftKeyboardSelection.vector.x) > std::abs(vectorPrev.x);
-//        
-//        } else if (delta.y) {
-//            select = std::abs(_shiftKeyboardSelection.vector.y) > std::abs(vectorPrev.y);
-//        
-//        } else {
-//            abort();
-//        }
-        
-//        if (_shiftKeyboardSelection.vector.y) {
-//            if (delta.x) {
-//                if (_shiftKeyboardSelection.vector.y > 0) {
-//                    select = delta.x >= 0;
-//                } else if (_shiftKeyboardSelection.vector.y < 0) {
-//                    select = delta.x <= 0;
-//                } else {
-//                    select = true;
-//                }
-//            
-//            } else if (delta.y) {
-//                select = std::abs(_shiftKeyboardSelection.vector.y) > std::abs(vectorPrev.y);
-//            
-//            } else {
-//                abort();
-//            }
-//        
-//        } else {
-//            if (delta.x) {
-//                select = std::abs(_shiftKeyboardSelection.vector.x) > std::abs(vectorPrev.x);
-//            
-//            } else if (delta.y) {
-//                select = std::abs(_shiftKeyboardSelection.vector.y) > std::abs(vectorPrev.y);
-//            
-//            } else {
-//                abort();
-//            }
-//        }
-        
-        // Add to the selection if the selection vector increased in magnitude
-//        const bool select = SelectionVectorAbs(_shiftSelection.vector) > SelectionVectorAbs(vectorPrev);
-//        
-//        SelectionVector abs = simd::abs(selectionVector);
-//        int absTotal = abs.x + abs.y;
-//        
-//        SelectionVector absPrev = simd::abs(vectorPrev);
-//        int absTotalPrev = absPrev.x + absPrev.y;
-//        
-//        simd::abs(_shiftSelection.vector);
-////        if (simd::ma)
-        
+        const ssize_t deltaCountMin = -(newSelectionFirst-begin);
+        const ssize_t deltaCountMax = end-newSelectionFirst-1;
         ssize_t deltaCount = delta.y*[_imageGridLayer columnCount] + delta.x;
-        if (deltaCount < 0) {
-//            newSelectionBegin--;
-            deltaCount = std::max(deltaCount, -(newSelectionFirst-begin));
-//            deltaCount--;
-        } else {
-//            newSelectionBegin++;
-            deltaCount = std::min(deltaCount, end-newSelectionFirst-1);
-//            deltaCount++;
+        
+        // Short circuit if the delta is trying to extend beyond the valid bounds
+        if (deltaCount<deltaCountMin || deltaCount>deltaCountMax) {
+            return;
         }
         
         ImageRecordIterAny newSelectionLast = newSelectionFirst+deltaCount;
-        ImageRecordPtr headPrev = _shiftKeyboardSelection.head;
-        _shiftKeyboardSelection.head = *newSelectionLast;
+        _selectionHead = *newSelectionLast;
         
         if (extend) {
             if (newSelectionFirst > newSelectionLast) {
                 std::swap(newSelectionFirst, newSelectionLast);
-                printf("SWAP\n");
             }
             
-            ImageRecordIterAny newSelectionEnd = newSelectionLast+1;
-            
-//            ImageRecordIterAny newSelectionEnd = newSelectionLast;
-//            if (newSelectionFirst > newSelectionEnd) {
-//                std::swap(newSelectionFirst, newSelectionEnd);
-//                printf("SWAP\n");
-//            } else {
-//                newSelectionFirst++;
-//                newSelectionEnd++;
-//            }
-            
-//            if (deltaCount < 0) {
-//                newSelectionFirst--;
-//            } else {
-//                newSelectionEnd++;
-//            }
-            
-    //        ImageRecordIterAny newSelectionLast = newSelectionBegin+deltaCount;
-            
-            ImageSet newSelection(newSelectionFirst, newSelectionEnd);
-            
-//            for (auto it=newSelection.begin(); it!=newSelection.end(); it++) {
-//                printf("newSelection: %ju\n", (uintmax_t)it->idx);
-//            }
-            
-//            if (select) {
-//                selection = ImageSetsUnion(oldSelection, newSelection);
-//            } else {
-//                selection = ImageSetsSubtract(oldSelection, newSelection);
-//            }
-//            
-//            selection.insert(_shiftKeyboardSelection.head);
-            
-            newSelection.erase(headPrev);
-//            newSelection.insert(_shiftKeyboardSelection.head);
-//            selection = newSelection;
-            
-//            selection = ImageSetsXOR(oldSelection, newSelection);
-//            selection.insert(_shiftKeyboardSelection.head);
-            
-            const bool headWasSelected = (oldSelection.find(_shiftKeyboardSelection.head) != oldSelection.end());
+            ImageSet newSelection(newSelectionFirst, newSelectionLast+1);
+            const bool headWasSelected = (oldSelection.find(_selectionHead) != oldSelection.end());
             if (headWasSelected) {
                 selection = ImageSetsSubtract(oldSelection, newSelection);
-                selection.erase(headPrev);
             } else {
                 selection = ImageSetsUnion(oldSelection, newSelection);
-                selection.insert(headPrev);
             }
             
-            selection.insert(_shiftKeyboardSelection.head);
+            selection.insert(_selectionHead);
         
         } else {
             selection = { *newSelectionLast };
         }
-        
-//        _shiftSelection.head = *newSelectionLast;
-        
-        
-        
-//        selection.insert(newSelection.begin(), newSelection.end());
-//        _selection->images(ImageSetsXOR(oldSelection, newSelection));
-//        _shiftSelection.head = ;
-        
-//        selection = _selection->images();
-//        
-//        {
-//            auto lock = std::unique_lock(*_imageLibrary);
-//            auto begin = _imageLibrary->find(*oldSelection.begin());
-//            auto last = _imageLibrary->find(*std::prev(newSelection.end()));
-//            if (begin > last) std::swap(begin, last);
-//            auto end = std::next(last);
-//            selection = ImageSet(begin, end);
-//        }
     }
     
     _selection->images(selection);
@@ -1027,12 +901,10 @@ static int SelectionVectorAbs(SelectionVector a) {
     [_selectionRectLayer setHidden:true];
     
     if (!_selection->images().empty()) {
-        _shiftKeyboardSelection = {
-            .head = *std::prev(_selection->images().end()),
-        };
+        _selectionHead = *std::prev(_selection->images().end());
     
     } else {
-        _shiftKeyboardSelection = {};
+        _selectionHead = {};
     }
 }
 
