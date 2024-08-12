@@ -22,14 +22,14 @@ using namespace MDCStudio;
 @implementation SettingsWindow
 
 - (instancetype)init {
-    NSArray* topLevelObjects = nil;
+    NSArray* objects = nil;
     bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil]
-        instantiateWithOwner:nil topLevelObjects:&topLevelObjects];
+        instantiateWithOwner:nil topLevelObjects:&objects];
     assert(br);
-    assert([topLevelObjects count] == 1);
-    id window = topLevelObjects[0];
-    assert([window isKindOfClass:[SettingsWindow class]]);
-    return window;
+    for (id obj : objects) {
+        if ([obj isKindOfClass:[self class]]) return obj;
+    }
+    abort();
 }
 
 @end

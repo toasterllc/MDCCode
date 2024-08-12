@@ -1,18 +1,27 @@
 #import <Cocoa/Cocoa.h>
 #import "MDCDevicesManager.h"
+#import "SettingsWindow/SettingsWindow.h"
 using namespace MDCStudio;
 
 @interface App : NSApplication
 @end
 
-@implementation App
+@implementation App {
+    SettingsWindow* _settingsWindow;
+}
 
-- (void)orderFrontStandardAboutPanel:(id)sender {
+- (IBAction)orderFrontStandardAboutPanel:(id)sender {
     [super orderFrontStandardAboutPanelWithOptions:@{
         // Suppress the build number because we use the same number for both the application version
         // and build number, so it's redundant
         NSAboutPanelOptionVersion: @"",
     }];
+}
+
+- (IBAction)showSettingsWindow:(id)sender {
+    if (!_settingsWindow) _settingsWindow = [SettingsWindow new];
+    [_settingsWindow makeKeyAndOrderFront:self];
+//    [super showSettingsWindow]
 }
 
 @end
