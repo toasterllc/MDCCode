@@ -796,16 +796,6 @@ static int SelectionVectorAbs(SelectionVector a) {
     
     std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:_selectionHead];
     if (rect) [self scrollToImageRect:*rect center:false];
-    
-    
-    
-//    auto last = _imageLibrary->find(*std::prev(newSelection.end()));
-//    
-//    _shiftSelection.head
-    
-//    std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
-//    if (!rect) return;
-//    [self scrollToImageRect:*rect center:false];
 }
 
 - (void)_updateDocumentHeight {
