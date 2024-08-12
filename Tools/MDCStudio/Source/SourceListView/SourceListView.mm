@@ -143,17 +143,6 @@ using namespace MDCStudio;
     });
 }
 
-static NSString* _BatteryLevelImage(float level) {
-    if (level == 1) {
-        return @"SourceList-Battery-Charged";
-    } else if (level == 0) {
-        return @"SourceList-Battery-Error";
-    } else {
-        const int levelInt = ((int)std::round(level*10))*10;
-        return [NSString stringWithFormat:@"SourceList-Battery-Charging-%d", levelInt];
-    }
-}
-
 - (void)updateView {
     [super updateView];
     MDCDevicePtr device = [self device];

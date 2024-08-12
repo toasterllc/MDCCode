@@ -556,11 +556,11 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 
 
 
-using SelectionVector = simd::int2;
-
-static int SelectionVectorAbs(SelectionVector a) {
-    return std::abs(a.x) + std::abs(a.y);
-}
+//using SelectionVector = simd::int2;
+//
+//static int SelectionVectorAbs(SelectionVector a) {
+//    return std::abs(a.x) + std::abs(a.y);
+//}
 
 //struct SelectionVector {
 //    int x = 0;
@@ -736,7 +736,7 @@ static int SelectionVectorAbs(SelectionVector a) {
 //    return [self rectForImageIndex:newIdx];
 //}
 
-- (void)_moveSelection:(SelectionVector)delta extend:(bool)extend {
+- (void)_moveSelection:(simd::int2)delta extend:(bool)extend {
     assert(delta.x==0 || delta.y==0); // Prohibit diagonal changes
     
     if (!_selectionHead) {

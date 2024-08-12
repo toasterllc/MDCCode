@@ -38,7 +38,7 @@
 		5544AE5D27B6EE04006AB473 /* Document.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE5A27B6EE04006AB473 /* Document.mm */; };
 		5544AE5E27B6EE04006AB473 /* Document.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544AE5B27B6EE04006AB473 /* Document.xib */; };
 		5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE6027B6F16F006AB473 /* DocumentController.mm */; };
-		55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55496F46278CFC0400BCA739 /* AppDelegate.mm */; };
+		55496F47278CFC0400BCA739 /* App.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55496F46278CFC0400BCA739 /* App.mm */; };
 		55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55496F48278CFC0600BCA739 /* Assets.xcassets */; };
 		55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55496F4A278CFC0600BCA739 /* MainMenu.xib */; };
 		55496F4F278CFC0600BCA739 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55496F4E278CFC0600BCA739 /* main.mm */; };
@@ -86,6 +86,8 @@
 		55C1BE8E2BF5A4F8004A4FAC /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BE732BF5A4EA004A4FAC /* FFCC.metal */; };
 		55C1BE8F2BF5A4FA004A4FAC /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BE8A2BF5A4EA004A4FAC /* FFCC.mm */; };
 		55C1BEA62BF909C8004A4FAC /* LMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BEA12BF909B6004A4FAC /* LMMSE.metal */; };
+		55C375912C6ABD2F0099ED35 /* SettingsWindow.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C3758B2C6ABD2F0099ED35 /* SettingsWindow.mm */; };
+		55C375922C6ABD2F0099ED35 /* SettingsWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C3758C2C6ABD2F0099ED35 /* SettingsWindow.xib */; };
 		55C6A26E2AE44559008149AF /* ImageExportSaveDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */; };
 		55C6A26F2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A26D2AE44559008149AF /* ImageExportSaveDialogFileTypesView.xib */; };
 		55C6A27A2AE44599008149AF /* ImageExportProgressDialog.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C6A2772AE44599008149AF /* ImageExportProgressDialog.xib */; };
@@ -238,7 +240,7 @@
 		55458F5B2B86C4F3008AB8B2 /* TmpDir.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TmpDir.h; sourceTree = "<group>"; };
 		55458F5D2B8882D9008AB8B2 /* CenterContent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CenterContent.h; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* Photon Transfer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Photon Transfer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
+		55496F46278CFC0400BCA739 /* App.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = App.mm; sourceTree = "<group>"; };
 		55496F48278CFC0600BCA739 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		55496F4B278CFC0600BCA739 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		55496F4D278CFC0600BCA739 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -319,6 +321,9 @@
 		55C1BE8A2BF5A4EA004A4FAC /* FFCC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
 		55C1BEA12BF909B6004A4FAC /* LMMSE.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = LMMSE.metal; sourceTree = "<group>"; };
 		55C1BEA22BF909B6004A4FAC /* LMMSE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LMMSE.h; sourceTree = "<group>"; };
+		55C3758A2C6ABD2F0099ED35 /* SettingsWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingsWindow.h; sourceTree = "<group>"; };
+		55C3758B2C6ABD2F0099ED35 /* SettingsWindow.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SettingsWindow.mm; sourceTree = "<group>"; };
+		55C3758C2C6ABD2F0099ED35 /* SettingsWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SettingsWindow.xib; sourceTree = "<group>"; };
 		55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageExporterTypes.h; sourceTree = "<group>"; };
 		55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineUtil.h; sourceTree = "<group>"; };
 		55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExportSaveDialog.mm; sourceTree = "<group>"; };
@@ -720,6 +725,7 @@
 				55F8D01127BEF3E500757165 /* FullSizeImageView */,
 				5544A7E927B5E011006AB473 /* SourceListView */,
 				55425B1C29A02F6500F25D57 /* InspectorView */,
+				55C375902C6ABD2F0099ED35 /* SettingsWindow */,
 				5544AE5927B6EE04006AB473 /* Document */,
 				55C6A27C2AE6EFAD008149AF /* FactoryResetConfirmationAlert */,
 				559704E52AE0E46B006CD617 /* ImageExporter */,
@@ -756,7 +762,7 @@
 				557ABD8929E7E90B0032619E /* DeviceSettings.h */,
 				55838C7E2ACF4B3A00D4B024 /* BatteryLifeSimulator.h */,
 				55458F5B2B86C4F3008AB8B2 /* TmpDir.h */,
-				55496F46278CFC0400BCA739 /* AppDelegate.mm */,
+				55496F46278CFC0400BCA739 /* App.mm */,
 				55496F4E278CFC0600BCA739 /* main.mm */,
 			);
 			path = Source;
@@ -841,6 +847,16 @@
 				55C1BEA12BF909B6004A4FAC /* LMMSE.metal */,
 			);
 			path = "LMMSE-Metal";
+			sourceTree = "<group>";
+		};
+		55C375902C6ABD2F0099ED35 /* SettingsWindow */ = {
+			isa = PBXGroup;
+			children = (
+				55C3758A2C6ABD2F0099ED35 /* SettingsWindow.h */,
+				55C3758B2C6ABD2F0099ED35 /* SettingsWindow.mm */,
+				55C3758C2C6ABD2F0099ED35 /* SettingsWindow.xib */,
+			);
+			path = SettingsWindow;
 			sourceTree = "<group>";
 		};
 		55C6A26A2AE44559008149AF /* ImageExportSaveDialog */ = {
@@ -1085,6 +1101,7 @@
 				55838CC22AD0BEAA00D4B024 /* Inspector-Saturation-Min.pdf in Resources */,
 				55838C922AD0BE7200D4B024 /* SourceList-Battery-Charging-50.pdf in Resources */,
 				55F8883A29D9EF1C0075593F /* CaptureTriggers-Icon-Motion-Small.pdf in Resources */,
+				55C375922C6ABD2F0099ED35 /* SettingsWindow.xib in Resources */,
 				55C6A27A2AE44599008149AF /* ImageExportProgressDialog.xib in Resources */,
 				55838CC12AD0BEAA00D4B024 /* Inspector-WhiteBalance-Min.pdf in Resources */,
 				55838C982AD0BE7200D4B024 /* SourceList-Battery-Charging-80.pdf in Resources */,
@@ -1110,12 +1127,13 @@
 				55496F4F278CFC0600BCA739 /* main.mm in Sources */,
 				551FFA692BAFBC4D0056263C /* AnchoredScrollView.mm in Sources */,
 				5544AE5D27B6EE04006AB473 /* Document.mm in Sources */,
-				55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */,
+				55496F47278CFC0400BCA739 /* App.mm in Sources */,
 				55E43F9F28C00D6B00FCCEA0 /* RenderThumb.metal in Sources */,
 				554243AE2B3EC4DB00BDFE25 /* PrintImages.mm in Sources */,
 				5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */,
 				55E43F9728C00D6B00FCCEA0 /* Defringe.metal in Sources */,
 				551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */,
+				55C375912C6ABD2F0099ED35 /* SettingsWindow.mm in Sources */,
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
 				5568449D2BB22954008F59AE /* Renderer.metal in Sources */,
 				5536310A2B7E894B0054E321 /* ImageGridContainerView.mm in Sources */,
@@ -1245,7 +1263,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 Toaster. All rights reserved.";
 				INFOPLIST_KEY_NSMainNibFile = MainMenu;
-				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_NSPrincipalClass = App;
 				MARKETING_VERSION = "$(CURRENT_PROJECT_VERSION)";
 				PRODUCT_BUNDLE_IDENTIFIER = "llc.toaster.photon-transfer";
 				PRODUCT_NAME = "Photon Transfer";

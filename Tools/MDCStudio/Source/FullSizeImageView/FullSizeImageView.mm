@@ -515,16 +515,18 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
     
     [@"hello" writeToURL:url atomically:true encoding:NSUTF8StringEncoding error:nil];
+    completionHandler(nil);
 }
 
 @end
 
-@interface FullSizeImageView () <FullSizeImageHeaderViewDelegate, NSDraggingSource, NSPasteboardItemDataProvider, NSFilePromiseProviderDelegate>
+@interface FullSizeImageView () <FullSizeImageHeaderViewDelegate, NSDraggingSource>
 @end
 
 @implementation FullSizeImageView {
     AnchoredScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
+    DragImage* _dragImage;
 }
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
@@ -624,7 +626,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 // kUTTypePNG
 // kUTTypeRawImage
     
-    static DragImage* dragItem = [[DragImage alloc] initDragImage];
+    _dragImage = [[DragImage alloc] initDragImage];
     
 //    static id <NSFilePromiseProviderDelegate> delegate = [FilePromiseDelegate new];
 //    NSFilePromiseProvider* filePromise = [NSFilePromiseProvider new];
@@ -643,12 +645,12 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 //    dragPosition.x -= self.image.size.width/5/2;
 //    dragPosition.y -= self.image.size.height/5/2;
 //    CGRect draggingRect = NSMakeRect(dragPosition.x, dragPosition.y, self.image.size.width/5, self.image.size.height/5);
-    [dragItem setDraggingFrame:{dragPosition, {10,10}}];
+    [_dragImage setDraggingFrame:{dragPosition, {10,10}}];
 //    [dragItem setDraggingFrame:{dragPosition, {10,10}} contents:self.image];
     
     
     NSLog(@"MEOWMIX called beginDraggingSessionWithItems");
-    [self beginDraggingSessionWithItems:@[dragItem] event:event source:self];
+    [self beginDraggingSessionWithItems:@[_dragImage] event:event source:self];
 }
 
 - (void)magnifyToActualSize:(id)sender {
@@ -667,67 +669,18 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     [_scrollView magnifyDecrease:sender];
 }
 
-//- (BOOL)acceptsFirstResponder {
-//    return true;
-//}
-
 // MARK: - FullSizeImageHeaderViewDelegate
 
 - (void)imageHeaderViewBack:(FullSizeImageHeaderView*)x {
     [[self window] tryToPerform:@selector(_backToImages:) with:self];
 }
 
-// MARK: - Menu Actions
-
-//- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
-//    NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
-//    if ([item action] == @selector(_export:)) {
-//        [mitem setTitle:@"Export…"];
-//        return true;
-//    } else if ([item action] == @selector(_delete:)) {
-//        [mitem setTitle:@"Delete…"];
-//        return true;
-//    }
-//    return true;
-//}
-//
-//- (IBAction)_export:(id)sender {
-//    printf("_export\n");
-//    [[self _fullSizeImageLayer] export:[self window]];
-//}
-//
-//- (IBAction)_delete:(id)sender {
-//    printf("_delete\n");
-//    [[self _fullSizeImageLayer] export:[self window]];
-//}
-
 // MARK: - Drag & Drop
-
-- (void)pasteboard:(NSPasteboard*)pasteboard item:(NSPasteboardItem*)item
-    provideDataForType:(NSPasteboardType)type {
-    
-    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-    
-//    if ([type isEqualToString:NSPasteboardTypeFileURL]) {
-//        [pasteboard setString:@"http://apple.com" forType:NSPasteboardTypeFileURL];
-////        [pasteboard setPropertyList:@"http://apple.com" forType:NSPasteboardTypeURL];
-//        return;
-//    }
-//    
-//    abort();
-}
-
-- (void)draggingSession:(NSDraggingSession*)session willBeginAtPoint:(NSPoint)point {
-    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-    for (NSPasteboardItem* item in [[NSPasteboard pasteboardWithName:NSPasteboardNameDrag] pasteboardItems]) {
-        NSLog(@"  MEOWMIX %@",[item types]);
-    }
-}
 
 - (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point
     operation:(NSDragOperation)operation {
     
-    NSLog(@"MEOWMIX %@ operation:%@\n", NSStringFromSelector(_cmd), @(operation));
+    _dragImage = nullptr;
 }
 
 - (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {

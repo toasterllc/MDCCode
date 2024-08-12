@@ -2,6 +2,21 @@
 #import "MDCDevicesManager.h"
 using namespace MDCStudio;
 
+@interface App : NSApplication
+@end
+
+@implementation App
+
+- (void)orderFrontStandardAboutPanel:(id)sender {
+    [super orderFrontStandardAboutPanelWithOptions:@{
+        // Suppress the build number because we use the same number for both the application version
+        // and build number, so it's redundant
+        NSAboutPanelOptionVersion: @"",
+    }];
+}
+
+@end
+
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @end
 
