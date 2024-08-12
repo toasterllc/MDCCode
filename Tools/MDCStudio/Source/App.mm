@@ -1,6 +1,51 @@
 #import <Cocoa/Cocoa.h>
 #import "MDCDevicesManager.h"
+#import "SettingsWindow/SettingsWindow.h"
+#import "PrefsUtil.h"
 using namespace MDCStudio;
+
+@interface App : NSApplication
+@end
+
+@implementation App {
+    SettingsWindow* _settingsWindow;
+}
+
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
+    NSLog(@"[Document] validateUserInterfaceItem: %@\n", item);
+    NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
+    
+    // Save
+    if ([item action] == @selector(_toggleTimestamp:)) {
+        [mitem setState:(PrefsUtil::Timestamp::Visible() ? NSControlStateValueOn : NSControlStateValueOff)];
+        return true;
+    }
+    return true;
+}
+
+- (IBAction)orderFrontStandardAboutPanel:(id)sender {
+    [super orderFrontStandardAboutPanelWithOptions:@{
+        // Suppress the build number because we use the same number for both the application version
+        // and build number, so it's redundant
+        NSAboutPanelOptionVersion: @"",
+    }];
+}
+
+- (IBAction)_showSettingsWindow:(id)sender {
+    if (!_settingsWindow) _settingsWindow = [SettingsWindow new];
+    [_settingsWindow makeKeyAndOrderFront:self];
+//    [super showSettingsWindow]
+}
+
+- (IBAction)_toggleTimestamp:(id)sender {
+    PrefsUtil::Timestamp::Visible(!PrefsUtil::Timestamp::Visible());
+}
+
+- (NSAppearance*)appearance {
+    return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+}
+
+@end
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @end

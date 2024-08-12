@@ -6,6 +6,8 @@
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "ImageThumb.h"
+#import "DragImage.h"
+#import "ImageExporter/ImageExporter.h"
 #import "Code/Shared/Img.h"
 #import "Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
 #import "Code/Lib/Toastbox/Mac/Grid.h"
@@ -556,11 +558,11 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 
 
 
-using SelectionVector = simd::int2;
-
-static int SelectionVectorAbs(SelectionVector a) {
-    return std::abs(a.x) + std::abs(a.y);
-}
+//using SelectionVector = simd::int2;
+//
+//static int SelectionVectorAbs(SelectionVector a) {
+//    return std::abs(a.x) + std::abs(a.y);
+//}
 
 //struct SelectionVector {
 //    int x = 0;
@@ -570,6 +572,9 @@ static int SelectionVectorAbs(SelectionVector a) {
 //        return std::abs(x)+std::abs(y);
 //    }
 //};
+
+@interface ImageGridView () <NSDraggingSource>
+@end
 
 // MARK: - ImageGridView
 @implementation ImageGridView {
@@ -583,7 +588,11 @@ static int SelectionVectorAbs(SelectionVector a) {
     ImageLibraryPtr _imageLibrary;
     Object::ObserverPtr _imageLibraryOb;
     NSLayoutConstraint* _docHeight;
-//    id _widthChangedObserver;
+    
+    struct {
+        NSDraggingSession* session;
+        NSMutableArray<DragImage*>* images;
+    } _drag;
 }
 
 // MARK: - Creation
@@ -637,16 +646,34 @@ static int SelectionVectorAbs(SelectionVector a) {
     return _imageSource;
 }
 
+- (bool)sortNewestFirst {
+    return [_imageGridLayer sortNewestFirst];
+}
+
 - (void)setSortNewestFirst:(bool)x {
     [_imageGridLayer setSortNewestFirst:x];
 }
 
 - (CGRect)rectForImageIndex:(size_t)idx {
+//    CGRect r = [_imageGridLayer rectForImageIndex:idx];
+//    const CGFloat height = [_imageGridLayer bounds].size.height;
+//    r.origin.y = height - r.origin.y - r.size.height;
+//    return r;
+    
+//    [_imageGridLayer bounds].size.height
     return [_imageGridLayer rectForImageIndex:idx];
 }
 
 - (std::optional<CGRect>)rectForImageRecord:(ImageRecordPtr)rec {
     return [_imageGridLayer rectForImageRecord:rec];
+//    std::optional<CGRect> r = [_imageGridLayer rectForImageRecord:rec];
+//    if (!r) return std::nullopt;
+////    return [self convertRectFromLayer:*r];
+//    
+//    const CGFloat height = [_imageGridLayer bounds].size.height;
+//    r->origin.y = height - r->origin.y - r->size.height - 22;
+////    r->origin.y = (((height-12) - (r->origin.y-6)) - r->size.height) + 6;
+//    return r;
 }
 
 - (void)scrollToImageRect:(CGRect)rect center:(bool)center {
@@ -736,63 +763,85 @@ static int SelectionVectorAbs(SelectionVector a) {
 //    return [self rectForImageIndex:newIdx];
 //}
 
-- (void)_moveSelection:(SelectionVector)delta extend:(bool)extend {
+- (void)_moveSelection:(simd::int2)delta extend:(bool)extend {
     assert(delta.x==0 || delta.y==0); // Prohibit diagonal changes
     
-    if (!_selectionHead) {
-        ImageRecordPtr first = *_selection->images().begin();
-        ImageRecordPtr last = *std::prev(_selection->images().end());
+    if (_selection->images().empty()) {
+        ImageLibrary::IterAny first;
+        ImageLibrary::IterAny last;
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            assert(!_imageLibrary->empty());
+            
+            const ImageLibrary::IterAny end = ImageLibrary::EndSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+            first = ImageLibrary::BeginSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+            last = std::prev(end);
+        }
         
         if (delta.x>0 || delta.y>0) {
-            _selectionHead = ([_imageGridLayer sortNewestFirst] ? first : last);
+            _selection->images({ *first });
+            _selectionHead = *first;
         } else {
-            _selectionHead = ([_imageGridLayer sortNewestFirst] ? last : first);
+            _selection->images({ *last });
+            _selectionHead = *last;
         }
-    }
     
-    ImageSet selection;
-    const ImageSet oldSelection = _selection->images();
-    {
-        auto lock = std::unique_lock(*_imageLibrary);
-        
-        ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
-        ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
-        ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _selectionHead);
-        assert(newSelectionFirst != end);
-        
-        const ssize_t deltaCountMin = -(newSelectionFirst-begin);
-        const ssize_t deltaCountMax = end-newSelectionFirst-1;
-        ssize_t deltaCount = delta.y*[_imageGridLayer columnCount] + delta.x;
-        
-        // Short circuit if the delta is trying to extend beyond the valid bounds
-        if (deltaCount<deltaCountMin || deltaCount>deltaCountMax) {
-            return;
-        }
-        
-        ImageRecordIterAny newSelectionLast = newSelectionFirst+deltaCount;
-        _selectionHead = *newSelectionLast;
-        
-        if (extend) {
-            if (newSelectionFirst > newSelectionLast) {
-                std::swap(newSelectionFirst, newSelectionLast);
-            }
+    } else {
+        if (!_selectionHead) {
+            ImageRecordPtr first = *_selection->images().begin();
+            ImageRecordPtr last = *std::prev(_selection->images().end());
             
-            ImageSet newSelection(newSelectionFirst, newSelectionLast+1);
-            const bool headWasSelected = (oldSelection.find(_selectionHead) != oldSelection.end());
-            if (headWasSelected) {
-                selection = ImageSetsSubtract(oldSelection, newSelection);
+            if (delta.x>0 || delta.y>0) {
+                _selectionHead = ([_imageGridLayer sortNewestFirst] ? first : last);
             } else {
-                selection = ImageSetsUnion(oldSelection, newSelection);
+                _selectionHead = ([_imageGridLayer sortNewestFirst] ? last : first);
+            }
+        }
+        
+        ImageSet selection;
+        const ImageSet oldSelection = _selection->images();
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            
+            ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+            ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+            ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _selectionHead);
+            assert(newSelectionFirst != end);
+            
+            const ssize_t deltaCountMin = -(newSelectionFirst-begin);
+            const ssize_t deltaCountMax = end-newSelectionFirst-1;
+            ssize_t deltaCount = delta.y*[_imageGridLayer columnCount] + delta.x;
+            
+            // Short circuit if the delta is trying to extend beyond the valid bounds
+            if (deltaCount<deltaCountMin || deltaCount>deltaCountMax) {
+                return;
             }
             
-            selection.insert(_selectionHead);
-        
-        } else {
-            selection = { *newSelectionLast };
+            ImageRecordIterAny newSelectionLast = newSelectionFirst+deltaCount;
+            _selectionHead = *newSelectionLast;
+            
+            if (extend) {
+                if (newSelectionFirst > newSelectionLast) {
+                    std::swap(newSelectionFirst, newSelectionLast);
+                }
+                
+                ImageSet newSelection(newSelectionFirst, newSelectionLast+1);
+                const bool headWasSelected = (oldSelection.find(_selectionHead) != oldSelection.end());
+                if (headWasSelected) {
+                    selection = ImageSetsSubtract(oldSelection, newSelection);
+                } else {
+                    selection = ImageSetsUnion(oldSelection, newSelection);
+                }
+                
+                selection.insert(_selectionHead);
+            
+            } else {
+                selection = { *newSelectionLast };
+            }
         }
+        
+        _selection->images(selection);
     }
-    
-    _selection->images(selection);
     
     std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:_selectionHead];
     if (rect) [self scrollToImageRect:*rect center:false];
@@ -854,64 +903,119 @@ static int SelectionVectorAbs(SelectionVector a) {
 
 // MARK: - Event Handling
 
-//static CGPoint _ConvertPoint(CALayer* dst, NSView* src, CGPoint x) {
-//    CALayer* srcLayer = [src layer];
-//    x = [src convertPointToLayer:x];
-//    return [dst convertPoint:x fromLayer:srcLayer];
-//}
-
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     [[self window] makeFirstResponder:self];
     
     NSView* superview = [self superview];
-    NSWindow* win = [mouseDownEvent window];
-//    const CGPoint startPoint = _ConvertPoint(_imageGridLayer, _documentView,
-//        [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil]);
-    const CGPoint startPoint = [superview convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
-    [_selectionRectLayer setHidden:false];
+    const CGPoint mouseDownPoint = [superview convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+    const CGRect rect = {mouseDownPoint, {1,1}};
+    const ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
+    const ImageRecordPtr mouseDownImage = (!newSelection.empty() ? *newSelection.begin() : ImageRecordPtr{});
+    const NSEventModifierFlags mouseDownFlags = [mouseDownEvent modifierFlags];
+    const ImageSet mouseDownSelection = _selection->images();
     
-    const NSEventModifierFlags flags = [[[self window] currentEvent] modifierFlags];
-    const ImageSet oldSelection = _selection->images();
-    Toastbox::TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
-        const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
-        const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
-        ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
+    const bool mouseDownInUnselectedImage = !mouseDownImage ||
+        mouseDownSelection.find(mouseDownImage) == mouseDownSelection.end();
+    if (mouseDownInUnselectedImage) {
+        _selection->images(std::move(newSelection));
+    }
+    
+    NSWindow* win = [self window];
+    bool drag = false;
+    Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
+        constexpr CGFloat DragThreshold = 5;
+        const CGPoint point = [superview convertPoint:[event locationInWindow] fromView:nil];
+        const CGFloat dist = std::hypot(point.x-mouseDownPoint.x, point.y-mouseDownPoint.y);
+        drag |= dist >= DragThreshold;
         
-        if (flags&NSEventModifierFlagShift && !oldSelection.empty()) {
-            if (!newSelection.empty()) {
-                ImageSet selection;
-                {
-                    auto lock = std::unique_lock(*_imageLibrary);
-                    auto begin = _imageLibrary->find(*oldSelection.begin());
-                    auto last = _imageLibrary->find(*std::prev(newSelection.end()));
-                    if (begin > last) std::swap(begin, last);
+        const CGRect rect = CGRectStandardize({ point,
+            { mouseDownPoint.x-point.x, mouseDownPoint.y-point.y } });
+        const ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
+        
+        bool updateSelectionRect = false;
+        if (mouseDownFlags & NSEventModifierFlagShift) {
+            ImageSet selection;
+            {
+                auto lock = std::unique_lock(*_imageLibrary);
+                std::set<ImageLibrary::RecordRefConstIter> iters;
+                if (!newSelection.empty()) {
+                    iters.insert(_imageLibrary->find(*newSelection.begin()));
+                    iters.insert(_imageLibrary->find(*std::prev(newSelection.end())));
+                }
+                
+                if (!mouseDownSelection.empty()) {
+                    iters.insert(_imageLibrary->find(*mouseDownSelection.begin()));
+                    iters.insert(_imageLibrary->find(*std::prev(mouseDownSelection.end())));
+                }
+                
+                if (!iters.empty()) {
+                    auto begin = *iters.begin();
+                    auto last = *std::prev(iters.end());
                     auto end = std::next(last);
                     selection = ImageSet(begin, end);
                 }
-                
-                _selection->images(selection);
             }
             
-        } else if (flags & NSEventModifierFlagCommand) {
-            _selection->images(ImageSetsXOR(oldSelection, newSelection));
+            _selection->images(selection);
+            updateSelectionRect = true;
+            
+        } else if (mouseDownFlags & NSEventModifierFlagCommand) {
+            _selection->images(ImageSetsXOR(mouseDownSelection, newSelection));
+            updateSelectionRect = true;
+        
         } else {
-            _selection->images(std::move(newSelection));
+            if (drag) {
+                if (mouseDownImage) {
+                    NSOperationQueue* queue = [[NSOperationQueue alloc] init];
+                    [queue setMaxConcurrentOperationCount:1];
+                    [queue setQualityOfService:NSQualityOfServiceUserInitiated];
+                    
+                    ImageExportProgressDialog* progress =
+                        [[ImageExportProgressDialog alloc] initWithParentWindow:[self window] imageCount:_selection->images().size()];
+                    
+                    _drag.images = [NSMutableArray new];
+                    for (ImageRecordPtr rec : _selection->images()) {
+                        std::optional<CGRect> rect = [self rectForImageRecord:rec];
+                        assert(rect);
+                        
+                        CGRect draggingRect = [self convertRect:*rect fromView:superview];
+                        
+                        DragImage* image = [[DragImage alloc] initWithImageSource:_imageSource
+                            imageRecord:rec progressDialog:progress operationQueue:queue
+                            draggingFrame:draggingRect];
+                        [_drag.images addObject:image];
+                    }
+                    
+                    _drag.session = [self beginDraggingSessionWithItems:_drag.images event:event source:self];
+                    [_drag.session setDraggingFormation:NSDraggingFormationPile];
+                    
+                    // Stop tracking mouse; this is apparently necessary becuase recursive mouse
+                    // tracking isn't compatible with -beginDraggingSessionWithItems:.
+                    return false;
+                    
+                } else {
+                    updateSelectionRect = true;
+                    _selection->images(std::move(newSelection));
+                    [self autoscroll:event];
+                }
+            }
         }
         
-        [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
+        if (updateSelectionRect) {
+            [_selectionRectLayer setHidden:false];
+            [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
+        }
         
-        [self autoscroll:event];
-//        NSLog(@"mouseDown:");
+        if (done) {
+            _selectionHead = {};
+            [_selectionRectLayer setHidden:true];
+            if ([event clickCount] == 2) {
+                [[self window] tryToPerform:@selector(_showImage:) with:self];
+            }
+        }
+        
+        return true;
     });
-    [_selectionRectLayer setHidden:true];
-    
-    _selectionHead = {};
-}
-
-- (void)mouseUp:(NSEvent*)event {
-    if ([event clickCount] == 2) {
-        [[self window] tryToPerform:@selector(_showImage:) with:self];
-    }
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
@@ -960,6 +1064,26 @@ static int SelectionVectorAbs(SelectionVector a) {
         }
     }
     _selection->images(selection);
+}
+
+// MARK: - Drag & Drop
+
+- (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    
+    switch(context) {
+    case NSDraggingContextOutsideApplication:   return NSDragOperationCopy;
+    case NSDraggingContextWithinApplication:
+    default:                                    return NSDragOperationNone;
+    }
+}
+
+- (void)draggingSession:(NSDraggingSession *)session willBeginAtPoint:(NSPoint)screenPoint {
+    NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void)draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)screenPoint operation:(NSDragOperation)operation {
+    NSLog(@"%@", NSStringFromSelector(_cmd));
+    _drag = {};
 }
 
 // MARK: - AnchoredScrollView

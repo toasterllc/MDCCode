@@ -1,12 +1,12 @@
 #import "ImageCornerButton.h"
-using namespace ImageCornerButtonTypes;
+using namespace MDCStudio;
 
 @implementation ImageCornerButton {
-    Corner _corner;
+    ImageCorner _corner;
 }
 
 static void _Init(ImageCornerButton* self) {
-    [self setCorner:Corner::BottomRight];
+    [self setCorner:ImageCorner::BottomRight];
 }
 
 //static Corner _CornerNext(Corner x, int delta) {
@@ -15,24 +15,23 @@ static void _Init(ImageCornerButton* self) {
 //    return (Corner)((int)x+delta);
 //}
 
-static Corner _CornerNext(Corner x, int delta) {
+static ImageCorner _CornerNext(ImageCorner x, int delta) {
     if (delta >= 0) {
         switch (x) {
-        case Corner::Mixed:
-        case Corner::BottomRight:   return Corner::BottomLeft;
-        case Corner::BottomLeft:    return Corner::TopLeft;
-        case Corner::TopLeft:       return Corner::TopRight;
-        case Corner::TopRight:      return Corner::BottomRight;
+        case ImageCorner::BottomRight:   return ImageCorner::BottomLeft;
+        case ImageCorner::BottomLeft:    return ImageCorner::TopLeft;
+        case ImageCorner::TopLeft:       return ImageCorner::TopRight;
+        case ImageCorner::TopRight:      return ImageCorner::BottomRight;
         }
     } else {
         switch (x) {
-        case Corner::Mixed:
-        case Corner::BottomRight:   return Corner::TopRight;
-        case Corner::BottomLeft:    return Corner::BottomRight;
-        case Corner::TopLeft:       return Corner::BottomLeft;
-        case Corner::TopRight:      return Corner::TopLeft;
+        case ImageCorner::BottomRight:   return ImageCorner::TopRight;
+        case ImageCorner::BottomLeft:    return ImageCorner::BottomRight;
+        case ImageCorner::TopLeft:       return ImageCorner::BottomLeft;
+        case ImageCorner::TopRight:      return ImageCorner::TopLeft;
         }
     }
+    abort();
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
@@ -54,11 +53,11 @@ static Corner _CornerNext(Corner x, int delta) {
     return [super sendAction:action to:target];
 }
 
-- (ImageCornerButtonTypes::Corner)corner {
+- (MDCStudio::ImageCorner)corner {
     return _corner;
 }
 
-- (void)setCorner:(ImageCornerButtonTypes::Corner)corner {
+- (void)setCorner:(MDCStudio::ImageCorner)corner {
     _corner = corner;
     [self setImage:[NSImage imageNamed:[NSString stringWithFormat:@"ImageCornerButton-%d", (int)corner]]];
 }

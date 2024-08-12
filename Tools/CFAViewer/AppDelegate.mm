@@ -203,7 +203,6 @@ struct RawImage {
     MDCDevicesManagerGlobal(MDCStudio::Object::Create<MDCStudio::MDCDevicesManager>(handler));
     
     _device = MTLCreateSystemDefaultDevice();
-    _renderer = Renderer(_device, [_device newDefaultLibrary], [_device newCommandQueue]);
     
     static constexpr Toastbox::CFADesc CFADesc = {
         Toastbox::CFAColor::Green, Toastbox::CFAColor::Red,

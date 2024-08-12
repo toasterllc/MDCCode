@@ -11,8 +11,10 @@
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
+#import "ImageUtil.h"
 #import "ImagePipelineUtil.h"
 #import "ImageExporter/ImageExporter.h"
+#import "DragImage.h"
 using namespace MDCStudio;
 using namespace MDCStudio::FullSizeImageViewTypes;
 
@@ -51,14 +53,11 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     return cs;
 }
 
-- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
     NSParameterAssert(imageSource);
     if (!(self = [super init])) return nil;
     
     _imageSource = imageSource;
-    
-    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    _renderer = Toastbox::Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     [self setDevice:[self preferredDevice]];
     [self setColorspace:_LinearSRGBColorSpace()];
@@ -96,15 +95,18 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     _imageLoad->signal.stop();
 }
 
+- (ImageSourcePtr)imageSource {
+    return _imageSource;
+}
+
 - (ImageRecordPtr)imageRecord {
     return _imageRecord;
 }
 
-- (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec {
+- (void)setImageRecord:(ImageRecordPtr)rec {
     NSParameterAssert(rec);
     
     _imageRecord = rec;
-    _image.txtValid = false;
     
     // Fetch the image from the cache
     _image.image = _imageSource->getImage(ImageSource::Priority::Cache, _imageRecord);
@@ -122,12 +124,11 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     assert(_height);
     [_width setConstant:_imageRecord->info.imageWidth];
     [_height setConstant:_imageRecord->info.imageHeight];
-    
-    [self setNeedsDisplay];
+    [self rerender];
 }
 
 - (void)display {
-        using namespace ImagePipeline;
+    using namespace ImagePipeline;
     using namespace Toastbox;
     
     [super display];
@@ -150,7 +151,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     if (!_image.txtValid) {
         Pipeline::Options popts = PipelineOptionsForImage(*_imageRecord, _image.image);
-        
         // Create _image.txt if it doesn't exist yet and we have the image
         if (_image.image) {
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
@@ -161,12 +161,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
 //            _renderer.debugTextureShow(rawTxt);
         
         } else {
-            const size_t w = ImageThumb::ThumbWidth;
-            const size_t h = ImageThumb::ThumbHeight;
-            Renderer::Txt thumbTxt = _renderer.textureCreate(ImageThumb::PixelFormat, w, h);
-            [thumbTxt replaceRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0
-                slice:0 withBytes:_imageRecord->thumb.data bytesPerRow:w*4 bytesPerImage:0];
-            
+            Renderer::Txt thumbTxt = ThumbTextureForImageRecord(_renderer, *_imageRecord);
             _renderer.render(_image.txt, thumbTxt);
             if (!popts.timestamp.string.empty()) {
                 Pipeline::TimestampOverlayRender(_renderer, popts.timestamp, _image.txt);
@@ -195,11 +190,15 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     }
 }
 
+- (void)rerender {
+    _image.txtValid = false;
+    [self setNeedsDisplay];
+}
+
 - (void)_handleImage:(ImageRecordPtr)rec loaded:(Image&&)image {
     if (rec != _imageRecord) return;
     _image.image = std::move(image);
-    _image.txtValid = false;
-    [self setNeedsDisplay];
+    [self rerender];
 }
 
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
@@ -224,8 +223,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
         break;
     case ImageLibrary::Event::Type::ChangeProperty:
         if (ev.records.count(_imageRecord)) {
-            _image.txtValid = false;
-            [self setNeedsDisplay];
+            [self rerender];
         }
         break;
     case ImageLibrary::Event::Type::ChangeThumbnail:
@@ -314,13 +312,18 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
-@interface FullSizeImageDocumentView : AnchoredDocumentView
-- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
+@interface FullSizeImageDocumentView : AnchoredDocumentView <NSDraggingSource>
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource;
 @end
 
-@implementation FullSizeImageDocumentView
+@implementation FullSizeImageDocumentView {
+    struct {
+        NSDraggingSession* session;
+        DragImage* image;
+    } _drag;
+}
 
-- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
     FullSizeImageLayer* imageLayer = [[FullSizeImageLayer alloc] initWithImageSource:imageSource];
     if (!(self = [super initWithAnchoredLayer:imageLayer])) return nil;
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
@@ -335,6 +338,56 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     const bool fit = [(AnchoredScrollView*)[self enclosingScrollView] magnifyToFit];
     return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [[self superview] bounds]);
 }
+// MARK: - Event Handling
+
+- (void)mouseDown:(NSEvent*)mouseDownEvent {
+    [[self window] makeFirstResponder:self];
+    
+    NSWindow* win = [self window];
+    const CGPoint mouseDownPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+    Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
+        constexpr CGFloat DragThreshold = 5;
+        const CGPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+        const CGFloat dist = std::hypot(point.x-mouseDownPoint.x, point.y-mouseDownPoint.y);
+        if (dist < DragThreshold) return true; // Continue tracking mouse
+        
+        NSView* dragView = [[self enclosingScrollView] superview];
+        CGPoint dragPosition = [dragView convertPoint:[event locationInWindow] fromView:nil];
+        CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
+        draggingFrame.origin = {
+            dragPosition.x - draggingFrame.size.width/2,
+            dragPosition.y - draggingFrame.size.height/2,
+        };
+        
+        FullSizeImageLayer* layer = (FullSizeImageLayer*)[self layer];
+        _drag.image = [[DragImage alloc] initWithImageSource:[layer imageSource]
+            imageRecord:[layer imageRecord]
+            progressDialog:nil
+            operationQueue:nil
+            draggingFrame:draggingFrame];
+        
+        _drag.session = [dragView beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
+        [_drag.session setDraggingFormation:NSDraggingFormationPile];
+        // Stop tracking mouse; this is apparently necessary becuase recursive mouse
+        // tracking isn't compatible with -beginDraggingSessionWithItems:.
+        return false;
+    });
+}
+
+// MARK: - Drag & Drop
+
+- (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    
+    switch(context) {
+    case NSDraggingContextOutsideApplication:   return NSDragOperationCopy;
+    case NSDraggingContextWithinApplication:
+    default:                                    return NSDragOperationNone;
+    }
+}
+
+- (void)draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)screenPoint operation:(NSDragOperation)operation {
+    _drag = {};
+}
 
 @end
 
@@ -344,10 +397,13 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 @implementation FullSizeImageView {
     AnchoredScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
+    Object::ObserverPtr _prefsOb;
 }
 
-- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
     if (!(self = [super initWithFrame:{}])) return nil;
+    __weak auto selfWeak = self;
+    
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
     {
@@ -375,6 +431,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
     }
     
+    {
+        _prefsOb = PrefsGlobal()->observerAdd([=] (auto, auto) { [selfWeak _prefsChanged]; });
+    }
+    
     [self magnifyToFit];
     return self;
 }
@@ -391,22 +451,24 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     return Toastbox::Cast<FullSizeImageLayer*>([[_scrollView document] layer]);
 }
 
-- (MDCStudio::ImageRecordPtr)imageRecord {
+- (ImageSourcePtr)imageSource {
+    return [[self _fullSizeImageLayer] imageSource];
+}
+
+- (ImageRecordPtr)imageRecord {
     return [[self _fullSizeImageLayer] imageRecord];
 }
 
-- (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec {
+- (void)setImageRecord:(ImageRecordPtr)rec {
     [[self _fullSizeImageLayer] setImageRecord:rec];
+}
+
+- (void)_prefsChanged {
+    [[self _fullSizeImageLayer] rerender];
 }
 
 - (void)magnifyToFit {
     [_scrollView setMagnifyToFit:true animate:false];
-}
-
-// MARK: - Event Handling
-
-- (void)mouseDown:(NSEvent*)mouseDownEvent {
-    [[self window] makeFirstResponder:self];
 }
 
 - (void)magnifyToActualSize:(id)sender {
@@ -425,38 +487,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     [_scrollView magnifyDecrease:sender];
 }
 
-//- (BOOL)acceptsFirstResponder {
-//    return true;
-//}
-
 // MARK: - FullSizeImageHeaderViewDelegate
 
 - (void)imageHeaderViewBack:(FullSizeImageHeaderView*)x {
     [[self window] tryToPerform:@selector(_backToImages:) with:self];
 }
-
-// MARK: - Menu Actions
-
-//- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
-//    NSMenuItem* mitem = Toastbox::CastOrNull<NSMenuItem*>(item);
-//    if ([item action] == @selector(_export:)) {
-//        [mitem setTitle:@"Export…"];
-//        return true;
-//    } else if ([item action] == @selector(_delete:)) {
-//        [mitem setTitle:@"Delete…"];
-//        return true;
-//    }
-//    return true;
-//}
-//
-//- (IBAction)_export:(id)sender {
-//    printf("_export\n");
-//    [[self _fullSizeImageLayer] export:[self window]];
-//}
-//
-//- (IBAction)_delete:(id)sender {
-//    printf("_delete\n");
-//    [[self _fullSizeImageLayer] export:[self window]];
-//}
 
 @end

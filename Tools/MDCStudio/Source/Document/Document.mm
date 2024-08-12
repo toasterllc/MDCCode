@@ -6,7 +6,7 @@
 #import "ImageGridView/ImageGridView.h"
 #import "FullSizeImageView/FullSizeImageView.h"
 #import "Code/Lib/AnchoredScrollView/AnchoredScrollView.h"
-#import "Prefs.h"
+#import "PrefsUtil.h"
 #import "ImageLibraryStatus.h"
 #import "DeviceSettings/DeviceSettingsView.h"
 #import "DeviceSettings/DeviceSettingsSheet.h"
@@ -232,11 +232,11 @@ static void _SetView(T& x, NSView* y) {
     
     // Sort
     } else if ([item action] == @selector(_sortNewestFirst:)) {
-        [mitem setState:(_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        [mitem setState:(PrefsUtil::ImageGrid::SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
         return true;
     
     } else if ([item action] == @selector(_sortOldestFirst:)) {
-        [mitem setState:(!_SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
+        [mitem setState:(!PrefsUtil::ImageGrid::SortNewestFirst() ? NSControlStateValueOn : NSControlStateValueOff)];
         return true;
     
     // Toggle panels
@@ -309,7 +309,7 @@ static void _SetView(T& x, NSView* y) {
 }
 
 static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
-    [view setSortNewestFirst:_SortNewestFirst()];
+    [view setSortNewestFirst:PrefsUtil::ImageGrid::SortNewestFirst()];
 }
 
 - (void)_prefsChanged {
@@ -323,7 +323,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 // _openImage: open a particular image id, or an image offset from a particular image id
 - (bool)_openImage:(ImageRecordPtr)rec delta:(ssize_t)delta {
-    const bool sortNewestFirst = _SortNewestFirst();
+    const bool sortNewestFirst = PrefsUtil::ImageGrid::SortNewestFirst();
     
     ImageLibraryPtr imageLibrary = _active.imageLibrary;
     assert(imageLibrary);
@@ -571,22 +571,15 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 }
 
 // MARK: - Menu Actions
-static bool _SortNewestFirst() {
-    return PrefsGlobal()->get("SortNewestFirst", true);
-}
-
-static void _SortNewestFirst(bool x) {
-    return PrefsGlobal()->set("SortNewestFirst", x);
-}
 
 - (IBAction)_sortNewestFirst:(id)sender {
     NSLog(@"_sortNewestFirst");
-    _SortNewestFirst(true);
+    PrefsUtil::ImageGrid::SortNewestFirst(true);
 }
 
 - (IBAction)_sortOldestFirst:(id)sender {
     NSLog(@"_sortOldestFirst");
-    _SortNewestFirst(false);
+    PrefsUtil::ImageGrid::SortNewestFirst(false);
 }
 
 - (IBAction)_toggleSourceList:(id)sender {
@@ -652,7 +645,7 @@ static void _SortNewestFirst(bool x) {
 - (void)_deleteSelection {
     using ImageSetIterAny = Toastbox::IterAny<ImageSet::const_iterator>;
     
-    const bool sortNewestFirst = _SortNewestFirst();
+    const bool sortNewestFirst = PrefsUtil::ImageGrid::SortNewestFirst();
     const ImageSet selection = _active.selection->images();
     ImageSet newSelection;
     if (selection.empty()) {
@@ -773,7 +766,7 @@ static void _SortNewestFirst(bool x) {
 // MARK: - Printing
 
 - (NSPrintOperation*)printOperationWithSettings:(NSDictionary<NSPrintInfoAttributeKey,id>*)settings error:(NSError**)error {
-    return PrintImages(settings, _active.imageSource, _active.selection->images(), !_SortNewestFirst());
+    return PrintImages(settings, _active.imageSource, _active.selection->images(), !PrefsUtil::ImageGrid::SortNewestFirst());
 }
 
 // MARK: - Demo

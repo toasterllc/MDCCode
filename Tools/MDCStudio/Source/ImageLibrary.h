@@ -7,7 +7,6 @@
 #include "RecordStore.h"
 #include "ImageOptions.h"
 #include "ImageThumb.h"
-#include "ImageUtil.h"
 #include "Object.h"
 
 namespace MDCStudio {

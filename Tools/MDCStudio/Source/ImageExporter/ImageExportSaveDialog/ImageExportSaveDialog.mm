@@ -1,6 +1,6 @@
 #import "ImageExportSaveDialog.h"
 #import "NibViewInit.h"
-#import "Prefs.h"
+#import "PrefsUtil.h"
 #import "ImageExporter/ImageExporter.h"
 using namespace MDCStudio;
 
@@ -16,8 +16,6 @@ using _FormatChangedHandler = void(^)();
     __weak NSSavePanel* _panel;
 }
 
-static const char* ImageExportFormatKey = "ImageExportFormat";
-
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
     NibViewInit(self, _nibView);
@@ -25,7 +23,7 @@ static const char* ImageExportFormatKey = "ImageExportFormat";
     for (const ImageExporter::Format* fmt : ImageExporter::Formats::All) {
         [_formatMenu addItemWithTitle:@(fmt->name)];
     }
-    [_formatMenu selectItemWithTitle:@(PrefsGlobal()->get(ImageExportFormatKey, ImageExporter::Formats::JPEG.name))];
+    [_formatMenu selectItemWithTitle:@(PrefsUtil::PreviousImageExportFormat())];
     return self;
 }
 
@@ -40,7 +38,7 @@ static const char* ImageExportFormatKey = "ImageExportFormat";
 }
 
 - (IBAction)_formatChanged:(id)sender {
-    PrefsGlobal()->set(ImageExportFormatKey, [self _format]->name);
+    PrefsUtil::PreviousImageExportFormat([self _format]->name);
     [self _updateFormat];
 }
 

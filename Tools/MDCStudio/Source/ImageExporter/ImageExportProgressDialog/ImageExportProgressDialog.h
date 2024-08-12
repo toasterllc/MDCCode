@@ -3,8 +3,8 @@
 @class ImageExportProgressDialog;
 
 @interface ImageExportProgressDialog : NSObject
-- (NSWindow*)window;
-- (void)setImageCount:(size_t)x;
-- (void)setProgress:(float)x;
-- (const std::atomic<bool>&)canceled;
+- (instancetype)initWithParentWindow:(NSWindow*)parentWindow imageCount:(size_t)imageCount;
+- (void)incrementProgress;
+- (void)showIfNeeded;
+- (bool)canceled;
 @end

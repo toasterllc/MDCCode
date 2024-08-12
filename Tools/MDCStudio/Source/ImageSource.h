@@ -20,6 +20,8 @@
 #import "Tools/Shared/ELF32Binary.h"
 #import "ImageLibrary.h"
 #import "Cache.h"
+#import "ColorMatrix.h"
+#import "ImageUtil.h"
 
 namespace MDCStudio {
 
@@ -761,8 +763,7 @@ struct ImageSource : Object {
         using namespace Toastbox;
         
         try {
-            id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
-            Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
+            Renderer renderer;
             std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
             
             at_encoder_t compressor = at_encoder_create(

@@ -16,10 +16,10 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     return cs;
 }
 
-static CGColorSpaceRef _LinearDisplayP3ColorSpace() {
-    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearDisplayP3);
-    return cs;
-}
+//static CGColorSpaceRef _LinearDisplayP3ColorSpace() {
+//    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearDisplayP3);
+//    return cs;
+//}
 
 @implementation ImageLayer {
     Toastbox::Renderer _renderer;
@@ -30,15 +30,10 @@ static CGColorSpaceRef _LinearDisplayP3ColorSpace() {
 
 - (instancetype)init {
     if (!(self = [super init])) return nil;
-    
-    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    _renderer = Toastbox::Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-    
-    [self setActions:LayerNullActions()];
-    [self setPixelFormat:_PixelFormat];
-//    [self setColorspace:_LinearDisplayP3ColorSpace()];
+    [self setDevice:[self preferredDevice]];
     [self setColorspace:_LinearSRGBColorSpace()];
-    [self setDevice:device];
+    [self setOpaque:false];
+    [self setActions:LayerNullActions()];
     return self;
 }
 

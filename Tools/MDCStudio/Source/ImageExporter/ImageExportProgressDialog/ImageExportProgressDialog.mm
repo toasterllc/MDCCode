@@ -6,18 +6,25 @@ using namespace MDCStudio;
     IBOutlet NSWindow* _window;
     IBOutlet NSTextField* _message;
     IBOutlet NSProgressIndicator* _progressBar;
+    __weak NSWindow* _parentWindow;
+    size_t _imageCountTotal;
+    size_t _imageCountProgress;
+    std::atomic<bool> _shown;
     std::atomic<bool> _canceled;
 }
 
-- (instancetype)init {
+- (instancetype)initWithParentWindow:(NSWindow*)parentWindow imageCount:(size_t)imageCount {
+    if (imageCount < 4) return nil;
     if (!(self = [super init])) return nil;
     
     bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil]
         instantiateWithOwner:self topLevelObjects:nil];
     assert(br);
     
-    [self setProgress:0];
-    
+    _parentWindow = parentWindow;
+    _imageCountTotal = imageCount;
+    [_message setStringValue:[NSString stringWithFormat:@"Exporting %ju photos…", (uintmax_t)_imageCountTotal]];
+    [self _setProgress:0];
     return self;
 }
 
@@ -25,11 +32,33 @@ using namespace MDCStudio;
     return _window;
 }
 
-- (void)setImageCount:(size_t)x {
-    [_message setStringValue:[NSString stringWithFormat:@"Exporting %ju photos…", (uintmax_t)x]];
+- (void)showIfNeeded {
+    if (_shown) return;
+    
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self showIfNeeded]; });
+        return;
+    }
+    
+    _shown = true;
+    [_parentWindow beginSheet:_window completionHandler:nil];
 }
 
-- (void)setProgress:(float)x {
+- (void)incrementProgress {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self incrementProgress]; });
+        return;
+    }
+    
+    assert(_imageCountProgress < _imageCountTotal);
+    _imageCountProgress++;
+    [self _setProgress:(float)_imageCountProgress/_imageCountTotal];
+    if (_imageCountProgress == _imageCountTotal) {
+        [[_window sheetParent] endSheet:_window];
+    }
+}
+
+- (void)_setProgress:(float)x {
     [_progressBar setDoubleValue:x];
 }
 
@@ -38,7 +67,7 @@ using namespace MDCStudio;
     _canceled = true;
 }
 
-- (const std::atomic<bool>&)canceled {
+- (bool)canceled {
     return _canceled;
 }
 
