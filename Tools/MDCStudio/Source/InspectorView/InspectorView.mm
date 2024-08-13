@@ -1,7 +1,6 @@
 #import "InspectorView.h"
 #import <vector>
 #import "Util.h"
-#import "ImageCornerButton/ImageCornerButton.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/Clock.h"
 #import "Code/Shared/MSP.h"
@@ -515,68 +514,6 @@ static NSColorPanel* _ColorPanel() {
 
 
 
-@interface InspectorViewItem_Timestamp : InspectorViewItem_Checkbox
-@end
-
-@implementation InspectorViewItem_Timestamp {
-@private
-    IBOutlet ImageCornerButton* _cornerButton;
-@public
-    ImageCornerButtonTypes::Corner cornerValueDefault;
-    _ModelGetter cornerGetter;
-    _ModelSetter cornerSetter;
-}
-
-- (bool)updateView {
-    bool modified = [super updateView];
-    
-    {
-        const _ModelData data = getter(self);
-        switch (data.type) {
-        case _ModelData::Type::Normal:
-            modified |= ((bool)[data.data boolValue] != valueDefault);
-            [_checkbox setState:([data.data boolValue] ? NSControlStateValueOn : NSControlStateValueOff)];
-            break;
-        case _ModelData::Type::Mixed:
-            modified = true;
-            [_checkbox setState:NSControlStateValueMixed];
-            break;
-        }
-    }
-    
-    {
-        const _ModelData data = cornerGetter(self);
-        switch (data.type) {
-        case _ModelData::Type::Normal:
-            modified |= ((ImageCornerButtonTypes::Corner)[data.data intValue] != cornerValueDefault);
-            [_cornerButton setCorner:(ImageCornerButtonTypes::Corner)[data.data intValue]];
-            break;
-        case _ModelData::Type::Mixed:
-            modified = true;
-            [_cornerButton setCorner:ImageCornerButtonTypes::Corner::Mixed];
-            break;
-        }
-    }
-    return modified;
-}
-
-- (void)clear {
-    [super clear];
-    cornerSetter(self, @((int)cornerValueDefault));
-}
-
-- (IBAction)checkboxAction:(id)sender {
-    setter(self, @([_checkbox state]!=NSControlStateValueOff));
-    [section updateView];
-}
-
-- (IBAction)cornerButtonAction:(id)sender {
-    cornerSetter(self, @((int)[_cornerButton corner]));
-    [section updateView];
-}
-
-@end
-
 
 
 
@@ -746,7 +683,6 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 #define Item_SliderWithLabel    InspectorViewItem_SliderWithLabel
 #define Item_WhiteBalance       InspectorViewItem_WhiteBalance
 #define Item_Checkbox           InspectorViewItem_Checkbox
-#define Item_Timestamp          InspectorViewItem_Timestamp
 #define Item_Rotation           InspectorViewItem_Rotation
 #define Item_Stat               InspectorViewItem_Stat
 
@@ -1073,16 +1009,6 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 [section addItem:it];
             }
             
-            {
-                Item_Timestamp* it = [self _createItemWithClass:[Item_Timestamp class]];
-                it->name = @"Timestamp";
-                it->getter = _GetterCreate(self, _Get_timestampShow);
-                it->setter = _SetterCreate(self, _Set_timestampShow);
-                it->cornerGetter = _GetterCreate(self, _Get_timestampCorner);
-                it->cornerSetter = _SetterCreate(self, _Set_timestampCorner);
-                [section addItem:it];
-            }
-            
 //            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
 //            spacer->height = SpacerSize;
 //            [section addItem:spacer];
@@ -1129,25 +1055,6 @@ static _ModelSetter _SetterCreate(InspectorView* self, _ModelSetterFn fn) {
 }
 
 // MARK: - Getters
-
-static ImageOptions::Corner _Convert(ImageCornerButtonTypes::Corner x) {
-    switch (x) {
-    case ImageCornerButtonTypes::Corner::BottomRight:   return ImageOptions::Corner::BottomRight;
-    case ImageCornerButtonTypes::Corner::BottomLeft:    return ImageOptions::Corner::BottomLeft;
-    case ImageCornerButtonTypes::Corner::TopLeft:       return ImageOptions::Corner::TopLeft;
-    case ImageCornerButtonTypes::Corner::TopRight:      return ImageOptions::Corner::TopRight;
-    case ImageCornerButtonTypes::Corner::Mixed:         return ImageOptions::Corner::BottomRight;
-    }
-}
-
-static ImageCornerButtonTypes::Corner _Convert(ImageOptions::Corner x) {
-    switch (x) {
-    case ImageOptions::Corner::BottomRight: return ImageCornerButtonTypes::Corner::BottomRight;
-    case ImageOptions::Corner::BottomLeft:  return ImageCornerButtonTypes::Corner::BottomLeft;
-    case ImageOptions::Corner::TopLeft:     return ImageCornerButtonTypes::Corner::TopLeft;
-    case ImageOptions::Corner::TopRight:    return ImageCornerButtonTypes::Corner::TopRight;
-    }
-}
 
 static id _Get_id(const ImageRecord& rec) {
     return @(rec.info.id);
@@ -1214,14 +1121,6 @@ static id _Get_reconstructHighlights(const ImageRecord& rec) {
     return @(rec.options.reconstructHighlights);
 }
 
-static id _Get_timestampShow(const ImageRecord& rec) {
-    return @(rec.options.timestamp.show);
-}
-
-static id _Get_timestampCorner(const ImageRecord& rec) {
-    return @((int)_Convert(rec.options.timestamp.corner));
-}
-
 // MARK: - Setters
 
 static void _Set_whiteBalance(ImageRecord& rec, id data) {
@@ -1285,17 +1184,6 @@ static void _Set_localContrastRadius(ImageRecord& rec, id data) {
 
 static void _Set_reconstructHighlights(ImageRecord& rec, id data) {
     rec.options.reconstructHighlights = [data boolValue];
-    rec.options.thumb.render = true;
-}
-
-static void _Set_timestampShow(ImageRecord& rec, id data) {
-    rec.options.timestamp.show = [data boolValue];
-    rec.options.thumb.render = true;
-}
-
-static void _Set_timestampCorner(ImageRecord& rec, id data) {
-    const ImageOptions::Corner corner = _Convert((ImageCornerButtonTypes::Corner)[data intValue]);
-    rec.options.timestamp.corner = corner;
     rec.options.thumb.render = true;
 }
 

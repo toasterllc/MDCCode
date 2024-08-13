@@ -2,6 +2,7 @@
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "ImagePipelineUtil.h"
+#import "PrefsUtil.h"
 using namespace MDCStudio;
 
 @interface PrintImageView : NSImageView
@@ -10,13 +11,13 @@ using namespace MDCStudio;
 
 static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPtr& rec) {
     using namespace Toastbox;
-        using namespace ImagePipeline;
+    using namespace ImagePipeline;
     
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     Toastbox::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     Image image = imageSource->getImage(ImageSource::Priority::High, rec);
-    Pipeline::Options popts = PipelineOptionsForImage(*rec, image);
+    Pipeline::Options popts = PipelineOptionsForImage(*rec, image, false);
     
     Renderer::Txt txt = renderer.textureCreate(MTLPixelFormatRGBA16Float,
         rec->info.imageWidth, rec->info.imageHeight);

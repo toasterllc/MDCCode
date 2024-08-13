@@ -324,6 +324,8 @@
 		55C3758A2C6ABD2F0099ED35 /* SettingsWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingsWindow.h; sourceTree = "<group>"; };
 		55C3758B2C6ABD2F0099ED35 /* SettingsWindow.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SettingsWindow.mm; sourceTree = "<group>"; };
 		55C3758C2C6ABD2F0099ED35 /* SettingsWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SettingsWindow.xib; sourceTree = "<group>"; };
+		55C375942C6BEA7F0099ED35 /* ImageCorner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageCorner.h; sourceTree = "<group>"; };
+		55C375952C6BED030099ED35 /* PrefsUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrefsUtil.h; sourceTree = "<group>"; };
 		55C6A2672AE2F4D0008149AF /* ImageExporterTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageExporterTypes.h; sourceTree = "<group>"; };
 		55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineUtil.h; sourceTree = "<group>"; };
 		55C6A26B2AE44559008149AF /* ImageExportSaveDialog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageExportSaveDialog.mm; sourceTree = "<group>"; };
@@ -518,7 +520,7 @@
 			path = InspectorView;
 			sourceTree = "<group>";
 		};
-		55425B5A29A2B8C900F25D57 /* ImageCornerButton */ = {
+		55425B5A29A2B8C900F25D57 /* ImageCorner */ = {
 			isa = PBXGroup;
 			children = (
 				55D30A3C29A96D670080BCBD /* ImageCornerButton-0.pdf */,
@@ -526,10 +528,11 @@
 				55D30A3D29A96D670080BCBD /* ImageCornerButton-2.pdf */,
 				55D30A3A29A96D670080BCBD /* ImageCornerButton-3.pdf */,
 				55D30A3B29A96D670080BCBD /* ImageCornerButton-4.pdf */,
+				55C375942C6BEA7F0099ED35 /* ImageCorner.h */,
 				55425B5B29A2B8C900F25D57 /* ImageCornerButton.h */,
 				55425B5C29A2B8C900F25D57 /* ImageCornerButton.mm */,
 			);
-			path = ImageCornerButton;
+			path = ImageCorner;
 			sourceTree = "<group>";
 		};
 		5544A7E927B5E011006AB473 /* SourceListView */ = {
@@ -729,7 +732,7 @@
 				5544AE5927B6EE04006AB473 /* Document */,
 				55C6A27C2AE6EFAD008149AF /* FactoryResetConfirmationAlert */,
 				559704E52AE0E46B006CD617 /* ImageExporter */,
-				55425B5A29A2B8C900F25D57 /* ImageCornerButton */,
+				55425B5A29A2B8C900F25D57 /* ImageCorner */,
 				55F8877C29D3A6E30075593F /* DeviceSettings */,
 				55458F5D2B8882D9008AB8B2 /* CenterContent.h */,
 				554243AC2B3EC4DB00BDFE25 /* PrintImages.h */,
@@ -754,6 +757,7 @@
 				55C6A2A42AE9925B008149AF /* ImageSelection.h */,
 				556F313E2AE069830028BF9C /* NibViewInit.h */,
 				558FFC6029CA1E520022E840 /* Prefs.h */,
+				55C375952C6BED030099ED35 /* PrefsUtil.h */,
 				552F4BF529B28543000CEAB2 /* ImageUtil.h */,
 				55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,

@@ -41,6 +41,9 @@
                         <constraints>
                             <constraint firstAttribute="width" constant="100" id="04g-ZJ-zza"/>
                         </constraints>
+                        <connections>
+                            <action selector="action_dragAndDropExportFormatMenu:" target="wzQ-YT-BhH" id="C90-St-Tai"/>
+                        </connections>
                     </popUpButton>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hnG-XM-0tJ">
                         <rect key="frame" x="18" y="89" width="97" height="16"/>
@@ -70,17 +73,20 @@
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
+                        <connections>
+                            <action selector="action_includeTimestamp:" target="wzQ-YT-BhH" id="RBO-0e-cbN"/>
+                        </connections>
                     </button>
                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="zT4-kE-dGK">
-                        <rect key="frame" x="38" y="145" width="127" height="16"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" title="Timestamp position:" id="14J-kd-smp">
+                        <rect key="frame" x="38" y="145" width="119" height="16"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" title="Timestamp corner:" id="14J-kd-smp">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
                     <button translatesAutoresizingMaskIntoConstraints="NO" id="WNf-IE-XN3" customClass="ImageCornerButton">
-                        <rect key="frame" x="171" y="137" width="32" height="32"/>
+                        <rect key="frame" x="163" y="137" width="32" height="32"/>
                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="buttonCell:rQ0-1b-hLF:image" imagePosition="only" alignment="center" inset="2" id="rQ0-1b-hLF">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -89,6 +95,9 @@
                             <constraint firstAttribute="height" constant="32" id="240-7G-YPf"/>
                             <constraint firstAttribute="width" constant="32" id="CHD-PT-rSW"/>
                         </constraints>
+                        <connections>
+                            <action selector="action_timestampCorner:" target="wzQ-YT-BhH" id="vmE-FL-pqX"/>
+                        </connections>
                     </button>
                 </subviews>
                 <constraints>
@@ -116,6 +125,11 @@
                     <constraint firstItem="Zdg-eg-cRG" firstAttribute="top" secondItem="cdR-Co-1wR" secondAttribute="top" constant="20" symbolic="YES" id="svD-GH-nIv"/>
                 </constraints>
             </view>
+            <connections>
+                <outlet property="_dragAndDropExportFormatMenu" destination="VrP-WT-BR1" id="aLE-Is-DI6"/>
+                <outlet property="_includeTimestampCheckbox" destination="KGR-hO-qlr" id="QbJ-XU-dTd"/>
+                <outlet property="_timestampCornerButton" destination="WNf-IE-XN3" id="AlW-ZW-dPI"/>
+            </connections>
             <point key="canvasLocation" x="-409" y="869.5"/>
         </window>
     </objects>

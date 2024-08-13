@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <forward_list>
+#import <optional>
 #import "Code/Lib/Toastbox/Mac/Util.h"
 #import "Object.h"
 
@@ -10,22 +11,33 @@ struct Prefs : Object {
     NSUserDefaults* _defaults = [NSUserDefaults new];
     
     template<typename T>
-    T get(std::string_view key, T uninit) {
+    std::optional<T> get(std::string_view key) {
         // Numeric types
         if constexpr (std::is_arithmetic_v<T>) {
-            return _getArithmetic(key, uninit);
+            return _getArithmetic<T>(key);
+        } else if constexpr (std::is_enum_v<T>) {
+            auto x = _getArithmetic<std::underlying_type_t<T>>(key);
+            if (!x) return std::nullopt;
+            return (T)*_getArithmetic<std::underlying_type_t<T>>(key);
         } else if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, std::string>) {
-            return _getString(key, uninit);
+            return _getString<T>(key);
         } else {
             static_assert(_AlwaysFalse<T>);
         }
-        return uninit;
+        return std::nullopt;
+    }
+    
+    template<typename T>
+    T get(std::string_view key, T uninit) {
+        return get<T>(key).value_or(uninit);
     }
     
     template<typename T>
     void set(std::string_view key, const T& x) {
         if constexpr (std::is_arithmetic_v<T>) {
             [_defaults setObject:@(x) forKey:@(std::string(key).c_str())];
+        } else if constexpr (std::is_enum_v<T>) {
+            [_defaults setObject:@((std::underlying_type_t<T>)x) forKey:@(std::string(key).c_str())];
         } else if constexpr (std::is_same_v<T, const char*>) {
             [_defaults setObject:@(x) forKey:@(std::string(key).c_str())];
         } else if constexpr (std::is_same_v<T, std::string>) {
@@ -45,7 +57,7 @@ struct Prefs : Object {
     }
     
     template<typename T>
-    T _getArithmetic(std::string_view key, T uninit) {
+    std::optional<T> _getArithmetic(std::string_view key) {
         if (auto x = _Load<NSNumber*>(_defaults, key)) {
             if constexpr (std::is_same_v<T, bool>) {
                 return [x boolValue];
@@ -61,11 +73,11 @@ struct Prefs : Object {
                 static_assert(_AlwaysFalse<T>);
             }
         }
-        return uninit;
+        return std::nullopt;
     }
     
     template<typename T>
-    T _getString(std::string_view key, T uninit) {
+    std::optional<T> _getString(std::string_view key) {
         if (auto x = _Load<NSString*>(_defaults, key)) {
             if constexpr (std::is_same_v<T, const char*>) {
                 return [x UTF8String];
@@ -75,7 +87,7 @@ struct Prefs : Object {
                 static_assert(_AlwaysFalse<T>);
             }
         }
-        return uninit;
+        return std::nullopt;
     }
 };
 using PrefsPtr = SharedPtr<Prefs>;

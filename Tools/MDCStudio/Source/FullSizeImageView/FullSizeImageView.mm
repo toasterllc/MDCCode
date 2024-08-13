@@ -127,7 +127,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
 }
 
 - (void)display {
-        using namespace ImagePipeline;
+    using namespace ImagePipeline;
     using namespace Toastbox;
     
     [super display];
@@ -149,8 +149,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     }
     
     if (!_image.txtValid) {
-        Pipeline::Options popts = PipelineOptionsForImage(*_imageRecord, _image.image);
-        
+        Pipeline::Options popts = PipelineOptionsForImage(*_imageRecord, _image.image, false);
         // Create _image.txt if it doesn't exist yet and we have the image
         if (_image.image) {
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,

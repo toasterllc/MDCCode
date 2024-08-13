@@ -22,21 +22,10 @@ struct [[gnu::packed]] ImageOptions {
         Clockwise270,
     };
     
-    enum class Corner : uint8_t {
-        BottomRight,
-        BottomLeft,
-        TopLeft,
-        TopRight,
-    };
-    
     Rotation rotation = Rotation::Clockwise0;
     bool defringe = false;
     bool reconstructHighlights = true;
-    struct [[gnu::packed]] {
-        bool show = false;
-        Corner corner = Corner::BottomRight;
-    } timestamp;
-    uint8_t _pad[3];
+    uint8_t _pad[5];
     
     ImageWhiteBalance whiteBalance;
     

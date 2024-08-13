@@ -2,26 +2,28 @@
 #import "ImageSource.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "Code/Lib/Toastbox/Mac/Color.h"
+#import "ImageCorner/ImageCorner.h"
 #import "Calendar.h"
+#import "PrefsUtil.h"
 
 namespace MDCStudio {
 
-static simd::float2 _TimestampPosition(ImageOptions::Corner corner) {
-    using X = ImageOptions::Corner;
+static simd::float2 _TimestampPosition(ImageCorner corner) {
     switch (corner) {
-    case X::BottomRight: return { 1, 0 };
-    case X::BottomLeft:  return { 0, 0 };
-    case X::TopLeft:     return { 0, 1 };
-    case X::TopRight:    return { 1, 1 };
+    case ImageCorner::BottomRight: return { 1, 0 };
+    case ImageCorner::BottomLeft:  return { 0, 0 };
+    case ImageCorner::TopLeft:     return { 0, 1 };
+    case ImageCorner::TopRight:    return { 1, 1 };
     }
     abort();
 }
 
 inline ImagePipeline::Pipeline::Options PipelineOptionsForImage(const ImageRecord& rec,
-    const Image& image) {
+    const Image& image, bool includeTimestamp) {
     
     const ImageInfo& info = rec.info;
     const ImageOptions& opts = rec.options;
+    const ImageCorner timestampCorner = PrefsUtil::TimestampImageCorner();
     
     return {
         .cfaDesc                = image.cfaDesc,
@@ -44,8 +46,8 @@ inline ImagePipeline::Pipeline::Options PipelineOptionsForImage(const ImageRecor
         },
         
         .timestamp = {
-            .string             = (opts.timestamp.show ? Calendar::TimestampString(info.timestamp) : ""),
-            .position           = _TimestampPosition(opts.timestamp.corner),
+            .string             = (includeTimestamp ? Calendar::TimestampString(info.timestamp) : ""),
+            .position           = (includeTimestamp ? _TimestampPosition(timestampCorner) : simd::float2{}),
         },
     };
 }
