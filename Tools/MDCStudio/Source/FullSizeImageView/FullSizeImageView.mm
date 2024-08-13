@@ -338,151 +338,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
-//@interface DragImage : NSPasteboardItem
-//@end
-//
-//@implementation DragImage
-//
-//- (NSPasteboardWritingOptions)writingOptionsForType:(NSPasteboardType)type pasteboard:(NSPasteboard *)pasteboard {
-//    NSLog(@"MEOWMIX %@", NSStringFromSelector(_cmd));
-//    if ([type isEqualToString:NSPasteboardTypeFileURL]) {
-//        NSLog(@"MEOWMIX returned NSPasteboardWritingPromised");
-//        return NSPasteboardWritingPromised;
-//    }
-//    return 0;
-//}
-//
-//@end
-
-//@interface FilePromiseDelegate : NSObject <NSDraggingSource, NSPasteboardItemDataProvider, NSFilePromiseProviderDelegate>
-//@end
-//
-//@implementation FilePromiseDelegate
-//
-//- (NSString*)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider
-//    fileNameForType:(NSString*)fileType {
-//    
-//    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-//    
-//    return [NSString stringWithFormat:@"%p.png", self];
-//}
-//
-//- (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
-//    completionHandler:(void(^)(NSError*))completionHandler {
-//    
-//    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-//    
-//    [@"hello" writeToURL:url atomically:true encoding:NSUTF8StringEncoding error:nil];
-//}
-//
-//
-//
-//
-//
-//
-//- (void)pasteboard:(NSPasteboard*)pasteboard item:(NSPasteboardItem*)item
-//    provideDataForType:(NSPasteboardType)type {
-//    
-//    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-//    
-////    if ([type isEqualToString:NSPasteboardTypeFileURL]) {
-////        [pasteboard setString:@"http://apple.com" forType:NSPasteboardTypeFileURL];
-//////        [pasteboard setPropertyList:@"http://apple.com" forType:NSPasteboardTypeURL];
-////        return;
-////    }
-////    
-////    abort();
-//}
-//
-//- (void)draggingSession:(NSDraggingSession*)session willBeginAtPoint:(NSPoint)point {
-//    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-//    for (NSPasteboardItem* item in [[NSPasteboard pasteboardWithName:NSPasteboardNameDrag] pasteboardItems]) {
-//        NSLog(@"  MEOWMIX %@",[item types]);
-//    }
-//}
-//
-//- (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point
-//    operation:(NSDragOperation)operation {
-//    
-//    NSLog(@"MEOWMIX %@ operation:%@\n", NSStringFromSelector(_cmd), @(operation));
-//}
-//
-//- (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
-//    
-//    switch(context) {
-//    case NSDraggingContextOutsideApplication:   return NSDragOperationCopy;
-//    case NSDraggingContextWithinApplication:
-//    default:                                    return NSDragOperationNone;
-//    }
-//}
-//
-//
-//@end
-
-//@interface CustomDragImage : NSDraggingItem <NSDraggingSource, NSPasteboardItemDataProvider, NSFilePromiseProviderDelegate>
-//@end
-//
-//@implementation CustomDragImage
-//
-//- (NSString*)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider
-//    fileNameForType:(NSString*)fileType {
-//    
-//    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-//    
-//    return [NSString stringWithFormat:@"%p.png", self];
-//}
-//
-//- (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
-//    completionHandler:(void(^)(NSError*))completionHandler {
-//    
-//    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-//    
-//    [@"hello" writeToURL:url atomically:true encoding:NSUTF8StringEncoding error:nil];
-//}
-//
-//
-//
-//
-//
-//
-//- (void)pasteboard:(NSPasteboard*)pasteboard item:(NSPasteboardItem*)item
-//    provideDataForType:(NSPasteboardType)type {
-//    
-//    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-//    
-////    if ([type isEqualToString:NSPasteboardTypeFileURL]) {
-////        [pasteboard setString:@"http://apple.com" forType:NSPasteboardTypeFileURL];
-//////        [pasteboard setPropertyList:@"http://apple.com" forType:NSPasteboardTypeURL];
-////        return;
-////    }
-////    
-////    abort();
-//}
-//
-//- (void)draggingSession:(NSDraggingSession*)session willBeginAtPoint:(NSPoint)point {
-//    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-//    for (NSPasteboardItem* item in [[NSPasteboard pasteboardWithName:NSPasteboardNameDrag] pasteboardItems]) {
-//        NSLog(@"  MEOWMIX %@",[item types]);
-//    }
-//}
-//
-//- (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point
-//    operation:(NSDragOperation)operation {
-//    
-//    NSLog(@"MEOWMIX %@ operation:%@\n", NSStringFromSelector(_cmd), @(operation));
-//}
-//
-//- (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
-//    
-//    switch(context) {
-//    case NSDraggingContextOutsideApplication:   return NSDragOperationCopy;
-//    case NSDraggingContextWithinApplication:
-//    default:                                    return NSDragOperationNone;
-//    }
-//}
-//
-//@end
-
 @interface DragImage : NSDraggingItem <NSFilePromiseProviderDelegate>
 @end
 
@@ -504,15 +359,11 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 - (NSString*)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider
     fileNameForType:(NSString*)fileType {
     
-    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-    
     return [NSString stringWithFormat:@"%p.png", self];
 }
 
 - (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
     completionHandler:(void(^)(NSError*))completionHandler {
-    
-    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
     
     [@"hello" writeToURL:url atomically:true encoding:NSUTF8StringEncoding error:nil];
     completionHandler(nil);
@@ -599,43 +450,8 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 // MARK: - Event Handling
 
-- (NSString*)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider
-    fileNameForType:(NSString*)fileType {
-    
-    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-    
-    return [NSString stringWithFormat:@"%p.png", self];
-}
-
-- (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
-    completionHandler:(void(^)(NSError*))completionHandler {
-    
-    NSLog(@"MEOWMIX %@\n", NSStringFromSelector(_cmd));
-    
-    [@"hello" writeToURL:url atomically:true encoding:NSUTF8StringEncoding error:nil];
-}
-
 - (void)mouseDown:(NSEvent*)event {
     [[self window] makeFirstResponder:self];
-    
-//    NSFilePromiseProvider* filePromise = [[NSFilePromiseProvider alloc]
-//        initWithFileType:(id)kUTTypeDirectory
-//        delegate:self];
-    
-//    DragImage* item = [DragImage new];
-//    [item setDataProvider:self forTypes:@[
-//        NSPasteboardTypeFileURL,
-////        (id)kUTTypeImage,
-////        (id)kUTTypeJPEG, (id)kUTTypePNG, (id)kUTTypeRawImage,
-//    ]];
-    
-//    [item setDataProvider:self forTypes:@[
-//        (id)kUTTypeJPEG, (id)kUTTypePNG, (id)kUTTypeRawImage, (id)kUTTypeFileURL,
-//    ]];
-    
-// kUTTypeJPEG
-// kUTTypePNG
-// kUTTypeRawImage
     
     _dragImage = [[DragImage alloc] initDragImage];
     
@@ -659,8 +475,6 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     [_dragImage setDraggingFrame:{dragPosition, {10,10}}];
 //    [dragItem setDraggingFrame:{dragPosition, {10,10}} contents:self.image];
     
-    
-    NSLog(@"MEOWMIX called beginDraggingSessionWithItems");
     [self beginDraggingSessionWithItems:@[_dragImage] event:event source:self];
 }
 
