@@ -11,7 +11,6 @@ using namespace MDCStudio;
     
     // Drag and Drop
     IBOutlet NSPopUpButton* _dragAndDropExportFormatMenu;
-    IBOutlet NSButton* _includeTimestampCheckbox;
 }
 
 - (instancetype)init {
@@ -20,15 +19,12 @@ using namespace MDCStudio;
         instantiateWithOwner:nil topLevelObjects:&objects];
     assert(br);
     for (id obj : objects) {
-        if ([obj isKindOfClass:[self class]]) {
-            [obj _load];
-            return obj;
-        }
+        if ([obj isKindOfClass:[self class]]) return obj;
     }
     abort();
 }
 
-- (void)_load {
+- (void)awakeFromNib {
     [_dragAndDropExportFormatMenu removeAllItems];
     for (const ImageExporter::Format* fmt : ImageExporter::Formats::All) {
         [_dragAndDropExportFormatMenu addItemWithTitle:@(fmt->name)];
@@ -36,7 +32,6 @@ using namespace MDCStudio;
     
     [_timestampCornerButton setCorner:PrefsUtil::Timestamp::Corner()];
     [_dragAndDropExportFormatMenu selectItemWithTitle:@(PrefsUtil::DragAndDrop::ExportFormat())];
-    [_includeTimestampCheckbox setState:(PrefsUtil::DragAndDrop::IncludeTimestamp() ? NSControlStateValueOn : NSControlStateValueOff)];
 }
 
 - (IBAction)action_timestampCorner:(id)sender {
@@ -45,10 +40,6 @@ using namespace MDCStudio;
 
 - (IBAction)action_dragAndDrop_exportFormatMenu:(id)sender {
     PrefsUtil::DragAndDrop::ExportFormat([[_dragAndDropExportFormatMenu titleOfSelectedItem] UTF8String]);
-}
-
-- (IBAction)action_dragAndDrop_includeTimestamp:(id)sender {
-    PrefsUtil::DragAndDrop::IncludeTimestamp([_includeTimestampCheckbox state]==NSControlStateValueOn);
 }
 
 @end

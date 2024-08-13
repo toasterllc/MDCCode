@@ -13,12 +13,12 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="140" y="176" width="258" height="401"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1512" height="944"/>
-            <view key="contentView" id="cdR-Co-1wR">
-                <rect key="frame" x="0.0" y="0.0" width="255" height="214"/>
+            <view key="contentView" misplaced="YES" id="cdR-Co-1wR">
+                <rect key="frame" x="0.0" y="0.0" width="255" height="182"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="ciB-cz-DFl">
-                        <rect key="frame" x="38" y="55" width="91" height="16"/>
+                        <rect key="frame" x="38" y="23" width="91" height="16"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Export format:" id="nJV-I8-u8m">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -26,7 +26,7 @@
                         </textFieldCell>
                     </textField>
                     <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="VrP-WT-BR1">
-                        <rect key="frame" x="132" y="48" width="107" height="25"/>
+                        <rect key="frame" x="132" y="16" width="107" height="25"/>
                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Lij-Uf-Lf6" id="L7h-xm-xFz">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="menu"/>
@@ -46,7 +46,7 @@
                         </connections>
                     </popUpButton>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hnG-XM-0tJ">
-                        <rect key="frame" x="18" y="89" width="97" height="16"/>
+                        <rect key="frame" x="18" y="57" width="97" height="16"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Drag and Drop" id="x04-kM-29D">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -54,10 +54,10 @@
                         </textFieldCell>
                     </textField>
                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="unc-Vc-be7">
-                        <rect key="frame" x="121" y="94" width="114" height="5"/>
+                        <rect key="frame" x="121" y="62" width="114" height="5"/>
                     </box>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Zdg-eg-cRG">
-                        <rect key="frame" x="18" y="178" width="55" height="16"/>
+                        <rect key="frame" x="18" y="146" width="55" height="16"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="General" id="ZpG-hf-VYR">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -65,20 +65,10 @@
                         </textFieldCell>
                     </textField>
                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="mj1-id-kyy">
-                        <rect key="frame" x="79" y="183" width="164" height="5"/>
+                        <rect key="frame" x="79" y="151" width="164" height="5"/>
                     </box>
-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KGR-hO-qlr">
-                        <rect key="frame" x="38" y="19" width="138" height="18"/>
-                        <buttonCell key="cell" type="check" title="Include timestamp" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="KM6-f9-grF">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <action selector="action_dragAndDrop_includeTimestamp:" target="wzQ-YT-BhH" id="RBO-0e-cbN"/>
-                        </connections>
-                    </button>
                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="zT4-kE-dGK">
-                        <rect key="frame" x="38" y="145" width="119" height="16"/>
+                        <rect key="frame" x="38" y="113" width="119" height="16"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Timestamp corner:" id="14J-kd-smp">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -86,7 +76,7 @@
                         </textFieldCell>
                     </textField>
                     <button translatesAutoresizingMaskIntoConstraints="NO" id="WNf-IE-XN3" customClass="ImageCornerButton">
-                        <rect key="frame" x="163" y="137" width="32" height="32"/>
+                        <rect key="frame" x="163" y="105" width="32" height="32"/>
                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="buttonCell:rQ0-1b-hLF:image" imagePosition="only" alignment="center" inset="2" id="rQ0-1b-hLF">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -106,10 +96,8 @@
                     <constraint firstItem="hnG-XM-0tJ" firstAttribute="leading" secondItem="cdR-Co-1wR" secondAttribute="leading" constant="20" symbolic="YES" id="DfA-i2-GF3"/>
                     <constraint firstItem="WNf-IE-XN3" firstAttribute="top" secondItem="mj1-id-kyy" secondAttribute="bottom" constant="16" id="G4a-2b-eej"/>
                     <constraint firstItem="zT4-kE-dGK" firstAttribute="leading" secondItem="cdR-Co-1wR" secondAttribute="leading" constant="40" id="GIM-KR-gcr"/>
-                    <constraint firstItem="KGR-hO-qlr" firstAttribute="leading" secondItem="cdR-Co-1wR" secondAttribute="leading" constant="40" id="HPu-kP-2q9"/>
                     <constraint firstAttribute="trailing" secondItem="mj1-id-kyy" secondAttribute="trailing" constant="12" symbolic="YES" id="MO7-No-P3M"/>
                     <constraint firstItem="mj1-id-kyy" firstAttribute="centerY" secondItem="Zdg-eg-cRG" secondAttribute="centerY" id="QMv-SG-k0Y"/>
-                    <constraint firstAttribute="bottom" secondItem="KGR-hO-qlr" secondAttribute="bottom" constant="20" symbolic="YES" id="RRu-No-cZl"/>
                     <constraint firstItem="Zdg-eg-cRG" firstAttribute="leading" secondItem="cdR-Co-1wR" secondAttribute="leading" constant="20" symbolic="YES" id="SwA-5Y-uaq"/>
                     <constraint firstAttribute="trailing" secondItem="VrP-WT-BR1" secondAttribute="trailing" constant="20" symbolic="YES" id="YU4-sk-5f0"/>
                     <constraint firstItem="WNf-IE-XN3" firstAttribute="centerY" secondItem="zT4-kE-dGK" secondAttribute="centerY" id="Yea-VN-U9K"/>
@@ -118,7 +106,7 @@
                     <constraint firstItem="unc-Vc-be7" firstAttribute="centerY" secondItem="hnG-XM-0tJ" secondAttribute="centerY" id="e9J-qu-qcg"/>
                     <constraint firstItem="VrP-WT-BR1" firstAttribute="leading" secondItem="ciB-cz-DFl" secondAttribute="trailing" constant="8" symbolic="YES" id="eCJ-l2-eVk"/>
                     <constraint firstItem="ciB-cz-DFl" firstAttribute="leading" secondItem="cdR-Co-1wR" secondAttribute="leading" constant="40" id="ej1-jk-gDc"/>
-                    <constraint firstItem="KGR-hO-qlr" firstAttribute="top" secondItem="VrP-WT-BR1" secondAttribute="bottom" constant="16" id="ilG-yX-ltX"/>
+                    <constraint firstAttribute="bottom" secondItem="VrP-WT-BR1" secondAttribute="bottom" constant="20" symbolic="YES" id="fBm-6z-q2K"/>
                     <constraint firstItem="mj1-id-kyy" firstAttribute="leading" secondItem="Zdg-eg-cRG" secondAttribute="trailing" constant="8" symbolic="YES" id="p3c-d9-Jbf"/>
                     <constraint firstItem="VrP-WT-BR1" firstAttribute="firstBaseline" secondItem="ciB-cz-DFl" secondAttribute="firstBaseline" id="qMB-4y-K4d"/>
                     <constraint firstItem="VrP-WT-BR1" firstAttribute="top" secondItem="unc-Vc-be7" secondAttribute="bottom" constant="24" id="rUa-dX-Phs"/>
@@ -127,7 +115,6 @@
             </view>
             <connections>
                 <outlet property="_dragAndDropExportFormatMenu" destination="VrP-WT-BR1" id="aLE-Is-DI6"/>
-                <outlet property="_includeTimestampCheckbox" destination="KGR-hO-qlr" id="QbJ-XU-dTd"/>
                 <outlet property="_timestampCornerButton" destination="WNf-IE-XN3" id="AlW-ZW-dPI"/>
             </connections>
             <point key="canvasLocation" x="-409" y="869.5"/>

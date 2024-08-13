@@ -59,7 +59,7 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
         Renderer::Txt rgbTxt = renderer.textureCreate(MTLPixelFormatRGBA16Unorm,
             image.width, image.height);
         
-        const Pipeline::Options popts = PipelineOptionsForImage(rec, image, false);
+        const Pipeline::Options popts = PipelineOptionsForImage(rec, image);
         Pipeline::Run(renderer, popts, rawTxt, rgbTxt);
         
         id cgimage = renderer.imageCreate(rgbTxt, true);

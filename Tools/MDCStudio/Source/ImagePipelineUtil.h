@@ -18,11 +18,10 @@ static simd::float2 _TimestampPosition(ImageCorner corner) {
     abort();
 }
 
-inline ImagePipeline::Pipeline::Options PipelineOptionsForImage(const ImageRecord& rec,
-    const Image& image, bool includeTimestamp) {
-    
+inline ImagePipeline::Pipeline::Options PipelineOptionsForImage(const ImageRecord& rec, const Image& image) {
     const ImageInfo& info = rec.info;
     const ImageOptions& opts = rec.options;
+    const bool includeTimestamp = PrefsUtil::Timestamp::Visible();
     const ImageCorner timestampCorner = PrefsUtil::Timestamp::Corner();
     
     return {

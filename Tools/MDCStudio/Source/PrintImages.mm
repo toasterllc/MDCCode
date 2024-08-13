@@ -17,7 +17,7 @@ static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPt
     Toastbox::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     Image image = imageSource->getImage(ImageSource::Priority::High, rec);
-    Pipeline::Options popts = PipelineOptionsForImage(*rec, image, false);
+    Pipeline::Options popts = PipelineOptionsForImage(*rec, image);
     
     Renderer::Txt txt = renderer.textureCreate(MTLPixelFormatRGBA16Float,
         rec->info.imageWidth, rec->info.imageHeight);

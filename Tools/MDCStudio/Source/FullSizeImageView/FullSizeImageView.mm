@@ -104,7 +104,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     NSParameterAssert(rec);
     
     _imageRecord = rec;
-    _image.txtValid = false;
     
     // Fetch the image from the cache
     _image.image = _imageSource->getImage(ImageSource::Priority::Cache, _imageRecord);
@@ -122,8 +121,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     assert(_height);
     [_width setConstant:_imageRecord->info.imageWidth];
     [_height setConstant:_imageRecord->info.imageHeight];
-    
-    [self setNeedsDisplay];
+    [self rerender];
 }
 
 - (void)display {
@@ -149,7 +147,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     }
     
     if (!_image.txtValid) {
-        Pipeline::Options popts = PipelineOptionsForImage(*_imageRecord, _image.image, false);
+        Pipeline::Options popts = PipelineOptionsForImage(*_imageRecord, _image.image);
         // Create _image.txt if it doesn't exist yet and we have the image
         if (_image.image) {
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(_renderer,
@@ -194,11 +192,15 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     }
 }
 
+- (void)rerender {
+    _image.txtValid = false;
+    [self setNeedsDisplay];
+}
+
 - (void)_handleImage:(ImageRecordPtr)rec loaded:(Image&&)image {
     if (rec != _imageRecord) return;
     _image.image = std::move(image);
-    _image.txtValid = false;
-    [self setNeedsDisplay];
+    [self rerender];
 }
 
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
@@ -223,8 +225,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
         break;
     case ImageLibrary::Event::Type::ChangeProperty:
         if (ev.records.count(_imageRecord)) {
-            _image.txtValid = false;
-            [self setNeedsDisplay];
+            [self rerender];
         }
         break;
     case ImageLibrary::Event::Type::ChangeThumbnail:
@@ -525,11 +526,14 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 @implementation FullSizeImageView {
     AnchoredScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
+    Object::ObserverPtr _prefsOb;
     DragImage* _dragImage;
 }
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
     if (!(self = [super initWithFrame:{}])) return nil;
+    __weak auto selfWeak = self;
+    
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
     {
@@ -557,6 +561,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
     }
     
+    {
+        _prefsOb = PrefsGlobal()->observerAdd([=] (auto, auto) { [selfWeak _prefsChanged]; });
+    }
+    
     [self magnifyToFit];
     return self;
 }
@@ -579,6 +587,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 - (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec {
     [[self _fullSizeImageLayer] setImageRecord:rec];
+}
+
+- (void)_prefsChanged {
+    [[self _fullSizeImageLayer] rerender];
 }
 
 - (void)magnifyToFit {
