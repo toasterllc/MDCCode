@@ -42,7 +42,7 @@
                             <constraint firstAttribute="width" constant="100" id="04g-ZJ-zza"/>
                         </constraints>
                         <connections>
-                            <action selector="action_dragAndDropExportFormatMenu:" target="wzQ-YT-BhH" id="C90-St-Tai"/>
+                            <action selector="action_dragAndDrop_exportFormatMenu:" target="wzQ-YT-BhH" id="C90-St-Tai"/>
                         </connections>
                     </popUpButton>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hnG-XM-0tJ">
@@ -74,7 +74,7 @@
                             <font key="font" metaFont="system"/>
                         </buttonCell>
                         <connections>
-                            <action selector="action_includeTimestamp:" target="wzQ-YT-BhH" id="RBO-0e-cbN"/>
+                            <action selector="action_dragAndDrop_includeTimestamp:" target="wzQ-YT-BhH" id="RBO-0e-cbN"/>
                         </connections>
                     </button>
                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="zT4-kE-dGK">

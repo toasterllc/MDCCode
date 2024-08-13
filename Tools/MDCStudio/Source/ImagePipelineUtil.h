@@ -23,7 +23,7 @@ inline ImagePipeline::Pipeline::Options PipelineOptionsForImage(const ImageRecor
     
     const ImageInfo& info = rec.info;
     const ImageOptions& opts = rec.options;
-    const ImageCorner timestampCorner = PrefsUtil::TimestampImageCorner();
+    const ImageCorner timestampCorner = PrefsUtil::Timestamp::Corner();
     
     return {
         .cfaDesc                = image.cfaDesc,

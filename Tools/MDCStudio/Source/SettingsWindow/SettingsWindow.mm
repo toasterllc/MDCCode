@@ -34,20 +34,20 @@ using namespace MDCStudio;
         [_dragAndDropExportFormatMenu addItemWithTitle:@(fmt->name)];
     }
     
-    [_timestampCornerButton setCorner:PrefsUtil::TimestampImageCorner()];
+    [_timestampCornerButton setCorner:PrefsUtil::Timestamp::Corner()];
     [_dragAndDropExportFormatMenu selectItemWithTitle:@(PrefsUtil::DragAndDrop::ExportFormat())];
     [_includeTimestampCheckbox setState:(PrefsUtil::DragAndDrop::IncludeTimestamp() ? NSControlStateValueOn : NSControlStateValueOff)];
 }
 
 - (IBAction)action_timestampCorner:(id)sender {
-    PrefsUtil::TimestampImageCorner([_timestampCornerButton corner]);
+    PrefsUtil::Timestamp::Corner([_timestampCornerButton corner]);
 }
 
-- (IBAction)action_dragAndDropExportFormatMenu:(id)sender {
+- (IBAction)action_dragAndDrop_exportFormatMenu:(id)sender {
     PrefsUtil::DragAndDrop::ExportFormat([[_dragAndDropExportFormatMenu titleOfSelectedItem] UTF8String]);
 }
 
-- (IBAction)action_includeTimestamp:(id)sender {
+- (IBAction)action_dragAndDrop_includeTimestamp:(id)sender {
     PrefsUtil::DragAndDrop::IncludeTimestamp([_includeTimestampCheckbox state]==NSControlStateValueOn);
 }
 

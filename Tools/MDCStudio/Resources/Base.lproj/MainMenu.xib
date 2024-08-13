@@ -30,7 +30,7 @@
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
                             <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW">
                                 <connections>
-                                    <action selector="showSettingsWindow:" target="-1" id="jxs-bC-L0I"/>
+                                    <action selector="_showSettingsWindow:" target="-1" id="jxs-bC-L0I"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="wFC-TO-SCJ"/>
@@ -716,6 +716,12 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="_toggleInspector:" target="-1" id="bOr-9I-qq2"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="Cva-Im-wu9"/>
+                            <menuItem title="Show Timestamp" keyEquivalent="T" id="Vvj-eA-zwd">
+                                <connections>
+                                    <action selector="_toggleTimestamp:" target="-1" id="uul-hC-Xrg"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="jXw-UC-hHE"/>

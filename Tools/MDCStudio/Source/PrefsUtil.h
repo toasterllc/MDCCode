@@ -6,14 +6,6 @@
 
 namespace MDCStudio::PrefsUtil {
 
-inline ImageCorner TimestampImageCorner() {
-    return PrefsGlobal()->get("TimestampImageCorner", ImageCorner::BottomRight);
-}
-
-inline void TimestampImageCorner(ImageCorner x) {
-    PrefsGlobal()->set("TimestampImageCorner", x);
-}
-
 inline const char* PreviousImageExportFormat() {
     return PrefsGlobal()->get("PreviousImageExportFormat", ImageExporter::Formats::JPEG.name);
 }
@@ -21,6 +13,26 @@ inline const char* PreviousImageExportFormat() {
 inline void PreviousImageExportFormat(const char* x) {
     PrefsGlobal()->set("PreviousImageExportFormat", x);
 }
+
+namespace Timestamp {
+
+    inline ImageCorner Corner() {
+        return PrefsGlobal()->get("Timestamp.Corner", ImageCorner::BottomRight);
+    }
+    
+    inline void Corner(ImageCorner x) {
+        PrefsGlobal()->set("Timestamp.Corner", x);
+    }
+    
+    inline bool Visible() {
+        return PrefsGlobal()->get("Timestamp.Visible", false);
+    }
+    
+    inline void Visible(bool x) {
+        PrefsGlobal()->set("Timestamp.Visible", x);
+    }
+
+} // namespace Timestamp
 
 namespace DragAndDrop {
 
