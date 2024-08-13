@@ -14,32 +14,6 @@ inline void TimestampImageCorner(ImageCorner x) {
     PrefsGlobal()->set("TimestampImageCorner", x);
 }
 
-
-
-
-inline const char* DragAndDropExportFormat() {
-    return PrefsGlobal()->get("DragAndDropExportFormat", ImageExporter::Formats::JPEG.name);
-}
-
-inline void DragAndDropExportFormat(const char* x) {
-    PrefsGlobal()->set("DragAndDropExportFormat", x);
-}
-
-
-
-
-inline bool DragAndDropIncludeTimestamp() {
-    return PrefsGlobal()->get("DragAndDropIncludeTimestamp", false);
-}
-
-inline void DragAndDropIncludeTimestamp(bool x) {
-    PrefsGlobal()->set("DragAndDropIncludeTimestamp", x);
-}
-
-
-
-
-
 inline const char* PreviousImageExportFormat() {
     return PrefsGlobal()->get("PreviousImageExportFormat", ImageExporter::Formats::JPEG.name);
 }
@@ -48,8 +22,36 @@ inline void PreviousImageExportFormat(const char* x) {
     PrefsGlobal()->set("PreviousImageExportFormat", x);
 }
 
+namespace DragAndDrop {
 
+    inline const char* ExportFormat() {
+        return PrefsGlobal()->get("DragAndDrop.ExportFormat", ImageExporter::Formats::JPEG.name);
+    }
+    
+    inline void ExportFormat(const char* x) {
+        PrefsGlobal()->set("DragAndDrop.ExportFormat", x);
+    }
+    
+    inline bool IncludeTimestamp() {
+        return PrefsGlobal()->get("DragAndDrop.IncludeTimestamp", false);
+    }
+    
+    inline void IncludeTimestamp(bool x) {
+        PrefsGlobal()->set("DragAndDrop.IncludeTimestamp", x);
+    }
 
+} // namespace DragAndDrop
 
+namespace ImageGrid {
 
-} // namespace MDCStudio
+    inline bool SortNewestFirst() {
+        return PrefsGlobal()->get("ImageGrid.SortNewestFirst", true);
+    }
+    
+    inline void SortNewestFirst(bool x) {
+        return PrefsGlobal()->set("ImageGrid.SortNewestFirst", x);
+    }
+
+} // namespace ImageGrid
+
+} // namespace MDCStudio::PrefsUtil
