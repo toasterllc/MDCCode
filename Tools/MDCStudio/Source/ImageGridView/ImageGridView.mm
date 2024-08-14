@@ -872,7 +872,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     
     const NSEventModifierFlags flags = [[[self window] currentEvent] modifierFlags];
     const ImageSet oldSelection = _selection->images();
-    Toastbox::TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
+    Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
         const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         ImageSet newSelection = [_imageGridLayer imagesForRect:rect];

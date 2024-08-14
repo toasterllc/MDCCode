@@ -312,6 +312,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 @end
 
 using DragImageCompletionHandler = void(^)(NSError*);
+using DragImageReadyHandler = void(^)();
 
 @interface DragImage : NSDraggingItem <NSFilePromiseProviderDelegate>
 @end
@@ -319,18 +320,26 @@ using DragImageCompletionHandler = void(^)(NSError*);
 @implementation DragImage {
     ImageRecordPtr _imageRecord;
     NSFilePromiseProvider* _filePromise;
+    DragImageReadyHandler _readyHandler;
+    bool _ready;
     NSURL* _outputURL;
     DragImageCompletionHandler _completionHandler;
 }
 
-- (instancetype)initWithImageRecord:(ImageRecordPtr)rec draggingFrame:(CGRect)draggingFrame {
+- (instancetype)initWithImageRecord:(ImageRecordPtr)rec draggingFrame:(CGRect)draggingFrame readyHandler:(DragImageReadyHandler)readyHandler {
+    
+    assert(readyHandler);
+    
     NSFilePromiseProvider* promise = [[NSFilePromiseProvider alloc]
         initWithFileType:(id)kUTTypeDirectory delegate:self];
     
     if (!(self = [super initWithPasteboardWriter:promise])) return nil;
-    _filePromise = promise;
     _imageRecord = rec;
+    
+    _filePromise = promise;
     [_filePromise setDelegate:self]; // Update delegate (in case `self` changed)
+    
+    _readyHandler = readyHandler;
     
     __weak auto selfWeak = self;
     [self setImageComponentsProvider:^NSArray<NSDraggingImageComponent*>*{
@@ -363,8 +372,12 @@ using DragImageCompletionHandler = void(^)(NSError*);
 - (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
     completionHandler:(void(^)(NSError*))completionHandler {
     
+    assert(!_ready);
+    
     _outputURL = url;
     _completionHandler = completionHandler;
+    _ready = true;
+    _readyHandler();
 }
 
 - (NSURL*)outputURL {
@@ -373,6 +386,10 @@ using DragImageCompletionHandler = void(^)(NSError*);
 
 - (DragImageCompletionHandler)completionHandler {
     return _completionHandler;
+}
+
+- (bool)ready {
+    return _ready;
 }
 
 @end
@@ -408,8 +425,11 @@ using DragImageCompletionHandler = void(^)(NSError*);
     AnchoredScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
     Object::ObserverPtr _prefsOb;
-    DragImage* _dragImage;
-    NSDraggingSession* _dragSession;
+    struct {
+        NSDraggingSession* session;
+        DragImage* image;
+        bool armed;
+    } _drag;
 }
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
@@ -481,25 +501,54 @@ using DragImageCompletionHandler = void(^)(NSError*);
 
 // MARK: - Event Handling
 
-- (void)mouseDown:(NSEvent*)event {
+- (void)mouseDown:(NSEvent*)mouseDownEvent {
+    NSLog(@"MEOWMIX %@", NSStringFromSelector(_cmd));
     [[self window] makeFirstResponder:self];
-    _dragSession = nil;
+    _drag = {};
+    
+    NSWindow* win = [self window];
+    const CGPoint startPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+    bool dragging = false;
+    Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
+        constexpr CGFloat DragThreshold = 5;
+        const CGPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+        if (!dragging) {
+            const CGFloat dist = std::hypot(point.x-startPoint.x, point.y-startPoint.y);
+            if (dist >= DragThreshold) {
+                [self _dragStart:mouseDownEvent];
+                dragging = true;
+            }
+        }
+    });
+    
+    
 }
 
-- (void)mouseDragged:(NSEvent*)event {
-    if (_dragSession) return;
-    
-//    CGRect draggingFrame = [self convertRect:[[_scrollView documentView] bounds] fromView:[_scrollView documentView]];
-    CGPoint dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
-    CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
-    draggingFrame.origin = {
-        dragPosition.x - draggingFrame.size.width/2,
-        dragPosition.y - draggingFrame.size.height/2,
-    };
-    _dragImage = [[DragImage alloc] initWithImageRecord:[self imageRecord] draggingFrame:draggingFrame];
-    _dragSession = [self beginDraggingSessionWithItems:@[_dragImage] event:event source:self];
-    [_dragSession setDraggingFormation:NSDraggingFormationStack];
-}
+//- (void)mouseDragged:(NSEvent*)event {
+//    if ([[self window] firstResponder] != self) return;
+//    if (_drag.session) return;
+//    
+////    CGRect draggingFrame = [self convertRect:[[_scrollView documentView] bounds] fromView:[_scrollView documentView]];
+//    CGPoint dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
+//    CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
+//    draggingFrame.origin = {
+//        dragPosition.x - draggingFrame.size.width/2,
+//        dragPosition.y - draggingFrame.size.height/2,
+//    };
+//    
+//    __weak auto selfWeak = self;
+//    auto readyHandler = ^{
+//        auto selfStrong = selfWeak;
+//        if (!selfStrong) return;
+//        [self _dragFinish];
+//    };
+//    
+//    _drag.image = [[DragImage alloc] initWithImageRecord:[self imageRecord]
+//        draggingFrame:draggingFrame readyHandler:readyHandler];
+//    
+//    _drag.session = [self beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
+//    [_drag.session setDraggingFormation:NSDraggingFormationStack];
+//}
 
 //- (void)mouseDragged:(NSEvent *)event
 
@@ -527,18 +576,51 @@ using DragImageCompletionHandler = void(^)(NSError*);
 
 // MARK: - Drag & Drop
 
-- (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point operation:(NSDragOperation)operation {
-//    NSLog(@"%@ %@", NSStringFromSelector(_cmd), @(operation));
-    if (operation != NSDragOperationCopy) return;
+- (void)_dragStart:(NSEvent*)event {
+//    CGRect draggingFrame = [self convertRect:[[_scrollView documentView] bounds] fromView:[_scrollView documentView]];
+    CGPoint dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
+    CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
+    draggingFrame.origin = {
+        dragPosition.x - draggingFrame.size.width/2,
+        dragPosition.y - draggingFrame.size.height/2,
+    };
+    
+    __weak auto selfWeak = self;
+    auto readyHandler = ^{
+        auto selfStrong = selfWeak;
+        if (!selfStrong) return;
+        [self _dragFinish];
+    };
+    
+    _drag.image = [[DragImage alloc] initWithImageRecord:[self imageRecord]
+        draggingFrame:draggingFrame readyHandler:readyHandler];
+    
+    _drag.session = [self beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
+    [_drag.session setDraggingFormation:NSDraggingFormationStack];
+}
+
+- (void)_dragFinish {
+    NSLog(@"%@ AAA", NSStringFromSelector(_cmd));
+    // Check if all our conditions are met to perform the drag
+    if (!_drag.armed) return;
+    if (![_drag.image ready]) return;
+    NSLog(@"%@ BBB", NSStringFromSelector(_cmd));
     
     ImageSourcePtr imageSource = [[self _fullSizeImageLayer] imageSource];
     const ImageExporter::Format* fmt = PrefsUtil::DragAndDrop::ExportFormat();
-    ImageRecordPtr imageRecord = [_dragImage imageRecord];
-    const std::filesystem::path path([[_dragImage outputURL] fileSystemRepresentation]);
+    ImageRecordPtr imageRecord = [_drag.image imageRecord];
+    const std::filesystem::path path([[_drag.image outputURL] fileSystemRepresentation]);
     
     ImageExporter::Export([self window], imageSource, { imageRecord }, fmt, path);
-    [_dragImage completionHandler](nil);
-    _dragImage = nullptr;
+    [_drag.image completionHandler](nil);
+    _drag = {};
+}
+
+- (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point operation:(NSDragOperation)operation {
+    NSLog(@"%@ %@", NSStringFromSelector(_cmd), @(operation));
+    _drag.armed = (operation == NSDragOperationCopy);
+    _drag.session = nullptr;
+    [self _dragFinish];
 }
 
 - (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
