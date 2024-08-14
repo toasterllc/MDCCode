@@ -13,8 +13,7 @@ static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPt
     using namespace Toastbox;
     using namespace ImagePipeline;
     
-    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    Toastbox::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    Toastbox::Renderer renderer;
     
     Image image = imageSource->getImage(ImageSource::Priority::High, rec);
     Pipeline::Options popts = PipelineOptionsForImage(*rec, image);

@@ -281,9 +281,7 @@ inline void _Export(ImageSourcePtr imageSource, const ImageExporter::Format* fmt
     
     assert(recs.size() > 0);
     
-    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    Toastbox::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-    
+    Toastbox::Renderer renderer;
     if (recs.size() > 1) {
         for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
             ImageRecordPtr rec = *it;

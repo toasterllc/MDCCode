@@ -11,6 +11,7 @@
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
+#import "ImageUtil.h"
 #import "ImagePipelineUtil.h"
 #import "ImageExporter/ImageExporter.h"
 using namespace MDCStudio;
@@ -56,9 +57,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     if (!(self = [super init])) return nil;
     
     _imageSource = imageSource;
-    
-    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    _renderer = Toastbox::Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     [self setDevice:[self preferredDevice]];
     [self setColorspace:_LinearSRGBColorSpace()];
@@ -158,12 +156,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
 //            _renderer.debugTextureShow(rawTxt);
         
         } else {
-            const size_t w = ImageThumb::ThumbWidth;
-            const size_t h = ImageThumb::ThumbHeight;
-            Renderer::Txt thumbTxt = _renderer.textureCreate(ImageThumb::PixelFormat, w, h);
-            [thumbTxt replaceRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0
-                slice:0 withBytes:_imageRecord->thumb.data bytesPerRow:w*4 bytesPerImage:0];
-            
+            Renderer::Txt thumbTxt = ThumbTextureForImageRecord(_renderer, *_imageRecord);
             _renderer.render(_image.txt, thumbTxt);
             if (!popts.timestamp.string.empty()) {
                 Pipeline::TimestampOverlayRender(_renderer, popts.timestamp, _image.txt);
@@ -314,45 +307,46 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
-@interface FullSizeImageDocumentView : AnchoredDocumentView
-- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
-@end
-
-@implementation FullSizeImageDocumentView
-
-- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
-    FullSizeImageLayer* imageLayer = [[FullSizeImageLayer alloc] initWithImageSource:imageSource];
-    if (!(self = [super initWithAnchoredLayer:imageLayer])) return nil;
-    [self setTranslatesAutoresizingMaskIntoConstraints:false];
-    return self;
-}
-
-- (void)dealloc {
-    printf("~FullSizeImageDocumentView\n");
-}
-
-- (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
-    const bool fit = [(AnchoredScrollView*)[self enclosingScrollView] magnifyToFit];
-    return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [[self superview] bounds]);
-}
-
-@end
-
 @interface DragImage : NSDraggingItem <NSFilePromiseProviderDelegate>
 @end
 
 @implementation DragImage {
+    ImageRecordPtr _imageRecord;
     NSFilePromiseProvider* _filePromise;
 }
 
-- (instancetype)initDragImage {
-    _filePromise = [[NSFilePromiseProvider alloc]
+- (instancetype)initWithImageRecord:(ImageRecordPtr)rec draggingFrame:(CGRect)draggingFrame {
+    NSFilePromiseProvider* promise = [[NSFilePromiseProvider alloc]
         initWithFileType:(id)kUTTypeDirectory delegate:self];
     
-    if (!(self = [super initWithPasteboardWriter:_filePromise])) return nil;
+    if (!(self = [super initWithPasteboardWriter:promise])) return nil;
+    _filePromise = promise;
+    _imageRecord = rec;
+    [_filePromise setDelegate:self]; // Update delegate (in case `self` changed)
     
-    // Update delegate in case `self` changed
-    [_filePromise setDelegate:self];
+    __weak auto selfWeak = self;
+    [self setImageComponentsProvider:^NSArray<NSDraggingImageComponent*>*{
+        auto selfStrong = selfWeak;
+        if (!selfStrong) return nil;
+        NSLog(@"MEOWMIX ImageComponentsProvider");
+        
+//        NSDraggingImageComponent* icon = [[NSDraggingImageComponent alloc] initWithKey:NSDraggingImageComponentIconKey];
+//        [icon setContents:[NSImage imageNamed:@"Photon-Settings"]];
+        
+//        NSDraggingImageComponent* label = [[NSDraggingImageComponent alloc] initWithKey:NSDraggingImageComponentLabelKey];
+//        [label setContents:@"hello"];
+        
+        NSDraggingImageComponent* icon = [[NSDraggingImageComponent alloc] initWithKey:NSDraggingImageComponentIconKey];
+        Toastbox::Renderer renderer;
+        Toastbox::Renderer::Txt tmp = ThumbTextureForImageRecord(renderer, *selfStrong->_imageRecord);
+        Toastbox::Renderer::Txt thumbTxt = renderer.textureCreate(tmp, MTLPixelFormatRGBA8Unorm_sRGB);
+        renderer.render(thumbTxt, tmp);
+        [icon setContents:renderer.imageCreate(thumbTxt)];
+        [icon setFrame:{{}, draggingFrame.size}];
+        return @[icon];
+    }];
+    
+    [self setDraggingFrame:draggingFrame];
     return self;
 }
 
@@ -371,6 +365,105 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
+@interface FullSizeImageDocumentView : AnchoredDocumentView <NSDraggingSource>
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
+@end
+
+@implementation FullSizeImageDocumentView {
+//    DragImage* _dragImage;
+//    NSEvent* _mouseDownEvent;
+//    NSDraggingSession* _dragSession;
+}
+
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
+    FullSizeImageLayer* imageLayer = [[FullSizeImageLayer alloc] initWithImageSource:imageSource];
+    if (!(self = [super initWithAnchoredLayer:imageLayer])) return nil;
+    [self setTranslatesAutoresizingMaskIntoConstraints:false];
+    return self;
+}
+
+- (void)dealloc {
+    printf("~FullSizeImageDocumentView\n");
+}
+
+- (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
+    const bool fit = [(AnchoredScrollView*)[self enclosingScrollView] magnifyToFit];
+    return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [[self superview] bounds]);
+}
+
+//- (void)mouseDown:(NSEvent*)event {
+//    NSLog(@"mouseDown");
+////    [[self window] makeFirstResponder:self];
+////    _dragSession = nil;
+//    _mouseDownEvent = event;
+//}
+//
+//- (void)mouseDragged:(NSEvent*)event {
+//    NSLog(@"mouseDragged");
+//    if (_dragSession) return;
+//    
+////    CGRect bounds = [self bounds];
+//    
+////    [self superview]
+//    
+//    CGRect rect = [self convertRect:[[self superview] bounds] fromView:[self superview]];
+////    rect = CGRectInset(rect, .33*rect.size.width, .3*rect.size.height);
+//    
+////    CGPoint dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
+////    CGRect rect = {0,0,(CGFloat)ImageThumb::ThumbWidth/2,(CGFloat)ImageThumb::ThumbHeight/2};
+////    rect.origin.x = dragPosition.x-rect.size.width/2;
+////    rect.origin.y = dragPosition.y-rect.size.height/2;
+//    
+//    _dragImage = [[DragImage alloc]
+//        initWithImageRecord:[(FullSizeImageLayer*)[self layer] imageRecord]
+//        superFrame:[self bounds] frame:rect];
+//    
+////    static DragImage* _dragImage2 = [[DragImage alloc] initWithImageRecord:[self imageRecord]];
+//    
+////    static id <NSFilePromiseProviderDelegate> delegate = [FilePromiseDelegate new];
+////    NSFilePromiseProvider* filePromise = [NSFilePromiseProvider new];
+////    CustomDragImage* dragItem = [[CustomDragImage alloc] initWithPasteboardWriter:filePromise];
+////    [filePromise setFileType:(id)kUTTypeDirectory];
+////    [filePromise setDelegate:self];
+////    [filePromise setDelegate:dragItem];
+////    [filePromise setDelegate:delegate];
+//    
+////    NSFilePromiseProvider* filePromise = [[NSFilePromiseProvider alloc]
+////        initWithFileType:(id)kUTTypeDirectory
+////        delegate:self];
+////    NSDraggingItem* dragItem = [[NSDraggingItem alloc] initWithPasteboardWriter:filePromise];
+//    
+////    dragPosition.x -= self.image.size.width/5/2;
+////    dragPosition.y -= self.image.size.height/5/2;
+////    CGRect draggingRect = NSMakeRect(dragPosition.x, dragPosition.y, self.image.size.width/5, self.image.size.height/5);
+//    
+//    
+//    
+////    [_dragImage setDraggingFrame:[self convertRect:[[self superview] bounds] fromView:[self superview]]];
+////    [_dragImage setDraggingFrame:{{}, {10,10}}];
+////    [_dragImage setDraggingFrame:[self bounds]];
+////    [dragItem setDraggingFrame:{dragPosition, {10,10}} contents:self.image];
+//    _dragSession = [self beginDraggingSessionWithItems:@[_dragImage] event:_mouseDownEvent source:self];
+//    [_dragSession setDraggingFormation:NSDraggingFormationStack];
+//    NSLog(@"MEOWMIX STARTED DRAG SESSION");
+//}
+
+
+- (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point
+    operation:(NSDragOperation)operation {
+}
+
+- (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    
+    switch(context) {
+    case NSDraggingContextOutsideApplication:   return NSDragOperationCopy;
+    case NSDraggingContextWithinApplication:
+    default:                                    return NSDragOperationNone;
+    }
+}
+
+@end
+
 @interface FullSizeImageView () <FullSizeImageHeaderViewDelegate, NSDraggingSource>
 @end
 
@@ -379,6 +472,8 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     FullSizeImageHeaderView* _headerView;
     Object::ObserverPtr _prefsOb;
     DragImage* _dragImage;
+    NSEvent* _mouseDownEvent;
+    NSDraggingSession* _dragSession;
 }
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource {
@@ -452,8 +547,29 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 - (void)mouseDown:(NSEvent*)event {
     [[self window] makeFirstResponder:self];
+    _dragSession = nil;
+    _mouseDownEvent = event;
+}
+
+- (void)mouseDragged:(NSEvent*)event {
+    if (_dragSession) return;
     
-    _dragImage = [[DragImage alloc] initDragImage];
+    CGRect bounds = [self bounds];
+    
+//    [self superview]
+    
+    
+    
+    CGRect draggingFrame = [self convertRect:[[_scrollView documentView] bounds] fromView:[_scrollView documentView]];
+//    frame = CGRectInset(frame, .3*frame.size.width, .3*frame.size.height);
+    
+    CGPoint dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
+//    CGRect rect = {0,0,(CGFloat)ImageThumb::ThumbWidth/2,(CGFloat)ImageThumb::ThumbHeight/2};
+//    rect.origin.x = dragPosition.x-rect.size.width/2;
+//    rect.origin.y = dragPosition.y-rect.size.height/2;
+    CGRect rect = {0,0,200,200};
+    _dragImage = [[DragImage alloc] initWithImageRecord:[self imageRecord] draggingFrame:draggingFrame];
+//    static DragImage* _dragImage2 = [[DragImage alloc] initWithImageRecord:[self imageRecord]];
     
 //    static id <NSFilePromiseProviderDelegate> delegate = [FilePromiseDelegate new];
 //    NSFilePromiseProvider* filePromise = [NSFilePromiseProvider new];
@@ -468,15 +584,24 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 //        delegate:self];
 //    NSDraggingItem* dragItem = [[NSDraggingItem alloc] initWithPasteboardWriter:filePromise];
     
-    CGPoint dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
 //    dragPosition.x -= self.image.size.width/5/2;
 //    dragPosition.y -= self.image.size.height/5/2;
 //    CGRect draggingRect = NSMakeRect(dragPosition.x, dragPosition.y, self.image.size.width/5, self.image.size.height/5);
-    [_dragImage setDraggingFrame:{dragPosition, {10,10}}];
-//    [dragItem setDraggingFrame:{dragPosition, {10,10}} contents:self.image];
     
-    [self beginDraggingSessionWithItems:@[_dragImage] event:event source:self];
+    
+    
+    
+//    [_dragImage setDraggingFrame:[self convertRect:[[self superview] bounds] fromView:[self superview]]];
+//    [_dragImage setDraggingFrame:{{}, {10,10}}];
+//    [_dragImage setDraggingFrame:[self bounds]];
+//    [dragItem setDraggingFrame:{dragPosition, {10,10}} contents:self.image];
+    _dragSession = [self beginDraggingSessionWithItems:@[_dragImage] event:_mouseDownEvent source:self];
+    [_dragSession setDraggingFormation:NSDraggingFormationStack];
+//    [_dragSession setAnimatesToStartingPositionsOnCancelOrFail:false];
+    NSLog(@"MEOWMIX STARTED DRAG SESSION");
 }
+
+//- (void)mouseDragged:(NSEvent *)event
 
 - (void)magnifyToActualSize:(id)sender {
     [_scrollView magnifyToActualSize:sender];
@@ -505,7 +630,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 - (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point
     operation:(NSDragOperation)operation {
     
-    _dragImage = nullptr;
+//    _dragImage = nullptr;
 }
 
 - (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
