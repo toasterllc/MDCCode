@@ -355,10 +355,6 @@ using DragImageReadyHandler = void(^)();
     return self;
 }
 
-//- (ImageRecordPtr)imageRecord {
-//    return _imageRecord;
-//}
-
 - (NSString*)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider
     fileNameForType:(NSString*)fileType {
     return @(ImageExporter::FileNameForImageRecord(*_imageRecord, PrefsUtil::DragAndDrop::ExportFormat()).c_str());
@@ -367,21 +363,10 @@ using DragImageReadyHandler = void(^)();
 - (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
     completionHandler:(void(^)(NSError*))completionHandler {
     
-//    bool wrote = [@"hello" writeToURL:url atomically:true encoding:NSUTF8StringEncoding error:nil];
-//    NSLog(@"writePromiseToURL: %@", @(wrote));
-    
-//    ImageSourcePtr imageSource = [[self _fullSizeImageLayer] imageSource];
     const ImageExporter::Format* fmt = PrefsUtil::DragAndDrop::ExportFormat();
-//    ImageRecordPtr imageRecord = [_drag.image imageRecord];
     const std::filesystem::path path([url fileSystemRepresentation]);
-    
     ImageExporter::Export(_imageSource, { _imageRecord }, fmt, path);
     completionHandler(nil);
-//    [_drag.image completionHandler](nil);
-//    _drag = {};
-    
-//    _outputURL = url;
-//    _completionHandler = completionHandler;
 }
 
 @end
@@ -499,37 +484,32 @@ using DragImageReadyHandler = void(^)();
 // MARK: - Event Handling
 
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
-    NSLog(@"MEOWMIX %@", NSStringFromSelector(_cmd));
     [[self window] makeFirstResponder:self];
     _drag = { .mouseDown = true };
-    
-//    NSWindow* win = [self window];
-//    const CGPoint startPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
-//    bool dragging = false;
-//    Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
-//        constexpr CGFloat DragThreshold = 5;
-//        const CGPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-//        if (!dragging) {
-//            const CGFloat dist = std::hypot(point.x-startPoint.x, point.y-startPoint.y);
-//            if (dist >= DragThreshold) {
-//                [self _dragStart:mouseDownEvent];
-//                dragging = true;
-//            }
-//        }
-//    });
 }
 
 - (void)mouseDragged:(NSEvent*)event {
     if (!_drag.mouseDown) return;
     if (_drag.session) return;
-    [self _dragStart:event];
+    
+    CGPoint dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
+    CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
+    draggingFrame.origin = {
+        dragPosition.x - draggingFrame.size.width/2,
+        dragPosition.y - draggingFrame.size.height/2,
+    };
+    
+    _drag.image = [[DragImage alloc] initWithImageSource:[self imageSource]
+        imageRecord:[self imageRecord]
+        draggingFrame:draggingFrame];
+    
+    _drag.session = [self beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
+    [_drag.session setDraggingFormation:NSDraggingFormationStack];
 }
 
 - (void)mouseUp:(NSEvent*)event {
     _drag = {};
 }
-
-//- (void)mouseDragged:(NSEvent *)event
 
 - (void)magnifyToActualSize:(id)sender {
     [_scrollView magnifyToActualSize:sender];
@@ -554,56 +534,6 @@ using DragImageReadyHandler = void(^)();
 }
 
 // MARK: - Drag & Drop
-
-- (void)_dragStart:(NSEvent*)event {
-//    CGRect draggingFrame = [self convertRect:[[_scrollView documentView] bounds] fromView:[_scrollView documentView]];
-    assert(!_drag.session);
-    
-    CGPoint dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
-    CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
-    draggingFrame.origin = {
-        dragPosition.x - draggingFrame.size.width/2,
-        dragPosition.y - draggingFrame.size.height/2,
-    };
-    
-//    __weak auto selfWeak = self;
-//    auto readyHandler = ^{
-//        auto selfStrong = selfWeak;
-//        if (!selfStrong) return;
-//        [self _dragFinish];
-//    };
-    
-    _drag.image = [[DragImage alloc] initWithImageSource:[self imageSource]
-        imageRecord:[self imageRecord]
-        draggingFrame:draggingFrame];
-    
-    _drag.session = [self beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
-    [_drag.session setDraggingFormation:NSDraggingFormationStack];
-}
-
-//- (void)_dragFinish {
-////    NSLog(@"%@ AAA", NSStringFromSelector(_cmd));
-////    // Check if all our conditions are met to perform the drag
-////    if (!_drag.armed) return;
-////    if (![_drag.image ready]) return;
-////    NSLog(@"%@ BBB", NSStringFromSelector(_cmd));
-//    
-//    ImageSourcePtr imageSource = [[self _fullSizeImageLayer] imageSource];
-//    const ImageExporter::Format* fmt = PrefsUtil::DragAndDrop::ExportFormat();
-//    ImageRecordPtr imageRecord = [_drag.image imageRecord];
-//    const std::filesystem::path path([[_drag.image outputURL] fileSystemRepresentation]);
-//    
-//    ImageExporter::Export([self window], imageSource, { imageRecord }, fmt, path);
-//    [_drag.image completionHandler](nil);
-//    _drag = {};
-//}
-
-//- (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point operation:(NSDragOperation)operation {
-//    NSLog(@"%@ %@", NSStringFromSelector(_cmd), @(operation));
-//    _drag.armed = (operation == NSDragOperationCopy);
-//    _drag.session = nullptr;
-//    [self _dragFinish];
-//}
 
 - (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
     
