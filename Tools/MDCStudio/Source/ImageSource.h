@@ -763,7 +763,6 @@ struct ImageSource : Object {
         using namespace Toastbox;
         
         try {
-            id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
             Renderer renderer;
             std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
             

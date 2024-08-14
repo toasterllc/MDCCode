@@ -274,10 +274,13 @@ inline void _Export(Toastbox::Renderer& renderer, ImageSourcePtr imageSource, co
     __Export(renderer, fmt, *rec, image, filePath);
 }
 
+inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, const ImageExporter::Format* fmt) {
+    constexpr const char* FilenamePrefix = "Image-";
+    return FilenamePrefix + std::to_string(rec.info.id) + "." + fmt->extension;
+}
+
 inline void _Export(ImageSourcePtr imageSource, const ImageExporter::Format* fmt,
     const std::filesystem::path& path, const ImageSet& recs, std::function<bool()> progress) {
-    
-    constexpr const char* FilenamePrefix = "Image-";
     
     assert(recs.size() > 0);
     
@@ -285,8 +288,7 @@ inline void _Export(ImageSourcePtr imageSource, const ImageExporter::Format* fmt
     if (recs.size() > 1) {
         for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
             ImageRecordPtr rec = *it;
-            const std::filesystem::path filePath = path /
-                (FilenamePrefix + std::to_string(rec->info.id) + "." + fmt->extension);
+            const std::filesystem::path filePath = path / FileNameForImageRecord(*rec, fmt);
             
             _Export(renderer, imageSource, fmt, rec, filePath);
             if (!progress()) break;

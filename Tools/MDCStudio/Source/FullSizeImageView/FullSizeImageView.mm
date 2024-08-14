@@ -357,8 +357,7 @@ using DragImageCompletionHandler = void(^)(NSError*);
 
 - (NSString*)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider
     fileNameForType:(NSString*)fileType {
-    
-    return [NSString stringWithFormat:@"%p.png", self];
+    return @(ImageExporter::FileNameForImageRecord(*_imageRecord, PrefsUtil::DragAndDrop::ExportFormat()).c_str());
 }
 
 - (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
@@ -535,9 +534,9 @@ using DragImageCompletionHandler = void(^)(NSError*);
     ImageSourcePtr imageSource = [[self _fullSizeImageLayer] imageSource];
     const ImageExporter::Format* fmt = PrefsUtil::DragAndDrop::ExportFormat();
     ImageRecordPtr imageRecord = [_dragImage imageRecord];
-    const std::filesystem::path dir([[[_dragImage outputURL] URLByDeletingLastPathComponent] fileSystemRepresentation]);
+    const std::filesystem::path path([[_dragImage outputURL] fileSystemRepresentation]);
     
-    ImageExporter::Export([self window], imageSource, { imageRecord }, fmt, dir);
+    ImageExporter::Export([self window], imageSource, { imageRecord }, fmt, path);
     [_dragImage completionHandler](nil);
     _dragImage = nullptr;
 }
