@@ -1,4 +1,5 @@
 #pragma once
+#include <string_view>
 
 namespace MDCStudio::ImageExporter {
 
@@ -17,6 +18,16 @@ struct Formats {
         &PNG,
         &DNG,
     };
+    
+    static const Format* FormatForName(const char* name) {
+        assert(name);
+        for (const Format* fmt : All) {
+            if (std::string_view(name) == fmt->name) {
+                return fmt;
+            }
+        }
+        abort();
+    }
 };
 
 } // namespace MDCStudio::ImageExporter

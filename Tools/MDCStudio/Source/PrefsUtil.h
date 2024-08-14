@@ -36,12 +36,24 @@ namespace Timestamp {
 
 namespace DragAndDrop {
 
-    inline const char* ExportFormat() {
-        return PrefsGlobal()->get("DragAndDrop.ExportFormat", ImageExporter::Formats::JPEG.name);
+//    inline const char* ExportFormat() {
+//        return PrefsGlobal()->get("DragAndDrop.ExportFormat", ImageExporter::Formats::JPEG.name);
+//    }
+//    
+//    inline void ExportFormat(const char* x) {
+//        PrefsGlobal()->set("DragAndDrop.ExportFormat", x);
+//    }
+    
+    inline const MDCStudio::ImageExporter::Format* ExportFormat() {
+        const char* fmtName = PrefsGlobal()->get("DragAndDrop.ExportFormat", ImageExporter::Formats::JPEG.name);
+        return MDCStudio::ImageExporter::Formats::FormatForName(fmtName);
     }
     
-    inline void ExportFormat(const char* x) {
-        PrefsGlobal()->set("DragAndDrop.ExportFormat", x);
+    inline void ExportFormat(const MDCStudio::ImageExporter::Format* x) {
+        PrefsGlobal()->set("DragAndDrop.ExportFormat", x->name);
+//        return MDCStudio::ImageExporter::Formats::FormatForName(fmtName);
+//        
+//        PrefsGlobal()->set("DragAndDrop.ExportFormat", x);
     }
     
     inline bool IncludeTimestamp() {

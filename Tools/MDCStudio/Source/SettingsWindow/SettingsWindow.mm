@@ -31,7 +31,7 @@ using namespace MDCStudio;
     }
     
     [_timestampCornerButton setCorner:PrefsUtil::Timestamp::Corner()];
-    [_dragAndDropExportFormatMenu selectItemWithTitle:@(PrefsUtil::DragAndDrop::ExportFormat())];
+    [_dragAndDropExportFormatMenu selectItemWithTitle:@(PrefsUtil::DragAndDrop::ExportFormat()->name)];
 }
 
 - (IBAction)action_timestampCorner:(id)sender {
@@ -39,7 +39,9 @@ using namespace MDCStudio;
 }
 
 - (IBAction)action_dragAndDrop_exportFormatMenu:(id)sender {
-    PrefsUtil::DragAndDrop::ExportFormat([[_dragAndDropExportFormatMenu titleOfSelectedItem] UTF8String]);
+    const ImageExporter::Format* fmt = ImageExporter::Formats::FormatForName(
+        [[_dragAndDropExportFormatMenu titleOfSelectedItem] UTF8String]);
+    PrefsUtil::DragAndDrop::ExportFormat(fmt);
 }
 
 @end

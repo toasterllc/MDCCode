@@ -94,6 +94,10 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     _imageLoad->signal.stop();
 }
 
+- (ImageSourcePtr)imageSource {
+    return _imageSource;
+}
+
 - (ImageRecordPtr)imageRecord {
     return _imageRecord;
 }
@@ -307,12 +311,16 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
+using DragImageCompletionHandler = void(^)(NSError*);
+
 @interface DragImage : NSDraggingItem <NSFilePromiseProviderDelegate>
 @end
 
 @implementation DragImage {
     ImageRecordPtr _imageRecord;
     NSFilePromiseProvider* _filePromise;
+    NSURL* _outputURL;
+    DragImageCompletionHandler _completionHandler;
 }
 
 - (instancetype)initWithImageRecord:(ImageRecordPtr)rec draggingFrame:(CGRect)draggingFrame {
@@ -343,6 +351,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     return self;
 }
 
+- (ImageRecordPtr)imageRecord {
+    return _imageRecord;
+}
+
 - (NSString*)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider
     fileNameForType:(NSString*)fileType {
     
@@ -352,8 +364,16 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 - (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
     completionHandler:(void(^)(NSError*))completionHandler {
     
-    [@"hello" writeToURL:url atomically:true encoding:NSUTF8StringEncoding error:nil];
-    completionHandler(nil);
+    _outputURL = url;
+    _completionHandler = completionHandler;
+}
+
+- (NSURL*)outputURL {
+    return _outputURL;
+}
+
+- (DragImageCompletionHandler)completionHandler {
+    return _completionHandler;
 }
 
 @end
@@ -508,10 +528,18 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 // MARK: - Drag & Drop
 
-- (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point
-    operation:(NSDragOperation)operation {
+- (void)draggingSession:(NSDraggingSession*)session endedAtPoint:(NSPoint)point operation:(NSDragOperation)operation {
+//    NSLog(@"%@ %@", NSStringFromSelector(_cmd), @(operation));
+    if (operation != NSDragOperationCopy) return;
     
-//    _dragImage = nullptr;
+    ImageSourcePtr imageSource = [[self _fullSizeImageLayer] imageSource];
+    const ImageExporter::Format* fmt = PrefsUtil::DragAndDrop::ExportFormat();
+    ImageRecordPtr imageRecord = [_dragImage imageRecord];
+    const std::filesystem::path dir([[[_dragImage outputURL] URLByDeletingLastPathComponent] fileSystemRepresentation]);
+    
+    ImageExporter::Export([self window], imageSource, { imageRecord }, fmt, dir);
+    [_dragImage completionHandler](nil);
+    _dragImage = nullptr;
 }
 
 - (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
