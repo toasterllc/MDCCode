@@ -279,19 +279,27 @@ inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, cons
     return FilenamePrefix + std::to_string(rec.info.id) + "." + fmt->extension;
 }
 
-inline void _Export(ImageSourcePtr imageSource, const ImageExporter::Format* fmt,
-    const std::filesystem::path& path, const ImageSet& recs, std::function<bool()> progress) {
+inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
+    const ImageExporter::Format* fmt, const std::filesystem::path& path,
+    std::function<bool(float)> progress=nullptr) {
     
     assert(recs.size() > 0);
     
     Toastbox::Renderer renderer;
     if (recs.size() > 1) {
+        size_t completed = 0;
         for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
             ImageRecordPtr rec = *it;
             const std::filesystem::path filePath = path / FileNameForImageRecord(*rec, fmt);
             
             _Export(renderer, imageSource, fmt, rec, filePath);
-            if (!progress()) break;
+            
+            // Signal main thread to update progress bar
+            completed++;
+            const float p = (float)completed / recs.size();
+            if (progress) {
+                if (!progress(p)) break;
+            }
         }
     
     } else {
@@ -299,7 +307,8 @@ inline void _Export(ImageSourcePtr imageSource, const ImageExporter::Format* fmt
     }
 }
 
-inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet& recs,
+inline void Export(NSWindow* window,
+    ImageSourcePtr imageSource, const ImageSet& recs,
     const ImageExporter::Format* fmt, const std::filesystem::path& path) {
     
     // Only show progress dialog if we're exporting a significant number of images
@@ -312,12 +321,8 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
     }
     
     std::thread exportThread([=] {
-        size_t completed = 0;
-        _Export(imageSource, fmt, path, recs, [=, &completed] {
+        Export(imageSource, recs, fmt, path, [=] (float p) {
             if (!progress) return true;
-            // Signal main thread to update progress bar
-            completed++;
-            const float p = (float)completed / recsSize;
             dispatch_async(dispatch_get_main_queue(), ^{ [progress setProgress:p]; });
             return ![progress canceled];
         });
