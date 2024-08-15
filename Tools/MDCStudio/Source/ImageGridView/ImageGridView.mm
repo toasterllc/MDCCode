@@ -874,6 +874,25 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         curPoint.x-_mouseDown.point.x, curPoint.y-_mouseDown.point.y});
     ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
     
+    switch ([event type]) {
+    case NSEventTypeLeftMouseDown:
+        _mouseDown = {
+            .active = true,
+            .selection = _selection->images(),
+            .point = [[self superview] convertPoint:[event locationInWindow] fromView:nil],
+            .flags = [event modifierFlags],
+        };
+        break;
+    case NSEventTypeLeftMouseDragged:
+    case NSEventTypeLeftMouseUp:
+        break;
+    default:
+        return; // Ignore non-left-mouse events events that aren't left-mouse events
+    }
+    
+    // Ignore mouse events unless we had a mouse-down event
+    if (!_mouseDown.active) return;
+    
     if (_mouseDown.flags&NSEventModifierFlagShift && !_mouseDown.selection.empty()) {
         NSLog(@"NSEventModifierFlagShift");
         if (!newSelection.empty()) {
@@ -899,6 +918,14 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
     
     [self autoscroll:event];
+    
+    switch ([event type]) {
+    case NSEventTypeLeftMouseUp:
+        _mouseDown = {};
+        break;
+    default:
+        break;
+    }
 }
 
 - (void)mouseDown:(NSEvent*)event {
@@ -916,11 +943,8 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 - (void)mouseDragged:(NSEvent*)event {
     if (!_mouseDown.active) return;
     
-    NSWindow* win = [event window];
     [_selectionRectLayer setHidden:false];
-    
-    const ImageSet oldSelection = _selection->images();
-    Toastbox::TrackMouse(win, event, [&] (NSEvent* event, bool done) {
+    Toastbox::TrackMouse([event window], event, [&] (NSEvent* event, bool done) {
         [self _trackMouse:event];
     });
     [_selectionRectLayer setHidden:true];
