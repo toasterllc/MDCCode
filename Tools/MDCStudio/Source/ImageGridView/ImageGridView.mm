@@ -893,8 +893,10 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     // Ignore mouse events unless we had a mouse-down event
     if (!_mouseDown.active) return;
     
-    if (_mouseDown.flags&NSEventModifierFlagShift && !_mouseDown.selection.empty()) {
-        NSLog(@"NSEventModifierFlagShift");
+    if ([event type] == NSEventTypeLeftMouseDragged) {
+        
+    
+    } else if (_mouseDown.flags&NSEventModifierFlagShift && !_mouseDown.selection.empty()) {
         if (!newSelection.empty()) {
             ImageSet selection;
             {
