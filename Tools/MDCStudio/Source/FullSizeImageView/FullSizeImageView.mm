@@ -504,7 +504,7 @@ using DragImageReadyHandler = void(^)();
         draggingFrame:draggingFrame];
     
     _drag.session = [self beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
-    [_drag.session setDraggingFormation:NSDraggingFormationStack];
+    [_drag.session setDraggingFormation:NSDraggingFormationPile];
 }
 
 - (void)mouseUp:(NSEvent*)event {
