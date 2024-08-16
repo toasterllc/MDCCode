@@ -930,7 +930,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     
     if (_mouseDown.flags&NSEventModifierFlagShift && !_mouseDown.selection.empty()) {
         if (!newSelection.empty()) {
-            NSLog(@"AAA newSelection: %ju", (uintmax_t)newSelection.size());
             ImageSet selection;
             {
                 auto lock = std::unique_lock(*_imageLibrary);
@@ -951,14 +950,12 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         }
         
     } else if (_mouseDown.flags & NSEventModifierFlagCommand) {
-        NSLog(@"BBB");
         _selection->images(ImageSetsXOR(_mouseDown.selection, newSelection));
     
     } else {
 //        _selection->images(std::move(newSelection));
         switch ([event type]) {
         case NSEventTypeLeftMouseDown: {
-            NSLog(@"CCC");
 //            if (!_mouseDown.image) {
 //                _selection->images(std::move(newSelection));
 //            
@@ -986,13 +983,11 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         }
         
         case NSEventTypeLeftMouseDragged: {
-            NSLog(@"DDD");
             _selection->images(std::move(newSelection));
             break;
         }
         
         default:
-            NSLog(@"EEE");
             break;
         }
     }
