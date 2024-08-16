@@ -939,7 +939,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
                 auto first2 = _imageLibrary->find(*std::prev(_mouseDown.selection.end()));
                 auto last1 = _imageLibrary->find(*newSelection.begin());
                 auto last2 = _imageLibrary->find(*std::prev(newSelection.end()));
-                auto first = ([self sortNewestFirst] ? first1 : first2);
+                auto first = ([self sortNewestFirst] ? first2 : first1);
                 auto last = ([self sortNewestFirst] ? last1 : last2);
                 
                 if (first > last) std::swap(first, last);
