@@ -664,11 +664,25 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 }
 
 - (CGRect)rectForImageIndex:(size_t)idx {
+//    CGRect r = [_imageGridLayer rectForImageIndex:idx];
+//    const CGFloat height = [_imageGridLayer bounds].size.height;
+//    r.origin.y = height - r.origin.y - r.size.height;
+//    return r;
+    
+//    [_imageGridLayer bounds].size.height
     return [_imageGridLayer rectForImageIndex:idx];
 }
 
 - (std::optional<CGRect>)rectForImageRecord:(ImageRecordPtr)rec {
     return [_imageGridLayer rectForImageRecord:rec];
+//    std::optional<CGRect> r = [_imageGridLayer rectForImageRecord:rec];
+//    if (!r) return std::nullopt;
+////    return [self convertRectFromLayer:*r];
+//    
+//    const CGFloat height = [_imageGridLayer bounds].size.height;
+//    r->origin.y = height - r->origin.y - r->size.height - 22;
+////    r->origin.y = (((height-12) - (r->origin.y-6)) - r->size.height) + 6;
+//    return r;
 }
 
 - (void)scrollToImageRect:(CGRect)rect center:(bool)center {
@@ -1001,11 +1015,26 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
             if (_mouse.down.image) {
                 
                 NSMutableArray* dragImages = [NSMutableArray new];
+                NSView* superview = [self superview];
                 for (ImageRecordPtr rec : _selection->images()) {
-                    std::optional<CGRect> draggingRect = [self rectForImageRecord:rec];
-                    assert(draggingRect);
+                    std::optional<CGRect> rect = [self rectForImageRecord:rec];
+//                    CGRect draggingRect2 = [[self superview]
+                    assert(rect);
+                    
+                    CGRect draggingRect = [self convertRect:*rect fromView:superview];
+                    
+//                    NSView* superview = [self superview];
+//                    const CGRect rect = {
+//                        [superview convertPoint:[event locationInWindow] fromView:nil],
+//                        {1,1},
+//                    };
+//
+//                    const ImageSet& selection = _selection->images();
+//                    const ImageSet clickedImages = [_imageGridLayer imagesForRect:rect];
+                    
+                    
                     DragImage* image = [[DragImage alloc] initWithImageSource:_imageSource
-                        imageRecord:rec draggingFrame:*draggingRect];
+                        imageRecord:rec draggingFrame:draggingRect];
                     [dragImages addObject:image];
                 }
                 
@@ -1059,6 +1088,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 }
 
 - (void)mouseDragged:(NSEvent*)event {
+    NSLog(@"%@", NSStringFromSelector(_cmd));
     [self _trackMouse:event];
 }
 
