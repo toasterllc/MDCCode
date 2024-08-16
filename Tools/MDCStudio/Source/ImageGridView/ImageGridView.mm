@@ -911,6 +911,8 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
             
             },
         };
+        
+        [[self window] makeFirstResponder:self];
         break;
     case NSEventTypeLeftMouseDragged:
     case NSEventTypeLeftMouseUp:
@@ -928,16 +930,24 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 //        return;
 //    }
     
-    if (_mouseDown.flags&NSEventModifierFlagShift && !_mouseDown.selection.empty()) {
+    bool updateSelectionRect = false;
+    if (_mouseDown.flags & NSEventModifierFlagShift) {
         if (!newSelection.empty()) {
             ImageSet selection;
             {
                 auto lock = std::unique_lock(*_imageLibrary);
                 
-                auto first1 = _imageLibrary->find(*_mouseDown.selection.begin());
-                auto first2 = _imageLibrary->find(*std::prev(_mouseDown.selection.end()));
+                auto first1 = _imageLibrary->find(*newSelection.begin());
+                auto first2 = _imageLibrary->find(*std::prev(newSelection.end()));
+                
+                if (!_mouseDown.selection.empty()) {
+                    first1 = _imageLibrary->find(*_mouseDown.selection.begin());
+                    first2 = _imageLibrary->find(*std::prev(_mouseDown.selection.end()));
+                }
+                
                 auto last1 = _imageLibrary->find(*newSelection.begin());
                 auto last2 = _imageLibrary->find(*std::prev(newSelection.end()));
+                
                 auto first = ([self sortNewestFirst] ? first2 : first1);
                 auto last = ([self sortNewestFirst] ? last1 : last2);
                 
@@ -948,9 +958,11 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
             
             _selection->images(selection);
         }
+        updateSelectionRect = true;
         
     } else if (_mouseDown.flags & NSEventModifierFlagCommand) {
         _selection->images(ImageSetsXOR(_mouseDown.selection, newSelection));
+        updateSelectionRect = true;
     
     } else {
 //        _selection->images(std::move(newSelection));
@@ -973,17 +985,23 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 //            if (mouseDownInsideUnselectedImage) {
 //                _selection->images(std::move(newSelection));
 //            }
-            
-            _selection->images(std::move(newSelection));
-//            if (!_mouseDown.image) {
-//                _selection->images(std::move(newSelection));
-//            }
+            bool mouseDownInUnselectedImage = !_mouseDown.image || _mouseDown.selection.find(_mouseDown.image) == _mouseDown.selection.end();
+            if (mouseDownInUnselectedImage) {
+                _selection->images(std::move(newSelection));
+            }
             
             break;
         }
         
         case NSEventTypeLeftMouseDragged: {
-            _selection->images(std::move(newSelection));
+            if (_mouseDown.image) {
+                NSLog(@"DRAG START");
+                _mouseDown = {};
+            } else {
+                updateSelectionRect = true;
+                _selection->images(std::move(newSelection));
+                [self autoscroll:event];
+            }
             break;
         }
         
@@ -992,13 +1010,20 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         }
     }
     
-    [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
-    
-    [self autoscroll:event];
+    if (updateSelectionRect) {
+        [_selectionRectLayer setHidden:false];
+        [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
+        NSLog(@"_selectionRectLayer %@", [NSDate date]);
+    }
     
     switch ([event type]) {
     case NSEventTypeLeftMouseUp:
         _mouseDown = {};
+        _selectionHead = {};
+        [_selectionRectLayer setHidden:true];
+        if ([event clickCount] == 2) {
+            [[self window] tryToPerform:@selector(_showImage:) with:self];
+        }
         break;
     default:
         break;
@@ -1006,35 +1031,15 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 }
 
 - (void)mouseDown:(NSEvent*)event {
-    [[self window] makeFirstResponder:self];
-//    _mouseDown = {
-//        .active = true,
-//        .selection = _selection->images(),
-//        .point = [[self superview] convertPoint:[event locationInWindow] fromView:nil],
-//        .flags = [event modifierFlags],
-//    };
-    
     [self _trackMouse:event];
 }
 
 - (void)mouseDragged:(NSEvent*)event {
-    if (!_mouseDown.active) return;
-    
-    [_selectionRectLayer setHidden:false];
-    Toastbox::TrackMouse([event window], event, [&] (NSEvent* event, bool done) {
-        [self _trackMouse:event];
-    });
-    [_selectionRectLayer setHidden:true];
-    
-    _selectionHead = {};
+    [self _trackMouse:event];
 }
 
 - (void)mouseUp:(NSEvent*)event {
-//    _mouseDown = {};
     [self _trackMouse:event];
-    if ([event clickCount] == 2) {
-        [[self window] tryToPerform:@selector(_showImage:) with:self];
-    }
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
