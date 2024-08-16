@@ -83,6 +83,7 @@
 		55A884CC2B23CCD0004D6564 /* STMApp.elf in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CA2B23CCCF004D6564 /* STMApp.elf */; };
 		55A884CD2B23CCD0004D6564 /* ICEApp.bin in Resources */ = {isa = PBXBuildFile; fileRef = 55A884CB2B23CCCF004D6564 /* ICEApp.bin */; };
 		55ADD4EE2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */; };
+		55B19FB92C6FE24D005EA41E /* DragImage.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55B19FB72C6FE24D005EA41E /* DragImage.mm */; };
 		55C1BE8E2BF5A4F8004A4FAC /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BE732BF5A4EA004A4FAC /* FFCC.metal */; };
 		55C1BE8F2BF5A4FA004A4FAC /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BE8A2BF5A4EA004A4FAC /* FFCC.mm */; };
 		55C1BEA62BF909C8004A4FAC /* LMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C1BEA12BF909B6004A4FAC /* LMMSE.metal */; };
@@ -311,6 +312,8 @@
 		55A884CB2B23CCCF004D6564 /* ICEApp.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = ICEApp.bin; sourceTree = "<group>"; };
 		55ADD4ED2B7F2BDF000595B5 /* Source-List-Photon-Icon@2x.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Source-List-Photon-Icon@2x.pdf"; sourceTree = "<group>"; };
 		55B1658129CB9A50008D53E5 /* Cache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cache.h; sourceTree = "<group>"; };
+		55B19FB72C6FE24D005EA41E /* DragImage.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DragImage.mm; sourceTree = "<group>"; };
+		55B19FB82C6FE24D005EA41E /* DragImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DragImage.h; sourceTree = "<group>"; };
 		55C1BDA42BF5770F004A4FAC /* CFA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFA.h; sourceTree = "<group>"; };
 		55C1BDA52BF578C1004A4FAC /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		55C1BDA62BF5794C004A4FAC /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
@@ -739,6 +742,8 @@
 				5514532A2B4116B20056A92D /* ColorButtonCell.mm */,
 				55116D2F2B3CC130004617DD /* ProgressBar.h */,
 				55116D2E2B3CC130004617DD /* ProgressBar.mm */,
+				55B19FB82C6FE24D005EA41E /* DragImage.h */,
+				55B19FB72C6FE24D005EA41E /* DragImage.mm */,
 				55F8882429D8DADD0075593F /* TokenField.h */,
 				55F8882629D8DADD0075593F /* TokenField.mm */,
 				55B1658129CB9A50008D53E5 /* Cache.h */,
@@ -1118,6 +1123,7 @@
 				55F8878229D4A96B0075593F /* CaptureTriggersView.mm in Sources */,
 				55E43F9B28C00D6B00FCCEA0 /* ImagePipeline.metal in Sources */,
 				55C6A27F2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm in Sources */,
+				55B19FB92C6FE24D005EA41E /* DragImage.mm in Sources */,
 				551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */,
 				55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */,
 				55C1BEA62BF909C8004A4FAC /* LMMSE.metal in Sources */,
