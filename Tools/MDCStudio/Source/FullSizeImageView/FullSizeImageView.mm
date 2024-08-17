@@ -312,14 +312,18 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @end
 
-using DragImageCompletionHandler = void(^)(NSError*);
-using DragImageReadyHandler = void(^)();
-
-@interface FullSizeImageDocumentView : AnchoredDocumentView
+@interface FullSizeImageDocumentView : AnchoredDocumentView <NSDraggingSource>
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource;
 @end
 
-@implementation FullSizeImageDocumentView
+@implementation FullSizeImageDocumentView {
+    struct {
+        bool mouseDown;
+        NSDraggingSession* session;
+        DragImage* image;
+        bool armed;
+    } _drag;
+}
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
     FullSizeImageLayer* imageLayer = [[FullSizeImageLayer alloc] initWithImageSource:imageSource];
@@ -336,22 +340,66 @@ using DragImageReadyHandler = void(^)();
     const bool fit = [(AnchoredScrollView*)[self enclosingScrollView] magnifyToFit];
     return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [[self superview] bounds]);
 }
+// MARK: - Event Handling
+
+- (void)mouseDown:(NSEvent*)mouseDownEvent {
+    [[self window] makeFirstResponder:self];
+    
+//    if () {
+//        
+//    }
+    
+    _drag = { .mouseDown = true };
+}
+
+- (void)mouseDragged:(NSEvent*)event {
+    if (!_drag.mouseDown) return;
+    if (_drag.session) return;
+    
+    NSView* dragView = [[self enclosingScrollView] superview];
+    CGPoint dragPosition = [dragView convertPoint:[event locationInWindow] fromView:nil];
+    CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
+    draggingFrame.origin = {
+        dragPosition.x - draggingFrame.size.width/2,
+        dragPosition.y - draggingFrame.size.height/2,
+    };
+    
+//    NSScrollView* scrollView = [self enclosingScrollView];
+//    CGRect rect = [scrollView convertRect:[self bounds] fromView:[self superview]];
+    
+    FullSizeImageLayer* layer = (FullSizeImageLayer*)[self layer];
+    _drag.image = [[DragImage alloc] initWithImageSource:[layer imageSource]
+        imageRecord:[layer imageRecord]
+        draggingFrame:draggingFrame];
+    
+    _drag.session = [dragView beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
+    [_drag.session setDraggingFormation:NSDraggingFormationPile];
+}
+
+- (void)mouseUp:(NSEvent*)event {
+    _drag = {};
+}
+
+// MARK: - Drag & Drop
+
+- (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    
+    switch(context) {
+    case NSDraggingContextOutsideApplication:   return NSDragOperationCopy;
+    case NSDraggingContextWithinApplication:
+    default:                                    return NSDragOperationNone;
+    }
+}
 
 @end
 
-@interface FullSizeImageView () <FullSizeImageHeaderViewDelegate, NSDraggingSource>
+@interface FullSizeImageView () <FullSizeImageHeaderViewDelegate>
 @end
 
 @implementation FullSizeImageView {
     AnchoredScrollView* _scrollView;
     FullSizeImageHeaderView* _headerView;
     Object::ObserverPtr _prefsOb;
-    struct {
-        bool mouseDown;
-        NSDraggingSession* session;
-        DragImage* image;
-        bool armed;
-    } _drag;
 }
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
@@ -425,36 +473,6 @@ using DragImageReadyHandler = void(^)();
     [_scrollView setMagnifyToFit:true animate:false];
 }
 
-// MARK: - Event Handling
-
-- (void)mouseDown:(NSEvent*)mouseDownEvent {
-    [[self window] makeFirstResponder:self];
-    _drag = { .mouseDown = true };
-}
-
-- (void)mouseDragged:(NSEvent*)event {
-    if (!_drag.mouseDown) return;
-    if (_drag.session) return;
-    
-    CGPoint dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
-    CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
-    draggingFrame.origin = {
-        dragPosition.x - draggingFrame.size.width/2,
-        dragPosition.y - draggingFrame.size.height/2,
-    };
-    
-    _drag.image = [[DragImage alloc] initWithImageSource:[self imageSource]
-        imageRecord:[self imageRecord]
-        draggingFrame:draggingFrame];
-    
-    _drag.session = [self beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
-    [_drag.session setDraggingFormation:NSDraggingFormationPile];
-}
-
-- (void)mouseUp:(NSEvent*)event {
-    _drag = {};
-}
-
 - (void)magnifyToActualSize:(id)sender {
     [_scrollView magnifyToActualSize:sender];
 }
@@ -475,17 +493,6 @@ using DragImageReadyHandler = void(^)();
 
 - (void)imageHeaderViewBack:(FullSizeImageHeaderView*)x {
     [[self window] tryToPerform:@selector(_backToImages:) with:self];
-}
-
-// MARK: - Drag & Drop
-
-- (NSDragOperation)draggingSession:(NSDraggingSession*)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
-    
-    switch(context) {
-    case NSDraggingContextOutsideApplication:   return NSDragOperationCopy;
-    case NSDraggingContextWithinApplication:
-    default:                                    return NSDragOperationNone;
-    }
 }
 
 @end
