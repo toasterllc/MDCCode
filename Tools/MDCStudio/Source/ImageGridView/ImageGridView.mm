@@ -955,23 +955,18 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
             {
                 auto lock = std::unique_lock(*_imageLibrary);
                 
-                auto first1 = _imageLibrary->find(*newSelection.begin());
-                auto first2 = _imageLibrary->find(*std::prev(newSelection.end()));
-                
+                std::set<ImageLibrary::RecordRefConstIter> iters;
+                iters.insert(_imageLibrary->find(*newSelection.begin()));
+                iters.insert(_imageLibrary->find(*std::prev(newSelection.end())));
                 if (!_mouse.down.selection.empty()) {
-                    first1 = _imageLibrary->find(*_mouse.down.selection.begin());
-                    first2 = _imageLibrary->find(*std::prev(_mouse.down.selection.end()));
+                    iters.insert(_imageLibrary->find(*_mouse.down.selection.begin()));
+                    iters.insert(_imageLibrary->find(*std::prev(_mouse.down.selection.end())));
                 }
                 
-                auto last1 = _imageLibrary->find(*newSelection.begin());
-                auto last2 = _imageLibrary->find(*std::prev(newSelection.end()));
-                
-                auto first = ([self sortNewestFirst] ? first2 : first1);
-                auto last = ([self sortNewestFirst] ? last1 : last2);
-                
-                if (first > last) std::swap(first, last);
+                auto begin = *iters.begin();
+                auto last = *std::prev(iters.end());
                 auto end = std::next(last);
-                selection = ImageSet(first, end);
+                selection = ImageSet(begin, end);
             }
             
             _selection->images(selection);
