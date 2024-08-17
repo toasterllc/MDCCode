@@ -983,23 +983,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 //        _selection->images(std::move(newSelection));
         switch ([event type]) {
         case NSEventTypeLeftMouseDown: {
-//            if (!_mouse.down.image) {
-//                _selection->images(std::move(newSelection));
-//            
-//            } else if (_mouse.down.image && ) {
-//                
-//            }
-            
-//            if (_mouse.down.image && _mouse.down.selection.find(_mouse.down.image)!=_mouse.down.selection.end()) {
-//                
-//            }
-//            
-//            const bool mouseDownInsideUnselectedImage = !_mouse.down.image ||
-//                _mouse.down.selection.find(_mouse.down.image)==_mouse.down.selection.end();
-//            
-//            if (mouseDownInsideUnselectedImage) {
-//                _selection->images(std::move(newSelection));
-//            }
             bool mouseDownInUnselectedImage = !_mouse.down.image || _mouse.down.selection.find(_mouse.down.image) == _mouse.down.selection.end();
             if (mouseDownInUnselectedImage) {
                 _selection->images(std::move(newSelection));
@@ -1015,27 +998,14 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
                 NSView* superview = [self superview];
                 for (ImageRecordPtr rec : _selection->images()) {
                     std::optional<CGRect> rect = [self rectForImageRecord:rec];
-//                    CGRect draggingRect2 = [[self superview]
                     assert(rect);
                     
                     CGRect draggingRect = [self convertRect:*rect fromView:superview];
-                    
-//                    NSView* superview = [self superview];
-//                    const CGRect rect = {
-//                        [superview convertPoint:[event locationInWindow] fromView:nil],
-//                        {1,1},
-//                    };
-//
-//                    const ImageSet& selection = _selection->images();
-//                    const ImageSet clickedImages = [_imageGridLayer imagesForRect:rect];
-                    
                     
                     DragImage* image = [[DragImage alloc] initWithImageSource:_imageSource
                         imageRecord:rec draggingFrame:draggingRect];
                     [dragImages addObject:image];
                 }
-                
-                NSLog(@"DRAG START: %@", dragImages);
                 
                 NSDraggingSession* session = [self beginDraggingSessionWithItems:dragImages event:event source:self];
                 [session setDraggingFormation:NSDraggingFormationPile];
@@ -1063,7 +1033,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     if (updateSelectionRect) {
         [_selectionRectLayer setHidden:false];
         [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
-        NSLog(@"_selectionRectLayer %@", [NSDate date]);
     }
     
     switch ([event type]) {
