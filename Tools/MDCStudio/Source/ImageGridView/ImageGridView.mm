@@ -950,27 +950,29 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     
     bool updateSelectionRect = false;
     if (_mouse.down.flags & NSEventModifierFlagShift) {
-        if (!newSelection.empty()) {
-            ImageSet selection;
-            {
-                auto lock = std::unique_lock(*_imageLibrary);
-                
-                std::set<ImageLibrary::RecordRefConstIter> iters;
+        ImageSet selection;
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            std::set<ImageLibrary::RecordRefConstIter> iters;
+            if (!newSelection.empty()) {
                 iters.insert(_imageLibrary->find(*newSelection.begin()));
                 iters.insert(_imageLibrary->find(*std::prev(newSelection.end())));
-                if (!_mouse.down.selection.empty()) {
-                    iters.insert(_imageLibrary->find(*_mouse.down.selection.begin()));
-                    iters.insert(_imageLibrary->find(*std::prev(_mouse.down.selection.end())));
-                }
-                
+            }
+            
+            if (!_mouse.down.selection.empty()) {
+                iters.insert(_imageLibrary->find(*_mouse.down.selection.begin()));
+                iters.insert(_imageLibrary->find(*std::prev(_mouse.down.selection.end())));
+            }
+            
+            if (!iters.empty()) {
                 auto begin = *iters.begin();
                 auto last = *std::prev(iters.end());
                 auto end = std::next(last);
                 selection = ImageSet(begin, end);
             }
-            
-            _selection->images(selection);
         }
+        
+        _selection->images(selection);
         updateSelectionRect = true;
         
     } else if (_mouse.down.flags & NSEventModifierFlagCommand) {
