@@ -344,11 +344,11 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     [[self window] makeFirstResponder:self];
     
     NSWindow* win = [self window];
-    const CGPoint startPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+    const CGPoint mouseDownPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
     Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
         constexpr CGFloat DragThreshold = 5;
         const CGPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-        const CGFloat dist = std::hypot(point.x-startPoint.x, point.y-startPoint.y);
+        const CGFloat dist = std::hypot(point.x-mouseDownPoint.x, point.y-mouseDownPoint.y);
         if (dist < DragThreshold) return true; // Continue tracking mouse
         
         NSView* dragView = [[self enclosingScrollView] superview];

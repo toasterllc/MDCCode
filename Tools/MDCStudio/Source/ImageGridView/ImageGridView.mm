@@ -902,9 +902,13 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     
     NSWindow* win = [self window];
     Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
-        const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
-        const CGRect rect = CGRectStandardize({ curPoint,
-            { mouseDownPoint.x-curPoint.x, mouseDownPoint.y-curPoint.y } });
+        constexpr CGFloat DragThreshold = 5;
+        const CGPoint point = [superview convertPoint:[event locationInWindow] fromView:nil];
+        const CGFloat dist = std::hypot(point.x-mouseDownPoint.x, point.y-mouseDownPoint.y);
+//        if (dist < DragThreshold) return true; // Continue tracking mouse
+        
+        const CGRect rect = CGRectStandardize({ point,
+            { mouseDownPoint.x-point.x, mouseDownPoint.y-point.y } });
         const ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
         
         bool updateSelectionRect = false;
