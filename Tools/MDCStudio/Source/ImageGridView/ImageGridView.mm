@@ -590,14 +590,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     
     struct {
         struct {
-            bool active;
-            ImageRecordPtr image;
-            ImageSet selection;
-            CGPoint point;
-            NSEventModifierFlags flags;
-        } down;
-        
-        struct {
             NSDraggingSession* session;
             NSArray<DragImage*>* images;
         } drag;
@@ -890,208 +882,123 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 
 // MARK: - Event Handling
 
-//static CGPoint _ConvertPoint(CALayer* dst, NSView* src, CGPoint x) {
-//    CALayer* srcLayer = [src layer];
-//    x = [src convertPointToLayer:x];
-//    return [dst convertPoint:x fromLayer:srcLayer];
-//}
-
-- (void)_trackMouse:(NSEvent*)event {
-    NSView* superview = [self superview];
-    const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
-//    const CGRect rect = CGRectStandardize(CGRect{
-//        _mouse.down.point.x, _mouse.down.point.y,
-//        curPoint.x-_mouse.down.point.x, curPoint.y-_mouse.down.point.y});
-    CGRect rect = { curPoint, {} };
-    
-    if (_mouse.down.active) {
-        rect.size = { _mouse.down.point.x-curPoint.x, _mouse.down.point.y-curPoint.y };
-        rect = CGRectStandardize(rect);
-    }
-    
-    ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
-    ImageRecordPtr image = (!newSelection.empty() ? *newSelection.begin() : ImageRecordPtr{});
-    
-//    if (_mouse.down.active) {
-//        rect.
-//    }
-//    
-//    const CGRect rect = CGRectStandardize(CGRect{
-//        _mouse.down.point.x, _mouse.down.point.y,
-//        curPoint.x-_mouse.down.point.x, curPoint.y-_mouse.down.point.y});
-    
-    switch ([event type]) {
-    case NSEventTypeLeftMouseDown:
-        _mouse.down = {
-            .active = true,
-            .image = image,
-            .selection = _selection->images(),
-            .point = [[self superview] convertPoint:[event locationInWindow] fromView:nil],
-            .flags = [event modifierFlags],
-        };
-        
-        [[self window] makeFirstResponder:self];
-        break;
-    case NSEventTypeLeftMouseDragged:
-    case NSEventTypeLeftMouseUp:
-        break;
-    default:
-        return; // Ignore non-left-mouse events events that aren't left-mouse events
-    }
-    
-    // Ignore mouse events unless we had a mouse-down event
-    if (!_mouse.down.active) return;
-    
-//    if ([event type]==NSEventTypeLeftMouseDragged && !_mouse.down.image) {
-////        [self ]
-//        _mouse.down = {};
-//        return;
-//    }
-    
-    bool updateSelectionRect = false;
-    if (_mouse.down.flags & NSEventModifierFlagShift) {
-        ImageSet selection;
-        {
-            auto lock = std::unique_lock(*_imageLibrary);
-            std::set<ImageLibrary::RecordRefConstIter> iters;
-            if (!newSelection.empty()) {
-                iters.insert(_imageLibrary->find(*newSelection.begin()));
-                iters.insert(_imageLibrary->find(*std::prev(newSelection.end())));
-            }
-            
-            if (!_mouse.down.selection.empty()) {
-                iters.insert(_imageLibrary->find(*_mouse.down.selection.begin()));
-                iters.insert(_imageLibrary->find(*std::prev(_mouse.down.selection.end())));
-            }
-            
-            if (!iters.empty()) {
-                auto begin = *iters.begin();
-                auto last = *std::prev(iters.end());
-                auto end = std::next(last);
-                selection = ImageSet(begin, end);
-            }
-        }
-        
-        _selection->images(selection);
-        updateSelectionRect = true;
-        
-    } else if (_mouse.down.flags & NSEventModifierFlagCommand) {
-        _selection->images(ImageSetsXOR(_mouse.down.selection, newSelection));
-        updateSelectionRect = true;
-    
-    } else {
-//        _selection->images(std::move(newSelection));
-        switch ([event type]) {
-        case NSEventTypeLeftMouseDown: {
-            bool mouseDownInUnselectedImage = !_mouse.down.image || _mouse.down.selection.find(_mouse.down.image) == _mouse.down.selection.end();
-            if (mouseDownInUnselectedImage) {
-                _selection->images(std::move(newSelection));
-            }
-            
-            break;
-        }
-        
-        case NSEventTypeLeftMouseDragged: {
-            if (_mouse.down.image) {
-                
-                NSMutableArray* dragImages = [NSMutableArray new];
-                NSView* superview = [self superview];
-                for (ImageRecordPtr rec : _selection->images()) {
-                    std::optional<CGRect> rect = [self rectForImageRecord:rec];
-                    assert(rect);
-                    
-                    CGRect draggingRect = [self convertRect:*rect fromView:superview];
-                    
-                    DragImage* image = [[DragImage alloc] initWithImageSource:_imageSource
-                        imageRecord:rec draggingFrame:draggingRect];
-                    [dragImages addObject:image];
-                }
-                
-                NSDraggingSession* session = [self beginDraggingSessionWithItems:dragImages event:event source:self];
-                [session setDraggingFormation:NSDraggingFormationPile];
-                
-                _mouse = {
-                    .drag = {
-                        .session = session,
-                        .images = dragImages,
-                    },
-                };
-                
-            } else {
-                updateSelectionRect = true;
-                _selection->images(std::move(newSelection));
-                [self autoscroll:event];
-            }
-            break;
-        }
-        
-        default:
-            break;
-        }
-    }
-    
-    if (updateSelectionRect) {
-        [_selectionRectLayer setHidden:false];
-        [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
-    }
-    
-    switch ([event type]) {
-    case NSEventTypeLeftMouseUp:
-        _mouse = {};
-        _selectionHead = {};
-        [_selectionRectLayer setHidden:true];
-        if ([event clickCount] == 2) {
-            [[self window] tryToPerform:@selector(_showImage:) with:self];
-        }
-        break;
-    default:
-        break;
-    }
-}
 
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
-    [self _trackMouse:mouseDownEvent];
-//    [[self window] makeFirstResponder:self];
-//    
-//    NSWindow* win = [self window];
-//    const CGPoint startPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
-//    Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
-//        if (event != mouseDownEvent) {
-//            [win sendEvent:event];
-//        }
-//        constexpr CGFloat DragThreshold = 5;
-//        const CGPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-//        const CGFloat dist = std::hypot(point.x-startPoint.x, point.y-startPoint.y);
-//        if (dist < DragThreshold) return true; // Continue tracking mouse
-//        
-//        NSView* dragView = [[self enclosingScrollView] superview];
-//        CGPoint dragPosition = [dragView convertPoint:[event locationInWindow] fromView:nil];
-//        CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
-//        draggingFrame.origin = {
-//            dragPosition.x - draggingFrame.size.width/2,
-//            dragPosition.y - draggingFrame.size.height/2,
-//        };
-//        
-//        FullSizeImageLayer* layer = (FullSizeImageLayer*)[self layer];
-//        _drag.image = [[DragImage alloc] initWithImageSource:[layer imageSource]
-//            imageRecord:[layer imageRecord]
-//            draggingFrame:draggingFrame];
-//        
-//        _drag.session = [dragView beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
-//        [_drag.session setDraggingFormation:NSDraggingFormationPile];
-//        // Stop tracking mouse; this is apparently necessary becuase recursive mouse
-//        // tracking isn't compatible with -beginDraggingSessionWithItems:.
-//        return false;
-//    });
-}
-
-- (void)mouseDragged:(NSEvent*)event {
-    NSLog(@"%@ %@", NSStringFromSelector(_cmd), [NSDate date]);
-    [self _trackMouse:event];
-}
-
-- (void)mouseUp:(NSEvent*)event {
-    [self _trackMouse:event];
+    [[self window] makeFirstResponder:self];
+    
+    NSView* superview = [self superview];
+    const CGPoint mouseDownPoint = [superview convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+    const CGRect rect = {mouseDownPoint, {1,1}};
+    const ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
+    const ImageRecordPtr mouseDownImage = (!newSelection.empty() ? *newSelection.begin() : ImageRecordPtr{});
+    const NSEventModifierFlags mouseDownFlags = [mouseDownEvent modifierFlags];
+    const ImageSet mouseDownSelection = _selection->images();
+    
+    const bool mouseDownInUnselectedImage = !mouseDownImage ||
+        mouseDownSelection.find(mouseDownImage) == mouseDownSelection.end();
+    if (mouseDownInUnselectedImage) {
+        _selection->images(std::move(newSelection));
+    }
+    
+    NSWindow* win = [self window];
+    Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
+        const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
+        const CGRect rect = CGRectStandardize({ curPoint,
+            { mouseDownPoint.x-curPoint.x, mouseDownPoint.y-curPoint.y } });
+        const ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
+        
+        bool updateSelectionRect = false;
+        if (mouseDownFlags & NSEventModifierFlagShift) {
+            ImageSet selection;
+            {
+                auto lock = std::unique_lock(*_imageLibrary);
+                std::set<ImageLibrary::RecordRefConstIter> iters;
+                if (!newSelection.empty()) {
+                    iters.insert(_imageLibrary->find(*newSelection.begin()));
+                    iters.insert(_imageLibrary->find(*std::prev(newSelection.end())));
+                }
+                
+                if (!mouseDownSelection.empty()) {
+                    iters.insert(_imageLibrary->find(*mouseDownSelection.begin()));
+                    iters.insert(_imageLibrary->find(*std::prev(mouseDownSelection.end())));
+                }
+                
+                if (!iters.empty()) {
+                    auto begin = *iters.begin();
+                    auto last = *std::prev(iters.end());
+                    auto end = std::next(last);
+                    selection = ImageSet(begin, end);
+                }
+            }
+            
+            _selection->images(selection);
+            updateSelectionRect = true;
+            
+        } else if (mouseDownFlags & NSEventModifierFlagCommand) {
+            _selection->images(ImageSetsXOR(mouseDownSelection, newSelection));
+            updateSelectionRect = true;
+        
+        } else {
+    //        _selection->images(std::move(newSelection));
+            switch ([event type]) {
+            case NSEventTypeLeftMouseDragged: {
+                if (mouseDownImage) {
+                    NSMutableArray* dragImages = [NSMutableArray new];
+                    NSView* superview = [self superview];
+                    for (ImageRecordPtr rec : _selection->images()) {
+                        std::optional<CGRect> rect = [self rectForImageRecord:rec];
+                        assert(rect);
+                        
+                        CGRect draggingRect = [self convertRect:*rect fromView:superview];
+                        
+                        DragImage* image = [[DragImage alloc] initWithImageSource:_imageSource
+                            imageRecord:rec draggingFrame:draggingRect];
+                        [dragImages addObject:image];
+                    }
+                    
+                    NSDraggingSession* session = [self beginDraggingSessionWithItems:dragImages event:event source:self];
+                    [session setDraggingFormation:NSDraggingFormationPile];
+                    
+                    _mouse = {
+                        .drag = {
+                            .session = session,
+                            .images = dragImages,
+                        },
+                    };
+                    
+                    // Stop tracking mouse; this is apparently necessary becuase recursive mouse
+                    // tracking isn't compatible with -beginDraggingSessionWithItems:.
+                    return false;
+                    
+                } else {
+                    updateSelectionRect = true;
+                    _selection->images(std::move(newSelection));
+                    [self autoscroll:event];
+                }
+                break;
+            }
+            
+            default:
+                break;
+            }
+        }
+        
+        if (updateSelectionRect) {
+            [_selectionRectLayer setHidden:false];
+            [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
+        }
+        
+        if (done) {
+            _mouse = {};
+            _selectionHead = {};
+            [_selectionRectLayer setHidden:true];
+            if ([event clickCount] == 2) {
+                [[self window] tryToPerform:@selector(_showImage:) with:self];
+            }
+        }
+        
+        return true;
+    });
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
