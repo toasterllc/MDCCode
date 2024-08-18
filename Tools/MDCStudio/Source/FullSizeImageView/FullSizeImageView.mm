@@ -383,6 +383,10 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     }
 }
 
+- (void)draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)screenPoint operation:(NSDragOperation)operation {
+    _drag = {};
+}
+
 @end
 
 @interface FullSizeImageView () <FullSizeImageHeaderViewDelegate>

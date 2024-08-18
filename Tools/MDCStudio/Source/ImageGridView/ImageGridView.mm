@@ -589,11 +589,9 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     NSLayoutConstraint* _docHeight;
     
     struct {
-        struct {
-            NSDraggingSession* session;
-            NSArray<DragImage*>* images;
-        } drag;
-    } _mouse;
+        NSDraggingSession* session;
+        NSMutableArray<DragImage*>* images;
+    } _drag;
 }
 
 // MARK: - Creation
@@ -882,7 +880,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 
 // MARK: - Event Handling
 
-
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     [[self window] makeFirstResponder:self];
     
@@ -901,11 +898,12 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     }
     
     NSWindow* win = [self window];
+    bool drag = false;
     Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
         constexpr CGFloat DragThreshold = 5;
         const CGPoint point = [superview convertPoint:[event locationInWindow] fromView:nil];
         const CGFloat dist = std::hypot(point.x-mouseDownPoint.x, point.y-mouseDownPoint.y);
-//        if (dist < DragThreshold) return true; // Continue tracking mouse
+        drag |= dist >= DragThreshold;
         
         const CGRect rect = CGRectStandardize({ point,
             { mouseDownPoint.x-point.x, mouseDownPoint.y-point.y } });
@@ -944,10 +942,9 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         
         } else {
     //        _selection->images(std::move(newSelection));
-            switch ([event type]) {
-            case NSEventTypeLeftMouseDragged: {
+            if (drag) {
                 if (mouseDownImage) {
-                    NSMutableArray* dragImages = [NSMutableArray new];
+                    _drag.images = [NSMutableArray new];
                     NSView* superview = [self superview];
                     for (ImageRecordPtr rec : _selection->images()) {
                         std::optional<CGRect> rect = [self rectForImageRecord:rec];
@@ -957,18 +954,11 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
                         
                         DragImage* image = [[DragImage alloc] initWithImageSource:_imageSource
                             imageRecord:rec draggingFrame:draggingRect];
-                        [dragImages addObject:image];
+                        [_drag.images addObject:image];
                     }
                     
-                    NSDraggingSession* session = [self beginDraggingSessionWithItems:dragImages event:event source:self];
-                    [session setDraggingFormation:NSDraggingFormationPile];
-                    
-                    _mouse = {
-                        .drag = {
-                            .session = session,
-                            .images = dragImages,
-                        },
-                    };
+                    _drag.session = [self beginDraggingSessionWithItems:_drag.images event:event source:self];
+                    [_drag.session setDraggingFormation:NSDraggingFormationPile];
                     
                     // Stop tracking mouse; this is apparently necessary becuase recursive mouse
                     // tracking isn't compatible with -beginDraggingSessionWithItems:.
@@ -979,11 +969,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
                     _selection->images(std::move(newSelection));
                     [self autoscroll:event];
                 }
-                break;
-            }
-            
-            default:
-                break;
             }
         }
         
@@ -993,7 +978,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         }
         
         if (done) {
-            _mouse = {};
             _selectionHead = {};
             [_selectionRectLayer setHidden:true];
             if ([event clickCount] == 2) {
@@ -1062,6 +1046,10 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     case NSDraggingContextWithinApplication:
     default:                                    return NSDragOperationNone;
     }
+}
+
+- (void)draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)screenPoint operation:(NSDragOperation)operation {
+    _drag = {};
 }
 
 // MARK: - AnchoredScrollView
