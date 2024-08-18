@@ -1049,8 +1049,40 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     }
 }
 
-- (void)mouseDown:(NSEvent*)event {
-    [self _trackMouse:event];
+- (void)mouseDown:(NSEvent*)mouseDownEvent {
+    [self _trackMouse:mouseDownEvent];
+//    [[self window] makeFirstResponder:self];
+//    
+//    NSWindow* win = [self window];
+//    const CGPoint startPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+//    Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
+//        if (event != mouseDownEvent) {
+//            [win sendEvent:event];
+//        }
+//        constexpr CGFloat DragThreshold = 5;
+//        const CGPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+//        const CGFloat dist = std::hypot(point.x-startPoint.x, point.y-startPoint.y);
+//        if (dist < DragThreshold) return true; // Continue tracking mouse
+//        
+//        NSView* dragView = [[self enclosingScrollView] superview];
+//        CGPoint dragPosition = [dragView convertPoint:[event locationInWindow] fromView:nil];
+//        CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
+//        draggingFrame.origin = {
+//            dragPosition.x - draggingFrame.size.width/2,
+//            dragPosition.y - draggingFrame.size.height/2,
+//        };
+//        
+//        FullSizeImageLayer* layer = (FullSizeImageLayer*)[self layer];
+//        _drag.image = [[DragImage alloc] initWithImageSource:[layer imageSource]
+//            imageRecord:[layer imageRecord]
+//            draggingFrame:draggingFrame];
+//        
+//        _drag.session = [dragView beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
+//        [_drag.session setDraggingFormation:NSDraggingFormationPile];
+//        // Stop tracking mouse; this is apparently necessary becuase recursive mouse
+//        // tracking isn't compatible with -beginDraggingSessionWithItems:.
+//        return false;
+//    });
 }
 
 - (void)mouseDragged:(NSEvent*)event {
