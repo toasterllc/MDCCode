@@ -765,60 +765,82 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 - (void)_moveSelection:(simd::int2)delta extend:(bool)extend {
     assert(delta.x==0 || delta.y==0); // Prohibit diagonal changes
     
-    if (!_selectionHead) {
-        ImageRecordPtr first = *_selection->images().begin();
-        ImageRecordPtr last = *std::prev(_selection->images().end());
+    if (_selection->images().empty()) {
+        ImageLibrary::IterAny first;
+        ImageLibrary::IterAny last;
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            assert(!_imageLibrary->empty());
+            
+            const ImageLibrary::IterAny end = ImageLibrary::EndSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+            first = ImageLibrary::BeginSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+            last = std::prev(end);
+        }
         
         if (delta.x>0 || delta.y>0) {
-            _selectionHead = ([_imageGridLayer sortNewestFirst] ? first : last);
+            _selection->images({ *first });
+            _selectionHead = *first;
         } else {
-            _selectionHead = ([_imageGridLayer sortNewestFirst] ? last : first);
+            _selection->images({ *last });
+            _selectionHead = *last;
         }
-    }
     
-    ImageSet selection;
-    const ImageSet oldSelection = _selection->images();
-    {
-        auto lock = std::unique_lock(*_imageLibrary);
-        
-        ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
-        ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
-        ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _selectionHead);
-        assert(newSelectionFirst != end);
-        
-        const ssize_t deltaCountMin = -(newSelectionFirst-begin);
-        const ssize_t deltaCountMax = end-newSelectionFirst-1;
-        ssize_t deltaCount = delta.y*[_imageGridLayer columnCount] + delta.x;
-        
-        // Short circuit if the delta is trying to extend beyond the valid bounds
-        if (deltaCount<deltaCountMin || deltaCount>deltaCountMax) {
-            return;
-        }
-        
-        ImageRecordIterAny newSelectionLast = newSelectionFirst+deltaCount;
-        _selectionHead = *newSelectionLast;
-        
-        if (extend) {
-            if (newSelectionFirst > newSelectionLast) {
-                std::swap(newSelectionFirst, newSelectionLast);
-            }
+    } else {
+        if (!_selectionHead) {
+            ImageRecordPtr first = *_selection->images().begin();
+            ImageRecordPtr last = *std::prev(_selection->images().end());
             
-            ImageSet newSelection(newSelectionFirst, newSelectionLast+1);
-            const bool headWasSelected = (oldSelection.find(_selectionHead) != oldSelection.end());
-            if (headWasSelected) {
-                selection = ImageSetsSubtract(oldSelection, newSelection);
+            if (delta.x>0 || delta.y>0) {
+                _selectionHead = ([_imageGridLayer sortNewestFirst] ? first : last);
             } else {
-                selection = ImageSetsUnion(oldSelection, newSelection);
+                _selectionHead = ([_imageGridLayer sortNewestFirst] ? last : first);
+            }
+        }
+        
+        ImageSet selection;
+        const ImageSet oldSelection = _selection->images();
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            
+            ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+            ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, [_imageGridLayer sortNewestFirst]);
+            ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _selectionHead);
+            assert(newSelectionFirst != end);
+            
+            const ssize_t deltaCountMin = -(newSelectionFirst-begin);
+            const ssize_t deltaCountMax = end-newSelectionFirst-1;
+            ssize_t deltaCount = delta.y*[_imageGridLayer columnCount] + delta.x;
+            
+            // Short circuit if the delta is trying to extend beyond the valid bounds
+            if (deltaCount<deltaCountMin || deltaCount>deltaCountMax) {
+                return;
             }
             
-            selection.insert(_selectionHead);
-        
-        } else {
-            selection = { *newSelectionLast };
+            ImageRecordIterAny newSelectionLast = newSelectionFirst+deltaCount;
+            _selectionHead = *newSelectionLast;
+            
+            if (extend) {
+                if (newSelectionFirst > newSelectionLast) {
+                    std::swap(newSelectionFirst, newSelectionLast);
+                }
+                
+                ImageSet newSelection(newSelectionFirst, newSelectionLast+1);
+                const bool headWasSelected = (oldSelection.find(_selectionHead) != oldSelection.end());
+                if (headWasSelected) {
+                    selection = ImageSetsSubtract(oldSelection, newSelection);
+                } else {
+                    selection = ImageSetsUnion(oldSelection, newSelection);
+                }
+                
+                selection.insert(_selectionHead);
+            
+            } else {
+                selection = { *newSelectionLast };
+            }
         }
+        
+        _selection->images(selection);
     }
-    
-    _selection->images(selection);
     
     std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:_selectionHead];
     if (rect) [self scrollToImageRect:*rect center:false];
