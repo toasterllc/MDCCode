@@ -941,11 +941,9 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
             updateSelectionRect = true;
         
         } else {
-    //        _selection->images(std::move(newSelection));
             if (drag) {
                 if (mouseDownImage) {
                     _drag.images = [NSMutableArray new];
-                    NSView* superview = [self superview];
                     for (ImageRecordPtr rec : _selection->images()) {
                         std::optional<CGRect> rect = [self rectForImageRecord:rec];
                         assert(rect);
