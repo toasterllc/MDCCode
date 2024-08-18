@@ -318,10 +318,8 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 
 @implementation FullSizeImageDocumentView {
     struct {
-        bool mouseDown;
         NSDraggingSession* session;
         DragImage* image;
-        bool armed;
     } _drag;
 }
 
@@ -345,39 +343,36 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     [[self window] makeFirstResponder:self];
     
-//    if () {
-//        
-//    }
-    
-    _drag = { .mouseDown = true };
-}
-
-- (void)mouseDragged:(NSEvent*)event {
-    if (!_drag.mouseDown) return;
-    if (_drag.session) return;
-    
-    NSView* dragView = [[self enclosingScrollView] superview];
-    CGPoint dragPosition = [dragView convertPoint:[event locationInWindow] fromView:nil];
-    CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
-    draggingFrame.origin = {
-        dragPosition.x - draggingFrame.size.width/2,
-        dragPosition.y - draggingFrame.size.height/2,
-    };
-    
-//    NSScrollView* scrollView = [self enclosingScrollView];
-//    CGRect rect = [scrollView convertRect:[self bounds] fromView:[self superview]];
-    
-    FullSizeImageLayer* layer = (FullSizeImageLayer*)[self layer];
-    _drag.image = [[DragImage alloc] initWithImageSource:[layer imageSource]
-        imageRecord:[layer imageRecord]
-        draggingFrame:draggingFrame];
-    
-    _drag.session = [dragView beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
-    [_drag.session setDraggingFormation:NSDraggingFormationPile];
-}
-
-- (void)mouseUp:(NSEvent*)event {
-    _drag = {};
+    NSWindow* win = [self window];
+    const CGPoint startPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+    Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
+        if (event != mouseDownEvent) {
+            [win sendEvent:event];
+        }
+        constexpr CGFloat DragThreshold = 5;
+        const CGPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+        const CGFloat dist = std::hypot(point.x-startPoint.x, point.y-startPoint.y);
+        if (dist < DragThreshold) return true; // Continue tracking mouse
+        
+        NSView* dragView = [[self enclosingScrollView] superview];
+        CGPoint dragPosition = [dragView convertPoint:[event locationInWindow] fromView:nil];
+        CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
+        draggingFrame.origin = {
+            dragPosition.x - draggingFrame.size.width/2,
+            dragPosition.y - draggingFrame.size.height/2,
+        };
+        
+        FullSizeImageLayer* layer = (FullSizeImageLayer*)[self layer];
+        _drag.image = [[DragImage alloc] initWithImageSource:[layer imageSource]
+            imageRecord:[layer imageRecord]
+            draggingFrame:draggingFrame];
+        
+        _drag.session = [dragView beginDraggingSessionWithItems:@[_drag.image] event:event source:self];
+        [_drag.session setDraggingFormation:NSDraggingFormationPile];
+        // Stop tracking mouse; this is apparently necessary becuase recursive mouse
+        // tracking isn't compatible with -beginDraggingSessionWithItems:.
+        return false;
+    });
 }
 
 // MARK: - Drag & Drop

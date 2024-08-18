@@ -1054,7 +1054,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 }
 
 - (void)mouseDragged:(NSEvent*)event {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
+    NSLog(@"%@ %@", NSStringFromSelector(_cmd), [NSDate date]);
     [self _trackMouse:event];
 }
 
