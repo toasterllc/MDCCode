@@ -274,17 +274,14 @@ inline bool _Export(Toastbox::Renderer& renderer,
     
     if ([progress canceled]) return false;
     
+    // Show progress dialog if it's not already shown
+    [progress showIfNeeded];
+    
     Image image = imageSource->getImage(ImageSource::Priority::High, rec);
     __Export(renderer, fmt, *rec, image, filePath);
     
-    // Signal main thread to update progress bar
-    if (progress) {
-        if ([NSThread isMainThread]) {
-            [progress incrementProgress];
-        } else {
-            dispatch_async(dispatch_get_main_queue(), ^{ [progress incrementProgress]; });
-        }
-    }
+    // Update progress bar
+    [progress incrementProgress];
     return true;
 }
 

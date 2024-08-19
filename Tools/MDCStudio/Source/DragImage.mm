@@ -21,6 +21,7 @@ using namespace MDCStudio;
     if (!(self = [super initWithPasteboardWriter:promise])) return nil;
     _imageSource = imageSource;
     _imageRecord = rec;
+    _progressDialog = progressDialog;
     
     _filePromise = promise;
     [_filePromise setDelegate:self]; // Update delegate (in case `self` changed)
@@ -54,7 +55,7 @@ using namespace MDCStudio;
     
     const ImageExporter::Format* fmt = PrefsUtil::DragAndDrop::ExportFormat();
     const std::filesystem::path path([url fileSystemRepresentation]);
-    ImageExporter::Export(_imageSource, { _imageRecord }, fmt, path);
+    ImageExporter::Export(_imageSource, { _imageRecord }, fmt, path, _progressDialog);
     completionHandler(nil);
 }
 

@@ -5,5 +5,6 @@
 @interface ImageExportProgressDialog : NSObject
 - (instancetype)initWithParentWindow:(NSWindow*)parentWindow imageCount:(size_t)imageCount;
 - (void)incrementProgress;
+- (void)showIfNeeded;
 - (bool)canceled;
 @end

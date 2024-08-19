@@ -1072,7 +1072,12 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     }
 }
 
+- (void)draggingSession:(NSDraggingSession *)session willBeginAtPoint:(NSPoint)screenPoint {
+    NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
 - (void)draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)screenPoint operation:(NSDragOperation)operation {
+    NSLog(@"%@", NSStringFromSelector(_cmd));
     _drag = {};
 }
 
