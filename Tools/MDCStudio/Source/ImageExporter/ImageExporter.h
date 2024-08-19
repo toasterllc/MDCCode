@@ -279,7 +279,11 @@ inline bool _Export(Toastbox::Renderer& renderer,
     
     // Signal main thread to update progress bar
     if (progress) {
-        dispatch_async(dispatch_get_main_queue(), ^{ [progress incrementProgress]; });
+        if ([NSThread isMainThread]) {
+            [progress incrementProgress];
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{ [progress incrementProgress]; });
+        }
     }
     return true;
 }
@@ -316,24 +320,11 @@ inline void Export(NSWindow* window,
     const ImageExporter::Format* fmt, const std::filesystem::path& path) {
     
     // Only show progress dialog if we're exporting a significant number of images
-    ImageExportProgressDialog* progress = nil;
-    const size_t recsSize = recs.size();
-    if (recsSize > 3) {
-        progress = [ImageExportProgressDialog new];
-        [progress setImageCount:recsSize];
-        [window beginSheet:[progress window] completionHandler:nil];
-    }
+    ImageExportProgressDialog* progress = [[ImageExportProgressDialog alloc] initWithParentWindow:window
+        imageCount:recs.size()];
     
     std::thread exportThread([=] {
         Export(imageSource, recs, fmt, path, progress);
-        
-        // Close the sheet
-        if (progress) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-//                    printf("Closing progress sheet\n");
-                [window endSheet:[progress window]];
-            });
-        }
     });
     exportThread.detach();
 }

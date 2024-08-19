@@ -7,6 +7,7 @@
 #import "Util.h"
 #import "ImageThumb.h"
 #import "DragImage.h"
+#import "ImageExporter/ImageExporter.h"
 #import "Code/Shared/Img.h"
 #import "Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
 #import "Code/Lib/Toastbox/Mac/Grid.h"
@@ -965,6 +966,9 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         } else {
             if (drag) {
                 if (mouseDownImage) {
+                    ImageExportProgressDialog* progress =
+                        [[ImageExportProgressDialog alloc] initWithParentWindow:[self window] imageCount:_selection->images().size()];
+                    
                     _drag.images = [NSMutableArray new];
                     for (ImageRecordPtr rec : _selection->images()) {
                         std::optional<CGRect> rect = [self rectForImageRecord:rec];
@@ -973,7 +977,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
                         CGRect draggingRect = [self convertRect:*rect fromView:superview];
                         
                         DragImage* image = [[DragImage alloc] initWithImageSource:_imageSource
-                            imageRecord:rec progressDialog:nil draggingFrame:draggingRect];
+                            imageRecord:rec progressDialog:progress draggingFrame:draggingRect];
                         [_drag.images addObject:image];
                     }
                     

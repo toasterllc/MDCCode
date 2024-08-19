@@ -11,6 +11,22 @@ using namespace MDCStudio;
     std::atomic<bool> _canceled;
 }
 
+- (instancetype)initWithParentWindow:(NSWindow*)parentWindow imageCount:(size_t)imageCount {
+    if (imageCount < 4) return nil;
+    if (!(self = [super init])) return nil;
+    
+    bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil]
+        instantiateWithOwner:self topLevelObjects:nil];
+    assert(br);
+    
+    _imageCountTotal = imageCount;
+    [_message setStringValue:[NSString stringWithFormat:@"Exporting %ju photos…", (uintmax_t)_imageCountTotal]];
+    [self _setProgress:0];
+    
+    [parentWindow beginSheet:_window completionHandler:nil];
+    return self;
+}
+
 - (instancetype)init {
     if (!(self = [super init])) return nil;
     
@@ -26,15 +42,14 @@ using namespace MDCStudio;
     return _window;
 }
 
-- (void)setImageCount:(size_t)x {
-    _imageCountTotal = x;
-    [_message setStringValue:[NSString stringWithFormat:@"Exporting %ju photos…", (uintmax_t)_imageCountTotal]];
-}
-
 - (void)incrementProgress {
+    assert([NSThread isMainThread]);
     assert(_imageCountProgress < _imageCountTotal);
     _imageCountProgress++;
     [self _setProgress:(float)_imageCountProgress/_imageCountTotal];
+    if (_imageCountProgress == _imageCountTotal) {
+        [[_window sheetParent] endSheet:_window];
+    }
 }
 
 - (void)_setProgress:(float)x {
