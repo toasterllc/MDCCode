@@ -46,7 +46,7 @@ using namespace MDCStudio;
     _canceled = true;
 }
 
-- (const std::atomic<bool>&)canceled {
+- (bool)canceled {
     return _canceled;
 }
 

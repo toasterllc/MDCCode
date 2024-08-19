@@ -6,5 +6,5 @@
 - (NSWindow*)window;
 - (void)setImageCount:(size_t)x;
 - (void)incrementProgress;
-- (const std::atomic<bool>&)canceled;
+- (bool)canceled;
 @end

@@ -1,15 +1,19 @@
 #import "DragImage.h"
 #import "ImageExporter/ImageExporter.h"
+#import "ImageExporter/ImageExporter.h"
 using namespace MDCStudio;
 
 @implementation DragImage {
     ImageSourcePtr _imageSource;
     ImageRecordPtr _imageRecord;
+    ImageExportProgressDialog* _progressDialog;
     NSFilePromiseProvider* _filePromise;
 }
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
-    imageRecord:(ImageRecordPtr)rec draggingFrame:(CGRect)draggingFrame {
+    imageRecord:(ImageRecordPtr)rec
+    progressDialog:(ImageExportProgressDialog*)progressDialog
+    draggingFrame:(CGRect)draggingFrame {
     
     NSFilePromiseProvider* promise = [[NSFilePromiseProvider alloc]
         initWithFileType:(id)kUTTypeDirectory delegate:self];

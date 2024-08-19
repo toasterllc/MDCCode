@@ -267,11 +267,30 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
 }
 
 // Single image export to file `filePath`
-inline void _Export(Toastbox::Renderer& renderer, ImageSourcePtr imageSource, const Format* fmt,
-    const ImageRecordPtr& rec, const std::filesystem::path& filePath) {
+inline bool _Export(Toastbox::Renderer& renderer,
+    ImageSourcePtr imageSource, const ImageRecordPtr& rec,
+    const Format* fmt, const std::filesystem::path& filePath,
+    ImageExportProgressDialog* progress) {
+    
+    if ([progress canceled]) return false;
     
     Image image = imageSource->getImage(ImageSource::Priority::High, rec);
     __Export(renderer, fmt, *rec, image, filePath);
+    
+    // Signal main thread to update progress bar
+    if (progress) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [progress incrementProgress]; });
+    }
+    return true;
+}
+
+// Single image export to file `filePath`
+inline bool Export(ImageSourcePtr imageSource, const ImageRecordPtr& rec,
+    const Format* fmt, const std::filesystem::path& filePath,
+    ImageExportProgressDialog* progress=nil) {
+    
+    Toastbox::Renderer renderer;
+    return _Export(renderer, imageSource, rec, fmt, filePath, progress);
 }
 
 inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, const ImageExporter::Format* fmt) {
@@ -280,30 +299,15 @@ inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, cons
 }
 
 inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
-    const ImageExporter::Format* fmt, const std::filesystem::path& path,
-    std::function<bool(float)> progress=nullptr) {
-    
-    assert(recs.size() > 0);
+    const ImageExporter::Format* fmt, const std::filesystem::path& dir,
+    ImageExportProgressDialog* progress=nil) {
     
     Toastbox::Renderer renderer;
-    if (recs.size() > 1) {
-        size_t completed = 0;
-        for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
-            ImageRecordPtr rec = *it;
-            const std::filesystem::path filePath = path / FileNameForImageRecord(*rec, fmt);
-            
-            _Export(renderer, imageSource, fmt, rec, filePath);
-            
-            // Signal main thread to update progress bar
-            completed++;
-            const float p = (float)completed / recs.size();
-            if (progress) {
-                if (!progress(p)) break;
-            }
-        }
-    
-    } else {
-        _Export(renderer, imageSource, fmt, *recs.begin(), path);
+    for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
+        ImageRecordPtr rec = *it;
+        const std::filesystem::path filePath = dir / FileNameForImageRecord(*rec, fmt);
+        bool cont = _Export(renderer, imageSource, rec, fmt, filePath, progress);
+        if (!cont) break;
     }
 }
 
@@ -321,11 +325,7 @@ inline void Export(NSWindow* window,
     }
     
     std::thread exportThread([=] {
-        Export(imageSource, recs, fmt, path, [=] (float p) {
-            if (!progress) return true;
-            dispatch_async(dispatch_get_main_queue(), ^{ [progress incrementProgress]; });
-            return ![progress canceled];
-        });
+        Export(imageSource, recs, fmt, path, progress);
         
         // Close the sheet
         if (progress) {
