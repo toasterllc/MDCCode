@@ -363,6 +363,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
         _drag.image = [[DragImage alloc] initWithImageSource:[layer imageSource]
             imageRecord:[layer imageRecord]
             progressDialog:nil
+            operationQueue:nil
             draggingFrame:draggingFrame];
         
         _drag.session = [dragView beginDraggingSessionWithItems:@[_drag.image] event:event source:self];

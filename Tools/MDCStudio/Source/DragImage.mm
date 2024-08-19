@@ -7,12 +7,14 @@ using namespace MDCStudio;
     ImageSourcePtr _imageSource;
     ImageRecordPtr _imageRecord;
     ImageExportProgressDialog* _progressDialog;
+    NSOperationQueue* _queue;
     NSFilePromiseProvider* _filePromise;
 }
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
     imageRecord:(ImageRecordPtr)rec
     progressDialog:(ImageExportProgressDialog*)progressDialog
+    operationQueue:(NSOperationQueue*)queue
     draggingFrame:(CGRect)draggingFrame {
     
     NSFilePromiseProvider* promise = [[NSFilePromiseProvider alloc]
@@ -22,6 +24,8 @@ using namespace MDCStudio;
     _imageSource = imageSource;
     _imageRecord = rec;
     _progressDialog = progressDialog;
+    
+    _queue = queue;
     
     _filePromise = promise;
     [_filePromise setDelegate:self]; // Update delegate (in case `self` changed)
@@ -57,6 +61,10 @@ using namespace MDCStudio;
     const std::filesystem::path path([url fileSystemRepresentation]);
     ImageExporter::Export(_imageSource, { _imageRecord }, fmt, path, _progressDialog);
     completionHandler(nil);
+}
+
+- (NSOperationQueue*)operationQueueForFilePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider {
+    return _queue;
 }
 
 @end

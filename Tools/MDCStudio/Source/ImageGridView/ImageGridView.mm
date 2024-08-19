@@ -966,6 +966,10 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         } else {
             if (drag) {
                 if (mouseDownImage) {
+                    NSOperationQueue* queue = [[NSOperationQueue alloc] init];
+                    [queue setMaxConcurrentOperationCount:1];
+                    [queue setQualityOfService:NSQualityOfServiceUserInitiated];
+                    
                     ImageExportProgressDialog* progress =
                         [[ImageExportProgressDialog alloc] initWithParentWindow:[self window] imageCount:_selection->images().size()];
                     
@@ -977,7 +981,8 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
                         CGRect draggingRect = [self convertRect:*rect fromView:superview];
                         
                         DragImage* image = [[DragImage alloc] initWithImageSource:_imageSource
-                            imageRecord:rec progressDialog:progress draggingFrame:draggingRect];
+                            imageRecord:rec progressDialog:progress operationQueue:queue
+                            draggingFrame:draggingRect];
                         [_drag.images addObject:image];
                     }
                     
