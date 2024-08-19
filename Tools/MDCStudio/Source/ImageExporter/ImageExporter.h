@@ -294,9 +294,11 @@ inline bool Export(ImageSourcePtr imageSource, const ImageRecordPtr& rec,
     return _Export(renderer, imageSource, rec, fmt, filePath, progress);
 }
 
-inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, const ImageExporter::Format* fmt) {
+inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, const ImageExporter::Format* fmt=nullptr) {
     constexpr const char* FilenamePrefix = "Image-";
-    return FilenamePrefix + std::to_string(rec.info.id) + "." + fmt->extension;
+    std::string r = FilenamePrefix + std::to_string(rec.info.id);
+    if (fmt) r += std::string(".") + fmt->extension;
+    return r;
 }
 
 inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
@@ -316,7 +318,6 @@ inline void Export(NSWindow* window,
     ImageSourcePtr imageSource, const ImageSet& recs,
     const ImageExporter::Format* fmt, const std::filesystem::path& path) {
     
-    // Only show progress dialog if we're exporting a significant number of images
     ImageExportProgressDialog* progress = [[ImageExportProgressDialog alloc] initWithParentWindow:window
         imageCount:recs.size()];
     
@@ -327,14 +328,16 @@ inline void Export(NSWindow* window,
 }
 
 inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet& recs) {
-    constexpr const char* FilenamePrefix = "Image-";
     assert(!recs.empty());
     const bool batch = recs.size()>1;
     ImageRecordPtr firstImage = *recs.begin();
     
-    NSString* filename = [NSString stringWithFormat:@"%s%@", FilenamePrefix, @(firstImage->info.id)];
-    ImageExportSaveDialog::Show(window, batch, filename, [=] (auto res) {
-        Export(window, imageSource, recs, res.format, [res.path UTF8String]);
+    ImageExportSaveDialog::Show(window, batch, @(FileNameForImageRecord(*firstImage).c_str()), [=] (auto res) {
+        if (batch) {
+            Export(window, imageSource, recs, res.format, [res.path UTF8String]);
+        } else {
+            Export(imageSource, firstImage, res.format, [res.path UTF8String]);
+        }
     });
 }
 
