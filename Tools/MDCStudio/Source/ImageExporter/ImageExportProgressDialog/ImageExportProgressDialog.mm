@@ -6,6 +6,8 @@ using namespace MDCStudio;
     IBOutlet NSWindow* _window;
     IBOutlet NSTextField* _message;
     IBOutlet NSProgressIndicator* _progressBar;
+    size_t _imageCountTotal;
+    size_t _imageCountProgress;
     std::atomic<bool> _canceled;
 }
 
@@ -16,8 +18,7 @@ using namespace MDCStudio;
         instantiateWithOwner:self topLevelObjects:nil];
     assert(br);
     
-    [self setProgress:0];
-    
+    [self _setProgress:0];
     return self;
 }
 
@@ -26,10 +27,17 @@ using namespace MDCStudio;
 }
 
 - (void)setImageCount:(size_t)x {
-    [_message setStringValue:[NSString stringWithFormat:@"Exporting %ju photos…", (uintmax_t)x]];
+    _imageCountTotal = x;
+    [_message setStringValue:[NSString stringWithFormat:@"Exporting %ju photos…", (uintmax_t)_imageCountTotal]];
 }
 
-- (void)setProgress:(float)x {
+- (void)incrementProgress {
+    assert(_imageCountProgress < _imageCountTotal);
+    _imageCountProgress++;
+    [self _setProgress:(float)_imageCountProgress/_imageCountTotal];
+}
+
+- (void)_setProgress:(float)x {
     [_progressBar setDoubleValue:x];
 }
 

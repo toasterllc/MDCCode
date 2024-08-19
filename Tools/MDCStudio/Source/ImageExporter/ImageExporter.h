@@ -323,7 +323,7 @@ inline void Export(NSWindow* window,
     std::thread exportThread([=] {
         Export(imageSource, recs, fmt, path, [=] (float p) {
             if (!progress) return true;
-            dispatch_async(dispatch_get_main_queue(), ^{ [progress setProgress:p]; });
+            dispatch_async(dispatch_get_main_queue(), ^{ [progress incrementProgress]; });
             return ![progress canceled];
         });
         
