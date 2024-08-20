@@ -42,9 +42,15 @@ inline std::string _ExifImageUniqueIDForImageId(Img::Id id) {
     return buf;
 }
 
+
+//inline bool _Export(Toastbox::Renderer& renderer,
+//    ImageSourcePtr imageSource, const ImageRecordPtr& rec,
+//    const Format* fmt, const std::filesystem::path& filePath,
+//    ImageExportProgressDialog* progress) {
+
 // Single image export to file `filePath`
-inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const ImageRecord& rec, const Image& image,
-    const std::filesystem::path& filePath) {
+inline void __Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const Image& image,
+    const Format* fmt, const std::filesystem::path& filePath) {
     
     printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
     using namespace Toastbox;
@@ -279,7 +285,7 @@ inline bool _Export(Toastbox::Renderer& renderer,
     [progress showIfNeeded];
     
     Image image = imageSource->getImage(ImageSource::Priority::High, rec);
-    __Export(renderer, fmt, *rec, image, filePath);
+    __Export(renderer, *rec, image, fmt, filePath);
     
     // Update progress bar
     [progress incrementProgress];
@@ -314,12 +320,11 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::queue<ImageRec> images;
-        bool done = false;
     } shared;
     
     auto timeStart = std::chrono::steady_clock::now();
     
-    // Consumers
+    // ## Consumers
     // Spawn N worker threads (N=number of cores)
     std::vector<std::thread> workers;
     const size_t threadCount = std::min(recs.size(), (size_t)std::thread::hardware_concurrency());
@@ -327,35 +332,56 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
         workers.emplace_back([&](){
             Toastbox::Renderer renderer;
             for (;;) @autoreleasepool {
-                ImageRec imageRec;
-                {
-                    auto lock = shared.signal.wait([&] {
-                        return !shared.images.empty() || shared.done;
-                    });
+                try {
+                    ImageRec imageRec;
+                    {
+                        auto lock = shared.signal.wait([&] { return !shared.images.empty(); });
+                        imageRec = std::move(shared.images.front());
+                        shared.images.pop();
+                        shared.signal.signalAll();
+                    }
                     
-                    if (shared.images.empty() && shared.done) break;
+                    const std::filesystem::path filePath = dir / FileNameForImageRecord(*imageRec.rec, fmt);
+                    __Export(renderer, *imageRec.rec, imageRec.image, fmt, filePath);
                     
-                    imageRec = std::move(shared.images.front());
-                    shared.images.pop();
-                    shared.signal.signalAll();
-                }
+                    // Update progress bar
+                    [progress incrementProgress];
                 
-                const std::filesystem::path filePath = dir / FileNameForImageRecord(*imageRec.rec, fmt);
-                const bool cont = _Export(renderer, imageSource, imageRec.rec, fmt, filePath, progress);
-                if (!cont) break;
+                } catch (const Toastbox::Signal::Stop&) {
+                    break;
+                }
             }
         });
     }
     
-    // Producer
+    
+    
+//    if ([progress canceled]) return false;
+//    
+//    // Show progress dialog if it's not already shown
+//    [progress showIfNeeded];
+//    
+//    Image image = imageSource->getImage(ImageSource::Priority::High, rec);
+//    __Export(renderer, fmt, *rec, image, filePath);
+//    
+//    // Update progress bar
+//    [progress incrementProgress];
+    
+    
+    
+    
+    // ## Producer
+    // Show progress dialog if it's not already shown
+    [progress showIfNeeded];
+    
     const size_t producerSlotCount = threadCount+8;
-    for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
+    for (auto it=recs.rbegin(); it!=recs.rend() && ![progress canceled]; it++) @autoreleasepool {
         ImageRecordPtr rec = *it;
         Image image = imageSource->getImage(ImageSource::Priority::High, rec);
         
         {
             auto lock = shared.signal.wait([&] {
-                return shared.images.size() < producerSlotCount;
+                return shared.images.size()<producerSlotCount;
             });
             
             shared.images.push({
@@ -369,9 +395,8 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
     
     // Signal that there's no more data coming
     {
-        auto lock = shared.signal.lock();
-        shared.done = true;
-        shared.signal.signalAll();
+        auto lock = shared.signal.wait([&] { return shared.images.empty() || [progress canceled]; });
+        shared.signal.stop(lock);
     }
     
     // Wait for consumers to complete
