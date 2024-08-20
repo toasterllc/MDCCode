@@ -11,7 +11,6 @@
 #import "Calendar.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Signal.h"
-#import "Code/Lib/Toastbox/SignalQueue.h"
 #import "Code/Lib/Toastbox/RuntimeError.h"
 #import "Code/Lib/Toastbox/TIFF.h"
 
@@ -307,131 +306,84 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
     const ImageExporter::Format* fmt, const std::filesystem::path& dir,
     ImageExportProgressDialog* progress=nil) {
     
-    
-    
-    
-//    // Spawn N worker threads (N=number of cores)
-//    // Each thread calculates the shift for a specific tile and updates `polys` when complete.
-//    // The work is complete when all threads have exited.
-//    std::vector<std::thread> workers;
-//    for (int i=0; i<std::max(1,(int)std::thread::hardware_concurrency()); i++) {
-//        workers.emplace_back([&](){
-//            for (;;) {
-//                auto lock = std::unique_lock(tilesLock);
-//                    if (tiles.empty()) return;
-//                    TilePos tilePos = tiles.front();
-//                    tiles.pop();
-//                lock.unlock();
-//                
-//                const ColorDir<TileShift> tileShift = _calcTileShift(
-//                    renderer, cfaDesc, opts, grid,
-//                    rawPx, gInterpPx,
-//                    tilePos.x, tilePos.y
-//                );
-//                
-//                for (CFAColor c : {CFAColor::Red, CFAColor::Blue}) {
-//                    for (Dir dir : {Dir::X, Dir::Y}) {
-//                        auto lock = std::unique_lock(polyLocks(c,dir));
-//                        polys(c,dir).addPoint(
-//                            tileShift(c,dir).weight,
-//                            tileShift(c,dir).x,
-//                            tileShift(c,dir).y,
-//                            tileShift(c,dir).shift
-//                        );
-//                    }
-//                }
-//            }
-//        });
-//    }
-    
     struct ImageRec {
         Image image;
         ImageRecordPtr rec;
     };
     
-    constexpr size_t ProducerSlotCount = 16;
     struct {
-        Toastbox::SignalQueue<ImageRec,ProducerSlotCount> queue;
-//        Toastbox::Signal signal; // Protects this struct
-//        std::queue<ImageRec> images;
-//        bool done = false;
-//        bool done = false;
+        Toastbox::Signal signal; // Protects this struct
+        std::queue<ImageRec> images;
+        bool done = false;
     } shared;
     
-//    for (;;) {
-//        auto lock = _signal.lock();
-//    }
+    auto timeStart = std::chrono::steady_clock::now();
+    
+    // Consumers
+    // Spawn N worker threads (N=number of cores)
+    std::vector<std::thread> workers;
+    const size_t threadCount = std::min(recs.size(), (size_t)std::thread::hardware_concurrency());
+    for (int i=0; i<threadCount; i++) {
+        workers.emplace_back([&](){
+            Toastbox::Renderer renderer;
+            for (;;) @autoreleasepool {
+                ImageRec imageRec;
+                {
+                    auto lock = shared.signal.wait([&] {
+                        return !shared.images.empty() || shared.done;
+                    });
+                    
+                    if (shared.images.empty() && shared.done) break;
+                    
+                    imageRec = std::move(shared.images.front());
+                    shared.images.pop();
+                    shared.signal.signalAll();
+                }
+                
+                const std::filesystem::path filePath = dir / FileNameForImageRecord(*imageRec.rec, fmt);
+                const bool cont = _Export(renderer, imageSource, imageRec.rec, fmt, filePath, progress);
+                if (!cont) break;
+            }
+        });
+    }
     
     // Producer
+    const size_t producerSlotCount = threadCount+8;
     for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
         ImageRecordPtr rec = *it;
         Image image = imageSource->getImage(ImageSource::Priority::High, rec);
         
         {
-            ImageRec& imageRec = shared.queue.wget();
-            imageRec = ImageRec{
+            auto lock = shared.signal.wait([&] {
+                return shared.images.size() < producerSlotCount;
+            });
+            
+            shared.images.push({
                 .image = std::move(image),
                 .rec = rec,
-            };
-            shared.queue.wpush();
+            });
             
-//            shared.queue.wget() = std::move({
-//                .image = std::move(image),
-//                .rec = rec,
-//            });
-//            
-//            auto lock = shared.signal.lock();
-//            shared.images.push();
-//            shared.signal.signalAll();
+            shared.signal.signalAll();
         }
-        
-//        const std::filesystem::path filePath = dir / FileNameForImageRecord(*rec, fmt);
-//        const bool cont = _Export(renderer, imageSource, rec, fmt, filePath, progress);
-//        if (!cont) break;
     }
     
-//    {
-//        auto lock = shared.signal.lock();
-//        shared.done = true;
-//        shared.signal.signalAll();
-//    }
-    
-    // Consumers
-    // Spawn N worker threads (N=number of cores)
-    std::vector<std::thread> workers;
-    for (int i=0; i<std::max(1,(int)std::thread::hardware_concurrency()); i++) {
-        workers.emplace_back([&](){
-            for (;;) {
-                ImageRec imageRec = shared.queue.rpop();
-                {
-                    auto lock = shared.signal.wait([&] { return !shared.images.empty() || shared.done; });
-                    if (shared.done) break;
-                    imageRec = std::move(shared.images.front());
-                    shared.images.pop_front();
-                }
-            }
-        });
+    // Signal that there's no more data coming
+    {
+        auto lock = shared.signal.lock();
+        shared.done = true;
+        shared.signal.signalAll();
     }
     
-    // Tell workers to bail
-    
-    // Wait for workers to complete
+    // Wait for consumers to complete
     for (std::thread& t : workers) t.join();
     
-    
-    
-    
-    
-    
-    
-    
-//    Toastbox::Renderer renderer;
-//    for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
-//        ImageRecordPtr rec = *it;
-//        const std::filesystem::path filePath = dir / FileNameForImageRecord(*rec, fmt);
-//        const bool cont = _Export(renderer, imageSource, rec, fmt, filePath, progress);
-//        if (!cont) break;
-//    }
+    // Print timing
+    {
+        using namespace std::chrono;
+        const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+        printf("[ImageExporter::Export] export took %ju ms for %ju images\n",
+            (uintmax_t)duration.count(), (uintmax_t)recs.size());
+    }
 }
 
 inline void Export(NSWindow* window,
