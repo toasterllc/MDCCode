@@ -42,12 +42,6 @@ inline std::string _ExifImageUniqueIDForImageId(Img::Id id) {
     return buf;
 }
 
-
-//inline bool _Export(Toastbox::Renderer& renderer,
-//    ImageSourcePtr imageSource, const ImageRecordPtr& rec,
-//    const Format* fmt, const std::filesystem::path& filePath,
-//    ImageExportProgressDialog* progress) {
-
 // Single image export to file `filePath`
 inline void __Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const Image& image,
     const Format* fmt, const std::filesystem::path& filePath) {
@@ -353,22 +347,6 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
             }
         });
     }
-    
-    
-    
-//    if ([progress canceled]) return false;
-//    
-//    // Show progress dialog if it's not already shown
-//    [progress showIfNeeded];
-//    
-//    Image image = imageSource->getImage(ImageSource::Priority::High, rec);
-//    __Export(renderer, fmt, *rec, image, filePath);
-//    
-//    // Update progress bar
-//    [progress incrementProgress];
-    
-    
-    
     
     // ## Producer
     // Show progress dialog if it's not already shown
