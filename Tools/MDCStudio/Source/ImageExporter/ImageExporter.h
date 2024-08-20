@@ -1,6 +1,7 @@
 #pragma once
 #import <filesystem>
 #import <thread>
+#import <queue>
 #import "ImageSource.h"
 #import "ImageLibrary.h"
 #import "ImageExportSaveDialog/ImageExportSaveDialog.h"
@@ -42,8 +43,8 @@ inline std::string _ExifImageUniqueIDForImageId(Img::Id id) {
 }
 
 // Single image export to file `filePath`
-inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const ImageRecord& rec, const Image& image,
-    const std::filesystem::path& filePath) {
+inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const Image& image,
+    const Format* fmt, const std::filesystem::path& filePath) {
     
     printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
     using namespace Toastbox;
@@ -266,34 +267,6 @@ inline void __Export(Toastbox::Renderer& renderer, const Format* fmt, const Imag
     }
 }
 
-// Single image export to file `filePath`
-inline bool _Export(Toastbox::Renderer& renderer,
-    ImageSourcePtr imageSource, const ImageRecordPtr& rec,
-    const Format* fmt, const std::filesystem::path& filePath,
-    ImageExportProgressDialog* progress) {
-    
-    if ([progress canceled]) return false;
-    
-    // Show progress dialog if it's not already shown
-    [progress showIfNeeded];
-    
-    Image image = imageSource->getImage(ImageSource::Priority::High, rec);
-    __Export(renderer, fmt, *rec, image, filePath);
-    
-    // Update progress bar
-    [progress incrementProgress];
-    return true;
-}
-
-// Single image export to file `filePath`
-inline bool Export(ImageSourcePtr imageSource, const ImageRecordPtr& rec,
-    const Format* fmt, const std::filesystem::path& filePath,
-    ImageExportProgressDialog* progress=nil) {
-    
-    Toastbox::Renderer renderer;
-    return _Export(renderer, imageSource, rec, fmt, filePath, progress);
-}
-
 inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, const ImageExporter::Format* fmt=nullptr) {
     constexpr const char* FilenamePrefix = "Image-";
     std::string r = FilenamePrefix + std::to_string(rec.info.id);
@@ -305,38 +278,126 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
     const ImageExporter::Format* fmt, const std::filesystem::path& dir,
     ImageExportProgressDialog* progress=nil) {
     
-    Toastbox::Renderer renderer;
-    for (auto it=recs.rbegin(); it!=recs.rend(); it++) @autoreleasepool {
+    struct ImageRec {
+        Image image;
+        ImageRecordPtr rec;
+    };
+    
+    struct {
+        Toastbox::Signal signal; // Protects this struct
+        std::queue<ImageRec> images;
+    } shared;
+    
+    auto timeStart = std::chrono::steady_clock::now();
+    
+    // ## Consumers
+    // Spawn N worker threads (N=number of cores)
+    std::vector<std::thread> workers;
+    const int threadCount = std::min((int)recs.size(), (int)std::thread::hardware_concurrency());
+    for (int i=0; i<threadCount; i++) {
+        workers.emplace_back([&](){
+            Toastbox::Renderer renderer;
+            for (;;) @autoreleasepool {
+                try {
+                    ImageRec imageRec;
+                    {
+                        auto lock = shared.signal.wait([&] { return !shared.images.empty(); });
+                        imageRec = std::move(shared.images.front());
+                        shared.images.pop();
+                        shared.signal.signalAll();
+                    }
+                    
+                    const std::filesystem::path filePath = dir / FileNameForImageRecord(*imageRec.rec, fmt);
+                    Export(renderer, *imageRec.rec, imageRec.image, fmt, filePath);
+                    
+                    // Update progress bar
+                    [progress incrementProgress];
+                
+                } catch (const Toastbox::Signal::Stop&) {
+                    break;
+                }
+            }
+        });
+    }
+    
+    // ## Producer
+    // Show progress dialog if it's not already shown
+    [progress showIfNeeded];
+    
+    const size_t producerSlotCount = threadCount+8;
+    for (auto it=recs.rbegin(); it!=recs.rend() && ![progress canceled]; it++) @autoreleasepool {
         ImageRecordPtr rec = *it;
-        const std::filesystem::path filePath = dir / FileNameForImageRecord(*rec, fmt);
-        bool cont = _Export(renderer, imageSource, rec, fmt, filePath, progress);
-        if (!cont) break;
+        Image image = imageSource->getImage(ImageSource::Priority::Low, rec);
+        
+        {
+            auto lock = shared.signal.wait([&] {
+                return shared.images.size()<producerSlotCount;
+            });
+            
+            shared.images.push({
+                .image = std::move(image),
+                .rec = rec,
+            });
+            
+            shared.signal.signalAll();
+        }
+    }
+    
+    // Signal that there's no more data coming
+    {
+        auto lock = shared.signal.wait([&] { return shared.images.empty() || [progress canceled]; });
+        shared.signal.stop(lock);
+    }
+    
+    // Wait for consumers to complete
+    for (std::thread& t : workers) t.join();
+    
+    // Print timing
+    {
+        using namespace std::chrono;
+        const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
+        printf("[ImageExporter::Export] export took %ju ms for %ju images\n",
+            (uintmax_t)duration.count(), (uintmax_t)recs.size());
     }
 }
 
-inline void Export(NSWindow* window,
-    ImageSourcePtr imageSource, const ImageSet& recs,
-    const ImageExporter::Format* fmt, const std::filesystem::path& path) {
-    
-    ImageExportProgressDialog* progress = [[ImageExportProgressDialog alloc] initWithParentWindow:window
-        imageCount:recs.size()];
-    
-    std::thread exportThread([=] {
-        Export(imageSource, recs, fmt, path, progress);
-    });
-    exportThread.detach();
-}
+//inline void Export(NSWindow* window,
+//    ImageSourcePtr imageSource, const ImageSet& recs,
+//    const ImageExporter::Format* fmt, const std::filesystem::path& path) {
+//    
+//    ImageExportProgressDialog* progress = [[ImageExportProgressDialog alloc] initWithParentWindow:window
+//        imageCount:recs.size()];
+//    
+//    std::thread exportThread([=] {
+//        Export(imageSource, recs, fmt, path, progress);
+//    });
+//    exportThread.detach();
+//}
 
 inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet& recs) {
     assert(!recs.empty());
     const bool batch = recs.size()>1;
-    ImageRecordPtr firstImage = *recs.begin();
+    ImageRecordPtr firstImageRec = *recs.begin();
     
-    ImageExportSaveDialog::Show(window, batch, @(FileNameForImageRecord(*firstImage).c_str()), [=] (auto res) {
+    ImageExportSaveDialog::Show(window, batch, @(FileNameForImageRecord(*firstImageRec).c_str()), [=] (auto res) {
         if (batch) {
-            Export(window, imageSource, recs, res.format, [res.path UTF8String]);
+            ImageExportProgressDialog* progress = [[ImageExportProgressDialog alloc] initWithParentWindow:window
+                imageCount:recs.size()];
+            
+            std::thread exportThread([=] {
+                Export(imageSource, recs, res.format, [res.path UTF8String], progress);
+            });
+            exportThread.detach();
+        
         } else {
-            Export(imageSource, firstImage, res.format, [res.path UTF8String]);
+            Toastbox::Renderer renderer;
+            Image image = imageSource->getImage(ImageSource::Priority::Low, firstImageRec);
+            Export(renderer, *firstImageRec, image, res.format, [res.path UTF8String]);
+            
+//            Toastbox::Renderer renderer;
+//            _Export(renderer, imageSource, firstImage, res.format, res.path);
+            
+//            Export(imageSource, firstImage, res.format, [res.path UTF8String]);
         }
     });
 }
