@@ -57,10 +57,19 @@ using namespace MDCStudio;
 - (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
     completionHandler:(void(^)(NSError*))completionHandler {
     
+//    __weak auto selfWeak = self;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+//        auto selfStrong = selfWeak;
+//        if (!selfStrong) return;
+        [self _export:url];
+        completionHandler(nil);
+    });
+}
+
+- (void)_export:(NSURL*)url {
     const ImageExporter::Format* fmt = PrefsUtil::DragAndDrop::ExportFormat();
     const std::filesystem::path path([url fileSystemRepresentation]);
     ImageExporter::Export(_imageSource, { _imageRecord }, fmt, path, _progressDialog);
-    completionHandler(nil);
 }
 
 - (NSOperationQueue*)operationQueueForFilePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider {
