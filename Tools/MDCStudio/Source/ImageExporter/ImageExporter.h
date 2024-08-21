@@ -267,33 +267,6 @@ inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const I
     }
 }
 
-//// Single image export to file `filePath`
-//inline void _Export(Toastbox::Renderer& renderer,
-//    ImageSourcePtr imageSource, const ImageRecordPtr& rec,
-//    const Format* fmt, const std::filesystem::path& filePath,
-//    ImageExportProgressDialog* progress) {
-//    
-//    if ([progress canceled]) return;
-//    
-//    // Show progress dialog if it's not already shown
-//    [progress showIfNeeded];
-//    
-//    Image image = imageSource->getImage(ImageSource::Priority::High, rec);
-//    __Export(renderer, *rec, image, fmt, filePath);
-//    
-//    // Update progress bar
-//    [progress incrementProgress];
-//}
-
-//// Single image export to file `filePath`
-//inline void Export(ImageSourcePtr imageSource, const ImageRecordPtr& rec,
-//    const Format* fmt, const std::filesystem::path& filePath,
-//    ImageExportProgressDialog* progress=nil) {
-//    
-//    Toastbox::Renderer renderer;
-//    _Export(renderer, imageSource, rec, fmt, filePath, progress);
-//}
-
 inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, const ImageExporter::Format* fmt=nullptr) {
     constexpr const char* FilenamePrefix = "Image-";
     std::string r = FilenamePrefix + std::to_string(rec.info.id);
@@ -354,7 +327,7 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
     const size_t producerSlotCount = threadCount+8;
     for (auto it=recs.rbegin(); it!=recs.rend() && ![progress canceled]; it++) @autoreleasepool {
         ImageRecordPtr rec = *it;
-        Image image = imageSource->getImage(ImageSource::Priority::High, rec);
+        Image image = imageSource->getImage(ImageSource::Priority::Low, rec);
         
         {
             auto lock = shared.signal.wait([&] {
@@ -418,7 +391,7 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
         
         } else {
             Toastbox::Renderer renderer;
-            Image image = imageSource->getImage(ImageSource::Priority::High, firstImageRec);
+            Image image = imageSource->getImage(ImageSource::Priority::Low, firstImageRec);
             Export(renderer, *firstImageRec, image, res.format, [res.path UTF8String]);
             
 //            Toastbox::Renderer renderer;
