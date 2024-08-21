@@ -981,8 +981,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
                         CGRect draggingRect = [self convertRect:*rect fromView:superview];
                         
                         DragImage* image = [[DragImage alloc] initWithImageSource:_imageSource
-                            imageRecord:rec progressDialog:progress operationQueue:queue
-                            draggingFrame:draggingRect];
+                            imageRecord:rec progressDialog:progress draggingFrame:draggingRect];
                         [_drag.images addObject:image];
                     }
                     

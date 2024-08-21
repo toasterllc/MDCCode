@@ -1,4 +1,5 @@
 #import "DragImage.h"
+#import <mutex>
 #import "ImageExporter/ImageExporter.h"
 #import "ImageExporter/ImageExporter.h"
 using namespace MDCStudio;
@@ -7,14 +8,29 @@ using namespace MDCStudio;
     ImageSourcePtr _imageSource;
     ImageRecordPtr _imageRecord;
     ImageExportProgressDialog* _progressDialog;
-    NSOperationQueue* _queue;
     NSFilePromiseProvider* _filePromise;
+}
+
+static NSOperationQueue* __QueueCreate(std::optional<size_t> concurrency=std::nullopt) {
+    NSOperationQueue* x = [NSOperationQueue new];
+    if (concurrency) [x setMaxConcurrentOperationCount:*concurrency];
+    [x setQualityOfService:NSQualityOfServiceUserInitiated];
+    return x;
+}
+
+static NSOperationQueue* _SerialQueue() {
+    static NSOperationQueue* x = __QueueCreate(1);
+    return x;
+}
+
+static NSOperationQueue* _ParallelQueue() {
+    static NSOperationQueue* x = __QueueCreate();
+    return x;
 }
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
     imageRecord:(ImageRecordPtr)rec
     progressDialog:(ImageExportProgressDialog*)progressDialog
-    operationQueue:(NSOperationQueue*)queue
     draggingFrame:(CGRect)draggingFrame {
     
     NSFilePromiseProvider* promise = [[NSFilePromiseProvider alloc]
@@ -24,8 +40,6 @@ using namespace MDCStudio;
     _imageSource = imageSource;
     _imageRecord = rec;
     _progressDialog = progressDialog;
-    
-    _queue = queue;
     
     _filePromise = promise;
     [_filePromise setDelegate:self]; // Update delegate (in case `self` changed)
@@ -57,13 +71,18 @@ using namespace MDCStudio;
 - (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
     completionHandler:(void(^)(NSError*))completionHandler {
     
-//    __weak auto selfWeak = self;
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-//        auto selfStrong = selfWeak;
-//        if (!selfStrong) return;
+    [_ParallelQueue() addOperationWithBlock:^{
         [self _export:url];
         completionHandler(nil);
-    });
+    }];
+    
+//    __weak auto selfWeak = self;
+//    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+////        auto selfStrong = selfWeak;
+////        if (!selfStrong) return;
+//        [self _export:url];
+//        completionHandler(nil);
+//    });
 }
 
 - (void)_export:(NSURL*)url {
@@ -73,7 +92,7 @@ using namespace MDCStudio;
 }
 
 - (NSOperationQueue*)operationQueueForFilePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider {
-    return _queue;
+    return _SerialQueue();
 }
 
 @end

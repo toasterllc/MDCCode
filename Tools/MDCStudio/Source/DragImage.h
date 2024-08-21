@@ -7,7 +7,6 @@
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource
     imageRecord:(MDCStudio::ImageRecordPtr)rec
     progressDialog:(ImageExportProgressDialog*)progressDialog
-    operationQueue:(NSOperationQueue*)queue
     draggingFrame:(CGRect)draggingFrame;
 
 @end

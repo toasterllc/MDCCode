@@ -267,33 +267,32 @@ inline void __Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const
     }
 }
 
-// Single image export to file `filePath`
-inline bool _Export(Toastbox::Renderer& renderer,
-    ImageSourcePtr imageSource, const ImageRecordPtr& rec,
-    const Format* fmt, const std::filesystem::path& filePath,
-    ImageExportProgressDialog* progress) {
-    
-    if ([progress canceled]) return false;
-    
-    // Show progress dialog if it's not already shown
-    [progress showIfNeeded];
-    
-    Image image = imageSource->getImage(ImageSource::Priority::High, rec);
-    __Export(renderer, *rec, image, fmt, filePath);
-    
-    // Update progress bar
-    [progress incrementProgress];
-    return true;
-}
+//// Single image export to file `filePath`
+//inline void _Export(Toastbox::Renderer& renderer,
+//    ImageSourcePtr imageSource, const ImageRecordPtr& rec,
+//    const Format* fmt, const std::filesystem::path& filePath,
+//    ImageExportProgressDialog* progress) {
+//    
+//    if ([progress canceled]) return;
+//    
+//    // Show progress dialog if it's not already shown
+//    [progress showIfNeeded];
+//    
+//    Image image = imageSource->getImage(ImageSource::Priority::High, rec);
+//    __Export(renderer, *rec, image, fmt, filePath);
+//    
+//    // Update progress bar
+//    [progress incrementProgress];
+//}
 
-// Single image export to file `filePath`
-inline bool Export(ImageSourcePtr imageSource, const ImageRecordPtr& rec,
-    const Format* fmt, const std::filesystem::path& filePath,
-    ImageExportProgressDialog* progress=nil) {
-    
-    Toastbox::Renderer renderer;
-    return _Export(renderer, imageSource, rec, fmt, filePath, progress);
-}
+//// Single image export to file `filePath`
+//inline void Export(ImageSourcePtr imageSource, const ImageRecordPtr& rec,
+//    const Format* fmt, const std::filesystem::path& filePath,
+//    ImageExportProgressDialog* progress=nil) {
+//    
+//    Toastbox::Renderer renderer;
+//    _Export(renderer, imageSource, rec, fmt, filePath, progress);
+//}
 
 inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, const ImageExporter::Format* fmt=nullptr) {
     constexpr const char* FilenamePrefix = "Image-";
@@ -389,29 +388,43 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
     }
 }
 
-inline void Export(NSWindow* window,
-    ImageSourcePtr imageSource, const ImageSet& recs,
-    const ImageExporter::Format* fmt, const std::filesystem::path& path) {
-    
-    ImageExportProgressDialog* progress = [[ImageExportProgressDialog alloc] initWithParentWindow:window
-        imageCount:recs.size()];
-    
-    std::thread exportThread([=] {
-        Export(imageSource, recs, fmt, path, progress);
-    });
-    exportThread.detach();
-}
+//inline void Export(NSWindow* window,
+//    ImageSourcePtr imageSource, const ImageSet& recs,
+//    const ImageExporter::Format* fmt, const std::filesystem::path& path) {
+//    
+//    ImageExportProgressDialog* progress = [[ImageExportProgressDialog alloc] initWithParentWindow:window
+//        imageCount:recs.size()];
+//    
+//    std::thread exportThread([=] {
+//        Export(imageSource, recs, fmt, path, progress);
+//    });
+//    exportThread.detach();
+//}
 
 inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet& recs) {
     assert(!recs.empty());
     const bool batch = recs.size()>1;
-    ImageRecordPtr firstImage = *recs.begin();
+    ImageRecordPtr firstImageRec = *recs.begin();
     
-    ImageExportSaveDialog::Show(window, batch, @(FileNameForImageRecord(*firstImage).c_str()), [=] (auto res) {
+    ImageExportSaveDialog::Show(window, batch, @(FileNameForImageRecord(*firstImageRec).c_str()), [=] (auto res) {
         if (batch) {
-            Export(window, imageSource, recs, res.format, [res.path UTF8String]);
+            ImageExportProgressDialog* progress = [[ImageExportProgressDialog alloc] initWithParentWindow:window
+                imageCount:recs.size()];
+            
+            std::thread exportThread([=] {
+                Export(imageSource, recs, res.format, [res.path UTF8String], progress);
+            });
+            exportThread.detach();
+        
         } else {
-            Export(imageSource, firstImage, res.format, [res.path UTF8String]);
+            Toastbox::Renderer renderer;
+            Image image = imageSource->getImage(ImageSource::Priority::High, firstImageRec);
+            __Export(renderer, *firstImageRec, image, res.format, [res.path UTF8String]);
+            
+//            Toastbox::Renderer renderer;
+//            _Export(renderer, imageSource, firstImage, res.format, res.path);
+            
+//            Export(imageSource, firstImage, res.format, [res.path UTF8String]);
         }
     });
 }
