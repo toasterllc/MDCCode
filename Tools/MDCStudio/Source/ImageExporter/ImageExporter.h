@@ -293,7 +293,7 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
     // ## Consumers
     // Spawn N worker threads (N=number of cores)
     std::vector<std::thread> workers;
-    const size_t threadCount = std::min(recs.size(), (size_t)std::thread::hardware_concurrency());
+    const int threadCount = std::min((int)recs.size(), (int)std::thread::hardware_concurrency());
     for (int i=0; i<threadCount; i++) {
         workers.emplace_back([&](){
             Toastbox::Renderer renderer;

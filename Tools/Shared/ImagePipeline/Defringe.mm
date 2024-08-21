@@ -259,7 +259,7 @@ static ColorDir<Poly> _solveForPolys(Renderer& renderer,
     // Each thread calculates the shift for a specific tile and updates `polys` when complete.
     // The work is complete when all threads have exited.
     std::vector<std::thread> workers;
-    for (int i=0; i<std::max(1,(int)std::thread::hardware_concurrency()); i++) {
+    for (int i=0; i<std::max((uint32_t)1, (uint32_t)std::thread::hardware_concurrency()); i++) {
         workers.emplace_back([&](){
             for (;;) {
                 auto lock = std::unique_lock(tilesLock);

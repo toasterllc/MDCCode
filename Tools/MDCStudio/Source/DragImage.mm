@@ -1,7 +1,8 @@
 #import "DragImage.h"
 #import <mutex>
 #import "ImageExporter/ImageExporter.h"
-#import "ImageExporter/ImageExporter.h"
+#import "Code/Lib/Toastbox/Signal.h"
+#import "Code/Lib/Toastbox/Defer.h"
 using namespace MDCStudio;
 
 @implementation DragImage {
@@ -27,6 +28,42 @@ static NSOperationQueue* _ParallelQueue() {
     static NSOperationQueue* x = __QueueCreate();
     return x;
 }
+
+static int _ParallelQueueUnderwayLimit() {
+    static int x = std::thread::hardware_concurrency()*2;
+    return x;
+}
+
+static void _ParallelQueueUnderwayUpdate(int delta) {
+    assert(delta==1 || delta==-1);
+    switch (delta) {
+    case 1: {
+        // Don't allow too many parallel operations to accumulate, by waiting until the number
+        // of queued operations falls below our threshold (_ParallelQueueUnderwayLimit).
+        auto lock = _ParallelQueueState.signal.wait([] {
+            return _ParallelQueueState.underway < _ParallelQueueUnderwayLimit();
+        });
+        _ParallelQueueState.underway++;
+        break;
+    }
+    
+    case -1: {
+        auto lock = _ParallelQueueState.signal.lock();
+        assert(_ParallelQueueState.underway > 0);
+        _ParallelQueueState.underway--;
+        _ParallelQueueState.signal.signalOne();
+        break;
+    }
+    
+    default:
+        abort();
+    }
+}
+
+static struct {
+    Toastbox::Signal signal;
+    int underway = 0;
+} _ParallelQueueState;
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
     imageRecord:(ImageRecordPtr)rec
@@ -79,19 +116,13 @@ static NSOperationQueue* _ParallelQueue() {
         return;
     }
     
+    _ParallelQueueUnderwayUpdate(1);
     __block Image image = _imageSource->getImage(ImageSource::Priority::Low, _imageRecord);
     [_ParallelQueue() addOperationWithBlock:^{
         [self _export:std::move(image) url:url];
+        _ParallelQueueUnderwayUpdate(-1);
         completionHandler(nil);
     }];
-    
-//    __weak auto selfWeak = self;
-//    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-////        auto selfStrong = selfWeak;
-////        if (!selfStrong) return;
-//        [self _export:url];
-//        completionHandler(nil);
-//    });
 }
 
 - (void)_export:(Image&&)image url:(NSURL*)url {
