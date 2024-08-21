@@ -43,7 +43,7 @@ inline std::string _ExifImageUniqueIDForImageId(Img::Id id) {
 }
 
 // Single image export to file `filePath`
-inline void __Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const Image& image,
+inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const Image& image,
     const Format* fmt, const std::filesystem::path& filePath) {
     
     printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
@@ -335,7 +335,7 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
                     }
                     
                     const std::filesystem::path filePath = dir / FileNameForImageRecord(*imageRec.rec, fmt);
-                    __Export(renderer, *imageRec.rec, imageRec.image, fmt, filePath);
+                    Export(renderer, *imageRec.rec, imageRec.image, fmt, filePath);
                     
                     // Update progress bar
                     [progress incrementProgress];
@@ -419,7 +419,7 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
         } else {
             Toastbox::Renderer renderer;
             Image image = imageSource->getImage(ImageSource::Priority::High, firstImageRec);
-            __Export(renderer, *firstImageRec, image, res.format, [res.path UTF8String]);
+            Export(renderer, *firstImageRec, image, res.format, [res.path UTF8String]);
             
 //            Toastbox::Renderer renderer;
 //            _Export(renderer, imageSource, firstImage, res.format, res.path);

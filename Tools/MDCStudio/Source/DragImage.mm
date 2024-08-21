@@ -71,8 +71,17 @@ static NSOperationQueue* _ParallelQueue() {
 - (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
     completionHandler:(void(^)(NSError*))completionHandler {
     
+    [_progressDialog showIfNeeded];
+    
+    // Short-circuit if we've been cancelled
+    if ([_progressDialog canceled]) {
+        completionHandler(nil);
+        return;
+    }
+    
+    __block Image image = _imageSource->getImage(ImageSource::Priority::Low, _imageRecord);
     [_ParallelQueue() addOperationWithBlock:^{
-        [self _export:url];
+        [self _export:std::move(image) url:url];
         completionHandler(nil);
     }];
     
@@ -85,10 +94,15 @@ static NSOperationQueue* _ParallelQueue() {
 //    });
 }
 
-- (void)_export:(NSURL*)url {
+- (void)_export:(Image&&)image url:(NSURL*)url {
+    // Short-circuit if we've been cancelled
+    if ([_progressDialog canceled]) return;
+    
     const ImageExporter::Format* fmt = PrefsUtil::DragAndDrop::ExportFormat();
     const std::filesystem::path path([url fileSystemRepresentation]);
-    ImageExporter::Export(_imageSource, { _imageRecord }, fmt, path, _progressDialog);
+    Toastbox::Renderer renderer;
+    ImageExporter::Export(renderer, *_imageRecord, image, fmt, path);
+    [_progressDialog incrementProgress];
 }
 
 - (NSOperationQueue*)operationQueueForFilePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider {
