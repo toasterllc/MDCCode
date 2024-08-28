@@ -966,15 +966,12 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         } else {
             if (drag) {
                 if (mouseDownImage) {
-                    NSOperationQueue* queue = [[NSOperationQueue alloc] init];
-                    [queue setMaxConcurrentOperationCount:1];
-                    [queue setQualityOfService:NSQualityOfServiceUserInitiated];
-                    
                     ImageExportProgressDialog* progress =
                         [[ImageExportProgressDialog alloc] initWithParentWindow:[self window] imageCount:_selection->images().size()];
                     
                     _drag.images = [NSMutableArray new];
-                    for (ImageRecordPtr rec : _selection->images()) {
+                    for (auto it=_selection->images().rbegin(); it!=_selection->images().rend(); it++) {
+                        ImageRecordPtr rec = *it;
                         std::optional<CGRect> rect = [self rectForImageRecord:rec];
                         assert(rect);
                         
