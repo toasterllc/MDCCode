@@ -9,7 +9,6 @@
 using namespace MDCStudio;
 
 @implementation DeviceImageGridContainerView {
-    IBOutlet NSView* _nibView;
     IBOutlet NSView* _noPhotosView;
     IBOutlet NSButton* _configureDeviceButton;
     
@@ -28,7 +27,13 @@ using namespace MDCStudio;
     
     if (!(self = [super initWithImageGridView:imageGridView])) return nil;
     
-    NibViewInit(self, _nibView);
+    NibViewInit(self, _noPhotosView);
+    [self addSubview:_noPhotosView];
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_noPhotosView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_noPhotosView)]];
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_noPhotosView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_noPhotosView)]];
+    
     _device = device;
     _selection = selection;
     
@@ -118,12 +123,29 @@ using namespace MDCStudio;
     return [_noPhotosView isHidden];
 }
 
-//- (BOOL)acceptsFirstResponder {
-//    return false;
-//}
-//
-//- (NSResponder*)nextResponder {
-//    return [self imageGridView];
-//}
+- (BOOL)acceptsFirstResponder {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent*)event {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)canBecomeKeyView {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)shouldDelayWindowOrderingForEvent:(NSEvent*)event {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return false;
+}
+
+- (BOOL)needsPanelToBecomeKey {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
 
 @end
