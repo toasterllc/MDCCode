@@ -9,7 +9,6 @@
 using namespace MDCStudio;
 
 @implementation DeviceImageGridContainerView {
-    IBOutlet NSView* _nibView;
     IBOutlet NSView* _noPhotosView;
     IBOutlet NSButton* _configureDeviceButton;
     
@@ -28,7 +27,13 @@ using namespace MDCStudio;
     
     if (!(self = [super initWithImageGridView:imageGridView])) return nil;
     
-    NibViewInit(self, _nibView);
+    NibViewInit(self, _noPhotosView);
+    [self addSubview:_noPhotosView];
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_noPhotosView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_noPhotosView)]];
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_noPhotosView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_noPhotosView)]];
+    
     _device = device;
     _selection = selection;
     
