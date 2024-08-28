@@ -268,10 +268,9 @@ inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const I
 }
 
 inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, const ImageExporter::Format* fmt=nullptr) {
-    constexpr const char* FilenamePrefix = "Image-";
-    std::string r = FilenamePrefix + std::to_string(rec.info.id);
-    if (fmt) r += std::string(".") + fmt->extension;
-    return r;
+    char buf[32];
+    snprintf(buf, sizeof(buf), "Image-%06ju%s%s", (uintmax_t)rec.info.id, (fmt ? "." : ""), (fmt ? fmt->extension : ""));
+    return buf;
 }
 
 inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
