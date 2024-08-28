@@ -904,6 +904,8 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 // MARK: - Event Handling
 
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
     [[self window] makeFirstResponder:self];
     
     NSView* superview = [self superview];
@@ -920,6 +922,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         _selection->images(std::move(newSelection));
     }
     
+    const bool activeApp = [NSApp isActive];
     NSWindow* win = [self window];
     bool drag = false;
     Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
@@ -959,7 +962,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
             _selection->images(selection);
             updateSelectionRect = true;
             
-        } else if (mouseDownFlags & NSEventModifierFlagCommand) {
+        } else if ((mouseDownFlags & NSEventModifierFlagCommand) /* && activeApp */) {
             _selection->images(ImageSetsXOR(mouseDownSelection, newSelection));
             updateSelectionRect = true;
         
@@ -1060,6 +1063,31 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         }
     }
     _selection->images(selection);
+}
+
+- (BOOL)acceptsFirstResponder {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent*)event {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)canBecomeKeyView {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)shouldDelayWindowOrderingForEvent:(NSEvent*)event {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return [event type] == NSEventTypeLeftMouseDown;
+}
+
+- (BOOL)needsPanelToBecomeKey {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
 }
 
 // MARK: - Drag & Drop
@@ -1165,6 +1193,31 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     } else if ([item action] == @selector(magnifyDecrease:)) {
         return false;
     }
+    return true;
+}
+
+- (BOOL)acceptsFirstResponder {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent*)event {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)canBecomeKeyView {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)shouldDelayWindowOrderingForEvent:(NSEvent*)event {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return false;
+}
+
+- (BOOL)needsPanelToBecomeKey {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     return true;
 }
 

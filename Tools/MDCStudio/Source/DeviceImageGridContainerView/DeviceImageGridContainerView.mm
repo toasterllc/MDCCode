@@ -123,12 +123,29 @@ using namespace MDCStudio;
     return [_noPhotosView isHidden];
 }
 
-//- (BOOL)acceptsFirstResponder {
-//    return false;
-//}
-//
-//- (NSResponder*)nextResponder {
-//    return [self imageGridView];
-//}
+- (BOOL)acceptsFirstResponder {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent*)event {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)canBecomeKeyView {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
+
+- (BOOL)shouldDelayWindowOrderingForEvent:(NSEvent*)event {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return false;
+}
+
+- (BOOL)needsPanelToBecomeKey {
+    NSLog(@"%@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return true;
+}
 
 @end
