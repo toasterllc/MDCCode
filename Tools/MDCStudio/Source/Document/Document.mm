@@ -555,6 +555,7 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 // MARK: - Split View
 
 - (BOOL)splitView:(NSSplitView*)splitView canCollapseSubview:(NSView*)subview {
+    if (subview == _center.containerView) return false;
     return true;
 }
 
