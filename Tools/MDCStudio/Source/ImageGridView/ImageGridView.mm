@@ -1104,7 +1104,10 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 
 - (void)draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)screenPoint operation:(NSDragOperation)operation {
     NSLog(@"%@", NSStringFromSelector(_cmd));
-    _drag = {};
+    // We can't clear _drag here because it's apparently the only thing that holds
+    // on to the DragImage instances. If we clear _drag here, the DragImage instances
+    // get destroyed and the drag-and-drop doesn't finish.
+//    _drag = {};
 }
 
 // MARK: - AnchoredScrollView
