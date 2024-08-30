@@ -41,7 +41,7 @@ struct _ChunkTexture {
     uint32_t loadCounts[SliceCount] = {};
 };
 
-static constexpr size_t _ChunkTexturesCacheCapacity = 4;
+static constexpr size_t _ChunkTexturesCacheCapacity = 16;
 using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,_ChunkTexturesCacheCapacity>;
 
 // MARK: - ImageGridLayer
@@ -51,9 +51,8 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
     ImageLibraryPtr _imageLibrary;
     ImageSelectionPtr _selection;
     Object::ObserverPtr _selectionOb;
-    uint32_t _cellWidth;
-    uint32_t _cellHeight;
     Toastbox::Grid _grid;
+    CGFloat _magnification;
     bool _sortNewestFirst;
     CGFloat _containerWidth;
     NSEdgeInsets _contentInsets;
@@ -77,8 +76,19 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     return cs;
 }
 
-- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
-selection:(MDCStudio::ImageSelectionPtr)selection {
+static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int direction) {
+    // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
+    constexpr CGFloat Thresh = 0.25;
+    if (direction > 0) {
+        mag = std::pow(2, std::floor((std::ceil(std::log2(mag)/Thresh)*Thresh)+1));
+    } else {
+        mag = std::pow(2, std::ceil((std::floor(std::log2(mag)/Thresh)*Thresh)-1));
+    }
+    mag = std::clamp(mag, min, max);
+    return mag;
+}
+
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource selection:(MDCStudio::ImageSelectionPtr)selection {
     
     NSParameterAssert(imageSource);
     NSParameterAssert(selection);
@@ -94,14 +104,13 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
         [selfWeak _handleSelectionEvent:ev];
     });
     
-    _cellWidth = _ThumbWidth;
-    _cellHeight = _ThumbHeight;
-    
     // Init our grid border
     [self setContentInsets:{}];
     
-    _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
-    _grid.setCellSpacing({6, 6});
+    [self setMagnification:1];
+    
+//    _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
+//    _grid.setCellSpacing({6, 6});
 //    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
     _sortNewestFirst = true;
@@ -117,8 +126,8 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
     
     _placeholderTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ImageGrid-ImagePlaceholder"] options:nil error:nil];
     assert(_placeholderTexture);
-    assert([_placeholderTexture width] == _cellWidth);
-    assert([_placeholderTexture height] == _cellHeight);
+    assert([_placeholderTexture width] == _ThumbWidth);
+    assert([_placeholderTexture height] == _ThumbHeight);
     
     _commandQueue = [_device newCommandQueue];
     
@@ -149,6 +158,15 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
 //    [NSTimer scheduledTimerWithTimeInterval:.1 repeats:true block:^(NSTimer * _Nonnull timer) {
 //        [self setNeedsDisplay];
 //    }];
+    
+//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer* timer) {
+//        const float k = 2 * ((float)arc4random() / UINT32_MAX);
+//        const int32_t cellWidth = k*_ThumbWidth;
+//        const int32_t cellHeight = k*_ThumbHeight;
+//        self->_grid.setCellSize({cellWidth, cellHeight});
+//        [self setNeedsDisplay];
+//    }];
+    
     return self;
 }
 
@@ -172,6 +190,26 @@ selection:(MDCStudio::ImageSelectionPtr)selection {
 
 - (size_t)columnCount {
     return _grid.columnCount();
+}
+
+- (void)setMagnification:(CGFloat)x {
+    _magnification = x;
+    
+    printf("_magnification = %f\n", _magnification);
+    
+    const int32_t cellWidth = _magnification*_ThumbWidth;
+    const int32_t cellHeight = _magnification*_ThumbHeight;
+    const int32_t spacing = 6*_magnification;
+    _grid.setCellSize({cellWidth, cellHeight});
+    _grid.setCellSpacing({spacing, spacing});
+    
+    const CGRect frame = [self frame];
+    const CGFloat contentsScale = [self contentsScale];
+    const Toastbox::Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
+    
+    printf("visible count: %ju\n", (uintmax_t)visibleIndexRange.count);
+    
+    [self setNeedsDisplay];
 }
 
 - (void)setContentsScale:(CGFloat)x {
@@ -223,7 +261,8 @@ static CGRect _CGRectFromGridRect(Toastbox::Grid::Rect rect, CGFloat scale) {
 static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::RecordRef& ref) {
     const uint32_t loadCount = ref->status.loadCount;
     if (loadCount != ct.loadCounts[ref.idx]) {
-//        printf("Update slice\n");
+//        printf("Update slice (%ju %u %u)\n", (uintmax_t)ref.idx, loadCount, ct.loadCounts[ref.idx]);
+        
         const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
         [ct.txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
             slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
@@ -268,7 +307,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     ct.txt = txt;
     
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-    printf("Texture creation took %ju ms\n", (uintmax_t)durationMs);
+//    printf("Texture creation took %ju ms\n", (uintmax_t)durationMs);
     
     return ct;
 }
@@ -355,6 +394,11 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         assert(_selectionDraw.base <= UINT32_MAX);
         assert(_selectionDraw.count <= UINT32_MAX);
         
+        constexpr uint32_t SelectionBorderSizeDefault = 10;
+        constexpr uint32_t SelectionBorderSizeMin = 5;
+        const uint32_t selectionBorderSize = std::max(SelectionBorderSizeMin,
+            (uint32_t)(_magnification * SelectionBorderSizeDefault));
+        
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
             .idx = (uint32_t)(chunkBegin-begin),
@@ -364,6 +408,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
             .selection = {
                 .base = (uint32_t)_selectionDraw.base,
                 .count = (uint32_t)_selectionDraw.count,
+                .borderSize = selectionBorderSize,
             },
         };
         
@@ -539,6 +584,19 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     if (vr < cl) return false;
     if (cr < vl) return false;
     return true;
+}
+
+// MARK: - Magnification
+
+constexpr CGFloat MagnificationMin = 1./(1<<16);
+constexpr CGFloat MagnificationMax = 1<<16;
+
+- (void)magnifyIncrease {
+    [self setMagnification:_NextMagnification(_magnification, MagnificationMin, MagnificationMax, +1)];
+}
+
+- (void)magnifyDecrease {
+    [self setMagnification:_NextMagnification(_magnification, MagnificationMin, MagnificationMax, -1)];
 }
 
 @end
@@ -908,7 +966,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     
     NSView* superview = [self superview];
     const CGPoint mouseDownPoint = [superview convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
-    const CGRect rect = {mouseDownPoint, {1,1}};
+    const CGRect rect = {mouseDownPoint, {}};
     const ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
     const ImageRecordPtr mouseDownImage = (!newSelection.empty() ? *newSelection.begin() : ImageRecordPtr{});
     const NSEventModifierFlags mouseDownFlags = [mouseDownEvent modifierFlags];
@@ -1018,7 +1076,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     NSView* superview = [self superview];
     const CGRect rect = {
         [superview convertPoint:[event locationInWindow] fromView:nil],
-        {1,1},
+        {},
     };
     
     const ImageSet& selection = _selection->images();
@@ -1135,6 +1193,16 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     // window size for some reason.
     [_docHeight setPriority:NSLayoutPriorityDefaultLow];
     [_docHeight setActive:true];
+}
+
+// MARK: - Magnification
+
+- (void)magnifyIncrease:(id)sender {
+    [_imageGridLayer magnifyIncrease];
+}
+
+- (void)magnifyDecrease:(id)sender {
+    [_imageGridLayer magnifyDecrease];
 }
 
 @end
