@@ -86,13 +86,15 @@ fragment float4 FragmentShader(
         const float4 c = placeholderTxt.sample({}, in.posNorm);
         return float4(c.rgb, PlaceholderAlpha*c.a);
     }
-    const uint2 txtSize = { txt.get_width(), txt.get_height() };
+//    const uint2 txtSize = { txt.get_width(), txt.get_height() };
     
     constexpr float4 SelectionBorderColor1 = float4(0,0.523,1,1);
     constexpr float4 SelectionBorderColor2 = float4(1,1,1,.175);
-    constexpr uint SelectionBorderSize = 10;
+    const uint32_t selectionBorderSize = ctx.selection.borderSize;
+    const uint2 cellSize = { (uint)ctx.grid.cellSize().x, (uint)ctx.grid.cellSize().y };
+    
     const float4 c = txt.sample({}, in.posNorm, in.idx);
-    if (in.selected && (metal::any(pos < SelectionBorderSize) || metal::any(pos > (txtSize-SelectionBorderSize)))) {
+    if (in.selected && (metal::any(pos < selectionBorderSize) || metal::any(pos >= (cellSize-selectionBorderSize)))) {
         return blendColorDodge(SelectionBorderColor1, blendOver(SelectionBorderColor2, c));
     }
     return c;

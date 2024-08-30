@@ -27,6 +27,7 @@ struct RenderContext {
     struct {
         uint32_t base = 0;
         uint32_t count = 0;
+        uint32_t borderSize = 0;
     } selection;
 };
 
