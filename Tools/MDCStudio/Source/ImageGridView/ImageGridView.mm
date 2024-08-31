@@ -76,18 +76,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     return cs;
 }
 
-static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int direction) {
-    // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
-    constexpr CGFloat Thresh = 0.25;
-    if (direction > 0) {
-        mag = std::pow(2, std::floor((std::ceil(std::log2(mag)/Thresh)*Thresh)+1));
-    } else {
-        mag = std::pow(2, std::ceil((std::floor(std::log2(mag)/Thresh)*Thresh)-1));
-    }
-    mag = std::clamp(mag, min, max);
-    return mag;
-}
-
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource selection:(MDCStudio::ImageSelectionPtr)selection {
     
     NSParameterAssert(imageSource);
@@ -190,6 +178,10 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int dir
 
 - (size_t)columnCount {
     return _grid.columnCount();
+}
+
+- (CGFloat)magnification {
+    return _magnification;
 }
 
 - (void)setMagnification:(CGFloat)x {
@@ -584,19 +576,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
     if (vr < cl) return false;
     if (cr < vl) return false;
     return true;
-}
-
-// MARK: - Magnification
-
-constexpr CGFloat MagnificationMin = 1./(1<<16);
-constexpr CGFloat MagnificationMax = 1<<16;
-
-- (void)magnifyIncrease {
-    [self setMagnification:_NextMagnification(_magnification, MagnificationMin, MagnificationMax, +1)];
-}
-
-- (void)magnifyDecrease {
-    [self setMagnification:_NextMagnification(_magnification, MagnificationMin, MagnificationMax, -1)];
 }
 
 @end
@@ -1197,12 +1176,29 @@ constexpr CGFloat MagnificationMax = 1<<16;
 
 // MARK: - Magnification
 
+constexpr CGFloat MagnificationMin = 1./(1<<3);
+constexpr CGFloat MagnificationMax = 1<<1;
+
+static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int direction) {
+    // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
+    constexpr CGFloat Thresh = 0.25;
+    if (direction > 0) {
+        mag = std::pow(2, std::floor((std::ceil(std::log2(mag)/Thresh)*Thresh)+1));
+    } else {
+        mag = std::pow(2, std::ceil((std::floor(std::log2(mag)/Thresh)*Thresh)-1));
+    }
+    mag = std::clamp(mag, min, max);
+    return mag;
+}
+
 - (void)magnifyIncrease:(id)sender {
-    [_imageGridLayer magnifyIncrease];
+    [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification], MagnificationMin, MagnificationMax, +1)];
+    [self _updateDocumentHeight];
 }
 
 - (void)magnifyDecrease:(id)sender {
-    [_imageGridLayer magnifyDecrease];
+    [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification], MagnificationMin, MagnificationMax, -1)];
+    [self _updateDocumentHeight];
 }
 
 @end
