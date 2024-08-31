@@ -1194,11 +1194,25 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int dir
 - (void)magnifyIncrease:(id)sender {
     [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification], MagnificationMin, MagnificationMax, +1)];
     [self _updateDocumentHeight];
+    
+    if (!_selection->images().empty()) {
+        [[self window] layoutIfNeeded];
+        ImageRecordPtr sel = *_selection->images().begin();
+        std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:sel];
+        if (rect) [self scrollToImageRect:*rect center:true];
+    }
 }
 
 - (void)magnifyDecrease:(id)sender {
     [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification], MagnificationMin, MagnificationMax, -1)];
     [self _updateDocumentHeight];
+    
+    if (!_selection->images().empty()) {
+        [[self window] layoutIfNeeded];
+        ImageRecordPtr sel = *_selection->images().begin();
+        std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:sel];
+        if (rect) [self scrollToImageRect:*rect center:true];
+    }
 }
 
 @end
