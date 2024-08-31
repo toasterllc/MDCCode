@@ -94,7 +94,7 @@ fragment float4 FragmentShader(
     const uint2 cellSize = { (uint)ctx.grid.cellSize().x, (uint)ctx.grid.cellSize().y };
     
     const float4 c = txt.sample({}, in.posNorm, in.idx);
-    if (in.selected && (metal::any(pos < selectionBorderSize) || metal::any(pos > (cellSize-selectionBorderSize)))) {
+    if (in.selected && (metal::any(pos < selectionBorderSize) || metal::any(pos >= (cellSize-selectionBorderSize)))) {
         return blendColorDodge(SelectionBorderColor1, blendOver(SelectionBorderColor2, c));
     }
     return c;
