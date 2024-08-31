@@ -1196,9 +1196,9 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int dir
     [self _updateDocumentHeight];
     
     if (!_selection->images().empty()) {
+        ImageRecordPtr anchor = *_selection->images().begin();
         [[self window] layoutIfNeeded];
-        ImageRecordPtr sel = *_selection->images().begin();
-        std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:sel];
+        std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:anchor];
         if (rect) [self scrollToImageRect:*rect center:true];
     }
 }
