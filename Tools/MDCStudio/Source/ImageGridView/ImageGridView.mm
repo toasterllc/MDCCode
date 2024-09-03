@@ -630,6 +630,11 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         NSDraggingSession* session;
         NSMutableArray<DragImage*>* images;
     } _drag;
+    
+    struct {
+        ImageRecordPtr anchor;
+        CGFloat amount = 1;
+    } _mag;
 }
 
 // MARK: - Creation
@@ -1232,6 +1237,49 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int dir
     [self _updateDocumentHeight];
     [[self window] layoutIfNeeded];
     [self _scrollToAnchor:anchor];
+}
+
+- (void)magnifyWithEvent:(NSEvent*)event {
+    NSLog(@"%@ %@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd), event);
+    
+    NSView* superview = [self superview];
+    const CGPoint point = [superview convertPoint:[event locationInWindow] fromView:nil];
+    const CGRect rect = {point,{}};
+    const ImageSet images = [_imageGridLayer imagesForRect:rect];
+    ImageRecordPtr anchor = (!images.empty() ? *images.begin() : ImageRecordPtr{});
+    
+    if ([event phase] == NSEventPhaseBegan) {
+        _mag = {
+            .amount = [_imageGridLayer magnification],
+            .anchor = anchor,
+        };
+    }
+    
+    _mag.amount = std::clamp(_mag.amount+[event magnification], MagnificationMin, MagnificationMax);
+    NSLog(@"_mag.amount = %f", _mag.amount);
+    
+    [_imageGridLayer setMagnification:_mag.amount];
+    [self _updateDocumentHeight];
+    [[self window] layoutIfNeeded];
+    [self _scrollToAnchor:_mag.anchor];
+    
+    
+//    [_imageGridLayer setMagnification:_magnify];
+    
+    
+    
+//    NSLog(@"MAG %f", [event scrollingDeltaX]);
+//    NSLog(@"MAG %f", [event scrollingDeltaY]);
+    
+    
+//    static CGFloat accum = 1;//[event magnification];
+//    accum += [event magnification];
+//    NSLog(@"ACCUM %f", accum);
+    
+//    const CGFloat mag = 1;
+//    NSLog(@"MAG: %f %f", [event deltaZ], [event magnification]);
+//    [self setMagnification:mag*(1-[event scrollingDeltaY]/250) centeredAtPoint:anchor];
+    
 }
 
 @end
