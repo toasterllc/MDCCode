@@ -1191,28 +1191,47 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int dir
     return mag;
 }
 
+- (ImageRecordPtr)_scrollAnchor {
+    if (!_selection->images().empty()) {
+        return *_selection->images().begin();
+    
+    } else {
+        NSView* superview = [self superview];
+        const CGRect rect = [superview convertRect:[self bounds] fromView:self];
+        const ImageSet images = [_imageGridLayer imagesForRect:rect];
+        if (!images.empty()) {
+            size_t count = images.size()/2;
+            auto it = images.begin();
+            while (count--) it++;
+            return *it;
+        }
+    }
+    
+    return {};
+}
+
+- (void)_scrollToAnchor:(ImageRecordPtr)anchor {
+    assert(anchor);
+    std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:anchor];
+    if (rect) [self scrollToImageRect:*rect center:true];
+}
+
 - (void)magnifyIncrease:(id)sender {
+    ImageRecordPtr anchor = [self _scrollAnchor];
+    
     [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification], MagnificationMin, MagnificationMax, +1)];
     [self _updateDocumentHeight];
-    
-    if (!_selection->images().empty()) {
-        ImageRecordPtr anchor = *_selection->images().begin();
-        [[self window] layoutIfNeeded];
-        std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:anchor];
-        if (rect) [self scrollToImageRect:*rect center:true];
-    }
+    [[self window] layoutIfNeeded];
+    [self _scrollToAnchor:anchor];
 }
 
 - (void)magnifyDecrease:(id)sender {
+    ImageRecordPtr anchor = [self _scrollAnchor];
+    
     [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification], MagnificationMin, MagnificationMax, -1)];
     [self _updateDocumentHeight];
-    
-    if (!_selection->images().empty()) {
-        [[self window] layoutIfNeeded];
-        ImageRecordPtr sel = *_selection->images().begin();
-        std::optional<CGRect> rect = [_imageGridLayer rectForImageRecord:sel];
-        if (rect) [self scrollToImageRect:*rect center:true];
-    }
+    [[self window] layoutIfNeeded];
+    [self _scrollToAnchor:anchor];
 }
 
 @end
