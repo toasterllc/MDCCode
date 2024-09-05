@@ -99,10 +99,6 @@ static void _ButtonStimulusInterval(const DS::Duration& x) {
     
     _Load(self);
     
-//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
-//        NSLog(@"first responder: %@", [[self window] firstResponder]);
-//    }];
-    
     return self;
 }
 

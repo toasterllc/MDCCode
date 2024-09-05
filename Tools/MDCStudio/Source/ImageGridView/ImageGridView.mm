@@ -97,10 +97,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     [self setMagnification:1];
     
-//    _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
-//    _grid.setCellSpacing({6, 6});
-//    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
-    
     _sortNewestFirst = true;
     
     _device = MTLCreateSystemDefaultDevice();
@@ -140,21 +136,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     // Make our layer transparent against the layer's background
     [self setOpaque:false];
-    
-//    NSColorPanel* colorPanel = [NSColorPanel sharedColorPanel];
-//    [colorPanel makeKeyAndOrderFront:nil];
-//    [NSTimer scheduledTimerWithTimeInterval:.1 repeats:true block:^(NSTimer * _Nonnull timer) {
-//        [self setNeedsDisplay];
-//    }];
-    
-//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer* timer) {
-//        const float k = 2 * ((float)arc4random() / UINT32_MAX);
-//        const int32_t cellWidth = k*_ThumbWidth;
-//        const int32_t cellHeight = k*_ThumbHeight;
-//        self->_grid.setCellSize({cellWidth, cellHeight});
-//        [self setNeedsDisplay];
-//    }];
-    
     return self;
 }
 
@@ -189,8 +170,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     _magnification = x;
     
-    printf("_magnification = %f\n", _magnification);
-    
     const int32_t cellWidth = _magnification*_ThumbWidth;
     const int32_t cellHeight = _magnification*_ThumbHeight;
     const int32_t spacing = 6*_magnification;
@@ -200,8 +179,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     const CGRect frame = [self frame];
     const CGFloat contentsScale = [self contentsScale];
     const Toastbox::Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
-    
-    printf("visible count: %ju\n", (uintmax_t)visibleIndexRange.count);
     
     [self setNeedsDisplay];
     return true;
@@ -1210,24 +1187,6 @@ static CGFloat _NextMagnification(CGFloat mag, int direction) {
         return *it;
     }
     return {};
-    
-    
-//    if (!_selection->images().empty()) {
-//        return *_selection->images().begin();
-//    
-//    } else {
-//        NSView* superview = [self superview];
-//        const CGRect rect = [superview convertRect:[self bounds] fromView:self];
-//        const ImageSet images = [_imageGridLayer imagesForRect:rect];
-//        if (!images.empty()) {
-//            size_t count = images.size()/2;
-//            auto it = images.begin();
-//            while (count--) it++;
-//            return *it;
-//        }
-//    }
-//    
-//    return {};
 }
 
 - (void)_scrollToAnchor:(ImageRecordPtr)anchor {
@@ -1243,20 +1202,6 @@ static CGFloat _NextMagnification(CGFloat mag, int direction) {
         [[self window] layoutIfNeeded];
         if (anchor) [self _scrollToAnchor:anchor];
     }
-    
-    
-    
-//    _mag.amount = std::clamp(_mag.amount+[event magnification], MagnificationMin, MagnificationMax);
-//    NSLog(@"_mag.amount = %f", _mag.amount);
-//    
-//    [_imageGridLayer setMagnification:_mag.amount];
-//    [self _updateDocumentHeight];
-//    [[self window] layoutIfNeeded];
-//    if (_mag.anchor) [self _scrollToAnchor:_mag.anchor];
-    
-    
-    
-    
 }
 
 - (void)magnifyIncrease:(id)sender {
@@ -1270,8 +1215,6 @@ static CGFloat _NextMagnification(CGFloat mag, int direction) {
 }
 
 - (void)magnifyWithEvent:(NSEvent*)event {
-    NSLog(@"%@ %@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd), event);
-    
     if ([event phase] == NSEventPhaseBegan) {
         _mag = {
             .amount = [_imageGridLayer magnification],

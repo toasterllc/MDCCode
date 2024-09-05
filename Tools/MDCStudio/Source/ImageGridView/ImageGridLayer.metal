@@ -86,8 +86,6 @@ fragment float4 FragmentShader(
         const float4 c = placeholderTxt.sample({}, in.posNorm);
         return float4(c.rgb, PlaceholderAlpha*c.a);
     }
-//    const uint2 txtSize = { txt.get_width(), txt.get_height() };
-    
     constexpr float4 SelectionBorderColor1 = float4(0,0.523,1,1);
     constexpr float4 SelectionBorderColor2 = float4(1,1,1,.175);
     const uint32_t selectionBorderSize = ctx.selection.borderSize;
