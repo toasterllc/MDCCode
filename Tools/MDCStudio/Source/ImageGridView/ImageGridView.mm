@@ -184,7 +184,9 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     return _magnification;
 }
 
-- (void)setMagnification:(CGFloat)x {
+- (bool)setMagnification:(CGFloat)x {
+    if (_magnification == x) return false;
+    
     _magnification = x;
     
     printf("_magnification = %f\n", _magnification);
@@ -202,6 +204,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     printf("visible count: %ju\n", (uintmax_t)visibleIndexRange.count);
     
     [self setNeedsDisplay];
+    return true;
 }
 
 - (void)setContentsScale:(CGFloat)x {
@@ -1197,22 +1200,34 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int dir
 }
 
 - (ImageRecordPtr)_scrollAnchor {
-    if (!_selection->images().empty()) {
-        return *_selection->images().begin();
-    
-    } else {
-        NSView* superview = [self superview];
-        const CGRect rect = [superview convertRect:[self bounds] fromView:self];
-        const ImageSet images = [_imageGridLayer imagesForRect:rect];
-        if (!images.empty()) {
-            size_t count = images.size()/2;
-            auto it = images.begin();
-            while (count--) it++;
-            return *it;
-        }
+    NSView* superview = [self superview];
+    const CGRect rect = [superview convertRect:[self bounds] fromView:self];
+    const ImageSet images = [_imageGridLayer imagesForRect:rect];
+    if (!images.empty()) {
+        size_t count = images.size()/2;
+        auto it = images.begin();
+        while (count--) it++;
+        return *it;
     }
-    
     return {};
+    
+    
+//    if (!_selection->images().empty()) {
+//        return *_selection->images().begin();
+//    
+//    } else {
+//        NSView* superview = [self superview];
+//        const CGRect rect = [superview convertRect:[self bounds] fromView:self];
+//        const ImageSet images = [_imageGridLayer imagesForRect:rect];
+//        if (!images.empty()) {
+//            size_t count = images.size()/2;
+//            auto it = images.begin();
+//            while (count--) it++;
+//            return *it;
+//        }
+//    }
+//    
+//    return {};
 }
 
 - (void)_scrollToAnchor:(ImageRecordPtr)anchor {
@@ -1223,20 +1238,24 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int dir
 
 - (void)magnifyIncrease:(id)sender {
     ImageRecordPtr anchor = [self _scrollAnchor];
+    const bool changed = [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification],
+        MagnificationMin, MagnificationMax, +1)];
+    if (!changed) return;
     
-    [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification], MagnificationMin, MagnificationMax, +1)];
     [self _updateDocumentHeight];
     [[self window] layoutIfNeeded];
-    [self _scrollToAnchor:anchor];
+    if (anchor) [self _scrollToAnchor:anchor];
 }
 
 - (void)magnifyDecrease:(id)sender {
     ImageRecordPtr anchor = [self _scrollAnchor];
+    const bool changed = [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification],
+        MagnificationMin, MagnificationMax, -1)];
+    if (!changed) return;
     
-    [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification], MagnificationMin, MagnificationMax, -1)];
     [self _updateDocumentHeight];
     [[self window] layoutIfNeeded];
-    [self _scrollToAnchor:anchor];
+    if (anchor) [self _scrollToAnchor:anchor];
 }
 
 - (void)magnifyWithEvent:(NSEvent*)event {
