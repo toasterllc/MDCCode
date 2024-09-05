@@ -1187,7 +1187,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 constexpr CGFloat MagnificationMin = 1./(1<<3);
 constexpr CGFloat MagnificationMax = 1<<1;
 
-static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int direction) {
+static CGFloat _NextMagnification(CGFloat mag, int direction) {
     // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
     constexpr CGFloat Thresh = 0.25;
     if (direction > 0) {
@@ -1195,7 +1195,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int dir
     } else {
         mag = std::pow(2, std::ceil((std::floor(std::log2(mag)/Thresh)*Thresh)-1));
     }
-    mag = std::clamp(mag, min, max);
+    mag = std::clamp(mag, MagnificationMin, MagnificationMax);
     return mag;
 }
 
@@ -1236,69 +1236,51 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat min, CGFloat max, int dir
     if (rect) [self scrollToImageRect:*rect center:true];
 }
 
-- (void)magnifyIncrease:(id)sender {
-    ImageRecordPtr anchor = [self _scrollAnchor];
-    const bool changed = [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification],
-        MagnificationMin, MagnificationMax, +1)];
-    if (!changed) return;
+- (void)_setMagnification:(CGFloat)mag anchor:(ImageRecordPtr)anchor {
+    const bool changed = [_imageGridLayer setMagnification:mag];
+    if (changed) {
+        [self _updateDocumentHeight];
+        [[self window] layoutIfNeeded];
+        if (anchor) [self _scrollToAnchor:anchor];
+    }
     
-    [self _updateDocumentHeight];
-    [[self window] layoutIfNeeded];
-    if (anchor) [self _scrollToAnchor:anchor];
+    
+    
+//    _mag.amount = std::clamp(_mag.amount+[event magnification], MagnificationMin, MagnificationMax);
+//    NSLog(@"_mag.amount = %f", _mag.amount);
+//    
+//    [_imageGridLayer setMagnification:_mag.amount];
+//    [self _updateDocumentHeight];
+//    [[self window] layoutIfNeeded];
+//    if (_mag.anchor) [self _scrollToAnchor:_mag.anchor];
+    
+    
+    
+    
+}
+
+- (void)magnifyIncrease:(id)sender {
+    const CGFloat mag = _NextMagnification([_imageGridLayer magnification], +1);
+    [self _setMagnification:mag anchor:[self _scrollAnchor]];
 }
 
 - (void)magnifyDecrease:(id)sender {
-    ImageRecordPtr anchor = [self _scrollAnchor];
-    const bool changed = [_imageGridLayer setMagnification:_NextMagnification([_imageGridLayer magnification],
-        MagnificationMin, MagnificationMax, -1)];
-    if (!changed) return;
-    
-    [self _updateDocumentHeight];
-    [[self window] layoutIfNeeded];
-    if (anchor) [self _scrollToAnchor:anchor];
+    const CGFloat mag = _NextMagnification([_imageGridLayer magnification], -1);
+    [self _setMagnification:mag anchor:[self _scrollAnchor]];
 }
 
 - (void)magnifyWithEvent:(NSEvent*)event {
     NSLog(@"%@ %@ %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd), event);
     
-    NSView* superview = [self superview];
-    const CGPoint point = [superview convertPoint:[event locationInWindow] fromView:nil];
-    const CGRect rect = {point,{}};
-    const ImageSet images = [_imageGridLayer imagesForRect:rect];
-    ImageRecordPtr anchor = (!images.empty() ? *images.begin() : ImageRecordPtr{});
-    
     if ([event phase] == NSEventPhaseBegan) {
         _mag = {
             .amount = [_imageGridLayer magnification],
-            .anchor = anchor,
+            .anchor = [self _scrollAnchor],
         };
     }
     
     _mag.amount = std::clamp(_mag.amount+[event magnification], MagnificationMin, MagnificationMax);
-    NSLog(@"_mag.amount = %f", _mag.amount);
-    
-    [_imageGridLayer setMagnification:_mag.amount];
-    [self _updateDocumentHeight];
-    [[self window] layoutIfNeeded];
-    [self _scrollToAnchor:_mag.anchor];
-    
-    
-//    [_imageGridLayer setMagnification:_magnify];
-    
-    
-    
-//    NSLog(@"MAG %f", [event scrollingDeltaX]);
-//    NSLog(@"MAG %f", [event scrollingDeltaY]);
-    
-    
-//    static CGFloat accum = 1;//[event magnification];
-//    accum += [event magnification];
-//    NSLog(@"ACCUM %f", accum);
-    
-//    const CGFloat mag = 1;
-//    NSLog(@"MAG: %f %f", [event deltaZ], [event magnification]);
-//    [self setMagnification:mag*(1-[event scrollingDeltaY]/250) centeredAtPoint:anchor];
-    
+    [self _setMagnification:_mag.amount anchor:_mag.anchor];
 }
 
 @end
