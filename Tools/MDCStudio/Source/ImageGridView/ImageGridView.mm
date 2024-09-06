@@ -56,6 +56,12 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
     bool _sortNewestFirst;
     CGFloat _containerWidth;
     NSEdgeInsets _contentInsets;
+    struct {
+        std::optional<std::chrono::steady_clock::time_point> startTime;
+        simd::float4x4 transform = matrix_identity_float4x4;
+        simd::float4x4 transformFinal = matrix_identity_float4x4;
+        NSTimer* timer;
+    } _zoomAnimation;
     
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
@@ -136,6 +142,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     // Make our layer transparent against the layer's background
     [self setOpaque:false];
+    
     return self;
 }
 
@@ -288,6 +295,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     const CGSize superlayerSize = [[self superlayer] bounds].size;
     const CGSize viewSize = {superlayerSize.width*contentsScale, superlayerSize.height*contentsScale};
     const Toastbox::Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
+    const simd::float4x4 transform = [self anchoredTransform]*_zoomAnimation.transform;
     if (!visibleIndexRange.count) return;
     
     MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
@@ -376,7 +384,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
             .idx = (uint32_t)(chunkBegin-begin),
             .sortNewestFirst = _sortNewestFirst,
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
-            .transform = [self anchoredTransform],
+            .transform = transform,
             .selection = {
                 .base = (uint32_t)_selectionDraw.base,
                 .count = (uint32_t)_selectionDraw.count,
@@ -484,6 +492,107 @@ done:
     const size_t idx = it-begin;
     return [self rectForImageIndex:idx];
 }
+
+static simd::float4x4 _Scale(float x, float y, float z) {
+    return {
+        simd::float4{ x,   0.f, 0.f, 0.f },
+        simd::float4{ 0.f, y,   0.f, 0.f },
+        simd::float4{ 0.f, 0.f, z,   0.f },
+        simd::float4{ 0.f, 0.f, 0.f, 1.f },
+    };
+}
+
+static simd::float4x4 _Translate(float x, float y, float z) {
+    return {
+        simd::float4{ 1.f, 0.f, 0.f, 0.f },
+        simd::float4{ 0.f, 1.f, 0.f, 0.f },
+        simd::float4{ 0.f, 0.f, 1.f, 0.f },
+        simd::float4{   x,   y,   z, 1.f },
+    };
+}
+
+
+
+
+- (void)zoomAnimation {
+    assert(_selection->images().size() == 1);
+    ImageRecordPtr rec = *_selection->images().begin();
+    const CGRect bounds = [self bounds];
+    const CGRect rectStart = [self rectForImageRecord:rec].value();
+    const CGRect rectEnd = { {}, bounds.size };
+    
+//    simd::float4x4 animationTransform =
+////        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1)  *
+//        _Translate(rectEnd.origin.x-rectStart.origin.x, rectEnd.origin.y-rectStart.origin.y, 0)     ;
+    
+//    const CGRect frame = [self frame];
+//    // We expect our superlayer's size to be the full content size
+//    const CGSize contentSize = [[self superlayer] bounds].size;
+//    const int flip = [self isGeometryFlipped] ? -1 : 1;
+//    const simd::float4x4 transform =
+//        _Translate(-1, -1*flip, 1)                          *
+//        _Scale(2, 2*flip, 1)                                *
+//        _Scale(1/frame.size.width, 1/frame.size.height, 1)  *
+//        _Translate(-_translation.x, -_translation.y, 0)     *
+//        _Scale(contentSize.width, contentSize.height, 1)    ;
+    
+//    simd::float4x4 animationTransform =
+////        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1)  *
+//        _Translate(.01, 0, 0)     ;
+    
+//    simd::float4x4 animationTransform =
+////        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1)  *
+//        _Translate(.01, 0, 0)     ;
+    
+//    const CGRect boundsSize = [self bounds];
+//    // We expect our superlayer's size to be the full content size
+//    const CGSize contentSize = [[self superlayer] bounds].size;
+//    const int flip = [self isGeometryFlipped] ? -1 : 1;
+    
+    
+    
+//    const CGFloat contentsScale = [self contentsScale];
+    const CGSize contentSize = [[self superlayer] bounds].size;
+    const simd::float4x4 animationTransform =
+//        _Translate(-1, -1*flip, 1)                          *
+//        _Scale(2, 2*flip, 1)                                *
+//        _Scale(1/frame.size.width, 1/frame.size.height, 1)  *
+        _Scale(1/contentSize.width, 1/contentSize.height, 1)    *
+        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
+        _Translate(rectEnd.origin.x-rectStart.origin.x, rectEnd.origin.y-rectStart.origin.y, 0)     *
+        _Scale(contentSize.width, contentSize.height, 1)    ;
+    
+    {
+        __weak auto selfWeak = self;
+        _zoomAnimation = {
+            .timer = [NSTimer scheduledTimerWithTimeInterval:1/120. repeats:true block:^(NSTimer* timer) {
+                [selfWeak _zoomAnimation];
+            }],
+            .transformFinal = animationTransform,
+        };
+    }
+}
+
+- (void)_zoomAnimation {
+    using namespace std::chrono;
+    
+    constexpr auto AnimationDuration = milliseconds(200);
+    
+    if (!_zoomAnimation.startTime) _zoomAnimation.startTime = steady_clock::now();
+    
+    const auto timeNow = steady_clock::now();
+    const auto elapsed = timeNow-_zoomAnimation.startTime.value();
+    const float progress = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / AnimationDuration.count());
+    printf("progress: %f\n", progress);
+    
+    self->_zoomAnimation.transform = matrix_identity_float4x4 +
+        (_zoomAnimation.transformFinal-matrix_identity_float4x4)*progress;
+    
+    [self setNeedsDisplay];
+    
+    if (progress == 1) [_zoomAnimation.timer invalidate];
+}
+
 
 // MARK: - ImageSelection Observer
 
@@ -1028,7 +1137,8 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
             _selectionHead = {};
             [_selectionRectLayer setHidden:true];
             if ([event clickCount] == 2) {
-                [[self window] tryToPerform:@selector(_showImage:) with:self];
+                [_imageGridLayer zoomAnimation];
+//                [[self window] tryToPerform:@selector(_showImage:) with:self];
             }
         }
         
