@@ -29,6 +29,9 @@ struct [[gnu::packed]] ImageThumb {
     
 #pragma clang diagnostic pop
     
+//    static constexpr size_t ThumbWidth      = 128;
+//    static constexpr size_t ThumbHeight     = 72;
+    
     static constexpr size_t ThumbWidth      = 512;
     static constexpr size_t ThumbHeight     = 288;
     

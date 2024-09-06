@@ -110,8 +110,8 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     _placeholderTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ImageGrid-ImagePlaceholder"] options:nil error:nil];
     assert(_placeholderTexture);
-    assert([_placeholderTexture width] == _ThumbWidth);
-    assert([_placeholderTexture height] == _ThumbHeight);
+//    assert([_placeholderTexture width] == _ThumbWidth);
+//    assert([_placeholderTexture height] == _ThumbHeight);
     
     _commandQueue = [_device newCommandQueue];
     
@@ -170,15 +170,12 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     _magnification = x;
     
+    constexpr CGFloat Spacing = 6. / 512;
     const int32_t cellWidth = _magnification*_ThumbWidth;
     const int32_t cellHeight = _magnification*_ThumbHeight;
-    const int32_t spacing = 6*_magnification;
+    const int32_t spacing = (Spacing*_ThumbWidth)*_magnification;
     _grid.setCellSize({cellWidth, cellHeight});
     _grid.setCellSpacing({spacing, spacing});
-    
-    const CGRect frame = [self frame];
-    const CGFloat contentsScale = [self contentsScale];
-    const Toastbox::Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
     
     [self setNeedsDisplay];
     return true;
@@ -366,10 +363,13 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         assert(_selectionDraw.base <= UINT32_MAX);
         assert(_selectionDraw.count <= UINT32_MAX);
         
-        constexpr uint32_t SelectionBorderSizeDefault = 10;
-        constexpr uint32_t SelectionBorderSizeMin = 5;
-        const uint32_t selectionBorderSize = std::max(SelectionBorderSizeMin,
-            (uint32_t)(_magnification * SelectionBorderSizeDefault));
+        constexpr CGFloat SelectionBorderSizeDefault = 10. / 512;
+        constexpr CGFloat SelectionBorderSizeMin = 5. / 512;
+        
+        const uint32_t selectionBorderSizeDefault = std::round(SelectionBorderSizeDefault*_ThumbWidth);
+        const uint32_t selectionBorderSizeMin = std::round(SelectionBorderSizeMin*_ThumbWidth);
+        const uint32_t selectionBorderSize = std::max(selectionBorderSizeMin,
+            (uint32_t)(_magnification * selectionBorderSizeDefault));
         
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
