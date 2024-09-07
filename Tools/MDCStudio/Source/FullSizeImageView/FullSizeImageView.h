@@ -14,4 +14,5 @@
 - (MDCStudio::ImageRecordPtr)imageRecord;
 - (void)setImageRecord:(MDCStudio::ImageRecordPtr)rec;
 - (void)magnifyToFit;
+- (CGRect)imageRect;
 @end

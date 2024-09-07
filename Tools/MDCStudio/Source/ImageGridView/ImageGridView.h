@@ -24,6 +24,8 @@
 
 - (void)setSortNewestFirst:(bool)x;
 
+- (void)animateZoom:(MDCStudio::ImageRecordPtr)rec toRect:(CGRect)rect;
+
 //- (NSView*)initialFirstResponder;
 
 @end

@@ -486,6 +486,11 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     [_scrollView magnifyDecrease:sender];
 }
 
+- (CGRect)imageRect {
+    NSView*const doc = [_scrollView document];
+    return [self convertRect:[doc bounds] fromView:doc];
+}
+
 // MARK: - FullSizeImageHeaderViewDelegate
 
 - (void)imageHeaderViewBack:(FullSizeImageHeaderView*)x {

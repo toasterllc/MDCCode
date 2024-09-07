@@ -565,24 +565,86 @@ static simd::float4x4 _Translate(float x, float y, float z) {
     {
         __weak auto selfWeak = self;
         _zoomAnimation = {
-            .timer = [NSTimer scheduledTimerWithTimeInterval:1/120. repeats:true block:^(NSTimer* timer) {
+            .timer = [NSTimer timerWithTimeInterval:1/120. repeats:true block:^(NSTimer* timer) {
                 [selfWeak _zoomAnimation];
             }],
             .transformFinal = animationTransform,
         };
+        [_zoomAnimation.timer setTolerance:0];
+        [[NSRunLoop mainRunLoop] addTimer:_zoomAnimation.timer forMode:NSRunLoopCommonModes];
     }
 }
+
+//static float _Bezier(float P0, float P1, float P2, float P3, float t) {
+//    const float k1 = (1-t);
+//    const float k2 = k1*k1; // (1-t)^2
+//    const float k3 = k2*k1; // (1-t)^3
+//    
+//    const float t2 = t*t;   // t^2
+//    const float t3 = t2*t;  // t^3
+//    
+//    return k3*P0 + t*P1*(3*k2) + P2*(3*k1*t2) + P3*t3;
+//}
+
+static float _Bezier(float P0, float P1, float P2, float P3, float t) {
+    return
+        (1-t)*(1-t)*(1-t)*P0    +
+        3*(1-t)*(1-t)*t*P1      +
+        3*(1-t)*(1-t)*P2        +
+        t*t*t*P3                ;
+}
+
+// Bezier(): returns the position of a point `t` on the cubic bezier curve `c`
+const simd::float2 Bezier(float a, float b, float t) {
+    const auto t2 = t*t;
+    const auto t3 = t*t2;
+    const auto nt = 1-t;
+    const auto nt2 = nt*nt;
+    const auto nt3 = nt*nt2;
+    const simd::float2 p0 = { 0.0, 0.0 };
+    const simd::float2 p1 = { 0.0,   a };
+    const simd::float2 p2 = {   b, 1.0 };
+    const simd::float2 p3 = { 1.0, 1.0 };
+    return + nt3     * p0
+           + 3*nt2*t * p1
+           + 3*nt*t2 * p2
+           + t3      * p3;
+}
+
+//static float _fitMagnification() {
+//    
+//}
+//
+//- (CGFloat)_fitMagnification {
+//    const CGSize contentSize = [[self documentView] frame].size;
+//    CGSize containerSize = [self bounds].size;
+//    const NSEdgeInsets contentInsets = [self contentInsets];
+//    containerSize.width -= contentInsets.left + contentInsets.right;
+//    containerSize.height -= contentInsets.top + contentInsets.bottom;
+//    
+//    const CGFloat contentAspect = contentSize.width/contentSize.height;
+//    const CGFloat containerAspect = containerSize.width/containerSize.height;
+//    
+//    const CGFloat contentAxisSize = (contentAspect>containerAspect ? contentSize.width : contentSize.height);
+//    const CGFloat containerAxisSize = (contentAspect>containerAspect ? containerSize.width : containerSize.height);
+//    
+//    const CGFloat fitMag = containerAxisSize/contentAxisSize;
+//    return fitMag;
+//}
 
 - (void)_zoomAnimation {
     using namespace std::chrono;
     
-    constexpr auto AnimationDuration = milliseconds(200);
+    constexpr auto AnimationDuration = milliseconds(10000);
+//    constexpr auto AnimationDuration = milliseconds(350);
     
     if (!_zoomAnimation.startTime) _zoomAnimation.startTime = steady_clock::now();
     
     const auto timeNow = steady_clock::now();
     const auto elapsed = timeNow-_zoomAnimation.startTime.value();
-    const float progress = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / AnimationDuration.count());
+    const float t = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / AnimationDuration.count());
+    const float progress = Bezier(.9, .1, t).y;
+//    const float progress = _Bezier(1,.4,0,.6, t);
     printf("progress: %f\n", progress);
     
     self->_zoomAnimation.transform = matrix_identity_float4x4 +
@@ -590,7 +652,20 @@ static simd::float4x4 _Translate(float x, float y, float z) {
     
     [self setNeedsDisplay];
     
-    if (progress == 1) [_zoomAnimation.timer invalidate];
+    if (progress == 1) {
+        [_zoomAnimation.timer invalidate];
+        
+        [NSTimer scheduledTimerWithTimeInterval:.5 repeats:false block:^(NSTimer * _Nonnull timer) {
+            _zoomAnimation = {};
+            [self setNeedsDisplay];
+        }];
+        
+        
+//        [NSTimer scheduledTimerWithTimeInterval:.5 repeats:false block:^(NSTimer * _Nonnull timer) {
+//            _zoomAnimation = {};
+//            [self setNeedsDisplay];
+//        }];
+    }
 }
 
 
