@@ -569,7 +569,7 @@ const simd::float2 Bezier(float a, float b, float t) {
     
     const CGRect bounds = [self bounds];
     const CGRect rectStart = [self rectForImageRecord:rec].value();
-    CGRect rectEnd = { {}, bounds.size };
+    CGRect rectEnd = {};
     const CGSize contentSize = [[self superlayer] bounds].size;
     const CGFloat contentsScale = [self contentsScale];
     
@@ -585,15 +585,34 @@ const simd::float2 Bezier(float a, float b, float t) {
         const CGFloat containerAxisSize = (thumbAspect>containerAspect ? containerSize.width : containerSize.height);
         const CGFloat scale = containerAxisSize/thumbAxisSize;
         
+//        rectEnd = {
+//            {},
+//            containerSize,
+//        };
+        
         rectEnd.size = { scale*thumbSize.width, scale*thumbSize.height };
-        rectEnd.origin = { (contentSize.width-rectEnd.size.width) / 2, (contentSize.height-rectEnd.size.height) / 2 };
+//        rectEnd.origin.y = 60;
+//        rectEnd.origin.y = ((containerSize.height-rectEnd.size.height) / 2);
+        rectEnd.origin = {
+            _contentInsets.left + (containerSize.width-rectEnd.size.width) / 2,
+            _contentInsets.top + ((containerSize.height-rectEnd.size.height) / 2),
+        };
+        
+        
+//        rectEnd.origin = {
+//            _contentInsets.left,
+//            _contentInsets.top,
+//        };
+        
     }
     
     const simd::float4x4 animationTransform =
         _Scale(1/contentSize.width, 1/contentSize.height, 1)    *
-        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
+//        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
 //        _Scale(scale, scale, 1)    *
-        _Translate(rectEnd.origin.x-rectStart.origin.x, rectEnd.origin.y-rectStart.origin.y, 0)     *
+        _Translate(rectEnd.origin.x, rectEnd.origin.y, 0)     *
+        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
+        _Translate(-rectStart.origin.x, -rectStart.origin.y, 0)     *
         _Scale(contentSize.width, contentSize.height, 1)    ;   // Put into points
     
     {
