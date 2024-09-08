@@ -567,10 +567,9 @@ const simd::float2 Bezier(float a, float b, float t) {
     
     
     
-    const CGRect bounds = [self bounds];
     const CGRect rectStart = [self rectForImageRecord:rec].value();
     CGRect rectEnd = {};
-    const CGSize contentSize = [[self superlayer] bounds].size;
+    const CGSize bounds = [[self superlayer] bounds].size;
     const CGFloat contentsScale = [self contentsScale];
     
     {
@@ -585,23 +584,19 @@ const simd::float2 Bezier(float a, float b, float t) {
         const CGFloat containerAxisSize = (thumbAspect>containerAspect ? containerSize.width : containerSize.height);
         const CGFloat scale = containerAxisSize/thumbAxisSize;
         
-        rectEnd = {
-            {
-                _contentInsets.left + (containerSize.width-rectEnd.size.width) / 2,
-                _contentInsets.top + ((containerSize.height-rectEnd.size.height) / 2),
-            }, {
-                scale*thumbSize.width,
-                scale*thumbSize.height
-            },
+        rectEnd.size = { scale*thumbSize.width, scale*thumbSize.height };
+        rectEnd.origin = {
+            _contentInsets.left + (containerSize.width-rectEnd.size.width) / 2,
+            _contentInsets.top + ((containerSize.height-rectEnd.size.height) / 2),
         };
     }
     
     const simd::float4x4 animationTransform =
-        _Scale(1/contentSize.width, 1/contentSize.height, 1)    *
+        _Scale(1/bounds.width, 1/bounds.height, 1)    *
         _Translate(rectEnd.origin.x, rectEnd.origin.y, 0)     *
         _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
         _Translate(-rectStart.origin.x, -rectStart.origin.y, 0)     *
-        _Scale(contentSize.width, contentSize.height, 1)    ;   // Put into points
+        _Scale(bounds.width, bounds.height, 1)    ;   // Put into points
     
     {
         __weak auto selfWeak = self;
