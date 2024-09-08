@@ -56,11 +56,16 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
     bool _sortNewestFirst;
     CGFloat _containerWidth;
     NSEdgeInsets _contentInsets;
+//    struct {
+////        std::optional<std::chrono::steady_clock::time_point> startTime;
+//        simd::float4x4 transform = matrix_identity_float4x4;
+////        simd::float4x4 transformFinal = matrix_identity_float4x4;
+////        NSTimer* timer;
+//    } _zoomAnimation;
+    
     struct {
-        std::optional<std::chrono::steady_clock::time_point> startTime;
         simd::float4x4 transform = matrix_identity_float4x4;
-        simd::float4x4 transformFinal = matrix_identity_float4x4;
-        NSTimer* timer;
+        float progress = 0;
     } _zoomAnimation;
     
     id<MTLDevice> _device;
@@ -295,7 +300,9 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     const CGSize superlayerSize = [[self superlayer] bounds].size;
     const CGSize viewSize = {superlayerSize.width*contentsScale, superlayerSize.height*contentsScale};
     const Toastbox::Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
-    const simd::float4x4 transform = [self anchoredTransform]*_zoomAnimation.transform;
+    const simd::float4x4 animationTransform = matrix_identity_float4x4 +
+        (_zoomAnimation.transform-matrix_identity_float4x4)*_zoomAnimation.progress;
+    const simd::float4x4 transform = [self anchoredTransform]*animationTransform;
     if (!visibleIndexRange.count) return;
     
     MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
@@ -528,44 +535,8 @@ const simd::float2 Bezier(float a, float b, float t) {
            + t3      * p3;
 }
 
-- (void)_zoomAnimation {
-    using namespace std::chrono;
-    
-    constexpr auto AnimationDuration = milliseconds(10000);
-//    constexpr auto AnimationDuration = milliseconds(350);
-    
-    if (!_zoomAnimation.startTime) _zoomAnimation.startTime = steady_clock::now();
-    
-    const auto timeNow = steady_clock::now();
-    const auto elapsed = timeNow-_zoomAnimation.startTime.value();
-    const float t = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / AnimationDuration.count());
-    const float progress = Bezier(.9, .1, t).y;
-//    const float progress = _Bezier(1,.4,0,.6, t);
-    printf("progress: %f\n", progress);
-    
-    self->_zoomAnimation.transform = matrix_identity_float4x4 +
-        (_zoomAnimation.transformFinal-matrix_identity_float4x4)*progress;
-    
-    [self setNeedsDisplay];
-    
-    if (progress == 1) {
-        [_zoomAnimation.timer invalidate];
-        
-        [NSTimer scheduledTimerWithTimeInterval:.5 repeats:false block:^(NSTimer * _Nonnull timer) {
-            _zoomAnimation = {};
-            [self setNeedsDisplay];
-        }];
-    }
-}
-
-- (void)_animateZoom:(ImageRecordPtr)rec toRect:(CGRect)rect {
+- (void)_animateZoom:(ImageRecordPtr)rec toRect:(CGRect)rect window:(NSWindow*)window {
     assert(rec);
-    
-    
-    
-    
-    
-    
     
     const CGRect rectStart = [self rectForImageRecord:rec].value();
     CGRect rectEnd = {};
@@ -574,7 +545,7 @@ const simd::float2 Bezier(float a, float b, float t) {
     
     {
         const CGSize thumbSize = {(_magnification*_ThumbWidth)/contentsScale, (_magnification*_ThumbHeight)/contentsScale};
-        CGSize containerSize = [[self superlayer] bounds].size;
+        CGSize containerSize = [self bounds].size;
         containerSize.width -= _contentInsets.left + _contentInsets.right;
         containerSize.height -= _contentInsets.top + _contentInsets.bottom;
         
@@ -591,24 +562,55 @@ const simd::float2 Bezier(float a, float b, float t) {
         };
     }
     
-    const simd::float4x4 animationTransform =
-        _Scale(1/bounds.width, 1/bounds.height, 1)    *
-        _Translate(rectEnd.origin.x, rectEnd.origin.y, 0)     *
-        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
-        _Translate(-rectStart.origin.x, -rectStart.origin.y, 0)     *
-        _Scale(bounds.width, bounds.height, 1)    ;   // Put into points
-    
     {
-        __weak auto selfWeak = self;
+        using namespace std::chrono;
+        
         _zoomAnimation = {
-            .timer = [NSTimer timerWithTimeInterval:1/120. repeats:true block:^(NSTimer* timer) {
-                [selfWeak _zoomAnimation];
-            }],
-            .transformFinal = animationTransform,
+            .transform = _Scale(1/bounds.width, 1/bounds.height, 1)    *
+                _Translate(rectEnd.origin.x, rectEnd.origin.y, 0)     *
+                _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
+                _Translate(-rectStart.origin.x, -rectStart.origin.y, 0)     *
+                _Scale(bounds.width, bounds.height, 1),   // Put into points
+            
+            .progress = 0,
         };
-        [_zoomAnimation.timer setTolerance:0];
-        [[NSRunLoop mainRunLoop] addTimer:_zoomAnimation.timer forMode:NSRunLoopCommonModes];
+        
+        const auto startTime = steady_clock::now();
+        for (;;) {
+            constexpr auto AnimationDuration = std::chrono::milliseconds(5000);
+            constexpr auto FramePeriod = std::chrono::duration<int, std::ratio<1,120>>(1);
+            
+            const auto timeNow = steady_clock::now();
+            const auto elapsed = timeNow-startTime;
+            const float t = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / AnimationDuration.count());
+//            const float progress = std::min(1.f, Bezier(.9, .1, t).y);
+            
+            _zoomAnimation.progress = std::min(1.f, Bezier(.9, .1, t).y);
+            printf("progress: %f\n", _zoomAnimation.progress);
+            
+            [self setNeedsDisplay];
+            [window nextEventMatchingMask:0 untilDate:[NSDate distantPast] inMode:NSEventTrackingRunLoopMode dequeue:true];
+            
+            if (_zoomAnimation.progress == 1) break;
+            
+            std::this_thread::sleep_for(FramePeriod);
+        }
+        
+        _zoomAnimation.progress = 0;
+        
     }
+    
+//    {
+//        __weak auto selfWeak = self;
+//        _zoomAnimation = {
+//            .timer = [NSTimer timerWithTimeInterval:1/120. repeats:true block:^(NSTimer* timer) {
+//                [selfWeak _zoomAnimation];
+//            }],
+//            .transformFinal = animationTransform,
+//        };
+//        [_zoomAnimation.timer setTolerance:0];
+//        [[NSRunLoop mainRunLoop] addTimer:_zoomAnimation.timer forMode:NSRunLoopCommonModes];
+//    }
 }
 
 
@@ -808,7 +810,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 }
 
 - (void)animateZoom:(MDCStudio::ImageRecordPtr)rec toRect:(CGRect)rect {
-    [_imageGridLayer _animateZoom:rec toRect:rect];
+    [_imageGridLayer _animateZoom:rec toRect:rect window:[self window]];
 }
 
 - (CGRect)rectForImageIndex:(size_t)idx {
