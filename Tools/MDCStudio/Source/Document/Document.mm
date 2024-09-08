@@ -348,8 +348,12 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     [_active.fullSizeImageView setImageRecord:imageRecord];
     
     if (_center.view != _active.fullSizeImageView) {
-        [self _setCenterView:_active.fullSizeImageView];
+//        [self _setCenterView:_active.fullSizeImageView];
         [_active.fullSizeImageView magnifyToFit];
+        
+        [[_active.imageGridContainerView imageGridView] animateZoom:imageRecord
+            toRect:[_active.fullSizeImageView imageRect]];
+        
 //        [_window makeFirstResponder:_active.fullSizeImageView];
     }
     

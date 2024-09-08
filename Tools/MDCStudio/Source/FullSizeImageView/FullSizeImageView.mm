@@ -487,7 +487,7 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
 }
 
 - (CGRect)imageRect {
-    NSView*const doc = [_scrollView document];
+    NSView*const doc = [_scrollView documentView];
     return [self convertRect:[doc bounds] fromView:doc];
 }
 

@@ -511,89 +511,6 @@ static simd::float4x4 _Translate(float x, float y, float z) {
     };
 }
 
-
-
-
-- (void)zoomAnimation {
-    assert(_selection->images().size() == 1);
-    ImageRecordPtr rec = *_selection->images().begin();
-    const CGRect bounds = [self bounds];
-    const CGRect rectStart = [self rectForImageRecord:rec].value();
-    const CGRect rectEnd = { {}, bounds.size };
-    
-//    simd::float4x4 animationTransform =
-////        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1)  *
-//        _Translate(rectEnd.origin.x-rectStart.origin.x, rectEnd.origin.y-rectStart.origin.y, 0)     ;
-    
-//    const CGRect frame = [self frame];
-//    // We expect our superlayer's size to be the full content size
-//    const CGSize contentSize = [[self superlayer] bounds].size;
-//    const int flip = [self isGeometryFlipped] ? -1 : 1;
-//    const simd::float4x4 transform =
-//        _Translate(-1, -1*flip, 1)                          *
-//        _Scale(2, 2*flip, 1)                                *
-//        _Scale(1/frame.size.width, 1/frame.size.height, 1)  *
-//        _Translate(-_translation.x, -_translation.y, 0)     *
-//        _Scale(contentSize.width, contentSize.height, 1)    ;
-    
-//    simd::float4x4 animationTransform =
-////        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1)  *
-//        _Translate(.01, 0, 0)     ;
-    
-//    simd::float4x4 animationTransform =
-////        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1)  *
-//        _Translate(.01, 0, 0)     ;
-    
-//    const CGRect boundsSize = [self bounds];
-//    // We expect our superlayer's size to be the full content size
-//    const CGSize contentSize = [[self superlayer] bounds].size;
-//    const int flip = [self isGeometryFlipped] ? -1 : 1;
-    
-    
-    
-//    const CGFloat contentsScale = [self contentsScale];
-    const CGSize contentSize = [[self superlayer] bounds].size;
-    const simd::float4x4 animationTransform =
-//        _Translate(-1, -1*flip, 1)                          *
-//        _Scale(2, 2*flip, 1)                                *
-//        _Scale(1/frame.size.width, 1/frame.size.height, 1)  *
-        _Scale(1/contentSize.width, 1/contentSize.height, 1)    *
-        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
-        _Translate(rectEnd.origin.x-rectStart.origin.x, rectEnd.origin.y-rectStart.origin.y, 0)     *
-        _Scale(contentSize.width, contentSize.height, 1)    ;
-    
-    {
-        __weak auto selfWeak = self;
-        _zoomAnimation = {
-            .timer = [NSTimer timerWithTimeInterval:1/120. repeats:true block:^(NSTimer* timer) {
-                [selfWeak _zoomAnimation];
-            }],
-            .transformFinal = animationTransform,
-        };
-        [_zoomAnimation.timer setTolerance:0];
-        [[NSRunLoop mainRunLoop] addTimer:_zoomAnimation.timer forMode:NSRunLoopCommonModes];
-    }
-}
-
-//static float _Bezier(float P0, float P1, float P2, float P3, float t) {
-//    const float k1 = (1-t);
-//    const float k2 = k1*k1; // (1-t)^2
-//    const float k3 = k2*k1; // (1-t)^3
-//    
-//    const float t2 = t*t;   // t^2
-//    const float t3 = t2*t;  // t^3
-//    
-//    return k3*P0 + t*P1*(3*k2) + P2*(3*k1*t2) + P3*t3;
-//}
-
-static float _Bezier(float P0, float P1, float P2, float P3, float t) {
-    return
-        (1-t)*(1-t)*(1-t)*P0    +
-        3*(1-t)*(1-t)*t*P1      +
-        3*(1-t)*(1-t)*P2        +
-        t*t*t*P3                ;
-}
-
 // Bezier(): returns the position of a point `t` on the cubic bezier curve `c`
 const simd::float2 Bezier(float a, float b, float t) {
     const auto t2 = t*t;
@@ -610,27 +527,6 @@ const simd::float2 Bezier(float a, float b, float t) {
            + 3*nt*t2 * p2
            + t3      * p3;
 }
-
-//static float _fitMagnification() {
-//    
-//}
-//
-//- (CGFloat)_fitMagnification {
-//    const CGSize contentSize = [[self documentView] frame].size;
-//    CGSize containerSize = [self bounds].size;
-//    const NSEdgeInsets contentInsets = [self contentInsets];
-//    containerSize.width -= contentInsets.left + contentInsets.right;
-//    containerSize.height -= contentInsets.top + contentInsets.bottom;
-//    
-//    const CGFloat contentAspect = contentSize.width/contentSize.height;
-//    const CGFloat containerAspect = containerSize.width/containerSize.height;
-//    
-//    const CGFloat contentAxisSize = (contentAspect>containerAspect ? contentSize.width : contentSize.height);
-//    const CGFloat containerAxisSize = (contentAspect>containerAspect ? containerSize.width : containerSize.height);
-//    
-//    const CGFloat fitMag = containerAxisSize/contentAxisSize;
-//    return fitMag;
-//}
 
 - (void)_zoomAnimation {
     using namespace std::chrono;
@@ -659,14 +555,63 @@ const simd::float2 Bezier(float a, float b, float t) {
             _zoomAnimation = {};
             [self setNeedsDisplay];
         }];
-        
-        
-//        [NSTimer scheduledTimerWithTimeInterval:.5 repeats:false block:^(NSTimer * _Nonnull timer) {
-//            _zoomAnimation = {};
-//            [self setNeedsDisplay];
-//        }];
     }
 }
+
+- (void)_animateZoom:(ImageRecordPtr)rec toRect:(CGRect)rect {
+    assert(rec);
+    
+    
+    
+    
+    
+    
+    
+    const CGRect bounds = [self bounds];
+    const CGRect rectStart = [self rectForImageRecord:rec].value();
+    CGRect rectEnd = { {}, bounds.size };
+    const CGSize contentSize = [[self superlayer] bounds].size;
+    const CGFloat contentsScale = [self contentsScale];
+    
+    {
+        const CGSize thumbSize = {(_magnification*_ThumbWidth)/contentsScale, (_magnification*_ThumbHeight)/contentsScale};
+        CGSize containerSize = [[self superlayer] bounds].size;
+        containerSize.width -= _contentInsets.left + _contentInsets.right;
+        containerSize.height -= _contentInsets.top + _contentInsets.bottom;
+        
+        const CGFloat thumbAspect = thumbSize.width/thumbSize.height;
+        const CGFloat containerAspect = containerSize.width/containerSize.height;
+        const CGFloat thumbAxisSize = (thumbAspect>containerAspect ? thumbSize.width : thumbSize.height);
+        const CGFloat containerAxisSize = (thumbAspect>containerAspect ? containerSize.width : containerSize.height);
+        const CGFloat scale = containerAxisSize/thumbAxisSize;
+        
+        rectEnd.size = { scale*thumbSize.width, scale*thumbSize.height };
+        rectEnd.origin = { (contentSize.width-rectEnd.size.width) / 2, (contentSize.height-rectEnd.size.height) / 2 };
+    }
+    
+    const simd::float4x4 animationTransform =
+        _Scale(1/contentSize.width, 1/contentSize.height, 1)    *
+        _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
+//        _Scale(scale, scale, 1)    *
+        _Translate(rectEnd.origin.x-rectStart.origin.x, rectEnd.origin.y-rectStart.origin.y, 0)     *
+        _Scale(contentSize.width, contentSize.height, 1)    ;   // Put into points
+    
+    {
+        __weak auto selfWeak = self;
+        _zoomAnimation = {
+            .timer = [NSTimer timerWithTimeInterval:1/120. repeats:true block:^(NSTimer* timer) {
+                [selfWeak _zoomAnimation];
+            }],
+            .transformFinal = animationTransform,
+        };
+        [_zoomAnimation.timer setTolerance:0];
+        [[NSRunLoop mainRunLoop] addTimer:_zoomAnimation.timer forMode:NSRunLoopCommonModes];
+    }
+}
+
+
+
+
 
 
 // MARK: - ImageSelection Observer
@@ -858,6 +803,10 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 
 - (void)setSortNewestFirst:(bool)x {
     [_imageGridLayer setSortNewestFirst:x];
+}
+
+- (void)animateZoom:(MDCStudio::ImageRecordPtr)rec toRect:(CGRect)rect {
+    [_imageGridLayer _animateZoom:rec toRect:rect];
 }
 
 - (CGRect)rectForImageIndex:(size_t)idx {
@@ -1212,8 +1161,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
             _selectionHead = {};
             [_selectionRectLayer setHidden:true];
             if ([event clickCount] == 2) {
-                [_imageGridLayer zoomAnimation];
-//                [[self window] tryToPerform:@selector(_showImage:) with:self];
+                [[self window] tryToPerform:@selector(_showImage:) with:self];
             }
         }
         
