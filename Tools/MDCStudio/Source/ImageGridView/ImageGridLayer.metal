@@ -14,7 +14,8 @@ struct VertexOutput {
     float4 posView [[position]];
     float2 posNorm;
     float2 posPx;
-    float opacity;
+    float zoomOpacity;
+    float zoomSelectionOpacity;
 };
 
 static constexpr constant float2 _Verts[6] = {
@@ -52,7 +53,8 @@ vertex VertexOutput VertexShader(
         )
     );
     
-    const float opacity = (idxRec!=ctx.zoom.focusIdx ? 1-ctx.zoom.progress : 1);
+    const float zoomOpacity = (idxRec!=ctx.zoom.focusIdx ? 1-ctx.zoom.progress : 1);
+    const float zoomSelectionOpacity = 1-ctx.zoom.progress;
     
     return VertexOutput{
         .idx = idxChunk,
@@ -60,7 +62,8 @@ vertex VertexOutput VertexShader(
         .posView = ctx.transform * float4(vnorm, 0, 1),
         .posNorm = _Verts[vidx],
         .posPx = float2(voff),
-        .opacity = opacity,
+        .zoomOpacity = zoomOpacity,
+        .zoomSelectionOpacity = zoomSelectionOpacity,
     };
 }
 
@@ -97,7 +100,9 @@ static float4 _Frag(
     
     const float4 c = txt.sample({}, in.posNorm, in.idx);
     if (in.selected && (metal::any(pos < selectionBorderSize) || metal::any(pos >= (cellSize-selectionBorderSize)))) {
-        return blendColorDodge(SelectionBorderColor1, blendOver(SelectionBorderColor2, c));
+        const float4 selectionColor = blendColorDodge(SelectionBorderColor1, blendOver(SelectionBorderColor2, c));
+        return blendOver(selectionColor*float4(1,1,1,in.zoomSelectionOpacity), c);
+//        return selectionColor*float4(1,1,1,in.zoomSelectionOpacity) + c*float4(1,1,1,1-in.zoomSelectionOpacity);
     }
     return c;
 }
@@ -109,7 +114,7 @@ fragment float4 FragmentShader(
     texture2d<float> placeholderTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-    return _Frag(ctx, loadCounts, txt, placeholderTxt, in) * float4(1,1,1,in.opacity);
+    return _Frag(ctx, loadCounts, txt, placeholderTxt, in) * float4(1,1,1,in.zoomOpacity);
 }
 
 } // namespace ImageGridLayerShader
