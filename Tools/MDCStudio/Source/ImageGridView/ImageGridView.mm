@@ -60,6 +60,7 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
     struct {
         std::optional<std::chrono::steady_clock::time_point> timeStart;
         simd::float4x4 transform = matrix_identity_float4x4;
+        size_t focusIdx = 0;
     } _zoomAnimation;
     
     id<MTLDevice> _device;
@@ -295,7 +296,8 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     const CGSize viewSize = {superlayerSize.width*contentsScale, superlayerSize.height*contentsScale};
     const Toastbox::Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
     
-    simd::float4x4 animationTransform = matrix_identity_float4x4;
+    simd::float4x4 zoomTransform = matrix_identity_float4x4;
+    float zoomProgress = 0;
     if (_zoomAnimation.timeStart) {
         using namespace std::chrono;
         
@@ -303,19 +305,19 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         
         const auto elapsed = steady_clock::now()-*_zoomAnimation.timeStart;
         const float t = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / ZoomAnimationDuration.count());
-        const float progress = Bezier(.9, .1, t).y;
+        zoomProgress = Bezier(.9, .1, t).y;
         
-        printf("progress: %f\n", progress);
+        printf("zoomProgress: %f\n", zoomProgress);
         
-        animationTransform = matrix_identity_float4x4 +
-            (_zoomAnimation.transform-matrix_identity_float4x4)*progress;
+        zoomTransform = matrix_identity_float4x4 +
+            (_zoomAnimation.transform-matrix_identity_float4x4)*zoomProgress;
         
-        if (progress == 1) {
+        if (zoomProgress == 1) {
             _zoomAnimation.timeStart = std::nullopt;
         }
     }
     
-    const simd::float4x4 transform = [self anchoredTransform]*animationTransform;
+    const simd::float4x4 transform = [self anchoredTransform]*zoomTransform;
     if (!visibleIndexRange.count) return;
     
     MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
@@ -409,6 +411,10 @@ static MTLTextureDescriptor* _TextureDescriptor() {
                 .base = (uint32_t)_selectionDraw.base,
                 .count = (uint32_t)_selectionDraw.count,
                 .borderSize = selectionBorderSize,
+            },
+            .zoom = {
+                .focusIdx = (uint32_t)_zoomAnimation.focusIdx,
+                .progress = zoomProgress,
             },
         };
         
@@ -551,6 +557,18 @@ const simd::float2 Bezier(float a, float b, float t) {
 - (void)_animateZoom:(ImageRecordPtr)rec toRect:(CGRect)rect window:(NSWindow*)window {
     assert(rec);
     
+    size_t recIdx = 0;
+    {
+        auto lock = std::unique_lock(*_imageLibrary);
+        auto find = _imageLibrary->find(rec);
+        assert(find != _imageLibrary->end());
+        recIdx = find-_imageLibrary->begin();
+//        ImageRecordIterAny begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
+//        ImageRecordIterAny end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
+//        ImageRecordIterAny newSelectionFirst = ImageLibrary::Find(begin, end, _selectionHead);
+    }
+    
+    
     const CGRect rectStart = [self rectForImageRecord:rec].value();
     CGRect rectEnd = {};
     const CGSize contentSize = [[self superlayer] bounds].size;
@@ -590,6 +608,8 @@ const simd::float2 Bezier(float a, float b, float t) {
                 _Scale(scale, scale, 1) *
                 _Translate(-rectStart.origin.x, -rectStart.origin.y, 0)     *
                 _Scale(contentSize.width, contentSize.height, 1),   // Put into points
+            
+            .focusIdx = recIdx,
         };
         
         while (_zoomAnimation.timeStart) {

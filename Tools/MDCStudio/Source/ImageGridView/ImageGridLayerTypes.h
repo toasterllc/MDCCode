@@ -29,6 +29,11 @@ struct RenderContext {
         uint32_t count = 0;
         uint32_t borderSize = 0;
     } selection;
+    
+    struct {
+        uint32_t focusIdx = 0;
+        float progress = 0;
+    } zoom;
 };
 
 } // namespace ImageGridLayerTypes

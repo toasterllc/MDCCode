@@ -14,6 +14,7 @@ struct VertexOutput {
     float4 posView [[position]];
     float2 posNorm;
     float2 posPx;
+    float opacity;
 };
 
 static constexpr constant float2 _Verts[6] = {
@@ -51,12 +52,15 @@ vertex VertexOutput VertexShader(
         )
     );
     
+    const float opacity = (idxRec!=ctx.zoom.focusIdx ? 1-ctx.zoom.progress : 1);
+    
     return VertexOutput{
         .idx = idxChunk,
         .selected = selected,
         .posView = ctx.transform * float4(vnorm, 0, 1),
         .posNorm = _Verts[vidx],
         .posPx = float2(voff),
+        .opacity = opacity,
     };
 }
 
@@ -73,12 +77,12 @@ static float4 blendOver(float4 a, float4 b) {
     return float4(oc, oa);
 }
 
-fragment float4 FragmentShader(
-    constant RenderContext& ctx [[buffer(0)]],
-    constant uint32_t* loadCounts [[buffer(1)]],
-    texture2d_array<float> txt [[texture(0)]],
-    texture2d<float> placeholderTxt [[texture(1)]],
-    VertexOutput in [[stage_in]]
+static float4 _Frag(
+    constant RenderContext& ctx,
+    constant uint32_t* loadCounts,
+    texture2d_array<float> txt,
+    texture2d<float> placeholderTxt,
+    VertexOutput in
 ) {
     const uint2 pos = uint2(in.posPx);
     if (!loadCounts[in.idx]) {
@@ -96,6 +100,16 @@ fragment float4 FragmentShader(
         return blendColorDodge(SelectionBorderColor1, blendOver(SelectionBorderColor2, c));
     }
     return c;
+}
+
+fragment float4 FragmentShader(
+    constant RenderContext& ctx [[buffer(0)]],
+    constant uint32_t* loadCounts [[buffer(1)]],
+    texture2d_array<float> txt [[texture(0)]],
+    texture2d<float> placeholderTxt [[texture(1)]],
+    VertexOutput in [[stage_in]]
+) {
+    return _Frag(ctx, loadCounts, txt, placeholderTxt, in) * float4(1,1,1,in.opacity);
 }
 
 } // namespace ImageGridLayerShader
