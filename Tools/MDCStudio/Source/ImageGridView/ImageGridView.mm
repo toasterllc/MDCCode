@@ -299,7 +299,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     if (_zoomAnimation.timeStart) {
         using namespace std::chrono;
         
-        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(500);
+        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(1500);
         
         const auto elapsed = steady_clock::now()-*_zoomAnimation.timeStart;
         const float t = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / ZoomAnimationDuration.count());
@@ -553,12 +553,13 @@ const simd::float2 Bezier(float a, float b, float t) {
     
     const CGRect rectStart = [self rectForImageRecord:rec].value();
     CGRect rectEnd = {};
-    const CGSize bounds = [[self superlayer] bounds].size;
+    const CGSize contentSize = [[self superlayer] bounds].size;
+    const CGSize clipSize = [[[self superlayer] superlayer] bounds].size;
     const CGFloat contentsScale = [self contentsScale];
     
     {
         const CGSize thumbSize = {(_magnification*_ThumbWidth)/contentsScale, (_magnification*_ThumbHeight)/contentsScale};
-        CGSize containerSize = [self bounds].size;
+        CGSize containerSize = clipSize;
         containerSize.width -= _contentInsets.left + _contentInsets.right;
         containerSize.height -= _contentInsets.top + _contentInsets.bottom;
         
@@ -578,14 +579,17 @@ const simd::float2 Bezier(float a, float b, float t) {
     {
         using namespace std::chrono;
         
+        const CGFloat scale = rectEnd.size.width/rectStart.size.width;
+        
         _zoomAnimation = {
             .timeStart = std::chrono::steady_clock::now(),
             
-            .transform = _Scale(1/bounds.width, 1/bounds.height, 1)    *
+            .transform = _Scale(1/contentSize.width, 1/contentSize.height, 1)    *
+//                _Translate(0, 60, 0)     *
                 _Translate(rectEnd.origin.x, rectEnd.origin.y, 0)     *
-                _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
+                _Scale(scale, scale, 1) *
                 _Translate(-rectStart.origin.x, -rectStart.origin.y, 0)     *
-                _Scale(bounds.width, bounds.height, 1),   // Put into points
+                _Scale(contentSize.width, contentSize.height, 1),   // Put into points
         };
         
         while (_zoomAnimation.timeStart) {
@@ -1392,7 +1396,7 @@ static CGFloat _NextMagnification(CGFloat mag, int direction) {
     [[self floatingSubviewContainer] addSubview:_headerView];
     
     ImageGridLayer* layer = Toastbox::Cast<ImageGridLayer*>([[self document] layer]);
-    [layer setContentInsets:{[_headerView intrinsicContentSize].height+10,0,0,0}];
+    [layer setContentInsets:{[_headerView intrinsicContentSize].height+10,0,10,0}];
     
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_headerView]"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_headerView)]];
