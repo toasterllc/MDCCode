@@ -56,16 +56,10 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
     bool _sortNewestFirst;
     CGFloat _containerWidth;
     NSEdgeInsets _contentInsets;
-//    struct {
-////        std::optional<std::chrono::steady_clock::time_point> startTime;
-//        simd::float4x4 transform = matrix_identity_float4x4;
-////        simd::float4x4 transformFinal = matrix_identity_float4x4;
-////        NSTimer* timer;
-//    } _zoomAnimation;
     
     struct {
+        std::optional<std::chrono::steady_clock::time_point> timeStart;
         simd::float4x4 transform = matrix_identity_float4x4;
-        float progress = 0;
     } _zoomAnimation;
     
     id<MTLDevice> _device;
@@ -300,8 +294,27 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     const CGSize superlayerSize = [[self superlayer] bounds].size;
     const CGSize viewSize = {superlayerSize.width*contentsScale, superlayerSize.height*contentsScale};
     const Toastbox::Grid::IndexRange visibleIndexRange = _VisibleIndexRange(_grid, frame, contentsScale);
-    const simd::float4x4 animationTransform = matrix_identity_float4x4 +
-        (_zoomAnimation.transform-matrix_identity_float4x4)*_zoomAnimation.progress;
+    
+    simd::float4x4 animationTransform = matrix_identity_float4x4;
+    if (_zoomAnimation.timeStart) {
+        using namespace std::chrono;
+        
+        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(500);
+        
+        const auto elapsed = steady_clock::now()-*_zoomAnimation.timeStart;
+        const float t = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / ZoomAnimationDuration.count());
+        const float progress = Bezier(.9, .1, t).y;
+        
+        printf("progress: %f\n", progress);
+        
+        animationTransform = matrix_identity_float4x4 +
+            (_zoomAnimation.transform-matrix_identity_float4x4)*progress;
+        
+        if (progress == 1) {
+            _zoomAnimation.timeStart = std::nullopt;
+        }
+    }
+    
     const simd::float4x4 transform = [self anchoredTransform]*animationTransform;
     if (!visibleIndexRange.count) return;
     
@@ -566,38 +579,23 @@ const simd::float2 Bezier(float a, float b, float t) {
         using namespace std::chrono;
         
         _zoomAnimation = {
+            .timeStart = std::chrono::steady_clock::now(),
+            
             .transform = _Scale(1/bounds.width, 1/bounds.height, 1)    *
                 _Translate(rectEnd.origin.x, rectEnd.origin.y, 0)     *
                 _Scale(rectEnd.size.width/rectStart.size.width, rectEnd.size.height/rectStart.size.height, 1) *
                 _Translate(-rectStart.origin.x, -rectStart.origin.y, 0)     *
                 _Scale(bounds.width, bounds.height, 1),   // Put into points
-            
-            .progress = 0,
         };
         
-        const auto startTime = steady_clock::now();
-        for (;;) {
-            constexpr auto AnimationDuration = std::chrono::milliseconds(5000);
-            constexpr auto FramePeriod = std::chrono::duration<int, std::ratio<1,120>>(1);
-            
-            const auto timeNow = steady_clock::now();
-            const auto elapsed = timeNow-startTime;
-            const float t = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / AnimationDuration.count());
-//            const float progress = std::min(1.f, Bezier(.9, .1, t).y);
-            
-            _zoomAnimation.progress = std::min(1.f, Bezier(.9, .1, t).y);
-            printf("progress: %f\n", _zoomAnimation.progress);
+        while (_zoomAnimation.timeStart) {
+            constexpr auto FramePeriod = std::chrono::duration<int, std::ratio<1,240>>(1);
             
             [self setNeedsDisplay];
             [window nextEventMatchingMask:0 untilDate:[NSDate distantPast] inMode:NSEventTrackingRunLoopMode dequeue:true];
             
-            if (_zoomAnimation.progress == 1) break;
-            
             std::this_thread::sleep_for(FramePeriod);
         }
-        
-        _zoomAnimation.progress = 0;
-        
     }
     
 //    {
