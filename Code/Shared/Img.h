@@ -63,7 +63,7 @@ namespace Thumb {
 // StatsSubsampleFactor: We only sample 1/16 of pixels for highlights/shadows
 constexpr uint16_t StatsSubsampleFactor = 16;
 
-constexpr uint16_t CoarseIntTimeMax     = 0xFFFF;
+constexpr uint16_t CoarseIntTimeMax     = 0x3FFF;
 constexpr uint16_t FineIntTimeMax       = 0x3FFF;
 constexpr uint16_t AnalogGainMax        = 63;
 constexpr Pixel PixelMax                = 0x0FFF; // 12 bit values
