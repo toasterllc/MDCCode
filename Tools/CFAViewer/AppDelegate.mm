@@ -193,7 +193,6 @@ struct RawImage {
     MDCDevicesManagerGlobal(MDCStudio::Object::Create<MDCStudio::MDCDevicesManager>(handler));
 
     _whiteBalanceColor = {0.263170, 0.278725, 0.097797};
-    __weak auto weakSelf = self;
     
     _device = MTLCreateSystemDefaultDevice();
     
