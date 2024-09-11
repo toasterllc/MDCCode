@@ -1493,7 +1493,7 @@ static SampleRect _SampleRectForCGRect(CGRect rect, size_t width, size_t height)
         
         Color<ColorSpace::Raw> c;
         for (size_t i=0; i<3; i++) {
-            if (counts[i]) c[i] = (double)vals[i] / (ImagePixelMax*counts[i]);
+            if (counts[i]) c[i] = (double)vals[i] / (Img::PixelMax*counts[i]);
         }
         _whiteBalanceColor = c;
         
