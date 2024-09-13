@@ -53,8 +53,8 @@ vertex VertexOutput VertexShader(
         )
     );
     
-    const float zoomOpacity = (idxRec!=ctx.zoom.focusIdx ? 1-ctx.zoom.progress : 1);
-    const float zoomSelectionOpacity = 1-ctx.zoom.progress;
+    const float zoomOpacity = std::clamp((idxRec!=ctx.zoom.focusIdx ? 1-ctx.zoom.progress : 1), 0., 1.);
+    const float zoomSelectionOpacity = std::clamp(1-ctx.zoom.progress, 0., 1.);
     
     return VertexOutput{
         .idx = idxChunk,

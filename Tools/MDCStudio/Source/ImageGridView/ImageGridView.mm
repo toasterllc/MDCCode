@@ -135,6 +135,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     [pipelineDescriptor setVertexFunction:vertexShader];
     [pipelineDescriptor setFragmentFunction:fragmentShader];
     
+//    [[pipelineDescriptor colorAttachments][0] setPixelFormat:MTLPixelFormatBGR10A2Unorm];
     [[pipelineDescriptor colorAttachments][0] setPixelFormat:[self pixelFormat]];
     
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
@@ -288,6 +289,46 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     return ct;
 }
 
+//static float _EaseOut(float t) {
+//    return 1-std::pow(1-t, 3);
+//}
+
+
+static float _Timing(float x) {
+    constexpr float Y0 = +0;
+    constexpr float Y1 = +1;
+    constexpr float S0 = +2;
+    constexpr float S1 = -2;
+    
+    return
+        + Y0 *                      std::pow(1-x, 3)
+        + (3 * Y0 + S0) * x *       std::pow(1-x, 2)
+        + (3 * Y1 - S1) * (1-x) *   std::pow(x, 2)
+        + Y1 *                      std::pow(x, 3);
+    
+//    (1-x)^3 * y0
+//    3x * (1-x)^2 * (y0 + (1/3)*s0)
+//    3 * x^2 * (1-x) * (y1 - (1/3)*s1)
+//    x^3 * y1
+}
+
+//// Bezier(): returns the position of a point `t` on the cubic bezier curve `c`
+//const simd::float2 Bezier(float a, float b, float t) {
+//    const auto t2 = t*t;
+//    const auto t3 = t*t2;
+//    const auto nt = 1-t;
+//    const auto nt2 = nt*nt;
+//    const auto nt3 = nt*nt2;
+//    const simd::float2 p0 = { 0.0, 0.0 };
+//    const simd::float2 p1 = { 0.0,   a };
+//    const simd::float2 p2 = {   b, 1.0 };
+//    const simd::float2 p3 = { 1.0, 1.0 };
+//    return + nt3     * p0
+//           + 3*nt2*t * p1
+//           + 3*nt*t2 * p2
+//           + t3      * p3;
+//}
+
 // ImageLibrary must be locked!
 - (void)_display:(id<MTLTexture>)drawableTxt commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     const CGRect frame = [self frame];
@@ -301,11 +342,15 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     if (_zoomAnimation.timeStart) {
         using namespace std::chrono;
         
-        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(1500);
+        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(350);
+//        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(400);
+//        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(600);
+//        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(10000);
         
         const auto elapsed = steady_clock::now()-*_zoomAnimation.timeStart;
         const float t = std::min(1.f, (float)duration_cast<milliseconds>(elapsed).count() / ZoomAnimationDuration.count());
-        zoomProgress = Bezier(.9, .1, t).y;
+//        zoomProgress = Bezier(.9, .1, t).y;
+        zoomProgress = _Timing(t);
         
         printf("zoomProgress: %f\n", zoomProgress);
         
@@ -537,22 +582,22 @@ static simd::float4x4 _Translate(float x, float y, float z) {
     };
 }
 
-// Bezier(): returns the position of a point `t` on the cubic bezier curve `c`
-const simd::float2 Bezier(float a, float b, float t) {
-    const auto t2 = t*t;
-    const auto t3 = t*t2;
-    const auto nt = 1-t;
-    const auto nt2 = nt*nt;
-    const auto nt3 = nt*nt2;
-    const simd::float2 p0 = { 0.0, 0.0 };
-    const simd::float2 p1 = { 0.0,   a };
-    const simd::float2 p2 = {   b, 1.0 };
-    const simd::float2 p3 = { 1.0, 1.0 };
-    return + nt3     * p0
-           + 3*nt2*t * p1
-           + 3*nt*t2 * p2
-           + t3      * p3;
-}
+//// Bezier(): returns the position of a point `t` on the cubic bezier curve `c`
+//const simd::float2 Bezier(float a, float b, float t) {
+//    const auto t2 = t*t;
+//    const auto t3 = t*t2;
+//    const auto nt = 1-t;
+//    const auto nt2 = nt*nt;
+//    const auto nt3 = nt*nt2;
+//    const simd::float2 p0 = { 0.0, 0.0 };
+//    const simd::float2 p1 = { 0.0,   a };
+//    const simd::float2 p2 = {   b, 1.0 };
+//    const simd::float2 p3 = { 1.0, 1.0 };
+//    return + nt3     * p0
+//           + 3*nt2*t * p1
+//           + 3*nt*t2 * p2
+//           + t3      * p3;
+//}
 
 - (void)_animateZoom:(ImageRecordPtr)rec toRect:(CGRect)rect window:(NSWindow*)window {
     assert(rec);
@@ -613,7 +658,8 @@ const simd::float2 Bezier(float a, float b, float t) {
         };
         
         while (_zoomAnimation.timeStart) {
-            constexpr auto FramePeriod = std::chrono::duration<int, std::ratio<1,240>>(1);
+            constexpr auto FramePeriod = std::chrono::duration<int, std::ratio<1,480>>(1);
+//            constexpr auto FramePeriod = std::chrono::duration<int, std::ratio<1,240>>(1);
             
             [self setNeedsDisplay];
             [window nextEventMatchingMask:0 untilDate:[NSDate distantPast] inMode:NSEventTrackingRunLoopMode dequeue:true];
