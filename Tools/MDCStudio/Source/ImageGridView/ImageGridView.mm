@@ -297,8 +297,8 @@ static MTLTextureDescriptor* _TextureDescriptor() {
 static float _Timing(float x) {
     constexpr float Y0 = +0;
     constexpr float Y1 = +1;
-    constexpr float S0 = +2;
-    constexpr float S1 = -2;
+    constexpr float S0 = +1.5;
+    constexpr float S1 = -1.5;
     
     return
         + Y0 *                      std::pow(1-x, 3)
@@ -342,9 +342,11 @@ static float _Timing(float x) {
     if (_zoomAnimation.timeStart) {
         using namespace std::chrono;
         
-        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(350);
+//        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(300);
+//        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(350);
 //        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(400);
 //        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(600);
+        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(3000);
 //        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(10000);
         
         const auto elapsed = steady_clock::now()-*_zoomAnimation.timeStart;
@@ -352,12 +354,12 @@ static float _Timing(float x) {
 //        zoomProgress = Bezier(.9, .1, t).y;
         zoomProgress = _Timing(t);
         
-        printf("zoomProgress: %f\n", zoomProgress);
+        printf("zoomProgress: %.4f -> %.4f\n", t, zoomProgress);
         
         zoomTransform = matrix_identity_float4x4 +
             (_zoomAnimation.transform-matrix_identity_float4x4)*zoomProgress;
         
-        if (zoomProgress == 1) {
+        if (t == 1) {
             _zoomAnimation.timeStart = std::nullopt;
         }
     }
