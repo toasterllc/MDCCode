@@ -342,11 +342,11 @@ static float _Timing(float x) {
     if (_zoomAnimation.timeStart) {
         using namespace std::chrono;
         
-//        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(300);
+        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(300);
 //        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(350);
 //        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(400);
 //        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(600);
-        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(3000);
+//        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(3000);
 //        constexpr auto ZoomAnimationDuration = std::chrono::milliseconds(10000);
         
         const auto elapsed = steady_clock::now()-*_zoomAnimation.timeStart;
