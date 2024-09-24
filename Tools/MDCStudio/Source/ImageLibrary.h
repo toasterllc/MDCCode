@@ -69,7 +69,7 @@ static_assert(!(sizeof(ImageRecord) % 8));
 // Ensure that the thumbnail is aligned to a 4-pixel boundary
 static_assert(!(offsetof(ImageRecord, thumb) % 16));
 
-struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
+struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
     using RecordStore::RecordStore;
     using IterAny = Toastbox::IterAny<RecordRefConstIter>;
     
@@ -96,9 +96,9 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
         else                 return lib.end();
     }
     
-    void read(RecordStore::Path path) {
+    void read(const RecordStore::Config& cfg) {
         try {
-            std::ifstream f = RecordStore::read(path);
+            std::ifstream f = RecordStore::read(cfg);
             _StateRead(f, _state);
         } catch (const std::exception& e) {
             printf("Recreating ImageLibrary; cause: %s\n", e.what());
