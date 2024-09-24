@@ -80,6 +80,7 @@ fragment float4 FragmentShader(
     texture2d<float> placeholderTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
+    #warning TODO: move as much of this into the vertex shader as possible (ie accessing loadCounts[in.idx])
     const uint2 pos = uint2(in.posPx);
     if (!loadCounts[in.idx]) {
         constexpr float PlaceholderAlpha = 0.05;
