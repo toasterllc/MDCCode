@@ -88,7 +88,7 @@ static struct {
         
         NSDraggingImageComponent* icon = [[NSDraggingImageComponent alloc] initWithKey:NSDraggingImageComponentIconKey];
         Toastbox::Renderer renderer;
-        Toastbox::Renderer::Txt tmp = ThumbTextureForImageRecord(renderer, *selfStrong->_imageRecord);
+        Toastbox::Renderer::Txt tmp = ThumbTextureForImageRecord(renderer, selfStrong->_imageRecord);
         Toastbox::Renderer::Txt thumbTxt = renderer.textureCreate(tmp, MTLPixelFormatRGBA8Unorm_sRGB);
         renderer.render(thumbTxt, tmp);
         [icon setContents:renderer.imageCreate(thumbTxt)];
@@ -102,7 +102,7 @@ static struct {
 
 - (NSString*)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider
     fileNameForType:(NSString*)fileType {
-    return @(ImageExporter::FileNameForImageRecord(*_imageRecord, PrefsUtil::DragAndDrop::ExportFormat()).c_str());
+    return @(ImageExporter::FileNameForImageRecord(*_imageRecord, &PrefsUtil::DragAndDrop::ExportFormat()).c_str());
 }
 
 - (void)filePromiseProvider:(NSFilePromiseProvider*)filePromiseProvider writePromiseToURL:(NSURL*)url
@@ -129,7 +129,7 @@ static struct {
     // Short-circuit if we've been cancelled
     if ([_progressDialog canceled]) return;
     
-    const ImageExporter::Format* fmt = PrefsUtil::DragAndDrop::ExportFormat();
+    const ImageExporter::Format& fmt = PrefsUtil::DragAndDrop::ExportFormat();
     const std::filesystem::path path([url fileSystemRepresentation]);
     Toastbox::Renderer renderer;
     ImageExporter::Export(renderer, *_imageRecord, image, fmt, path);

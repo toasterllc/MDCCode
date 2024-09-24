@@ -69,7 +69,7 @@ static_assert(!(sizeof(ImageRecord) % 8));
 // Ensure that the thumbnail is aligned to a 4-pixel boundary
 static_assert(!(offsetof(ImageRecord, thumb) % 16));
 
-struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
+struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
     using RecordStore::RecordStore;
     using IterAny = Toastbox::IterAny<RecordRefConstIter>;
     
@@ -86,6 +86,55 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
         std::set<RecordStrongRef> records;
     };
     
+    struct Descriptor {
+        const char* name = nullptr;
+        size_t thumbWidth = 0;
+        size_t thumbHeight = 0;
+        size_t chunkRecordCap = 0; // The number of ImageRecords per chunk
+    };
+    
+    struct Descriptors {
+        static constexpr const inline Descriptor  Small      = { "Small",       128,  72, 2048 };
+        static constexpr const inline Descriptor  Medium     = { "Medium",      256, 144,  512 };
+        static constexpr const inline Descriptor  Large      = { "Large",       384, 216,  256 };
+        static constexpr const inline Descriptor  ExtraLarge = { "Extra Large", 512, 288,  128 };
+        static constexpr const inline Descriptor* All[] = {
+            &Small,
+            &Medium,
+            &Large,
+            &ExtraLarge,
+        };
+    };
+    
+    static constexpr size_t RecordSizeForDescriptor(const Descriptor& desc) {
+        return sizeof(ImageRecord) + desc.thumbWidth*desc.thumbHeight;
+    }
+    
+    static const Descriptor& DescriptorForRecordSize(size_t recordSize) {
+        switch (recordSize) {
+        case RecordSizeForDescriptor(Descriptors::Small):       return Descriptors::Small;
+        case RecordSizeForDescriptor(Descriptors::Medium):      return Descriptors::Medium;
+        case RecordSizeForDescriptor(Descriptors::Large):       return Descriptors::Large;
+        case RecordSizeForDescriptor(Descriptors::ExtraLarge):  return Descriptors::ExtraLarge;
+        default: abort();
+        }
+    }
+    
+    static const Descriptor& DescriptorFromThumbWidth(size_t thumbWidth) {
+        switch (thumbWidth) {
+        case Descriptors::Small.thumbWidth:       return Descriptors::Small;
+        case Descriptors::Medium.thumbWidth:      return Descriptors::Medium;
+        case Descriptors::Large.thumbWidth:       return Descriptors::Large;
+        case Descriptors::ExtraLarge.thumbWidth:  return Descriptors::ExtraLarge;
+        default: abort();
+        }
+    }
+    
+//    static size_t DataLength(const Descriptor& desc) {
+//        // Compressed thumbnail data length is one byte per pixel
+//        return desc.width * desc.height;
+//    }
+    
     static IterAny BeginSorted(const ImageLibrary& lib, bool sortNewestFirst) {
         if (sortNewestFirst) return lib.rbegin();
         else                 return lib.begin();
@@ -96,9 +145,19 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
         else                 return lib.end();
     }
     
-    void read(RecordStore::Path path) {
+    void init(const Descriptor& desc) {
+        printf("ImageLibrary::init()\n");
+        Object::init(); // Call super
+        _desc = &desc;
+    }
+    
+    void read(const RecordStore::Path& dir) {
         try {
-            std::ifstream f = RecordStore::read(path);
+            std::ifstream f = RecordStore::read({
+                .path = dir,
+                .recordSize = RecordSizeForDescriptor(*_desc),
+                .chunkRecordCap = _desc->chunkRecordCap,
+            });
             _StateRead(f, _state);
         } catch (const std::exception& e) {
             printf("Recreating ImageLibrary; cause: %s\n", e.what());
@@ -157,6 +216,8 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
     RecordRefConstIter find(const RecordRef& ref) {
         return RecordStore::Find(begin(), end(), ref);
     }
+    
+    const Descriptor& descriptor() const { return *_desc; }
     
     void imageIdEnd(Img::Id x) { _state.imageIdEnd = x; }
     Img::Id imageIdEnd() const { return _state.imageIdEnd; }
@@ -220,6 +281,7 @@ struct ImageLibrary : Object, RecordStore<ImageRecord, 128>, std::mutex {
         f.write((char*)&serialized, sizeof(serialized));
     }
     
+    const Descriptor* _desc = nullptr;
     _State _state;
 };
 using ImageLibraryPtr = SharedPtr<ImageLibrary>;

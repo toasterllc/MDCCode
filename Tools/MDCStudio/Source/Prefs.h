@@ -7,6 +7,10 @@
 namespace MDCStudio {
 
 struct Prefs : Object {
+    struct Event : Object::Event {
+        std::string key;
+    };
+    
     // _defaults: needs to be initialized before all other members, so put it at the top
     NSUserDefaults* _defaults = [NSUserDefaults new];
     
@@ -46,7 +50,9 @@ struct Prefs : Object {
             static_assert(_AlwaysFalse<T>);
         }
         
-        observersNotify({});
+        Event ev;
+        ev.key = key;
+        observersNotify(ev);
     }
     
     template<class...> static constexpr std::false_type _AlwaysFalse;

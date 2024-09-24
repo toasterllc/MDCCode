@@ -22,6 +22,7 @@
 #import "Cache.h"
 #import "ColorMatrix.h"
 #import "ImageUtil.h"
+#import "PrefsUtil.h"
 
 namespace MDCStudio {
 
@@ -82,6 +83,7 @@ struct ImageSource : Object {
     }
     
     static void ImageRecordInit(ImageRecord& rec, Img::Id id, SD::Block addrFull, SD::Block addrThumb) {
+        rec = {};
         rec.info.id = id;
         rec.info.addrFull = addrFull;
         rec.info.addrThumb = addrThumb;
@@ -93,7 +95,7 @@ struct ImageSource : Object {
         Object::init(); // Call super
         
         _dir = dir;
-        _imageLibrary = Object::Create<ImageLibrary>();
+        _imageLibrary = Object::Create<ImageLibrary>(PrefsUtil::ImageLibraryDescriptor());
         
         // Read state from disk
         try {
@@ -188,6 +190,8 @@ struct ImageSource : Object {
     virtual ImageLibraryPtr imageLibrary() { return _imageLibrary; }
     
     virtual void renderThumbs(std::set<ImageRecordPtr> recs) {
+//        _debugPrintImages("renderThumbs", recs);
+        
         try {
             auto lock = _thumbRender.master.signal.lock();
             _thumbRender.master.recs = std::move(recs);
@@ -351,24 +355,31 @@ struct ImageSource : Object {
         return true;
     }
     
-    static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4;
+    static constexpr auto& _LargestDesc = ImageLibrary::Descriptors::ExtraLarge;
+    static constexpr size_t _ThumbTmpStorageLen = _LargestDesc.thumbWidth * _LargestDesc.thumbHeight * 4;
     using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
     
     // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
     // destination buffer (dst), as BC7-compressed data
     static CCM _ThumbRender(Toastbox::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage& tmpStorage,
-        const ImageOptions& opts, bool estimateIlluminant, const void* src, void* dst) {
+        bool estimateIlluminant, const void* src, ImageRecordPtr rec) {
         
         using namespace ImagePipeline;
         using namespace Toastbox;
         using namespace std::chrono;
+        
+        const ImageOptions& opts = rec->options;
+        const ImageLibrary::Descriptor& desc = ImageLibrary::DescriptorForRecordSize(rec.recordSize);
+        const size_t thumbWidth = desc.thumbWidth;
+        const size_t thumbHeight = desc.thumbHeight;
+        void* dst = rec->thumb.data;
         
         CCM ccm;
         
         // Render thumbnail into `thumbTxt`
         constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
         const Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
-            ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
+            thumbWidth, thumbHeight, ThumbTxtUsage);
         {
             Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
                 Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const Img::Pixel*)src);
@@ -413,23 +424,23 @@ struct ImageSource : Object {
 //            constexpr float CompressErrorThreshold = 0.0009765625;    // Fast
             constexpr float CompressErrorThreshold = 0.00003051757812;  // High quality
             
-            [thumbTxt getBytes:&tmpStorage[0] bytesPerRow:ImageThumb::ThumbWidth*4
-                fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+            [thumbTxt getBytes:&tmpStorage[0] bytesPerRow:thumbWidth*4
+                fromRegion:MTLRegionMake2D(0,0,thumbWidth,thumbHeight) mipmapLevel:0];
             
             const at_texel_region_t srcTexels = {
                 .texels = (void*)&tmpStorage[0],
                 .validSize = {
-                    .x = ImageThumb::ThumbWidth,
-                    .y = ImageThumb::ThumbHeight,
+                    .x = (uint32_t)thumbWidth,
+                    .y = (uint32_t)thumbHeight,
                     .z = 1,
                 },
-                .rowBytes = ImageThumb::ThumbWidth*4,
+                .rowBytes = thumbWidth*4,
                 .sliceBytes = 0,
             };
             
             const at_block_buffer_t dstBuffer = {
                 .blocks = dst,
-                .rowBytes = ImageThumb::ThumbWidth*4,
+                .rowBytes = thumbWidth*4,
                 .sliceBytes = 0,
             };
             
@@ -448,6 +459,26 @@ struct ImageSource : Object {
         }
         
         return ccm;
+    }
+    
+    template<typename T>
+    void _debugPrintImages(const char* str, T& recs) {
+        static std::mutex SharedLock;
+        auto lock = std::unique_lock(SharedLock);
+        uintmax_t count = 0;
+        for (const auto& x : recs) {
+            count++;
+        }
+        
+        printf("*** _debugPrintImages START : %s [ %ju recs ] ***\n", str, count);
+        for (const ImageLibrary::RecordRef& rec : recs) {
+            printf("* Image %ju\n", (uintmax_t)rec->info.id);
+            printf("   addrFull: 0x%08jx\n", (uintmax_t)rec->info.addrFull);
+            printf("  addrThumb: 0x%08jx\n", (uintmax_t)rec->info.addrThumb);
+            printf("  loadCount: 0x%08jx\n", (uintmax_t)rec->status.loadCount);
+            printf("\n\n");
+        }
+        printf("*** _debugPrintImages END ***\n\n");
     }
     
     Image _imageCreate(const _ImageBuffer& buf) {
@@ -505,6 +536,9 @@ struct ImageSource : Object {
     }
     
     void _renderEnqueue(const std::unique_lock<std::mutex>& lock, _LoadState& state, bool initial, bool validateChecksum, ImageRecordPtr rec, _ThumbBuffer buf) {
+        
+//        printf("_renderEnqueue %ju\n", (uintmax_t)rec->info.id);
+        
         // Enqueue _RenderWork into _thumbRender.slave.queue
         _thumbRender.slave.queue.push(_RenderWork{
             .initial = initial,
@@ -539,6 +573,8 @@ struct ImageSource : Object {
                 }
             });
         }
+        
+//        _debugPrintImages("Before _loadThumbs", *_imageLibrary);
         
         // Kick off rendering for all the recs that are in the cache
         {
@@ -600,6 +636,8 @@ struct ImageSource : Object {
         
         // Wait until everything's done
         state->signal.wait([&] { return !state->underway; });
+        
+//        _debugPrintImages("After _loadThumbs", *_imageLibrary);
         
         // Print profile stats
         {
@@ -764,6 +802,8 @@ struct ImageSource : Object {
         
         try {
             Renderer renderer;
+            
+            // Allocate enough space to fit the largest thumbnail
             std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
             
             at_encoder_t compressor = at_encoder_create(
@@ -786,7 +826,7 @@ struct ImageSource : Object {
                     _thumbRender.slave.queue.pop();
                 }
                 
-                ImageRecord& rec = *work.rec;
+                ImageRecordPtr rec = work.rec;
                 
                 if (work.validateChecksum) {
                     if (_ImageChecksumValid(*work.buf, Img::Size::Thumb)) {
@@ -813,46 +853,45 @@ struct ImageSource : Object {
                             goto thumbDone;
                         }
                         
-                        if (imgHeader.id != rec.info.id) {
+                        if (imgHeader.id != rec->info.id) {
                             #warning TODO: how do we properly handle this?
                             printf("[_thumbRender_slaveThread] Invalid image id (got: %ju, expected: %ju)\n",
-                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+                                (uintmax_t)imgHeader.id, (uintmax_t)rec->info.id);
 //                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
-//                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+//                                (uintmax_t)imgHeader.id, (uintmax_t)rec->info.id);
                         }
                         
-                        rec.info.timestamp      = imgHeader.timestamp;
+                        rec->info.timestamp      = imgHeader.timestamp;
                         
-                        rec.info.imageWidth     = imgHeader.imageWidth;
-                        rec.info.imageHeight    = imgHeader.imageHeight;
+                        rec->info.imageWidth     = imgHeader.imageWidth;
+                        rec->info.imageHeight    = imgHeader.imageHeight;
                         
-                        rec.info.coarseIntTime  = imgHeader.coarseIntTime;
-                        rec.info.analogGain     = imgHeader.analogGain;
+                        rec->info.coarseIntTime  = imgHeader.coarseIntTime;
+                        rec->info.analogGain     = imgHeader.analogGain;
                         
-                        rec.info.batteryLevelMv = imgHeader.batteryLevelMv;
+                        rec->info.batteryLevelMv = imgHeader.batteryLevelMv;
                     }
                     
                     // Populate .options
                     {
-                        rec.options = {};
+                        rec->options = {};
                     }
                 }
                 
-                // Render the thumbnail into rec.thumb
+                // Render the thumbnail into rec->thumb
                 {
                     const void* thumbSrc = (*work.buf)+Img::PixelsOffset;
-                    void* thumbDst = rec.thumb.data;
                     
                     // estimateIlluminant: only perform illuminant estimation upon our initial import
                     const bool estimateIlluminant = work.initial;
-                    const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, rec.options,
-                        estimateIlluminant, thumbSrc, thumbDst);
+                    const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage,
+                        estimateIlluminant, thumbSrc, rec);
                     
                     if (estimateIlluminant) {
                         // Populate .info.illumEst
-                        ccm.illum.m.get(rec.info.illumEst);
+                        ccm.illum.m.get(rec->info.illumEst);
                         // Populate .options.whiteBalance
-                        ImageWhiteBalanceSet(rec.options.whiteBalance, true, ccm);
+                        ImageWhiteBalanceSet(rec->options.whiteBalance, true, ccm);
                     }
                 }
                 
@@ -864,9 +903,9 @@ struct ImageSource : Object {
                     // Verify that we can safely cast our loadCount field to a std::atomic<uint32_t>
                     // by checking loadCount's type and alignment.
                     using Atomic32 = std::atomic<uint32_t>;
-                    static_assert(std::is_same_v<uint32_t, decltype(rec.status.loadCount)>);
+                    static_assert(std::is_same_v<uint32_t, decltype(rec->status.loadCount)>);
                     static_assert(!(offsetof(ImageRecord, status.loadCount) % alignof(Atomic32)));
-                    Atomic32& loadCount = reinterpret_cast<Atomic32&>(rec.status.loadCount);
+                    Atomic32& loadCount = reinterpret_cast<Atomic32&>(rec->status.loadCount);
                     uint32_t loadCountCopy = loadCount;
                     loadCountCopy++;
                     if (!loadCountCopy) loadCountCopy++; // Skip 0

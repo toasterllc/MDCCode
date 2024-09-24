@@ -2,6 +2,7 @@
 #import "Tools/Shared/MDCUSBDevice.h"
 #import <IOKit/IOKitLib.h>
 #import <IOKit/IOMessage.h>
+#import <filesystem>
 
 namespace MDCStudio {
 
@@ -19,11 +20,7 @@ struct MDCDeviceReal : MDCDevice {
     };
     
     static Path _DirForSerial(const std::string_view& serial) {
-        auto urls = [[NSFileManager defaultManager] URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask];
-        if (![urls count]) throw Toastbox::RuntimeError("failed to get NSApplicationSupportDirectory");
-        
-        const Path appSupportDir = Path([urls[0] fileSystemRepresentation]) / [[[NSBundle mainBundle] bundleIdentifier] UTF8String];
-        return appSupportDir / "Devices" / serial;
+        return DevicesDir / serial;
     }
     
     // _SDBlock: we're intentionally not using SD::Block because we want our block addressing type
@@ -468,10 +465,17 @@ struct MDCDeviceReal : MDCDevice {
         _SendRight obj(_SendRight::NoRetain, ioObj); // Make sure port gets cleaned up
         
         for (;;) @autoreleasepool {
-            CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
-            if (stop) throw Toastbox::Signal::Stop(); // Signalled to stop
+            CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
+            if (stop || r==kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
         }
     }
+    
+//    void abort() {
+//        CFRunLoopPerformBlock((CFRunLoopRef)_device.runLoop, kCFRunLoopCommonModes, ^{
+//            CFRunLoopStop(CFRunLoopGetCurrent());
+//        });
+//        CFRunLoopWakeUp((CFRunLoopRef)_device.runLoop);
+//    }
     
     void stop() override {
         // Trigger our threads to exit

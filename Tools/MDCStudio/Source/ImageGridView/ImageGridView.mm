@@ -17,9 +17,6 @@
 #import "Code/Lib/Toastbox/Mac/Util.h"
 using namespace MDCStudio;
 
-static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
-static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
-
 @interface ImageGridLayer : AnchoredMetalDocumentLayer
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource
@@ -36,9 +33,12 @@ static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 @end
 
 struct _ChunkTexture {
-    static constexpr size_t SliceCount = ImageLibrary::ChunkRecordCap;
+    static constexpr size_t SliceCountMax = 2048; // Metal feature set tables define this max layer count
     id<MTLTexture> txt = nil;
-    uint32_t loadCounts[SliceCount] = {};
+    uint32_t loadCounts[SliceCountMax] = {};
+    // `loaded` is separate from `loadCounts` because `loadCounts` is too
+    // large to pass as a uniform buffer
+    uint8_t loaded[SliceCountMax] = {};
 };
 
 static constexpr size_t _ChunkTexturesCacheCapacity = 16;
@@ -49,9 +49,13 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
     ImageLibraryPtr _imageLibrary;
+    const ImageLibrary::Descriptor* _imageLibraryDesc;
+    MTLTextureDescriptor* _txtDesc;
+    
     ImageSelectionPtr _selection;
     Object::ObserverPtr _selectionOb;
     Toastbox::Grid _grid;
+    
     CGFloat _magnification;
     bool _sortNewestFirst;
     CGFloat _containerWidth;
@@ -76,6 +80,16 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     return cs;
 }
 
+static MTLTextureDescriptor* _TextureDescriptor(const ImageLibrary::Descriptor& desc, size_t sliceCount) {
+    MTLTextureDescriptor* r = [MTLTextureDescriptor new];
+    [r setTextureType:MTLTextureType2DArray];
+    [r setPixelFormat:ImageThumb::PixelFormat];
+    [r setWidth:desc.thumbWidth];
+    [r setHeight:desc.thumbHeight];
+    [r setArrayLength:sliceCount];
+    return r;
+}
+
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource selection:(MDCStudio::ImageSelectionPtr)selection {
     
     NSParameterAssert(imageSource);
@@ -85,6 +99,9 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     _imageSource = imageSource;
     _imageLibrary = imageSource->imageLibrary();
+    _imageLibraryDesc = &_imageLibrary->descriptor();
+    _txtDesc = _TextureDescriptor(*_imageLibraryDesc, _imageLibrary->config().chunkRecordCap);
+    
     _selection = selection;
     
     __weak auto selfWeak = self;
@@ -99,9 +116,9 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     _sortNewestFirst = true;
     
-    _device = MTLCreateSystemDefaultDevice();
+    _device = [self preferredDevice];
     assert(_device);
-    [self setDevice:[self preferredDevice]];
+    [self setDevice:_device];
     [self setColorspace:_LinearSRGBColorSpace()];
     [self setOpaque:false];
     
@@ -110,8 +127,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     _placeholderTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ImageGrid-ImagePlaceholder"] options:nil error:nil];
     assert(_placeholderTexture);
-//    assert([_placeholderTexture width] == _ThumbWidth);
-//    assert([_placeholderTexture height] == _ThumbHeight);
     
     _commandQueue = [_device newCommandQueue];
     
@@ -165,15 +180,24 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     return _magnification;
 }
 
+- (CGFloat)magnificationMin {
+    constexpr CGFloat WidthMinPx = 64;
+    return WidthMinPx / _imageLibraryDesc->thumbWidth;
+}
+
+- (CGFloat)magnificationMax {
+    return 2;
+}
+
 - (bool)setMagnification:(CGFloat)x {
     if (_magnification == x) return false;
     
     _magnification = x;
     
     constexpr CGFloat Spacing = 6. / 512;
-    const int32_t cellWidth = _magnification*_ThumbWidth;
-    const int32_t cellHeight = _magnification*_ThumbHeight;
-    const int32_t spacing = (Spacing*_ThumbWidth)*_magnification;
+    const int32_t cellWidth = _magnification*_imageLibraryDesc->thumbWidth;
+    const int32_t cellHeight = _magnification*_imageLibraryDesc->thumbHeight;
+    const int32_t spacing = (Spacing*_imageLibraryDesc->thumbWidth)*_magnification;
     _grid.setCellSize({cellWidth, cellHeight});
     _grid.setCellSpacing({spacing, spacing});
     
@@ -227,27 +251,25 @@ static CGRect _CGRectFromGridRect(Toastbox::Grid::Rect rect, CGFloat scale) {
 
 // _ChunkTextureUpdateSlice: if _ChunkTexture's slice for an ImageRecord is stale, reloads the compressed
 // thumbnail data from the ImageRecord into the slice
-static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::RecordRef& ref) {
+static void _ChunkTextureUpdateSlice(const ImageLibrary::Descriptor& desc, _ChunkTexture& ct,
+    const ImageLibrary::RecordRef& ref) {
+    
+    // Verify that the index is within the compile-time max slice count
+    assert(ref.idx < _ChunkTexture::SliceCountMax);
+    // Verify that the index is within the runtime max slice count
+    assert(ref.idx < [ct.txt arrayLength]);
+    
     const uint32_t loadCount = ref->status.loadCount;
     if (loadCount != ct.loadCounts[ref.idx]) {
 //        printf("Update slice (%ju %u %u)\n", (uintmax_t)ref.idx, loadCount, ct.loadCounts[ref.idx]);
         
-        const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
-        [ct.txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
-            slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+        const uint8_t* b = ref.chunk->mmap.data() + ref.idx*ref.recordSize + offsetof(ImageRecord, thumb.data);
+        [ct.txt replaceRegion:MTLRegionMake2D(0,0,desc.thumbWidth,desc.thumbHeight) mipmapLevel:0
+            slice:ref.idx withBytes:b bytesPerRow:desc.thumbWidth*4 bytesPerImage:0];
         
         ct.loadCounts[ref.idx] = loadCount;
+        ct.loaded[ref.idx] = true;
     }
-}
-
-static MTLTextureDescriptor* _TextureDescriptor() {
-    MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-    [desc setTextureType:MTLTextureType2DArray];
-    [desc setPixelFormat:ImageThumb::PixelFormat];
-    [desc setWidth:ImageThumb::ThumbWidth];
-    [desc setHeight:ImageThumb::ThumbHeight];
-    [desc setArrayLength:_ChunkTexture::SliceCount];
-    return desc;
 }
 
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
@@ -262,14 +284,9 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         return it->val;
     }
     
-    const auto chunkBegin = ImageLibrary::FindChunkBegin(ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst), iter);
-    const auto chunkEnd = ImageLibrary::FindChunkEnd(ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst), iter);
-    assert(chunkBegin != chunkEnd);
-    
     auto startTime = std::chrono::steady_clock::now();
     
-    static MTLTextureDescriptor* txtDesc = _TextureDescriptor();
-    id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
+    id<MTLTexture> txt = [_device newTextureWithDescriptor:_txtDesc];
     assert(txt);
     
     _ChunkTexture& ct = _chunkTxts[chunk];
@@ -351,7 +368,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         const auto chunkBegin = it;
         _ChunkTexture& ct = [self _getChunkTexture:it];
         for (; it!=visibleEnd && it->chunk==chunkBegin->chunk; it++) {
-            _ChunkTextureUpdateSlice(ct, *it);
+            _ChunkTextureUpdateSlice(*_imageLibraryDesc, ct, *it);
         }
         const auto chunkEnd = it;
         
@@ -366,10 +383,11 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         constexpr CGFloat SelectionBorderSizeDefault = 10. / 512;
         constexpr CGFloat SelectionBorderSizeMin = 5. / 512;
         
-        const uint32_t selectionBorderSizeDefault = std::round(SelectionBorderSizeDefault*_ThumbWidth);
-        const uint32_t selectionBorderSizeMin = std::round(SelectionBorderSizeMin*_ThumbWidth);
-        const uint32_t selectionBorderSize = std::max(selectionBorderSizeMin,
-            (uint32_t)(_magnification * selectionBorderSizeDefault));
+        const uint32_t selectionBorderSizeDefault =
+            std::round(_magnification * _imageLibraryDesc->thumbWidth * SelectionBorderSizeDefault);
+        const uint32_t selectionBorderSizeMin =
+            std::round(SelectionBorderSizeMin*ImageLibrary::Descriptors::ExtraLarge.thumbWidth);
+        const uint32_t selectionBorderSize = std::max(selectionBorderSizeMin, selectionBorderSizeDefault);
         
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
@@ -389,7 +407,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         [renderEncoder setVertexBuffer:_selectionDraw.buf offset:0 atIndex:2];
         
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-        [renderEncoder setFragmentBytes:&ct.loadCounts length:sizeof(ct.loadCounts) atIndex:1];
+        [renderEncoder setFragmentBytes:&ct.loaded length:sizeof(ct.loaded) atIndex:1];
         [renderEncoder setFragmentTexture:ct.txt atIndex:0];
         [renderEncoder setFragmentTexture:_placeholderTexture atIndex:1];
         
@@ -709,81 +727,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
         [self scrollRectToVisible:[self convertRect:rect fromView:[self superview]]];
     }
 }
-
-//- (std::optional<CGRect>)__moveSelection:(SelectionDelta)delta extend:(bool)extend {
-//    ssize_t newIdx = 0;
-//    ImageRecordPtr newImg;
-//    ImageSet selection = _selection->images();
-//    {
-//        auto lock = std::unique_lock(*_imageLibrary);
-//        
-//        auto begin = ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst);
-//        auto end = ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst);
-//        const size_t imgCount = _imageLibrary->recordCount();
-//        if (!imgCount) return std::nullopt;
-//        
-//        if (!selection.empty()) {
-//            const auto it = ImageLibrary::Find(begin, end, *std::prev(selection.end()));
-//            if (it == end) {
-//                NSLog(@"Image no longer in library");
-//                return std::nullopt;
-//            }
-//            
-//            const size_t idx = it-begin;
-//            const size_t colCount = _grid.columnCount();
-//            const size_t rem = (imgCount % colCount);
-//            const size_t lastRowCount = (rem ? rem : colCount);
-//            const bool firstRow = (idx < colCount);
-//            const bool lastRow = (idx >= (imgCount-lastRowCount));
-//            const bool firstCol = !(idx % colCount);
-//            const bool lastCol = ((idx % colCount) == (colCount-1));
-//            const bool lastElm = (idx == (imgCount-1));
-//            
-//            newIdx = idx;
-//            if (delta.x > 0) {
-//                // Right
-//                if (lastCol || lastElm) return std::nullopt;
-//                newIdx += 1;
-//            
-//            } else if (delta.x < 0) {
-//                // Left
-//                if (firstCol) return std::nullopt;
-//                newIdx -= 1;
-//            
-//            } else if (delta.y > 0) {
-//                // Down
-//                if (lastRow) return std::nullopt;
-//                newIdx += colCount;
-//            
-//            } else if (delta.y < 0) {
-//                // Up
-//                if (firstRow) return std::nullopt;
-//                newIdx -= colCount;
-//            }
-//            
-//            newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
-//        
-//        } else {
-//            if (delta.x>0 || delta.y>0) {
-//                // Select first element
-//                newIdx = 0;
-//            } else if (delta.x<0 || delta.y<0) {
-//                // Select last element
-//                newIdx = imgCount-1;
-//            } else {
-//                return std::nullopt;
-//            }
-//        }
-//        
-//    //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-//        newImg = *(begin+newIdx);
-//    }
-//    
-//    if (!extend) selection.clear();
-//    selection.insert(newImg);
-//    _selection->images(std::move(selection));
-//    return [self rectForImageIndex:newIdx];
-//}
 
 - (void)_moveSelection:(simd::int2)delta extend:(bool)extend {
     assert(delta.x==0 || delta.y==0); // Prohibit diagonal changes
@@ -1161,10 +1104,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 
 // MARK: - Magnification
 
-constexpr CGFloat MagnificationMin = 1./(1<<3);
-constexpr CGFloat MagnificationMax = 1<<1;
-
-static CGFloat _NextMagnification(CGFloat mag, int direction) {
+static CGFloat _NextMagnification(CGFloat min, CGFloat max, int direction, CGFloat mag) {
     // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
     constexpr CGFloat Thresh = 0.25;
     if (direction > 0) {
@@ -1172,7 +1112,7 @@ static CGFloat _NextMagnification(CGFloat mag, int direction) {
     } else {
         mag = std::pow(2, std::ceil((std::floor(std::log2(mag)/Thresh)*Thresh)-1));
     }
-    mag = std::clamp(mag, MagnificationMin, MagnificationMax);
+    mag = std::clamp(mag, min, max);
     return mag;
 }
 
@@ -1205,12 +1145,14 @@ static CGFloat _NextMagnification(CGFloat mag, int direction) {
 }
 
 - (void)magnifyIncrease:(id)sender {
-    const CGFloat mag = _NextMagnification([_imageGridLayer magnification], +1);
+    const CGFloat mag = _NextMagnification([_imageGridLayer magnificationMin],
+        [_imageGridLayer magnificationMax], +1, [_imageGridLayer magnification]);
     [self _setMagnification:mag anchor:[self _scrollAnchor]];
 }
 
 - (void)magnifyDecrease:(id)sender {
-    const CGFloat mag = _NextMagnification([_imageGridLayer magnification], -1);
+    const CGFloat mag = _NextMagnification([_imageGridLayer magnificationMin],
+        [_imageGridLayer magnificationMax], -1, [_imageGridLayer magnification]);
     [self _setMagnification:mag anchor:[self _scrollAnchor]];
 }
 
@@ -1222,7 +1164,8 @@ static CGFloat _NextMagnification(CGFloat mag, int direction) {
         };
     }
     
-    _mag.amount = std::clamp(_mag.amount+[event magnification], MagnificationMin, MagnificationMax);
+    _mag.amount = std::clamp(_mag.amount+[event magnification],
+        [_imageGridLayer magnificationMin], [_imageGridLayer magnificationMax]);
     [self _setMagnification:_mag.amount anchor:_mag.anchor];
 }
 

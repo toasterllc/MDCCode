@@ -32,8 +32,14 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 128;
 //    static constexpr size_t ThumbHeight     = 72;
     
-    static constexpr size_t ThumbWidth      = 512;
-    static constexpr size_t ThumbHeight     = 288;
+//    static constexpr size_t ThumbWidth      = 256;
+//    static constexpr size_t ThumbHeight     = 144;
+
+//    static constexpr size_t ThumbWidth      = 384;
+//    static constexpr size_t ThumbHeight     = 216;
+    
+//    static constexpr size_t ThumbWidth      = 512;
+//    static constexpr size_t ThumbHeight     = 288;
     
 //    static constexpr size_t ThumbWidth      = 576;
 //    static constexpr size_t ThumbHeight     = 324;
@@ -41,8 +47,11 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 2304;
 //    static constexpr size_t ThumbHeight     = 1296;
     
-    alignas(16) // Must be aligned to the block size of the compressed thumb format (either ASTC or BC7)
-    uint8_t data[ThumbHeight][ThumbWidth];
+    alignas(16)
+    uint8_t data[];
+    
+//    alignas(16) // Must be aligned to the block size of the compressed thumb format (either ASTC or BC7)
+//    uint8_t data[ThumbHeight][ThumbWidth];
 };
 
 static_assert(!(sizeof(ImageThumb) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes

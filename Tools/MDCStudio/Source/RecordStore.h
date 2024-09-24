@@ -17,16 +17,11 @@
 //                          the space of a randomly-deleted record is not recovered until chunk compaction occurs (currently unimplemented)
 //               threading: data can be written from one thread and read from another thread in parallel
 
-template<
-typename T_Record,      // The type of the records
-size_t T_ChunkRecordCap // Max number of records per chunk
->
+template<typename T_Record>
 struct RecordStore {
     static constexpr uint32_t Version = T_Record::Version;
-    static constexpr uint32_t ChunkRecordCap = T_ChunkRecordCap;
     
     using Path = std::filesystem::path;
-    using Record = T_Record;
     
     using ChunkId = uint64_t;
     
@@ -98,9 +93,10 @@ struct RecordStore {
     template<typename T_ChunkRef>
     struct _RecordRef : T_ChunkRef {
         size_t idx = 0;
+        size_t recordSize = 0;
         
         _RecordRef() {}
-        _RecordRef(const T_ChunkRef& chunk, size_t idx) : T_ChunkRef(chunk), idx(idx) {}
+        _RecordRef(const T_ChunkRef& chunk, size_t idx, size_t recordSize) : T_ChunkRef(chunk), idx(idx), recordSize(recordSize) {}
         
 //        using T_ChunkRef::T_ChunkRef;
         const T_ChunkRef& chunkRef() const { return *this; }
@@ -112,6 +108,7 @@ struct RecordStore {
         bool operator<(const T& x) const {
             if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
             if (idx != x.idx)               return idx < x.idx;
+            if (recordSize != x.recordSize) return recordSize < x.recordSize;
             return false;
         }
         
@@ -119,6 +116,7 @@ struct RecordStore {
         bool operator==(const T& x) const {
             if (chunkRef() != x.chunkRef()) return false;
             if (idx != x.idx)               return false;
+            if (recordSize != x.recordSize) return false;
             return true;
         }
         
@@ -128,7 +126,7 @@ struct RecordStore {
         T_Record* operator->() const { return &record(); }
         T_Record& operator*() const { return record(); }
         T_Record& record() const {
-            return *(T_Record*)chunkRef().chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
+            return *(T_Record*)chunkRef().chunk->mmap.data(idx*recordSize, recordSize);
         }
     };
     
@@ -146,15 +144,21 @@ struct RecordStore {
     // that the data that it references stays alive while other threads modify the store.
     struct RecordStrongRef : _RecordRef<ChunkStrongRef> {
         RecordStrongRef() {}
-        RecordStrongRef(const RecordRef& ref) : _RecordRef<ChunkStrongRef>(ref, ref.idx) {}
+        RecordStrongRef(const RecordRef& ref) : _RecordRef<ChunkStrongRef>(ref, ref.idx, ref.recordSize) {}
         operator const RecordRef() const {
-            return RecordRef(*this, this->idx);
+            return RecordRef(*this, this->idx, this->recordSize);
         }
     };
     
     using RecordRefs = std::vector<RecordRef>;
     using RecordRefConstIter = typename RecordRefs::const_iterator;
     using RecordRefConstReverseIter = typename RecordRefs::const_reverse_iterator;
+    
+    struct Config {
+        Path path;                  // Filesystem path to the record store
+        size_t recordSize = 0;      // The size of each T_Record, in bytes
+        size_t chunkRecordCap = 0;  // The maximum number of records per chunk
+    };
     
     struct _State {
         ChunkId chunkId = 0;
@@ -198,10 +202,10 @@ struct RecordStore {
             });
     }
     
-    std::ifstream read(Path path) {
-        _path = path;
-        std::filesystem::create_directories(_ChunksPath(_path));
-        return _StateRead(_path, _state);
+    std::ifstream read(const Config& cfg) {
+        _cfg = cfg;
+        std::filesystem::create_directories(_ChunksPath(_cfg));
+        return _StateRead(_cfg, _state);
     }
     
     std::ofstream write() {
@@ -224,7 +228,7 @@ struct RecordStore {
         // Perform 'trivial compaction': truncate each chunk to its last record (according to chunk.recordIdx)
         {
             for (Chunk& chunk : _state.chunks) {
-                chunk.mmap.len(chunk.recordIdx * sizeof(T_Record));
+                chunk.mmap.len(chunk.recordIdx * _cfg.recordSize);
             }
         }
         
@@ -235,7 +239,7 @@ struct RecordStore {
                 if (chunk.alive) aliveChunks.insert(chunk.id);
             }
             
-            for (const fs::path& p : fs::directory_iterator(_ChunksPath(_path))) {
+            for (const fs::path& p : fs::directory_iterator(_ChunksPath(_cfg))) {
                 // Delete the chunk file if it's beyond the new count of chunks (therefore
                 // it's an old chunk file that's no longer needed).
                 std::optional<ChunkId> deleteName;
@@ -255,7 +259,7 @@ struct RecordStore {
             }
         }
         
-        return _StateWrite(_path, _state);
+        return _StateWrite(_cfg, _state);
     }
     
     // add(): adds records to the end
@@ -266,6 +270,7 @@ struct RecordStore {
             Chunk& chunk = _chunkGetWritable();
             ref.chunk = &chunk;
             ref.idx = chunk.recordIdx;
+            ref.recordSize = _cfg.recordSize;
             chunk.recordCount++;
             chunk.recordIdx++;
         }
@@ -337,9 +342,13 @@ struct RecordStore {
         return _state.recordRefs.size();
     }
     
+    const Config& config() const {
+        return _cfg;
+    }
+    
     struct [[gnu::packed]] _SerializedHeader {
         uint32_t version     = 0; // Version
-        uint32_t recordSize  = 0; // sizeof(T_Record)
+        uint32_t recordSize  = 0; // Size of each record, as passed to read()
         uint32_t recordCount = 0; // Count of RecordRef structs in Index file
     };
     
@@ -351,15 +360,20 @@ struct RecordStore {
         static_assert(std::is_same_v<decltype(chunkId), ChunkId>);
     };
     
-    static constexpr size_t _ChunkLen = sizeof(T_Record)*T_ChunkRecordCap;
+    static constexpr size_t _ChunkLen(const Config& cfg) {
+        return cfg.recordSize*cfg.chunkRecordCap;
+    }
     
-    static std::ifstream _StateRead(const Path& path, _State& state) {
+    static std::ifstream _StateRead(const Config& cfg, _State& state) {
+        // Ensure that the runtime record size isn't smaller than the compile-time record type
+        assert(cfg.recordSize >= sizeof(T_Record));
+        
         try {
             state = {};
             
             std::ifstream f;
             f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-            f.open(_IndexPath(path));
+            f.open(_IndexPath(cfg));
             
             _SerializedHeader header;
             f.read((char*)&header, sizeof(header));
@@ -371,9 +385,9 @@ struct RecordStore {
                 );
             }
             
-            if (header.recordSize != sizeof(T_Record)) {
+            if (header.recordSize != cfg.recordSize) {
                 throw Toastbox::RuntimeError("record size mismatch (expected: %ju, got: %ju)",
-                    (uintmax_t)sizeof(T_Record), (uintmax_t)header.recordSize);
+                    (uintmax_t)cfg.recordSize, (uintmax_t)header.recordSize);
             }
             
             // Create RecordRefs
@@ -409,17 +423,18 @@ struct RecordStore {
                 }
                 
                 Chunk*& chunk = chunksMap[chunkId];
-                if (!chunk) chunk = &state.chunks.emplace_back(chunkId, _ChunkFileOpen(_ChunkPath(path, chunkId)));
+                if (!chunk) chunk = &state.chunks.emplace_back(chunkId, _ChunkFileOpen(cfg, _ChunkPath(cfg, chunkId)));
                 
-                if (sizeof(T_Record)*(ref.idx+1) > chunk->mmap.len()) {
+                if (cfg.recordSize*(ref.idx+1) > chunk->mmap.len()) {
                     throw Toastbox::RuntimeError("RecordRef extends beyond chunk (RecordRef end: 0x%jx, chunk end: 0x%jx)",
-                        (uintmax_t)(sizeof(T_Record)*(ref.idx+1)),
+                        (uintmax_t)(cfg.recordSize*(ref.idx+1)),
                         (uintmax_t)chunk->mmap.len()
                     );
                 }
                 
                 state.recordRefs[i].chunk = chunk;
                 state.recordRefs[i].idx = ref.idx;
+                state.recordRefs[i].recordSize = cfg.recordSize;
                 
                 chunk->recordCount++;
                 chunk->recordIdx = ref.idx+1;
@@ -438,15 +453,15 @@ struct RecordStore {
         }
     }
     
-    static std::ofstream _StateWrite(const Path& path, const _State& state) {
+    static std::ofstream _StateWrite(const Config& cfg, const _State& state) {
         std::ofstream f;
         f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-        f.open(_IndexPath(path));
+        f.open(_IndexPath(cfg));
         
         // Write header
         const _SerializedHeader header = {
             .version     = Version,
-            .recordSize  = (uint32_t)sizeof(T_Record),
+            .recordSize  = (uint32_t)cfg.recordSize,
             .recordCount = (uint32_t)state.recordRefs.size(),
         };
         f.write((char*)&header, sizeof(header));
@@ -463,28 +478,28 @@ struct RecordStore {
         return f;
     }
     
-    static Path _IndexPath(const Path& path) {
-        return path / "Index";
+    static Path _IndexPath(const Config& cfg) {
+        return cfg.path / "Index";
     }
     
-    static Path _ChunksPath(const Path& path) {
-        return path / "Chunks";
+    static Path _ChunksPath(const Config& cfg) {
+        return cfg.path / "Chunks";
     }
     
-    static Path _ChunkPath(const Path& path, ChunkId id) {
-        return _ChunksPath(path) / std::to_string(id);
+    static Path _ChunkPath(const Config& cfg, ChunkId id) {
+        return _ChunksPath(cfg) / std::to_string(id);
     }
     
-    static Toastbox::Mmap _ChunkFileCreate(const Path& path) {
+    static Toastbox::Mmap _ChunkFileCreate(const Config& cfg, const Path& path) {
         constexpr int OpenFlags = O_RDWR|O_CREAT|O_CLOEXEC;
         constexpr int ChunkPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
         const int fd = open(path.c_str(), OpenFlags, ChunkPerm);
         if (fd < 0) throw Toastbox::RuntimeError("failed to create chunk file: %s", strerror(errno));
-        const size_t cap = Toastbox::Mmap::PageCeil(_ChunkLen);
+        const size_t cap = Toastbox::Mmap::PageCeil(_ChunkLen(cfg));
         return Toastbox::Mmap(fd, cap, OpenFlags);
     }
     
-    static Toastbox::Mmap _ChunkFileOpen(const Path& path) {
+    static Toastbox::Mmap _ChunkFileOpen(const Config& cfg, const Path& path) {
         constexpr int OpenFlags = O_RDWR;
         int fdi = open(path.c_str(), OpenFlags);
         if (fdi < 0) throw Toastbox::RuntimeError("open failed: %s", strerror(errno));
@@ -493,24 +508,24 @@ struct RecordStore {
         struct stat st;
         int ir = fstat(fd, &st);
         if (ir) throw Toastbox::RuntimeError("fstat failed: %s", strerror(errno));
-        // Create the mapping with a capacity of either the file size or _ChunkLen, whichever is larger.
-        const size_t cap = Toastbox::Mmap::PageCeil(std::max((size_t)st.st_size, _ChunkLen));
+        // Create the mapping with a capacity of either the file size or _ChunkLen(recordSize), whichever is larger.
+        const size_t cap = Toastbox::Mmap::PageCeil(std::max((size_t)st.st_size, _ChunkLen(cfg)));
         return Toastbox::Mmap(std::move(fd), cap, OpenFlags);
     }
     
     Path _chunkPath(ChunkId id) const {
-        return _ChunkPath(_path, id);
+        return _ChunkPath(_cfg, id);
     }
     
     Chunk& _chunkCreate() {
         const ChunkId chunkId = _state.chunkId++;
-        return _state.chunks.emplace_back(chunkId, _ChunkFileCreate(_chunkPath(chunkId)));
+        return _state.chunks.emplace_back(chunkId, _ChunkFileCreate(_cfg, _chunkPath(chunkId)));
     }
     
     Chunk& _chunkGetWritable() {
         Chunk* chunk = nullptr;
         auto last = std::prev(_state.chunks.end());
-        if (last==_state.chunks.end() || (last->recordIdx>=T_ChunkRecordCap || !last->alive)) {
+        if (last==_state.chunks.end() || (last->recordIdx>=_cfg.chunkRecordCap || !last->alive)) {
             // We don't have any chunks, the last chunk is full, or the last chunk is dead;
             // create a new chunk
             chunk = &_chunkCreate();
@@ -524,10 +539,10 @@ struct RecordStore {
         // Currently, _ChunkFileCreate() creates 0-byte chunk files, so we set their size here.
         // In the future, when we implement compaction, chunks could have arbitrary sizes, making it
         // doubly necessary to set the file size here.
-        chunk->mmap.len(_ChunkLen);
+        chunk->mmap.len(_ChunkLen(_cfg));
         return *chunk;
     }
     
-    Path _path;
+    Config _cfg;
     _State _state;
 };

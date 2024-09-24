@@ -1,6 +1,7 @@
 #import "Document.h"
 #import <algorithm>
 #import "Code/Lib/Toastbox/Cast.h"
+#import "Code/Lib/Toastbox/Util.h"
 #import "SourceListView/SourceListView.h"
 #import "InspectorView/InspectorView.h"
 #import "ImageGridView/ImageGridView.h"
@@ -700,16 +701,16 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     ]];
     
     {
+        NSButton* button = [alert addButtonWithTitle:@"Cancel"];
+        [button setTag:NSModalResponseCancel];
+        [button setKeyEquivalent:@"\r"];
+    }
+    
+    {
         NSButton* button = [alert addButtonWithTitle:@"Delete"];
         [button setTag:NSModalResponseOK];
         [button setKeyEquivalent:@"\x7f"];
         [button setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
-    }
-    
-    {
-        NSButton* button = [alert addButtonWithTitle:@"Cancel"];
-        [button setTag:NSModalResponseCancel];
-        [button setKeyEquivalent:@"\r"];
     }
     
 //    {
@@ -771,7 +772,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 }
 
 // MARK: - Demo
-
 - (IBAction)_tryDemo:(id)sender {
     _demoDevice = Object::Create<MDCDeviceDemo>();
     [self _updateDevices];

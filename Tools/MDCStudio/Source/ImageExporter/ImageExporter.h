@@ -44,7 +44,7 @@ inline std::string _ExifImageUniqueIDForImageId(Img::Id id) {
 
 // Single image export to file `filePath`
 inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const Image& image,
-    const Format* fmt, const std::filesystem::path& filePath) {
+    const Format& fmt, const std::filesystem::path& filePath) {
     
     printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
     using namespace Toastbox;
@@ -53,7 +53,7 @@ inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const I
     const Time::Instant timestamp = rec.info.timestamp;
     const float batteryLevel = MSP::BatteryLevelFloat(MSP::BatteryLevelLinearize(rec.info.batteryLevelMv));
     
-    if (fmt==&Formats::JPEG || fmt==&Formats::PNG) {
+    if (&fmt==&Formats::JPEG || &fmt==&Formats::PNG) {
         Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
             image.width, image.height, (Img::Pixel*)(image.data.get()));
         
@@ -67,7 +67,7 @@ inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const I
         
         NSURL* url = [NSURL fileURLWithPath:@(filePath.c_str())];
         id /* CGImageDestinationRef */ imageDest = CFBridgingRelease(CGImageDestinationCreateWithURL((CFURLRef)url,
-            (CFStringRef)fmt->uti, 1, nil));
+            (CFStringRef)fmt.uti, 1, nil));
         
         id /* CGMutableImageMetadataRef */ metadata = CFBridgingRelease(CGImageMetadataCreateMutable());
         
@@ -94,7 +94,7 @@ inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const I
             (CGImageMetadataRef)metadata, nullptr);
         CGImageDestinationFinalize((CGImageDestinationRef)imageDest);
     
-    } else if (fmt == &Formats::DNG) {
+    } else if (&fmt == &Formats::DNG) {
         const size_t imageDataLen = image.width*image.height*sizeof(*image.data.get());
         
         TIFF tiff;
@@ -274,7 +274,7 @@ inline std::filesystem::path FileNameForImageRecord(const ImageRecord& rec, cons
 }
 
 inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
-    const ImageExporter::Format* fmt, const std::filesystem::path& dir,
+    const ImageExporter::Format& fmt, const std::filesystem::path& dir,
     ImageExportProgressDialog* progress=nil) {
     
     struct ImageRec {
@@ -306,7 +306,7 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
                         shared.signal.signalAll();
                     }
                     
-                    const std::filesystem::path filePath = dir / FileNameForImageRecord(*imageRec.rec, fmt);
+                    const std::filesystem::path filePath = dir / FileNameForImageRecord(*imageRec.rec, &fmt);
                     Export(renderer, *imageRec.rec, imageRec.image, fmt, filePath);
                     
                     // Update progress bar
@@ -384,14 +384,14 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
                 imageCount:recs.size()];
             
             std::thread exportThread([=] {
-                Export(imageSource, recs, res.format, [res.path UTF8String], progress);
+                Export(imageSource, recs, *res.format, [res.path UTF8String], progress);
             });
             exportThread.detach();
         
         } else {
             Toastbox::Renderer renderer;
             Image image = imageSource->getImage(ImageSource::Priority::Low, firstImageRec);
-            Export(renderer, *firstImageRec, image, res.format, [res.path UTF8String]);
+            Export(renderer, *firstImageRec, image, *res.format, [res.path UTF8String]);
             
 //            Toastbox::Renderer renderer;
 //            _Export(renderer, imageSource, firstImage, res.format, res.path);
