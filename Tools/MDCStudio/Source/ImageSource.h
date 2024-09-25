@@ -104,7 +104,18 @@ struct ImageSource : Object {
         // Load the library
         {
             auto lock = std::unique_lock(*_imageLibrary);
-            _imageLibrary->read(_dir / "ImageLibrary");
+            _imageLibrary->read({
+                .path = _dir / "ImageLibrary",
+                .recordSize = sizeof(ImageRecord) + ImageThumb::ThumbWidth * ImageThumb::ThumbHeight,
+                .chunkRecordCap = 128,
+            });
+            
+//        Path path;                  // Filesystem path to the record store
+//        size_t recordSize = 0;      // The size of each T_Record, in bytes
+//        size_t chunkRecordCap = 0;  // The maximum number of records per chunk
+            
+            
+//            _imageLibrary->read(_dir / "ImageLibrary");
         }
         
         // Init _dataRead

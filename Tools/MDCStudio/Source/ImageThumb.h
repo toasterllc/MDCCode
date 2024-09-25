@@ -29,8 +29,8 @@ struct [[gnu::packed]] alignas(16) ImageThumb {
     
 #pragma clang diagnostic pop
     
-    static constexpr size_t ThumbWidth      = 128;
-    static constexpr size_t ThumbHeight     = 72;
+//    static constexpr size_t ThumbWidth      = 128;
+//    static constexpr size_t ThumbHeight     = 72;
     
 //    static constexpr size_t ThumbWidth      = 256;
 //    static constexpr size_t ThumbHeight     = 144;
@@ -38,8 +38,8 @@ struct [[gnu::packed]] alignas(16) ImageThumb {
 //    static constexpr size_t ThumbWidth      = 384;
 //    static constexpr size_t ThumbHeight     = 216;
     
-//    static constexpr size_t ThumbWidth      = 512;
-//    static constexpr size_t ThumbHeight     = 288;
+    static constexpr size_t ThumbWidth      = 512;
+    static constexpr size_t ThumbHeight     = 288;
     
 //    static constexpr size_t ThumbWidth      = 576;
 //    static constexpr size_t ThumbHeight     = 324;

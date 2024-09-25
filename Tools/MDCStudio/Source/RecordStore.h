@@ -94,11 +94,11 @@ struct RecordStore {
     
     template<typename T_ChunkRef>
     struct _RecordRef : T_ChunkRef {
-        size_t recordSize = 0;
         size_t idx = 0;
+        size_t recordSize = 0;
         
         _RecordRef() {}
-        _RecordRef(const T_ChunkRef& chunk, size_t recordSize, size_t idx) : T_ChunkRef(chunk), recordSize(recordSize), idx(idx) {}
+        _RecordRef(const T_ChunkRef& chunk, size_t idx, size_t recordSize) : T_ChunkRef(chunk), idx(idx), recordSize(recordSize) {}
         
 //        using T_ChunkRef::T_ChunkRef;
         const T_ChunkRef& chunkRef() const { return *this; }
@@ -110,6 +110,7 @@ struct RecordStore {
         bool operator<(const T& x) const {
             if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
             if (idx != x.idx)               return idx < x.idx;
+            if (recordSize != x.recordSize) return recordSize < x.recordSize;
             return false;
         }
         
@@ -117,6 +118,7 @@ struct RecordStore {
         bool operator==(const T& x) const {
             if (chunkRef() != x.chunkRef()) return false;
             if (idx != x.idx)               return false;
+            if (recordSize != x.recordSize) return false;
             return true;
         }
         
@@ -144,9 +146,9 @@ struct RecordStore {
     // that the data that it references stays alive while other threads modify the store.
     struct RecordStrongRef : _RecordRef<ChunkStrongRef> {
         RecordStrongRef() {}
-        RecordStrongRef(const RecordRef& ref) : _RecordRef<ChunkStrongRef>(ref, ref.recordSize, ref.idx) {}
+        RecordStrongRef(const RecordRef& ref) : _RecordRef<ChunkStrongRef>(ref, ref.idx, ref.recordSize) {}
         operator const RecordRef() const {
-            return RecordRef(*this, this->idx);
+            return RecordRef(*this, this->idx, this->recordSize);
         }
     };
     
@@ -161,7 +163,6 @@ struct RecordStore {
     };
     
     struct _State {
-        Config cfg;
         ChunkId chunkId = 0;
         RecordRefs recordRefs;
         Chunks chunks;
@@ -229,7 +230,7 @@ struct RecordStore {
         // Perform 'trivial compaction': truncate each chunk to its last record (according to chunk.recordIdx)
         {
             for (Chunk& chunk : _state.chunks) {
-                chunk.mmap.len(chunk.recordIdx * _state.recordSize);
+                chunk.mmap.len(chunk.recordIdx * _cfg.recordSize);
             }
         }
         
@@ -271,6 +272,7 @@ struct RecordStore {
             Chunk& chunk = _chunkGetWritable();
             ref.chunk = &chunk;
             ref.idx = chunk.recordIdx;
+            ref.recordSize = _cfg.recordSize;
             chunk.recordCount++;
             chunk.recordIdx++;
         }
@@ -369,7 +371,7 @@ struct RecordStore {
             
             std::ifstream f;
             f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-            f.open(_IndexPath(cfg.path));
+            f.open(_IndexPath(cfg));
             
             _SerializedHeader header;
             f.read((char*)&header, sizeof(header));
@@ -381,9 +383,9 @@ struct RecordStore {
                 );
             }
             
-            if (header.recordSize >= sizeof(T_Record)) {
-                throw Toastbox::RuntimeError("record size mismatch (expected: >=%ju, got: %ju)",
-                    (uintmax_t)sizeof(T_Record), (uintmax_t)header.recordSize);
+            if (header.recordSize == cfg.recordSize) {
+                throw Toastbox::RuntimeError("record size mismatch (expected: %ju, got: %ju)",
+                    (uintmax_t)cfg.recordSize, (uintmax_t)header.recordSize);
             }
             
             // Create RecordRefs
@@ -421,15 +423,16 @@ struct RecordStore {
                 Chunk*& chunk = chunksMap[chunkId];
                 if (!chunk) chunk = &state.chunks.emplace_back(chunkId, _ChunkFileOpen(cfg, _ChunkPath(cfg, chunkId)));
                 
-                if (state.recordSize*(ref.idx+1) > chunk->mmap.len()) {
+                if (cfg.recordSize*(ref.idx+1) > chunk->mmap.len()) {
                     throw Toastbox::RuntimeError("RecordRef extends beyond chunk (RecordRef end: 0x%jx, chunk end: 0x%jx)",
-                        (uintmax_t)(state.recordSize*(ref.idx+1)),
+                        (uintmax_t)(cfg.recordSize*(ref.idx+1)),
                         (uintmax_t)chunk->mmap.len()
                     );
                 }
                 
                 state.recordRefs[i].chunk = chunk;
                 state.recordRefs[i].idx = ref.idx;
+                state.recordRefs[i].recordSize = cfg.recordSize;
                 
                 chunk->recordCount++;
                 chunk->recordIdx = ref.idx+1;
@@ -451,12 +454,12 @@ struct RecordStore {
     static std::ofstream _StateWrite(const Config& cfg, const _State& state) {
         std::ofstream f;
         f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-        f.open(_IndexPath(cfg.path));
+        f.open(_IndexPath(cfg));
         
         // Write header
         const _SerializedHeader header = {
             .version     = Version,
-            .recordSize  = (uint32_t)state.recordSize,
+            .recordSize  = (uint32_t)cfg.recordSize,
             .recordCount = (uint32_t)state.recordRefs.size(),
         };
         f.write((char*)&header, sizeof(header));
@@ -485,10 +488,10 @@ struct RecordStore {
         return _ChunksPath(cfg) / std::to_string(id);
     }
     
-    static Toastbox::Mmap _ChunkFileCreate(const Config& cfg) {
+    static Toastbox::Mmap _ChunkFileCreate(const Config& cfg, const Path& path) {
         constexpr int OpenFlags = O_RDWR|O_CREAT|O_CLOEXEC;
         constexpr int ChunkPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
-        const int fd = open(cfg.path.c_str(), OpenFlags, ChunkPerm);
+        const int fd = open(path.c_str(), OpenFlags, ChunkPerm);
         if (fd < 0) throw Toastbox::RuntimeError("failed to create chunk file: %s", strerror(errno));
         const size_t cap = Toastbox::Mmap::PageCeil(_ChunkLen(cfg));
         return Toastbox::Mmap(fd, cap, OpenFlags);
@@ -514,7 +517,7 @@ struct RecordStore {
     
     Chunk& _chunkCreate() {
         const ChunkId chunkId = _state.chunkId++;
-        return _state.chunks.emplace_back(chunkId, _ChunkFileCreate(_chunkPath(chunkId), _state.recordSize));
+        return _state.chunks.emplace_back(chunkId, _ChunkFileCreate(_cfg, _chunkPath(chunkId)));
     }
     
     Chunk& _chunkGetWritable() {

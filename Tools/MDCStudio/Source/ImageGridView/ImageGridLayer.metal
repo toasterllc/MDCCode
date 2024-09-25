@@ -75,14 +75,14 @@ static float4 blendOver(float4 a, float4 b) {
 
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
-    constant uint32_t* loadCounts [[buffer(1)]],
+    constant uint8_t* loaded [[buffer(1)]],
     texture2d_array<float> txt [[texture(0)]],
     texture2d<float> placeholderTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     #warning TODO: move as much of this into the vertex shader as possible (ie accessing loadCounts[in.idx])
     const uint2 pos = uint2(in.posPx);
-    if (!loadCounts[in.idx]) {
+    if (!loaded[in.idx]) {
         constexpr float PlaceholderAlpha = 0.05;
         const float4 c = placeholderTxt.sample({}, in.posNorm);
         return float4(c.rgb, PlaceholderAlpha*c.a);

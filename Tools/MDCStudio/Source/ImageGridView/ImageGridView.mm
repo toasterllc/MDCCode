@@ -36,9 +36,12 @@ static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 @end
 
 struct _ChunkTexture {
-    static constexpr size_t SliceCount = ImageLibrary::ChunkRecordCap;
+    static constexpr size_t SliceCount = 2048; // Metal feature set tables define this max layer count
     id<MTLTexture> txt = nil;
     uint32_t loadCounts[SliceCount] = {};
+    // `loaded` is separate from `loadCounts` because `loadCounts` is too
+    // large to pass as a uniform buffer
+    uint8_t loaded[SliceCount] = {};
 };
 
 static constexpr size_t _ChunkTexturesCacheCapacity = 16;
@@ -228,6 +231,8 @@ static CGRect _CGRectFromGridRect(Toastbox::Grid::Rect rect, CGFloat scale) {
 // _ChunkTextureUpdateSlice: if _ChunkTexture's slice for an ImageRecord is stale, reloads the compressed
 // thumbnail data from the ImageRecord into the slice
 static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::RecordRef& ref) {
+    assert(ref.idx < _ChunkTexture::SliceCount);
+    
     const uint32_t loadCount = ref->status.loadCount;
     if (loadCount != ct.loadCounts[ref.idx]) {
 //        printf("Update slice (%ju %u %u)\n", (uintmax_t)ref.idx, loadCount, ct.loadCounts[ref.idx]);
@@ -237,16 +242,17 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
             slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
         
         ct.loadCounts[ref.idx] = loadCount;
+        ct.loaded[ref.idx] = true;
     }
 }
 
-static MTLTextureDescriptor* _TextureDescriptor() {
+static MTLTextureDescriptor* _TextureDescriptor(size_t sliceCount) {
     MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
     [desc setTextureType:MTLTextureType2DArray];
     [desc setPixelFormat:ImageThumb::PixelFormat];
     [desc setWidth:ImageThumb::ThumbWidth];
     [desc setHeight:ImageThumb::ThumbHeight];
-    [desc setArrayLength:_ChunkTexture::SliceCount];
+    [desc setArrayLength:sliceCount];
     return desc;
 }
 
@@ -265,10 +271,11 @@ static MTLTextureDescriptor* _TextureDescriptor() {
     const auto chunkBegin = ImageLibrary::FindChunkBegin(ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst), iter);
     const auto chunkEnd = ImageLibrary::FindChunkEnd(ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst), iter);
     assert(chunkBegin != chunkEnd);
+    const size_t sliceCount = chunkEnd-chunkBegin;
     
     auto startTime = std::chrono::steady_clock::now();
     
-    static MTLTextureDescriptor* txtDesc = _TextureDescriptor();
+    static MTLTextureDescriptor* txtDesc = _TextureDescriptor(sliceCount);
     id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
     assert(txt);
     
@@ -389,7 +396,7 @@ static MTLTextureDescriptor* _TextureDescriptor() {
         [renderEncoder setVertexBuffer:_selectionDraw.buf offset:0 atIndex:2];
         
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-        [renderEncoder setFragmentBytes:&ct.loadCounts length:sizeof(ct.loadCounts) atIndex:1];
+        [renderEncoder setFragmentBytes:&ct.loaded length:sizeof(ct.loaded) atIndex:1];
         [renderEncoder setFragmentTexture:ct.txt atIndex:0];
         [renderEncoder setFragmentTexture:_placeholderTexture atIndex:1];
         
