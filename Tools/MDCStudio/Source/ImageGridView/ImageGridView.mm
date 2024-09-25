@@ -268,11 +268,6 @@ static MTLTextureDescriptor* _TextureDescriptor(size_t sliceCount) {
         return it->val;
     }
     
-//    const auto chunkBegin = ImageLibrary::FindChunkBegin(ImageLibrary::BeginSorted(*_imageLibrary, _sortNewestFirst), iter);
-//    const auto chunkEnd = ImageLibrary::FindChunkEnd(ImageLibrary::EndSorted(*_imageLibrary, _sortNewestFirst), iter);
-//    assert(chunkBegin != chunkEnd);
-//    const size_t sliceCount = chunkEnd-chunkBegin;
-    
     auto startTime = std::chrono::steady_clock::now();
     
     static MTLTextureDescriptor* txtDesc = _TextureDescriptor(_imageLibrary->config().chunkRecordCap);
