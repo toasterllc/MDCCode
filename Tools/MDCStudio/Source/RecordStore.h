@@ -381,9 +381,9 @@ struct RecordStore {
                 );
             }
             
-            if (header.recordSize != cfg.recordSize) {
-                throw Toastbox::RuntimeError("record size mismatch (expected: %ju, got: %ju)",
-                    (uintmax_t)cfg.recordSize, (uintmax_t)header.recordSize);
+            if (header.recordSize >= sizeof(T_Record)) {
+                throw Toastbox::RuntimeError("record size mismatch (expected: >=%ju, got: %ju)",
+                    (uintmax_t)sizeof(T_Record), (uintmax_t)header.recordSize);
             }
             
             // Create RecordRefs
@@ -496,7 +496,7 @@ struct RecordStore {
     
     static Toastbox::Mmap _ChunkFileOpen(const Config& cfg, const Path& path) {
         constexpr int OpenFlags = O_RDWR;
-        int fdi = open(cfg.path.c_str(), OpenFlags);
+        int fdi = open(path.c_str(), OpenFlags);
         if (fdi < 0) throw Toastbox::RuntimeError("open failed: %s", strerror(errno));
         Toastbox::FileDescriptor fd(fdi);
         // Determine file size
