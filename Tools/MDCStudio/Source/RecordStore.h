@@ -17,9 +17,7 @@
 //                          the space of a randomly-deleted record is not recovered until chunk compaction occurs (currently unimplemented)
 //               threading: data can be written from one thread and read from another thread in parallel
 
-template<
-typename T_Record      // The type of the records
->
+template<typename T_Record>
 struct RecordStore {
     static constexpr uint32_t Version = T_Record::Version;
     
@@ -342,6 +340,10 @@ struct RecordStore {
     
     size_t recordCount() const {
         return _state.recordRefs.size();
+    }
+    
+    const Config& config() const {
+        return _cfg;
     }
     
     struct [[gnu::packed]] _SerializedHeader {

@@ -96,14 +96,28 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
         else                 return lib.end();
     }
     
-    void read(const RecordStore::Config& cfg) {
+    void read(const RecordStore::Path& dir, const ImageThumb::Size& thumbSize) {
         try {
-            std::ifstream f = RecordStore::read(cfg);
+            const size_t recordSize = sizeof(ImageRecord) + thumbSize.width * thumbSize.height;
+            std::ifstream f = RecordStore::read({
+                .path = dir,
+                .recordSize = recordSize,
+                .chunkRecordCap = thumbSize.chunkRecordCap,
+            });
             _StateRead(f, _state);
         } catch (const std::exception& e) {
             printf("Recreating ImageLibrary; cause: %s\n", e.what());
         }
     }
+    
+//    void read(const RecordStore::Config& cfg) {
+//        try {
+//            std::ifstream f = RecordStore::read(cfg);
+//            _StateRead(f, _state);
+//        } catch (const std::exception& e) {
+//            printf("Recreating ImageLibrary; cause: %s\n", e.what());
+//        }
+//    }
     
     void write() {
         std::ofstream f = RecordStore::write();
