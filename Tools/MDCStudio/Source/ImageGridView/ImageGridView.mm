@@ -237,7 +237,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     if (loadCount != ct.loadCounts[ref.idx]) {
 //        printf("Update slice (%ju %u %u)\n", (uintmax_t)ref.idx, loadCount, ct.loadCounts[ref.idx]);
         
-        const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
+        const uint8_t* b = ref.chunk->mmap.data() + ref.idx*ref.recordSize + offsetof(ImageRecord, thumb.data);
         [ct.txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
             slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
         
