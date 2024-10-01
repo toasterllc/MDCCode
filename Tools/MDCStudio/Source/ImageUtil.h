@@ -12,13 +12,15 @@ inline void ImageWhiteBalanceSet(ImageWhiteBalance& x, bool automatic, const CCM
     ccm.matrix.get(x.colorMatrix);
 }
 
-inline Toastbox::Renderer::Txt ThumbTextureForImageRecord(Toastbox::Renderer& renderer, const ImageRecord& rec) {
+inline Toastbox::Renderer::Txt ThumbTextureForImageRecord(Toastbox::Renderer& renderer, ImageRecordPtr rec) {
     using namespace Toastbox;
-    const size_t w = ImageThumb::ThumbWidth;
-    const size_t h = ImageThumb::ThumbHeight;
+    
+    const ImageLibrary::Descriptor& desc = ImageLibrary::DescriptorForRecordSize(rec.recordSize);
+    const size_t w = desc.thumbWidth;
+    const size_t h = desc.thumbHeight;
     Renderer::Txt thumbTxt = renderer.textureCreate(ImageThumb::PixelFormat, w, h);
     [thumbTxt replaceRegion:MTLRegionMake2D(0,0,w,h) mipmapLevel:0
-        slice:0 withBytes:rec.thumb.data bytesPerRow:w*4 bytesPerImage:0];
+        slice:0 withBytes:rec->thumb.data bytesPerRow:w*4 bytesPerImage:0];
     return thumbTxt;
 }
 

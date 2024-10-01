@@ -86,6 +86,42 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
         std::set<RecordStrongRef> records;
     };
     
+    struct Descriptor {
+        const char* name = nullptr;
+        size_t thumbWidth = 0;
+        size_t thumbHeight = 0;
+        size_t chunkRecordCap = 0; // The number of ImageRecords per chunk
+    };
+    
+    struct Descriptors {
+        static constexpr const inline Descriptor  Small  = { "Small",  128,  72, 2048 };
+        static constexpr const inline Descriptor  Medium = { "Medium", 256, 144,  512 };
+        static constexpr const inline Descriptor  Large  = { "Large",  384, 216,  128 };
+        static constexpr const inline Descriptor* All[] = {
+            &Small,
+            &Medium,
+            &Large,
+        };
+    };
+    
+    static constexpr size_t RecordSizeForDescriptor(const Descriptor& desc) {
+        return sizeof(ImageRecord) + desc.thumbWidth*desc.thumbHeight;
+    }
+    
+    static const Descriptor& DescriptorForRecordSize(size_t recordSize) {
+        switch (recordSize) {
+        case RecordSizeForDescriptor(Descriptors::Small):   return Descriptors::Small;
+        case RecordSizeForDescriptor(Descriptors::Medium):  return Descriptors::Medium;
+        case RecordSizeForDescriptor(Descriptors::Large):   return Descriptors::Large;
+        default: abort();
+        }
+    }
+    
+//    static size_t DataLength(const Descriptor& desc) {
+//        // Compressed thumbnail data length is one byte per pixel
+//        return desc.width * desc.height;
+//    }
+    
     static IterAny BeginSorted(const ImageLibrary& lib, bool sortNewestFirst) {
         if (sortNewestFirst) return lib.rbegin();
         else                 return lib.begin();
@@ -96,13 +132,13 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
         else                 return lib.end();
     }
     
-    void read(const RecordStore::Path& dir, const ImageThumb::Size& thumbSize) {
+    void read(const RecordStore::Path& dir, const ImageLibrary::Descriptor& desc) {
         try {
-            const size_t recordSize = sizeof(ImageRecord) + thumbSize.width * thumbSize.height;
+            const size_t recordSize = sizeof(ImageRecord) + ImageThumb::DataLength(desc);
             std::ifstream f = RecordStore::read({
                 .path = dir,
                 .recordSize = recordSize,
-                .chunkRecordCap = thumbSize.chunkRecordCap,
+                .chunkRecordCap = desc.chunkRecordCap,
             });
             _StateRead(f, _state);
         } catch (const std::exception& e) {
@@ -202,6 +238,7 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
     
     struct _State {
         Img::Id imageIdEnd = 0;
+        const ImageLibrary::Descriptor* desc = nullptr;
     };
     
     static void _StateRead(std::ifstream& f, _State& state) {

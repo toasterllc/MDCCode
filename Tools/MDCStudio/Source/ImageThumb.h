@@ -3,25 +3,7 @@
 
 namespace MDCStudio {
 
-struct [[gnu::packed]] alignas(16) ImageThumb {
-    struct Size {
-        const char* name = nullptr;
-        size_t width = 0;
-        size_t height = 0;
-        size_t chunkRecordCap = 0; // The number of ImageRecords per chunk
-    };
-    
-    struct Sizes {
-        static const inline Size  Small  = { "Small",  128,  72, 2048 };
-        static const inline Size  Medium = { "Medium", 256, 144,  512 };
-        static const inline Size  Large  = { "Large",  384, 216,  128 };
-        static const inline Size* All[] = {
-            &Small,
-            &Medium,
-            &Large,
-        };
-    };
-    
+struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 288;
 //    static constexpr size_t ThumbHeight     = 162;
 
@@ -65,6 +47,7 @@ struct [[gnu::packed]] alignas(16) ImageThumb {
 //    static constexpr size_t ThumbWidth      = 2304;
 //    static constexpr size_t ThumbHeight     = 1296;
     
+    alignas(16)
     uint8_t data[];
     
 //    alignas(16) // Must be aligned to the block size of the compressed thumb format (either ASTC or BC7)
