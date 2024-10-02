@@ -93,7 +93,7 @@ struct ImageSource : Object {
         Object::init(); // Call super
         
         _dir = dir;
-        _imageLibrary = Object::Create<ImageLibrary>(ImageLibrary::Descriptors::Small);
+        _imageLibrary = Object::Create<ImageLibrary>(ImageLibrary::Descriptors::ExtraLarge);
         
         // Read state from disk
         try {
@@ -365,11 +365,13 @@ struct ImageSource : Object {
         return true;
     }
     
-    using _ThumbTmpStorage = uint8_t[];
+    static constexpr auto& _LargestDesc = ImageLibrary::Descriptors::ExtraLarge;
+    static constexpr size_t _ThumbTmpStorageLen = _LargestDesc.thumbWidth * _LargestDesc.thumbHeight * 4;
+    using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
     
     // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
     // destination buffer (dst), as BC7-compressed data
-    static CCM _ThumbRender(Toastbox::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage tmpStorage,
+    static CCM _ThumbRender(Toastbox::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage& tmpStorage,
         bool estimateIlluminant, const void* src, ImageRecordPtr rec) {
         
         using namespace ImagePipeline;
@@ -785,9 +787,7 @@ struct ImageSource : Object {
             Renderer renderer;
             
             // Allocate enough space to fit the largest thumbnail
-            constexpr auto& LargeThumbDesc = ImageLibrary::Descriptors::Large;
-            constexpr size_t ThumbTmpStorageLen = LargeThumbDesc.thumbWidth * LargeThumbDesc.thumbHeight * 4;
-            std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>(ThumbTmpStorageLen);
+            std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
             
             at_encoder_t compressor = at_encoder_create(
                 at_texel_format_rgba8_unorm,
@@ -867,7 +867,7 @@ struct ImageSource : Object {
                     
                     // estimateIlluminant: only perform illuminant estimation upon our initial import
                     const bool estimateIlluminant = work.initial;
-                    const CCM ccm = _ThumbRender(renderer, compressor, thumbTmpStorage.get(),
+                    const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage,
                         estimateIlluminant, thumbSrc, rec);
                     
                     if (estimateIlluminant) {

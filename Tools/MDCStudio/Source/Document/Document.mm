@@ -1,6 +1,7 @@
 #import "Document.h"
 #import <algorithm>
 #import "Code/Lib/Toastbox/Cast.h"
+#import "Code/Lib/Toastbox/Util.h"
 #import "SourceListView/SourceListView.h"
 #import "InspectorView/InspectorView.h"
 #import "ImageGridView/ImageGridView.h"
@@ -771,7 +772,6 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 }
 
 // MARK: - Demo
-
 - (IBAction)_tryDemo:(id)sender {
     _demoDevice = Object::Create<MDCDeviceDemo>();
     [self _updateDevices];
