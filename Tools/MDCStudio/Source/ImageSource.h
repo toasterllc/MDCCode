@@ -93,7 +93,7 @@ struct ImageSource : Object {
         Object::init(); // Call super
         
         _dir = dir;
-        _imageLibrary = Object::Create<ImageLibrary>(ImageLibrary::Descriptors::ExtraLarge);
+        _imageLibrary = Object::Create<ImageLibrary>(ImageLibrary::Descriptors::Small);
         
         // Read state from disk
         try {

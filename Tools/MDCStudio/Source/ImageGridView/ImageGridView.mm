@@ -1172,9 +1172,6 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 
 // MARK: - Magnification
 
-constexpr CGFloat MagnificationMin = 0.125;
-constexpr CGFloat MagnificationMax = 2.000;
-
 static CGFloat _NextMagnification(CGFloat min, CGFloat max, int direction, CGFloat mag) {
     // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
     constexpr CGFloat Thresh = 0.25;
@@ -1235,7 +1232,8 @@ static CGFloat _NextMagnification(CGFloat min, CGFloat max, int direction, CGFlo
         };
     }
     
-    _mag.amount = std::clamp(_mag.amount+[event magnification], MagnificationMin, MagnificationMax);
+    _mag.amount = std::clamp(_mag.amount+[event magnification],
+        [_imageGridLayer magnificationMin], [_imageGridLayer magnificationMax]);
     [self _setMagnification:_mag.amount anchor:_mag.anchor];
 }
 
