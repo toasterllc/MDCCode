@@ -161,7 +161,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
 //            _renderer.debugTextureShow(rawTxt);
         
         } else {
-            Renderer::Txt thumbTxt = ThumbTextureForImageRecord(_renderer, *_imageRecord);
+            Renderer::Txt thumbTxt = ThumbTextureForImageRecord(_renderer, _imageRecord);
             _renderer.render(_image.txt, thumbTxt);
             if (!popts.timestamp.string.empty()) {
                 Pipeline::TimestampOverlayRender(_renderer, popts.timestamp, _image.txt);
@@ -344,6 +344,9 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
     [[self window] makeFirstResponder:self];
     
     NSWindow* win = [self window];
+    FullSizeImageLayer* layer = (FullSizeImageLayer*)[self layer];
+    ImageRecordPtr rec = [layer imageRecord];
+    const ImageLibrary::Descriptor& desc = ImageLibrary::DescriptorForRecordSize(rec.recordSize);
     const CGPoint mouseDownPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
     Toastbox::TrackMouse(win, mouseDownEvent, [&] (NSEvent* event, bool done) {
         constexpr CGFloat DragThreshold = 5;
@@ -353,13 +356,12 @@ static void _ImageLoadThread(_ImageLoadThreadState& state) {
         
         NSView* dragView = [[self enclosingScrollView] superview];
         CGPoint dragPosition = [dragView convertPoint:[event locationInWindow] fromView:nil];
-        CGRect draggingFrame = {{}, {(CGFloat)ImageThumb::ThumbWidth/2, (CGFloat)ImageThumb::ThumbHeight/2}};
+        CGRect draggingFrame = {{}, {(CGFloat)desc.thumbWidth/2, (CGFloat)desc.thumbHeight/2}};
         draggingFrame.origin = {
             dragPosition.x - draggingFrame.size.width/2,
             dragPosition.y - draggingFrame.size.height/2,
         };
         
-        FullSizeImageLayer* layer = (FullSizeImageLayer*)[self layer];
         _drag.image = [[DragImage alloc] initWithImageSource:[layer imageSource]
             imageRecord:[layer imageRecord]
             progressDialog:nil

@@ -88,7 +88,7 @@ static struct {
         
         NSDraggingImageComponent* icon = [[NSDraggingImageComponent alloc] initWithKey:NSDraggingImageComponentIconKey];
         Toastbox::Renderer renderer;
-        Toastbox::Renderer::Txt tmp = ThumbTextureForImageRecord(renderer, *selfStrong->_imageRecord);
+        Toastbox::Renderer::Txt tmp = ThumbTextureForImageRecord(renderer, selfStrong->_imageRecord);
         Toastbox::Renderer::Txt thumbTxt = renderer.textureCreate(tmp, MTLPixelFormatRGBA8Unorm_sRGB);
         renderer.render(thumbTxt, tmp);
         [icon setContents:renderer.imageCreate(thumbTxt)];

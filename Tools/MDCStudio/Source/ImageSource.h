@@ -369,7 +369,7 @@ struct ImageSource : Object {
     
     // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
     // destination buffer (dst), as BC7-compressed data
-    static CCM _ThumbRender(Toastbox::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage& tmpStorage,
+    static CCM _ThumbRender(Toastbox::Renderer& renderer, at_encoder_t compressor, _ThumbTmpStorage tmpStorage,
         bool estimateIlluminant, const void* src, ImageRecordPtr rec) {
         
         using namespace ImagePipeline;
@@ -783,7 +783,11 @@ struct ImageSource : Object {
         
         try {
             Renderer renderer;
-            std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>(XXX);
+            
+            // Allocate enough space to fit the largest thumbnail
+            constexpr auto& LargeThumbDesc = ImageLibrary::Descriptors::Large;
+            constexpr size_t ThumbTmpStorageLen = LargeThumbDesc.thumbWidth * LargeThumbDesc.thumbHeight * 4;
+            std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>(ThumbTmpStorageLen);
             
             at_encoder_t compressor = at_encoder_create(
                 at_texel_format_rgba8_unorm,
@@ -863,7 +867,7 @@ struct ImageSource : Object {
                     
                     // estimateIlluminant: only perform illuminant estimation upon our initial import
                     const bool estimateIlluminant = work.initial;
-                    const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage,
+                    const CCM ccm = _ThumbRender(renderer, compressor, thumbTmpStorage.get(),
                         estimateIlluminant, thumbSrc, rec);
                     
                     if (estimateIlluminant) {

@@ -17,9 +17,6 @@
 #import "Code/Lib/Toastbox/Mac/Util.h"
 using namespace MDCStudio;
 
-static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
-static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
-
 @interface ImageGridLayer : AnchoredMetalDocumentLayer
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource

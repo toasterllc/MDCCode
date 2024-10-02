@@ -94,13 +94,15 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
     };
     
     struct Descriptors {
-        static constexpr const inline Descriptor  Small  = { "Small",  128,  72, 2048 };
-        static constexpr const inline Descriptor  Medium = { "Medium", 256, 144,  512 };
-        static constexpr const inline Descriptor  Large  = { "Large",  384, 216,  128 };
+        static constexpr const inline Descriptor  Small       = { "Small",          128,  72, 2048 };
+        static constexpr const inline Descriptor  Medium      = { "Medium",         256, 144,  512 };
+        static constexpr const inline Descriptor  Large       = { "Large",          384, 216,  256 };
+        static constexpr const inline Descriptor  ExtraLarge  = { "Extra Large",    512, 288,  128 };
         static constexpr const inline Descriptor* All[] = {
             &Small,
             &Medium,
             &Large,
+            &ExtraLarge,
         };
     };
     
@@ -134,10 +136,9 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
     
     void read(const RecordStore::Path& dir, const ImageLibrary::Descriptor& desc) {
         try {
-            const size_t recordSize = sizeof(ImageRecord) + ImageThumb::DataLength(desc);
             std::ifstream f = RecordStore::read({
                 .path = dir,
-                .recordSize = recordSize,
+                .recordSize = RecordSizeForDescriptor(desc),
                 .chunkRecordCap = desc.chunkRecordCap,
             });
             _StateRead(f, _state);
