@@ -258,7 +258,6 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
     
     struct _State {
         Img::Id imageIdEnd = 0;
-        const ImageLibrary::Descriptor* desc = nullptr;
     };
     
     static void _StateRead(std::ifstream& f, _State& state) {

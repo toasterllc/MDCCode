@@ -50,6 +50,8 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
     ImageSourcePtr _imageSource;
     ImageLibraryPtr _imageLibrary;
     const ImageLibrary::Descriptor* _imageLibraryDesc;
+    MTLTextureDescriptor* _txtDesc;
+    
     ImageSelectionPtr _selection;
     Object::ObserverPtr _selectionOb;
     Toastbox::Grid _grid;
@@ -78,6 +80,16 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     return cs;
 }
 
+static MTLTextureDescriptor* _TextureDescriptor(const ImageLibrary::Descriptor& desc, size_t sliceCount) {
+    MTLTextureDescriptor* r = [MTLTextureDescriptor new];
+    [r setTextureType:MTLTextureType2DArray];
+    [r setPixelFormat:ImageThumb::PixelFormat];
+    [r setWidth:desc.thumbWidth];
+    [r setHeight:desc.thumbHeight];
+    [r setArrayLength:sliceCount];
+    return r;
+}
+
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource selection:(MDCStudio::ImageSelectionPtr)selection {
     
     NSParameterAssert(imageSource);
@@ -88,6 +100,8 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     _imageSource = imageSource;
     _imageLibrary = imageSource->imageLibrary();
     _imageLibraryDesc = &_imageLibrary->descriptor();
+    _txtDesc = _TextureDescriptor(*_imageLibraryDesc, _imageLibrary->config().chunkRecordCap);
+    
     _selection = selection;
     
     __weak auto selfWeak = self;
@@ -255,16 +269,6 @@ static void _ChunkTextureUpdateSlice(const ImageLibrary::Descriptor& desc, _Chun
     }
 }
 
-static MTLTextureDescriptor* _TextureDescriptor(const ImageLibrary::Descriptor& desc, size_t sliceCount) {
-    MTLTextureDescriptor* r = [MTLTextureDescriptor new];
-    [r setTextureType:MTLTextureType2DArray];
-    [r setPixelFormat:ImageThumb::PixelFormat];
-    [r setWidth:desc.thumbWidth];
-    [r setHeight:desc.thumbHeight];
-    [r setArrayLength:sliceCount];
-    return r;
-}
-
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
 // _getChunkTexture: returns a _ChunkTexture& containing all thumbnails for a given chunk
 // ImageLibrary must be locked!
@@ -279,8 +283,7 @@ static MTLTextureDescriptor* _TextureDescriptor(const ImageLibrary::Descriptor& 
     
     auto startTime = std::chrono::steady_clock::now();
     
-    static MTLTextureDescriptor* txtDesc = _TextureDescriptor(*_imageLibraryDesc, _imageLibrary->config().chunkRecordCap);
-    id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
+    id<MTLTexture> txt = [_device newTextureWithDescriptor:_txtDesc];
     assert(txt);
     
     _ChunkTexture& ct = _chunkTxts[chunk];
@@ -377,10 +380,11 @@ static MTLTextureDescriptor* _TextureDescriptor(const ImageLibrary::Descriptor& 
         constexpr CGFloat SelectionBorderSizeDefault = 10. / 512;
         constexpr CGFloat SelectionBorderSizeMin = 5. / 512;
         
-        const uint32_t selectionBorderSizeDefault = std::round(SelectionBorderSizeDefault*_imageLibraryDesc->thumbWidth);
-        const uint32_t selectionBorderSizeMin = std::round(SelectionBorderSizeMin*_imageLibraryDesc->thumbWidth);
-        const uint32_t selectionBorderSize = std::max(selectionBorderSizeMin,
-            (uint32_t)(_magnification * selectionBorderSizeDefault));
+        const uint32_t selectionBorderSizeDefault =
+            std::round(_magnification * _imageLibraryDesc->thumbWidth * SelectionBorderSizeDefault);
+        const uint32_t selectionBorderSizeMin =
+            std::round(SelectionBorderSizeMin*ImageLibrary::Descriptors::ExtraLarge.thumbWidth);
+        const uint32_t selectionBorderSize = std::max(selectionBorderSizeMin, selectionBorderSizeDefault);
         
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,

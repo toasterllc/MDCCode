@@ -89,9 +89,22 @@ struct ImageSource : Object {
         rec.status.loadCount = 0;
     }
     
+    void _imageLibraryCreate() {
+        
+    }
+    
     void init(const Path& dir) {
         printf("ImageSource::init() %p\n", this);
         Object::init(); // Call super
+        
+//        _prefsOb = PrefsGlobal()->observerAdd(<#Observer &&fn#>)
+        
+        _prefsOb = PrefsGlobal()->observerAdd([=] (auto, const Object::Event& ev) {
+            const Prefs::Event& pev = static_cast<const Prefs::Event&>(ev);
+            if (pev.key == "CachedThumbWidth") {
+                printf("CachedThumbWidth");
+            }
+        });
         
         _dir = dir;
         _imageLibrary = Object::Create<ImageLibrary>(PrefsUtil::ImageLibraryDescriptor());
@@ -106,19 +119,6 @@ struct ImageSource : Object {
         {
             auto lock = std::unique_lock(*_imageLibrary);
             _imageLibrary->read(_dir / "ImageLibrary");
-            
-//            _imageLibrary->read({
-//                .path = _dir / "ImageLibrary",
-//                .recordSize = sizeof(ImageRecord) + ImageThumb::ThumbWidth * ImageThumb::ThumbHeight,
-//                .chunkRecordCap = 128,
-//            });
-            
-//        Path path;                  // Filesystem path to the record store
-//        size_t recordSize = 0;      // The size of each T_Record, in bytes
-//        size_t chunkRecordCap = 0;  // The maximum number of records per chunk
-            
-            
-//            _imageLibrary->read(_dir / "ImageLibrary");
         }
         
         // Init _dataRead
@@ -517,6 +517,7 @@ struct ImageSource : Object {
             }
         }
         
+        #warning _imageLibrary may not match the image records in `notify` !
         if (!notify.empty()) {
             auto lock = std::unique_lock(*_imageLibrary);
             _imageLibrary->observersNotify(ImageLibrary::Event::Type::ChangeThumbnail, notify);
@@ -907,6 +908,7 @@ struct ImageSource : Object {
     // MARK: - Members
     
     Path _dir;
+    Object::ObserverPtr _prefsOb;
     ImageLibraryPtr _imageLibrary;
     
     _ThumbCache _thumbCache;
