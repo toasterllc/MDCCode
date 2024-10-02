@@ -22,6 +22,7 @@
 #import "Cache.h"
 #import "ColorMatrix.h"
 #import "ImageUtil.h"
+#import "PrefsUtil.h"
 
 namespace MDCStudio {
 
@@ -93,7 +94,7 @@ struct ImageSource : Object {
         Object::init(); // Call super
         
         _dir = dir;
-        _imageLibrary = Object::Create<ImageLibrary>(ImageLibrary::Descriptors::Small);
+        _imageLibrary = Object::Create<ImageLibrary>(PrefsUtil::ImageLibraryDescriptor());
         
         // Read state from disk
         try {
@@ -105,7 +106,6 @@ struct ImageSource : Object {
         {
             auto lock = std::unique_lock(*_imageLibrary);
             _imageLibrary->read(_dir / "ImageLibrary");
-            
             
 //            _imageLibrary->read({
 //                .path = _dir / "ImageLibrary",

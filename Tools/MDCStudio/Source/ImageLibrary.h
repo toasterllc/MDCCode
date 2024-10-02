@@ -94,10 +94,10 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
     };
     
     struct Descriptors {
-        static constexpr const inline Descriptor  Small       = { "Small",       128,  72, 2048 };
-        static constexpr const inline Descriptor  Medium      = { "Medium",      256, 144,  512 };
-        static constexpr const inline Descriptor  Large       = { "Large",       384, 216,  256 };
-        static constexpr const inline Descriptor  ExtraLarge  = { "Extra Large", 512, 288,  128 };
+        static constexpr const inline Descriptor  Small      = { "Small",       128,  72, 2048 };
+        static constexpr const inline Descriptor  Medium     = { "Medium",      256, 144,  512 };
+        static constexpr const inline Descriptor  Large      = { "Large",       384, 216,  256 };
+        static constexpr const inline Descriptor  ExtraLarge = { "Extra Large", 512, 288,  128 };
         static constexpr const inline Descriptor* All[] = {
             &Small,
             &Medium,
@@ -116,6 +116,16 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
         case RecordSizeForDescriptor(Descriptors::Medium):      return Descriptors::Medium;
         case RecordSizeForDescriptor(Descriptors::Large):       return Descriptors::Large;
         case RecordSizeForDescriptor(Descriptors::ExtraLarge):  return Descriptors::ExtraLarge;
+        default: abort();
+        }
+    }
+    
+    static const Descriptor& DescriptorFromThumbWidth(size_t thumbWidth) {
+        switch (thumbWidth) {
+        case Descriptors::Small.thumbWidth:       return Descriptors::Small;
+        case Descriptors::Medium.thumbWidth:      return Descriptors::Medium;
+        case Descriptors::Large.thumbWidth:       return Descriptors::Large;
+        case Descriptors::ExtraLarge.thumbWidth:  return Descriptors::ExtraLarge;
         default: abort();
         }
     }

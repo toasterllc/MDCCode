@@ -19,11 +19,11 @@ struct Formats {
         &DNG,
     };
     
-    static const Format* FormatForName(const char* name) {
+    static const Format& FormatForName(const char* name) {
         assert(name);
         for (const Format* fmt : All) {
             if (std::string_view(name) == fmt->name) {
-                return fmt;
+                return *fmt;
             }
         }
         abort();

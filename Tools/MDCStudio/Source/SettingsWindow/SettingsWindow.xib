@@ -6,7 +6,7 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="SettingsWindow"/>
+        <customObject id="-2" userLabel="File's Owner"/>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="" animationBehavior="default" id="wzQ-YT-BhH" customClass="SettingsWindow">
@@ -62,48 +62,6 @@
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bWc-Bn-Mxr">
-                        <rect key="frame" x="18" y="52" width="69" height="16"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" title="Advanced" id="Z5x-Eo-2if">
-                            <font key="font" metaFont="systemBold"/>
-                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="Aq5-Rb-J3V">
-                        <rect key="frame" x="93" y="57" width="150" height="5"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    </box>
-                    <popUpButton verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="prC-DC-Ko0">
-                        <rect key="frame" x="162" y="16" width="107" height="25"/>
-                        <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="p1R-FV-f72" id="y4U-ez-Kv3">
-                            <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="menu"/>
-                            <menu key="menu" id="JIB-rJ-1wF">
-                                <items>
-                                    <menuItem title="Item 1" state="on" id="p1R-FV-f72"/>
-                                    <menuItem title="Item 2" id="oKm-mt-5Le"/>
-                                    <menuItem title="Item 3" id="jJg-cZ-apK"/>
-                                </items>
-                            </menu>
-                        </popUpButtonCell>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="100" id="dFi-PG-sWn"/>
-                        </constraints>
-                        <connections>
-                            <action selector="action_dragAndDrop_exportFormatMenu:" target="wzQ-YT-BhH" id="Pgo-V8-hsQ"/>
-                        </connections>
-                    </popUpButton>
-                    <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JgO-MA-LbU">
-                        <rect key="frame" x="33" y="22" width="122" height="16"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" title="Cached image size:" id="b2L-Fm-g8f">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
                     <popUpButton verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VrP-WT-BR1">
                         <rect key="frame" x="179" y="96" width="107" height="25"/>
                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Lij-Uf-Lf6" id="L7h-xm-xFz">
@@ -121,12 +79,55 @@
                             <constraint firstAttribute="width" constant="100" id="04g-ZJ-zza"/>
                         </constraints>
                         <connections>
-                            <action selector="action_dragAndDrop_exportFormatMenu:" target="wzQ-YT-BhH" id="C90-St-Tai"/>
+                            <action selector="action_dragAndDropFormatMenu:" target="wzQ-YT-BhH" id="C90-St-Tai"/>
+                        </connections>
+                    </popUpButton>
+                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bWc-Bn-Mxr">
+                        <rect key="frame" x="18" y="52" width="69" height="16"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" title="Advanced" id="Z5x-Eo-2if">
+                            <font key="font" metaFont="systemBold"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="Aq5-Rb-J3V">
+                        <rect key="frame" x="93" y="57" width="150" height="5"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    </box>
+                    <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JgO-MA-LbU">
+                        <rect key="frame" x="33" y="22" width="122" height="16"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" title="Cached image size:" id="b2L-Fm-g8f">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <popUpButton verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="prC-DC-Ko0" userLabel="Cached image size">
+                        <rect key="frame" x="162" y="16" width="107" height="25"/>
+                        <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="p1R-FV-f72" id="y4U-ez-Kv3">
+                            <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="menu"/>
+                            <menu key="menu" id="JIB-rJ-1wF">
+                                <items>
+                                    <menuItem title="Item 1" state="on" id="p1R-FV-f72"/>
+                                    <menuItem title="Item 2" id="oKm-mt-5Le"/>
+                                    <menuItem title="Item 3" id="jJg-cZ-apK"/>
+                                </items>
+                            </menu>
+                        </popUpButtonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="100" id="dFi-PG-sWn"/>
+                        </constraints>
+                        <connections>
+                            <action selector="action_cachedImageSizeMenu:" target="wzQ-YT-BhH" id="yoC-Bz-Nf3"/>
                         </connections>
                     </popUpButton>
                 </subviews>
             </view>
             <connections>
+                <outlet property="_cachedImageSizeMenu" destination="prC-DC-Ko0" id="AQw-tt-nIj"/>
                 <outlet property="_dragAndDropExportFormatMenu" destination="VrP-WT-BR1" id="aLE-Is-DI6"/>
                 <outlet property="_timestampCornerButton" destination="WNf-IE-XN3" id="AlW-ZW-dPI"/>
             </connections>
