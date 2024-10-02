@@ -166,6 +166,15 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     return _magnification;
 }
 
+- (CGFloat)magnificationMin {
+    constexpr CGFloat WidthMinPx = 64;
+    return WidthMinPx / _imageLibraryDesc->thumbWidth;
+}
+
+- (CGFloat)magnificationMax {
+    return 2;
+}
+
 - (bool)setMagnification:(CGFloat)x {
     if (_magnification == x) return false;
     
@@ -1166,7 +1175,7 @@ static void _ThumbRenderIfNeeded(ImageSourcePtr is, _IterRange range) {
 constexpr CGFloat MagnificationMin = 0.125;
 constexpr CGFloat MagnificationMax = 2.000;
 
-static CGFloat _NextMagnification(CGFloat mag, int direction) {
+static CGFloat _NextMagnification(CGFloat min, CGFloat max, int direction, CGFloat mag) {
     // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
     constexpr CGFloat Thresh = 0.25;
     if (direction > 0) {
@@ -1174,7 +1183,7 @@ static CGFloat _NextMagnification(CGFloat mag, int direction) {
     } else {
         mag = std::pow(2, std::ceil((std::floor(std::log2(mag)/Thresh)*Thresh)-1));
     }
-    mag = std::clamp(mag, MagnificationMin, MagnificationMax);
+    mag = std::clamp(mag, min, max);
     return mag;
 }
 
@@ -1207,12 +1216,14 @@ static CGFloat _NextMagnification(CGFloat mag, int direction) {
 }
 
 - (void)magnifyIncrease:(id)sender {
-    const CGFloat mag = _NextMagnification([_imageGridLayer magnification], +1);
+    const CGFloat mag = _NextMagnification([_imageGridLayer magnificationMin],
+        [_imageGridLayer magnificationMax], +1, [_imageGridLayer magnification]);
     [self _setMagnification:mag anchor:[self _scrollAnchor]];
 }
 
 - (void)magnifyDecrease:(id)sender {
-    const CGFloat mag = _NextMagnification([_imageGridLayer magnification], -1);
+    const CGFloat mag = _NextMagnification([_imageGridLayer magnificationMin],
+        [_imageGridLayer magnificationMax], -1, [_imageGridLayer magnification]);
     [self _setMagnification:mag anchor:[self _scrollAnchor]];
 }
 
