@@ -49,9 +49,11 @@ using _ChunkTextures = Toastbox::LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture,
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
     ImageLibraryPtr _imageLibrary;
+    const ImageLibrary::Descriptor* _imageLibraryDesc;
     ImageSelectionPtr _selection;
     Object::ObserverPtr _selectionOb;
     Toastbox::Grid _grid;
+    
     CGFloat _magnification;
     bool _sortNewestFirst;
     CGFloat _containerWidth;
@@ -85,6 +87,7 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     _imageSource = imageSource;
     _imageLibrary = imageSource->imageLibrary();
+    _imageLibraryDesc = &_imageLibrary->descriptor();
     _selection = selection;
     
     __weak auto selfWeak = self;
@@ -110,8 +113,6 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     
     _placeholderTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ImageGrid-ImagePlaceholder"] options:nil error:nil];
     assert(_placeholderTexture);
-//    assert([_placeholderTexture width] == _ThumbWidth);
-//    assert([_placeholderTexture height] == _ThumbHeight);
     
     _commandQueue = [_device newCommandQueue];
     
@@ -171,9 +172,9 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     _magnification = x;
     
     constexpr CGFloat Spacing = 6. / 512;
-    const int32_t cellWidth = _magnification*_ThumbWidth;
-    const int32_t cellHeight = _magnification*_ThumbHeight;
-    const int32_t spacing = (Spacing*_ThumbWidth)*_magnification;
+    const int32_t cellWidth = _magnification*_imageLibraryDesc->thumbWidth;
+    const int32_t cellHeight = _magnification*_imageLibraryDesc->thumbHeight;
+    const int32_t spacing = (Spacing*_imageLibraryDesc->thumbWidth)*_magnification;
     _grid.setCellSize({cellWidth, cellHeight});
     _grid.setCellSpacing({spacing, spacing});
     
@@ -227,7 +228,9 @@ static CGRect _CGRectFromGridRect(Toastbox::Grid::Rect rect, CGFloat scale) {
 
 // _ChunkTextureUpdateSlice: if _ChunkTexture's slice for an ImageRecord is stale, reloads the compressed
 // thumbnail data from the ImageRecord into the slice
-static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::RecordRef& ref) {
+static void _ChunkTextureUpdateSlice(const ImageLibrary::Descriptor& desc, _ChunkTexture& ct,
+    const ImageLibrary::RecordRef& ref) {
+    
     assert(ref.idx < _ChunkTexture::SliceCount);
     
     const uint32_t loadCount = ref->status.loadCount;
@@ -235,22 +238,22 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
 //        printf("Update slice (%ju %u %u)\n", (uintmax_t)ref.idx, loadCount, ct.loadCounts[ref.idx]);
         
         const uint8_t* b = ref.chunk->mmap.data() + ref.idx*ref.recordSize + offsetof(ImageRecord, thumb.data);
-        [ct.txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
-            slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+        [ct.txt replaceRegion:MTLRegionMake2D(0,0,desc.thumbWidth,desc.thumbHeight) mipmapLevel:0
+            slice:ref.idx withBytes:b bytesPerRow:desc.thumbWidth*4 bytesPerImage:0];
         
         ct.loadCounts[ref.idx] = loadCount;
         ct.loaded[ref.idx] = true;
     }
 }
 
-static MTLTextureDescriptor* _TextureDescriptor(size_t sliceCount) {
-    MTLTextureDescriptor* desc = [MTLTextureDescriptor new];
-    [desc setTextureType:MTLTextureType2DArray];
-    [desc setPixelFormat:ImageThumb::PixelFormat];
-    [desc setWidth:ImageThumb::ThumbWidth];
-    [desc setHeight:ImageThumb::ThumbHeight];
-    [desc setArrayLength:sliceCount];
-    return desc;
+static MTLTextureDescriptor* _TextureDescriptor(const ImageLibrary::Descriptor& desc, size_t sliceCount) {
+    MTLTextureDescriptor* r = [MTLTextureDescriptor new];
+    [r setTextureType:MTLTextureType2DArray];
+    [r setPixelFormat:ImageThumb::PixelFormat];
+    [r setWidth:desc.thumbWidth];
+    [r setHeight:desc.thumbHeight];
+    [r setArrayLength:sliceCount];
+    return r;
 }
 
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
@@ -267,7 +270,7 @@ static MTLTextureDescriptor* _TextureDescriptor(size_t sliceCount) {
     
     auto startTime = std::chrono::steady_clock::now();
     
-    static MTLTextureDescriptor* txtDesc = _TextureDescriptor(_imageLibrary->config().chunkRecordCap);
+    static MTLTextureDescriptor* txtDesc = _TextureDescriptor(*_imageLibraryDesc, _imageLibrary->config().chunkRecordCap);
     id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
     assert(txt);
     
@@ -350,7 +353,7 @@ static MTLTextureDescriptor* _TextureDescriptor(size_t sliceCount) {
         const auto chunkBegin = it;
         _ChunkTexture& ct = [self _getChunkTexture:it];
         for (; it!=visibleEnd && it->chunk==chunkBegin->chunk; it++) {
-            _ChunkTextureUpdateSlice(ct, *it);
+            _ChunkTextureUpdateSlice(*_imageLibraryDesc, ct, *it);
         }
         const auto chunkEnd = it;
         
@@ -365,8 +368,8 @@ static MTLTextureDescriptor* _TextureDescriptor(size_t sliceCount) {
         constexpr CGFloat SelectionBorderSizeDefault = 10. / 512;
         constexpr CGFloat SelectionBorderSizeMin = 5. / 512;
         
-        const uint32_t selectionBorderSizeDefault = std::round(SelectionBorderSizeDefault*_ThumbWidth);
-        const uint32_t selectionBorderSizeMin = std::round(SelectionBorderSizeMin*_ThumbWidth);
+        const uint32_t selectionBorderSizeDefault = std::round(SelectionBorderSizeDefault*_imageLibraryDesc->thumbWidth);
+        const uint32_t selectionBorderSizeMin = std::round(SelectionBorderSizeMin*_imageLibraryDesc->thumbWidth);
         const uint32_t selectionBorderSize = std::max(selectionBorderSizeMin,
             (uint32_t)(_magnification * selectionBorderSizeDefault));
         

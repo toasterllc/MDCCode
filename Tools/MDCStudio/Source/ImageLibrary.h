@@ -94,10 +94,10 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
     };
     
     struct Descriptors {
-        static constexpr const inline Descriptor  Small       = { "Small",          128,  72, 2048 };
-        static constexpr const inline Descriptor  Medium      = { "Medium",         256, 144,  512 };
-        static constexpr const inline Descriptor  Large       = { "Large",          384, 216,  256 };
-        static constexpr const inline Descriptor  ExtraLarge  = { "Extra Large",    512, 288,  128 };
+        static constexpr const inline Descriptor  Small       = { "Small",       128,  72, 2048 };
+        static constexpr const inline Descriptor  Medium      = { "Medium",      256, 144,  512 };
+        static constexpr const inline Descriptor  Large       = { "Large",       384, 216,  256 };
+        static constexpr const inline Descriptor  ExtraLarge  = { "Extra Large", 512, 288,  128 };
         static constexpr const inline Descriptor* All[] = {
             &Small,
             &Medium,
@@ -112,9 +112,10 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
     
     static const Descriptor& DescriptorForRecordSize(size_t recordSize) {
         switch (recordSize) {
-        case RecordSizeForDescriptor(Descriptors::Small):   return Descriptors::Small;
-        case RecordSizeForDescriptor(Descriptors::Medium):  return Descriptors::Medium;
-        case RecordSizeForDescriptor(Descriptors::Large):   return Descriptors::Large;
+        case RecordSizeForDescriptor(Descriptors::Small):       return Descriptors::Small;
+        case RecordSizeForDescriptor(Descriptors::Medium):      return Descriptors::Medium;
+        case RecordSizeForDescriptor(Descriptors::Large):       return Descriptors::Large;
+        case RecordSizeForDescriptor(Descriptors::ExtraLarge):  return Descriptors::ExtraLarge;
         default: abort();
         }
     }
@@ -134,12 +135,18 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
         else                 return lib.end();
     }
     
-    void read(const RecordStore::Path& dir, const ImageLibrary::Descriptor& desc) {
+    void init(const Descriptor& desc) {
+        printf("ImageLibrary::init()\n");
+        Object::init(); // Call super
+        _desc = &desc;
+    }
+    
+    void read(const RecordStore::Path& dir) {
         try {
             std::ifstream f = RecordStore::read({
                 .path = dir,
-                .recordSize = RecordSizeForDescriptor(desc),
-                .chunkRecordCap = desc.chunkRecordCap,
+                .recordSize = RecordSizeForDescriptor(*_desc),
+                .chunkRecordCap = _desc->chunkRecordCap,
             });
             _StateRead(f, _state);
         } catch (const std::exception& e) {
@@ -209,6 +216,8 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
         return RecordStore::Find(begin(), end(), ref);
     }
     
+    const Descriptor& descriptor() const { return *_desc; }
+    
     void imageIdEnd(Img::Id x) { _state.imageIdEnd = x; }
     Img::Id imageIdEnd() const { return _state.imageIdEnd; }
     
@@ -272,6 +281,7 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
         f.write((char*)&serialized, sizeof(serialized));
     }
     
+    const Descriptor* _desc = nullptr;
     _State _state;
 };
 using ImageLibraryPtr = SharedPtr<ImageLibrary>;

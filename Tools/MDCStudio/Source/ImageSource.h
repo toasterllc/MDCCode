@@ -93,7 +93,7 @@ struct ImageSource : Object {
         Object::init(); // Call super
         
         _dir = dir;
-        _imageLibrary = Object::Create<ImageLibrary>();
+        _imageLibrary = Object::Create<ImageLibrary>(ImageLibrary::Descriptors::Small);
         
         // Read state from disk
         try {
@@ -104,7 +104,7 @@ struct ImageSource : Object {
         // Load the library
         {
             auto lock = std::unique_lock(*_imageLibrary);
-            _imageLibrary->read(_dir / "ImageLibrary", ImageLibrary::Descriptors::Small);
+            _imageLibrary->read(_dir / "ImageLibrary");
             
             
 //            _imageLibrary->read({
