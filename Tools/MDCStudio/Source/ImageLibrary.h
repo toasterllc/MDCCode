@@ -164,15 +164,6 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
         }
     }
     
-//    void read(const RecordStore::Config& cfg) {
-//        try {
-//            std::ifstream f = RecordStore::read(cfg);
-//            _StateRead(f, _state);
-//        } catch (const std::exception& e) {
-//            printf("Recreating ImageLibrary; cause: %s\n", e.what());
-//        }
-//    }
-    
     void write() {
         std::ofstream f = RecordStore::write();
         _StateWrite(f, _state);

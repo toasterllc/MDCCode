@@ -54,7 +54,7 @@
                         </connections>
                     </button>
                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ciB-cz-DFl">
-                        <rect key="frame" x="33" y="183" width="139" height="16"/>
+                        <rect key="frame" x="33" y="178" width="139" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Drag and drop format:" id="nJV-I8-u8m">
                             <font key="font" metaFont="system"/>
@@ -63,7 +63,7 @@
                         </textFieldCell>
                     </textField>
                     <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VrP-WT-BR1">
-                        <rect key="frame" x="179" y="177" width="107" height="25"/>
+                        <rect key="frame" x="179" y="172" width="107" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Lij-Uf-Lf6" id="L7h-xm-xFz">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -123,7 +123,7 @@
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Sj0-eH-eBH">
                         <rect key="frame" x="33" y="56" width="251" height="28"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" title="This setting controls how much disk space is consumed by cached images." id="ebt-G4-Imy">
+                        <textFieldCell key="cell" title="This setting affects how much disk space is consumed by cached images." id="ebt-G4-Imy">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -132,7 +132,7 @@
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OZu-YO-w2v">
                         <rect key="frame" x="33" y="20" width="251" height="28"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" title="Changes to this setting will take effect the next time you plug in a Photon." id="vMV-sY-a5f">
+                        <textFieldCell key="cell" title="Changes take effect the next time you plug in a Photon." id="vMV-sY-a5f">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>

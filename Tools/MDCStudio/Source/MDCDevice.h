@@ -9,6 +9,26 @@ struct MDCDevice : ImageSource {
         size_t loadImageCount = 0;
     };
     
+    static Path _DevicesDir() {
+        auto urls = [[NSFileManager defaultManager] URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask];
+        if (![urls count]) throw Toastbox::RuntimeError("failed to get NSApplicationSupportDirectory");
+        
+        const Path appSupportDir = Path([urls[0] fileSystemRepresentation]) / [[[NSBundle mainBundle] bundleIdentifier] UTF8String];
+        return appSupportDir / "Devices";
+    }
+    
+    static inline Path DevicesDir = _DevicesDir();
+    
+    static bool DevicesExist() {
+        // Passing `ec` to directory_iterator() causes us to ignore the directory not existing
+        std::error_code ec;
+        for (const Path& p : std::filesystem::directory_iterator(DevicesDir, ec)) {
+            if (p.filename().string().at(0) == '.') continue;
+            return true;
+        }
+        return false;
+    }
+    
     ~MDCDevice() {
         printf("~MDCDevice() %p\n", this);
     }

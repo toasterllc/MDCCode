@@ -23,6 +23,14 @@ inline void CachedThumbWidth(uint16_t x) {
     PrefsGlobal()->set("CachedThumbWidth", x);
 }
 
+inline bool ImageLibraryDescriptorMigrated() {
+    return PrefsGlobal()->get("ImageLibraryDescriptorMigrated", false);
+}
+
+inline void ImageLibraryDescriptorMigrated(bool x) {
+    PrefsGlobal()->set("ImageLibraryDescriptorMigrated", x);
+}
+
 inline const ImageLibrary::Descriptor& ImageLibraryDescriptor() {
     return ImageLibrary::DescriptorFromThumbWidth(CachedThumbWidth());
 }
@@ -30,6 +38,10 @@ inline const ImageLibrary::Descriptor& ImageLibraryDescriptor() {
 inline void ImageLibraryDescriptor(const ImageLibrary::Descriptor& x) {
     CachedThumbWidth(x.thumbWidth);
 }
+
+
+
+
 
 
 
