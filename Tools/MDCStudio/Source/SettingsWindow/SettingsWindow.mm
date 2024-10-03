@@ -35,6 +35,10 @@ static NSString* _StringForDescriptor(const ImageLibrary::Descriptor& desc) {
     return [NSString stringWithFormat:@"%s (%ju MB)", desc.name, (uintmax_t)mb];
 }
 
+- (void)_cachedImageSizeMenuUpdate {
+    [_cachedImageSizeMenu selectItemWithTag:PrefsUtil::ImageLibraryDescriptor().thumbWidth];
+}
+
 - (void)awakeFromNib {
     // _timestampCornerButton
     {
@@ -57,7 +61,7 @@ static NSString* _StringForDescriptor(const ImageLibrary::Descriptor& desc) {
             [_cachedImageSizeMenu addItemWithTitle:_StringForDescriptor(*desc)];
             [[_cachedImageSizeMenu lastItem] setTag:desc->thumbWidth];
         }
-        [_cachedImageSizeMenu selectItemWithTag:PrefsUtil::ImageLibraryDescriptor().thumbWidth];
+        [self _cachedImageSizeMenuUpdate];
     }
 }
 
@@ -72,8 +76,44 @@ static NSString* _StringForDescriptor(const ImageLibrary::Descriptor& desc) {
 }
 
 - (IBAction)action_cachedImageSizeMenu:(id)sender {
-    const ImageLibrary::Descriptor& desc = ImageLibrary::DescriptorFromThumbWidth([[_cachedImageSizeMenu selectedItem] tag]);
-    PrefsUtil::ImageLibraryDescriptor(desc);
+    NSAlert* alert = [NSAlert new];
+    [alert setAlertStyle:NSAlertStyleCritical];
+    [alert setMessageText:@"Photo adjustments will be lost"];
+    
+    [alert setInformativeText:@"This will cause your photo library to be rebuilt.\n\nAll photos will revert to their default appearance; any modifications (such as exposure or contrast adjustments) will be lost!"];
+    
+    {
+        NSButton* button = [alert addButtonWithTitle:@"Cancel"];
+        [button setTag:NSModalResponseCancel];
+        [button setKeyEquivalent:@"\r"];
+    }
+    
+    {
+        NSButton* button = [alert addButtonWithTitle:@"Continue"];
+        [button setTag:NSModalResponseOK];
+    }
+    
+    [alert beginSheetModalForWindow:self completionHandler:^(NSModalResponse r) {
+        [self _cachedImageSizeAlertFinished:r];
+    }];
+}
+
+- (void)_cachedImageSizeAlertFinished:(NSModalResponse)resp {
+    switch (resp) {
+    case NSModalResponseOK: {
+        const ImageLibrary::Descriptor& desc = ImageLibrary::DescriptorFromThumbWidth([[_cachedImageSizeMenu selectedItem] tag]);
+        PrefsUtil::ImageLibraryDescriptor(desc);
+        break;
+    }
+    
+    case NSModalResponseCancel: {
+        break;
+    }
+    
+    default: abort();
+    }
+    
+    [self _cachedImageSizeMenuUpdate];
 }
 
 @end

@@ -701,16 +701,16 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     ]];
     
     {
+        NSButton* button = [alert addButtonWithTitle:@"Cancel"];
+        [button setTag:NSModalResponseCancel];
+        [button setKeyEquivalent:@"\r"];
+    }
+    
+    {
         NSButton* button = [alert addButtonWithTitle:@"Delete"];
         [button setTag:NSModalResponseOK];
         [button setKeyEquivalent:@"\x7f"];
         [button setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
-    }
-    
-    {
-        NSButton* button = [alert addButtonWithTitle:@"Cancel"];
-        [button setTag:NSModalResponseCancel];
-        [button setKeyEquivalent:@"\r"];
     }
     
 //    {
