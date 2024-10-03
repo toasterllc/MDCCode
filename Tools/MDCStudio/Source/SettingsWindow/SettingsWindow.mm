@@ -25,6 +25,16 @@ using namespace MDCStudio;
     abort();
 }
 
+static NSString* _StringForDescriptor(const ImageLibrary::Descriptor& desc) {
+    constexpr size_t ImageLibraryRecordCount = 20197;
+    const size_t bytes = ImageLibrary::RecordSizeForDescriptor(desc) * ImageLibraryRecordCount;
+    const size_t mb = bytes / (1024*1024);
+//    return [NSString stringWithFormat:@"%s (%ju x %ju, %ju MB)",
+//        desc.name, (uintmax_t)desc.thumbWidth, (uintmax_t)desc.thumbHeight, (uintmax_t)mb];
+    
+    return [NSString stringWithFormat:@"%s (%ju MB)", desc.name, (uintmax_t)mb];
+}
+
 - (void)awakeFromNib {
     // _timestampCornerButton
     {
@@ -44,10 +54,10 @@ using namespace MDCStudio;
     {
         [_cachedImageSizeMenu removeAllItems];
         for (const ImageLibrary::Descriptor* desc : ImageLibrary::Descriptors::All) {
-            [_cachedImageSizeMenu addItemWithTitle:@(desc->name)];
+            [_cachedImageSizeMenu addItemWithTitle:_StringForDescriptor(*desc)];
             [[_cachedImageSizeMenu lastItem] setTag:desc->thumbWidth];
         }
-        [_cachedImageSizeMenu selectItemWithTitle:@(PrefsUtil::ImageLibraryDescriptor().name)];
+        [_cachedImageSizeMenu selectItemWithTag:PrefsUtil::ImageLibraryDescriptor().thumbWidth];
     }
 }
 
