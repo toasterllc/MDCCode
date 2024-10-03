@@ -16,7 +16,7 @@ inline void PreviousImageExportFormat(const char* x) {
 }
 
 inline uint16_t CachedThumbWidth() {
-    return PrefsGlobal()->get("CachedThumbWidth", ImageLibrary::Descriptors::Small.thumbWidth);
+    return PrefsGlobal()->get("CachedThumbWidth", ImageLibrary::Descriptors::Medium.thumbWidth);
 }
 
 inline void CachedThumbWidth(uint16_t x) {
