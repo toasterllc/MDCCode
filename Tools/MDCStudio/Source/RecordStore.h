@@ -385,7 +385,7 @@ struct RecordStore {
                 );
             }
             
-            if (header.recordSize == cfg.recordSize) {
+            if (header.recordSize != cfg.recordSize) {
                 throw Toastbox::RuntimeError("record size mismatch (expected: %ju, got: %ju)",
                     (uintmax_t)cfg.recordSize, (uintmax_t)header.recordSize);
             }

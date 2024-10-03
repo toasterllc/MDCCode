@@ -83,6 +83,7 @@ struct ImageSource : Object {
     }
     
     static void ImageRecordInit(ImageRecord& rec, Img::Id id, SD::Block addrFull, SD::Block addrThumb) {
+        rec = {};
         rec.info.id = id;
         rec.info.addrFull = addrFull;
         rec.info.addrThumb = addrThumb;
@@ -189,6 +190,8 @@ struct ImageSource : Object {
     virtual ImageLibraryPtr imageLibrary() { return _imageLibrary; }
     
     virtual void renderThumbs(std::set<ImageRecordPtr> recs) {
+//        _debugPrintImages("renderThumbs", recs);
+        
         try {
             auto lock = _thumbRender.master.signal.lock();
             _thumbRender.master.recs = std::move(recs);
@@ -458,6 +461,26 @@ struct ImageSource : Object {
         return ccm;
     }
     
+    template<typename T>
+    void _debugPrintImages(const char* str, T& recs) {
+        static std::mutex SharedLock;
+        auto lock = std::unique_lock(SharedLock);
+        uintmax_t count = 0;
+        for (const auto& x : recs) {
+            count++;
+        }
+        
+        printf("*** _debugPrintImages START : %s [ %ju recs ] ***\n", str, count);
+        for (const ImageLibrary::RecordRef& rec : recs) {
+            printf("* Image %ju\n", (uintmax_t)rec->info.id);
+            printf("   addrFull: 0x%08jx\n", (uintmax_t)rec->info.addrFull);
+            printf("  addrThumb: 0x%08jx\n", (uintmax_t)rec->info.addrThumb);
+            printf("  loadCount: 0x%08jx\n", (uintmax_t)rec->status.loadCount);
+            printf("\n\n");
+        }
+        printf("*** _debugPrintImages END ***\n\n");
+    }
+    
     Image _imageCreate(const _ImageBuffer& buf) {
 //        assert(len >= Img::Full::ImageLen);
         auto data = std::make_unique<Img::Pixel[]>(Img::Full::PixelCount);
@@ -513,6 +536,9 @@ struct ImageSource : Object {
     }
     
     void _renderEnqueue(const std::unique_lock<std::mutex>& lock, _LoadState& state, bool initial, bool validateChecksum, ImageRecordPtr rec, _ThumbBuffer buf) {
+        
+//        printf("_renderEnqueue %ju\n", (uintmax_t)rec->info.id);
+        
         // Enqueue _RenderWork into _thumbRender.slave.queue
         _thumbRender.slave.queue.push(_RenderWork{
             .initial = initial,
@@ -547,6 +573,8 @@ struct ImageSource : Object {
                 }
             });
         }
+        
+//        _debugPrintImages("Before _loadThumbs", *_imageLibrary);
         
         // Kick off rendering for all the recs that are in the cache
         {
@@ -608,6 +636,8 @@ struct ImageSource : Object {
         
         // Wait until everything's done
         state->signal.wait([&] { return !state->underway; });
+        
+//        _debugPrintImages("After _loadThumbs", *_imageLibrary);
         
         // Print profile stats
         {
