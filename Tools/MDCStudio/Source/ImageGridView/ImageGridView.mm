@@ -116,9 +116,9 @@ static MTLTextureDescriptor* _TextureDescriptor(const ImageLibrary::Descriptor& 
     
     _sortNewestFirst = true;
     
-    _device = MTLCreateSystemDefaultDevice();
+    _device = [self preferredDevice];
     assert(_device);
-    [self setDevice:[self preferredDevice]];
+    [self setDevice:_device];
     [self setColorspace:_LinearSRGBColorSpace()];
     [self setOpaque:false];
     
