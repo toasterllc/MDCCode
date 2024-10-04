@@ -465,10 +465,17 @@ struct MDCDeviceReal : MDCDevice {
         _SendRight obj(_SendRight::NoRetain, ioObj); // Make sure port gets cleaned up
         
         for (;;) @autoreleasepool {
-            CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
-            if (stop) throw Toastbox::Signal::Stop(); // Signalled to stop
+            CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
+            if (stop || r==kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
         }
     }
+    
+//    void abort() {
+//        CFRunLoopPerformBlock((CFRunLoopRef)_device.runLoop, kCFRunLoopCommonModes, ^{
+//            CFRunLoopStop(CFRunLoopGetCurrent());
+//        });
+//        CFRunLoopWakeUp((CFRunLoopRef)_device.runLoop);
+//    }
     
     void stop() override {
         // Trigger our threads to exit
