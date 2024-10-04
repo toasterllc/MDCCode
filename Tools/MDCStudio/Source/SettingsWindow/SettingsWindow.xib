@@ -10,15 +10,15 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="" animationBehavior="default" id="wzQ-YT-BhH" customClass="SettingsWindow">
-            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
-            <rect key="contentRect" x="140" y="176" width="365" height="272"/>
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <rect key="contentRect" x="140" y="176" width="365" height="278"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1512" height="944"/>
             <view key="contentView" id="cdR-Co-1wR">
-                <rect key="frame" x="0.0" y="0.0" width="365" height="272"/>
+                <rect key="frame" x="0.0" y="0.0" width="365" height="278"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Zdg-eg-cRG">
-                        <rect key="frame" x="18" y="236" width="55" height="16"/>
+                        <rect key="frame" x="18" y="242" width="55" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="General" id="ZpG-hf-VYR">
                             <font key="font" metaFont="systemBold"/>
@@ -27,11 +27,11 @@
                         </textFieldCell>
                     </textField>
                     <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="mj1-id-kyy">
-                        <rect key="frame" x="79" y="242" width="266" height="5"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <rect key="frame" x="79" y="248" width="266" height="5"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     </box>
                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zT4-kE-dGK">
-                        <rect key="frame" x="33" y="204" width="119" height="16"/>
+                        <rect key="frame" x="33" y="210" width="119" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Timestamp corner:" id="14J-kd-smp">
                             <font key="font" metaFont="system"/>
@@ -39,22 +39,19 @@
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <button ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WNf-IE-XN3" customClass="ImageCornerButton">
-                        <rect key="frame" x="158" y="195" width="32" height="32"/>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WNf-IE-XN3" customClass="ImageCornerButton">
+                        <rect key="frame" x="158" y="201" width="32" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="buttonCell:rQ0-1b-hLF:image" imagePosition="only" alignment="center" inset="2" id="rQ0-1b-hLF">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
-                        <constraints>
-                            <constraint firstAttribute="height" constant="32" id="240-7G-YPf"/>
-                            <constraint firstAttribute="width" constant="32" id="CHD-PT-rSW"/>
-                        </constraints>
                         <connections>
                             <action selector="action_timestampCorner:" target="wzQ-YT-BhH" id="vmE-FL-pqX"/>
                         </connections>
                     </button>
                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ciB-cz-DFl">
-                        <rect key="frame" x="33" y="169" width="139" height="16"/>
+                        <rect key="frame" x="33" y="175" width="139" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Drag and drop format:" id="nJV-I8-u8m">
                             <font key="font" metaFont="system"/>
@@ -63,8 +60,8 @@
                         </textFieldCell>
                     </textField>
                     <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VrP-WT-BR1">
-                        <rect key="frame" x="179" y="163" width="107" height="25"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <rect key="frame" x="179" y="169" width="107" height="25"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Lij-Uf-Lf6" id="L7h-xm-xFz">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="menu"/>
@@ -81,7 +78,7 @@
                         </connections>
                     </popUpButton>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bWc-Bn-Mxr">
-                        <rect key="frame" x="18" y="116" width="69" height="16"/>
+                        <rect key="frame" x="18" y="122" width="69" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Advanced" id="Z5x-Eo-2if">
                             <font key="font" metaFont="systemBold"/>
@@ -90,11 +87,11 @@
                         </textFieldCell>
                     </textField>
                     <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="Aq5-Rb-J3V">
-                        <rect key="frame" x="93" y="121" width="252" height="5"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <rect key="frame" x="93" y="127" width="252" height="5"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     </box>
                     <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JgO-MA-LbU">
-                        <rect key="frame" x="33" y="85" width="122" height="16"/>
+                        <rect key="frame" x="33" y="91" width="122" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Cached image size:" id="b2L-Fm-g8f">
                             <font key="font" metaFont="system"/>
@@ -103,8 +100,8 @@
                         </textFieldCell>
                     </textField>
                     <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="prC-DC-Ko0" userLabel="Cached image size">
-                        <rect key="frame" x="162" y="79" width="187" height="25"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <rect key="frame" x="162" y="85" width="187" height="25"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="p1R-FV-f72" id="y4U-ez-Kv3">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="menu"/>
@@ -121,19 +118,13 @@
                         </connections>
                     </popUpButton>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Sj0-eH-eBH">
-                        <rect key="frame" x="33" y="42" width="314" height="28"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" title="This setting affects how much disk space is consumed by cached images." id="ebt-G4-Imy">
+                        <rect key="frame" x="33" y="20" width="314" height="56"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" id="ebt-G4-Imy">
                             <font key="font" metaFont="smallSystem"/>
-                            <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OZu-YO-w2v">
-                        <rect key="frame" x="33" y="20" width="295" height="14"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" title="Changes take effect the next time you plug in a Photon." id="vMV-sY-a5f">
-                            <font key="font" metaFont="smallSystem"/>
+                            <string key="title">This setting affects how much disk space is consumed by cached images.
+
+Changes take effect the next time you plug in a Photon.</string>
                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
@@ -145,7 +136,7 @@
                 <outlet property="_dragAndDropExportFormatMenu" destination="VrP-WT-BR1" id="aLE-Is-DI6"/>
                 <outlet property="_timestampCornerButton" destination="WNf-IE-XN3" id="AlW-ZW-dPI"/>
             </connections>
-            <point key="canvasLocation" x="-271.5" y="805"/>
+            <point key="canvasLocation" x="-271.5" y="808"/>
         </window>
     </objects>
     <resources>
