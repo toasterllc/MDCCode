@@ -106,10 +106,8 @@
 		55D30A4329A96D670080BCBD /* ImageCornerButton-1.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55D30A3E29A96D670080BCBD /* ImageCornerButton-1.pdf */; };
 		55D4AAA127B1D3E70052EFEE /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */; };
 		55D4AAA327B1D3F20052EFEE /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA227B1D3F20052EFEE /* Accelerate.framework */; };
-		55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */; };
 		55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F7D28C00D6B00FCCEA0 /* LocalContrast.metal */; };
 		55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8028C00D6B00FCCEA0 /* Saturation.metal */; };
-		55E43F9728C00D6B00FCCEA0 /* Defringe.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8328C00D6B00FCCEA0 /* Defringe.metal */; };
 		55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8428C00D6B00FCCEA0 /* ImagePipeline.mm */; };
 		55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8828C00D6B00FCCEA0 /* ReconstructHighlights.metal */; };
 		55E43F9B28C00D6B00FCCEA0 /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8928C00D6B00FCCEA0 /* ImagePipeline.metal */; };
@@ -368,17 +366,14 @@
 		55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 		55D4AAA227B1D3F20052EFEE /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		55E43F7B28C00D6B00FCCEA0 /* ImagePipeline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImagePipeline.h; sourceTree = "<group>"; };
-		55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Defringe.mm; sourceTree = "<group>"; };
 		55E43F7D28C00D6B00FCCEA0 /* LocalContrast.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
 		55E43F7F28C00D6B00FCCEA0 /* LocalContrast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
 		55E43F8028C00D6B00FCCEA0 /* Saturation.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
-		55E43F8328C00D6B00FCCEA0 /* Defringe.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
 		55E43F8428C00D6B00FCCEA0 /* ImagePipeline.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImagePipeline.mm; sourceTree = "<group>"; };
 		55E43F8628C00D6B00FCCEA0 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImagePipelineTypes.h; sourceTree = "<group>"; };
 		55E43F8828C00D6B00FCCEA0 /* ReconstructHighlights.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
 		55E43F8928C00D6B00FCCEA0 /* ImagePipeline.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImagePipeline.metal; sourceTree = "<group>"; };
 		55E43F8C28C00D6B00FCCEA0 /* RenderThumb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenderThumb.h; sourceTree = "<group>"; };
-		55E43F8D28C00D6B00FCCEA0 /* Defringe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
 		55E43F8E28C00D6B00FCCEA0 /* ReconstructHighlights.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReconstructHighlights.h; sourceTree = "<group>"; };
 		55E43F9028C00D6B00FCCEA0 /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
 		55E43F9128C00D6B00FCCEA0 /* Saturation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
@@ -942,9 +937,6 @@
 		55E43F7A28C00D6B00FCCEA0 /* ImagePipeline */ = {
 			isa = PBXGroup;
 			children = (
-				55E43F8D28C00D6B00FCCEA0 /* Defringe.h */,
-				55E43F8328C00D6B00FCCEA0 /* Defringe.metal */,
-				55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */,
 				558FFC5629C8F26F0022E840 /* EstimateIlluminant.h */,
 				558FFC5729C8F26F0022E840 /* EstimateIlluminant.mm */,
 				55E43F8628C00D6B00FCCEA0 /* ImagePipelineTypes.h */,
@@ -1137,7 +1129,6 @@
 				55E43F9F28C00D6B00FCCEA0 /* RenderThumb.metal in Sources */,
 				554243AE2B3EC4DB00BDFE25 /* PrintImages.mm in Sources */,
 				5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */,
-				55E43F9728C00D6B00FCCEA0 /* Defringe.metal in Sources */,
 				551467E72B3E1FDA00D8DF58 /* DeviceSettingsSheet.mm in Sources */,
 				55C375912C6ABD2F0099ED35 /* SettingsWindow.mm in Sources */,
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
@@ -1165,7 +1156,6 @@
 				55C1BE8E2BF5A4F8004A4FAC /* FFCC.metal in Sources */,
 				5514532B2B4116B20056A92D /* ColorButtonCell.mm in Sources */,
 				55F8D01427BEF3E500757165 /* FullSizeImageView.mm in Sources */,
-				55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

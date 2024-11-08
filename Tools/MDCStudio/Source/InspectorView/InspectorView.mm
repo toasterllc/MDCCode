@@ -991,15 +991,6 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Other";
             
-            // TODO: bring back defringe in the future?
-//            {
-//                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
-//                it->name = @"Defringe";
-//                it->getter = _GetterCreate(self, _Get_defringe);
-//                it->setter = _SetterCreate(self, _Set_defringe);
-//                [section addItem:it];
-//            }
-            
             {
                 Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
                 it->name = @"Reconstruct highlights";
@@ -1112,10 +1103,6 @@ static id _Get_localContrastRadius(const ImageRecord& rec) {
 //static id _Get_rotation(const ImageRecord& rec) {
 //    return @((int)rec.options.rotation);
 //}
-//
-//static id _Get_defringe(const ImageRecord& rec) {
-//    return @(rec.options.defringe);
-//}
 
 static id _Get_reconstructHighlights(const ImageRecord& rec) {
     return @(rec.options.reconstructHighlights);
@@ -1174,11 +1161,6 @@ static void _Set_localContrastRadius(ImageRecord& rec, id data) {
 
 //static void _Set_rotation(ImageRecord& rec, id data) {
 //    rec.options.rotation = (ImageOptions::Rotation)[data intValue];
-//    rec.options.thumb.render = true;
-//}
-//
-//static void _Set_defringe(ImageRecord& rec, id data) {
-//    rec.options.defringe = [data boolValue];
 //    rec.options.thumb.render = true;
 //}
 

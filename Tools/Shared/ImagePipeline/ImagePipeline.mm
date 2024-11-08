@@ -2,7 +2,6 @@
 #import <Metal/Metal.h>
 #import "ImagePipeline.h"
 #import "ImagePipelineTypes.h"
-#import "Defringe.h"
 #import "ReconstructHighlights.h"
 #import "LocalContrast.h"
 #import "Saturation.h"
@@ -42,10 +41,6 @@ namespace ImagePipeline {
 //    // Reconstruct highlights
 //    if (opts.reconstructHighlights.en) {
 //        ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum.m, srcRaw);
-//    }
-//    
-//    if (opts.defringe.en) {
-//        Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
 //    }
 //    
 //    // LMMSE Debayer
@@ -102,11 +97,6 @@ void Pipeline::Run(Renderer& renderer, const Options& opts, id<MTLTexture> srcRa
     if (opts.reconstructHighlights.en) {
         assert(opts.illum);
         ReconstructHighlights::Run(renderer, opts.cfaDesc, opts.illum->m, srcRaw);
-    }
-    
-    // Defringe (currently unused)
-    if (opts.defringe.en) {
-        Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
     }
     
     // Debayer (LMMSE)

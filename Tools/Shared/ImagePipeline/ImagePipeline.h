@@ -1,9 +1,9 @@
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
-#import "Defringe.h"
 #import "ImagePipelineTypes.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 #import "Code/Lib/Toastbox/Mac/Color.h"
+#import "Code/Lib/Toastbox/Mac/CFA.h"
 #import "Code/Lib/Toastbox/Mac/Mat.h"
 #import "Code/Shared/Img.h"
 
@@ -17,11 +17,6 @@ public:
 //    struct DebayerOptions {
 //        Toastbox::CFADesc cfaDesc;
 //        ColorRaw illum;
-//        
-//        struct {
-//            bool en = false;
-//            Defringe::Options opts;
-//        } defringe;
 //        
 //        struct {
 //            bool en = false;
@@ -46,11 +41,6 @@ public:
         
         std::optional<ColorRaw> illum;
         std::optional<ColorMatrix> colorMatrix;
-        
-        struct {
-            bool en = false;
-            Defringe::Options opts;
-        } defringe;
         
         struct {
             bool en = false;

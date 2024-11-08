@@ -399,7 +399,6 @@ struct ImageSource : Object {
                 .illum                  = ccm.illum,
                 .colorMatrix            = ccm.matrix,
                 
-                .defringe               = { .en = false, },
                 .reconstructHighlights  = { .en = opts.reconstructHighlights, },
                 .debayerLMMSE           = { .applyGamma = true, },
                 

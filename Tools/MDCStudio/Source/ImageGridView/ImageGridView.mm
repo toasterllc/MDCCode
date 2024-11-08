@@ -284,7 +284,7 @@ static void _ChunkTextureUpdateSlice(const ImageLibrary::Descriptor& desc, _Chun
         return it->val;
     }
     
-    auto startTime = std::chrono::steady_clock::now();
+//    auto startTime = std::chrono::steady_clock::now();
     
     id<MTLTexture> txt = [_device newTextureWithDescriptor:_txtDesc];
     assert(txt);
@@ -292,7 +292,7 @@ static void _ChunkTextureUpdateSlice(const ImageLibrary::Descriptor& desc, _Chun
     _ChunkTexture& ct = _chunkTxts[chunk];
     ct.txt = txt;
     
-    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+//    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
 //    printf("Texture creation took %ju ms\n", (uintmax_t)durationMs);
     
     return ct;

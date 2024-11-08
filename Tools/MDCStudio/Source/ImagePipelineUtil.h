@@ -30,7 +30,6 @@ inline ImagePipeline::Pipeline::Options PipelineOptionsForImage(const ImageRecor
         .illum                  = ColorRaw(opts.whiteBalance.illum),
         .colorMatrix            = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
         
-        .defringe               = { .en = false, },
         .reconstructHighlights  = { .en = opts.reconstructHighlights, },
         .debayerLMMSE           = { .applyGamma = true, },
         
