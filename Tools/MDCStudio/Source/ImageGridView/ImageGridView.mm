@@ -279,6 +279,10 @@ static void _ChunkTextureUpdateSlice(const ImageLibrary::Descriptor& desc, _Chun
     // If we already have a _ChunkTexture for the iter's chunk, return it.
     // Otherwise we need to create it.
     const ImageLibrary::ChunkStrongRef chunk = iter->chunkRef();
+    
+    // We've seen cases where ChunkStrongRef.chunk == nullptr; try to catch it here so we can debug!
+    assert(chunk);
+    
     const auto it = _chunkTxts.find(chunk);
     if (it != _chunkTxts.end()) {
         return it->val;

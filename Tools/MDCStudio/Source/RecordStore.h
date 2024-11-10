@@ -45,6 +45,8 @@ struct RecordStore {
         Chunk* chunk = nullptr;
         
         bool operator<(const ChunkRef& x) const {
+            // Handle one of the ChunkRefs having a null `chunk` member
+            if ((bool)*this != (bool)x) return (bool)*this < (bool)x;
             if (chunk != x.chunk) return chunk->id < x.chunk->id;
             return false;
         }
@@ -57,10 +59,6 @@ struct RecordStore {
         bool operator!=(const ChunkRef& x) const { return !(*this == x); }
         
         explicit operator bool() const { return chunk; }
-        
-        Chunk* operator->() const { return &get(); }
-        Chunk& operator*() const { return get(); }
-        Chunk& get() const { return *chunk; }
     };
     
     // ChunkStrongRef: a strong reference to a mmap'd chunk, which keeps the chunk alive
