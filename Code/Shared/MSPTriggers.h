@@ -229,7 +229,7 @@ struct T_MSPTriggers {
         MSP::DSTPhase phase;
     };
     
-    static void Init(const Time::Instant& t) {
+    static void Init() {
         // Reset everything
         _Front = _End;
         for (auto& x : _RepeatEvent)    x = RepeatEvent(x.base());
@@ -237,15 +237,6 @@ struct T_MSPTriggers {
         for (auto& x : _MotionTrigger)  x = MotionTrigger(x.base());
         for (auto& x : _ButtonTrigger)  x = ButtonTrigger(x.base());
         for (auto& x : _DSTEvent)       x = DSTEvent(x.base());
-        
-//        // If we don't know the absolute time, run in 'relative time mode', where we still
-//        // execute events with the same relative timing as in 'absolute time mode', we just
-//        // don't know the absolute time. To do so, we subtract the first event's absolute
-//        // time from all events, such that the first event starts at Time::Instant=0.
-//        Time::Instant sub = 0;
-//        if (!Time::Absolute(t)) {
-//            sub = _RepeatEvent[0].base().time;
-//        }
         
         // Schedule events
         for (auto it=RepeatEventBegin(); it!=RepeatEventEnd(); it++) {
@@ -257,7 +248,7 @@ struct T_MSPTriggers {
         }
     }
     
-    static void EventInsert(Event& ev, const Time::Instant& t) {
+    static void EventInsert(Event& ev, Time::Instant t) {
         EventPop(ev);
         ev.time = t;
         

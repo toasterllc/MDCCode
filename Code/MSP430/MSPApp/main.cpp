@@ -109,7 +109,7 @@ struct _MotionPowered : T_AssertionCounter<_MotionPoweredUpdate> {};
 using _Triggers = T_MSPTriggers<_State, _MotionPowered::Assertion>;
 
 [[gnu::noinline]]
-static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::TicksS32 deltaTicks) {
+static constexpr Time::Instant _TimeInstantAdd(Time::Instant time, Time::TicksS32 deltaTicks) {
     return time + deltaTicks;
 }
 
@@ -1236,7 +1236,7 @@ struct _TaskEvent {
         }
     }
     
-    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
+    static void EventInsert(_Triggers::Event& ev, Time::Instant time) {
         _Triggers::EventInsert(ev, time);
         if (&ev == _Triggers::EventBegin()) {
             // The new event is the first event, so interrupt Run() so that it re-schedules _EventTimer.
@@ -1259,7 +1259,7 @@ struct _TaskEvent {
         EventInsert(ev, _TimeInstantAdd(ev.time, delta));
     }
     
-    static bool CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
+    static bool CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) {
         // Bail if the CaptureImageEvent is already underway
         if (ev.countRem) return false;
         
@@ -1302,10 +1302,10 @@ struct _TaskEvent {
         _SPI::Init();
         
         // Init Triggers
-        const Time::Instant startTime = _RTC::Now();
-        _Triggers::Init(startTime);
+        _Triggers::Init();
         
         // Fast-forward through events
+        const Time::Instant startTime = _RTC::Now();
         for (;;) {
             _Triggers::Event* ev = _Triggers::EventBegin();
             if (ev==_Triggers::EventEnd() || (ev->time > startTime)) break;

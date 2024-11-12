@@ -764,20 +764,40 @@ static void _ContainerSubviewSet(NSView* container, ContainerSubview* subview, N
     _ContainerSubviewAdd(container, subview, alignView);
 }
 
+// _Unaligned: this is necessary because our _Copy() functions load/store to unaligned members in our MSP.h structs
+template<typename T>
+struct _Unaligned {
+    _Unaligned(void* t) : _t(t) {}
+    
+    T get() const {
+        T t = {};
+        memcpy(&t, _t, sizeof(T));
+        return t;
+    }
+    
+    void set(const T& t) const {
+        memcpy(_t, &t, sizeof(T));
+    }
+    
+    void* _t = nullptr;
+};
+
+#define _Unaligned(x) _Unaligned<std::remove_cv_t<std::remove_reference_t<decltype(x)>>>(&x)
+
 template<bool T_Forward>
-static void _Copy(bool& x, NSButton* checkbox) {
+static void _Copy(_Unaligned<bool> x, NSButton* checkbox) {
     if constexpr (T_Forward) {
-        [checkbox setState:(x ? NSControlStateValueOn : NSControlStateValueOff)];
+        [checkbox setState:(x.get() ? NSControlStateValueOn : NSControlStateValueOff)];
     } else {
-        x = ([checkbox state] == NSControlStateValueOn);
+        x.set([checkbox state] == NSControlStateValueOn);
     }
 }
 
 template<bool T_Forward>
-static void _Copy(Repeat::Type& x, NSPopUpButton* menu) {
+static void _Copy(_Unaligned<Repeat::Type> x, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        std::string xstr = StringFromRepeatType(x);
+        std::string xstr = StringFromRepeatType(x.get());
         xstr[0] = std::toupper(xstr[0]);
         NSMenuItem* item = [menu itemWithTitle:@(xstr.c_str())];
         #warning TODO: is this a good behavior?
@@ -787,54 +807,56 @@ static void _Copy(Repeat::Type& x, NSPopUpButton* menu) {
     } else {
         NSString* str = [menu titleOfSelectedItem];
         assert(str);
-        x = RepeatTypeFromString([str UTF8String]);
+        x.set(RepeatTypeFromString([str UTF8String]));
     }
 }
 
 template<bool T_Forward>
-static void _CopyTime(Calendar::TimeOfDay& x, NSTextField* field) {
+static void _CopyTime(_Unaligned<Calendar::TimeOfDay> x, NSTextField* field) {
     static constexpr Calendar::TimeOfDay Morning(12*60*60);
     if constexpr (T_Forward) {
-        [field setStringValue:@(Calendar::StringFromTimeOfDay(x).c_str())];
+        [field setStringValue:@(Calendar::StringFromTimeOfDay(x.get()).c_str())];
     } else {
         try {
-            const bool assumeAM = x < Morning;
-            x = Calendar::TimeOfDayFromString([[field stringValue] UTF8String], assumeAM);
+            const bool assumeAM = x.get() < Morning;
+            x.set(Calendar::TimeOfDayFromString([[field stringValue] UTF8String], assumeAM));
         } catch (...) {}
     }
 }
 
 template<bool T_Forward>
-static void _Copy(uint16_t& x, NSTextField* field, uint16_t min=0) {
+static void _Copy(_Unaligned<uint16_t> x, NSTextField* field, uint16_t min=0) {
     if constexpr (T_Forward) {
-        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x]];
+        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.get()]];
     } else {
-        x = (uint16_t)std::clamp([field integerValue],
-            (NSInteger)min, (NSInteger)std::numeric_limits<decltype(min)>::max());
+        x.set((uint16_t)std::clamp([field integerValue],
+            (NSInteger)min, (NSInteger)std::numeric_limits<decltype(min)>::max()));
     }
 }
 
 template<bool T_Forward>
-static void _Copy(DayInterval& x, NSTextField* field) {
+static void _Copy(_Unaligned<DayInterval> x, NSTextField* field) {
     if constexpr (T_Forward) {
-        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.count()]];
+        [field setStringValue:[NSString stringWithFormat:@"%ju",(uintmax_t)x.get().count()]];
     } else {
-        x = DayInterval(std::clamp([field intValue], 2, UINT8_MAX));
+        x.set(DayInterval(std::clamp([field intValue], 2, UINT8_MAX)));
     }
 }
 
 template<bool T_Forward>
-static void _Copy(DeviceSettings::Duration& x, NSTextField* field, NSPopUpButton* menu) {
+static void _Copy(_Unaligned<DeviceSettings::Duration> x, NSTextField* field, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        [field setStringValue:@(StringFromFloat(x.value).c_str())];
-        [menu selectItemWithTitle:@(DeviceSettings::Duration::StringFromUnit(x.unit).c_str())];
+        [field setStringValue:@(StringFromFloat(x.get().value).c_str())];
+        [menu selectItemWithTitle:@(DeviceSettings::Duration::StringFromUnit(x.get().unit).c_str())];
     } else {
         const std::string xstr = [[menu titleOfSelectedItem] UTF8String];
+        DeviceSettings::Duration dur;
         try {
-            x.value = std::clamp(FloatFromString([[field stringValue] UTF8String]), 0.f, (float)UINT16_MAX);
+            dur.value = std::clamp(FloatFromString([[field stringValue] UTF8String]), 0.f, (float)UINT16_MAX);
         } catch (...) {}
-        x.unit = DeviceSettings::Duration::UnitFromString([[menu titleOfSelectedItem] UTF8String]);
+        dur.unit = DeviceSettings::Duration::UnitFromString([[menu titleOfSelectedItem] UTF8String]);
+        x.set(dur);
     }
 }
 
@@ -863,27 +885,29 @@ static NSInteger _SegmentForDayOfWeek(Calendar::DayOfWeek x) {
 //}
 
 template<bool T_Forward>
-static void _Copy(Calendar::DaysOfWeek& x, NSSegmentedControl* control) {
+static void _Copy(_Unaligned<Calendar::DaysOfWeek> x, NSSegmentedControl* control) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         for (uint8_t i=0; i<7; i++) {
             const Calendar::DayOfWeek d = Calendar::DayOfWeek(i);
-            [control setSelected:Calendar::DaysOfWeekGet(x, d) forSegment:_SegmentForDayOfWeek(d)];
+            [control setSelected:Calendar::DaysOfWeekGet(x.get(), d) forSegment:_SegmentForDayOfWeek(d)];
         }
     } else {
+        Calendar::DaysOfWeek dow = {};
         for (uint8_t i=0; i<7; i++) {
             const Calendar::DayOfWeek d = Calendar::DayOfWeek(i);
-            Calendar::DaysOfWeekSet(x, d, [control isSelectedForSegment:_SegmentForDayOfWeek(d)]);
+            Calendar::DaysOfWeekSet(dow, Calendar::DayOfWeek(i), [control isSelectedForSegment:_SegmentForDayOfWeek(d)]);
         }
+        x.set(dow);
     }
 }
 
 template<bool T_Forward>
-static void _Copy(Calendar::DaysOfYear& x, NSTokenField* field) {
+static void _Copy(_Unaligned<Calendar::DaysOfYear> x, NSTokenField* field) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
         NSMutableArray* tokens = [NSMutableArray new];
-        std::vector<Calendar::DayOfYear> days = VectorFromDaysOfYear(x);
+        std::vector<Calendar::DayOfYear> days = VectorFromDaysOfYear(x.get());
         for (Calendar::DayOfYear day : days) {
             DayOfYearObj* x = [DayOfYearObj new];
             x->x = day;
@@ -899,7 +923,7 @@ static void _Copy(Calendar::DaysOfYear& x, NSTokenField* field) {
             if (!x) continue;
             days.push_back(x->x);
         }
-        x = Calendar::DaysOfYearFromVector(days);
+        x.set(Calendar::DaysOfYearFromVector(days));
     }
 }
 
@@ -909,22 +933,22 @@ static void _Copy(Repeat& x, CaptureTriggersView* view, const char* menuLabel) {
     
     if (T_Forward) [v._repeat_MenuLabel setStringValue:@(menuLabel)];
     
-    _Copy<T_Forward>(x.type, v._repeat_Menu);
+    _Copy<T_Forward>(_Unaligned(x.type), v._repeat_Menu);
     switch (x.type) {
     case Repeat::Type::Daily:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, nil);
         break;
     case Repeat::Type::DaysOfWeek:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._daySelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.DaysOfWeek, v._daySelector_Control);
+        _Copy<T_Forward>(_Unaligned(x.DaysOfWeek), v._daySelector_Control);
         break;
     case Repeat::Type::DaysOfYear:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._dateSelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.DaysOfYear, v._dateSelector_Field);
+        _Copy<T_Forward>(_Unaligned(x.DaysOfYear), v._dateSelector_Field);
         break;
     case Repeat::Type::DayInterval:
         if constexpr (T_Forward) _ContainerSubviewSet(v._repeat_ContainerView, v._intervalSelector_View, v._repeat_Menu);
-        _Copy<T_Forward>(x.DayInterval, v._intervalSelector_Field);
+        _Copy<T_Forward>(_Unaligned(x.DayInterval), v._intervalSelector_Field);
         if constexpr (T_Forward) {
             [v._intervalSelector_DescriptionLabel setStringValue:@(("(" + _DayIntervalDetailedDescription(x.DayInterval) + ")").c_str())];
         }
@@ -935,21 +959,21 @@ static void _Copy(Repeat& x, CaptureTriggersView* view, const char* menuLabel) {
 }
 
 template<bool T_Forward>
-static void _CopyTimeRangeEnable(bool& x, NSPopUpButton* menu) {
+static void _CopyTimeRangeEnable(_Unaligned<bool> x, NSPopUpButton* menu) {
     using X = std::remove_reference_t<decltype(x)>;
     if constexpr (T_Forward) {
-        [menu selectItemAtIndex:(NSInteger)x];
+        [menu selectItemAtIndex:(NSInteger)x.get()];
     } else {
-        x = (bool)[menu indexOfSelectedItem];
+        x.set([menu indexOfSelectedItem]);
     }
 }
 
 template<bool T_Forward, typename T_TimeRange>
 static void _CopyTimeRange(T_TimeRange& x, CaptureTriggersView* view) {
     auto& v = *view;
-    _CopyTimeRangeEnable<T_Forward>(x.enable, v._schedule_Motion_TimeRange_Menu);
-    _CopyTime<T_Forward>(x.start, v._schedule_Motion_TimeRange_TimeStartField);
-    _CopyTime<T_Forward>(x.end, v._schedule_Motion_TimeRange_TimeEndField);
+    _CopyTimeRangeEnable<T_Forward>(_Unaligned(x.enable), v._schedule_Motion_TimeRange_Menu);
+    _CopyTime<T_Forward>(_Unaligned(x.start), v._schedule_Motion_TimeRange_TimeStartField);
+    _CopyTime<T_Forward>(_Unaligned(x.end), v._schedule_Motion_TimeRange_TimeEndField);
     if constexpr (T_Forward) {
         [v._schedule_Motion_TimeRange_TimeStartField setEnabled:x.enable];
         [v._schedule_Motion_TimeRange_TimeEndField setEnabled:x.enable];
@@ -959,8 +983,8 @@ static void _CopyTimeRange(T_TimeRange& x, CaptureTriggersView* view) {
 template<bool T_Forward>
 static void _Copy(Capture& x, CaptureTriggersView* view) {
     auto& v = *view;
-    _Copy<T_Forward>(x.count, v._capture_CountField, 1);
-    _Copy<T_Forward>(x.interval, v._capture_IntervalField, v._capture_IntervalUnitMenu);
+    _Copy<T_Forward>(_Unaligned(x.count), v._capture_CountField, 1);
+    _Copy<T_Forward>(_Unaligned(x.interval), v._capture_IntervalField, v._capture_IntervalUnitMenu);
     
     if constexpr (T_Forward) {
         [v._capture_IntervalLabel setEnabled:x.count>1];
@@ -968,7 +992,7 @@ static void _Copy(Capture& x, CaptureTriggersView* view) {
         [v._capture_IntervalUnitMenu setEnabled:x.count>1];
     }
     
-    _Copy<T_Forward>(x.ledFlash, v._capture_LEDFlashCheckbox);
+    _Copy<T_Forward>(_Unaligned(x.ledFlash), v._capture_LEDFlashCheckbox);
 }
 
 template<bool T_Forward>
@@ -983,7 +1007,7 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
             if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_ContainerView, v._schedule_Time_View);
             if constexpr (T_Forward) _ContainerSubviewSet(v._schedule_Time_RepeatContainerView, v._repeat_View, v._schedule_Time_TimeField);
             
-            _CopyTime<T_Forward>(x.schedule.time, v._schedule_Time_TimeField);
+            _CopyTime<T_Forward>(_Unaligned(x.schedule.time), v._schedule_Time_TimeField);
             _Copy<T_Forward>(x.schedule.repeat, view, "Repeat:");
         }
         
@@ -1017,11 +1041,11 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
         {
             if constexpr (T_Forward) _ContainerSubviewSet(v._battery_ContainerView, v._battery_Motion_View);
             
-            _Copy<T_Forward>(x.constraints.suppressDuration.enable, v._battery_Motion_IgnoreTrigger_Checkbox);
-            _Copy<T_Forward>(x.constraints.suppressDuration.duration, v._battery_Motion_IgnoreTrigger_DurationField, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
+            _Copy<T_Forward>(_Unaligned(x.constraints.suppressDuration.enable), v._battery_Motion_IgnoreTrigger_Checkbox);
+            _Copy<T_Forward>(_Unaligned(x.constraints.suppressDuration.duration), v._battery_Motion_IgnoreTrigger_DurationField, v._battery_Motion_IgnoreTrigger_DurationUnitMenu);
             
-            _Copy<T_Forward>(x.constraints.maxTriggerCount.enable, v._battery_Motion_MaxTriggerCount_Checkbox);
-            _Copy<T_Forward>(x.constraints.maxTriggerCount.count, v._battery_Motion_MaxTriggerCount_Field, 1);
+            _Copy<T_Forward>(_Unaligned(x.constraints.maxTriggerCount.enable), v._battery_Motion_MaxTriggerCount_Checkbox);
+            _Copy<T_Forward>(_Unaligned(x.constraints.maxTriggerCount.count), v._battery_Motion_MaxTriggerCount_Field, 1);
             
             if constexpr (T_Forward) {
                 if (!x.schedule.timeRange.enable) {
