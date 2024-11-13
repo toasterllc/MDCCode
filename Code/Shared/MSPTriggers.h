@@ -229,13 +229,6 @@ struct T_MSPTriggers {
         MSP::DSTPhase phase;
     };
     
-//    [[gnu::noinline]]
-    static Time::Instant TimeInstantLoad(const void* t) {
-        Time::Instant r = 0;
-        memcpy(&r, t, sizeof(r));
-        return r;
-    }
-    
     static void Init() {
         // Reset everything
         _Front = _End;
@@ -247,11 +240,11 @@ struct T_MSPTriggers {
         
         // Schedule events
         for (auto it=RepeatEventBegin(); it!=RepeatEventEnd(); it++) {
-            EventInsert(*it, TimeInstantLoad(&it->base().time));
+            EventInsert(*it, it->base().time);
         }
         
         for (auto it=DSTEventBegin(); it!=DSTEventEnd(); it++) {
-            EventInsert(*it, TimeInstantLoad(&it->base().time));
+            EventInsert(*it, it->base().time);
         }
     }
     

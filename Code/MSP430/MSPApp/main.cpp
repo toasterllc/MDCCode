@@ -1107,7 +1107,7 @@ struct _TaskEvent {
     static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
         _Triggers::TimeTrigger& trigger = ev.trigger();
         // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
-        if (_State.live) CaptureStart(trigger, _Triggers::TimeInstantLoad(&ev.time));
+        if (_State.live) CaptureStart(trigger, ev.time);
         // Reschedule TimeTriggerEvent for its next trigger time
         EventInsert(ev);
     }
@@ -1129,7 +1129,7 @@ struct _TaskEvent {
         // properly schedule the MotionDisableEvent!
         const uint32_t durationTicks = trigger.base().durationTicks;
         if (durationTicks) {
-            EventInsert(_Cast<_Triggers::MotionDisableEvent&>(trigger), _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), durationTicks));
+            EventInsert(_Cast<_Triggers::MotionDisableEvent&>(trigger), _TimeInstantAdd(ev.time, durationTicks));
         }
         
         // Reschedule MotionEnableEvent for its next trigger time
@@ -1138,7 +1138,7 @@ struct _TaskEvent {
         // Schedule MotionEnablePowerEvent event `PowerOnDelayMs` before the MotionEnableEvent.
         if (repeat) {
             EventInsert(_Cast<_Triggers::MotionEnablePowerEvent>(trigger),
-                _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), -_TicksForMs(_Motion::PowerOnDelayMs)));
+                _TimeInstantAdd(ev.time, -_TicksForMs(_Motion::PowerOnDelayMs)));
         }
     }
     
@@ -1219,7 +1219,7 @@ struct _TaskEvent {
         
         ev.countRem--;
         if (ev.countRem) {
-            EventInsert(ev, _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), ev.capture->delayTicks));
+            EventInsert(ev, _TimeInstantAdd(ev.time, ev.capture->delayTicks));
         }
     }
     
@@ -1248,7 +1248,7 @@ struct _TaskEvent {
         const Time::TicksU32 delta = _Triggers::RepeatAdvance(ev.repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
-            EventInsert(ev, _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), delta));
+            EventInsert(ev, _TimeInstantAdd(ev.time, delta));
             return true;
         }
         return false;
@@ -1256,7 +1256,7 @@ struct _TaskEvent {
     
     static void EventInsert(_Triggers::DSTEvent& ev) {
         const Time::TicksU32 delta = _Triggers::DSTPhaseAdvance(ev.phase);
-        EventInsert(ev, _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), delta));
+        EventInsert(ev, _TimeInstantAdd(ev.time, delta));
     }
     
     static bool CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) {
