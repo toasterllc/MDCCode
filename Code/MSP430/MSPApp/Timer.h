@@ -170,7 +170,7 @@ private:
     }
     
     [[gnu::noinline]]
-    static Time::TicksU32 _TicksRemaining(const Time::Instant& now) {
+    static Time::TicksU32 _TicksRemaining(Time::Instant now) {
         if (now >= *_State.request.time) return 0;
         return *_State.request.time - now;
     }

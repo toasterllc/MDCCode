@@ -109,7 +109,7 @@ struct _MotionPowered : T_AssertionCounter<_MotionPoweredUpdate> {};
 using _Triggers = T_MSPTriggers<_State, _MotionPowered::Assertion>;
 
 [[gnu::noinline]]
-static constexpr Time::Instant _TimeInstantAdd(const Time::Instant& time, Time::TicksS32 deltaTicks) {
+static constexpr Time::Instant _TimeInstantAdd(Time::Instant time, Time::TicksS32 deltaTicks) {
     return time + deltaTicks;
 }
 
@@ -1107,7 +1107,7 @@ struct _TaskEvent {
     static void _TimeTrigger(_Triggers::TimeTriggerEvent& ev) {
         _Triggers::TimeTrigger& trigger = ev.trigger();
         // Schedule the CaptureImageEvent, but only if we're not in fast-forward mode
-        if (_State.live) CaptureStart(trigger, ev.time);
+        if (_State.live) CaptureStart(trigger, _Triggers::TimeInstantLoad(&ev.time));
         // Reschedule TimeTriggerEvent for its next trigger time
         EventInsert(ev);
     }
@@ -1129,7 +1129,7 @@ struct _TaskEvent {
         // properly schedule the MotionDisableEvent!
         const uint32_t durationTicks = trigger.base().durationTicks;
         if (durationTicks) {
-            EventInsert(_Cast<_Triggers::MotionDisableEvent&>(trigger), _TimeInstantAdd(ev.time, durationTicks));
+            EventInsert(_Cast<_Triggers::MotionDisableEvent&>(trigger), _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), durationTicks));
         }
         
         // Reschedule MotionEnableEvent for its next trigger time
@@ -1138,7 +1138,7 @@ struct _TaskEvent {
         // Schedule MotionEnablePowerEvent event `PowerOnDelayMs` before the MotionEnableEvent.
         if (repeat) {
             EventInsert(_Cast<_Triggers::MotionEnablePowerEvent>(trigger),
-                _TimeInstantAdd(ev.time, -_TicksForMs(_Motion::PowerOnDelayMs)));
+                _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), -_TicksForMs(_Motion::PowerOnDelayMs)));
         }
     }
     
@@ -1219,7 +1219,7 @@ struct _TaskEvent {
         
         ev.countRem--;
         if (ev.countRem) {
-            EventInsert(ev, _TimeInstantAdd(ev.time, ev.capture->delayTicks));
+            EventInsert(ev, _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), ev.capture->delayTicks));
         }
     }
     
@@ -1236,7 +1236,7 @@ struct _TaskEvent {
         }
     }
     
-    static void EventInsert(_Triggers::Event& ev, const Time::Instant& time) {
+    static void EventInsert(_Triggers::Event& ev, Time::Instant time) {
         _Triggers::EventInsert(ev, time);
         if (&ev == _Triggers::EventBegin()) {
             // The new event is the first event, so interrupt Run() so that it re-schedules _EventTimer.
@@ -1248,7 +1248,7 @@ struct _TaskEvent {
         const Time::TicksU32 delta = _Triggers::RepeatAdvance(ev.repeat);
         // delta=0 means Repeat=never, in which case we don't reschedule the event
         if (delta) {
-            EventInsert(ev, _TimeInstantAdd(ev.time, delta));
+            EventInsert(ev, _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), delta));
             return true;
         }
         return false;
@@ -1256,10 +1256,10 @@ struct _TaskEvent {
     
     static void EventInsert(_Triggers::DSTEvent& ev) {
         const Time::TicksU32 delta = _Triggers::DSTPhaseAdvance(ev.phase);
-        EventInsert(ev, _TimeInstantAdd(ev.time, delta));
+        EventInsert(ev, _TimeInstantAdd(_Triggers::TimeInstantLoad(&ev.time), delta));
     }
     
-    static bool CaptureStart(_Triggers::CaptureImageEvent& ev, const Time::Instant& time) {
+    static bool CaptureStart(_Triggers::CaptureImageEvent& ev, Time::Instant time) {
         // Bail if the CaptureImageEvent is already underway
         if (ev.countRem) return false;
         
@@ -1302,10 +1302,10 @@ struct _TaskEvent {
         _SPI::Init();
         
         // Init Triggers
-        const Time::Instant startTime = _RTC::Now();
-        _Triggers::Init(startTime);
+        _Triggers::Init();
         
         // Fast-forward through events
+        const Time::Instant startTime = _RTC::Now();
         for (;;) {
             _Triggers::Event* ev = _Triggers::EventBegin();
             if (ev==_Triggers::EventEnd() || (ev->time > startTime)) break;
