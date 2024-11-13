@@ -158,8 +158,9 @@ struct Simulator {
         const Time::Instant timeStart = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
 //        printf("timeStart: 0x%jx\n", (uintmax_t)timeStart);
         
+        _Triggers::Init();
+        
         _time = timeStart;
-        _Triggers::Init(_time);
         
         // Insert the initial point where the battery is fully charged
         std::vector<Point> points = {{
