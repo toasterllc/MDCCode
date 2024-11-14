@@ -250,6 +250,7 @@
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		554986302B400CBA00B68E4B /* TimeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeString.h; sourceTree = "<group>"; };
 		5557260A2B5F677C00B32710 /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
+		555883CC2CE5BA8D00DF115B /* Bail.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bail.h; sourceTree = "<group>"; };
 		5568449A2BB22951008F59AE /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		5568449B2BB22951008F59AE /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
 		5568449C2BB22951008F59AE /* Renderer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
@@ -633,6 +634,7 @@
 			isa = PBXGroup;
 			children = (
 				55F755DE29C3D9D700241672 /* Atomic.h */,
+				555883CC2CE5BA8D00DF115B /* Bail.h */,
 				557ABD2429E603380032619E /* Cast.h */,
 				5544AE1F27B5E58F006AB473 /* Defer.h */,
 				55D30A4629A9A0A90080BCBD /* DurationString.h */,

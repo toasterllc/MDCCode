@@ -8,6 +8,7 @@
 #include "Code/Lib/Toastbox/RuntimeError.h"
 #include "Code/Lib/Toastbox/Mmap.h"
 #include "Code/Lib/Toastbox/NumForStr.h"
+#include "Code/Lib/Toastbox/Bail.h"
 
 // RecordStore: a persistent data structure designed with the following properties:
 //          storage amount: many gigabytes of data
@@ -22,7 +23,6 @@ struct RecordStore {
     static constexpr uint32_t Version = T_Record::Version;
     
     using Path = std::filesystem::path;
-    
     using ChunkId = uint64_t;
     
     struct Chunk {
@@ -492,23 +492,35 @@ struct RecordStore {
         constexpr int OpenFlags = O_RDWR|O_CREAT|O_CLOEXEC;
         constexpr int ChunkPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
         const int fd = open(path.c_str(), OpenFlags, ChunkPerm);
-        if (fd < 0) throw Toastbox::RuntimeError("failed to create chunk file: %s", strerror(errno));
+        if (fd < 0) Toastbox::Bail("RecordStore: failed to create chunk file: %s", strerror(errno));
         const size_t cap = Toastbox::Mmap::PageCeil(_ChunkLen(cfg));
-        return Toastbox::Mmap(fd, cap, OpenFlags);
+        
+        try {
+            return Toastbox::Mmap(fd, cap, OpenFlags);
+        
+        } catch (const std::exception& e) {
+            Toastbox::Bail("RecordStore: failed to create Toastbox::Mmap(): %s", e.what());
+        }
     }
     
     static Toastbox::Mmap _ChunkFileOpen(const Config& cfg, const Path& path) {
         constexpr int OpenFlags = O_RDWR;
         int fdi = open(path.c_str(), OpenFlags);
-        if (fdi < 0) throw Toastbox::RuntimeError("open failed: %s", strerror(errno));
+        if (fdi < 0) Toastbox::Bail("RecordStore: open failed: %s", strerror(errno));
         Toastbox::FileDescriptor fd(fdi);
         // Determine file size
         struct stat st;
         int ir = fstat(fd, &st);
-        if (ir) throw Toastbox::RuntimeError("fstat failed: %s", strerror(errno));
+        if (ir) Toastbox::Bail("RecordStore: fstat failed: %s", strerror(errno));
         // Create the mapping with a capacity of either the file size or _ChunkLen(recordSize), whichever is larger.
         const size_t cap = Toastbox::Mmap::PageCeil(std::max((size_t)st.st_size, _ChunkLen(cfg)));
-        return Toastbox::Mmap(std::move(fd), cap, OpenFlags);
+        
+        try {
+            return Toastbox::Mmap(std::move(fd), cap, OpenFlags);
+        
+        } catch (const std::exception& e) {
+            Toastbox::Bail("RecordStore: failed to create Toastbox::Mmap(): %s", e.what());
+        }
     }
     
     Path _chunkPath(ChunkId id) const {

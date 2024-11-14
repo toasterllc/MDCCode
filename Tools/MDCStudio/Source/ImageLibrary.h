@@ -159,6 +159,7 @@ struct ImageLibrary : Object, RecordStore<ImageRecord>, std::mutex {
                 .chunkRecordCap = _desc->chunkRecordCap,
             });
             _StateRead(f, _state);
+        
         } catch (const std::exception& e) {
             printf("Recreating ImageLibrary; cause: %s\n", e.what());
         }
