@@ -74,24 +74,24 @@ struct Clock {
         return AbsoluteBit | (Time::Instant)ticks.count();
     }
     
-    static time_point TimePointFromTimeInstant(Time::Instant t) {
+    static constexpr time_point TimePointFromTimeInstant(Time::Instant t) {
         // `t` must be an absolute time
         assert(Time::Absolute(t));
         const duration ticks(t & ~Time::AbsoluteBit);
         return time_point(ticks);
     }
     
-    static duration DurationFromTimeInstant(Time::Instant t) {
+    static constexpr duration DurationFromTimeInstant(Time::Instant t) {
         // `t` must be a relative time
         assert(!Time::Absolute(t));
         return duration(t);
     }
     
-    static duration DurationFromTicks(TicksU64 x) {
+    static constexpr duration DurationFromTicks(TicksU64 x) {
         return duration(x);
     }
     
-    static TicksU64 TicksFromDuration(duration x) {
+    static constexpr TicksU64 TicksFromDuration(duration x) {
         return x.count();
     }
 };

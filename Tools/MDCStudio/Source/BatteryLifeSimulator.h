@@ -194,7 +194,7 @@ struct Simulator {
             _eventHandle(ev);
             
             const std::chrono::seconds duration = _duration(timeStart);
-            if (duration != points.back().time) {
+            if (_live && duration!=points.back().time) {
                 points.push_back({
                     .time = duration,
                     .batteryLevel = std::max(0.f, _BatteryLevelNormalize(_batteryLevel)),
@@ -454,7 +454,7 @@ struct Simulator {
         
         ev.countRem--;
         if (ev.countRem) {
-            _eventInsert(ev, ev.time+ev.capture->delayTicks);
+            _eventInsert(ev, ev.time + std::max(_CaptureDelayTicksMin, ev.capture->delayTicks));
         }
     }
     
@@ -533,6 +533,10 @@ struct Simulator {
     // BatteryEmptyLevel: consider battery dead at 2%
     // This needs to match MSP's battery trap level
     static constexpr float _BatteryEmptyLevel = 0.02;
+    
+    // _CaptureDelayTicksMin: minimum delay between simulated image captures, to simulate
+    // the non-zero time that it takes to actually capture an image
+    static constexpr Time::TicksU32 _CaptureDelayTicksMin = Time::Second/4;
     
     const Constants _consts;
     const Parameters _params;
