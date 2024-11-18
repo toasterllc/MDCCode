@@ -152,18 +152,19 @@ inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const I
                 tiff.push(batteryLevel);
             }
             
-            const double illumEstMax = std::max(std::max(rec.info.illumEst[0], rec.info.illumEst[1]), rec.info.illumEst[2]);
-            const double illumEst[3] = {
-                rec.info.illumEst[0]/illumEstMax,
-                rec.info.illumEst[1]/illumEstMax,
-                rec.info.illumEst[2]/illumEstMax,
+            const auto& illumOrig = rec.options.whiteBalance.illum;
+            const double illumMax = std::max(std::max(illumOrig[0], illumOrig[1]), illumOrig[2]);
+            const double illum[3] = {
+                illumOrig[0]/illumMax,
+                illumOrig[1]/illumMax,
+                illumOrig[2]/illumMax,
             };
             
             {
                 // ColorMatrix1
                 {
                     ColorMatrix ccm = ColorMatrixForInterpolation(0).matrix;
-                    _WhiteBalanceApply(ccm, illumEst);
+                    _WhiteBalanceApply(ccm, illum);
                     ccm = ccm.inv();
                     
                     tiff.set(colorMatrixPointer1, tiff.off());
@@ -173,7 +174,7 @@ inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const I
                 // ColorMatrix2
                 {
                     ColorMatrix ccm = ColorMatrixForInterpolation(1).matrix;
-                    _WhiteBalanceApply(ccm, illumEst);
+                    _WhiteBalanceApply(ccm, illum);
                     ccm = ccm.inv();
                     
                     tiff.set(colorMatrixPointer2, tiff.off());
@@ -184,7 +185,7 @@ inline void Export(Toastbox::Renderer& renderer, const ImageRecord& rec, const I
             // AsShotNeutral
             {
                 tiff.set(asShotNeutralPointer, tiff.off());
-                tiff.push(std::begin(illumEst), std::end(illumEst));
+                tiff.push(std::begin(illum), std::end(illum));
             }
         }
         
