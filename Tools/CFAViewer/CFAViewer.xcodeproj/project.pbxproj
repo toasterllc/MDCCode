@@ -25,10 +25,8 @@
 		55C1C07F2C114F54004A4FAC /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C1C07B2C114F1B004A4FAC /* FFCC.mm */; };
 		55C1C0802C114F58004A4FAC /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C1C0642C114F1B004A4FAC /* FFCC.metal */; };
 		55C1C0812C114F5A004A4FAC /* LMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C1C05E2C114F1B004A4FAC /* LMMSE.metal */; };
-		55E43FD428C0104D00FCCEA0 /* Defringe.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FBD28C0104D00FCCEA0 /* Defringe.mm */; };
 		55E43FD528C0104D00FCCEA0 /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FBE28C0104D00FCCEA0 /* LocalContrast.metal */; };
 		55E43FD628C0104D00FCCEA0 /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FC128C0104D00FCCEA0 /* Saturation.metal */; };
-		55E43FD828C0104D00FCCEA0 /* Defringe.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FC428C0104D00FCCEA0 /* Defringe.metal */; };
 		55E43FD928C0104D00FCCEA0 /* ImagePipeline.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FC528C0104D00FCCEA0 /* ImagePipeline.mm */; };
 		55E43FDB28C0104D00FCCEA0 /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FC928C0104D00FCCEA0 /* ReconstructHighlights.metal */; };
 		55E43FDC28C0104D00FCCEA0 /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FCA28C0104D00FCCEA0 /* ImagePipeline.metal */; };
@@ -108,19 +106,16 @@
 		55D08211270BACA600B9BB97 /* ChecksumFletcher32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
 		55DE385B25F83EFB00AD2223 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
 		55E43FBC28C0104D00FCCEA0 /* ImagePipeline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImagePipeline.h; sourceTree = "<group>"; };
-		55E43FBD28C0104D00FCCEA0 /* Defringe.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Defringe.mm; sourceTree = "<group>"; };
 		55E43FBE28C0104D00FCCEA0 /* LocalContrast.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
 		55E43FBF28C0104D00FCCEA0 /* EstimateIlluminant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminant.h; sourceTree = "<group>"; };
 		55E43FC028C0104D00FCCEA0 /* LocalContrast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
 		55E43FC128C0104D00FCCEA0 /* Saturation.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
-		55E43FC428C0104D00FCCEA0 /* Defringe.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
 		55E43FC528C0104D00FCCEA0 /* ImagePipeline.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImagePipeline.mm; sourceTree = "<group>"; };
 		55E43FC728C0104D00FCCEA0 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImagePipelineTypes.h; sourceTree = "<group>"; };
 		55E43FC928C0104D00FCCEA0 /* ReconstructHighlights.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
 		55E43FCA28C0104D00FCCEA0 /* ImagePipeline.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImagePipeline.metal; sourceTree = "<group>"; };
 		55E43FCB28C0104D00FCCEA0 /* EstimateIlluminant.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminant.mm; sourceTree = "<group>"; };
 		55E43FCD28C0104D00FCCEA0 /* RenderThumb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenderThumb.h; sourceTree = "<group>"; };
-		55E43FCE28C0104D00FCCEA0 /* Defringe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
 		55E43FCF28C0104D00FCCEA0 /* ReconstructHighlights.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReconstructHighlights.h; sourceTree = "<group>"; };
 		55E43FD128C0104D00FCCEA0 /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
 		55E43FD228C0104D00FCCEA0 /* Saturation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
@@ -364,9 +359,6 @@
 		55E43FBB28C0104D00FCCEA0 /* ImagePipeline */ = {
 			isa = PBXGroup;
 			children = (
-				55E43FCE28C0104D00FCCEA0 /* Defringe.h */,
-				55E43FC428C0104D00FCCEA0 /* Defringe.metal */,
-				55E43FBD28C0104D00FCCEA0 /* Defringe.mm */,
 				55E43FBF28C0104D00FCCEA0 /* EstimateIlluminant.h */,
 				55E43FCB28C0104D00FCCEA0 /* EstimateIlluminant.mm */,
 				55E43FBC28C0104D00FCCEA0 /* ImagePipeline.h */,
@@ -468,12 +460,10 @@
 				553630EB2B7C13C90054E321 /* tz.cpp in Sources */,
 				55E43FDB28C0104D00FCCEA0 /* ReconstructHighlights.metal in Sources */,
 				55C1C07F2C114F54004A4FAC /* FFCC.mm in Sources */,
-				55E43FD828C0104D00FCCEA0 /* Defringe.metal in Sources */,
 				55B9745E24C504E2000B2633 /* AppDelegate.mm in Sources */,
 				55E43FDD28C0104D00FCCEA0 /* EstimateIlluminant.mm in Sources */,
 				55E43FDC28C0104D00FCCEA0 /* ImagePipeline.metal in Sources */,
 				552DC1492BB679F300E99941 /* Renderer.metal in Sources */,
-				55E43FD428C0104D00FCCEA0 /* Defringe.mm in Sources */,
 				55E43FE028C0104D00FCCEA0 /* RenderThumb.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

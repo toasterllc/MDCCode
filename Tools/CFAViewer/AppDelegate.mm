@@ -88,18 +88,6 @@ struct RawImage {
     IBOutlet NSButton* _colorMatrixCheckbox;
     IBOutlet NSTextField* _colorMatrixTextField;
     
-    IBOutlet NSButton* _defringeCheckbox;
-    IBOutlet NSSlider* _defringeRoundsSlider;
-    IBOutlet NSTextField* _defringeRoundsLabel;
-    IBOutlet NSSlider* _defringeαThresholdSlider;
-    IBOutlet NSTextField* _defringeαThresholdLabel;
-    IBOutlet NSSlider* _defringeγThresholdSlider;
-    IBOutlet NSTextField* _defringeγThresholdLabel;
-    IBOutlet NSSlider* _defringeγFactorSlider;
-    IBOutlet NSTextField* _defringeγFactorLabel;
-    IBOutlet NSSlider* _defringeδFactorSlider;
-    IBOutlet NSTextField* _defringeδFactorLabel;
-    
     IBOutlet NSButton* _reconstructHighlightsCheckbox;
     
     IBOutlet NSButton* _debayerLMMSEGammaCheckbox;
@@ -215,7 +203,6 @@ struct RawImage {
         .illum = std::nullopt,
         .colorMatrix = std::nullopt,
         
-        .defringe = { .en = false, },
         .reconstructHighlights = { .en = false, },
         .debayerLMMSE = { .applyGamma = true, },
         
@@ -985,12 +972,6 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 
 - (IBAction)_imageOptionsAction:(id)sender {
     auto& opts = _pipelineOptions;
-    opts.defringe.en = ([_defringeCheckbox state]==NSControlStateValueOn);
-    opts.defringe.opts.rounds = (uint32_t)[_defringeRoundsSlider intValue];
-    opts.defringe.opts.αthresh = [_defringeαThresholdSlider floatValue];
-    opts.defringe.opts.γthresh = [_defringeγThresholdSlider floatValue];
-    opts.defringe.opts.γfactor = [_defringeγFactorSlider floatValue];
-    opts.defringe.opts.δfactor = [_defringeδFactorSlider floatValue];
     
     opts.reconstructHighlights.en = ([_reconstructHighlightsCheckbox state]==NSControlStateValueOn);
     
@@ -1010,28 +991,6 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
 - (void)_updateInspectorUI {
     const auto& optsPre = _pipelineOptions;
     const auto& opts = _pipelineOptionsPost;
-    
-    // Defringe
-    {
-        [_defringeCheckbox setState:(opts.defringe.en ? NSControlStateValueOn : NSControlStateValueOff)];
-        
-        [_defringeRoundsSlider setIntValue:opts.defringe.opts.rounds];
-        [_defringeRoundsLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)opts.defringe.opts.rounds]];
-        
-        [_defringeαThresholdSlider setFloatValue:opts.defringe.opts.αthresh];
-        [_defringeαThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.defringe.opts.αthresh]];
-        
-        [_defringeγThresholdSlider setFloatValue:opts.defringe.opts.γthresh];
-        [_defringeγThresholdLabel setStringValue:[NSString stringWithFormat:@"%.3f", opts.defringe.opts.γthresh]];
-        
-        [_defringeγFactorSlider setFloatValue:opts.defringe.opts.γfactor];
-        [_defringeγFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
-            opts.defringe.opts.γfactor]];
-        
-        [_defringeδFactorSlider setFloatValue:opts.defringe.opts.δfactor];
-        [_defringeδFactorLabel setStringValue:[NSString stringWithFormat:@"%.3f",
-            opts.defringe.opts.δfactor]];
-    }
     
     // Reconstruct Highlights
     {
