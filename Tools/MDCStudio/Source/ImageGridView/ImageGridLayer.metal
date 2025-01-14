@@ -1,6 +1,6 @@
 #import <metal_stdlib>
 #import "ImageGridLayerTypes.h"
-#import "Code/Lib/Toastbox/Mac/MetalUtil.h"
+#import "Lib/Toastbox/Mac/MetalUtil.h"
 using namespace metal;
 using namespace Toastbox::MetalUtil;
 using namespace MDCStudio::ImageGridLayerTypes;

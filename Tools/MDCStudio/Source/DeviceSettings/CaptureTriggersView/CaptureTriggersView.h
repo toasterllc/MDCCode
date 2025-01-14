@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "Code/Shared/MSP.h"
+#import "Shared/MSP.h"
 
 @interface CaptureTriggersView : NSView
 - (instancetype)initWithTriggers:(const MSP::Triggers&)triggers;

@@ -1,6 +1,6 @@
 #pragma once
 #include <mutex>
-#include "Code/Shared/Assert.h"
+#include "Shared/Assert.h"
 
 template <
 typename T_Scheduler,

@@ -2,9 +2,9 @@
 #include <msp430.h>
 #include <cstdint>
 #include <cstring>
-#include "Code/Shared/Assert.h"
-#include "Code/Shared/MSP.h"
-#include "Code/Lib/Scheduler/Scheduler.h"
+#include "Shared/Assert.h"
+#include "Shared/MSP.h"
+#include "Lib/Scheduler/Scheduler.h"
 
 #define DebugEnable 0
 

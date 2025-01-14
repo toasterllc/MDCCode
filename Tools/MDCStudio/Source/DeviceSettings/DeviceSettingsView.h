@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "Code/Shared/MSP.h"
+#import "Shared/MSP.h"
 @class DeviceSettingsView;
 
 @protocol DeviceSettingsViewDelegate

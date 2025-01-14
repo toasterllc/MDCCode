@@ -10,7 +10,7 @@ OBJS := $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SRCS))))
 INCLUDES :=					\
 	-I$(TOOLCHAIN)/include	\
 	-I"."					\
-	-I"../../.."
+	-I"../.."
 
 # Link final product
 $(BUILDDIR)/$(OUTPUT): $(OBJS)

@@ -3,11 +3,11 @@
 #include <chrono>
 #include <optional>
 #include "date/date.h"
-#include "Code/Lib/Toastbox/RuntimeError.h"
-#include "Code/Lib/Toastbox/NumForStr.h"
-#include "Code/Lib/Toastbox/DurationString.h"
-#include "Code/Lib/Toastbox/String.h"
-#include "Code/Shared/Clock.h"
+#include "Lib/Toastbox/RuntimeError.h"
+#include "Lib/Toastbox/NumForStr.h"
+#include "Lib/Toastbox/DurationString.h"
+#include "Lib/Toastbox/String.h"
+#include "Shared/Clock.h"
 
 namespace MDCStudio {
 namespace Calendar {

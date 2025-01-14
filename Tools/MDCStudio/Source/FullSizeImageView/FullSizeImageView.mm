@@ -4,16 +4,16 @@
 #import <MetalKit/MetalKit.h>
 #import <thread>
 #import "Util.h"
-#import "Code/Lib/Toastbox/Mac/Util.h"
-#import "Code/Lib/Toastbox/Mac/Renderer.h"
-#import "Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
-#import "Tools/Shared/ImagePipeline/RenderThumb.h"
-#import "Tools/Shared/ImagePipeline/ImagePipeline.h"
+#import "Lib/Toastbox/Mac/Util.h"
+#import "Lib/Toastbox/Mac/Renderer.h"
+#import "Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
+#import "Shared/ImagePipeline/RenderThumb.h"
+#import "Shared/ImagePipeline/ImagePipeline.h"
+#import "Shared/ImageUtil.h"
+#import "Shared/ImageExporter/ImageExporter.h"
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
-#import "ImageUtil.h"
 #import "ImagePipelineUtil.h"
-#import "ImageExporter/ImageExporter.h"
 #import "DragImage.h"
 using namespace MDCStudio;
 using namespace MDCStudio::FullSizeImageViewTypes;

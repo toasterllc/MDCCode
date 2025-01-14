@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
-#import "MDCDevicesManager.h"
+#import "Shared/MDCDevicesManager.h"
 #import "SettingsWindow/SettingsWindow.h"
-#import "PrefsUtil.h"
+#import "Shared/PrefsUtil.h"
 using namespace MDCStudio;
 
 @interface App : NSApplication

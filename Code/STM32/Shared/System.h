@@ -3,11 +3,11 @@
 #include <tuple>
 #include <ratio>
 #include "stm32f7xx.h"
-#include "Code/Lib/Scheduler/Scheduler.h"
-#include "Code/Lib/Toastbox/Util.h"
-#include "Code/Shared/STM.h"
-#include "Code/Shared/Assert.h"
-#include "Code/Shared/MSP.h"
+#include "Lib/Scheduler/Scheduler.h"
+#include "Lib/Toastbox/Util.h"
+#include "Shared/STM.h"
+#include "Shared/Assert.h"
+#include "Shared/MSP.h"
 #include "GPIO.h"
 #include "USB.h"
 #include "I2C.h"

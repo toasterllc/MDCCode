@@ -1,4 +1,4 @@
-#include "Code/Shared/Assert.h"
+#include "Shared/Assert.h"
 
 extern "C"
 void _ISR_Default() {

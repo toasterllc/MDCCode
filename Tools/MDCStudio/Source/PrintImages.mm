@@ -1,8 +1,8 @@
 #import "PrintImages.h"
-#import "Code/Lib/Toastbox/Mac/Renderer.h"
-#import "Tools/Shared/ImagePipeline/ImagePipeline.h"
+#import "Lib/Toastbox/Mac/Renderer.h"
+#import "Shared/ImagePipeline/ImagePipeline.h"
+#import "Shared/PrefsUtil.h"
 #import "ImagePipelineUtil.h"
-#import "PrefsUtil.h"
 using namespace MDCStudio;
 
 @interface PrintImageView : NSImageView

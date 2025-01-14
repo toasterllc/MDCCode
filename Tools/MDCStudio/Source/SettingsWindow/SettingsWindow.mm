@@ -1,7 +1,7 @@
 #import "SettingsWindow.h"
 #import "NibViewInit.h"
-#import "ImageCorner/ImageCornerButton.h"
-#import "PrefsUtil.h"
+#import "Shared/ImageCorner/ImageCornerButton.h"
+#import "Shared/PrefsUtil.h"
 
 using namespace MDCStudio;
 

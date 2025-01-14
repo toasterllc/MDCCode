@@ -6,7 +6,7 @@
 #include <optional>
 #include "Img.h"
 #include "GetBits.h"
-#include "Code/Shared/Assert.h"
+#include "Shared/Assert.h"
 
 template<
 typename T_Scheduler

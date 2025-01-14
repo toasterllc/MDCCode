@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "ImageSource.h"
+#import "Shared/ImageSource.h"
 @class ImageExportProgressDialog;
 
 @interface DragImage : NSDraggingItem <NSFilePromiseProviderDelegate>

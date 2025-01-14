@@ -5,16 +5,16 @@
 #import <simd/simd.h>
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
-#import "ImageThumb.h"
 #import "DragImage.h"
-#import "ImageExporter/ImageExporter.h"
-#import "Code/Shared/Img.h"
-#import "Code/Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
-#import "Code/Lib/Toastbox/Mac/Grid.h"
-#import "Code/Lib/Toastbox/LRU.h"
-#import "Code/Lib/Toastbox/IterAny.h"
-#import "Code/Lib/Toastbox/Signal.h"
-#import "Code/Lib/Toastbox/Mac/Util.h"
+#import "Shared/ImageExporter/ImageExporter.h"
+#import "Shared/Img.h"
+#import "Shared/ImageThumb.h"
+#import "Lib/AnchoredScrollView/AnchoredMetalDocumentLayer.h"
+#import "Lib/Toastbox/Mac/Grid.h"
+#import "Lib/Toastbox/LRU.h"
+#import "Lib/Toastbox/IterAny.h"
+#import "Lib/Toastbox/Signal.h"
+#import "Lib/Toastbox/Mac/Util.h"
 using namespace MDCStudio;
 
 @interface ImageGridLayer : AnchoredMetalDocumentLayer

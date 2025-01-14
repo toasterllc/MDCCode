@@ -1,9 +1,9 @@
 #import <Cocoa/Cocoa.h>
 #import <filesystem>
 #import "TmpDir.h"
-#import "MDCDevice.h"
-#import "PrefsUtil.h"
-#import "Code/Lib/Toastbox/Util.h"
+#import "Shared/MDCDevice.h"
+#import "Shared/PrefsUtil.h"
+#import "Lib/Toastbox/Util.h"
 
 int main(int argc, const char* argv[]) {
     using namespace MDCStudio;

@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "MDCDevice.h"
+#import "Shared/MDCDevice.h"
 
 @interface DeviceImageGridHeaderView : NSView
 - (void)setStatus:(NSString*)x;

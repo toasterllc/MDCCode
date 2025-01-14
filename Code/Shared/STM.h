@@ -1,7 +1,7 @@
 #pragma once
-#include "Code/Lib/Toastbox/Enum.h"
-#include "Code/Lib/Toastbox/USB.h"
-#include "Code/Shared/MSP.h"
+#include "Lib/Toastbox/Enum.h"
+#include "Lib/Toastbox/USB.h"
+#include "Shared/MSP.h"
 #include "Img.h"
 #include "SD.h"
 #include "ImgSD.h"

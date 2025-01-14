@@ -1,6 +1,6 @@
 #pragma once
 #import <simd/simd.h>
-#import "Code/Lib/Toastbox/Mac/Grid.h"
+#import "Lib/Toastbox/Mac/Grid.h"
 
 namespace MDCStudio {
 namespace ImageGridLayerTypes {

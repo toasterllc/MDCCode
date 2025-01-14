@@ -1,5 +1,5 @@
 #pragma once
-#include "Code/Shared/Assert.h"
+#include "Shared/Assert.h"
 
 template<
 auto... T_Changed

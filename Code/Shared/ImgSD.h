@@ -1,5 +1,5 @@
 #pragma once
-#include "Code/Lib/Toastbox/Math.h"
+#include "Lib/Toastbox/Math.h"
 #include "Img.h"
 #include "SD.h"
 

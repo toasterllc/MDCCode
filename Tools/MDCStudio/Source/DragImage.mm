@@ -1,8 +1,8 @@
 #import "DragImage.h"
 #import <mutex>
-#import "ImageExporter/ImageExporter.h"
-#import "Code/Lib/Toastbox/Signal.h"
-#import "Code/Lib/Toastbox/Defer.h"
+#import "Shared/ImageExporter/ImageExporter.h"
+#import "Lib/Toastbox/Signal.h"
+#import "Lib/Toastbox/Defer.h"
 using namespace MDCStudio;
 
 @implementation DragImage {

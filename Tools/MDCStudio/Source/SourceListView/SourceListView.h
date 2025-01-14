@@ -1,6 +1,6 @@
 #import <Cocoa/Cocoa.h>
-#import "MDCDevice.h"
-#import "ImageSource.h"
+#import "Shared/MDCDevice.h"
+#import "Shared/ImageSource.h"
 @class SourceListView;
 
 @protocol SourceListViewDelegate

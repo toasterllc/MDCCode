@@ -2,7 +2,7 @@
 #include <sstream>
 #include <string>
 #include "Time.h"
-#include "Code/Lib/Toastbox/DurationString.h"
+#include "Lib/Toastbox/DurationString.h"
 
 namespace Time {
 

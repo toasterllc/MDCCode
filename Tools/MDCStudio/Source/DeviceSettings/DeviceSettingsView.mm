@@ -1,5 +1,5 @@
 #import "DeviceSettingsView.h"
-#import "Code/Lib/Toastbox/Mac/Util.h"
+#import "Lib/Toastbox/Mac/Util.h"
 #import "CaptureTriggersView/CaptureTriggersView.h"
 #import "NibViewInit.h"
 using namespace MDCStudio;

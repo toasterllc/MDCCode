@@ -1,6 +1,6 @@
 #pragma once
-#include "ImageLibrary.h"
-#include "Object.h"
+#include "Shared/ImageLibrary.h"
+#include "Shared/Object.h"
 
 namespace MDCStudio {
 

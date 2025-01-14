@@ -1,8 +1,8 @@
 #include <cstring>
 #include <algorithm>
-#include "Code/Lib/Toastbox/Math.h"
-#include "Code/Shared/Assert.h"
-#include "Code/Shared/STM.h"
+#include "Lib/Toastbox/Math.h"
+#include "Shared/Assert.h"
+#include "Shared/STM.h"
 #include "USB.h"
 #include "System.h"
 using namespace STM;

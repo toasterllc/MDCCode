@@ -1,5 +1,5 @@
 #import "TokenField.h"
-#import "Code/Lib/Toastbox/Mac/Util.h"
+#import "Lib/Toastbox/Mac/Util.h"
 
 @implementation TokenField {
     bool _init;

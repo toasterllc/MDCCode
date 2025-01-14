@@ -1,11 +1,11 @@
 #pragma once
 #include <msp430.h>
 #include <ratio>
-#include "Code/Lib/Scheduler/Scheduler.h"
-#include "Code/Lib/Toastbox/Util.h"
-#include "Code/Shared/MSP.h"
-#include "Code/Shared/Assert.h"
-#include "Code/Shared/Time.h"
+#include "Lib/Scheduler/Scheduler.h"
+#include "Lib/Toastbox/Util.h"
+#include "Shared/MSP.h"
+#include "Shared/Assert.h"
+#include "Shared/Time.h"
 
 // _RTCState: the current time (either absolute or relative, depending on the
 // value supplied to Init()) and calibration info.

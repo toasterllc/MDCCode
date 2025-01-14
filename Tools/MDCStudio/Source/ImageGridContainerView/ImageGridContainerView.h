@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "MDCDevice.h"
+#import "Shared/MDCDevice.h"
 #import "ImageSelection.h"
 #import "CenterContent.h"
 @class ImageGridView;

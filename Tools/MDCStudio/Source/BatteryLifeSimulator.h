@@ -3,12 +3,12 @@
 #include <list>
 #include <iostream>
 #include "DeviceSettings.h"
-#include "Code/Shared/Clock.h"
-#include "Code/Shared/Time.h"
-#include "Code/Shared/TimeConstants.h"
-#include "Code/Shared/MSPTriggers.h"
+#include "Shared/Clock.h"
+#include "Shared/Time.h"
+#include "Shared/TimeConstants.h"
+#include "Shared/MSPTriggers.h"
 #include "date/date.h"
-#include "Code/Shared/TimeString.h"
+#include "Shared/TimeString.h"
 
 namespace MDCStudio::BatteryLifeSimulator {
 

@@ -1,13 +1,13 @@
 #pragma once
 #include <initializer_list>
 #include <optional>
-#include "Code/Shared/Assert.h"
+#include "Shared/Assert.h"
 #include "stm32f7xx.h"
 #include "usbd_def.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
-#include "Code/Lib/Toastbox/USB.h"
-#include "Code/Lib/Scheduler/Scheduler.h"
+#include "Lib/Toastbox/USB.h"
+#include "Lib/Scheduler/Scheduler.h"
 
 template <
 typename T_Scheduler,   // T_Scheduler: scheduler

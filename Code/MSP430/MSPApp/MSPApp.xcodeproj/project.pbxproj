@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		55451F882D35BE7500D1A071 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		554F67502A0C97A400AE958F /* LED.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LED.h; sourceTree = "<group>"; };
 		5562769F29F353E500998BE2 /* Timer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Timer.h; sourceTree = "<group>"; };
 		5562771729FB15EC00998BE2 /* SysTick.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SysTick.h; sourceTree = "<group>"; };
@@ -42,6 +43,7 @@
 				556E45F226B12050006681FA /* Shared */,
 				556E45F126B1204A006681FA /* Lib */,
 				55FD016B275F25BA005505B5 /* Linker.ld */,
+				55451F882D35BE7500D1A071 /* Makefile */,
 				55B9EC95293AA2A300318243 /* msp430fr2433.ld */,
 				55B9EC94293AA2A300318243 /* msp430fr2433.txt */,
 				55889121273B3D360004458F /* GPIO.h */,

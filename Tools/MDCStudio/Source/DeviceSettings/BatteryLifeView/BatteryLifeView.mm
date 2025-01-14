@@ -1,11 +1,11 @@
 #import "BatteryLifeView.h"
 #import "BatteryLifeSimulator.h"
-#import "Prefs.h"
 #import "BatteryLifePlotView.h"
 #import "NibViewInit.h"
-#import "Code/Lib/Toastbox/Defer.h"
-#import "Code/Lib/Toastbox/String.h"
-#import "Code/Lib/Toastbox/NumForStr.h"
+#import "Lib/Toastbox/Defer.h"
+#import "Lib/Toastbox/String.h"
+#import "Lib/Toastbox/NumForStr.h"
+#import "Shared/Prefs.h"
 using namespace MDCStudio;
 using namespace BatteryLifeViewTypes;
 

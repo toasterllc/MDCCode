@@ -1,6 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <chrono>
-#import "Code/Shared/MSP.h"
+#import "Shared/MSP.h"
 @class BatteryLifeView;
 
 @protocol BatteryLifeViewDelegate

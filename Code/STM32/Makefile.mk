@@ -18,14 +18,14 @@ $(BUILDDIR)/$(OUTPUT): $(OBJS)
 $(BUILDDIR)/Shared/%.o: ../Shared/%.cpp
 	mkdir -p $(dir $@)
 	$(TOOLCHAINBIN)/arm-none-eabi-g++ "$<" -mcpu=cortex-m7 -std=c++17 -g3 -DUSE_HAL_DRIVER -DSTM32F730xx -c -Os -ffunction-sections -fdata-sections		\
-		-fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit -Wall -std=c++1z -iquote '../../..'						\
+		-fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit -Wall -std=c++1z -iquote '../..'						\
 		-iquote '../Shared' -iquote '../Shared/ST' -iquote 'Source' -fstack-usage -MMD -MP -MF"$(@:.o=.d)" -MT"$@"						\
 		--specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
 
 $(BUILDDIR)/Source/%.o: Source/%.cpp
 	mkdir -p $(dir $@)
 	$(TOOLCHAINBIN)/arm-none-eabi-g++ "$<" -mcpu=cortex-m7 -std=c++17 -g3 -DUSE_HAL_DRIVER -DSTM32F730xx -c -Os -ffunction-sections -fdata-sections		\
-		-fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit -Wall -std=c++1z -iquote '../../..'						\
+		-fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit -Wall -std=c++1z -iquote '../..'						\
 		-iquote '../Shared' -iquote '../Shared/ST' -iquote 'Source' -fstack-usage -MMD -MP -MF"$(@:.o=.d)" -MT"$@"						\
 		--specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
 

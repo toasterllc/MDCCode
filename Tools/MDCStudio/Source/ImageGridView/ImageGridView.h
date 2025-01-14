@@ -1,10 +1,10 @@
 #import <Cocoa/Cocoa.h>
 #import <set>
 #import <optional>
-#import "ImageSource.h"
+#import "Shared/ImageSource.h"
+#import "Shared/Img.h"
+#import "Lib/AnchoredScrollView/AnchoredDocumentView.h"
 #import "ImageSelection.h"
-#import "Code/Shared/Img.h"
-#import "Code/Lib/AnchoredScrollView/AnchoredDocumentView.h"
 @class ImageGridView;
 
 @protocol ImageGridViewResponder

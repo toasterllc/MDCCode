@@ -6,11 +6,11 @@
 #include "date/date.h"
 #include "date/tz.h"
 #include "Calendar.h"
-#include "Code/Shared/Time.h"
-#include "Code/Shared/Clock.h"
-#include "Code/Shared/MSP.h"
-#include "Code/Lib/Toastbox/Cast.h"
-#include "Code/Lib/Toastbox/Util.h"
+#include "Shared/Time.h"
+#include "Shared/Clock.h"
+#include "Shared/MSP.h"
+#include "Lib/Toastbox/Cast.h"
+#include "Lib/Toastbox/Util.h"
 
 namespace MDCStudio {
 namespace DeviceSettings {

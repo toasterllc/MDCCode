@@ -1,5 +1,5 @@
 #import "ProgressBar.h"
-#import "Code/Lib/Toastbox/Mac/Util.h"
+#import "Lib/Toastbox/Mac/Util.h"
 
 @implementation ProgressBar {
     CALayer* _bar;

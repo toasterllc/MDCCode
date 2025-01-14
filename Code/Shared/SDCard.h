@@ -3,7 +3,7 @@
 #include "Img.h"
 #include "SD.h"
 #include "ImgSD.h"
-#include "Code/Shared/Assert.h"
+#include "Shared/Assert.h"
 
 namespace SD {
 

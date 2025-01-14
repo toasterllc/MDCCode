@@ -1,10 +1,10 @@
 #pragma once
 #include "Time.h"
 #include "Clock.h"
-#include "Code/Shared/MSP.h"
-#include "Code/Lib/Toastbox/Cast.h"
-#include "Code/Lib/Toastbox/DurationString.h"
-#include "Code/Lib/Toastbox/RuntimeError.h"
+#include "Shared/MSP.h"
+#include "Lib/Toastbox/Cast.h"
+#include "Lib/Toastbox/DurationString.h"
+#include "Lib/Toastbox/RuntimeError.h"
 
 namespace Time {
 

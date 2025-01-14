@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include "Code/Shared/GetBits.h"
+#include "Shared/GetBits.h"
 
 namespace SD {
 

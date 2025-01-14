@@ -1,7 +1,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import "BatteryLifePlotView.h"
 #import "BatteryLifeSimulator.h"
-#import "Code/Lib/Toastbox/Mac/Util.h"
+#import "Lib/Toastbox/Mac/Util.h"
 
 using namespace MDCStudio;
 

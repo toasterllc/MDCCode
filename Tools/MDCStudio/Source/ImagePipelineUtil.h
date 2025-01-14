@@ -1,10 +1,10 @@
 #pragma once
-#import "ImageSource.h"
-#import "Tools/Shared/ImagePipeline/ImagePipeline.h"
-#import "Code/Lib/Toastbox/Mac/Color.h"
-#import "ImageCorner/ImageCorner.h"
+#import "Shared/ImageSource.h"
+#import "Shared/ImagePipeline/ImagePipeline.h"
+#import "Shared/ImageCorner/ImageCorner.h"
+#import "Shared/PrefsUtil.h"
+#import "Lib/Toastbox/Mac/Color.h"
 #import "Calendar.h"
-#import "PrefsUtil.h"
 
 namespace MDCStudio {
 
