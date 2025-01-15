@@ -196,6 +196,8 @@
 		55781C3E2D3746E2005BBA6F /* ICEApp.bin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ICEApp.bin.h; sourceTree = "<group>"; };
 		55781C3F2D374BD2005BBA6F /* JThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JThread.h; sourceTree = "<group>"; };
 		55781C532D377057005BBA6F /* RunLoopStop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RunLoopStop.h; sourceTree = "<group>"; };
+		55781C562D378169005BBA6F /* ImagePipelineUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineUtil.h; sourceTree = "<group>"; };
+		55781C572D37816C005BBA6F /* Calendar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Calendar.h; sourceTree = "<group>"; };
 		55E393FD2D35C821000C1EFA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		55E393FF2D35C82B000C1EFA /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		55F273D72D35B7BC0085D55A /* MDCDownload */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCDownload; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -269,20 +271,22 @@
 		557816472D36EEB5005BBA6F /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				557816032D36EEB5005BBA6F /* ImageCorner */,
-				5578160E2D36EEB5005BBA6F /* ImageExporter */,
-				5578161D2D36EEB5005BBA6F /* ImagePipeline */,
 				5578161E2D36EEB5005BBA6F /* Assert.h */,
 				5578161F2D36EEB5005BBA6F /* BitmapImage.h */,
 				557816202D36EEB5005BBA6F /* Cache.h */,
+				55781C572D37816C005BBA6F /* Calendar.h */,
 				557816212D36EEB5005BBA6F /* ChecksumFletcher32.h */,
 				557816222D36EEB5005BBA6F /* Clock.h */,
 				557816232D36EEB5005BBA6F /* ColorMatrix.h */,
 				557816242D36EEB5005BBA6F /* ELF32Binary.h */,
 				557816252D36EEB5005BBA6F /* GetBits.h */,
 				557816262D36EEB5005BBA6F /* ICE.h */,
+				557816032D36EEB5005BBA6F /* ImageCorner */,
+				5578160E2D36EEB5005BBA6F /* ImageExporter */,
 				557816272D36EEB5005BBA6F /* ImageLibrary.h */,
 				557816282D36EEB5005BBA6F /* ImageOptions.h */,
+				5578161D2D36EEB5005BBA6F /* ImagePipeline */,
+				55781C562D378169005BBA6F /* ImagePipelineUtil.h */,
 				557816292D36EEB5005BBA6F /* ImageSource.h */,
 				5578162A2D36EEB5005BBA6F /* ImageThumb.h */,
 				5578162B2D36EEB5005BBA6F /* ImageUtil.h */,

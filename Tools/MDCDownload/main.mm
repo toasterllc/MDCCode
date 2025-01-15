@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "Shared/MDCDevicesManager.h"
+#import "Shared/ImageExporter/ImageExporter.h"
 #import "STMApp.elf.h"
 #import "ICEApp.bin.h"
 using namespace MDCStudio;
@@ -26,6 +27,7 @@ int main(int argc, const char* argv[]) {
     
     try {
         MDCDeviceHardPtr device = _DeviceGet();
+        ImageExporter::
     
     } catch (std::exception& e) {
         printf("Error: %s\n", e.what());

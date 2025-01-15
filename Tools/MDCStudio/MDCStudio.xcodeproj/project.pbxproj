@@ -225,12 +225,13 @@
 		5568449B2BB22951008F59AE /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
 		5568449C2BB22951008F59AE /* Renderer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
 		556F313E2AE069830028BF9C /* NibViewInit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NibViewInit.h; sourceTree = "<group>"; };
+		55781C542D378135005BBA6F /* ImagePipelineUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineUtil.h; sourceTree = "<group>"; };
+		55781C552D37815C005BBA6F /* Calendar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Calendar.h; sourceTree = "<group>"; };
 		557ABCED29DD24230032619E /* BatteryLifeView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BatteryLifeView.mm; sourceTree = "<group>"; };
 		557ABCEE29DD24230032619E /* BatteryLifeView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BatteryLifeView.xib; sourceTree = "<group>"; };
 		557ABCEF29DD24230032619E /* BatteryLifeView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BatteryLifeView.h; sourceTree = "<group>"; };
 		557ABD2329E600DF0032619E /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		557ABD2429E603380032619E /* Cast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cast.h; sourceTree = "<group>"; };
-		557ABD8829E7E90B0032619E /* Calendar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Calendar.h; sourceTree = "<group>"; };
 		557ABD8929E7E90B0032619E /* DeviceSettings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeviceSettings.h; sourceTree = "<group>"; };
 		55838C7E2ACF4B3A00D4B024 /* BatteryLifeSimulator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BatteryLifeSimulator.h; sourceTree = "<group>"; };
 		55838C822AD0BE7100D4B024 /* SourceList-Gear.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "SourceList-Gear.pdf"; sourceTree = "<group>"; };
@@ -283,7 +284,6 @@
 		55C3758A2C6ABD2F0099ED35 /* SettingsWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingsWindow.h; sourceTree = "<group>"; };
 		55C3758B2C6ABD2F0099ED35 /* SettingsWindow.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SettingsWindow.mm; sourceTree = "<group>"; };
 		55C3758C2C6ABD2F0099ED35 /* SettingsWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SettingsWindow.xib; sourceTree = "<group>"; };
-		55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineUtil.h; sourceTree = "<group>"; };
 		55C6A27D2AE6EFC9008149AF /* FactoryResetConfirmationAlert.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FactoryResetConfirmationAlert.mm; sourceTree = "<group>"; };
 		55C6A27E2AE6EFC9008149AF /* FactoryResetConfirmationAlert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FactoryResetConfirmationAlert.h; sourceTree = "<group>"; };
 		55C6A2842AE6F74E008149AF /* FactoryResetConfirmationAlert.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FactoryResetConfirmationAlert.xib; sourceTree = "<group>"; };
@@ -676,8 +676,6 @@
 				553EF5572AD7088A00157484 /* ImageLibraryStatus.h */,
 				55C6A2A42AE9925B008149AF /* ImageSelection.h */,
 				556F313E2AE069830028BF9C /* NibViewInit.h */,
-				55C6A2682AE3154C008149AF /* ImagePipelineUtil.h */,
-				557ABD8829E7E90B0032619E /* Calendar.h */,
 				557ABD8929E7E90B0032619E /* DeviceSettings.h */,
 				55838C7E2ACF4B3A00D4B024 /* BatteryLifeSimulator.h */,
 				55458F5B2B86C4F3008AB8B2 /* TmpDir.h */,
@@ -893,6 +891,7 @@
 				55E393C12D35C5D4000C1EFA /* Assert.h */,
 				55E393C22D35C5D4000C1EFA /* BitmapImage.h */,
 				55E393C32D35C5D4000C1EFA /* Cache.h */,
+				55781C552D37815C005BBA6F /* Calendar.h */,
 				55E393C42D35C5D4000C1EFA /* ChecksumFletcher32.h */,
 				55E393C52D35C5D4000C1EFA /* Clock.h */,
 				55E393C62D35C5D4000C1EFA /* ColorMatrix.h */,
@@ -907,6 +906,7 @@
 				55E393CC2D35C5D4000C1EFA /* ImageSource.h */,
 				55E393CD2D35C5D4000C1EFA /* ImageThumb.h */,
 				55E393CE2D35C5D4000C1EFA /* ImageUtil.h */,
+				55781C542D378135005BBA6F /* ImagePipelineUtil.h */,
 				55E393CF2D35C5D4000C1EFA /* Img.h */,
 				55E393D02D35C5D4000C1EFA /* ImgAutoExposure.h */,
 				55E393D12D35C5D4000C1EFA /* ImgSD.h */,

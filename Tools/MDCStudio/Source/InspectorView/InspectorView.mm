@@ -5,9 +5,9 @@
 #import "Shared/Clock.h"
 #import "Shared/MSP.h"
 #import "Shared/ImageUtil.h"
+#import "Shared/Calendar.h"
 #import "Lib/Toastbox/DurationString.h"
 #import "Lib/Toastbox/Mac/Util.h"
-#import "Calendar.h"
 #import "NibViewInit.h"
 #import "ColorButtonCell.h"
 using namespace MDCStudio;
