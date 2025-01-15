@@ -360,7 +360,7 @@
 		55E393D52D35C5D4000C1EFA /* IOServiceWatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
 		55E393D62D35C5D4000C1EFA /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		55E393D72D35C5D4000C1EFA /* MDCDeviceDemo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDeviceDemo.h; sourceTree = "<group>"; };
-		55E393D82D35C5D4000C1EFA /* MDCDeviceReal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDeviceReal.h; sourceTree = "<group>"; };
+		55E393D82D35C5D4000C1EFA /* MDCDeviceHard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDeviceHard.h; sourceTree = "<group>"; };
 		55E393D92D35C5D4000C1EFA /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		55E393DA2D35C5D4000C1EFA /* MDCUSBDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCUSBDevice.h; sourceTree = "<group>"; };
 		55E393DB2D35C5D4000C1EFA /* MSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
@@ -916,7 +916,7 @@
 				55E393D52D35C5D4000C1EFA /* IOServiceWatcher.h */,
 				55E393D62D35C5D4000C1EFA /* MDCDevice.h */,
 				55E393D72D35C5D4000C1EFA /* MDCDeviceDemo.h */,
-				55E393D82D35C5D4000C1EFA /* MDCDeviceReal.h */,
+				55E393D82D35C5D4000C1EFA /* MDCDeviceHard.h */,
 				55E393D92D35C5D4000C1EFA /* MDCDevicesManager.h */,
 				55E393DA2D35C5D4000C1EFA /* MDCUSBDevice.h */,
 				55E393DB2D35C5D4000C1EFA /* MSP.h */,
@@ -1196,7 +1196,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = c11;
+				GCC_C_LANGUAGE_STANDARD = c17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (

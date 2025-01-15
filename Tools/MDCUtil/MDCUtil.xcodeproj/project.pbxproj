@@ -42,12 +42,10 @@
 		552F4B8D29AD3ACB000CEAB2 /* ReadWrite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReadWrite.h; sourceTree = "<group>"; };
 		552F4B8E29AD3ACB000CEAB2 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		552F4B8F29AD3ACB000CEAB2 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
-		552F4B9029AD3ACB000CEAB2 /* Scheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scheduler.h; sourceTree = "<group>"; };
 		552F4B9229AD3ACB000CEAB2 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
 		552F4B9429AD3ACB000CEAB2 /* ThreePartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
 		552F4B9529AD3ACB000CEAB2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		552F4B9629AD3ACB000CEAB2 /* ThreePartView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ThreePartView.mm; sourceTree = "<group>"; };
-		552F4B9729AD3ACB000CEAB2 /* IntForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IntForStr.h; sourceTree = "<group>"; };
 		552F4B9829AD3ACB000CEAB2 /* FDStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FDStream.h; sourceTree = "<group>"; };
 		552F4B9929AD3ACB000CEAB2 /* Cast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Cast.h; sourceTree = "<group>"; };
 		552F4B9A29AD3ACB000CEAB2 /* FileDescriptor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileDescriptor.h; sourceTree = "<group>"; };
@@ -63,6 +61,7 @@
 		552F4BA529AD3ACB000CEAB2 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		552F4BA629AD3ACB000CEAB2 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
 		55496F38278BAC5000BCA739 /* MSP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
+		55781C272D373230005BBA6F /* MemStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MemStream.h; sourceTree = "<group>"; };
 		557ABD2529E61A3D0032619E /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
 		557ABD8A29E9C3210032619E /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
 		557ABD8F29EA1BE70032619E /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
@@ -168,11 +167,10 @@
 				552F4B8D29AD3ACB000CEAB2 /* ReadWrite.h */,
 				552F4B8E29AD3ACB000CEAB2 /* Enum.h */,
 				552F4B8F29AD3ACB000CEAB2 /* Endian.h */,
-				552F4B9029AD3ACB000CEAB2 /* Scheduler.h */,
 				552F4B9229AD3ACB000CEAB2 /* RuntimeError.h */,
 				552F4B9329AD3ACB000CEAB2 /* Mac */,
-				552F4B9729AD3ACB000CEAB2 /* IntForStr.h */,
 				552F4B9829AD3ACB000CEAB2 /* FDStream.h */,
+				55781C272D373230005BBA6F /* MemStream.h */,
 				552F4B9929AD3ACB000CEAB2 /* Cast.h */,
 				552F4B9A29AD3ACB000CEAB2 /* FileDescriptor.h */,
 				552F4B9B29AD3ACB000CEAB2 /* USB.h */,
@@ -371,7 +369,6 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = (
-					$PROJECT_DIR/Source,
 					$PROJECT_DIR/../../Code,
 					$PROJECT_DIR/../../Code/Lib/date/include,
 				);

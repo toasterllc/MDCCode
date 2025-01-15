@@ -96,7 +96,6 @@
 		557816322D36EEB5005BBA6F /* IOServiceWatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
 		557816332D36EEB5005BBA6F /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		557816342D36EEB5005BBA6F /* MDCDeviceDemo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDeviceDemo.h; sourceTree = "<group>"; };
-		557816352D36EEB5005BBA6F /* MDCDeviceReal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDeviceReal.h; sourceTree = "<group>"; };
 		557816362D36EEB5005BBA6F /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		557816372D36EEB5005BBA6F /* MDCUSBDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCUSBDevice.h; sourceTree = "<group>"; };
 		557816382D36EEB5005BBA6F /* MSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
@@ -192,6 +191,11 @@
 		55781AA32D3715F6005BBA6F /* STMApp.elf */ = {isa = PBXFileReference; lastKnownFileType = file; path = STMApp.elf; sourceTree = "<group>"; };
 		55781C252D3719B6005BBA6F /* STMApp.elf */ = {isa = PBXFileReference; lastKnownFileType = file; path = STMApp.elf; sourceTree = "<group>"; };
 		55781C262D3719B6005BBA6F /* STMApp.elf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STMApp.elf.h; sourceTree = "<group>"; };
+		55781C3B2D3745B5005BBA6F /* MDCDeviceHard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDeviceHard.h; sourceTree = "<group>"; };
+		55781C3C2D374661005BBA6F /* ICEApp.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = ICEApp.bin; sourceTree = "<group>"; };
+		55781C3E2D3746E2005BBA6F /* ICEApp.bin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ICEApp.bin.h; sourceTree = "<group>"; };
+		55781C3F2D374BD2005BBA6F /* JThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JThread.h; sourceTree = "<group>"; };
+		55781C532D377057005BBA6F /* RunLoopStop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RunLoopStop.h; sourceTree = "<group>"; };
 		55E393FD2D35C821000C1EFA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		55E393FF2D35C82B000C1EFA /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		55F273D72D35B7BC0085D55A /* MDCDownload */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCDownload; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -289,9 +293,10 @@
 				557816302D36EEB5005BBA6F /* Interp.h */,
 				557816312D36EEB5005BBA6F /* IOServiceMatcher.h */,
 				557816322D36EEB5005BBA6F /* IOServiceWatcher.h */,
+				55781C3F2D374BD2005BBA6F /* JThread.h */,
 				557816332D36EEB5005BBA6F /* MDCDevice.h */,
 				557816342D36EEB5005BBA6F /* MDCDeviceDemo.h */,
-				557816352D36EEB5005BBA6F /* MDCDeviceReal.h */,
+				55781C3B2D3745B5005BBA6F /* MDCDeviceHard.h */,
 				557816362D36EEB5005BBA6F /* MDCDevicesManager.h */,
 				557816372D36EEB5005BBA6F /* MDCUSBDevice.h */,
 				557816382D36EEB5005BBA6F /* MSP.h */,
@@ -302,6 +307,7 @@
 				5578163D2D36EEB5005BBA6F /* Prefs.h */,
 				5578163E2D36EEB5005BBA6F /* PrefsUtil.h */,
 				5578163F2D36EEB5005BBA6F /* RecordStore.h */,
+				55781C532D377057005BBA6F /* RunLoopStop.h */,
 				557816402D36EEB5005BBA6F /* SD.h */,
 				557816412D36EEB5005BBA6F /* SDCard.h */,
 				557816422D36EEB5005BBA6F /* STM.h */,
@@ -571,6 +577,8 @@
 				55781C162D3715F6005BBA6F /* STM32 */,
 				55781C252D3719B6005BBA6F /* STMApp.elf */,
 				55781C262D3719B6005BBA6F /* STMApp.elf.h */,
+				55781C3C2D374661005BBA6F /* ICEApp.bin */,
+				55781C3E2D3746E2005BBA6F /* ICEApp.bin.h */,
 				557819D82D36FF9A005BBA6F /* Info.plist */,
 				55F273DA2D35B7BC0085D55A /* main.mm */,
 				55F273D82D35B7BC0085D55A /* Products */,
@@ -593,7 +601,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 55F273DE2D35B7BC0085D55A /* Build configuration list for PBXNativeTarget "MDCDownload" */;
 			buildPhases = (
-				55781C242D371648005BBA6F /* Create STMApp.elf.h */,
+				55781C242D371648005BBA6F /* Create STMApp.elf.h / ICEApp.bin.h */,
 				55F273D32D35B7BC0085D55A /* Sources */,
 				55F273D42D35B7BC0085D55A /* Frameworks */,
 				55F273D52D35B7BC0085D55A /* CopyFiles */,
@@ -640,7 +648,7 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		55781C242D371648005BBA6F /* Create STMApp.elf.h */ = {
+		55781C242D371648005BBA6F /* Create STMApp.elf.h / ICEApp.bin.h */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -649,16 +657,18 @@
 			);
 			inputPaths = (
 				"$(SRCROOT)/STMApp.elf",
+				"$(SRCROOT)/ICEApp.bin",
 			);
-			name = "Create STMApp.elf.h";
+			name = "Create STMApp.elf.h / ICEApp.bin.h";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 				"$(SRCROOT)/STMApp.elf.h",
+				"$(SRCROOT)/ICEApp.bin.h",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "xxd -n `basename \"$SCRIPT_INPUT_FILE_0\"` -i \"$SCRIPT_INPUT_FILE_0\" > \"$SCRIPT_OUTPUT_FILE_0\"\n";
+			shellScript = "xxd -n `basename \"$SCRIPT_INPUT_FILE_0\"` -i \"$SCRIPT_INPUT_FILE_0\" > \"$SCRIPT_OUTPUT_FILE_0\"\n\nxxd -n `basename \"$SCRIPT_INPUT_FILE_1\"` -i \"$SCRIPT_INPUT_FILE_1\" > \"$SCRIPT_OUTPUT_FILE_1\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

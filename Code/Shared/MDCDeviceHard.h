@@ -6,8 +6,8 @@
 
 namespace MDCStudio {
 
-struct MDCDeviceReal; using MDCDeviceRealPtr = SharedPtr<MDCDeviceReal>;
-struct MDCDeviceReal : MDCDevice {
+struct MDCDeviceHard; using MDCDeviceHardPtr = SharedPtr<MDCDeviceHard>;
+struct MDCDeviceHard : MDCDevice {
     using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
     using _SendRight = Toastbox::SendRight;
     using _USBDevice = Toastbox::USBDevice;
@@ -74,8 +74,22 @@ struct MDCDeviceReal : MDCDevice {
         return block + blockCount;
     }
     
+    static inline const void* _STMAppData = nullptr;
+    static inline size_t _STMAppDataLen = 0;
+    static void STMAppData(const void* data, size_t len) {
+        _STMAppData = data;
+        _STMAppDataLen = len;
+    }
+    
+    static inline const void* _ICEAppData = nullptr;
+    static inline size_t _ICEAppDataLen = 0;
+    static void ICEAppData(const void* data, size_t len) {
+        _ICEAppData = data;
+        _ICEAppDataLen = len;
+    }
+    
     void init(_MDCUSBDevicePtr&& dev) {
-        printf("MDCDeviceReal::init() %p\n", this);
+        printf("MDCDeviceHard::init() %p\n", this);
         
         _serial = dev->serial();
         MDCDevice::init(_DirForSerial(_serial)); // Call super
@@ -90,9 +104,13 @@ struct MDCDeviceReal : MDCDevice {
         while (!_device.runLoop) usleep(1000);
     }
     
-    ~MDCDeviceReal() {
-        printf("~MDCDeviceReal() %p\n", this);
+    ~MDCDeviceHard() {
+        printf("~MDCDeviceHard() %p\n", this);
         stop();
+        
+        // Wait for our threads to exit.
+        // We have to explicitly join the threads in our destructor (instead of using a `jthread` or similar),
+        // because we need to delay destruction of our members until the threads no longer need them.
         _Join(_device.thread);
         _Join(_sync.thread);
         _Join(_status.thread);
@@ -189,6 +207,8 @@ struct MDCDeviceReal : MDCDevice {
             // Bail if syncing isn't allowed right now
             if (_sync.stop) return;
             _sync.progress = 0;
+            
+            _Join(_sync.thread);
             _sync.thread = std::thread([&] { _sync_thread(); });
         }
         
@@ -387,7 +407,7 @@ struct MDCDeviceReal : MDCDevice {
             
             // Wait for matching services to appear
             CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, Timeout, true);
-            if (r==kCFRunLoopRunTimedOut || r==kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
+            if (r==kCFRunLoopRunTimedOut || RunLoopStop()) throw Toastbox::Signal::Stop(); // Signalled to stop
             assert(r == kCFRunLoopRunHandledSource);
         }
     }
@@ -395,16 +415,15 @@ struct MDCDeviceReal : MDCDevice {
     static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {
         if (msgType == kIOMessageServiceIsTerminated) {
             printf("kIOMessageServiceIsTerminated\n");
-            bool* stop = (bool*)ctx;
-            *stop = true;
+            bool* terminated = (bool*)ctx;
+            *terminated = true;
         }
     }
     
     static void _Nop(void* ctx, io_iterator_t iter) {}
     
     static void _DeviceBootload(const _MDCUSBDevicePtr& dev) {
-        std::string stmBinPath = [[[NSBundle mainBundle] pathForResource:@"STMApp" ofType:@"elf"] UTF8String];
-        ELF32Binary elf(stmBinPath);
+        ELF32Binary elf(_STMAppData, _STMAppDataLen);
         
         elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
         size_t size, const char* name) {
@@ -451,24 +470,19 @@ struct MDCDeviceReal : MDCDevice {
         
         // Watch the service so we know when it goes away
         io_object_t ioObj = MACH_PORT_NULL;
-        bool stop = false;
+        bool terminated = false;
         kern_return_t kr = IOServiceAddInterestNotification(*note, dev->dev().service(),
-            kIOGeneralInterest, _ServiceInterestCallback, &stop, &ioObj);
+            kIOGeneralInterest, _ServiceInterestCallback, &terminated, &ioObj);
         if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddInterestNotification failed: 0x%x", kr);
         _SendRight obj(_SendRight::NoRetain, ioObj); // Make sure port gets cleaned up
         
         for (;;) @autoreleasepool {
+            printf("[MDCDeviceHard::_DeviceWaitForTerminate] runloop start\n");
             CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
-            if (stop || r==kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
+            printf("[MDCDeviceHard::_DeviceWaitForTerminate] runloop end r==%d\n", r);
+            if (terminated || RunLoopStop()) throw Toastbox::Signal::Stop(); // Signalled to stop
         }
     }
-    
-//    void abort() {
-//        CFRunLoopPerformBlock((CFRunLoopRef)_device.runLoop, kCFRunLoopCommonModes, ^{
-//            CFRunLoopStop(CFRunLoopGetCurrent());
-//        });
-//        CFRunLoopWakeUp((CFRunLoopRef)_device.runLoop);
-//    }
     
     void stop() override {
         // Tell _device_thread to bail
@@ -476,10 +490,7 @@ struct MDCDeviceReal : MDCDevice {
         // for _device.runLoop to be set, because the constructor may not have
         // completed due to an exception!
         if (_device.runLoop) {
-            CFRunLoopPerformBlock((CFRunLoopRef)_device.runLoop, kCFRunLoopCommonModes, ^{
-                CFRunLoopStop(CFRunLoopGetCurrent());
-            });
-            CFRunLoopWakeUp((CFRunLoopRef)_device.runLoop);
+            RunLoopStop((__bridge CFRunLoopRef)_device.runLoop);
         }
         
         // Trigger our threads to exit
@@ -520,9 +531,6 @@ struct MDCDeviceReal : MDCDevice {
                 _status.thread = std::thread([&] { _status_thread(); });
             }
             
-            // Start syncing
-            sync();
-            
             // Wait for device to disappear
             _DeviceWaitForTerminate(_device.device);
         
@@ -552,8 +560,6 @@ struct MDCDeviceReal : MDCDevice {
             return std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
         
         } else {
-            #warning TODO: Debug to catch invalid battery state, remove!
-//            abort();
             return 0;
         }
     }
@@ -928,11 +934,8 @@ struct MDCDeviceReal : MDCDevice {
     }
     
     static void _ICEConfigure(MDCUSBDevice& dev) {
-        std::string iceBinPath = [[[NSBundle mainBundle] pathForResource:@"ICEApp" ofType:@"bin"] UTF8String];
-        Toastbox::Mmap mmap(iceBinPath);
-        
         // Write the ICE40 binary
-        dev.iceRAMWrite(mmap.data(), mmap.len());
+        dev.iceRAMWrite(_ICEAppData, _ICEAppDataLen);
     }
     
     bool alive() {
