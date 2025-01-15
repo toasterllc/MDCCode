@@ -394,6 +394,12 @@ struct [[gnu::packed]] SDState {
     ImgRingBuf imgRingBufs[2];
     bool valid;
     uint8_t _pad;
+    
+    MSP::ImgRingBuf imgRingBuf() const {
+        const std::optional<int> comp = ImgRingBuf::Compare(imgRingBufs[0], imgRingBufs[1]);
+        if (!comp) return {};
+        return *comp>=0 ? imgRingBufs[0] : imgRingBufs[1];
+    }
 };
 static_assert(!(sizeof(SDState) % 2)); // Check alignment
 static_assert(sizeof(SDState) == 56); // Debug

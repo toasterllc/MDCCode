@@ -50,7 +50,9 @@ using namespace MDCStudio;
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @end
 
-@implementation AppDelegate
+@implementation AppDelegate {
+    Object::ObserverPtr _devicesChangedObserver;
+}
 
 - (void)_handleDeviceIncompatibleVersion:(const MDCUSBDevice::IncompatibleVersion&)e {
     NSAlert* alert = [NSAlert new];
@@ -58,6 +60,12 @@ using namespace MDCStudio;
     [alert setMessageText:@"Incompatible Photon"];
     [alert setInformativeText:[NSString stringWithFormat:@"A Photon was connected that is running firmware that is too new for this version of Photon Transfer.\n\nPlease use a newer version of Photon Transfer.\n\nError: %s", e.what()]];
     [alert runModal];
+}
+
+- (void)_handleNewDevices:(const std::set<MDCDeviceHardPtr>&)devices {
+    for (MDCDeviceHardPtr dev : devices) {
+        dev->sync();
+    }
 }
 
 - (void)applicationWillFinishLaunching:(NSNotification*)note {
@@ -70,6 +78,14 @@ using namespace MDCStudio;
     };
     
     MDCDevicesManagerGlobal(Object::Create<MDCDevicesManager>(handler));
+    _devicesChangedObserver = MDCDevicesManagerGlobal()->observerAdd([=] (auto, const Object::Event& ev2) {
+        const MDCDevicesManager::Change& ev = static_cast<const MDCDevicesManager::Change&>(ev2);
+        if (!ev.added.empty()) {
+            [selfWeak _handleNewDevices:ev.added];
+        }
+    });
+    
+    [self _handleNewDevices:MDCDevicesManagerGlobal()->devices()];
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
@@ -83,9 +99,14 @@ using namespace MDCStudio;
     // Ensure that all devices are out of host mode when we exit, by acquiring each device's
     // device lock and stashing the locks in our global DeviceLocks.
     MDCDevicesManagerPtr devicesManager = MDCDevicesManagerGlobal();
-    const std::vector<MDCDeviceRealPtr> devices = devicesManager->devices();
-    for (MDCDeviceRealPtr device : devices) {
-        DeviceLocks.push_back(device->deviceLock(true));
+    const std::set<MDCDeviceHardPtr> devices = devicesManager->devices();
+    for (MDCDeviceHardPtr device : devices) {
+        try {
+            auto lock = device->deviceLock(true);
+            DeviceLocks.push_back(std::move(lock));
+        } catch (const Toastbox::Signal::Stop&) {
+            // Ignore if the device has been stopped
+        }
     }
     printf("applicationShouldTerminate\n");
     return NSTerminateNow;

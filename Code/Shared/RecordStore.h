@@ -490,8 +490,8 @@ struct RecordStore {
     
     static Toastbox::Mmap _ChunkFileCreate(const Config& cfg, const Path& path) {
         constexpr int OpenFlags = O_RDWR|O_CREAT|O_CLOEXEC;
-        constexpr int ChunkPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
-        const int fd = open(path.c_str(), OpenFlags, ChunkPerm);
+        constexpr int OpenPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
+        const int fd = open(path.c_str(), OpenFlags, OpenPerm);
         if (fd < 0) Toastbox::Bail("RecordStore: failed to create chunk file: %s", strerror(errno));
         const size_t cap = Toastbox::Mmap::PageCeil(_ChunkLen(cfg));
         

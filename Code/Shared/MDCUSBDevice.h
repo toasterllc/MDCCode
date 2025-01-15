@@ -23,7 +23,7 @@ public:
         using Toastbox::RuntimeError::RuntimeError;
     };
     
-    static bool USBDeviceMatches(const USBDevice& dev) {
+    static bool DeviceMatches(USBDevice& dev) {
         namespace USB = Toastbox::USB;
         try {
 //            USB::DeviceDescriptor desc = dev.deviceDescriptor();
@@ -58,11 +58,11 @@ public:
         }
     }
     
-    static std::vector<MDCUSBDevicePtr> GetDevices() {
+    static std::vector<MDCUSBDevicePtr> DevicesGet() {
         std::vector<MDCUSBDevicePtr> devs;
-        auto usbDevs = USBDevice::GetDevices();
+        auto usbDevs = USBDevice::DevicesGet();
         for (USBDevicePtr& usbDev : usbDevs) {
-            if (USBDeviceMatches(*usbDev)) {
+            if (DeviceMatches(*usbDev)) {
                 try {
                     devs.push_back(std::make_unique<MDCUSBDevice>(std::move(usbDev)));
                 
@@ -76,6 +76,9 @@ public:
     }
     
     MDCUSBDevice(std::unique_ptr<USBDevice>&& dev) : _dev(std::move(dev)) {
+        // Acquire system-wide exclusive access to the device
+        _dev->claim();
+        
         printf("[MDCUSBDevice] reset START\n");
         // We don't know what state the device was left in, so reset its state
         reset();
@@ -97,7 +100,7 @@ public:
         return _dev == x._dev;
     }
     
-    const USBDevice& dev() const { return *_dev; }
+    USBDevice& dev() { return *_dev; }
     
     // MARK: - Accessors
     

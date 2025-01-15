@@ -1,7 +1,6 @@
 #pragma once
-#include <sys/stat.h>
-#include <sys/mman.h>
 #include <vector>
+#include <iostream>
 #include "Lib/Toastbox/Mmap.h"
 #include "Lib/Toastbox/RuntimeError.h"
 
@@ -70,9 +69,19 @@ public:
         std::vector<Section> sections   = {};
     };
     
+    ELF32Binary(const std::filesystem::path& path) : _mmap(path) {
+        _init(_mmap.data(), _mmap.len());
+    }
+    
     // Throws on error
-    ELF32Binary(const std::filesystem::path& path) :
-    _mmap(path) {
+    ELF32Binary(const void* data, size_t len) {
+        _init(data, len);
+    }
+    
+    void _init(const void* data, size_t len) {
+        _data = (const uint8_t*)data;
+        _len = len;
+        
         // Validate the magic number
         struct MagicNum { uint8_t b[4]; };
         const MagicNum expected = {0x7F, 'E', 'L', 'F'};
@@ -269,7 +278,7 @@ public:
     
     const void* sectionData(const Section& s) const {
         _assertCanRead(s.off, s.size);
-        return _mmap.data()+s.off;
+        return _data+s.off;
     }
     
 //    std::unique_ptr<uint8_t[]> segmentData(const Segment& seg) const {
@@ -346,8 +355,8 @@ private:
     };
     
     void _assertCanRead(size_t off, size_t len) const {
-        if (off > _mmap.len()) throw std::runtime_error("attempt to read past data");
-        if (_mmap.len()-off < len) throw std::runtime_error("attempt to read past data");
+        if (off > _len) throw std::runtime_error("attempt to read past data");
+        if (_len-off < len) throw std::runtime_error("attempt to read past data");
     }
     
     // _read: Verify that we have enough bytes to return a `T` from offset `off`
@@ -357,7 +366,7 @@ private:
     T _read(size_t off) const {
         _assertCanRead(off, sizeof(T));
         T r;
-        memcpy(&r, _mmap.data()+off, sizeof(T));
+        memcpy(&r, _data+off, sizeof(T));
         return r;
     }
     
@@ -384,6 +393,8 @@ private:
 //        throw Toastbox::RuntimeError("failed to get physical address for file offset 0x%jx", (uintmax_t)off);
 //    }
     
+    const uint8_t* _data = nullptr;
+    size_t _len = 0;
     Toastbox::Mmap _mmap;
     uint32_t _entryPointAddr = 0;
 };

@@ -6,8 +6,8 @@
 
 namespace MDCStudio {
 
-struct MDCDeviceReal; using MDCDeviceRealPtr = SharedPtr<MDCDeviceReal>;
-struct MDCDeviceReal : MDCDevice {
+struct MDCDeviceHard; using MDCDeviceHardPtr = SharedPtr<MDCDeviceHard>;
+struct MDCDeviceHard : MDCDevice {
     using _MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
     using _SendRight = Toastbox::SendRight;
     using _USBDevice = Toastbox::USBDevice;
@@ -74,26 +74,61 @@ struct MDCDeviceReal : MDCDevice {
         return block + blockCount;
     }
     
+    struct _Status {
+        MSP::State mspState = {};
+        float batteryLevel = 0;
+    };
+    
+    static inline const void* _STMAppData = nullptr;
+    static inline size_t _STMAppDataLen = 0;
+    static inline const void* _ICEAppData = nullptr;
+    static inline size_t _ICEAppDataLen = 0;
+    
+    static void Config(const void* stmAppData, size_t stmAppDataLen, const void* iceAppData, size_t iceAppDataLen) {
+        _STMAppData = stmAppData;
+        _STMAppDataLen = stmAppDataLen;
+        
+        _ICEAppData = iceAppData;
+        _ICEAppDataLen = iceAppDataLen;
+    }
+    
     void init(_MDCUSBDevicePtr&& dev) {
-        printf("MDCDeviceReal::init() %p\n", this);
+        printf("MDCDeviceHard::init() %p\n", this);
         
         _serial = dev->serial();
         MDCDevice::init(_DirForSerial(_serial)); // Call super
         
-        _device.thread = std::thread([&] (_MDCUSBDevicePtr&& dev) {
-            _device_thread(std::move(dev));
-        }, std::move(dev));
+        _device.device = _DevicePrepare(std::move(dev));
+        
+        // Update the device's time
+        {
+            // Enter host mode to adjust the device time
+            auto hostMode = _hostModeEnter();
+            
+            // Adjust the device's time to correct it for crystal innaccuracy
+            std::cout << "Adjusting device time:\n";
+            _device.device->mspTimeAdjust();
+        }
+        
+        // Init _status
+        {
+            _status_update();
+            _status.thread = std::thread([&] { _status_thread(); });
+        }
         
         // Wait until thread starts, so that our destructor knows that it can
-        // safely acccess _device.runLoop.
+        // safely acccess _status.runLoop.
         // TODO: use std::binary_semaphore when we can use C++20
-        while (!_device.runLoop) usleep(1000);
+        while (!_status.runLoop) usleep(1000);
     }
     
-    ~MDCDeviceReal() {
-        printf("~MDCDeviceReal() %p\n", this);
+    ~MDCDeviceHard() {
+        printf("~MDCDeviceHard() %p\n", this);
         stop();
-        _Join(_device.thread);
+        
+        // Wait for our threads to exit.
+        // We have to explicitly join the threads in our destructor (instead of using a `jthread` or similar),
+        // because we need to delay destruction of our members until the threads no longer need them.
         _Join(_sync.thread);
         _Join(_status.thread);
     }
@@ -105,29 +140,22 @@ struct MDCDeviceReal : MDCDevice {
     // MARK: - Device Settings
     
     const MSP::Settings settings() override {
-        auto lock = _status.signal.wait([&] { return (bool)_status.status; });
-        return _status.status->state.settings;
+        auto lock = std::unique_lock(_status.lock);
+        return _status.status.mspState.settings;
     }
     
     void settings(const MSP::Settings& x) override {
-        // Wait until _status.status is loaded
-        _status.signal.wait([&] { return (bool)_status.status; });
-        
         auto hostMode = _hostModeEnter(true);
         
         {
-            auto lock = _status.signal.lock();
-            assert(_status.status);
-            _status.status->state.settings = x;
+            auto lock = std::unique_lock(_status.lock);
+            _status.status.mspState.settings = x;
         }
         
-        _device.device->mspStateWrite(_status.status->state);
+        _device.device->mspStateWrite(_status.status.mspState);
     }
     
     void factoryReset() override {
-        // Wait until _status.status is loaded
-        _status.signal.wait([&] { return (bool)_status.status; });
-        
         // Disable syncing and wait for it to stop.
         //
         // This is necessary for 2 reasons:
@@ -150,10 +178,10 @@ struct MDCDeviceReal : MDCDevice {
             
             // Reset MSP430 state
             {
-                auto lock = _status.signal.lock();
-                    _status.status->state.sd = {};
-                    _status.status->state.settings = {};
-                    const MSP::State mspState = _status.status->state;
+                auto lock = std::unique_lock(_status.lock);
+                    _status.status.mspState.sd = {};
+                    _status.status.mspState.settings = {};
+                    const MSP::State mspState = _status.status.mspState;
                 lock.unlock();
                 
                 _device.device->mspStateWrite(mspState);
@@ -189,6 +217,8 @@ struct MDCDeviceReal : MDCDevice {
             // Bail if syncing isn't allowed right now
             if (_sync.stop) return;
             _sync.progress = 0;
+            
+            _Join(_sync.thread);
             _sync.thread = std::thread([&] { _sync_thread(); });
         }
         
@@ -207,25 +237,21 @@ struct MDCDeviceReal : MDCDevice {
     }
     
     // status(): returns nullopt if the status hasn't been loaded yet
-    std::optional<Status> status() override {
-        try {
-            auto statusLock = _status.signal.lock();
-                if (!_status.status) return std::nullopt;
-                const auto state = _status.status->state;
-                const auto batteryLevel = _status.status->batteryLevel;
-            statusLock.unlock();
-            
-            const ImageRange deviceImageRange = _GetImageRange(_GetImgRingBuf(state.sd), state.sd.imgCap);
-            const std::optional<size_t> loadImageCount = _LoadImageCount(std::unique_lock(*_imageLibrary),
-                _imageLibrary, deviceImageRange);
-            
-            return Status{
-                .batteryLevel = batteryLevel,
-                .loadImageCount = loadImageCount.value_or(0),
-            };
-        } catch (const Toastbox::Signal::Stop&) {
-            return std::nullopt;
-        }
+    Status status() override {
+        auto statusLock = std::unique_lock(_status.lock);
+            const auto mspState = _status.status.mspState;
+            const auto batteryLevel = _status.status.batteryLevel;
+        statusLock.unlock();
+        
+        const ImageRange deviceImageRange = _GetImageRange(mspState.sd.imgRingBuf(), mspState.sd.imgCap);
+        const std::optional<size_t> loadImageCount = _LoadImageCount(std::unique_lock(*_imageLibrary),
+            _imageLibrary, deviceImageRange);
+        
+        return Status{
+            .mspState = mspState,
+            .batteryLevel = batteryLevel,
+            .loadImageCount = loadImageCount.value_or(0),
+        };
     }
     
     std::optional<float> syncProgress() override {
@@ -372,7 +398,7 @@ struct MDCDeviceReal : MDCDevice {
                     const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
                     printf("[_WaitForDeviceReenumerate] _USBDevice creation took %ju ms\n", (uintmax_t)duration.count());
                     
-                    if (!MDCUSBDevice::USBDeviceMatches(*usbDev)) continue; // Ignore if this isn't an MDC
+                    if (!MDCUSBDevice::DeviceMatches(*usbDev)) continue; // Ignore if this isn't an MDC
                     if (usbDev->serialNumber() != serial) continue; // Ignore if the serial doesn't match
                     if (*usbDev == existing) continue; // Ignore if this is the same device as `existing`
                     dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
@@ -387,24 +413,22 @@ struct MDCDeviceReal : MDCDevice {
             
             // Wait for matching services to appear
             CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, Timeout, true);
-            if (r==kCFRunLoopRunTimedOut || r==kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
+            if (r==kCFRunLoopRunTimedOut || RunLoopStop()) throw Toastbox::Signal::Stop(); // Signalled to stop
             assert(r == kCFRunLoopRunHandledSource);
         }
     }
     
-    static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {
+    static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* context) {
         if (msgType == kIOMessageServiceIsTerminated) {
             printf("kIOMessageServiceIsTerminated\n");
-            bool* stop = (bool*)ctx;
-            *stop = true;
+            RunLoopStop(CFRunLoopGetCurrent());
         }
     }
     
     static void _Nop(void* ctx, io_iterator_t iter) {}
     
     static void _DeviceBootload(const _MDCUSBDevicePtr& dev) {
-        std::string stmBinPath = [[[NSBundle mainBundle] pathForResource:@"STMApp" ofType:@"elf"] UTF8String];
-        ELF32Binary elf(stmBinPath);
+        ELF32Binary elf(_STMAppData, _STMAppDataLen);
         
         elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
         size_t size, const char* name) {
@@ -446,42 +470,24 @@ struct MDCDeviceReal : MDCDevice {
         return std::move(dev);
     }
     
-    static void _DeviceWaitForTerminate(const _MDCUSBDevicePtr& dev) {
+    static void _DeviceWaitForTerminate(const _MDCUSBDevicePtr& dev, CFTimeInterval timeout) {
         _IONotificationPtr note = _IONotificationCreate();
         
         // Watch the service so we know when it goes away
         io_object_t ioObj = MACH_PORT_NULL;
-        bool stop = false;
         kern_return_t kr = IOServiceAddInterestNotification(*note, dev->dev().service(),
-            kIOGeneralInterest, _ServiceInterestCallback, &stop, &ioObj);
+            kIOGeneralInterest, _ServiceInterestCallback, nullptr, &ioObj);
         if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddInterestNotification failed: 0x%x", kr);
         _SendRight obj(_SendRight::NoRetain, ioObj); // Make sure port gets cleaned up
         
-        for (;;) @autoreleasepool {
-            CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
-            if (stop || r==kCFRunLoopRunStopped) throw Toastbox::Signal::Stop(); // Signalled to stop
-        }
+        printf("[MDCDeviceHard::_DeviceWaitForTerminate] runloop start\n");
+        CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, timeout, false);
+        printf("[MDCDeviceHard::_DeviceWaitForTerminate] runloop end r==%d\n", r);
+        if (RunLoopStop()) throw Toastbox::Signal::Stop(); // Signalled to stop
+        assert(r == kCFRunLoopRunTimedOut);
     }
     
-//    void abort() {
-//        CFRunLoopPerformBlock((CFRunLoopRef)_device.runLoop, kCFRunLoopCommonModes, ^{
-//            CFRunLoopStop(CFRunLoopGetCurrent());
-//        });
-//        CFRunLoopWakeUp((CFRunLoopRef)_device.runLoop);
-//    }
-    
     void stop() override {
-        // Tell _device_thread to bail
-        // We have to check for _device.runLoop, even though the constructor waits
-        // for _device.runLoop to be set, because the constructor may not have
-        // completed due to an exception!
-        if (_device.runLoop) {
-            CFRunLoopPerformBlock((CFRunLoopRef)_device.runLoop, kCFRunLoopCommonModes, ^{
-                CFRunLoopStop(CFRunLoopGetCurrent());
-            });
-            CFRunLoopWakeUp((CFRunLoopRef)_device.runLoop);
-        }
-        
         // Trigger our threads to exit
         try {
             auto lock = deviceLock(true);
@@ -490,56 +496,15 @@ struct MDCDeviceReal : MDCDevice {
             // If we've already been stopped, deviceLock() will throw, which is fine
         }
         
-        _status.signal.stop();
-        
-        MDCDevice::stop();
-    }
-    
-    // MARK: - Device
-    
-    void _device_thread(_MDCUSBDevicePtr&& dev) {
-        try {
-            {
-                auto lock = deviceLock();
-                _device.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
-                _device.device = _DevicePrepare(std::move(dev));
-            }
-            
-            // Update the device's time
-            {
-                // Enter host mode to adjust the device time
-                auto hostMode = _hostModeEnter();
-                
-                // Adjust the device's time to correct it for crystal innaccuracy
-                std::cout << "Adjusting device time:\n";
-                _device.device->mspTimeAdjust();
-            }
-            
-            // Init _status
-            {
-                _status.thread = std::thread([&] { _status_thread(); });
-            }
-            
-            // Start syncing
-            sync();
-            
-            // Wait for device to disappear
-            _DeviceWaitForTerminate(_device.device);
-        
-        } catch (const Toastbox::Signal::Stop&) {
-            printf("[_device_thread] Stopping\n");
-        
-        } catch (const std::exception& e) {
-            printf("[_device_thread] Error: %s\n", e.what());
+        // Tell _status_thread to bail
+        {
+            // We have to check for _status.runLoop, even though the constructor waits
+            // for _status.runLoop to be set, because the constructor may not have
+            // completed due to an exception!
+            if (_status.runLoop) RunLoopStop((__bridge CFRunLoopRef)_status.runLoop);
         }
         
-        stop();
-        
-        // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
-        // exception if our MDCDevice is undergoing destruction on a different thread.
-        // The destructor waits for this thread to terminate, so this should be safe.
-        const auto self = selfOrNull();
-        if (self) observersNotify(self, {});
+        MDCDevice::stop();
     }
     
     // MARK: - Device Status
@@ -552,34 +517,39 @@ struct MDCDeviceReal : MDCDevice {
             return std::min(.999f, (float)MSP::BatteryLevelLinearize(batteryStatus.level) / MSP::BatteryLevelMax);
         
         } else {
-            #warning TODO: Debug to catch invalid battery state, remove!
-//            abort();
             return 0;
         }
     }
     
-    void _status_update() {
+    _Status _status_get() {
         auto lock = deviceLock();
-            const auto bat = _device.device->batteryStatusGet();
-            const auto msp = _device.device->mspStateRead();
-        lock.unlock();
+        return _Status{
+            _device.device->mspStateRead(),
+            _BatteryLevel(_device.device->batteryStatusGet()),
+        };
+    }
+    
+    void _status_update() {
+        const _Status status = _status_get();
         
         {
-            auto lock = _status.signal.lock();
-            _status.status = {
-                .state = msp,
-                .batteryLevel = _BatteryLevel(bat),
-            };
+            auto lock = std::unique_lock(_status.lock);
+            _status.status = status;
         }
         
         // Remove images from beginning of library: lib has, device doesn't
         {
-            const ImageRange deviceImageRange = _GetImageRange(_GetImgRingBuf(msp.sd), msp.sd.imgCap);
-            _RemoveStaleImages(std::unique_lock(*_imageLibrary), _imageLibrary, deviceImageRange);
+            auto lock = std::unique_lock(*_imageLibrary);
+            const ImageRange deviceImageRange = _GetImageRange(status.mspState.sd.imgRingBuf(), status.mspState.sd.imgCap);
+            _RemoveStaleImages(lock, _imageLibrary, deviceImageRange);
         }
-        
-        _status.signal.signalAll();
     }
+    
+//    void _device_observersNotify() {
+//        Object::Event ev;
+//        ev.prop = &_device;
+//        observersNotify(ev);
+//    }
     
     void _status_observersNotify() {
         Object::Event ev;
@@ -588,14 +558,17 @@ struct MDCDeviceReal : MDCDevice {
     }
     
     void _status_thread() {
+        constexpr CFTimeInterval UpdateInterval = 2;
+        
         printf("[_status_thread] Started\n");
-        constexpr auto UpdateInterval = std::chrono::seconds(2);
+        _status.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
+        
         try {
             for (;;) {
                 _status_update();
                 printf("[_status_thread] Updated\n");
                 _status_observersNotify();
-                _status.signal.wait_for(UpdateInterval, [] { return false; });
+                _DeviceWaitForTerminate(_device.device, UpdateInterval);
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -604,6 +577,22 @@ struct MDCDeviceReal : MDCDevice {
         } catch (const std::exception& e) {
             printf("[_status_thread] Error: %s\n", e.what());
         }
+        
+        // Call stop() because we may be bailing because the device terminated.
+        // If we're bailing because we've been signalled to exit (ie a different
+        // thread called stop()), this will be a no-op.
+        stop();
+        
+        // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
+        // exception if our MDCDeviceHard is undergoing destruction on a different thread.
+        // The destructor waits for this thread to terminate, so this should be safe.
+        const auto self = selfOrNull();
+        if (self) {
+            Object::Event ev;
+            ev.prop = &_device;
+            observersNotify(self, {});
+        }
+        
         printf("[_status_thread] Terminating\n");
     }
     
@@ -666,13 +655,6 @@ struct MDCDeviceReal : MDCDevice {
             if (en) {
                 auto timeStart = std::chrono::steady_clock::now();
                 
-                // Wait until _status.status is loaded before acquiring the hostMode lock.
-                // We can't wait for _status.status while holding the hostMode lock, because we can
-                // deadlock wrt _device_thread(), which acquires the device lock before starting
-                // _status_thread(). So we'd be waiting for _status.status to be set while holding the
-                // device lock, which couldn't happen because we held the device lock.
-                _status.signal.wait([&] { return (bool)_status.status; });
-                
                 // Enter host mode while we're in SD mode, since MSP can't talk to
                 // ICE40 or SD card while we're using it.
                 _sdMode.state = {
@@ -687,11 +669,10 @@ struct MDCDeviceReal : MDCDevice {
                 
                 // If _device.state.sd is valid, verify that the current SD card id matches MSP's card id
                 {
-                    auto lock = _status.signal.lock();
-                    assert(_status.status); // Checked above, before acquiring hostMode lock
-                    if (_status.status->state.sd.valid) {
-                        if (memcmp(&_sdMode.cardInfo.cardId, &_status.status->state.sd.cardId,
-                            sizeof(_status.status->state.sd.cardId))) {
+                    auto lock = std::unique_lock(_status.lock);
+                    if (_status.status.mspState.sd.valid) {
+                        if (memcmp(&_sdMode.cardInfo.cardId, &_status.status.mspState.sd.cardId,
+                            sizeof(_status.status.mspState.sd.cardId))) {
                             throw Toastbox::RuntimeError("_sdMode.cardInfo.cardId != _status.status->state.sd.cardId");
                         }
                     }
@@ -767,105 +748,103 @@ struct MDCDeviceReal : MDCDevice {
         };
         
         try {
-            auto lock = _status.signal.wait([&] { return (bool)_status.status; });
-                const MSP::SDState sd = _status.status->state.sd;
+            auto lock = std::unique_lock(_status.lock);
+                const MSP::SDState sd = _status.status.mspState.sd;
             lock.unlock();
             
-            const MSP::ImgRingBuf imgRingBuf = _GetImgRingBuf(sd);
+            const MSP::ImgRingBuf imgRingBuf = sd.imgRingBuf();
             if (!imgRingBuf.valid) throw StaleLibrary("image ring buf invalid");
             const ImageRange deviceImageRange = _GetImageRange(imgRingBuf, sd.imgCap);
             
+            // Modify the image library to reflect the images that have been added and removed
+            // since the last time we sync'd
+            uint32_t addCount = 0;
             {
-                // Modify the image library to reflect the images that have been added and removed
-                // since the last time we sync'd
-                uint32_t addCount = 0;
+                auto lock = std::unique_lock(*_imageLibrary);
+                
+                // Remove images from beginning of library: lib has, device doesn't
+                _RemoveStaleImages(lock, _imageLibrary, deviceImageRange);
+                
+                // Calculate how many images to add to the end of the library: device has, lib doesn't
                 {
-                    auto lock = std::unique_lock(*_imageLibrary);
+                    const std::optional<size_t> count = _LoadImageCount(lock, _imageLibrary, deviceImageRange);
+                    if (count) {
+                        addCount = (uint32_t)*count;
+                    } else {
+                        throw StaleLibrary("_LoadImageCount failed");
+                    }
                     
-                    // Remove images from beginning of library: lib has, device doesn't
-                    _RemoveStaleImages(lock, _imageLibrary, deviceImageRange);
-                    
-                    // Calculate how many images to add to the end of the library: device has, lib doesn't
-                    {
-                        const std::optional<size_t> count = _LoadImageCount(lock, _imageLibrary, deviceImageRange);
-                        if (count) {
-                            addCount = (uint32_t)*count;
-                        } else {
-                            throw StaleLibrary("_LoadImageCount failed");
-                        }
-                        
 //                        addCount = 1000;
 //                        addCount = 20000;
-                        printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
-                        _imageLibrary->add(addCount);
+                    printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
+                    _imageLibrary->add(addCount);
+                }
+                
+                // Populate .id / .addr for the ImageRecords that we're adding
+                {
+                    auto it = _imageLibrary->end();
+                    Img::Id id = deviceImageRange.end;
+                    uint32_t idx = imgRingBuf.buf.idx;
+                    while (addCount) {
+                        it--;
+                        id--;
+                        idx = (idx ? idx-1 : sd.imgCap-1);
+                        addCount--;
+                        
+                        ImageRecordPtr rec = *it;
+                        const SD::Block addrFull = MSP::SDBlockStart(sd.baseFull, ImgSD::Full::ImageBlockCount, idx);
+                        const SD::Block addrThumb = MSP::SDBlockStart(sd.baseThumb, ImgSD::Thumb::ImageBlockCount, idx);
+                        ImageRecordInit(*rec, id, addrFull, addrThumb);
                     }
-                    
-                    // Populate .id / .addr for the ImageRecords that we're adding
+                }
+                
+                // Write library now that we've added our new images and populated their .id / .addr
+                _imageLibrary->imageIdEnd(deviceImageRange.end);
+                _imageLibrary->write();
+            }
+            
+            // Load all unloaded images from the SD card
+            // Note that this will also load unloaded images from a previous session, since we may have
+            // been killed or crashed before we finished loading all images.
+            {
+                std::set<ImageRecordPtr> recs;
+                for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
+                    if (!rec->status.loadCount) {
+                        recs.insert(rec);
+                    }
+                }
+                
+                printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
+                _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
                     {
-                        auto it = _imageLibrary->end();
-                        Img::Id id = deviceImageRange.end;
-                        uint32_t idx = imgRingBuf.buf.idx;
-                        while (addCount) {
-                            it--;
-                            id--;
-                            idx = (idx ? idx-1 : sd.imgCap-1);
-                            addCount--;
-                            
-                            ImageRecordPtr rec = *it;
-                            const SD::Block addrFull = MSP::SDBlockStart(sd.baseFull, ImgSD::Full::ImageBlockCount, idx);
-                            const SD::Block addrThumb = MSP::SDBlockStart(sd.baseThumb, ImgSD::Thumb::ImageBlockCount, idx);
-                            ImageRecordInit(*rec, id, addrFull, addrThumb);
-                        }
+                        auto lock = _sync.signal.lock();
+                        if (_sync.stop) throw Toastbox::Signal::Stop(); // Signalled to stop
+                        _sync.progress = progress;
+                        _sync.signal.signalAll();
                     }
-                    
-                    // Write library now that we've added our new images and populated their .id / .addr
-                    _imageLibrary->imageIdEnd(deviceImageRange.end);
-                    _imageLibrary->write();
-                }
-                
-                // Load all unloaded images from the SD card
-                // Note that this will also load unloaded images from a previous session, since we may have
-                // been killed or crashed before we finished loading all images.
-                {
-                    std::set<ImageRecordPtr> recs;
-                    for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
-                        if (!rec->status.loadCount) {
-                            recs.insert(rec);
-                        }
+                    _sync_observersNotify();
+                });
+            }
+            
+            // Prune unloaded images
+            // The unloaded images at this point are unloaded because they failed to load,
+            // so we presume that they've been deleted from the device from a previous
+            // MDCStudio session.
+            {
+                std::set<ImageRecordPtr> recs;
+                for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
+                    if (!rec->status.loadCount) {
+                        recs.insert(rec);
                     }
-                    
-                    printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
-                    _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
-                        {
-                            auto lock = _sync.signal.lock();
-                            if (_sync.stop) throw Toastbox::Signal::Stop(); // Signalled to stop
-                            _sync.progress = progress;
-                            _sync.signal.signalAll();
-                        }
-                        _sync_observersNotify();
-                    });
                 }
-                
-                // Prune unloaded images
-                // The unloaded images at this point are unloaded because they failed to load,
-                // so we presume that they've been deleted from the device from a previous
-                // MDCStudio session.
-                {
-                    std::set<ImageRecordPtr> recs;
-                    for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
-                        if (!rec->status.loadCount) {
-                            recs.insert(rec);
-                        }
-                    }
-                    printf("[_sync_thread] Pruning %ju unloaded images\n", (uintmax_t)recs.size());
-                    _imageLibrary->remove(recs);
-                }
-                
-                // Write the image library now that we're done syncing
-                {
-                    auto lock = std::unique_lock(*_imageLibrary);
-                    _imageLibrary->write();
-                }
+                printf("[_sync_thread] Pruning %ju unloaded images\n", (uintmax_t)recs.size());
+                _imageLibrary->remove(recs);
+            }
+            
+            // Write the image library now that we're done syncing
+            {
+                auto lock = std::unique_lock(*_imageLibrary);
+                _imageLibrary->write();
             }
         
         } catch (const StaleLibrary& e) {
@@ -919,20 +898,9 @@ struct MDCDeviceReal : MDCDevice {
         };
     }
     
-    static MSP::ImgRingBuf _GetImgRingBuf(const MSP::SDState& sd) {
-        const MSP::ImgRingBuf& imgRingBuf0 = sd.imgRingBufs[0];
-        const MSP::ImgRingBuf& imgRingBuf1 = sd.imgRingBufs[1];
-        const std::optional<int> comp = MSP::ImgRingBuf::Compare(imgRingBuf0, imgRingBuf1);
-        if (!comp) return {};
-        return *comp>=0 ? imgRingBuf0 : imgRingBuf1;
-    }
-    
     static void _ICEConfigure(MDCUSBDevice& dev) {
-        std::string iceBinPath = [[[NSBundle mainBundle] pathForResource:@"ICEApp" ofType:@"bin"] UTF8String];
-        Toastbox::Mmap mmap(iceBinPath);
-        
         // Write the ICE40 binary
-        dev.iceRAMWrite(mmap.data(), mmap.len());
+        dev.iceRAMWrite(_ICEAppData, _ICEAppDataLen);
     }
     
     bool alive() {
@@ -956,8 +924,6 @@ struct MDCDeviceReal : MDCDevice {
     
     struct {
         Toastbox::Signal signal; // Protects this struct
-        std::thread thread;
-        id /* CFRunLoopRef */ runLoop;
         std::unique_ptr<MDCUSBDevice> device;
     } _device;
     
@@ -975,21 +941,21 @@ struct MDCDeviceReal : MDCDevice {
     } _sdMode;
     
     struct {
-        Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        uint32_t stop = 0;
-        std::optional<float> progress;
+        struct {
+            Toastbox::Signal signal; // Protects this struct
+            uint32_t stop = 0;
+            std::optional<float> progress;
+        };
     } _sync;
     
-    struct _Status {
-        MSP::State state = {};
-        float batteryLevel = 0;
-    };
-    
     struct {
-        Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        std::optional<_Status> status;
+        id /* CFRunLoopRef */ runLoop;
+        struct {
+            std::mutex lock; // Protects this struct
+            _Status status;
+        };
     } _status;
 };
 

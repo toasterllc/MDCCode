@@ -1031,7 +1031,7 @@ int main(int argc, const char* argv[]) {
     
     std::vector<MDCUSBDevicePtr> devices;
     try {
-        devices = MDCUSBDevice::GetDevices();
+        devices = MDCUSBDevice::DevicesGet();
     } catch (const std::exception& e) {
         fprintf(stderr, "Failed to get MDC loader devices: %s\n\n", e.what());
         return 1;

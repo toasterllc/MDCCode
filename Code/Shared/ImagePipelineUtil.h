@@ -3,8 +3,8 @@
 #import "Shared/ImagePipeline/ImagePipeline.h"
 #import "Shared/ImageCorner/ImageCorner.h"
 #import "Shared/PrefsUtil.h"
+#import "Shared/Calendar.h"
 #import "Lib/Toastbox/Mac/Color.h"
-#import "Calendar.h"
 
 namespace MDCStudio {
 

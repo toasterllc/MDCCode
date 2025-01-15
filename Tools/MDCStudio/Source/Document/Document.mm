@@ -476,8 +476,8 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
 
 - (void)_updateDevices {
     std::set<ImageSourcePtr> imageSources;
-    std::vector<MDCDeviceRealPtr> devices = MDCDevicesManagerGlobal()->devices();
-    for (MDCDeviceRealPtr device : devices) {
+    std::set<MDCDeviceHardPtr> devices = MDCDevicesManagerGlobal()->devices();
+    for (MDCDeviceHardPtr device : devices) {
         imageSources.insert(device);
     }
     
@@ -487,6 +487,11 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     
     [_sourceListView setImageSources:imageSources];
     [self sourceListViewSelectionChanged:_sourceListView];
+    
+    // If the settings sheet is open for a device that disappeared, close the settings window
+    if (_deviceSettings.device && devices.find(_deviceSettings.device)==devices.end()) {
+        [self deviceSettingsView:_deviceSettings.view dismiss:false];
+    }
     
 //    const bool haveDevices = !imageSources.empty();
 //    if (!haveDevices) {
@@ -521,11 +526,9 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     // Perform an initial load the first time our image library doesn't have photos, but the device does.
     // This is a simple UX affordance for a nicer 'out of box' experience.
     {
-        auto status = device->status();
-        if (status) {
-            if (libraryEmpty && status->loadImageCount) {
-                device->sync();
-            }
+        const MDCDevice::Status status = device->status();
+        if (libraryEmpty && status.loadImageCount) {
+            device->sync();
         }
     }
 }

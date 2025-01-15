@@ -11,9 +11,9 @@
 #import "Shared/ImagePipeline/ImagePipeline.h"
 #import "Shared/ImageUtil.h"
 #import "Shared/ImageExporter/ImageExporter.h"
+#import "Shared/ImagePipelineUtil.h"
 #import "FullSizeImageViewTypes.h"
 #import "FullSizeImageHeaderView/FullSizeImageHeaderView.h"
-#import "ImagePipelineUtil.h"
 #import "DragImage.h"
 using namespace MDCStudio;
 using namespace MDCStudio::FullSizeImageViewTypes;

@@ -23,6 +23,8 @@
 #import "ColorMatrix.h"
 #import "ImageUtil.h"
 #import "PrefsUtil.h"
+#import "JThread.h"
+#import "RunLoopStop.h"
 
 namespace MDCStudio {
 
@@ -56,25 +58,6 @@ struct ImageSource : Object {
     using _ImageCache = Cache<ImageRecordPtr,__ImageBuffer,8,(uint8_t)Priority::Low>;
     using _ImageBuffer = _ImageCache::Entry;
     using _ImageBufferReserved = _ImageCache::Reserved;
-    
-//    // Thread: convenience to automatically join() the thread upon instance destruction
-//    struct Thread : std::thread {
-//        using std::thread::thread;
-//        
-//        // Move constructor
-//        Thread(Thread&& x) { set(std::move(x)); }
-//        // Move assignment operator
-//        Thread& operator=(Thread&& x) { set(std::move(x)); return *this; }
-//        
-//        ~Thread() {
-//            if (joinable()) join();
-//        }
-//        
-//        void set(Thread&& x) {
-//            if (joinable()) join();
-//            std::thread::operator=(std::move(x));
-//        }
-//    };
     
     static int _CPUCount() {
 //        return 1;
@@ -132,7 +115,9 @@ struct ImageSource : Object {
         printf("~ImageSource() %p\n", this);
         stop();
         
-        // Wait for our threads to exit
+        // Wait for our threads to exit.
+        // We have to explicitly join the threads in our destructor (instead of using a `jthread` or similar),
+        // because we need to delay destruction of our members until the threads no longer need them.
         _Join(_dataRead.thread);
         _Join(_thumbRender.master.thread);
         for (std::thread& t : _thumbRender.slave.threads) {
@@ -575,9 +560,11 @@ struct ImageSource : Object {
         assert(!state->underway);
         state->underway += imageCount;
         
-        std::thread progressThread;
+        // Using a jthread for `progressThread` because this function may bail early due
+        // to an exception (eg Toastbox::Signal::Stop), so the thread needs join in destructor
+        JThread progressThread;
         if (progressCallback && imageCount) {
-            progressThread = std::thread([&] {
+            progressThread = JThread([&] {
                 try {
                     state->signal.wait([&] {
                         const float progress = (float)(imageCount - state->underway) / imageCount;
@@ -652,7 +639,6 @@ struct ImageSource : Object {
         
         // Wait until everything's done
         state->signal.wait([&] { return !state->underway; });
-        progressThread.join();
         
 //        _debugPrintImages("After _loadThumbs", *_imageLibrary);
         
@@ -949,7 +935,7 @@ struct ImageSource : Object {
     
     struct {
         Toastbox::Signal signal; // Protects this struct
-        std::thread thread;
+        std::thread thread; // Not using JThread; see ~ImageSource()
         _DataReadWorkQueue queues[(size_t)Priority::Low+1];
         uint32_t pause = 0;
     } _dataRead;
@@ -957,13 +943,13 @@ struct ImageSource : Object {
     struct {
         struct {
             Toastbox::Signal signal; // Protects this struct
-            std::thread thread;
+            std::thread thread; // Not using JThread; see ~ImageSource()
             ImageSet recs;
         } master;
         
         struct {
             Toastbox::Signal signal; // Protects this struct
-            std::vector<std::thread> threads;
+            std::vector<std::thread> threads; // Not using JThread; see ~ImageSource()
             _RenderWorkQueue queue;
         } slave;
     } _thumbRender;
