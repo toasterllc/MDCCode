@@ -51,8 +51,7 @@ int main(int argc, const char* argv[]) {
     std::vector<uint8_t> iceapp =
         _FileRead([[[NSBundle mainBundle] pathForResource:@"ICEApp" ofType:@"bin"] UTF8String]);
     {
-        MDCDeviceHard::STMAppData(stmapp.data(), stmapp.size());
-        MDCDeviceHard::ICEAppData(iceapp.data(), iceapp.size());
+        MDCDeviceHard::Config(stmapp.data(), stmapp.size(), iceapp.data(), iceapp.size());
     }
     
 //    std::filesystem::remove_all("/Users/dave/Library/Containers/llc.toaster.photon-transfer/Data/Library/Application Support/llc.toaster.photon-transfer");

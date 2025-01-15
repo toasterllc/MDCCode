@@ -4,29 +4,31 @@
 #import "ICEApp.bin.h"
 using namespace MDCStudio;
 
-int main(int argc, const char* argv[]) {
-    
-    // Configure MDCDeviceHard
-    {
-        MDCDeviceHard::STMAppData(STMApp_elf, std::size(STMApp_elf));
-        MDCDeviceHard::ICEAppData(ICEApp_bin, std::size(ICEApp_bin));
-    }
-    
-    for (;;) {
-        
-        MDCStudio::MDCDevicesManagerPtr devicesManager = MDCStudio::Object::Create<MDCDevicesManager>([] (const MDCUSBDevice::IncompatibleVersion& x) {
+static MDCDeviceHardPtr _DeviceGet() {
+    MDCStudio::MDCDevicesManagerPtr devicesManager = MDCStudio::Object::Create<MDCDevicesManager>([] (const MDCUSBDevice::IncompatibleVersion& x) {
             throw x;
         });
-        
-        auto devices = devicesManager->devices();
-        printf("device count: %ju\n", (uintmax_t)devices.size());
-        
-//        sleep(1);
-        
-//        usleep(500000);
-        
-        usleep(100000);
     
+    auto devices = devicesManager->devices();
+    if (devices.empty()) {
+        throw std::runtime_error("no devices connected");
+    } else if (devices.size() > 1) {
+        throw std::runtime_error("more than one device connected");
+    }
+    return *devices.begin();
+}
+
+int main(int argc, const char* argv[]) {
+    // Configure MDCDeviceHard
+    {
+        MDCDeviceHard::Config(STMApp_elf, std::size(STMApp_elf), ICEApp_bin, std::size(ICEApp_bin));
+    }
+    
+    try {
+        MDCDeviceHardPtr device = _DeviceGet();
+    
+    } catch (std::exception& e) {
+        printf("Error: %s\n", e.what());
     }
     
     return 0;

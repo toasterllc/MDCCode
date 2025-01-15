@@ -76,16 +76,15 @@ struct MDCDeviceHard : MDCDevice {
     
     static inline const void* _STMAppData = nullptr;
     static inline size_t _STMAppDataLen = 0;
-    static void STMAppData(const void* data, size_t len) {
-        _STMAppData = data;
-        _STMAppDataLen = len;
-    }
-    
     static inline const void* _ICEAppData = nullptr;
     static inline size_t _ICEAppDataLen = 0;
-    static void ICEAppData(const void* data, size_t len) {
-        _ICEAppData = data;
-        _ICEAppDataLen = len;
+    
+    static void Config(const void* stmAppData, size_t stmAppDataLen, const void* iceAppData, size_t iceAppDataLen) {
+        _STMAppData = stmAppData;
+        _STMAppDataLen = stmAppDataLen;
+        
+        _ICEAppData = iceAppData;
+        _ICEAppDataLen = iceAppDataLen;
     }
     
     void init(_MDCUSBDevicePtr&& dev) {
