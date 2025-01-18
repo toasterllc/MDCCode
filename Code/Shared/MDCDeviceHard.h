@@ -234,7 +234,7 @@ struct MDCDeviceHard : MDCDevice {
                 const auto batteryLevel = _status.status->batteryLevel;
             statusLock.unlock();
             
-            const ImageRange deviceImageRange = _GetImageRange(_GetImgRingBuf(state.sd), state.sd.imgCap);
+            const ImageRange deviceImageRange = _GetImageRange(state.sd.imgRingBuf(), state.sd.imgCap);
             const std::optional<size_t> loadImageCount = _LoadImageCount(std::unique_lock(*_imageLibrary),
                 _imageLibrary, deviceImageRange);
             
@@ -579,7 +579,7 @@ struct MDCDeviceHard : MDCDevice {
         
         // Remove images from beginning of library: lib has, device doesn't
         {
-            const ImageRange deviceImageRange = _GetImageRange(_GetImgRingBuf(msp.sd), msp.sd.imgCap);
+            const ImageRange deviceImageRange = _GetImageRange(msp.sd.imgRingBuf(), msp.sd.imgCap);
             _RemoveStaleImages(std::unique_lock(*_imageLibrary), _imageLibrary, deviceImageRange);
         }
         
@@ -776,101 +776,99 @@ struct MDCDeviceHard : MDCDevice {
                 const MSP::SDState sd = _status.status->state.sd;
             lock.unlock();
             
-            const MSP::ImgRingBuf imgRingBuf = _GetImgRingBuf(sd);
+            const MSP::ImgRingBuf imgRingBuf = sd.imgRingBuf();
             if (!imgRingBuf.valid) throw StaleLibrary("image ring buf invalid");
             const ImageRange deviceImageRange = _GetImageRange(imgRingBuf, sd.imgCap);
             
+            // Modify the image library to reflect the images that have been added and removed
+            // since the last time we sync'd
+            uint32_t addCount = 0;
             {
-                // Modify the image library to reflect the images that have been added and removed
-                // since the last time we sync'd
-                uint32_t addCount = 0;
+                auto lock = std::unique_lock(*_imageLibrary);
+                
+                // Remove images from beginning of library: lib has, device doesn't
+                _RemoveStaleImages(lock, _imageLibrary, deviceImageRange);
+                
+                // Calculate how many images to add to the end of the library: device has, lib doesn't
                 {
-                    auto lock = std::unique_lock(*_imageLibrary);
+                    const std::optional<size_t> count = _LoadImageCount(lock, _imageLibrary, deviceImageRange);
+                    if (count) {
+                        addCount = (uint32_t)*count;
+                    } else {
+                        throw StaleLibrary("_LoadImageCount failed");
+                    }
                     
-                    // Remove images from beginning of library: lib has, device doesn't
-                    _RemoveStaleImages(lock, _imageLibrary, deviceImageRange);
-                    
-                    // Calculate how many images to add to the end of the library: device has, lib doesn't
-                    {
-                        const std::optional<size_t> count = _LoadImageCount(lock, _imageLibrary, deviceImageRange);
-                        if (count) {
-                            addCount = (uint32_t)*count;
-                        } else {
-                            throw StaleLibrary("_LoadImageCount failed");
-                        }
-                        
 //                        addCount = 1000;
 //                        addCount = 20000;
-                        printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
-                        _imageLibrary->add(addCount);
+                    printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
+                    _imageLibrary->add(addCount);
+                }
+                
+                // Populate .id / .addr for the ImageRecords that we're adding
+                {
+                    auto it = _imageLibrary->end();
+                    Img::Id id = deviceImageRange.end;
+                    uint32_t idx = imgRingBuf.buf.idx;
+                    while (addCount) {
+                        it--;
+                        id--;
+                        idx = (idx ? idx-1 : sd.imgCap-1);
+                        addCount--;
+                        
+                        ImageRecordPtr rec = *it;
+                        const SD::Block addrFull = MSP::SDBlockStart(sd.baseFull, ImgSD::Full::ImageBlockCount, idx);
+                        const SD::Block addrThumb = MSP::SDBlockStart(sd.baseThumb, ImgSD::Thumb::ImageBlockCount, idx);
+                        ImageRecordInit(*rec, id, addrFull, addrThumb);
                     }
-                    
-                    // Populate .id / .addr for the ImageRecords that we're adding
+                }
+                
+                // Write library now that we've added our new images and populated their .id / .addr
+                _imageLibrary->imageIdEnd(deviceImageRange.end);
+                _imageLibrary->write();
+            }
+            
+            // Load all unloaded images from the SD card
+            // Note that this will also load unloaded images from a previous session, since we may have
+            // been killed or crashed before we finished loading all images.
+            {
+                std::set<ImageRecordPtr> recs;
+                for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
+                    if (!rec->status.loadCount) {
+                        recs.insert(rec);
+                    }
+                }
+                
+                printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
+                _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
                     {
-                        auto it = _imageLibrary->end();
-                        Img::Id id = deviceImageRange.end;
-                        uint32_t idx = imgRingBuf.buf.idx;
-                        while (addCount) {
-                            it--;
-                            id--;
-                            idx = (idx ? idx-1 : sd.imgCap-1);
-                            addCount--;
-                            
-                            ImageRecordPtr rec = *it;
-                            const SD::Block addrFull = MSP::SDBlockStart(sd.baseFull, ImgSD::Full::ImageBlockCount, idx);
-                            const SD::Block addrThumb = MSP::SDBlockStart(sd.baseThumb, ImgSD::Thumb::ImageBlockCount, idx);
-                            ImageRecordInit(*rec, id, addrFull, addrThumb);
-                        }
+                        auto lock = _sync.signal.lock();
+                        if (_sync.stop) throw Toastbox::Signal::Stop(); // Signalled to stop
+                        _sync.progress = progress;
+                        _sync.signal.signalAll();
                     }
-                    
-                    // Write library now that we've added our new images and populated their .id / .addr
-                    _imageLibrary->imageIdEnd(deviceImageRange.end);
-                    _imageLibrary->write();
-                }
-                
-                // Load all unloaded images from the SD card
-                // Note that this will also load unloaded images from a previous session, since we may have
-                // been killed or crashed before we finished loading all images.
-                {
-                    std::set<ImageRecordPtr> recs;
-                    for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
-                        if (!rec->status.loadCount) {
-                            recs.insert(rec);
-                        }
+                    _sync_observersNotify();
+                });
+            }
+            
+            // Prune unloaded images
+            // The unloaded images at this point are unloaded because they failed to load,
+            // so we presume that they've been deleted from the device from a previous
+            // MDCStudio session.
+            {
+                std::set<ImageRecordPtr> recs;
+                for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
+                    if (!rec->status.loadCount) {
+                        recs.insert(rec);
                     }
-                    
-                    printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
-                    _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
-                        {
-                            auto lock = _sync.signal.lock();
-                            if (_sync.stop) throw Toastbox::Signal::Stop(); // Signalled to stop
-                            _sync.progress = progress;
-                            _sync.signal.signalAll();
-                        }
-                        _sync_observersNotify();
-                    });
                 }
-                
-                // Prune unloaded images
-                // The unloaded images at this point are unloaded because they failed to load,
-                // so we presume that they've been deleted from the device from a previous
-                // MDCStudio session.
-                {
-                    std::set<ImageRecordPtr> recs;
-                    for (const ImageLibrary::RecordRef& rec : *_imageLibrary) {
-                        if (!rec->status.loadCount) {
-                            recs.insert(rec);
-                        }
-                    }
-                    printf("[_sync_thread] Pruning %ju unloaded images\n", (uintmax_t)recs.size());
-                    _imageLibrary->remove(recs);
-                }
-                
-                // Write the image library now that we're done syncing
-                {
-                    auto lock = std::unique_lock(*_imageLibrary);
-                    _imageLibrary->write();
-                }
+                printf("[_sync_thread] Pruning %ju unloaded images\n", (uintmax_t)recs.size());
+                _imageLibrary->remove(recs);
+            }
+            
+            // Write the image library now that we're done syncing
+            {
+                auto lock = std::unique_lock(*_imageLibrary);
+                _imageLibrary->write();
             }
         
         } catch (const StaleLibrary& e) {
@@ -922,14 +920,6 @@ struct MDCDeviceHard : MDCDevice {
             .begin = rec->info.addrFull,
             .end = _SDBlockEnd(rec->info.addrFull, ImgSD::Full::ImagePaddedLen),
         };
-    }
-    
-    static MSP::ImgRingBuf _GetImgRingBuf(const MSP::SDState& sd) {
-        const MSP::ImgRingBuf& imgRingBuf0 = sd.imgRingBufs[0];
-        const MSP::ImgRingBuf& imgRingBuf1 = sd.imgRingBufs[1];
-        const std::optional<int> comp = MSP::ImgRingBuf::Compare(imgRingBuf0, imgRingBuf1);
-        if (!comp) return {};
-        return *comp>=0 ? imgRingBuf0 : imgRingBuf1;
     }
     
     static void _ICEConfigure(MDCUSBDevice& dev) {
