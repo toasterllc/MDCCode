@@ -5,6 +5,7 @@ namespace MDCStudio {
 struct MDCDevice; using MDCDevicePtr = SharedPtr<MDCDevice>;
 struct MDCDevice : ImageSource {
     struct Status {
+        MSP::State mspState = {};
         float batteryLevel = 0;
         size_t loadImageCount = 0;
     };
@@ -61,7 +62,7 @@ struct MDCDevice : ImageSource {
     
     // MARK: - Status
     
-    virtual std::optional<Status> status() = 0;
+    virtual Status status() = 0;
     virtual std::optional<float> syncProgress() = 0;
 };
 

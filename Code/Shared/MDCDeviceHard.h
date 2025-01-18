@@ -107,6 +107,7 @@ struct MDCDeviceHard : MDCDevice {
         
         // Init _status
         {
+            _status_update();
             _status.thread = std::thread([&] { _status_thread(); });
         }
         
@@ -134,29 +135,22 @@ struct MDCDeviceHard : MDCDevice {
     // MARK: - Device Settings
     
     const MSP::Settings settings() override {
-        auto lock = _status.signal.wait([&] { return (bool)_status.status; });
-        return _status.status->state.settings;
+        auto lock = std::unique_lock(_status.lock);
+        return _status.status.mspState.settings;
     }
     
     void settings(const MSP::Settings& x) override {
-        // Wait until _status.status is loaded
-        _status.signal.wait([&] { return (bool)_status.status; });
-        
         auto hostMode = _hostModeEnter(true);
         
         {
-            auto lock = _status.signal.lock();
-            assert(_status.status);
-            _status.status->state.settings = x;
+            auto lock = std::unique_lock(_status.lock);
+            _status.status.mspState.settings = x;
         }
         
-        _device.device->mspStateWrite(_status.status->state);
+        _device.device->mspStateWrite(_status.status.mspState);
     }
     
     void factoryReset() override {
-        // Wait until _status.status is loaded
-        _status.signal.wait([&] { return (bool)_status.status; });
-        
         // Disable syncing and wait for it to stop.
         //
         // This is necessary for 2 reasons:
@@ -179,10 +173,10 @@ struct MDCDeviceHard : MDCDevice {
             
             // Reset MSP430 state
             {
-                auto lock = _status.signal.lock();
-                    _status.status->state.sd = {};
-                    _status.status->state.settings = {};
-                    const MSP::State mspState = _status.status->state;
+                auto lock = std::unique_lock(_status.lock);
+                    _status.status.mspState.sd = {};
+                    _status.status.mspState.settings = {};
+                    const MSP::State mspState = _status.status.mspState;
                 lock.unlock();
                 
                 _device.device->mspStateWrite(mspState);
@@ -238,25 +232,27 @@ struct MDCDeviceHard : MDCDevice {
     }
     
     // status(): returns nullopt if the status hasn't been loaded yet
-    std::optional<Status> status() override {
-        try {
-            auto statusLock = _status.signal.lock();
-                if (!_status.status) return std::nullopt;
-                const auto state = _status.status->state;
-                const auto batteryLevel = _status.status->batteryLevel;
-            statusLock.unlock();
-            
-            const ImageRange deviceImageRange = _GetImageRange(state.sd.imgRingBuf(), state.sd.imgCap);
-            const std::optional<size_t> loadImageCount = _LoadImageCount(std::unique_lock(*_imageLibrary),
-                _imageLibrary, deviceImageRange);
-            
-            return Status{
-                .batteryLevel = batteryLevel,
-                .loadImageCount = loadImageCount.value_or(0),
-            };
-        } catch (const Toastbox::Signal::Stop&) {
-            return std::nullopt;
-        }
+    Status status() override {
+        auto lock = std::unique_lock(_status.lock);
+        return _status.status;
+//        try {
+//            auto statusLock = _status.signal.lock();
+//                if (!_status.status) return std::nullopt;
+//                const auto state = _status.status->state;
+//                const auto batteryLevel = _status.status->batteryLevel;
+//            statusLock.unlock();
+//            
+//            const ImageRange deviceImageRange = _GetImageRange(state.sd.imgRingBuf(), state.sd.imgCap);
+//            const std::optional<size_t> loadImageCount = _LoadImageCount(std::unique_lock(*_imageLibrary),
+//                _imageLibrary, deviceImageRange);
+//            
+//            return Status{
+//                .batteryLevel = batteryLevel,
+//                .loadImageCount = loadImageCount.value_or(0),
+//            };
+//        } catch (const Toastbox::Signal::Stop&) {
+//            return std::nullopt;
+//        }
     }
     
     std::optional<float> syncProgress() override {
@@ -504,7 +500,6 @@ struct MDCDeviceHard : MDCDevice {
         
         // Tell _status_thread to bail
         {
-            _status.signal.stop();
             // We have to check for _status.runLoop, even though the constructor waits
             // for _status.runLoop to be set, because the constructor may not have
             // completed due to an exception!
@@ -529,26 +524,35 @@ struct MDCDeviceHard : MDCDevice {
     }
     
     void _status_update() {
-        auto lock = deviceLock();
-            const auto bat = _device.device->batteryStatusGet();
-            const auto msp = _device.device->mspStateRead();
-        lock.unlock();
+        MSP::State mspState = {};
+        STM::BatteryStatus batteryStatus;
+        {
+            auto lock = deviceLock();
+            mspState = _device.device->mspStateRead();
+            batteryStatus = _device.device->batteryStatusGet();
+        }
+        
+        ImageRange deviceImageRange;
+        std::optional<size_t> loadImageCount;
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            deviceImageRange = _GetImageRange(mspState.sd.imgRingBuf(), mspState.sd.imgCap);
+            loadImageCount = _LoadImageCount(lock, _imageLibrary, deviceImageRange);
+        }
         
         {
-            auto lock = _status.signal.lock();
+            auto lock = std::unique_lock(_status.lock);
             _status.status = {
-                .state = msp,
-                .batteryLevel = _BatteryLevel(bat),
+                .mspState = mspState,
+                .batteryLevel = _BatteryLevel(batteryStatus),
+                .loadImageCount = loadImageCount.value_or(0),
             };
         }
         
         // Remove images from beginning of library: lib has, device doesn't
         {
-            const ImageRange deviceImageRange = _GetImageRange(msp.sd.imgRingBuf(), msp.sd.imgCap);
             _RemoveStaleImages(std::unique_lock(*_imageLibrary), _imageLibrary, deviceImageRange);
         }
-        
-        _status.signal.signalAll();
     }
     
 //    void _device_observersNotify() {
@@ -661,13 +665,6 @@ struct MDCDeviceHard : MDCDevice {
             if (en) {
                 auto timeStart = std::chrono::steady_clock::now();
                 
-                // Wait until _status.status is loaded before acquiring the hostMode lock.
-                // We can't wait for _status.status while holding the hostMode lock, because we can
-                // deadlock wrt _device_thread(), which acquires the device lock before starting
-                // _status_thread(). So we'd be waiting for _status.status to be set while holding the
-                // device lock, which couldn't happen because we held the device lock.
-                _status.signal.wait([&] { return (bool)_status.status; });
-                
                 // Enter host mode while we're in SD mode, since MSP can't talk to
                 // ICE40 or SD card while we're using it.
                 _sdMode.state = {
@@ -682,11 +679,10 @@ struct MDCDeviceHard : MDCDevice {
                 
                 // If _device.state.sd is valid, verify that the current SD card id matches MSP's card id
                 {
-                    auto lock = _status.signal.lock();
-                    assert(_status.status); // Checked above, before acquiring hostMode lock
-                    if (_status.status->state.sd.valid) {
-                        if (memcmp(&_sdMode.cardInfo.cardId, &_status.status->state.sd.cardId,
-                            sizeof(_status.status->state.sd.cardId))) {
+                    auto lock = std::unique_lock(_status.lock);
+                    if (_status.status.mspState.sd.valid) {
+                        if (memcmp(&_sdMode.cardInfo.cardId, &_status.status.mspState.sd.cardId,
+                            sizeof(_status.status.mspState.sd.cardId))) {
                             throw Toastbox::RuntimeError("_sdMode.cardInfo.cardId != _status.status->state.sd.cardId");
                         }
                     }
@@ -762,8 +758,8 @@ struct MDCDeviceHard : MDCDevice {
         };
         
         try {
-            auto lock = _status.signal.wait([&] { return (bool)_status.status; });
-                const MSP::SDState sd = _status.status->state.sd;
+            auto lock = std::unique_lock(_status.lock);
+                const MSP::SDState sd = _status.status.mspState.sd;
             lock.unlock();
             
             const MSP::ImgRingBuf imgRingBuf = sd.imgRingBuf();
@@ -961,16 +957,11 @@ struct MDCDeviceHard : MDCDevice {
         std::optional<float> progress;
     } _sync;
     
-    struct _Status {
-        MSP::State state = {};
-        float batteryLevel = 0;
-    };
-    
     struct {
-        Toastbox::Signal signal; // Protects this struct
+        std::mutex lock; // Protects this struct
         std::thread thread;
         id /* CFRunLoopRef */ runLoop;
-        std::optional<_Status> status;
+        Status status;
     } _status;
 };
 

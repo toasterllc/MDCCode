@@ -521,11 +521,9 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     // Perform an initial load the first time our image library doesn't have photos, but the device does.
     // This is a simple UX affordance for a nicer 'out of box' experience.
     {
-        auto status = device->status();
-        if (status) {
-            if (libraryEmpty && status->loadImageCount) {
-                device->sync();
-            }
+        const MDCDevice::Status status = device->status();
+        if (libraryEmpty && status.loadImageCount) {
+            device->sync();
         }
     }
 }
