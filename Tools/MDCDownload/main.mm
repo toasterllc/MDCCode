@@ -1,5 +1,5 @@
 #import <Foundation/Foundation.h>
-#import "Shared/MDCDevicesManager.h"
+#import "Shared/MDCDeviceHard.h"
 #import "Shared/ImageExporter/ImageExporter.h"
 #import "Shared/JThread.h"
 #import "Lib/Toastbox/SignalQueue.h"
@@ -16,18 +16,25 @@ using ImgIds = std::set<Img::Id, std::greater<Img::Id>>;
 #define ProgramName "MDCDownload"
 
 static MDCDeviceHardPtr _DeviceGet() {
-    MDCDevicesManagerPtr devicesManager = Object::Create<MDCDevicesManager>([] (const MDCUSBDevice::IncompatibleVersion& x) {
-            printf("Incompatible device version: %s\n", x.what());
-            exit(0);
-        });
-    
-    auto devices = devicesManager->devices();
-    if (devices.empty()) {
-        throw std::runtime_error("no devices connected");
-    } else if (devices.size() > 1) {
-        throw std::runtime_error("more than one device connected");
+    auto usbDevs = MDCUSBDevice::DevicesGet();
+    if (usbDevs.empty()) {
+        throw Toastbox::RuntimeError("no devices connected");
+    } else if (usbDevs.size() > 1) {
+        throw Toastbox::RuntimeError("more than one device connected");
     }
-    return *devices.begin();
+    
+    // Create our final MDCDevice instance
+    try {
+        return Object::Create<MDCDeviceHard>(std::move(usbDevs.at(0)));
+    
+    } catch (const MDCUSBDevice::IncompatibleVersion& e) {
+        // Ignore failures to create MDCDevice
+        throw Toastbox::RuntimeError("MDCUSBDevice has incompatible version: %s\n", e.what());
+    
+    } catch (const std::exception& e) {
+        // Ignore failures to create MDCDevice
+        throw Toastbox::RuntimeError("Failed to create MDCDeviceHard: %s\n", e.what());
+    }
 }
 
 static uint32_t _IdxForImgId(const MSP::SDState& sd, Img::Id id) {

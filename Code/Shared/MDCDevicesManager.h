@@ -134,7 +134,7 @@ struct MDCDevicesManager : Object {
                     _USBDevicePtr usbDev;
                     try {
                         usbDev = std::make_unique<_USBDevice>(service);
-                        if (!MDCUSBDevice::USBDeviceMatches(*usbDev)) continue;
+                        if (!MDCUSBDevice::DeviceMatches(*usbDev)) continue;
                         const std::string serial = usbDev->serialNumber();
                         // If we have a device for the serial, ignore it
                         if (_state.devices.find(serial) != _state.devices.end()) continue;

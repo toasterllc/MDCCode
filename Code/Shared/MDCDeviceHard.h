@@ -399,11 +399,10 @@ struct MDCDeviceHard : MDCDevice {
                     const milliseconds duration = duration_cast<milliseconds>(steady_clock::now()-timeStart);
                     printf("[_WaitForDeviceReenumerate] _USBDevice creation took %ju ms\n", (uintmax_t)duration.count());
                     
-                    if (!MDCUSBDevice::USBDeviceMatches(*usbDev)) continue; // Ignore if this isn't an MDC
+                    if (!MDCUSBDevice::DeviceMatches(*usbDev)) continue; // Ignore if this isn't an MDC
                     if (usbDev->serialNumber() != serial) continue; // Ignore if the serial doesn't match
                     if (*usbDev == existing) continue; // Ignore if this is the same device as `existing`
                     dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
-                    dev->dev().open();
                 
                 } catch (const std::exception& e) {
                     // Ignore failures to create USBDevice
