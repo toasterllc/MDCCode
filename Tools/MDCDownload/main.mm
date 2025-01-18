@@ -5,6 +5,7 @@
 #import "Lib/Toastbox/SignalQueue.h"
 #import "Lib/Toastbox/String.h"
 #import "Lib/Toastbox/NumForStr.h"
+#import "Lib/Toastbox/FileDescriptor.h"
 #import "STMApp.elf.h"
 #import "ICEApp.bin.h"
 using namespace MDCStudio;
@@ -108,19 +109,70 @@ static ImgIds _GetExistingImgIdsInDir(const fs::path& dir) {
     return ids;
 }
 
-static fs::path _OutputDir(std::string_view serial) {
+
+
+static fs::path __DesktopDir() {
     auto urls = [[NSFileManager defaultManager] URLsForDirectory:NSDesktopDirectory inDomains:NSUserDomainMask];
     if (![urls count]) throw Toastbox::RuntimeError("failed to get NSDesktopDirectory");
-    return fs::path([urls[0] fileSystemRepresentation]) / ("MDCDownload-" + std::string(serial));
+    return [urls[0] fileSystemRepresentation];
+}
+
+static fs::path _DesktopDir() {
+    static fs::path Path = __DesktopDir();
+    return Path;
+}
+
+static fs::path _LogFilePath() {
+    return _DesktopDir() / "MDCDownload-Log.txt";
+}
+
+static fs::path _OutputDir(std::string_view serial) {
+    return _DesktopDir() / ("MDCDownload-" + std::string(serial));
+}
+
+struct Term {
+    FILE* file = nullptr;
+};
+
+static Term _LogAndTermOutputInit(const fs::path& logFilePath) {
+//    // Move the terminal tty fd out of the way
+//    int ir = dup(STDOUT_FILENO);
+//    if (ir < 0) throw Toastbox::RuntimeError("dup failed: %s", strerror(errno));
+//    Toastbox::FileDescriptor termFd(ir);
+    
+    FILE* term = fopen("/dev/tty", "w+");
+    if (!term) throw Toastbox::RuntimeError("fopen failed: %s", strerror(errno));
+    setvbuf(term, nullptr, _IOLBF, 0);
+    
+    // Route stdout to `logFilePath`
+    FILE* fr = freopen(logFilePath.c_str(), "a+", stdout);
+    if (!fr) throw Toastbox::RuntimeError("freopen failed: %s", strerror(errno));
+    // Ensure stdout is line-buffered
+    setvbuf(stdout, nullptr, _IOLBF, 0);
+    
+    return { term };
+    
+//    constexpr int OpenFlags = O_RDWR|O_CREAT|O_APPEND|O_CLOEXEC;
+//    constexpr int OpenPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
+//    ir = openat(STDOUT_FILENO, logFilePath.c_str(), OpenFlags, OpenPerm);
+//    if (ir < 0) throw Toastbox::RuntimeError("openat failed: %s", strerror(errno));
+//    Toastbox::FileDescriptor stdoutFd(ir);
 }
 
 int main(int argc, const char* argv[]) {
+    Term term = _LogAndTermOutputInit(_LogFilePath());
+    
     // Configure MDCDeviceHard
     {
         MDCDeviceHard::Config(STMApp_elf, std::size(STMApp_elf), ICEApp_bin, std::size(ICEApp_bin));
     }
     
     try {
+//        std::ofstream f;
+//        f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+//        f.open(_StatePath(dir));
+//        f.write((char*)&state, sizeof(state));
+        
         MDCDeviceHardPtr device = _DeviceGet();
         const fs::path outputDir = _OutputDir(device->serial());
         std::filesystem::create_directories(outputDir);
