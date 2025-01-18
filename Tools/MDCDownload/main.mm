@@ -2,10 +2,14 @@
 #import "Shared/MDCDevicesManager.h"
 #import "Shared/ImageExporter/ImageExporter.h"
 #import "Lib/Toastbox/SignalQueue.h"
+#import "Lib/Toastbox/String.h"
+#import "Lib/Toastbox/NumForStr.h"
 #import "STMApp.elf.h"
 #import "ICEApp.bin.h"
 using namespace MDCStudio;
 namespace fs = std::filesystem;
+
+using ImgIds = std::set<Img::Id, std::greater<Img::Id>>;
 
 static MDCDeviceHardPtr _DeviceGet() {
     MDCDevicesManagerPtr devicesManager = Object::Create<MDCDevicesManager>([] (const MDCUSBDevice::IncompatibleVersion& x) {
@@ -81,6 +85,28 @@ static ImageRecord _ImageRecordForImageDataPtr(const ImageDataPtr& img) {
     };
 }
 
+static std::optional<Img::Id> _ImgIdForFileName(const fs::path& fileName) {
+    const fs::path basename = fs::path(fileName).replace_extension();
+    auto parts = Toastbox::String::Split(basename.c_str(), "-");
+    if (parts.size() != 2) return std::nullopt;
+    if (parts.at(0) != "Image") return std::nullopt;
+    try {
+        return Toastbox::IntForStr<Img::Id>(parts.at(1));
+    } catch (...) {
+        return std::nullopt;
+    }
+}
+
+static ImgIds _GetExistingImgIdsInDir(const fs::path& dir) {
+    ImgIds ids;
+    for (const fs::path& p : fs::directory_iterator(dir)) {
+        const std::optional<Img::Id> id = _ImgIdForFileName(p.filename());
+        if (!id) continue;
+        ids.insert(*id);
+    }
+    return ids;
+}
+
 static fs::path _OutputDir(std::string_view serial) {
     auto urls = [[NSFileManager defaultManager] URLsForDirectory:NSDesktopDirectory inDomains:NSUserDomainMask];
     if (![urls count]) throw Toastbox::RuntimeError("failed to get NSDesktopDirectory");
@@ -92,8 +118,6 @@ static fs::path _OutputDir(std::string_view serial) {
 //    ImageExporter::ExportDNG(rec, image, path);
 //    
 //}
-
-using ImgIds = std::set<Img::Id, std::greater<Img::Id>>;
 
 int main(int argc, const char* argv[]) {
     // Configure MDCDeviceHard
@@ -115,9 +139,12 @@ int main(int argc, const char* argv[]) {
         
 //        imgRingBuf = MDCDeviceHard::_GetImgRingBuf(mspState.sd);
         const MDCDeviceHard::ImageRange imgRange = MDCDeviceHard::_GetImageRange(mspState.sd.imgRingBuf(), mspState.sd.imgCap);
+        const ImgIds existingImgIds = _GetExistingImgIdsInDir(outputDir);
         ImgIds imgIds;
         for (Img::Id id=imgRange.begin; id!=imgRange.end; id++) {
-            imgIds.insert(id);
+            if (existingImgIds.find(id) == existingImgIds.end()) {
+                imgIds.insert(id);
+            }
         }
         
         constexpr size_t ImageQueueSlotCount = 32;
