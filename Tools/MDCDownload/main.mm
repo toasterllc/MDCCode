@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "Shared/MDCDevicesManager.h"
 #import "Shared/ImageExporter/ImageExporter.h"
+#import "Shared/JThread.h"
 #import "Lib/Toastbox/SignalQueue.h"
 #import "Lib/Toastbox/String.h"
 #import "Lib/Toastbox/NumForStr.h"
@@ -113,12 +114,6 @@ static fs::path _OutputDir(std::string_view serial) {
     return fs::path([urls[0] fileSystemRepresentation]) / ("MDCDownload-" + std::string(serial));
 }
 
-//static void _ImageExport(const ImageDataPtr& img, const fs::path& path) {
-//    const Image image = _ImageForImageDataPtr(img);
-//    ImageExporter::ExportDNG(rec, image, path);
-//    
-//}
-
 int main(int argc, const char* argv[]) {
     // Configure MDCDeviceHard
     {
@@ -131,13 +126,11 @@ int main(int argc, const char* argv[]) {
         std::filesystem::create_directories(outputDir);
         
         MSP::State mspState = {};
-//        MSP::ImgRingBuf imgRingBuf;
         {
             auto lock = device->deviceLock();
             mspState = device->_device.device->mspStateRead();
         }
         
-//        imgRingBuf = MDCDeviceHard::_GetImgRingBuf(mspState.sd);
         const MDCDeviceHard::ImageRange imgRange = MDCDeviceHard::_GetImageRange(mspState.sd.imgRingBuf(), mspState.sd.imgCap);
         const ImgIds existingImgIds = _GetExistingImgIdsInDir(outputDir);
         ImgIds imgIds;
@@ -151,25 +144,38 @@ int main(int argc, const char* argv[]) {
         using ImageQueue = Toastbox::SignalQueue<ImageDataPtr, ImageQueueSlotCount>;
         ImageQueue imageDataQueue;
         
-        std::vector<std::thread> workers;
-        const int threadCount = std::thread::hardware_concurrency();
-        for (int i=0; i<threadCount; i++) {
-            workers.emplace_back([&](){
-                try {
-                    for (;;) {
-                        const ImageDataPtr img = imageDataQueue.pop();
-                        const ImageRecord rec = _ImageRecordForImageDataPtr(img);
-                        const fs::path fileName = ImageExporter::FileNameForImageRecord(rec).replace_extension(ImageExporter::Formats::DNG.extension);
-                        const fs::path filePath = outputDir / fileName;
-                        const Image image = _ImageForImageDataPtr(img);
-                        ImageExporter::ExportDNG(rec, image, filePath);
-                        
-                        printf("Wrote image: %s\n", filePath.c_str());
+        // Spawn workers that write the image files
+        std::vector<JThread> workers;
+        {
+            const int threadCount = std::thread::hardware_concurrency();
+            for (int i=0; i<threadCount; i++) {
+                workers.emplace_back([&](){
+                    try {
+                        for (;;) {
+                            const ImageDataPtr img = imageDataQueue.pop();
+                            
+                            // Check for our signal to bail
+                            if (!img) {
+                                // Call stop() on the read end, not on the write end!
+                                // If we called stop() on the write end, there could
+                                // still be unread elements in the queue.
+                                imageDataQueue.stop();
+                                break;
+                            }
+                            
+                            const ImageRecord rec = _ImageRecordForImageDataPtr(img);
+                            const fs::path fileName = ImageExporter::FileNameForImageRecord(rec).replace_extension(ImageExporter::Formats::DNG.extension);
+                            const fs::path filePath = outputDir / fileName;
+                            const Image image = _ImageForImageDataPtr(img);
+                            ImageExporter::ExportDNG(rec, image, filePath);
+                            
+                            printf("Wrote image: %s\n", filePath.c_str());
+                        }
+                    } catch (const Toastbox::Signal::Stop&) {
+                        return;
                     }
-                } catch (const Toastbox::Signal::Stop&) {
-                    return;
-                }
-            });
+                });
+            }
         }
         
         {
@@ -187,40 +193,10 @@ int main(int argc, const char* argv[]) {
                 
                 imageDataQueue.push(std::move(img));
             }
+            
+            // Signal workers to exit
+            imageDataQueue.push(nullptr);
         }
-        
-//        const uint32_t idxBegin = (imgRingBuf.buf.idx>mspState.sd.imgCap ? imgRingBuf.buf.idx-mspState.sd.imgCap : 0);
-//        const uint32_t idxEnd = imgRingBuf.buf.idx;
-//        const SD::Block addrBegin = MSP::SDBlockStart(mspState.sd.baseFull, ImgSD::Full::ImageBlockCount, idxBegin);
-//        const SD::Block addrEnd = MSP::SDBlockStart(mspState.sd.baseFull, ImgSD::Full::ImageBlockCount, idxEnd);
-//        const size_t imageCount = idxEnd-idxBegin;
-        
-        
-//        struct [[gnu::packed]] SDState {
-//            // cardId: the SD card's CID, used to determine when the SD card has been
-//            // changed, and therefore we need to update `imgCap` and reset `ringBufs`
-//            SD::CardId cardId;
-//            // imgCap: image capacity; the number of images that bounds the ring buffer
-//            uint32_t imgCap;
-//            // baseFull / baseThumb: the first block of the full-size and thumb image regions.
-//            // The SD card is broken into 2 regions (fullSize, thumbnails), to allow the host
-//            // to quickly read the thumbnails.
-//            SD::Block baseFull;
-//            SD::Block baseThumb;
-//            // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
-//            // power failure while updating one
-//            ImgRingBuf imgRingBufs[2];
-//            bool valid;
-//            uint8_t _pad;
-//        };
-        
-        
-        {
-            auto cleanup = device->dataReadStart();
-        }
-//        device->
-        
-//        device->
     
     } catch (std::exception& e) {
         printf("Error: %s\n", e.what());
