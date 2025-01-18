@@ -93,14 +93,27 @@ struct MDCDeviceHard : MDCDevice {
         _serial = dev->serial();
         MDCDevice::init(_DirForSerial(_serial)); // Call super
         
-        _device.thread = std::thread([&] (_MDCUSBDevicePtr&& dev) {
-            _device_thread(std::move(dev));
-        }, std::move(dev));
+        _device.device = _DevicePrepare(std::move(dev));
+        
+        // Update the device's time
+        {
+            // Enter host mode to adjust the device time
+            auto hostMode = _hostModeEnter();
+            
+            // Adjust the device's time to correct it for crystal innaccuracy
+            std::cout << "Adjusting device time:\n";
+            _device.device->mspTimeAdjust();
+        }
+        
+        // Init _status
+        {
+            _status.thread = std::thread([&] { _status_thread(); });
+        }
         
         // Wait until thread starts, so that our destructor knows that it can
-        // safely acccess _device.runLoop.
+        // safely acccess _status.runLoop.
         // TODO: use std::binary_semaphore when we can use C++20
-        while (!_device.runLoop) usleep(1000);
+        while (!_status.runLoop) usleep(1000);
     }
     
     ~MDCDeviceHard() {
@@ -110,7 +123,6 @@ struct MDCDeviceHard : MDCDevice {
         // Wait for our threads to exit.
         // We have to explicitly join the threads in our destructor (instead of using a `jthread` or similar),
         // because we need to delay destruction of our members until the threads no longer need them.
-        _Join(_device.thread);
         _Join(_sync.thread);
         _Join(_status.thread);
     }
@@ -395,6 +407,7 @@ struct MDCDeviceHard : MDCDevice {
                     if (usbDev->serialNumber() != serial) continue; // Ignore if the serial doesn't match
                     if (*usbDev == existing) continue; // Ignore if this is the same device as `existing`
                     dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
+                    dev->dev().open();
                 
                 } catch (const std::exception& e) {
                     // Ignore failures to create USBDevice
@@ -411,11 +424,10 @@ struct MDCDeviceHard : MDCDevice {
         }
     }
     
-    static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {
+    static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* context) {
         if (msgType == kIOMessageServiceIsTerminated) {
             printf("kIOMessageServiceIsTerminated\n");
-            bool* terminated = (bool*)ctx;
-            *terminated = true;
+            RunLoopStop(CFRunLoopGetCurrent());
         }
     }
     
@@ -464,34 +476,24 @@ struct MDCDeviceHard : MDCDevice {
         return std::move(dev);
     }
     
-    static void _DeviceWaitForTerminate(const _MDCUSBDevicePtr& dev) {
+    static void _DeviceWaitForTerminate(const _MDCUSBDevicePtr& dev, CFTimeInterval timeout) {
         _IONotificationPtr note = _IONotificationCreate();
         
         // Watch the service so we know when it goes away
         io_object_t ioObj = MACH_PORT_NULL;
-        bool terminated = false;
         kern_return_t kr = IOServiceAddInterestNotification(*note, dev->dev().service(),
-            kIOGeneralInterest, _ServiceInterestCallback, &terminated, &ioObj);
+            kIOGeneralInterest, _ServiceInterestCallback, nullptr, &ioObj);
         if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddInterestNotification failed: 0x%x", kr);
         _SendRight obj(_SendRight::NoRetain, ioObj); // Make sure port gets cleaned up
         
-        for (;;) @autoreleasepool {
-            printf("[MDCDeviceHard::_DeviceWaitForTerminate] runloop start\n");
-            CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
-            printf("[MDCDeviceHard::_DeviceWaitForTerminate] runloop end r==%d\n", r);
-            if (terminated || RunLoopStop()) throw Toastbox::Signal::Stop(); // Signalled to stop
-        }
+        printf("[MDCDeviceHard::_DeviceWaitForTerminate] runloop start\n");
+        CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, timeout, false);
+        printf("[MDCDeviceHard::_DeviceWaitForTerminate] runloop end r==%d\n", r);
+        if (RunLoopStop()) throw Toastbox::Signal::Stop(); // Signalled to stop
+        assert(r == kCFRunLoopRunTimedOut);
     }
     
     void stop() override {
-        // Tell _device_thread to bail
-        // We have to check for _device.runLoop, even though the constructor waits
-        // for _device.runLoop to be set, because the constructor may not have
-        // completed due to an exception!
-        if (_device.runLoop) {
-            RunLoopStop((__bridge CFRunLoopRef)_device.runLoop);
-        }
-        
         // Trigger our threads to exit
         try {
             auto lock = deviceLock(true);
@@ -500,53 +502,16 @@ struct MDCDeviceHard : MDCDevice {
             // If we've already been stopped, deviceLock() will throw, which is fine
         }
         
-        _status.signal.stop();
-        
-        MDCDevice::stop();
-    }
-    
-    // MARK: - Device
-    
-    void _device_thread(_MDCUSBDevicePtr&& dev) {
-        try {
-            {
-                auto lock = deviceLock();
-                _device.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
-                _device.device = _DevicePrepare(std::move(dev));
-            }
-            
-            // Update the device's time
-            {
-                // Enter host mode to adjust the device time
-                auto hostMode = _hostModeEnter();
-                
-                // Adjust the device's time to correct it for crystal innaccuracy
-                std::cout << "Adjusting device time:\n";
-                _device.device->mspTimeAdjust();
-            }
-            
-            // Init _status
-            {
-                _status.thread = std::thread([&] { _status_thread(); });
-            }
-            
-            // Wait for device to disappear
-            _DeviceWaitForTerminate(_device.device);
-        
-        } catch (const Toastbox::Signal::Stop&) {
-            printf("[_device_thread] Stopping\n");
-        
-        } catch (const std::exception& e) {
-            printf("[_device_thread] Error: %s\n", e.what());
+        // Tell _status_thread to bail
+        {
+            _status.signal.stop();
+            // We have to check for _status.runLoop, even though the constructor waits
+            // for _status.runLoop to be set, because the constructor may not have
+            // completed due to an exception!
+            if (_status.runLoop) RunLoopStop((__bridge CFRunLoopRef)_status.runLoop);
         }
         
-        stop();
-        
-        // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
-        // exception if our MDCDevice is undergoing destruction on a different thread.
-        // The destructor waits for this thread to terminate, so this should be safe.
-        const auto self = selfOrNull();
-        if (self) observersNotify(self, {});
+        MDCDevice::stop();
     }
     
     // MARK: - Device Status
@@ -586,6 +551,12 @@ struct MDCDeviceHard : MDCDevice {
         _status.signal.signalAll();
     }
     
+//    void _device_observersNotify() {
+//        Object::Event ev;
+//        ev.prop = &_device;
+//        observersNotify(ev);
+//    }
+    
     void _status_observersNotify() {
         Object::Event ev;
         ev.prop = &_status;
@@ -593,14 +564,17 @@ struct MDCDeviceHard : MDCDevice {
     }
     
     void _status_thread() {
+        constexpr CFTimeInterval UpdateInterval = 2;
+        
         printf("[_status_thread] Started\n");
-        constexpr auto UpdateInterval = std::chrono::seconds(2);
+        _status.runLoop = CFBridgingRelease(CFRetain(CFRunLoopGetCurrent()));
+        
         try {
             for (;;) {
                 _status_update();
                 printf("[_status_thread] Updated\n");
                 _status_observersNotify();
-                _status.signal.wait_for(UpdateInterval, [] { return false; });
+                _DeviceWaitForTerminate(_device.device, UpdateInterval);
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -609,6 +583,22 @@ struct MDCDeviceHard : MDCDevice {
         } catch (const std::exception& e) {
             printf("[_status_thread] Error: %s\n", e.what());
         }
+        
+        // Call stop() because we may be bailing because the device terminated.
+        // If we're bailing because we've been signalled to exit (ie a different
+        // thread called stop()), this will be a no-op.
+        stop();
+        
+        // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
+        // exception if our MDCDeviceHard is undergoing destruction on a different thread.
+        // The destructor waits for this thread to terminate, so this should be safe.
+        const auto self = selfOrNull();
+        if (self) {
+            Object::Event ev;
+            ev.prop = &_device;
+            observersNotify(self, {});
+        }
+        
         printf("[_status_thread] Terminating\n");
     }
     
@@ -948,8 +938,6 @@ struct MDCDeviceHard : MDCDevice {
     
     struct {
         Toastbox::Signal signal; // Protects this struct
-        std::thread thread;
-        id /* CFRunLoopRef */ runLoop;
         std::unique_ptr<MDCUSBDevice> device;
     } _device;
     
@@ -981,6 +969,7 @@ struct MDCDeviceHard : MDCDevice {
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
+        id /* CFRunLoopRef */ runLoop;
         std::optional<_Status> status;
     } _status;
 };

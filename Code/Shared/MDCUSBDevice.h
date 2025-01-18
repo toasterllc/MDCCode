@@ -23,7 +23,7 @@ public:
         using Toastbox::RuntimeError::RuntimeError;
     };
     
-    static bool USBDeviceMatches(const USBDevice& dev) {
+    static bool USBDeviceMatches(USBDevice& dev) {
         namespace USB = Toastbox::USB;
         try {
 //            USB::DeviceDescriptor desc = dev.deviceDescriptor();
@@ -97,7 +97,7 @@ public:
         return _dev == x._dev;
     }
     
-    const USBDevice& dev() const { return *_dev; }
+    USBDevice& dev() { return *_dev; }
     
     // MARK: - Accessors
     

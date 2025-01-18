@@ -19,6 +19,7 @@ inline bool RunLoopStop() {
 
 // RunLoopStop(): tells a specific runloop to stop
 inline void RunLoopStop(CFRunLoopRef rl) {
+    assert(rl);
     CFRunLoopPerformBlock(rl, kCFRunLoopCommonModes, ^{
         objc_setAssociatedObject((__bridge id)rl, _RunLoopStopKey(), @YES, OBJC_ASSOCIATION_ASSIGN);
         CFRunLoopStop(rl);
