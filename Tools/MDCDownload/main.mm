@@ -13,6 +13,8 @@ namespace fs = std::filesystem;
 
 using ImgIds = std::set<Img::Id, std::greater<Img::Id>>;
 
+#define ProgramName "MDCDownload"
+
 static MDCDeviceHardPtr _DeviceGet() {
     MDCDevicesManagerPtr devicesManager = Object::Create<MDCDevicesManager>([] (const MDCUSBDevice::IncompatibleVersion& x) {
             printf("Incompatible device version: %s\n", x.what());
@@ -111,46 +113,61 @@ static ImgIds _GetExistingImgIdsInDir(const fs::path& dir) {
 
 
 
-static fs::path __DesktopDir() {
+static fs::path _DesktopDir() {
     auto urls = [[NSFileManager defaultManager] URLsForDirectory:NSDesktopDirectory inDomains:NSUserDomainMask];
     if (![urls count]) throw Toastbox::RuntimeError("failed to get NSDesktopDirectory");
     return [urls[0] fileSystemRepresentation];
 }
 
-static fs::path _DesktopDir() {
-    static fs::path Path = __DesktopDir();
+static fs::path _RootDir() {
+    static fs::path Path = _DesktopDir() / ProgramName;
     return Path;
 }
 
 static fs::path _LogFilePath() {
-    return _DesktopDir() / "MDCDownload-Log.txt";
+    return _RootDir() / "Log.txt";
 }
 
 static fs::path _OutputDir(std::string_view serial) {
-    return _DesktopDir() / ("MDCDownload-" + std::string(serial));
+    return _RootDir() / ("Photon-" + std::string(serial));
 }
 
 struct Term {
     FILE* file = nullptr;
+    Toastbox::FileDescriptor fd;
 };
 
 static Term _LogAndTermOutputInit(const fs::path& logFilePath) {
-//    // Move the terminal tty fd out of the way
-//    int ir = dup(STDOUT_FILENO);
-//    if (ir < 0) throw Toastbox::RuntimeError("dup failed: %s", strerror(errno));
-//    Toastbox::FileDescriptor termFd(ir);
-    
-    FILE* term = fopen("/dev/tty", "w+");
-    if (!term) throw Toastbox::RuntimeError("fopen failed: %s", strerror(errno));
-    setvbuf(term, nullptr, _IOLBF, 0);
+    Term term;
+    {
+//        FILE* term2 = fopen("/dev/tty", "w");
+//        if (!term2) throw Toastbox::RuntimeError("fopen failed: %s", strerror(errno));
+//        setvbuf(term2, nullptr, _IOLBF, 0);
+        
+        // Move the terminal tty fd out of the way
+        int ir = dup(STDOUT_FILENO);
+        if (ir < 0) throw Toastbox::RuntimeError("dup failed: %s", strerror(errno));
+        Toastbox::FileDescriptor fd(ir);
+        
+        FILE* file = fdopen(fd, "w");
+        if (!file) throw Toastbox::RuntimeError("fopen failed: %s", strerror(errno));
+        setvbuf(file, nullptr, _IOLBF, 0);
+        term = {
+            .file = file,
+            .fd = std::move(fd),
+        };
+    }
     
     // Route stdout to `logFilePath`
-    FILE* fr = freopen(logFilePath.c_str(), "a+", stdout);
-    if (!fr) throw Toastbox::RuntimeError("freopen failed: %s", strerror(errno));
-    // Ensure stdout is line-buffered
-    setvbuf(stdout, nullptr, _IOLBF, 0);
+    {
+        std::filesystem::create_directories(logFilePath.parent_path());
+        FILE* fr = freopen(logFilePath.c_str(), "a+", stdout);
+        if (!fr) throw Toastbox::RuntimeError("freopen failed: %s", strerror(errno));
+        // Ensure stdout is line-buffered
+        setvbuf(stdout, nullptr, _IOLBF, 0);
+    }
     
-    return { term };
+    return term;
     
 //    constexpr int OpenFlags = O_RDWR|O_CREAT|O_APPEND|O_CLOEXEC;
 //    constexpr int OpenPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
@@ -159,19 +176,39 @@ static Term _LogAndTermOutputInit(const fs::path& logFilePath) {
 //    Toastbox::FileDescriptor stdoutFd(ir);
 }
 
+static std::string _CurrentDateTimeString() {
+    return Time::StringForTimeInstant(Time::Clock::TimeInstantFromTimePoint(Time::Clock::now()));
+//    NSDateFormatter* fmt = [NSDateFormatter new];
+//    [fmt setDateStyle: NSDateFormatterMediumStyle];
+//    [fmt setTimeStyle: NSDateFormatterMediumStyle];
+//     
+//    NSDate* date = [NSDate date];
+//     
+//    // US English Locale (en_US)
+//    dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US"];
+//    NSLog(@"%@", [dateFormatter stringFromDate:date]); // Jan 2, 2001
+//     
+//    // French Locale (fr_FR)
+//    dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"fr_FR"];
+//    NSLog(@"%@", [dateFormatter stringFromDate:date]); // 2 janv. 2001
+//     
+//    // Japanese Locale (ja_JP)
+//    dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"ja_JP"];
+//    NSLog(@"%@", [dateFormatter stringFromDate:date]); // 2001/01/02
+}
+
 int main(int argc, const char* argv[]) {
-    Term term = _LogAndTermOutputInit(_LogFilePath());
-    
-    // Configure MDCDeviceHard
-    {
-        MDCDeviceHard::Config(STMApp_elf, std::size(STMApp_elf), ICEApp_bin, std::size(ICEApp_bin));
-    }
-    
     try {
-//        std::ofstream f;
-//        f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-//        f.open(_StatePath(dir));
-//        f.write((char*)&state, sizeof(state));
+        Term term = _LogAndTermOutputInit(_LogFilePath());
+        
+        printf("==================================================\n");
+        printf(ProgramName " started at %s\n", _CurrentDateTimeString().c_str());
+        printf("==================================================\n");
+        
+        // Configure MDCDeviceHard
+        {
+            MDCDeviceHard::Config(STMApp_elf, std::size(STMApp_elf), ICEApp_bin, std::size(ICEApp_bin));
+        }
         
         MDCDeviceHardPtr device = _DeviceGet();
         const fs::path outputDir = _OutputDir(device->serial());
