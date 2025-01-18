@@ -178,23 +178,6 @@ static Term _LogAndTermOutputInit(const fs::path& logFilePath) {
 
 static std::string _CurrentDateTimeString() {
     return Time::StringForTimeInstant(Time::Clock::TimeInstantFromTimePoint(Time::Clock::now()));
-//    NSDateFormatter* fmt = [NSDateFormatter new];
-//    [fmt setDateStyle: NSDateFormatterMediumStyle];
-//    [fmt setTimeStyle: NSDateFormatterMediumStyle];
-//     
-//    NSDate* date = [NSDate date];
-//     
-//    // US English Locale (en_US)
-//    dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US"];
-//    NSLog(@"%@", [dateFormatter stringFromDate:date]); // Jan 2, 2001
-//     
-//    // French Locale (fr_FR)
-//    dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"fr_FR"];
-//    NSLog(@"%@", [dateFormatter stringFromDate:date]); // 2 janv. 2001
-//     
-//    // Japanese Locale (ja_JP)
-//    dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"ja_JP"];
-//    NSLog(@"%@", [dateFormatter stringFromDate:date]); // 2001/01/02
 }
 
 int main(int argc, const char* argv[]) {
@@ -267,6 +250,7 @@ int main(int argc, const char* argv[]) {
             }
         }
         
+        // Read data from the device and push it into imageDataQueue
         {
             auto cleanup = device->dataReadStart();
             
