@@ -60,6 +60,7 @@
 		552F4BA429AD3ACB000CEAB2 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
 		552F4BA529AD3ACB000CEAB2 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		552F4BA629AD3ACB000CEAB2 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
+		5548DAC52D3C876A000DB18D /* MSPDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSPDebug.h; sourceTree = "<group>"; };
 		55496F38278BAC5000BCA739 /* MSP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
 		55781C272D373230005BBA6F /* MemStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MemStream.h; sourceTree = "<group>"; };
 		557ABD2529E61A3D0032619E /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
@@ -211,6 +212,7 @@
 				55D4AAAA27B237AA0052EFEE /* ImgSD.h */,
 				55B66B412715274200AD39A5 /* ImgSensor.h */,
 				55496F38278BAC5000BCA739 /* MSP.h */,
+				5548DAC52D3C876A000DB18D /* MSPDebug.h */,
 				55B66B40271525F800AD39A5 /* SD.h */,
 				55B66B422715286A00AD39A5 /* SDCard.h */,
 				55B66B472717691200AD39A5 /* STM.h */,
