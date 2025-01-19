@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <chrono>
 #import "Shared/MDCDeviceHard.h"
 #import "Shared/ImageExporter/ImageExporter.h"
 #import "Shared/JThread.h"
@@ -291,21 +292,39 @@ int main(int argc, const char* argv[]) {
             
             _TermPrint(term, "\n");
             size_t imageIdx = 0;
+            struct {
+                size_t bytes = 0;
+                std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+            } throughput;
+            float mbPerSec = 0;
             for (Img::Id id : imgIds) {
+                constexpr size_t MB = 1024*1024;
+                constexpr size_t ThroughputThreshold = 128*MB;
+                if (throughput.bytes > ThroughputThreshold) {
+                    using namespace std::chrono;
+                    const milliseconds ms = duration_cast<milliseconds>(steady_clock::now() - throughput.startTime);
+                    mbPerSec = ((float)throughput.bytes / ms.count()) * (1000. / MB);
+                    throughput = {};
+                }
+                
                 const int percentage = (((float)(imageIdx+1) / imgIds.size()) * 100);
                 _TermClearLine(term);
-                _TermPrint(term, "[ Downloading image %ju / %ju ] [ %ju%% ]\n",
-                    (uintmax_t)(imageIdx+1), (uintmax_t)imgIds.size(), (uintmax_t)percentage);
+                _TermPrint(term, "[ Downloading image %ju / %ju ] [ %ju%% ] [ Throughput: %.1f MB/sec ]\n",
+                    (uintmax_t)(imageIdx+1), (uintmax_t)imgIds.size(), (uintmax_t)percentage, mbPerSec);
                 
                 ImageDataPtr img = std::make_unique<ImageData>();
                 img->id = id;
                 
                 const SD::Block sdBlockBegin = _SDBlockForImgId(mspState.sd, id);
                 const MDCDeviceHard::_SDRegion sdRegion = { sdBlockBegin, sdBlockBegin+ImgSD::Full::ImageBlockCount };
-                device->_dataRead(sdRegion, img->data, std::size(img->data));
+                const size_t len = std::size(img->data);
+                device->_dataRead(sdRegion, img->data, len);
                 
                 imageDataQueue.push(std::move(img));
                 imageIdx++;
+                
+                throughput.bytes += len;
+                
             }
         }
     
