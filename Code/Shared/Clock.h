@@ -1,9 +1,9 @@
 #pragma once
 #include <chrono>
 #include <cassert>
+#include "Time.h"
 #include "date/date.h"
 #include "date/tz.h"
-#include "Time.h"
 
 namespace Time {
 

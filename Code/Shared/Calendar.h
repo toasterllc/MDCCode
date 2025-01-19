@@ -347,8 +347,8 @@ inline TimeOfDay TimeOfDayFromString(std::string x, bool assumeAM=true) {
     
     // Add AM/PM if it isn't specified, so we don't reject the input if it's just missing am/pm
     if (_DateFormatterStateGet().showsAMPM &&
-        !Toastbox::String::EndsWith("am", x) &&
-        !Toastbox::String::EndsWith("pm", x)) {
+        !x.ends_with("am") &&
+        !x.ends_with("pm")) {
         x += (assumeAM ? "am" : "pm");
     }
     

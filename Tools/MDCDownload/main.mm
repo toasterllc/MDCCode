@@ -2,6 +2,7 @@
 #import "Shared/MDCDeviceHard.h"
 #import "Shared/ImageExporter/ImageExporter.h"
 #import "Shared/JThread.h"
+#import "Shared/MSPDebug.h"
 #import "Lib/Toastbox/SignalQueue.h"
 #import "Lib/Toastbox/String.h"
 #import "Lib/Toastbox/NumForStr.h"
@@ -231,6 +232,10 @@ int main(int argc, const char* argv[]) {
         {
             auto lock = device->deviceLock();
             mspState = device->_device.device->mspStateRead();
+            printf("==================================================\n");
+            printf("MSPState:\n");
+            printf("%s\n", MSP::StringForState(mspState).c_str());
+            printf("==================================================\n");
         }
         
         const MDCDeviceHard::ImageRange imgRange = MDCDeviceHard::_GetImageRange(mspState.sd.imgRingBuf(), mspState.sd.imgCap);
