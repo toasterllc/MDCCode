@@ -17,6 +17,7 @@ namespace fs = std::filesystem;
 using ImgIds = std::set<Img::Id, std::greater<Img::Id>>;
 
 #define ProgramName "MDCDownload"
+const fs::path ImageFileNameExtension = fs::path(".") += ImageExporter::Formats::DNG.extension;
 
 static MDCDeviceHardPtr _DeviceGet() {
     auto usbDevs = MDCUSBDevice::DevicesGet();
@@ -100,8 +101,9 @@ static ImageRecord _ImageRecordForImageDataPtr(const ImageDataPtr& img) {
 }
 
 static std::optional<Img::Id> _ImgIdForFileName(const fs::path& fileName) {
-    const fs::path basename = fs::path(fileName).replace_extension();
-    auto parts = Toastbox::String::Split(basename.c_str(), "-");
+    if (fileName.extension() != ImageFileNameExtension) return std::nullopt;
+    const fs::path stem = fs::path(fileName).stem();
+    auto parts = Toastbox::String::Split(stem.c_str(), "-");
     if (parts.size() != 2) return std::nullopt;
     if (parts.at(0) != "Image") return std::nullopt;
     try {
@@ -120,8 +122,6 @@ static ImgIds _GetExistingImgIdsInDir(const fs::path& dir) {
     }
     return ids;
 }
-
-
 
 static fs::path _DesktopDir() {
     auto urls = [[NSFileManager defaultManager] URLsForDirectory:NSDesktopDirectory inDomains:NSUserDomainMask];
@@ -272,7 +272,7 @@ int main(int argc, const char* argv[]) {
                             }
                             
                             const ImageRecord rec = _ImageRecordForImageDataPtr(img);
-                            const fs::path fileName = ImageExporter::FileNameForImageRecord(rec).replace_extension(ImageExporter::Formats::DNG.extension);
+                            const fs::path fileName = ImageExporter::FileNameForImageRecord(rec).replace_extension(ImageFileNameExtension);
                             const fs::path filePath = outputDir / fileName;
                             const Image image = _ImageForImageDataPtr(img);
                             ImageExporter::ExportDNG(rec, image, filePath);
