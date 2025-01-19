@@ -337,7 +337,6 @@
 		55E393BD2D35C5D4000C1EFA /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
 		55E393BE2D35C5D4000C1EFA /* Saturation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
 		55E393BF2D35C5D4000C1EFA /* Saturation.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
-		55E393C12D35C5D4000C1EFA /* Assert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
 		55E393C22D35C5D4000C1EFA /* BitmapImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitmapImage.h; sourceTree = "<group>"; };
 		55E393C32D35C5D4000C1EFA /* Cache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Cache.h; sourceTree = "<group>"; };
 		55E393C42D35C5D4000C1EFA /* ChecksumFletcher32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
@@ -888,7 +887,6 @@
 		55E393EA2D35C5D4000C1EFA /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				55E393C12D35C5D4000C1EFA /* Assert.h */,
 				55E393C22D35C5D4000C1EFA /* BitmapImage.h */,
 				55E393C32D35C5D4000C1EFA /* Cache.h */,
 				55781C552D37815C005BBA6F /* Calendar.h */,

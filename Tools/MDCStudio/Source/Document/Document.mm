@@ -488,6 +488,11 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     [_sourceListView setImageSources:imageSources];
     [self sourceListViewSelectionChanged:_sourceListView];
     
+    // If the settings sheet is open for a device that disappeared, close the settings window
+    if (_deviceSettings.device && devices.find(_deviceSettings.device)==devices.end()) {
+        [self deviceSettingsView:_deviceSettings.view dismiss:false];
+    }
+    
 //    const bool haveDevices = !imageSources.empty();
 //    if (!haveDevices) {
 //        [self _setCenterView:_noDevicesView];

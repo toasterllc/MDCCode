@@ -855,6 +855,11 @@ struct MDCDeviceHard : MDCDevice {
                 auto lock = std::unique_lock(*_imageLibrary);
                 _imageLibrary->write();
             }
+            
+            // Update our status to reflect the newly loaded images
+            {
+                _status_update();
+            }
         
         } catch (const StaleLibrary& e) {
             printf("[_sync_thread] Stale ImageLibrary: %s\n", e.what());
