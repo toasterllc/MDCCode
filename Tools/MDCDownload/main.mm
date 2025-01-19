@@ -255,7 +255,7 @@ int main(int argc, const char* argv[]) {
         // Spawn workers that write the image files
         std::vector<JThread> workers;
         {
-            const int threadCount = std::thread::hardware_concurrency();
+            const int threadCount = 4;
             for (int i=0; i<threadCount; i++) {
                 workers.emplace_back([&](){
                     try {
