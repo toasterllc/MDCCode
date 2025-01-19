@@ -1,7 +1,9 @@
 #import <Foundation/Foundation.h>
+#import <chrono>
 #import "Shared/MDCDeviceHard.h"
 #import "Shared/ImageExporter/ImageExporter.h"
 #import "Shared/JThread.h"
+#import "Shared/MSPDebug.h"
 #import "Lib/Toastbox/SignalQueue.h"
 #import "Lib/Toastbox/String.h"
 #import "Lib/Toastbox/NumForStr.h"
@@ -15,6 +17,7 @@ namespace fs = std::filesystem;
 using ImgIds = std::set<Img::Id, std::greater<Img::Id>>;
 
 #define ProgramName "MDCDownload"
+const fs::path ImageFileNameExtension = fs::path(".") += ImageExporter::Formats::DNG.extension;
 
 static MDCDeviceHardPtr _DeviceGet() {
     auto usbDevs = MDCUSBDevice::DevicesGet();
@@ -98,8 +101,9 @@ static ImageRecord _ImageRecordForImageDataPtr(const ImageDataPtr& img) {
 }
 
 static std::optional<Img::Id> _ImgIdForFileName(const fs::path& fileName) {
-    const fs::path basename = fs::path(fileName).replace_extension();
-    auto parts = Toastbox::String::Split(basename.c_str(), "-");
+    if (fileName.extension() != ImageFileNameExtension) return std::nullopt;
+    const fs::path stem = fs::path(fileName).stem();
+    auto parts = Toastbox::String::Split(stem.c_str(), "-");
     if (parts.size() != 2) return std::nullopt;
     if (parts.at(0) != "Image") return std::nullopt;
     try {
@@ -118,8 +122,6 @@ static ImgIds _GetExistingImgIdsInDir(const fs::path& dir) {
     }
     return ids;
 }
-
-
 
 static fs::path _DesktopDir() {
     auto urls = [[NSFileManager defaultManager] URLsForDirectory:NSDesktopDirectory inDomains:NSUserDomainMask];
@@ -198,9 +200,13 @@ static void _TermClearLine(const Term& term) {
 
 template<typename ...Args>
 static void _TermPrint(const Term& term, const char* fmt, Args&&... args) {
+// Silence warning: "Format string is not a string literal (potentially insecure)"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-security"
     printf(fmt, std::forward<Args>(args)...);
     // Check for term.file so we don't crash if our Term object wasn't fully created
     if (term.file) fprintf(term.file, fmt, std::forward<Args>(args)...);
+#pragma clang diagnostic pop
 }
 
 int main(int argc, const char* argv[]) {
@@ -231,6 +237,10 @@ int main(int argc, const char* argv[]) {
         {
             auto lock = device->deviceLock();
             mspState = device->_device.device->mspStateRead();
+            printf("==================================================\n");
+            printf("MSPState:\n");
+            printf("%s\n", MSP::StringForState(mspState).c_str());
+            printf("==================================================\n");
         }
         
         const MDCDeviceHard::ImageRange imgRange = MDCDeviceHard::_GetImageRange(mspState.sd.imgRingBuf(), mspState.sd.imgCap);
@@ -245,7 +255,7 @@ int main(int argc, const char* argv[]) {
         // Spawn workers that write the image files
         std::vector<JThread> workers;
         {
-            const int threadCount = std::thread::hardware_concurrency();
+            const int threadCount = 4;
             for (int i=0; i<threadCount; i++) {
                 workers.emplace_back([&](){
                     try {
@@ -262,7 +272,7 @@ int main(int argc, const char* argv[]) {
                             }
                             
                             const ImageRecord rec = _ImageRecordForImageDataPtr(img);
-                            const fs::path fileName = ImageExporter::FileNameForImageRecord(rec).replace_extension(ImageExporter::Formats::DNG.extension);
+                            const fs::path fileName = ImageExporter::FileNameForImageRecord(rec).replace_extension(ImageFileNameExtension);
                             const fs::path filePath = outputDir / fileName;
                             const Image image = _ImageForImageDataPtr(img);
                             ImageExporter::ExportDNG(rec, image, filePath);
@@ -286,21 +296,39 @@ int main(int argc, const char* argv[]) {
             
             _TermPrint(term, "\n");
             size_t imageIdx = 0;
+            struct {
+                size_t bytes = 0;
+                std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+            } throughput;
+            float mbPerSec = 0;
             for (Img::Id id : imgIds) {
+                constexpr size_t MB = 1024*1024;
+                constexpr size_t ThroughputThreshold = 32*MB;
+                if (throughput.bytes > ThroughputThreshold) {
+                    using namespace std::chrono;
+                    const milliseconds ms = duration_cast<milliseconds>(steady_clock::now() - throughput.startTime);
+                    mbPerSec = ((float)throughput.bytes / ms.count()) * (1000. / MB);
+                    throughput = {};
+                }
+                
                 const int percentage = (((float)(imageIdx+1) / imgIds.size()) * 100);
                 _TermClearLine(term);
-                _TermPrint(term, "[ Downloading image %ju / %ju ] [ %ju%% ]\n",
-                    (uintmax_t)(imageIdx+1), (uintmax_t)imgIds.size(), (uintmax_t)percentage);
+                _TermPrint(term, "[ Downloading image %ju / %ju ] [ %ju%% ] [ Throughput: %.1f MB/sec ]\n",
+                    (uintmax_t)(imageIdx+1), (uintmax_t)imgIds.size(), (uintmax_t)percentage, mbPerSec);
                 
                 ImageDataPtr img = std::make_unique<ImageData>();
                 img->id = id;
                 
                 const SD::Block sdBlockBegin = _SDBlockForImgId(mspState.sd, id);
                 const MDCDeviceHard::_SDRegion sdRegion = { sdBlockBegin, sdBlockBegin+ImgSD::Full::ImageBlockCount };
-                device->_dataRead(sdRegion, img->data, std::size(img->data));
+                const size_t len = std::size(img->data);
+                device->_dataRead(sdRegion, img->data, len);
                 
                 imageDataQueue.push(std::move(img));
                 imageIdx++;
+                
+                throughput.bytes += len;
+                
             }
         }
     

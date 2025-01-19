@@ -3,6 +3,9 @@
 #include <string>
 #include "Time.h"
 #include "Lib/Toastbox/DurationString.h"
+#include "Shared/Clock.h"
+#include "date/date.h"
+#include "date/tz.h"
 
 namespace Time {
 

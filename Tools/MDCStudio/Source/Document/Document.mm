@@ -1,5 +1,6 @@
 #import "Document.h"
 #import <algorithm>
+#import <exception>
 #import "Lib/Toastbox/Cast.h"
 #import "Lib/Toastbox/Util.h"
 #import "Shared/PrefsUtil.h"
