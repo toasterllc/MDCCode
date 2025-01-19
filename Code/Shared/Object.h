@@ -4,6 +4,7 @@
 #include <list>
 #include <set>
 #include <map>
+#include <functional>
 #include <simd/simd.h>
 #include <cxxabi.h>
 #include "Lib/Toastbox/Cast.h"
