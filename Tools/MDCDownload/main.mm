@@ -200,9 +200,13 @@ static void _TermClearLine(const Term& term) {
 
 template<typename ...Args>
 static void _TermPrint(const Term& term, const char* fmt, Args&&... args) {
+// Silence warning: "Format string is not a string literal (potentially insecure)"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-security"
     printf(fmt, std::forward<Args>(args)...);
     // Check for term.file so we don't crash if our Term object wasn't fully created
     if (term.file) fprintf(term.file, fmt, std::forward<Args>(args)...);
+#pragma clang diagnostic pop
 }
 
 int main(int argc, const char* argv[]) {
@@ -299,7 +303,7 @@ int main(int argc, const char* argv[]) {
             float mbPerSec = 0;
             for (Img::Id id : imgIds) {
                 constexpr size_t MB = 1024*1024;
-                constexpr size_t ThroughputThreshold = 128*MB;
+                constexpr size_t ThroughputThreshold = 32*MB;
                 if (throughput.bytes > ThroughputThreshold) {
                     using namespace std::chrono;
                     const milliseconds ms = duration_cast<milliseconds>(steady_clock::now() - throughput.startTime);
