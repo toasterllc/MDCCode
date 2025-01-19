@@ -6,6 +6,7 @@
 #import "Lib/Toastbox/String.h"
 #import "Lib/Toastbox/NumForStr.h"
 #import "Lib/Toastbox/FileDescriptor.h"
+#import "Lib/Toastbox/Defer.h"
 #import "STMApp.elf.h"
 #import "ICEApp.bin.h"
 using namespace MDCStudio;
@@ -142,6 +143,7 @@ static fs::path _OutputDir(std::string_view serial) {
 struct Term {
     FILE* file = nullptr;
     Toastbox::FileDescriptor fd;
+    bool tty = false;
 };
 
 static Term _LogAndTermOutputInit(const fs::path& logFilePath) {
@@ -155,6 +157,7 @@ static Term _LogAndTermOutputInit(const fs::path& logFilePath) {
         int ir = dup(STDOUT_FILENO);
         if (ir < 0) throw Toastbox::RuntimeError("dup failed: %s", strerror(errno));
         Toastbox::FileDescriptor fd(ir);
+        const bool tty = isatty(fd);
         
         FILE* file = fdopen(fd, "w");
         if (!file) throw Toastbox::RuntimeError("fopen failed: %s", strerror(errno));
@@ -162,6 +165,7 @@ static Term _LogAndTermOutputInit(const fs::path& logFilePath) {
         term = {
             .file = file,
             .fd = std::move(fd),
+            .tty = tty,
         };
     }
     
@@ -187,9 +191,26 @@ static std::string _CurrentDateTimeString() {
     return Time::StringForTimeInstant(Time::Clock::TimeInstantFromTimePoint(Time::Clock::now()));
 }
 
+static void _TermClearLine(const Term& term) {
+    // Clear the current line if we're printing to a terminal
+    if (term.tty) fprintf(term.file, "\033[A\33[2K\r");
+}
+
+template<typename ...Args>
+static void _TermPrint(const Term& term, const char* fmt, Args&&... args) {
+    printf(fmt, std::forward<Args>(args)...);
+    // Check for term.file so we don't crash if our Term object wasn't fully created
+    if (term.file) fprintf(term.file, fmt, std::forward<Args>(args)...);
+}
+
 int main(int argc, const char* argv[]) {
+    constexpr size_t ImageQueueSlotCount = 32;
+    using ImageQueue = Toastbox::SignalQueue<ImageDataPtr, ImageQueueSlotCount>;
+    ImageQueue imageDataQueue;
+    Term term;
+    
     try {
-        Term term = _LogAndTermOutputInit(_LogFilePath());
+        term = _LogAndTermOutputInit(_LogFilePath());
         
         printf("==================================================\n");
         printf(ProgramName " started at %s\n", _CurrentDateTimeString().c_str());
@@ -200,9 +221,11 @@ int main(int argc, const char* argv[]) {
             MDCDeviceHard::Config(STMApp_elf, std::size(STMApp_elf), ICEApp_bin, std::size(ICEApp_bin));
         }
         
+        _TermPrint(term, "Configuring Photon...\n");
         MDCDeviceHardPtr device = _DeviceGet();
         const fs::path outputDir = _OutputDir(device->serial());
         std::filesystem::create_directories(outputDir);
+        _TermPrint(term, "-> Done\n\n");
         
         MSP::State mspState = {};
         {
@@ -218,10 +241,6 @@ int main(int argc, const char* argv[]) {
                 imgIds.insert(id);
             }
         }
-        
-        constexpr size_t ImageQueueSlotCount = 32;
-        using ImageQueue = Toastbox::SignalQueue<ImageDataPtr, ImageQueueSlotCount>;
-        ImageQueue imageDataQueue;
         
         // Spawn workers that write the image files
         std::vector<JThread> workers;
@@ -257,12 +276,21 @@ int main(int argc, const char* argv[]) {
             }
         }
         
+        // Signal workers to exit when we leave our scope
+        // Using Defer so that this works even when an exception is thrown
+        Defer(imageDataQueue.push(nullptr));
+        
         // Read data from the device and push it into imageDataQueue
         {
             auto cleanup = device->dataReadStart();
             
+            _TermPrint(term, "\n");
+            size_t imageIdx = 0;
             for (Img::Id id : imgIds) {
-                printf("Downloading image id %ju\n", (uintmax_t)id);
+                const int percentage = (((float)(imageIdx+1) / imgIds.size()) * 100);
+                _TermClearLine(term);
+                _TermPrint(term, "[ Downloading image %ju / %ju ] [ %ju%% ]\n",
+                    (uintmax_t)(imageIdx+1), (uintmax_t)imgIds.size(), (uintmax_t)percentage);
                 
                 ImageDataPtr img = std::make_unique<ImageData>();
                 img->id = id;
@@ -272,14 +300,12 @@ int main(int argc, const char* argv[]) {
                 device->_dataRead(sdRegion, img->data, std::size(img->data));
                 
                 imageDataQueue.push(std::move(img));
+                imageIdx++;
             }
-            
-            // Signal workers to exit
-            imageDataQueue.push(nullptr);
         }
     
     } catch (std::exception& e) {
-        printf("Error: %s\n", e.what());
+        _TermPrint(term, "Error: %s\n", e.what());
     }
     
     return 0;
