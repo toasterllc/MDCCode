@@ -405,7 +405,8 @@ static NSColor* _WhiteBalanceDefaultColor() {
 }
 
 static NSColorPanel* _ColorPanelCreate() {
-    [NSColorPanel setPickerMask:NSColorPanelWheelModeMask];
+    constexpr NSColorPanelOptions opts = NSColorPanelRGBModeMask|NSColorPanelCMYKModeMask|NSColorPanelHSBModeMask|NSColorPanelCustomPaletteModeMask|NSColorPanelWheelModeMask;
+    [NSColorPanel setPickerMask:opts];
     NSColorPanel* panel = [NSColorPanel new];
     [panel setShowsAlpha:false];
     [panel setMode:NSColorPanelModeWheel];
