@@ -120,6 +120,10 @@ struct MDCDeviceDemo : MDCDevice {
         _settings = {};
     }
     
+    std::string diagnosticData() override {
+        return "MDCDeviceDemo\n";
+    }
+    
     // MARK: - Image Syncing
     
     void sync() override {

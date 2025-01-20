@@ -208,6 +208,7 @@
 		5544AE6027B6F16F006AB473 /* DocumentController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DocumentController.mm; sourceTree = "<group>"; };
 		55458F5B2B86C4F3008AB8B2 /* TmpDir.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TmpDir.h; sourceTree = "<group>"; };
 		55458F5D2B8882D9008AB8B2 /* CenterContent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CenterContent.h; sourceTree = "<group>"; };
+		5548DAEC2D3E24C6000DB18D /* MSPDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSPDebug.h; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* Photon Transfer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Photon Transfer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* App.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = App.mm; sourceTree = "<group>"; };
 		55496F48278CFC0600BCA739 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -918,6 +919,7 @@
 				55E393D92D35C5D4000C1EFA /* MDCDevicesManager.h */,
 				55E393DA2D35C5D4000C1EFA /* MDCUSBDevice.h */,
 				55E393DB2D35C5D4000C1EFA /* MSP.h */,
+				5548DAEC2D3E24C6000DB18D /* MSPDebug.h */,
 				55E393DC2D35C5D4000C1EFA /* MSPTriggers.h */,
 				55E393DD2D35C5D4000C1EFA /* Object.h */,
 				55E393DE2D35C5D4000C1EFA /* PixelSampler.h */,

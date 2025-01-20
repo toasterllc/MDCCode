@@ -1,3 +1,5 @@
+#import <string>
+#import <optional>
 #import "ImageSource.h"
 
 namespace MDCStudio {
@@ -55,6 +57,7 @@ struct MDCDevice : ImageSource {
     virtual const MSP::Settings settings() = 0;
     virtual void settings(const MSP::Settings& x) = 0;
     virtual void factoryReset() = 0;
+    virtual std::string diagnosticData() = 0;
     
     // MARK: - Image Syncing
     

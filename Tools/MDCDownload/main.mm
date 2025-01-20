@@ -233,16 +233,14 @@ int main(int argc, const char* argv[]) {
         std::filesystem::create_directories(outputDir);
         _TermPrint(term, "-> Done\n\n");
         
-        MSP::State mspState = {};
         {
-            auto lock = device->deviceLock();
-            mspState = device->_device.device->mspStateRead();
             printf("==================================================\n");
-            printf("MSPState:\n");
-            printf("%s\n", MSP::StringForState(mspState).c_str());
+            printf("Device diagnostic data:\n");
+            printf("%s\n", device->diagnosticData().c_str());
             printf("==================================================\n");
         }
         
+        const MSP::State mspState = device->status().mspState;
         const MDCDeviceHard::ImageRange imgRange = MDCDeviceHard::_GetImageRange(mspState.sd.imgRingBuf(), mspState.sd.imgCap);
         const ImgIds existingImgIds = _GetExistingImgIdsInDir(outputDir);
         ImgIds imgIds;

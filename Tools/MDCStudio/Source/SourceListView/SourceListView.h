@@ -8,6 +8,7 @@
 - (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView;
 - (void)sourceListView:(SourceListView*)sourceListView showSettingsForDevice:(MDCStudio::MDCDevicePtr)device;
 - (void)sourceListView:(SourceListView*)sourceListView factoryResetDevice:(MDCStudio::MDCDevicePtr)device;
+- (void)sourceListView:(SourceListView*)sourceListView exportDiagnosticData:(MDCStudio::MDCDevicePtr)device;
 @end
 
 @interface SourceListView : NSView
