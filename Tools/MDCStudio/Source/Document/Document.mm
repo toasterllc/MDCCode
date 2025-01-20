@@ -475,6 +475,25 @@ static void _UpdateImageGridViewFromPrefs(PrefsPtr prefs, ImageGridView* view) {
     }];
 }
 
+- (void)sourceListView:(SourceListView*)sourceListView exportDiagnosticData:(MDCStudio::MDCDevicePtr)device {
+    constexpr const char* FileName = "Photon-Diagnostic-Data.txt";
+    
+    const std::string diagData = device->diagnosticData();
+    
+    NSSavePanel* panel = [NSSavePanel new];
+    [panel setCanCreateDirectories:true];
+    [panel setNameFieldStringValue:@(FileName)];
+    [panel beginSheetModalForWindow:_window completionHandler:^(NSModalResponse result) {
+        if (result != NSModalResponseOK) return;
+        
+        const std::filesystem::path path([[[panel URL] path] UTF8String]);
+        std::ofstream f;
+        f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+        f.open([[[panel URL] path] UTF8String]);
+        f.write((const char*)diagData.c_str(), diagData.size());
+    }];
+}
+
 - (void)_updateDevices {
     std::set<ImageSourcePtr> imageSources;
     std::set<MDCDeviceHardPtr> devices = MDCDevicesManagerGlobal()->devices();

@@ -1,4 +1,5 @@
 #import "MDCDevice.h"
+#import "Shared/MSPDebug.h"
 #import "Shared/MDCUSBDevice.h"
 #import <IOKit/IOKitLib.h>
 #import <IOKit/IOMessage.h>
@@ -205,6 +206,16 @@ struct MDCDeviceHard : MDCDevice {
             _thumbCache.clear();
             _imageCache.clear();
         }
+    }
+    
+    std::string diagnosticData() override {
+        std::stringstream ss;
+        ss << "MDCDeviceHard serial " << _serial << "\n";
+        {
+            auto lock = std::unique_lock(_status.lock);
+            ss << MSP::StringForState(_status.status.mspState) << "\n";
+        }
+        return ss.str();
     }
     
     // MARK: - Image Syncing

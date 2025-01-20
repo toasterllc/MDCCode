@@ -212,7 +212,6 @@ inline std::string StringForState(const MSP::State& x, MSPLineForAddrFn mspLineF
         fprintf(f,          "    count:                 %ju\n",                 (uintmax_t)reset.count);
         i++;
     }
-    fprintf(f,              "\n");
     
     // Flush the stream to so that `buf` is assigned to the FILE's internal buffer
     fflush(f);

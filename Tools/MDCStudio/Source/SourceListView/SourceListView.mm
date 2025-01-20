@@ -277,6 +277,7 @@ static void _Init(SourceListView* self) {
         NSMenu* menu = [[NSMenu alloc] initWithTitle:@""];
         [menu addItemWithTitle:@"Settings…" action:@selector(_settings:) keyEquivalent:@""];
         [menu addItemWithTitle:@"Factory Reset…" action:@selector(_factoryReset:) keyEquivalent:@""];
+        [menu addItemWithTitle:@"Export Diagnostic Data…" action:@selector(_exportDiagnosticData:) keyEquivalent:@""];
         [self->_outlineView setMenu:menu];
     }
     
@@ -450,11 +451,19 @@ static void _Init(SourceListView* self) {
     }
 }
 
+- (IBAction)_exportDiagnosticData:(id)sender {
+    if (MDCDevicePtr device = [self _clickedDevice]) {
+        [_delegate sourceListView:self exportDiagnosticData:device];
+    }
+}
+
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
     MDCDevicePtr clickedDevice = [self _clickedDevice];
     if ([item action] == @selector(_settings:)) {
         return (bool)clickedDevice;
     } else if ([item action] == @selector(_factoryReset:)) {
+        return (bool)clickedDevice;
+    } else if ([item action] == @selector(_exportDiagnosticData:)) {
         return (bool)clickedDevice;
     }
     return true;
@@ -462,10 +471,6 @@ static void _Init(SourceListView* self) {
 
 - (void)_showSettingsForDevice:(MDCDevicePtr)device {
     [_delegate sourceListView:self showSettingsForDevice:device];
-}
-
-- (void)_factoryResetDevice:(MDCDevicePtr)device {
-    [_delegate sourceListView:self factoryResetDevice:device];
 }
 
 // MARK: - Outline View Data Source / Delegate
