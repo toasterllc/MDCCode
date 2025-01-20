@@ -355,12 +355,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     IBOutlet ColorButtonCell* _colorButton;
 }
 
-static NSColor* _WhiteBalanceDefaultColor() {
-    // Outdoor
-    return [NSColor colorWithDisplayP3Red:0.555822 green:1 blue:0.767107 alpha:1];
-//    // Indoor
-//    return [NSColor colorWithDisplayP3Red:0.836295 green:1 blue:0.423893 alpha:1];
-}
+static NSString* InspectorViewItem_WhiteBalanceDefaultColor = @"InspectorViewItem_WhiteBalanceDefaultColor";
 
 - (bool)updateView {
     bool modified = [super updateView];
@@ -399,7 +394,7 @@ static NSColor* _WhiteBalanceDefaultColor() {
     if ([_modeControl selectedSegment] == 0) {
         setter(self, nil);
     } else {
-        setter(self, _WhiteBalanceDefaultColor());
+        setter(self, InspectorViewItem_WhiteBalanceDefaultColor);
     }
     [section updateView];
 }
@@ -693,6 +688,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 @end
 
 @implementation InspectorView {
+@public
     ImageSourcePtr _imageSource;
     ImageSelectionPtr _selection;
     Object::ObserverPtr _selectionOb;
@@ -828,7 +824,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             
             {
                 Item_WhiteBalance* it = [self _createItemWithClass:[Item_WhiteBalance class]];
-                it->getter = _GetterCreate(self, _Get_whiteBalance);
+                it->getter = _GetterCreate<_Get_WhiteBalance>(self, _Get_whiteBalance);
                 it->setter = _SetterCreate(self, _Set_whiteBalance);
                 [section addItem:it];
             }
@@ -1025,24 +1021,104 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     return self;
 }
 
+static NSColor* _WhiteBalanceColor(const double* illum) {
+    return [NSColor colorWithDisplayP3Red:illum[0] green:illum[1] blue:illum[2] alpha:1];
+}
+
+static NSColor* _WhiteBalanceMixedColor() {
+    // Outdoor
+    return [NSColor colorWithDisplayP3Red:0.5 green:0.5 blue:0.5 alpha:1];
+}
+
 using _ModelGetterFn = id(*)(const ImageRecord&);
 using _ModelSetterFn = void(*)(ImageRecord&, id);
 
+static _ModelData _Get(InspectorView* self, _ModelGetterFn fn) {
+    bool init = false;
+    id first = nil;
+    for (const ImageRecordPtr& rec : self->_selection->images()) {
+        const id obj = fn(*rec);
+        
+        if (!init) {
+            first = obj;
+            init = true;
+            continue;
+        }
+        
+        if (first!=obj && ![first isEqual:obj]) {
+            return _ModelData{ .type = _ModelData::Type::Mixed };
+        }
+    }
+    
+    return _ModelData{ .data = first };
+}
+
+static _ModelData _Get_WhiteBalance(InspectorView* self, _ModelGetterFn fn) {
+    // All nil -> nil
+    // Some nil, some colors -> _ModelData::Type::Mixed
+    // All valid colors, same color -> color
+    // All valid colors, different colors -> _WhiteBalanceMixedColor()
+    id first = nil;
+    std::vector<id> vals;
+    bool allNil = true;
+    bool anyNil = false;
+    bool anyColor = false;
+    bool sameColor = true;
+    for (const ImageRecordPtr& rec : self->_selection->images()) {
+        id val = fn(*rec);
+        if (val) {
+            allNil = false;
+            anyColor = true;
+        } else {
+            anyNil = true;
+        }
+        
+        if (!first) first = val;
+        
+        if (sameColor && ![first isEqual:val]) {
+            sameColor = false;
+        }
+    }
+    
+    if (allNil) {
+        return { .data = nil };
+    } else if (anyNil) {
+        return _ModelData{ .type = _ModelData::Type::Mixed };
+    } else if (sameColor) {
+        return { .data = first };
+    } else {
+        return { .data = _WhiteBalanceMixedColor() };
+    }
+}
+
+static void _Set(InspectorView* self, _ModelSetterFn fn, id data) {
+    for (const ImageRecordPtr& rec : self->_selection->images()) {
+        fn(*rec, data);
+    }
+    
+    self->_notifying = true;
+    self->_imageSource->imageLibrary()->observersNotify(
+        ImageLibrary::Event::Type::ChangeProperty, self->_selection->images());
+    self->_notifying = false;
+}
+
+template<auto T_Get=_Get>
 static _ModelGetter _GetterCreate(InspectorView* self, _ModelGetterFn fn) {
     __weak const auto selfWeak = self;
     return ^_ModelData(InspectorViewItem*) {
         const auto selfStrong = selfWeak;
         if (!selfStrong) return _ModelData{};
-        return [selfStrong _get:fn];
+        return T_Get(selfStrong, fn);
     };
 }
 
+template<auto T_Set=_Set>
 static _ModelSetter _SetterCreate(InspectorView* self, _ModelSetterFn fn) {
     __weak const auto selfWeak = self;
     return ^void(InspectorViewItem*, id data) {
         const auto selfStrong = selfWeak;
         if (!selfStrong) return;
-        [selfStrong _set:fn data:data];
+        T_Set(selfStrong, fn, data);
     };
 }
 
@@ -1073,8 +1149,7 @@ static id _Get_batteryLevel(const ImageRecord& rec) {
 
 static id _Get_whiteBalance(const ImageRecord& rec) {
     if (rec.options.whiteBalance.automatic) return nil;
-    return [NSColor colorWithDisplayP3Red:rec.options.whiteBalance.illum[0]
-        green:rec.options.whiteBalance.illum[1] blue:rec.options.whiteBalance.illum[2] alpha:1];
+    return _WhiteBalanceColor(rec.options.whiteBalance.illum);
 }
 
 static id _Get_exposure(const ImageRecord& rec) {
@@ -1116,7 +1191,11 @@ static void _Set_whiteBalance(ImageRecord& rec, id data) {
     ColorRaw illum;
     if (automatic) {
         illum = ColorRaw(rec.info.illumEst);
+    } else if (data == InspectorViewItem_WhiteBalanceDefaultColor) {
+        // Just switched to 'Manual' white balance mode; default to the auto-white-balance illuminant
+        illum = ColorRaw(rec.info.illumEst);
     } else {
+        // Setting an explicit color
         NSColor* color = Toastbox::Cast<NSColor*>(data);
         illum = ColorRaw([color redComponent], [color greenComponent], [color blueComponent]);
     }
@@ -1235,37 +1314,6 @@ static void _Update(Item* it) {
     Item* view = Toastbox::Cast<Item*>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
     assert(view);
     return view;
-}
-
-- (_ModelData)_get:(_ModelGetterFn)fn {
-    bool init = false;
-    id first = nil;
-    for (const ImageRecordPtr& rec : _selection->images()) {
-        const id obj = fn(*rec);
-        
-        if (!init) {
-            first = obj;
-            init = true;
-            continue;
-        }
-        
-        if (first!=obj && ![first isEqual:obj]) {
-            return _ModelData{ .type = _ModelData::Type::Mixed };
-        }
-    }
-    
-    return _ModelData{ .data = first };
-}
-
-- (void)_set:(_ModelSetterFn)fn data:(id)data {
-    for (const ImageRecordPtr& rec : _selection->images()) {
-        fn(*rec, data);
-    }
-    
-    _notifying = true;
-    _imageSource->imageLibrary()->observersNotify(
-        ImageLibrary::Event::Type::ChangeProperty, _selection->images());
-    _notifying = false;
 }
 
 // MARK: - Tracking Area
