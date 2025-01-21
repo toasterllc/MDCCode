@@ -581,6 +581,14 @@ static Triggers _TriggersForListItems(const std::vector<ListItem*>& x) {
     return triggers;
 }
 
+static void _ErrorShow(NSWindow* win, const char* title, const char* desc) {
+    NSAlert* alert = [NSAlert new];
+    [alert setAlertStyle:NSAlertStyleCritical];
+    [alert setMessageText:@(title)];
+    [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", desc]];
+    [alert beginSheetModalForWindow:win completionHandler:nil];
+}
+
 static void _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool select=false) {
     assert(self);
     NSTableView* tv = self->_tableView;
@@ -595,11 +603,7 @@ static void _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool
         state.triggers = Convert(_TriggersForListItems(state.items));
         self->_state = state;
     } catch (const std::exception& e) {
-        NSAlert* alert = [NSAlert new];
-        [alert setAlertStyle:NSAlertStyleCritical];
-        [alert setMessageText:@"Can't Add Trigger"];
-        [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
-        [alert beginSheetModalForWindow:[self window] completionHandler:nil];
+        _ErrorShow([self window], "Can't Add Trigger", e.what());
         return;
     }
     
@@ -631,11 +635,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         state.triggers = Convert(_TriggersForListItems(state.items));
         self->_state = state;
     } catch (const std::exception& e) {
-        NSAlert* alert = [NSAlert new];
-        [alert setAlertStyle:NSAlertStyleCritical];
-        [alert setMessageText:@"Can't Remove Trigger"];
-        [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
-        [alert beginSheetModalForWindow:[self window] completionHandler:nil];
+        _ErrorShow([self window], "Can't Remove Trigger", e.what());
         return;
     }
     
@@ -1137,13 +1137,9 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
         it->trigger = trigger;
         self->_state = state;
     } catch (const std::exception& e) {
-        NSAlert* alert = [NSAlert new];
-        [alert setAlertStyle:NSAlertStyleCritical];
-        [alert setMessageText:@"Can't Update Trigger"];
-        [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
-        [alert beginSheetModalForWindow:[self window] completionHandler:nil];
+        _ErrorShow([self window], "Can't Update Trigger", e.what());
         // Not returning here! We need to _Load() if an error occurred,
-        // so that the UI reflects a valid state
+        // to return the UI to the valid state stored in it->trigger.
     }
     
     // Load our state
