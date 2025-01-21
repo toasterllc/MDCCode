@@ -548,24 +548,15 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_Label;
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_DetailLabel;
     
-    MSP::Triggers _triggers;
-    std::vector<ListItem*> _items;
-    bool _storeLoadUnderway;
+    struct {
+        MSP::Triggers triggers;
+        std::vector<ListItem*> items;
+    } _state;
     
+    bool _storeLoadUnderway;
     BatteryLifeView* _batteryLifeView;
     NSPopover* _batteryLifePopover;
 }
-
-//- (void)description {
-//    Trigger triggers[32] = {};
-//    size_t i = 0;
-//    for (ListItem* it : _items) {
-//        triggers[i] = it->trigger;
-//        i++;
-//    }
-//    NSData* data = [NSData dataWithBytes:&triggers length:sizeof(triggers)];
-//    [data writeToFile:@"/Users/dave/Desktop/test.bin" atomically:true];
-//}
 
 static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
     [self->_noTriggersView setHidden:!emptyMode];
@@ -575,15 +566,44 @@ static void _SetEmptyMode(CaptureTriggersView* self, bool emptyMode) {
     [self->_separatorLineOffset setConstant:(emptyMode ? 1000 : 7.5)];
 }
 
-static ListItem* _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool select=false) {
+static Triggers _TriggersForListItems(const std::vector<ListItem*>& x) {
+    Triggers triggers;
+    if (x.size() > std::size(triggers.triggers)) {
+        throw Toastbox::RuntimeError("number of ListItems exceeds %ju", (uintmax_t)std::size(triggers.triggers));
+    }
+    
+    triggers.count = x.size();
+    size_t i = 0;
+    for (ListItem* it : x) {
+        triggers.triggers[i] = it->trigger;
+        i++;
+    }
+    return triggers;
+}
+
+static void _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool select=false) {
     assert(self);
     NSTableView* tv = self->_tableView;
     ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
     it->trigger = trigger;
     [it updateView];
     
-    self->_items.push_back(it);
-    const size_t idx = self->_items.size()-1;
+    // Update our state
+    try {
+        auto state = self->_state;
+        state.items.push_back(it);
+        state.triggers = Convert(_TriggersForListItems(state.items));
+        self->_state = state;
+    } catch (const std::exception& e) {
+        NSAlert* alert = [NSAlert new];
+        [alert setAlertStyle:NSAlertStyleCritical];
+        [alert setMessageText:@"Can't Add Trigger"];
+        [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
+        [alert beginSheetModalForWindow:[self window] completionHandler:nil];
+        return;
+    }
+    
+    const size_t idx = self->_state.items.size()-1;
     NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
     [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
     if (select) {
@@ -597,44 +617,37 @@ static ListItem* _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger,
     }
     
     _SetEmptyMode(self, false);
-    return it;
 }
-
-
-//static ListItem* _ListItemAdd(CaptureTriggersView* self, Trigger::Type type) {
-//    assert(self);
-//    NSTableView* tv = self->_tableView;
-//    ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
-//    Trigger& t = it->trigger;
-//    _TriggerInit(t, type);
-//    [it updateView];
-//    
-//    self->_items.push_back(it);
-//    const size_t idx = self->_items.size()-1;
-//    NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
-//    [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
-//    [tv selectRowIndexes:idxs byExtendingSelection:false];
-//    [tv scrollRowToVisible:idx];
-//    
-//    _SetEmptyMode(self, false);
-//    return it;
-//}
 
 static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     assert(self);
-    assert(idx < self->_items.size());
+    assert(idx < self->_state.items.size());
     NSTableView* tv = self->_tableView;
+    
+    // Update our state
+    try {
+        auto state = self->_state;
+        state.items.erase(state.items.begin()+idx);
+        state.triggers = Convert(_TriggersForListItems(state.items));
+        self->_state = state;
+    } catch (const std::exception& e) {
+        NSAlert* alert = [NSAlert new];
+        [alert setAlertStyle:NSAlertStyleCritical];
+        [alert setMessageText:@"Can't Remove Trigger"];
+        [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
+        [alert beginSheetModalForWindow:[self window] completionHandler:nil];
+        return;
+    }
     
     // Remove item
     {
         NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
-        self->_items.erase(self->_items.begin()+idx);
         [tv removeRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
     }
     
     // Update selection
-    if (!self->_items.empty()) {
-        NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:std::min(self->_items.size()-1, idx)];
+    if (!self->_state.items.empty()) {
+        NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:std::min(self->_state.items.size()-1, idx)];
         [tv selectRowIndexes:idxs byExtendingSelection:false];
     } else {
         _SetEmptyMode(self, true);
@@ -667,9 +680,6 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     
     [_tableView registerForDraggedTypes:@[_PboardDragItemsType]];
     [_tableView reloadData];
-//    _ListItemAdd(self, Trigger::Type::Time);
-//    _ListItemAdd(self, Trigger::Type::Motion);
-//    _ListItemAdd(self, _TriggerMake(Trigger::Type::Button));
     
     [_dateSelector_Field setPlaceholderString:@(Calendar::DayOfYearPlaceholderString().c_str())];
     
@@ -682,6 +692,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         Triggers t;
         Deserialize(t, triggers.source);
         for (auto it=std::begin(t.triggers); it!=std::begin(t.triggers)+t.count; it++) {
+            #warning TODO: this is inefficient because we're going to call Convert() at every iteration; figure out a better solution
             _ListItemAdd(self, *it);
         }
         if (t.count) [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:false];
@@ -708,31 +719,19 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     return self;
 }
 
-- (Triggers)_triggers {
-    Triggers triggers;
-    triggers.count = _items.size();
-    size_t i = 0;
-    for (ListItem* it : _items) {
-        triggers.triggers[i] = it->trigger;
-        i++;
-    }
-    return triggers;
-}
-
 - (void)_updateBatteryLife {
-    [_batteryLifeView setTriggers:[self triggers]];
-    [self _updateBatteryLifeTitle];
+    [_batteryLifeView setTriggers:_state.triggers];
 }
 
 - (void)_updateBatteryLifeTitle {
+    printf("_updateBatteryLifeTitle\n");
     const auto estimate = [_batteryLifeView batteryLifeEstimate];
     [_batteryLifeButton setTitle:[NSString stringWithFormat:@"  %@",
         @(StringForDurationRange(estimate.min, estimate.max).c_str())]];
 }
 
 - (const MSP::Triggers&)triggers {
-    _triggers = Convert([self _triggers]);
-    return _triggers;
+    return _state.triggers;
 }
 
 static void _ContainerSubviewAdd(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
@@ -1090,12 +1089,6 @@ static void _Copy(Trigger& trigger, CaptureTriggersView* view) {
 
 // MARK: - Actions
 
-- (ListItem*)_selectedItem {
-    NSInteger idx = [_tableView selectedRow];
-    if (idx < 0) return nil;
-    return _items.at(idx);
-}
-
 static void _Store(CaptureTriggersView* self, Trigger& trigger) {
     _Copy<false>(trigger, self);
 }
@@ -1111,19 +1104,25 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     self->_storeLoadUnderway = true;
     Defer( self->_storeLoadUnderway = false );
     
-    ListItem* it = [self _selectedItem];
-    if (it) {
-        Trigger& trigger = it->trigger;
-        
-        // Commit editing the active editor
-        if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
-            // We call -insertNewline twice because NSTokenField has 2 sequential states
-            // that the return key transitions through, and we want to transition through
-            // both to get to the final "select all" state.
-            [x insertNewline:nil];
-            [x insertNewline:nil];
-        }
-        
+    const NSInteger idx = [self->_tableView selectedRow];
+    if (idx < 0) return;
+    ListItem* it = self->_state.items.at(idx);
+    
+    // Commit editing the active editor
+    if (NSText* x = Toastbox::CastOrNull<NSText*>([[self window] firstResponder])) {
+        // We call -insertNewline twice because NSTokenField has 2 sequential states
+        // that the return key transitions through, and we want to transition through
+        // both to get to the final "select all" state.
+        [x insertNewline:nil];
+        [x insertNewline:nil];
+    }
+    
+    // Store our state
+    try {
+        auto state = self->_state;
+        Triggers triggers = _TriggersForListItems(state.items);
+        assert(idx < std::size(triggers.triggers));
+        Trigger& trigger = triggers.triggers[idx];
         _Store(self, trigger);
         
         if (initRepeat) {
@@ -1134,7 +1133,22 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
             }
         }
         
-        _Load(self, trigger);
+        state.triggers = Convert(triggers);
+        it->trigger = trigger;
+        self->_state = state;
+    } catch (const std::exception& e) {
+        NSAlert* alert = [NSAlert new];
+        [alert setAlertStyle:NSAlertStyleCritical];
+        [alert setMessageText:@"Can't Update Trigger"];
+        [alert setInformativeText:[NSString stringWithFormat:@"Error: %s", e.what()]];
+        [alert beginSheetModalForWindow:[self window] completionHandler:nil];
+        // Not returning here! We need to _Load() if an error occurred,
+        // so that the UI reflects a valid state
+    }
+    
+    // Load our state
+    {
+        _Load(self, it->trigger);
         [it updateView];
     }
 }
@@ -1188,18 +1202,18 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
 // MARK: - Table View Data Source / Delegate
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView*)tableView {
-    NSLog(@"numberOfRowsInTableView: %@", @(_items.size()));
-    return _items.size();
+    NSLog(@"numberOfRowsInTableView: %@", @(_state.items.size()));
+    return _state.items.size();
 }
 
 - (NSView*)tableView:(NSTableView*)tableView viewForTableColumn:(NSTableColumn*)tableColumn row:(NSInteger)row {
-    NSLog(@"viewForTableColumn: %@", _items.at(row));
-    return _items.at(row);
+    NSLog(@"viewForTableColumn: %@", _state.items.at(row));
+    return _state.items.at(row);
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification*)note {
     NSInteger idx = [_tableView selectedRow];
-    ListItem* it = (idx>=0 ? _items.at(idx) : nil);
+    ListItem* it = (idx>=0 ? _state.items.at(idx) : nil);
     
     _ContainerSubviewSet(_containerView, (it ? _detailView : nil));
     [_removeButton setEnabled:(bool)it];
@@ -1224,11 +1238,12 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     NSLog(@"_dateSelector_Field");
     NSMutableArray* filtered = [NSMutableArray new];
     for (NSString* x : tokens) {
-        auto day = Calendar::DayOfYearFromString([x UTF8String]);
-        if (!day) continue;
-        DayOfYearObj* obj = [DayOfYearObj new];
-        obj->x = *day;
-        [filtered addObject:obj];
+        const auto days = Calendar::DayOfYearsFromString([x UTF8String]);
+        for (auto day : days) {
+            DayOfYearObj* obj = [DayOfYearObj new];
+            obj->x = day;
+            [filtered addObject:obj];
+        }
     }
     return filtered;
 }
@@ -1277,7 +1292,7 @@ static NSString*const _PboardDragItemsType = @"llc.toaster.photon-transfer.Captu
         const size_t idx = (size_t)[num unsignedIntegerValue];
         rows.insert(idx);
         [idxsOld addIndex:idx];
-        movedItems.push_back(_items[idx]);
+        movedItems.push_back(_state.items[idx]);
         reselect |= [selection containsIndex:idx];
         if (idx < dstIdx) {
             dstIdx--;
@@ -1290,7 +1305,7 @@ static NSString*const _PboardDragItemsType = @"llc.toaster.photon-transfer.Captu
     {
         size_t off = 0;
         for (size_t row : rows) {
-            _items.erase(_items.begin() + row - off);
+            _state.items.erase(_state.items.begin() + row - off);
             off++;
         }
         [_tableView removeRowsAtIndexes:idxsOld withAnimation:NSTableViewAnimationEffectNone];
@@ -1298,7 +1313,7 @@ static NSString*const _PboardDragItemsType = @"llc.toaster.photon-transfer.Captu
     
     // Add moved items
     {
-        _items.insert(_items.begin()+dstIdx, movedItems.begin(), movedItems.end());
+        _state.items.insert(_state.items.begin()+dstIdx, movedItems.begin(), movedItems.end());
         [_tableView insertRowsAtIndexes:idxsNew withAnimation:NSTableViewAnimationEffectNone];
         // Select new rows, if the dragged items were originally selected
         if (reselect) {

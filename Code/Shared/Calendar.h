@@ -365,20 +365,63 @@ inline TimeOfDay TimeOfDayFromString(std::string x, bool assumeAM=true) {
     return t;
 }
 
-inline std::optional<DayOfYear> DayOfYearFromString(std::string_view x) {
-    NSDate* date = [_DateFormatterStateGet().monthDayFormatter dateFromString:@(std::string(x).c_str())];
-    if (!date) return std::nullopt;
+inline std::vector<std::string_view> _DayOfYearsComponents(std::string_view x) {
+    using Iter = std::string_view::iterator;
     
-    NSDateComponents* comp = [_DateFormatterStateGet().cal
-        components:NSCalendarUnitMonth|NSCalendarUnitDay fromDate:date];
-    if (!comp) return std::nullopt;
+    constexpr uint8_t Space     = 1<<0;
+    constexpr uint8_t Number    = 1<<1;
+    constexpr uint8_t Char      = 1<<2;
+    constexpr uint8_t Complete  = Char|Number;
     
-    const DayOfYear r = DayOfYear{ MonthOfYear((int)[comp month]), DayOfMonth((int)[comp day]) };
-    try {
-        DayOfYearValidate(r);
-    } catch (...) { return std::nullopt; }
+    auto charType = [] (char c) {
+        if (std::isspace(c)) return Space;
+        if (std::isdigit(c)) return Number;
+        return Char;
+    };
     
-    return r;
+    Iter left;
+    Iter right;
+    std::vector<std::string_view> v;
+    uint8_t state = 0;
+    for (left=x.begin(), right=x.begin(); right!=x.end();) {
+        const uint8_t type = charType(*right);
+        state |= type;
+        if (type==Space && (state&Complete)==Complete) {
+            v.emplace_back(left, right+1);
+            state = 0;
+            left = right+1;
+            right = left;
+        } else {
+            right++;
+        }
+    }
+    
+    // Push remainder
+    if ((state&Complete) == Complete) {
+        v.emplace_back(left, right+1);
+    }
+    
+    return v;
+}
+
+inline std::vector<DayOfYear> DayOfYearsFromString(std::string_view x) {
+    std::vector<std::string_view> strs = _DayOfYearsComponents(x);
+    std::vector<DayOfYear> v;
+    for (std::string_view s : strs) {
+        NSDate* date = [_DateFormatterStateGet().monthDayFormatter dateFromString:@(std::string(s).c_str())];
+        if (!date) continue;
+        
+        NSDateComponents* comp = [_DateFormatterStateGet().cal
+            components:NSCalendarUnitMonth|NSCalendarUnitDay fromDate:date];
+        if (!comp) continue;
+        
+        const DayOfYear r = DayOfYear{ MonthOfYear((int)[comp month]), DayOfMonth((int)[comp day]) };
+        try {
+            DayOfYearValidate(r);
+        } catch (...) { continue; }
+        v.push_back(r);
+    }
+    return v;
 }
 
 inline std::string StringFromDayOfYear(DayOfYear x) {
