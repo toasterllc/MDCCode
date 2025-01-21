@@ -29,7 +29,7 @@
 - (BOOL)textShouldEndEditing:(NSText*)text {
     NSLog(@"%@", NSStringFromSelector(_cmd));
     if (auto client = CastProtocol(NSTextInputClient, text)) {
-        NSString*const Delimeter = @"\0";
+        NSString*const Delimeter = @",";
         if (!_init) {
             _init = true;
             NSMutableCharacterSet* s = [[self tokenizingCharacterSet] mutableCopy];

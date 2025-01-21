@@ -83,6 +83,7 @@ static void _Init(BatteryLifePlotView* self) {
     [self->_layer setNeedsDisplayOnBoundsChange:true];
     [self->_layer setActions:Toastbox::LayerNullActions];
     [self->_layer setDelegate:self];
+    [self->_layer setShouldRasterize:true];
     [self setLayer:self->_layer];
     [self setWantsLayer:true];
     
@@ -164,6 +165,13 @@ static void _Init(BatteryLifePlotView* self) {
 
 - (CAShapeLayer*)plotLayer {
     return _layer;
+}
+
+- (void)viewDidChangeBackingProperties {
+    [super viewDidChangeBackingProperties];
+    [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
+    [_layer setRasterizationScale:[_layer contentsScale]];
+    [_layer setNeedsDisplay];
 }
 
 @end
