@@ -621,6 +621,15 @@ static void _ErrorShow(NSWindow* win, const char* title, const char* desc) {
     [alert beginSheetModalForWindow:win completionHandler:nil];
 }
 
+static void _ListItemPush(CaptureTriggersView* self, size_t count) {
+    for (size_t i=0; i<count; i++) {
+        ListItem* it = [self->_tableView makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
+        it->getter = _Getter(self, self->_items.size());
+        [it updateView];
+        self->_items.push_back(it);
+    }
+}
+
 static void _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool select=false) {
     assert(self);
     
@@ -635,13 +644,10 @@ static void _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool
         return;
     }
     
-    NSTableView* tv = self->_tableView;
-    ListItem* it = [tv makeViewWithIdentifier:NSStringFromClass([ListItem class]) owner:nil];
-    const size_t idx = self->_state.host.size()-1;
-    it->getter = _Getter(self, idx);
-    self->_items.push_back(it);
-    [it updateView];
+    _ListItemPush(self, 1);
     
+    const size_t idx = self->_state.host.size()-1;
+    NSTableView* tv = self->_tableView;
     NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
     [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
     if (select) {
@@ -673,9 +679,17 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         return;
     }
     
-    // Remove item
+    // Remove the _last_ item in `_items` and call updateView for every item after `idx`
+    // This is because our ListItems reference ascending indexes, so if we remove a
+    // ListItem in the middle, we'll leave a hole.
     {
-        NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
+        const size_t lastIdx = self->_items.size()-1;
+        self->_items.pop_back();
+        for (auto it=self->_items.begin()+idx; it!=self->_items.end(); it++) {
+            [*it updateView];
+        }
+        
+        NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:lastIdx];
         [tv removeRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
     }
     
@@ -717,10 +731,6 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     
     [_dateSelector_Field setPlaceholderString:@(Calendar::DayOfYearPlaceholderString().c_str())];
     
-    // By default, be in empty mode
-    // We'll exit empty mode if we successfully deserialize the triggers
-    _SetEmptyMode(self, true);
-    
     // Deserialize data
     try {
         Triggers t;
@@ -728,14 +738,17 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         _state.host = _VectorFromTriggers(t);
         _state.device = triggers;
         
-        for (auto it=std::begin(t.triggers); it!=std::begin(t.triggers)+t.count; it++) {
-            #warning TODO: this is inefficient because we're going to call Convert() at every iteration; figure out a better solution
-            _ListItemAdd(self, *it);
+        if (!_state.host.empty()) {
+            _ListItemPush(self, _state.host.size());
+            [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:{0,_state.host.size()}]
+                withAnimation:NSTableViewAnimationEffectNone];
+            [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:false];
         }
-        if (t.count) [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:false];
     } catch (const std::exception& e) {
         printf("[CaptureTriggersView] Failed to deserailize triggers: %s\n", e.what());
     }
+    
+    _SetEmptyMode(self, _state.host.empty());
     
     _batteryLifeView = [[BatteryLifeView alloc] initWithFrame:{}];
     [_batteryLifeView setDelegate:self];
@@ -1310,49 +1323,123 @@ static NSString*const _PboardDragItemsType = @"llc.toaster.photon-transfer.Captu
 - (BOOL)tableView:(NSTableView*)tableView acceptDrop:(id<NSDraggingInfo>)info
     row:(NSInteger)row dropOperation:(NSTableViewDropOperation)drop {
     
+    assert(row >= 0);
+    assert(row <= _state.host.size());
+    
     NSArray<NSPasteboardItem*>* items = [[info draggingPasteboard] pasteboardItems];
+    assert([items count] == 1);
     
-    std::set<size_t> rows;
-    std::vector<ListItem*> movedItems;
-    NSMutableIndexSet* idxsOld = [NSMutableIndexSet new];
-    size_t dstIdx = row;
+    NSNumber* triggerIdxNum = Toastbox::Cast<NSNumber*>([items[0] propertyListForType:_PboardDragItemsType]);
+    const size_t triggerIdx = (size_t)[triggerIdxNum unsignedIntegerValue];
+    const Trigger trigger = _state.host.at(triggerIdx);
     NSIndexSet* selection = [_tableView selectedRowIndexes];
-    bool reselect = false;
+    assert([selection count] == 1);
+    const size_t selectionIdx = [selection firstIndex];
+    const bool movingSelection = [selection containsIndex:triggerIdx];
     
-    // Compose `movedItems`
-    for (NSPasteboardItem* it : items) {
-        NSNumber* num = Toastbox::Cast<NSNumber*>([it propertyListForType:_PboardDragItemsType]);
-        const size_t idx = (size_t)[num unsignedIntegerValue];
-        rows.insert(idx);
-        [idxsOld addIndex:idx];
-        movedItems.push_back(_state.items[idx]);
-        reselect |= [selection containsIndex:idx];
-        if (idx < dstIdx) {
-            dstIdx--;
-        }
+    size_t dstIdx = row;
+    if (dstIdx > triggerIdx) dstIdx--;
+    
+    // Update our state
+    try {
+        auto state = self->_state;
+        // Remove old trigger
+        state.host.erase(state.host.begin()+triggerIdx);
+        // Insert new trigger
+        state.host.insert(state.host.begin()+dstIdx, trigger);
+        // Update .device
+        state.device = Convert(_TriggersFromVector(state.host));
+        self->_state = state;
+    } catch (const std::exception& e) {
+        _ErrorShow([self window], "Can't Move Trigger", e.what());
+        return false;
     }
     
-    NSIndexSet* idxsNew = [NSIndexSet indexSetWithIndexesInRange:{dstIdx, movedItems.size()}];
-    
-    // Remove moved items
-    {
-        size_t off = 0;
-        for (size_t row : rows) {
-            _state.items.erase(_state.items.begin() + row - off);
-            off++;
+    // Update selection
+    if (movingSelection) {
+        NSIndexSet* selection = [NSIndexSet indexSetWithIndexesInRange:{dstIdx, 1}];
+        [_tableView selectRowIndexes:selection byExtendingSelection:false];
+    } else {
+        ssize_t delta = 0;
+        if (triggerIdx>selectionIdx && row<=selectionIdx) {
+            delta = 1;
+        } else if (triggerIdx<=selectionIdx && row>selectionIdx) {
+            delta = -1;
         }
-        [_tableView removeRowsAtIndexes:idxsOld withAnimation:NSTableViewAnimationEffectNone];
+        
+        NSIndexSet* selection = [NSIndexSet indexSetWithIndexesInRange:{selectionIdx+delta, 1}];
+        [_tableView selectRowIndexes:selection byExtendingSelection:false];
+        
+        
+//        if (row < selectionIdx) {
+//            NSIndexSet* selection = [NSIndexSet indexSetWithIndexesInRange:{selectionIdx, 1}];
+//            [_tableView selectRowIndexes:selection byExtendingSelection:false];
+//        } else if (row > selectionIdx) {
+//            NSIndexSet* selection = [NSIndexSet indexSetWithIndexesInRange:{selectionIdx, 1}];
+//            [_tableView selectRowIndexes:selection byExtendingSelection:false];
+//        } else {
+//            NSIndexSet* selection = [NSIndexSet indexSetWithIndexesInRange:{selectionIdx+1, 1}];
+//            [_tableView selectRowIndexes:selection byExtendingSelection:false];
+//        }
     }
     
-    // Add moved items
-    {
-        _state.items.insert(_state.items.begin()+dstIdx, movedItems.begin(), movedItems.end());
-        [_tableView insertRowsAtIndexes:idxsNew withAnimation:NSTableViewAnimationEffectNone];
-        // Select new rows, if the dragged items were originally selected
-        if (reselect) {
-            [_tableView selectRowIndexes:idxsNew byExtendingSelection:false];
-            [_tableView scrollRowToVisible:dstIdx];
-        }
+    [_tableView scrollRowToVisible:dstIdx];
+    
+//    std::set<size_t> rows;
+//    std::vector<Trigger> movedItems;
+////    NSMutableIndexSet* idxsOld = [NSMutableIndexSet new];
+//    size_t dstIdx = row;
+//    
+//    
+//    
+//    // Compose `movedItems`
+//    for (NSPasteboardItem* it : items) {
+//        NSNumber* num = Toastbox::Cast<NSNumber*>([it propertyListForType:_PboardDragItemsType]);
+//        const size_t idx = (size_t)[num unsignedIntegerValue];
+//        rows.insert(idx);
+////        [idxsOld addIndex:idx];
+//        movedItems.push_back(_state.host.at(idx));
+////        reselect |= [selection containsIndex:idx];
+//        if (idx < dstIdx) {
+//            dstIdx--;
+//        }
+//    }
+//    
+//    // Update our state
+//    try {
+//        auto state = self->_state;
+//        
+//        // Remove moved items
+//        {
+//            size_t off = 0;
+//            for (size_t row : rows) {
+//                state.host.erase(state.host.begin()+row-off);
+//                off++;
+//            }
+//        }
+//        
+//        // Add moved items
+//        {
+//            state.host.insert(state.host.begin()+dstIdx, movedItems.begin(), movedItems.end());
+//        }
+//        
+//        state.device = Convert(_TriggersFromVector(state.host));
+//        self->_state = state;
+//    } catch (const std::exception& e) {
+//        _ErrorShow([self window], "Can't Move Trigger", e.what());
+//        return false;
+//    }
+//    
+    // Select new rows, if the dragged items were originally selected
+//    if (reselect) {
+//        NSIndexSet* idxsNew = [NSIndexSet indexSetWithIndexesInRange:{dstIdx, movedItems.size()}];
+//        [_tableView selectRowIndexes:idxsNew byExtendingSelection:false];
+//        [_tableView scrollRowToVisible:dstIdx];
+//    }
+    
+    // Update all rows since things got shuffled
+    for (ListItem* it : _items) {
+        [it updateView];
     }
     
     return true;
