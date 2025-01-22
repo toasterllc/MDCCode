@@ -550,11 +550,10 @@ static std::string _TimeRangeDescription(Calendar::TimeOfDay start, Calendar::Ti
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_Label;
     IBOutlet NSTextField*       _battery_Motion_MaxTriggerCount_DetailLabel;
     
-    #warning TODO: rename _state -> _triggers
     struct {
         MSP::Triggers device;
         std::vector<Trigger> host;
-    } _state;
+    } _triggers;
     
     std::vector<ListItem*> _items;
     
@@ -609,7 +608,7 @@ static CaptureTriggersView_ListItemGetter _Getter(CaptureTriggersView* self, siz
     return [=] () -> Trigger {
         auto selfStrong = selfWeak;
         if (!selfStrong) return {};
-        return selfStrong->_state.host.at(idx);
+        return selfStrong->_triggers.host.at(idx);
     };
 }
 
@@ -635,10 +634,10 @@ static void _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool
     
     // Update our state
     try {
-        auto state = self->_state;
+        auto state = self->_triggers;
         state.host.push_back(trigger);
         state.device = Convert(_TriggersFromVector(state.host));
-        self->_state = state;
+        self->_triggers = state;
     } catch (const std::exception& e) {
         _ErrorShow([self window], "Can't Add Trigger", e.what());
         return;
@@ -646,7 +645,7 @@ static void _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool
     
     _ListItemPush(self, 1);
     
-    const size_t idx = self->_state.host.size()-1;
+    const size_t idx = self->_triggers.host.size()-1;
     NSTableView* tv = self->_tableView;
     NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:idx];
     [tv insertRowsAtIndexes:idxs withAnimation:NSTableViewAnimationEffectNone];
@@ -665,15 +664,15 @@ static void _ListItemAdd(CaptureTriggersView* self, const Trigger& trigger, bool
 
 static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     assert(self);
-    assert(idx < self->_state.host.size());
+    assert(idx < self->_triggers.host.size());
     NSTableView* tv = self->_tableView;
     
     // Update our state
     try {
-        auto state = self->_state;
+        auto state = self->_triggers;
         state.host.erase(state.host.begin()+idx);
         state.device = Convert(_TriggersFromVector(state.host));
-        self->_state = state;
+        self->_triggers = state;
     } catch (const std::exception& e) {
         _ErrorShow([self window], "Can't Remove Trigger", e.what());
         return;
@@ -694,8 +693,8 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     }
     
     // Update selection
-    if (!self->_state.host.empty()) {
-        NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:std::min(self->_state.host.size()-1, idx)];
+    if (!self->_triggers.host.empty()) {
+        NSIndexSet* idxs = [NSIndexSet indexSetWithIndex:std::min(self->_triggers.host.size()-1, idx)];
         [tv selectRowIndexes:idxs byExtendingSelection:false];
     } else {
         _SetEmptyMode(self, true);
@@ -735,12 +734,12 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
     try {
         Triggers t;
         Deserialize(t, triggers.source);
-        _state.host = _VectorFromTriggers(t);
-        _state.device = triggers;
+        _triggers.host = _VectorFromTriggers(t);
+        _triggers.device = triggers;
         
-        if (!_state.host.empty()) {
-            _ListItemPush(self, _state.host.size());
-            [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:{0,_state.host.size()}]
+        if (!_triggers.host.empty()) {
+            _ListItemPush(self, _triggers.host.size());
+            [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:{0,_triggers.host.size()}]
                 withAnimation:NSTableViewAnimationEffectNone];
             [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:false];
         }
@@ -748,7 +747,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
         printf("[CaptureTriggersView] Failed to deserailize triggers: %s\n", e.what());
     }
     
-    _SetEmptyMode(self, _state.host.empty());
+    _SetEmptyMode(self, _triggers.host.empty());
     
     _batteryLifeView = [[BatteryLifeView alloc] initWithFrame:{}];
     [_batteryLifeView setDelegate:self];
@@ -770,7 +769,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 }
 
 - (void)_updateBatteryLife {
-    [_batteryLifeView setTriggers:_state.device];
+    [_batteryLifeView setTriggers:_triggers.device];
 }
 
 - (void)_updateBatteryLifeTitle {
@@ -781,7 +780,7 @@ static void _ListItemRemove(CaptureTriggersView* self, size_t idx) {
 }
 
 - (const MSP::Triggers&)triggers {
-    return _state.device;
+    return _triggers.device;
 }
 
 static void _ContainerSubviewAdd(NSView* container, ContainerSubview* subview, NSView* alignView=nil) {
@@ -1169,7 +1168,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     
     // Store our state
     try {
-        auto state = self->_state;
+        auto state = self->_triggers;
         Trigger& trigger = state.host.at(idx);
         _Store(self, trigger);
         
@@ -1182,7 +1181,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
         }
         
         state.device = Convert(_TriggersFromVector(state.host));
-        self->_state = state;
+        self->_triggers = state;
     } catch (const std::exception& e) {
         _ErrorShow([self window], "Can't Update Trigger", e.what());
         // Not returning here! We need to _Load() if an error occurred,
@@ -1191,7 +1190,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     
     // Load our state
     {
-        _Load(self, self->_state.host.at(idx));
+        _Load(self, self->_triggers.host.at(idx));
         [self->_items.at(idx) updateView];
     }
 }
@@ -1259,7 +1258,7 @@ static void _StoreLoad(CaptureTriggersView* self, bool initRepeat=false) {
     if (idx >= 0) {
         _ContainerSubviewSet(_containerView, _detailView);
         [_removeButton setEnabled:true];
-        _Load(self, _state.host.at(idx));
+        _Load(self, _triggers.host.at(idx));
     
     } else {
         _ContainerSubviewSet(_containerView, nil);
@@ -1324,14 +1323,14 @@ static NSString*const _PboardDragItemsType = @"llc.toaster.photon-transfer.Captu
     row:(NSInteger)row dropOperation:(NSTableViewDropOperation)drop {
     
     assert(row >= 0);
-    assert(row <= _state.host.size());
+    assert(row <= _triggers.host.size());
     
     NSArray<NSPasteboardItem*>* items = [[info draggingPasteboard] pasteboardItems];
     assert([items count] == 1);
     
     NSNumber* triggerIdxNum = Toastbox::Cast<NSNumber*>([items[0] propertyListForType:_PboardDragItemsType]);
     const size_t triggerIdx = (size_t)[triggerIdxNum unsignedIntegerValue];
-    const Trigger trigger = _state.host.at(triggerIdx);
+    const Trigger trigger = _triggers.host.at(triggerIdx);
     NSIndexSet* selection = [_tableView selectedRowIndexes];
     assert([selection count] == 1);
     const size_t selectionIdx = [selection firstIndex];
@@ -1342,14 +1341,14 @@ static NSString*const _PboardDragItemsType = @"llc.toaster.photon-transfer.Captu
     
     // Update our state
     try {
-        auto state = self->_state;
+        auto state = self->_triggers;
         // Remove old trigger
         state.host.erase(state.host.begin()+triggerIdx);
         // Insert new trigger
         state.host.insert(state.host.begin()+dstIdx, trigger);
         // Update .device
         state.device = Convert(_TriggersFromVector(state.host));
-        self->_state = state;
+        self->_triggers = state;
     } catch (const std::exception& e) {
         _ErrorShow([self window], "Can't Move Trigger", e.what());
         return false;
