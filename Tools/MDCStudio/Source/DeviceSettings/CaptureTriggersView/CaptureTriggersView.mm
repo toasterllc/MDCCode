@@ -1369,73 +1369,9 @@ static NSString*const _PboardDragItemsType = @"llc.toaster.photon-transfer.Captu
         
         NSIndexSet* selection = [NSIndexSet indexSetWithIndexesInRange:{selectionIdx+delta, 1}];
         [_tableView selectRowIndexes:selection byExtendingSelection:false];
-        
-        
-//        if (row < selectionIdx) {
-//            NSIndexSet* selection = [NSIndexSet indexSetWithIndexesInRange:{selectionIdx, 1}];
-//            [_tableView selectRowIndexes:selection byExtendingSelection:false];
-//        } else if (row > selectionIdx) {
-//            NSIndexSet* selection = [NSIndexSet indexSetWithIndexesInRange:{selectionIdx, 1}];
-//            [_tableView selectRowIndexes:selection byExtendingSelection:false];
-//        } else {
-//            NSIndexSet* selection = [NSIndexSet indexSetWithIndexesInRange:{selectionIdx+1, 1}];
-//            [_tableView selectRowIndexes:selection byExtendingSelection:false];
-//        }
     }
     
     [_tableView scrollRowToVisible:dstIdx];
-    
-//    std::set<size_t> rows;
-//    std::vector<Trigger> movedItems;
-////    NSMutableIndexSet* idxsOld = [NSMutableIndexSet new];
-//    size_t dstIdx = row;
-//    
-//    
-//    
-//    // Compose `movedItems`
-//    for (NSPasteboardItem* it : items) {
-//        NSNumber* num = Toastbox::Cast<NSNumber*>([it propertyListForType:_PboardDragItemsType]);
-//        const size_t idx = (size_t)[num unsignedIntegerValue];
-//        rows.insert(idx);
-////        [idxsOld addIndex:idx];
-//        movedItems.push_back(_state.host.at(idx));
-////        reselect |= [selection containsIndex:idx];
-//        if (idx < dstIdx) {
-//            dstIdx--;
-//        }
-//    }
-//    
-//    // Update our state
-//    try {
-//        auto state = self->_state;
-//        
-//        // Remove moved items
-//        {
-//            size_t off = 0;
-//            for (size_t row : rows) {
-//                state.host.erase(state.host.begin()+row-off);
-//                off++;
-//            }
-//        }
-//        
-//        // Add moved items
-//        {
-//            state.host.insert(state.host.begin()+dstIdx, movedItems.begin(), movedItems.end());
-//        }
-//        
-//        state.device = Convert(_TriggersFromVector(state.host));
-//        self->_state = state;
-//    } catch (const std::exception& e) {
-//        _ErrorShow([self window], "Can't Move Trigger", e.what());
-//        return false;
-//    }
-//    
-    // Select new rows, if the dragged items were originally selected
-//    if (reselect) {
-//        NSIndexSet* idxsNew = [NSIndexSet indexSetWithIndexesInRange:{dstIdx, movedItems.size()}];
-//        [_tableView selectRowIndexes:idxsNew byExtendingSelection:false];
-//        [_tableView scrollRowToVisible:dstIdx];
-//    }
     
     // Update all rows since things got shuffled
     for (ListItem* it : _items) {
@@ -1449,27 +1385,4 @@ static NSString*const _PboardDragItemsType = @"llc.toaster.photon-transfer.Captu
     return _separatorLine;
 }
 
-//- (NSLayoutYAxisAnchor*)deviceSettingsView_HeaderBottomAnchor {
-//    return [_containerView topAnchor];
-//}
-//
-//- (CGFloat)deviceSettingsView_HeaderBottomAnchorOffset {
-//    if ([_detailView superview]) {
-//        return 8;
-//    }
-//    return 0;
-//}
-
 @end
-
-//@interface RedView : NSView
-//@end
-//
-//@implementation RedView
-//
-////- (void)drawRect:(NSRect)rect {
-////    [[NSColor redColor] set];
-////    NSRectFill(rect);
-////}
-//
-//@end
