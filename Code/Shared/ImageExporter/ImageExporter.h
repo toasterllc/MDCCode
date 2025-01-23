@@ -104,7 +104,7 @@ inline void ExportJPEGPNG(Toastbox::Renderer& renderer, const ImageRecord& rec, 
     _FileTimestampSet(filePath, timestamp);
 }
 
-inline void ExportDNG(const ImageRecord& rec, const Image& image, const std::filesystem::path& filePath) {
+inline void ExportDNG(const ImageRecord& rec, const Image& image, const std::filesystem::path& filePath, const std::filesystem::path& tmpDir={}) {
     using namespace Toastbox;
     
     const Time::Instant timestamp = rec.info.timestamp;
@@ -268,7 +268,7 @@ inline void ExportDNG(const ImageRecord& rec, const Image& image, const std::fil
         tiff.push(image.data.get(), imageDataLen);
     }
     
-    tiff.write(filePath);
+    tiff.write(filePath, tmpDir);
     
     _FileTimestampSet(filePath, timestamp);
 }

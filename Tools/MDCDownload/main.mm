@@ -273,7 +273,7 @@ int main(int argc, const char* argv[]) {
                             const fs::path fileName = ImageExporter::FileNameForImageRecord(rec).replace_extension(ImageFileNameExtension);
                             const fs::path filePath = outputDir / fileName;
                             const Image image = _ImageForImageDataPtr(img);
-                            ImageExporter::ExportDNG(rec, image, filePath);
+                            ImageExporter::ExportDNG(rec, image, filePath, filePath.parent_path());
                             
                             printf("Wrote image: %s\n", filePath.c_str());
                         }
