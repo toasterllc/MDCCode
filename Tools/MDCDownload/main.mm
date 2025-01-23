@@ -289,7 +289,7 @@ int main(int argc, const char* argv[]) {
         Defer(imageDataQueue.push(nullptr));
         
         // Read data from the device and push it into imageDataQueue
-        {
+        if (!imgIds.empty()) {
             auto cleanup = device->dataReadStart();
             
             _TermPrint(term, "\n");
@@ -299,6 +299,7 @@ int main(int argc, const char* argv[]) {
                 std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
             } throughput;
             float mbPerSec = 0;
+            std::string timeRemaining = "...";
             for (Img::Id id : imgIds) {
                 constexpr size_t MB = 1024*1024;
                 constexpr size_t ThroughputThreshold = 32*MB;
@@ -306,13 +307,24 @@ int main(int argc, const char* argv[]) {
                     using namespace std::chrono;
                     const milliseconds ms = duration_cast<milliseconds>(steady_clock::now() - throughput.startTime);
                     mbPerSec = ((float)throughput.bytes / ms.count()) * (1000. / MB);
+                    
+                    const size_t imagesRemaining = imgIds.size()-(imageIdx+1);
+                    const size_t bytesRemaining = imagesRemaining*ImgSD::Full::ImagePaddedLen;
+                    const milliseconds msRemaining((bytesRemaining * ms.count()) / throughput.bytes);
+                    const minutes minRemaining = duration_cast<minutes>(msRemaining);
+                    const seconds secRemaining = duration_cast<seconds>(msRemaining);
+                    if (minRemaining.count()) {
+                        timeRemaining = std::to_string(minRemaining.count()) + "m";
+                    } else {
+                        timeRemaining = std::to_string(secRemaining.count()) + "s";
+                    }
                     throughput = {};
                 }
                 
                 const int percentage = (((float)(imageIdx+1) / imgIds.size()) * 100);
                 _TermClearLine(term);
-                _TermPrint(term, "[ Downloading image %ju / %ju ] [ %ju%% ] [ Throughput: %.1f MB/sec ]\n",
-                    (uintmax_t)(imageIdx+1), (uintmax_t)imgIds.size(), (uintmax_t)percentage, mbPerSec);
+                _TermPrint(term, "[ Downloading image %ju / %ju ] [ %ju%% ] [ Throughput: %.1f MB/sec ] [ Time remaining: %s ]\n",
+                    (uintmax_t)(imageIdx+1), (uintmax_t)imgIds.size(), (uintmax_t)percentage, mbPerSec, timeRemaining.c_str());
                 
                 ImageDataPtr img = std::make_unique<ImageData>();
                 img->id = id;
@@ -326,9 +338,10 @@ int main(int argc, const char* argv[]) {
                 imageIdx++;
                 
                 throughput.bytes += len;
-                
             }
         }
+        
+        _TermPrint(term, "Images downloaded successfully!\n");
     
     } catch (std::exception& e) {
         _TermPrint(term, "Error: %s\n", e.what());
