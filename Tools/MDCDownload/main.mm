@@ -83,7 +83,7 @@ static Image _ImageForImageDataPtr(const ImageDataPtr& img) {
 }
 
 static ImageRecord _ImageRecordForImageDataPtr(const ImageDataPtr& img) {
-    const auto illum = ColorMatrixForInterpolation(1).illum;
+    const double illum[] = { 0.555822, 1, 0.767107 }; // Good illuminant color for outdoor imagery
     const Img::Header& header = _ImgHeaderForImageDataPtr(img);
     assert(img->id == header.id); // Verify that the image id is what we expect
     return ImageRecord{
