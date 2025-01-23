@@ -130,7 +130,7 @@ static fs::path _DesktopDir() {
 }
 
 static fs::path _RootDir() {
-    static fs::path Path = _DesktopDir() / ProgramName;
+    static fs::path Path = _DesktopDir() / ProgramName "-Data";
     return Path;
 }
 
@@ -323,7 +323,7 @@ int main(int argc, const char* argv[]) {
                 
                 const int percentage = (((float)(imageIdx+1) / imgIds.size()) * 100);
                 _TermClearLine(term);
-                _TermPrint(term, "[ Downloading image %ju / %ju ] [ %ju%% ] [ Throughput: %.1f MB/sec ] [ Time remaining: %s ]\n",
+                _TermPrint(term, "[ Image %ju / %ju ] [ %ju%% ] [ %.1f MB/sec ] [ %s remaining ]\n",
                     (uintmax_t)(imageIdx+1), (uintmax_t)imgIds.size(), (uintmax_t)percentage, mbPerSec, timeRemaining.c_str());
                 
                 ImageDataPtr img = std::make_unique<ImageData>();
