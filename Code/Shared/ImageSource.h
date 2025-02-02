@@ -204,12 +204,17 @@ struct ImageSource : Object {
     }
     
     virtual Image getImage(Priority priority, const ImageRecordPtr& rec) {
-        // If the image is in our cache, return it
-        _ImageBuffer cached = _imageCache.get(rec);
-        if (cached) return _imageCreate(cached);
-        // Short-circuit if the caller only wanted the image if it's cached
-        if (priority == Priority::Cache) return {};
-        return _loadImage(priority, rec);
+        try {
+            // If the image is in our cache, return it
+            _ImageBuffer cached = _imageCache.get(rec);
+            if (cached) return _imageCreate(cached);
+            // Short-circuit if the caller only wanted the image if it's cached
+            if (priority == Priority::Cache) return {};
+            return _loadImage(priority, rec);
+        } catch (const Toastbox::Signal::Stop&) {
+            // No-op if we're in the process of teardown
+            return {};
+        }
     }
     
     virtual void deleteImages(const ImageSet& recs) {

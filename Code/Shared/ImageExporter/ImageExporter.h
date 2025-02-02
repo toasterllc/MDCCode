@@ -54,7 +54,6 @@ inline void _FileTimestampSet(const std::filesystem::path& filePath, Time::Insta
 inline void ExportJPEGPNG(Toastbox::Renderer& renderer, const ImageRecord& rec, const Image& image,
     const Format& fmt, const std::filesystem::path& filePath) {
     
-    printf("Export image id %ju to %s\n", (uintmax_t)rec.info.id, filePath.c_str());
     using namespace Toastbox;
     using namespace ImagePipeline;
     
@@ -351,6 +350,14 @@ inline void Export(ImageSourcePtr imageSource, const ImageSet& recs,
     for (auto it=recs.rbegin(); it!=recs.rend() && ![progress canceled]; it++) @autoreleasepool {
         ImageRecordPtr rec = *it;
         Image image = imageSource->getImage(ImageSource::Priority::Low, rec);
+        // getImage() can fail if the device is removed (in which case it'll
+        // return Image{}), so check for that case.
+        if (!image) {
+            printf("[ImageExporter::Export] getImage() failed; bailing\n");
+            // Dismiss the progress dialog
+            [progress cancel];
+            break;
+        }
         
         {
             auto lock = shared.signal.wait([&] {
@@ -415,7 +422,13 @@ inline void Export(NSWindow* window, ImageSourcePtr imageSource, const ImageSet&
         } else {
             Toastbox::Renderer renderer;
             Image image = imageSource->getImage(ImageSource::Priority::Low, firstImageRec);
-            Export(renderer, *firstImageRec, image, *res.format, [res.path UTF8String]);
+            // getImage() can fail if the device is removed (in which case it'll
+            // return Image{}), so check for that case.
+            if (image) {
+                Export(renderer, *firstImageRec, image, *res.format, [res.path UTF8String]);
+            } else {
+                printf("[ImageExporter::Export] getImage() failed; nothing to export\n");
+            }
             
 //            Toastbox::Renderer renderer;
 //            _Export(renderer, imageSource, firstImage, res.format, res.path);

@@ -63,6 +63,17 @@ using namespace MDCStudio;
 }
 
 - (IBAction)_cancel:(id)sender {
+    [self cancel];
+}
+
+- (void)cancel {
+    if (_canceled) return;
+    
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self cancel]; });
+        return;
+    }
+    
     [[_window sheetParent] endSheet:_window returnCode:NSModalResponseCancel];
     _canceled = true;
 }

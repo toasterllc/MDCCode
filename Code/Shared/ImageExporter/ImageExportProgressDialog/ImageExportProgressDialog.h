@@ -6,5 +6,6 @@
 - (instancetype)initWithParentWindow:(NSWindow*)parentWindow imageCount:(size_t)imageCount;
 - (void)incrementProgress;
 - (void)showIfNeeded;
+- (void)cancel;
 - (bool)canceled;
 @end

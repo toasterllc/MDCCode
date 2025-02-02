@@ -119,7 +119,13 @@ static struct {
     _ParallelQueueUnderwayUpdate(1);
     __block Image image = _imageSource->getImage(ImageSource::Priority::Low, _imageRecord);
     [_ParallelQueue() addOperationWithBlock:^{
-        [self _export:std::move(image) url:url];
+        // getImage() can fail if the device is removed (in which case it'll
+        // return Image{}), so check for that case.
+        if (image) {
+            [self _export:std::move(image) url:url];
+        } else {
+            [self->_progressDialog cancel];
+        }
         _ParallelQueueUnderwayUpdate(-1);
         completionHandler(nil);
     }];

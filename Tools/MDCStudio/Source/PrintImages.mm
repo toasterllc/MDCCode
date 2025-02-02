@@ -16,6 +16,13 @@ static NSImage* _NSImageForImage(ImageSourcePtr imageSource, const ImageRecordPt
     Toastbox::Renderer renderer;
     
     Image image = imageSource->getImage(ImageSource::Priority::Low, rec);
+    // getImage() can fail if the device is removed (in which case it'll
+    // return Image{}), so check for that case.
+    if (!image) {
+        printf("[PrintImages::_NSImageForImage] getImage() failed; returning nil\n");
+        return nil;
+    }
+    
     Pipeline::Options popts = PipelineOptionsForImage(*rec, image);
     
     Renderer::Txt txt = renderer.textureCreate(MTLPixelFormatRGBA16Float,
@@ -41,6 +48,11 @@ NSPrintOperation* PrintImages(NSDictionary<NSPrintInfoAttributeKey,id>* settings
     IterAny recsBegin = (order ? IterAny(recs.begin()) : IterAny(recs.rbegin()));
     IterAny recsEnd = (order ? IterAny(recs.end()) : IterAny(recs.rend()));
     for (auto it=recsBegin; it!=recsEnd; it++) {
+        NSImage* img = _NSImageForImage(imageSource, *it);
+        if (!img) {
+            printf("[PrintImages::PrintImages] _NSImageForImage returning nil; bailing\n");
+            return nil;
+        }
         images.push_back(_NSImageForImage(imageSource, *it));
     }
     
