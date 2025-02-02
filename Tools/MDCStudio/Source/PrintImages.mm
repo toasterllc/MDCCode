@@ -47,7 +47,7 @@ NSPrintOperation* PrintImages(NSDictionary<NSPrintInfoAttributeKey,id>* settings
     using IterAny = Toastbox::IterAny<ImageSet::const_iterator>;
     IterAny recsBegin = (order ? IterAny(recs.begin()) : IterAny(recs.rbegin()));
     IterAny recsEnd = (order ? IterAny(recs.end()) : IterAny(recs.rend()));
-    for (auto it=recsBegin; it!=recsEnd; it++) {
+    for (auto it=recsBegin; it!=recsEnd; it++) @autoreleasepool {
         NSImage* img = _NSImageForImage(imageSource, *it);
         if (!img) {
             printf("[PrintImages::PrintImages] _NSImageForImage returning nil; bailing\n");
