@@ -610,14 +610,14 @@ struct MDCDeviceHard : MDCDevice {
     // Host mode: acquires the device lock, and tells the device to enter host mode
     Cleanup _hostModeEnter(bool interrupt=false) {
         _hostModeSet(true, interrupt);
-        return std::make_unique<_Cleanup>([=] { _hostModeSet(false); });
+        return std::make_unique<_Cleanup>([=, this] { _hostModeSet(false); });
     }
     
     // SD mode: acquires the device lock, tells the device to enter host mode,
     // loads ICEAppSDReadoutSTM onto the ICE40, and initializes the SD card.
     Cleanup _sdModeEnter(bool interrupt=false) {
         _sdModeSet(true, interrupt);
-        return std::make_unique<_Cleanup>([=] { _sdModeSet(false); });
+        return std::make_unique<_Cleanup>([=, this] { _sdModeSet(false); });
     }
     
     Cleanup _suddenTerminationDisable() {
@@ -629,7 +629,7 @@ struct MDCDeviceHard : MDCDevice {
     
     Cleanup _syncStop() {
         _syncStop(true);
-        return std::make_unique<_Cleanup>([=] { _syncStop(false); });
+        return std::make_unique<_Cleanup>([=, this] { _syncStop(false); });
     }
     
     void _hostModeSet(bool en, bool interrupt=false) {
@@ -826,7 +826,7 @@ struct MDCDeviceHard : MDCDevice {
                 }
                 
                 printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
-                _loadThumbs(Priority::Low, true, recs, [=] (float progress) {
+                _loadThumbs(Priority::Low, true, recs, [=, this] (float progress) {
                     {
                         auto lock = _sync.signal.lock();
                         if (_sync.stop) throw Toastbox::Signal::Stop(); // Signalled to stop

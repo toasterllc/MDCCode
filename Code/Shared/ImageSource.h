@@ -155,7 +155,7 @@ struct ImageSource : Object {
     
     Cleanup dataReadPause() {
         _dataReadPause(1);
-        return std::make_unique<_Cleanup>([=] {
+        return std::make_unique<_Cleanup>([=, this] {
             try {
                 _dataReadPause(-1);
             } catch (const Toastbox::Signal::Stop&) {
@@ -551,7 +551,7 @@ struct ImageSource : Object {
             .validateChecksum = validateChecksum,
             .rec = rec,
             .buf = std::move(buf),
-            .callback = [=, &state] { _renderCompleteCallback(state, rec); },
+            .callback = [=, this, &state] { _renderCompleteCallback(state, rec); },
         });
     }
     
