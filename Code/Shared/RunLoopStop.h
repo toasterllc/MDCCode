@@ -1,7 +1,10 @@
 // RunLoopStop: mechanism to signal a runloop to stop running.
+//
 // This is necessary because apparently CFRunLoopStop() alone isn't always enough to
 // cause CFRunLoopRunInMode() to return kCFRunLoopRunStopped; sometimes it returns
-// kCFRunLoopRunHandledSource instead. This RunLoopStop mechanism works around that.
+// kCFRunLoopRunHandledSource instead, even when calling CFRunLoopStop() from the
+// runloop itself via CFRunLoopPerformBlock(). This RunLoopStop mechanism works
+// around that.
 
 #pragma once
 #import <Foundation/Foundation.h>
