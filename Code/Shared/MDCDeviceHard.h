@@ -234,7 +234,7 @@ struct MDCDeviceHard : MDCDevice {
         }
         
         // Notify observers that syncing started
-        _sync_observersNotify();
+        _observersNotify(&_sync);
     }
     
     // MARK: - Status
@@ -556,18 +556,6 @@ struct MDCDeviceHard : MDCDevice {
         }
     }
     
-//    void _device_observersNotify() {
-//        Object::Event ev;
-//        ev.prop = &_device;
-//        observersNotify(ev);
-//    }
-    
-    void _status_observersNotify() {
-        Object::Event ev;
-        ev.prop = &_status;
-        observersNotify(ev);
-    }
-    
     void _status_thread() {
         constexpr CFTimeInterval UpdateInterval = 2;
         
@@ -578,7 +566,7 @@ struct MDCDeviceHard : MDCDevice {
             for (;;) {
                 _status_update();
                 printf("[_status_thread] Updated\n");
-                _status_observersNotify();
+                _observersNotify(&_status);
                 _DeviceWaitForTerminate(_device.device, UpdateInterval);
             }
         
@@ -594,16 +582,8 @@ struct MDCDeviceHard : MDCDevice {
         // thread called stop()), this will be a no-op.
         stop();
         
-        // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
-        // exception if our MDCDeviceHard is undergoing destruction on a different thread.
-        // The destructor waits for this thread to terminate, so this should be safe.
-        const auto self = selfOrNull();
-        if (self) {
-            Object::Event ev;
-            ev.prop = &_device;
-            observersNotify(self, {});
-        }
-        
+        // Let observers know our device changed
+        _observersNotify(&_device);
         printf("[_status_thread] Terminating\n");
     }
     
@@ -833,7 +813,7 @@ struct MDCDeviceHard : MDCDevice {
                         _sync.progress = progress;
                         _sync.signal.signalAll();
                     }
-                    _sync_observersNotify();
+                    _observersNotify(&_sync);
                 });
             }
             
@@ -871,28 +851,25 @@ struct MDCDeviceHard : MDCDevice {
             printf("[_sync_thread] Error: %s\n", e.what());
         }
         
-        // Update syncing status
+        // Update sync status
         {
             auto lock = _sync.signal.lock();
             _sync.progress = std::nullopt;
             _sync.signal.signalAll();
         }
         
+        _observersNotify(&_sync);
+    }
+    
+    void _observersNotify(void* prop) {
         // Use selfOrNull() instead of self() because self() will throw a bad_weak_ptr
-        // exception if our MDCDevice is undergoing destruction on a different thread.
-        // The destructor waits for this thread to terminate, so this should be safe.
+        // exception if our MDCDeviceHard is undergoing destruction on a different thread.
+        // The destructor waits for this thread to terminate, so this is safe.
         const auto self = selfOrNull();
-        if (self) _sync_observersNotify(self);
-    }
-    
-    void _sync_observersNotify(ObjectPtr self) {
+        if (!self) return;
         Object::Event ev;
-        ev.prop = &_sync;
+        ev.prop = prop;
         observersNotify(self, ev);
-    }
-    
-    void _sync_observersNotify() {
-        _sync_observersNotify(self());
     }
     
     static _SDRegion _SDRegionForThumb(const ImageRecordPtr& rec) {

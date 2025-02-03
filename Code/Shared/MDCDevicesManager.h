@@ -162,9 +162,9 @@ struct MDCDevicesManager : Object {
                         Object::ObserverPtr ob = mdc->observerAdd([=] (MDCDeviceHardPtr device, const Object::Event& ev) {
                             auto selfStrong = selfWeak.lock();
                             if (!selfStrong) return;
-                            if (ev.prop == &device->_status) return; // Ignore status changes
-                            if (ev.prop == &device->_sync) return; // Ignore sync changes
-                            selfStrong->_deviceChanged(device);
+                            if (ev.prop == &device->_device) {
+                                selfStrong->_deviceChanged(device);
+                            }
                         });
                         
                         // Add the device to our _state.devices
