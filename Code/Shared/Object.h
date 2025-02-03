@@ -4,6 +4,7 @@
 #include <list>
 #include <set>
 #include <map>
+#include <mutex>
 #include <functional>
 #include <simd/simd.h>
 #include <cxxabi.h>
