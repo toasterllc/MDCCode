@@ -1,7 +1,7 @@
 #include <cstdint>
 #include "Lib/Toastbox/Queue.h"
 #include "Lib/Toastbox/Math.h"
-#include "Shared/Assert.h"
+#include "Lib/Toastbox/Assert.h"
 #include "Shared/ICE.h"
 #include "Shared/STM.h"
 #include "Shared/SDCard.h"

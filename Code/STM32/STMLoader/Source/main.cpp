@@ -1,7 +1,7 @@
 #include <cstring>
 #include <algorithm>
 #include "Lib/Toastbox/Math.h"
-#include "Shared/Assert.h"
+#include "Lib/Toastbox/Assert.h"
 #include "Shared/STM.h"
 #include "USB.h"
 #include "System.h"

@@ -3,8 +3,8 @@
 #include <ratio>
 #include "Lib/Scheduler/Scheduler.h"
 #include "Lib/Toastbox/Util.h"
+#include "Lib/Toastbox/Assert.h"
 #include "Shared/MSP.h"
-#include "Shared/Assert.h"
 #include "Shared/Time.h"
 
 // _RTCState: the current time (either absolute or relative, depending on the

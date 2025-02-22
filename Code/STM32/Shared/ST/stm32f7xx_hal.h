@@ -27,7 +27,7 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "Shared/Assert.h"
+#include "Lib/Toastbox/Assert.h"
 #include "stm32f7xx_hal_conf.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver

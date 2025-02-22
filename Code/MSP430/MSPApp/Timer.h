@@ -3,8 +3,8 @@
 #include <ratio>
 #include <limits>
 #include "Lib/Toastbox/Util.h"
+#include "Lib/Toastbox/Assert.h"
 #include "Shared/Time.h"
-#include "Shared/Assert.h"
 
 // T_Timer: a one-shot timer that can be scheduled for times in the near future
 // to distant future (up to ~4 years -- 0xFFFF*T_RTC::InterruptIntervalUs).

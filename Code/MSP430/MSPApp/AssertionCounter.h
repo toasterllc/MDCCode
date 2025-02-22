@@ -1,5 +1,5 @@
 #pragma once
-#include "Shared/Assert.h"
+#include "Lib/Toastbox/Assert.h"
 
 template<
 auto... T_Changed

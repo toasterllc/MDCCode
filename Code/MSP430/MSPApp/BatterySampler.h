@@ -2,7 +2,7 @@
 #include <msp430.h>
 #include "Shared/MSP.h"
 #include "RegLocker.h"
-#include "Shared/Assert.h"
+#include "Lib/Toastbox/Assert.h"
 
 template<
 typename T_Scheduler,

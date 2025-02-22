@@ -1,7 +1,7 @@
 #pragma once
 #include <initializer_list>
 #include <optional>
-#include "Shared/Assert.h"
+#include "Lib/Toastbox/Assert.h"
 #include "stm32f7xx.h"
 #include "usbd_def.h"
 #include "usbd_core.h"
