@@ -278,6 +278,8 @@ struct [[gnu::packed]] USBInitConfig {
     uint32_t phyTune = 0;
 };
 
+#define USBInitConfigSection ".USBInitConfig"
+
 struct [[gnu::packed]] BatteryStatus {
     MSP::ChargeStatus chargeStatus = MSP::ChargeStatus::Invalid;
     MSP::BatteryLevelMv level = MSP::BatteryLevelMvInvalid;

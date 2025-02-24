@@ -14,7 +14,7 @@ SECTIONS {
     .text : {
         . = ALIGN(4);
         *(.text)
-        *(.text*)
+        *(.text.*)
         *(.glue_7) /* glue arm to thumb code */
         *(.glue_7t) /* glue thumb to arm code */
         *(.eh_frame)
@@ -26,27 +26,27 @@ SECTIONS {
     .rodata : {
         . = ALIGN(4);
         *(.rodata)
-        *(.rodata*)
+        *(.rodata.*)
         . = ALIGN(4);
     } >DTCM_RAM
     
     .ARM.extab : {
         . = ALIGN(4);
-        *(.ARM.extab*)
+        *(.ARM.extab.*)
         *(.gnu.linkonce.armextab.*)
         . = ALIGN(4);
     } >DTCM_RAM
     
     .ARM : {
         . = ALIGN(4);
-        *(.ARM.exidx*)
+        *(.ARM.exidx.*)
         . = ALIGN(4);
     } >DTCM_RAM
     
     .preinit_array : {
         . = ALIGN(4);
         PROVIDE_HIDDEN(__preinit_array_start = .);
-        KEEP(*(.preinit_array*))
+        KEEP(*(.preinit_array))
         PROVIDE_HIDDEN(__preinit_array_end = .);
     } >DTCM_RAM
     
@@ -54,7 +54,7 @@ SECTIONS {
         . = ALIGN(4);
         PROVIDE_HIDDEN(__init_array_start = .);
         KEEP(*(SORT(.init_array.*)))
-        KEEP(*(.init_array*))
+        KEEP(*(.init_array))
         PROVIDE_HIDDEN(__init_array_end = .);
     } >DTCM_RAM
     
@@ -62,7 +62,7 @@ SECTIONS {
         . = ALIGN(4);
         PROVIDE_HIDDEN(__fini_array_start = .);
         KEEP(*(SORT(.fini_array.*)))
-        KEEP(*(.fini_array*))
+        KEEP(*(.fini_array))
         PROVIDE_HIDDEN(__fini_array_end = .);
     } >DTCM_RAM
     
@@ -71,7 +71,7 @@ SECTIONS {
         _sdata_flash = LOADADDR(.data);
         _sdata_ram = .;
         *(.data)
-        *(.data*)
+        *(.data.*)
         . = ALIGN(4);
         _edata_ram = .;
     } >DTCM_RAM
@@ -80,7 +80,7 @@ SECTIONS {
         . = ALIGN(4);
         _sbss = .;
         *(.bss)
-        *(.bss*)
+        *(.bss.*)
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;
@@ -89,7 +89,7 @@ SECTIONS {
     .uninit (NOLOAD) : {
         . = ALIGN(4);
         *(.uninit)
-        *(.uninit*)
+        *(.uninit.*)
         . = ALIGN(4);
     } >DTCM_RAM
     
@@ -103,7 +103,7 @@ SECTIONS {
     .sram1 : {
         . = ALIGN(4);
         *(.sram1)
-        *(.sram1*)
+        *(.sram1.*)
         . = ALIGN(4);
     } >SRAM1
     
@@ -113,7 +113,7 @@ SECTIONS {
     .sram2 (NOLOAD) : {
         . = ALIGN(4);
         *(.sram2)
-        *(.sram2*)
+        *(.sram2.*)
         . = ALIGN(4);
     } >SRAM2
     

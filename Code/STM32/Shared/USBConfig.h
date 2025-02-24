@@ -16,7 +16,9 @@ private:
     };
     
 public:
-    static inline STM::USBInitConfig InitConfig = {
+    // `volatile` to ensure that this struct isn't optimized away (since it's `const`)
+    [[gnu::section(USBInitConfigSection)]]
+    static const volatile inline STM::USBInitConfig InitConfig = {
         .options = STM::USBInitConfig::SpeedFull,   // By default we're a full-speed device
         .phyTune = 0xF17,                           // Default value via USB_HS_PHYC_TUNE_VALUE.
                                                     // Intel Macs: 0xF17 works
