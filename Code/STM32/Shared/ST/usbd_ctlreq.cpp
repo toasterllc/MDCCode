@@ -381,7 +381,7 @@ USBD_StatusTypeDef USBD_StdEPReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
 static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
   uint16_t len = 0U;
-  uint8_t *pbuf = NULL;
+  const uint8_t *pbuf = NULL;
   uint8_t err = 0U;
 
   switch (req->wValue >> 8)

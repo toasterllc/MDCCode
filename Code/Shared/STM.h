@@ -265,8 +265,8 @@ struct [[gnu::packed]] ImgCaptureStats {
 // This is necessary so that when multiple images are streamed, the
 // transfer continues indefinitely and isn't cut short by a short packet
 // (ie a packet < the MPS).
-static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
-static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
+static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk) == 0);
+static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk) == 0);
 
 struct [[gnu::packed]] USBInitConfig {
     using Options = uint32_t;

@@ -14,14 +14,14 @@ typename T_Scheduler,   // T_Scheduler: scheduler
 bool T_DMAEn,           // T_DMAEn: whether DMA is enabled
 typename T_Config       // T_ConfigDesc: contains endpoints and configuration descriptor
 >
-class T_USB {
-public:
+struct T_USB {
     struct Cmd {
         const uint8_t* data;
         size_t len;
     };
     
-private:
+    using Config = T_Config;
+    
     enum class _EndpointStage : uint8_t {
         Ready,
         Busy,
@@ -39,9 +39,8 @@ private:
         bool needsReset = false;
     };
     
-public:
-    static constexpr size_t MaxPacketSizeCtrl = Toastbox::USB::Endpoint::MaxPacketSizeCtrl;
-    static constexpr size_t MaxPacketSizeBulk = Toastbox::USB::Endpoint::MaxPacketSizeBulk;
+    static constexpr size_t _MaxPacketSizeCtrl = Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeCtrl;
+    static constexpr size_t _MaxPacketSizeBulk = Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk;
     
     static constexpr auto EndpointIdx = Toastbox::USB::Endpoint::Idx;
     static constexpr auto EndpointOut = Toastbox::USB::Endpoint::Out;
@@ -57,16 +56,6 @@ public:
     
     static constexpr size_t EndpointCount() {
         return std::size(T_Config::Endpoints);
-    }
-    
-    static constexpr size_t MaxPacketSizeIn() {
-        return 64;
-        return Toastbox::USB::Endpoint::MaxPacketSizeIn(T_Config::Endpoints);
-    }
-    
-    static constexpr size_t MaxPacketSizeOut() {
-        return 64;
-        return Toastbox::USB::Endpoint::MaxPacketSizeOut(T_Config::Endpoints);
     }
     
     static constexpr uint32_t FIFORxSize() {
@@ -88,7 +77,7 @@ public:
         //   packet."
         return (
             (5*EndpointCountCtrl+8)                     +
-            (2*((MaxPacketSizeOut()/4)+1))              +
+            (2*((_MaxPacketSizeBulk/4)+1))              +
             (2*(EndpointCountCtrl+EndpointCountOut()))  +
             (1)
         ) * sizeof(uint32_t);
@@ -103,12 +92,10 @@ public:
     
     // Initialization
     static void Init() {
-        const auto speed = (T_Config::InitConfig.options & STM::USBInitConfig::Speed);
-        
         _PCD.pData = &_Device;
         _PCD.Instance = USB_OTG_HS;
         _PCD.Init.dev_endpoints = 9;
-        _PCD.Init.speed = (speed==STM::USBInitConfig::SpeedHigh ? USBD_HS_SPEED : USBD_HSINFS_SPEED);
+        _PCD.Init.speed = (T_Config::SpeedFull() ? USBD_HSINFS_SPEED : USBD_HS_SPEED);
         _PCD.Init.dma_enable = T_DMAEn;
         _PCD.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
         _PCD.Init.sof_enable = false;
@@ -205,12 +192,12 @@ public:
         constexpr size_t FIFOCapDMARegisters    = (T_DMAEn ? 128 : 0);
         constexpr size_t FIFOCapUsable          = FIFOCapTotal-FIFOCapDMARegisters;
         constexpr size_t FIFOCapRx              = FIFORxSize();
-        constexpr size_t FIFOCapTxCtrl          = MaxPacketSizeCtrl;
+        constexpr size_t FIFOCapTxCtrl          = _MaxPacketSizeCtrl;
         // Verify that we haven't already overflowed FIFOCapUsable
         static_assert((FIFOCapRx+FIFOCapTxCtrl) <= FIFOCapUsable);
         constexpr size_t FIFOCapTxBulk          = (FIFOCapUsable-(FIFOCapRx+FIFOCapTxCtrl))/EndpointCountIn();
         // Verify that FIFOCapTxBulk is large enough to hold an IN packet
-        static_assert(FIFOCapTxBulk >= MaxPacketSizeIn());
+        static_assert(FIFOCapTxBulk >= _MaxPacketSizeBulk);
         // Verify that the total memory allocated fits within the FIFO memory.
         static_assert(FIFOCapRx+FIFOCapTxCtrl+(FIFOCapTxBulk*EndpointCountIn()) <= FIFOCapUsable);
         
@@ -338,16 +325,15 @@ public:
         ISR_HAL_PCD(&_PCD);
     }
     
-private:
     static uint8_t _USBD_Init(uint8_t cfgidx) {
         // Open endpoints
         for (uint8_t ep : T_Config::Endpoints) {
             if (EndpointOut(ep)) {
-                USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
+                USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, T_Config::MaxPacketSizeOut());
                 _Device.ep_out[EndpointIdx(ep)].is_used = 1U;
             
             } else {
-                USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeIn());
+                USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, T_Config::MaxPacketSizeIn());
                 _Device.ep_in[EndpointIdx(ep)].is_used = 1U;
             }
             
@@ -440,12 +426,12 @@ private:
         return (uint8_t)USBD_OK;
     }
     
-    static uint8_t* _USBD_GetConfigDescriptor(uint16_t* len) {
-        *len = sizeof(T_Config::Descriptor);
-        return (uint8_t*)&T_Config::Descriptor;
+    static const uint8_t* _USBD_GetConfigDescriptor(uint16_t* len) {
+        *len = sizeof(*T_Config::Descriptor());
+        return (const uint8_t*)T_Config::Descriptor();
     }
     
-    static uint8_t* _USBD_GetUsrStrDescriptor(uint8_t index, uint16_t* len) {
+    static const uint8_t* _USBD_GetUsrStrDescriptor(uint8_t index, uint16_t* len) {
         return nullptr;
     }
     
@@ -566,7 +552,7 @@ private:
         switch (eps.stage) {
         case _EndpointStage::ResetZLP1:
         case _EndpointStage::ResetSentinel:
-            USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
+            USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)_DevNullAddr, _MaxPacketSizeBulk);
             break;
         default:
             break;
@@ -626,7 +612,6 @@ private:
         }
     }
     
-private:
     alignas(void*) // Aligned to send via USB
     static const inline uint8_t _ResetSentinel = 0;
     
@@ -639,7 +624,7 @@ private:
     static constexpr uint32_t _DevNullAddr = 0x08000000;
     
     alignas(void*) // Aligned to receive via USB
-    static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl];
+    static inline uint8_t _CmdRecvBuf[_MaxPacketSizeCtrl];
     
     static inline std::optional<size_t> _CmdRecvLen;
     static inline _EndpointState _EndpointsOut[EndpointCountOut()] = {};

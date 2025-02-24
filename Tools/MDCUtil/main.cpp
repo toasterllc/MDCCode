@@ -631,7 +631,7 @@ static void _Print(MSP::DebugLogPacket::Type t, uint64_t x) {
 
 static void MSPSBWDebugLog(const Args& args, MDCUSBDevice& device) {
     using DebugLogPacket = MSP::DebugLogPacket;
-    DebugLogPacket log[Toastbox::USB::Endpoint::MaxPacketSizeBulk / sizeof(DebugLogPacket)];
+    DebugLogPacket log[Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk / sizeof(DebugLogPacket)];
     
     std::cout << "MSPSBWDebugLog\n";
 //    device.mspLock();
@@ -697,7 +697,7 @@ static void MSPSBWDebugLog(const Args& args, MDCUSBDevice& device) {
 }
 
 static void SDRead(const Args& args, MDCUSBDevice& device) {
-    static_assert(!(SD::BlockLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk));
+    static_assert(!(SD::BlockLen % Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk));
     const size_t len = (size_t)args.SDRead.count * (size_t)SD::BlockLen;
     
     printf("Sending SDInit command...\n");
@@ -740,7 +740,7 @@ static void SDErase(const Args& args, MDCUSBDevice& device) {
 }
 
 static void _ImgRead(MDCUSBDevice& device, const std::string& filePath, SD::Block block, size_t len) {
-    static_assert(!(SD::BlockLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk));
+    static_assert(!(SD::BlockLen % Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk));
     
     printf("Sending SDInit command...\n");
     device.sdInit();
@@ -759,8 +759,8 @@ static void _ImgRead(MDCUSBDevice& device, const std::string& filePath, SD::Bloc
 //    len = 16384*64;
 //    len = 1024*512 + 1024*512 - 64;
     
-//    len = 16383*64;
-    len = 16384*64;
+    len = 16383*64;
+//    len = 16384*64;
     
 //    len = 16383*512;
 //    len = 1024*1024*512;
