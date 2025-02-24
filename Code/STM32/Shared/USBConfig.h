@@ -19,11 +19,36 @@ public:
     // `volatile` to ensure that this struct isn't optimized away (since it's `const`)
     [[gnu::section(USBInitConfigSection)]]
     static const volatile inline STM::USBInitConfig InitConfig = {
-        .options = STM::USBInitConfig::SpeedFull,   // By default we're a full-speed device
+//        .options = STM::USBInitConfig::SpeedHigh,   // By default we're a full-speed device
+//        .phyTune = 0xE043,
+        
+        
+//        .options = STM::USBInitConfig::SpeedFull,   // By default we're a full-speed device
+//        .phyTune = 0xF17,                           // Default value via USB_HS_PHYC_TUNE_VALUE.
+//                                                    // Intel Macs: 0xF17 works
+//                                                    // ARM Macs, device connected via hub: 0xF17 works
+//                                                    // ARM Macs, device connected directly: 0xF17 needs to be overridden
+        
+        
+//        .options = STM::USBInitConfig::SpeedFull,   // By default we're a full-speed device
+//        .phyTune = 0xF13,                           // Default value via USB_HS_PHYC_TUNE_VALUE.
+//                                                    // Intel Macs: 0xF17 works
+//                                                    // ARM Macs, device connected via hub: 0xF17 works
+//                                                    // ARM Macs, device connected directly: 0xF17 needs to be overridden
+        
+        
+        .options = STM::USBInitConfig::SpeedHigh,   // By default we're a full-speed device
         .phyTune = 0xF17,                           // Default value via USB_HS_PHYC_TUNE_VALUE.
                                                     // Intel Macs: 0xF17 works
                                                     // ARM Macs, device connected via hub: 0xF17 works
                                                     // ARM Macs, device connected directly: 0xF17 needs to be overridden
+        
+        
+//        .options = STM::USBInitConfig::SpeedFull,   // By default we're a full-speed device
+//        .phyTune = 0xF17,                           // Default value via USB_HS_PHYC_TUNE_VALUE.
+//                                                    // Intel Macs: 0xF17 works
+//                                                    // ARM Macs, device connected via hub: 0xF17 works
+//                                                    // ARM Macs, device connected directly: 0xF17 needs to be overridden
     };
     
     static constexpr inline uint8_t Endpoints[] = {
