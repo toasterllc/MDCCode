@@ -30,18 +30,18 @@ public:
 //                                                    // ARM Macs, device connected directly: 0xF17 needs to be overridden
         
         
-//        .options = STM::USBInitConfig::SpeedFull,   // By default we're a full-speed device
-//        .phyTune = 0xF13,                           // Default value via USB_HS_PHYC_TUNE_VALUE.
-//                                                    // Intel Macs: 0xF17 works
-//                                                    // ARM Macs, device connected via hub: 0xF17 works
-//                                                    // ARM Macs, device connected directly: 0xF17 needs to be overridden
-        
-        
-        .options = STM::USBInitConfig::SpeedHigh,   // By default we're a full-speed device
+        .options = STM::USBInitConfig::SpeedFull,   // By default we're a full-speed device
         .phyTune = 0xF17,                           // Default value via USB_HS_PHYC_TUNE_VALUE.
                                                     // Intel Macs: 0xF17 works
                                                     // ARM Macs, device connected via hub: 0xF17 works
                                                     // ARM Macs, device connected directly: 0xF17 needs to be overridden
+        
+        
+//        .options = STM::USBInitConfig::SpeedHigh,   // By default we're a full-speed device
+//        .phyTune = 0xF17,                           // Default value via USB_HS_PHYC_TUNE_VALUE.
+//                                                    // Intel Macs: 0xF17 works
+//                                                    // ARM Macs, device connected via hub: 0xF17 works
+//                                                    // ARM Macs, device connected directly: 0xF17 needs to be overridden
         
         
 //        .options = STM::USBInitConfig::SpeedFull,   // By default we're a full-speed device

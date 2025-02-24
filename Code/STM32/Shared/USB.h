@@ -60,12 +60,12 @@ public:
     }
     
     static constexpr size_t MaxPacketSizeIn() {
-//        return 64;
+        return 64;
         return Toastbox::USB::Endpoint::MaxPacketSizeIn(T_Config::Endpoints);
     }
     
     static constexpr size_t MaxPacketSizeOut() {
-//        return 64;
+        return 64;
         return Toastbox::USB::Endpoint::MaxPacketSizeOut(T_Config::Endpoints);
     }
     

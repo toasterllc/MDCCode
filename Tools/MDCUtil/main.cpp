@@ -750,18 +750,35 @@ static void _ImgRead(MDCUSBDevice& device, const std::string& filePath, SD::Bloc
     device.sdRead(block);
     printf("-> OK\n\n");
     
-    printf("Reading data...\n");
-    auto buf = std::make_unique<uint8_t[]>(len);
-    device.readout(buf.get(), len);
-    printf("-> OK\n\n");
-    
-    // Write data
-    printf("Writing data...\n");
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(filePath.c_str());
-    f.write((char*)buf.get(), len);
-    printf("-> OK\n");
+    
+//    len = 64;
+//    len = 1024*512;
+//    len = 16384*64;
+//    len = 1024*512 + 1024*512 - 64;
+    
+//    len = 16383*64;
+    len = 16384*64;
+    
+//    len = 16383*512;
+//    len = 1024*1024*512;
+    
+    auto buf = std::make_unique<uint8_t[]>(len);
+    
+    for (;;) {
+        printf("Reading %ju bytes...\n", (uintmax_t)len);
+        device.readout(buf.get(), len);
+        printf("-> OK\n\n");
+        
+        // Write data
+        printf("Writing data...\n");
+        f.write((char*)buf.get(), len);
+        printf("-> OK\n");
+    }
+    
+
 }
 
 static void ImgReadFull(const Args& args, MDCUSBDevice& device) {
