@@ -269,12 +269,14 @@ static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::SpeedHigh:
 static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk) == 0);
 
 struct [[gnu::packed]] USBInitConfig {
-    using Options = uint32_t;
-    static constexpr Options SpeedFull  = 0<<0;
-    static constexpr Options SpeedHigh  = 1<<0;
-    static constexpr Options Speed      = 1<<0; // Mask
+    static constexpr uint32_t SpeedFull             = 0<<0;
+    static constexpr uint32_t SpeedHigh             = 1<<0;
+    static constexpr uint32_t Speed                 = 1<<0; // Mask
     
-    Options options = 0;
+    static constexpr uint32_t PhyTuneDefault        = 0x00000F17;
+    static constexpr uint32_t PhyTuneARMWorkaround  = 0x0000E043;
+    
+    uint32_t options = 0;
     uint32_t phyTune = 0;
 };
 
