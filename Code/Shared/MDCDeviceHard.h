@@ -440,14 +440,7 @@ struct MDCDeviceHard : MDCDevice {
     
     static void _DeviceBootload(const _MDCUSBDevicePtr& dev) {
         ELF32Binary elf(_STMAppData, _STMAppDataLen);
-        
-        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-        size_t size, const char* name) {
-            dev->stmRAMWrite(paddr, data, size);
-        });
-        
-        // Reset the device, triggering it to load the program we just wrote
-        dev->stmReset(elf.entryPointAddr());
+        dev->stmRAMWrite(elf);
     }
     
     static void _DeviceModeCheck(const _MDCUSBDevicePtr& dev, STM::Status::Mode mode) {

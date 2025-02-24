@@ -10,7 +10,6 @@
 #include "System.h"
 #include "USB.h"
 #include "QSPI.h"
-#include "USBConfig.h"
 using namespace STM;
 
 static void _Reset();
@@ -523,7 +522,7 @@ struct _TaskUSBDataOut {
             if (_LenRem) {
                 // Prepare to receive either `len` bytes or the buffer capacity bytes,
                 // whichever is smaller.
-                const size_t cap = Toastbox::Ceil(_USB::MaxPacketSizeOut(), std::min(_LenRem, sizeof(buf.data)));
+                const size_t cap = Toastbox::Ceil(_USB::Config::MaxPacketSizeBulk(), std::min(_LenRem, sizeof(buf.data)));
                 // Ensure that after rounding up to the nearest packet size, we don't
                 // exceed the buffer capacity. (This should always be safe as long as
                 // the buffer capacity is a multiple of the max packet size.)

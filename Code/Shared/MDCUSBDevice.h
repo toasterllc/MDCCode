@@ -12,12 +12,13 @@
 #include "Shared/ChecksumFletcher32.h"
 #include "Shared/TimeAdjustment.h"
 #include "Shared/TimeString.h"
+#include "Shared/ELF32Binary.h"
 
 struct MDCUSBDevice; using MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
-class MDCUSBDevice {
-public:
+struct MDCUSBDevice {
     using USBDevice = Toastbox::USBDevice;
     using USBDevicePtr = Toastbox::USBDevicePtr;
+    using _SendRight = Toastbox::SendRight;
     
     struct IncompatibleVersion : Toastbox::RuntimeError {
         using Toastbox::RuntimeError::RuntimeError;
@@ -79,8 +80,8 @@ public:
         // Acquire system-wide exclusive access to the device
         _dev->claim();
         
-        printf("[MDCUSBDevice] reset START\n");
         // We don't know what state the device was left in, so reset its state
+        printf("[MDCUSBDevice] reset START\n");
         reset();
         printf("[MDCUSBDevice] reset END\n");
         
@@ -225,6 +226,93 @@ public:
         _checkStatus("STMRAMWrite command failed");
     }
     
+    // _Parents(): returns the parents for `service`
+    // (IORegistryEntry's can have multiple parents, called 'providers' in the kernel.)
+    static std::vector<_SendRight> _Parents(const _SendRight& service) {
+        _SendRight serviceIter;
+        {
+            io_iterator_t iter = MACH_PORT_NULL;
+            kern_return_t kr = IORegistryEntryGetParentIterator(service, kIOServicePlane, &iter);
+            if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IORegistryEntryGetParentIterator failed: 0x%x", kr);
+            serviceIter = _SendRight(_SendRight::NoRetain, iter);
+        }
+        
+        std::vector<_SendRight> services;
+        for (;;) {
+            _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
+            if (!service) break;
+            services.push_back(std::move(service));
+        }
+        
+        return services;
+    }
+    
+    static bool _USBHub(const _SendRight& service) {
+        return IOObjectConformsTo(service, "AppleUSBHubPort");
+    }
+    
+    static bool _USBHub(const std::vector<_SendRight>& services) {
+        for (const _SendRight& service : services) {
+            if (_USBHub(service)) return true;
+        }
+        return false;
+    }
+    
+    static constexpr bool _ARMMac() {
+#ifdef __arm64__
+        // ARM
+        return true;
+#else
+        // x86
+        return false;
+#endif // __arm64__
+    }
+    
+    static uint32_t _PhyTune(const _SendRight& service) {
+        // Use the default PHY tune value is this isn't an ARM Mac, or the device is connected via a hub.
+        // Inversely, use the workaround PHY tune value if this is an ARM Mac, and the device is
+        // connected directly to a host port.
+        if (!_ARMMac() || _USBHub(_Parents(service))) {
+            return STM::USBInitConfig::PhyTuneDefault;
+        } else {
+            return STM::USBInitConfig::PhyTuneWorkaround;
+        }
+    }
+    
+    static STM::USBInitConfig _USBInitConfig(const USBDevice& dev) {
+        return STM::USBInitConfig{
+            .options = STM::USBInitConfig::SpeedHigh,
+//            .options = STM::USBInitConfig::SpeedFull,
+            .phyTune = _PhyTune(dev.service()),
+        };
+    }
+    
+    void stmRAMWrite(const ELF32Binary& elf) {
+        const STM::USBInitConfig usbInitConfig = _USBInitConfig(dev());
+        printf("[MDCUSBDevice::stmRAMWrite] usbInitConfig.phyTune=0x%08jx\n", (uintmax_t)usbInitConfig.phyTune);
+        
+        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+        size_t size, const std::string& name) {
+            if (name == USBInitConfigSection) {
+                if (size != sizeof(usbInitConfig)) {
+                    throw Toastbox::RuntimeError("%s section isn't expected size (expected:%ju got:%ju)",
+                        USBInitConfigSection, (uintmax_t)sizeof(usbInitConfig), (uintmax_t)size);
+                }
+                
+                data = &usbInitConfig;
+            }
+            
+            printf("[MDCUSBDevice::stmRAMWrite] Writing %16s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
+                name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+            
+            stmRAMWrite(paddr, data, size);
+        });
+        
+        // Reset the device, triggering it to load the program we just wrote
+        printf("[MDCUSBDevice::stmRAMWrite] Resetting device\n");
+        stmReset(elf.entryPointAddr());
+    }
+    
     void stmRAMWriteLegacy(uintptr_t addr, const void* data, size_t len) {
         assert(_mode == STM::Status::Mode::STMLoader);
         
@@ -247,6 +335,20 @@ public:
         
         // Send data
         _dev->write(STM::Endpoint::DataOut, data, len);
+    }
+    
+    void stmRAMWriteLegacy(const ELF32Binary& elf) {
+        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+        size_t size, const std::string& name) {
+            printf("[MDCUSBDevice::stmRAMWriteLegacy] Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
+                name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+            
+            stmRAMWriteLegacy(paddr, data, size);
+        });
+        
+        // Reset the device, triggering it to load the program we just wrote
+        printf("[MDCUSBDevice::stmRAMWriteLegacy] Resetting device\n");
+        stmReset(elf.entryPointAddr());
     }
     
     void stmReset(uintptr_t entryPointAddr) {
@@ -295,6 +397,23 @@ public:
         
         // Check status
         _checkStatus("STMFlashWrite command failed");
+    }
+    
+    void stmFlashWrite(const ELF32Binary& elf) {
+        printf("[MDCUSBDevice::stmFlashWrite] Init\n");
+        stmFlashWriteInit();
+        
+        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+        size_t size, const std::string& name) {
+            printf("[MDCUSBDevice::stmFlashWrite] Writing %16s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
+                name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+            
+            stmFlashWrite(paddr, data, size);
+        });
+        
+        // Invoke the bootloader, triggering it to load the program we just wrote
+        printf("[MDCUSBDevice::stmFlashWrite] Invoking bootloader\n");
+        bootloaderInvoke();
     }
     
     void hostModeSet(bool en) {
@@ -656,6 +775,39 @@ public:
         _sendCmd(cmd);
     }
     
+    void mspSBWWrite(const ELF32Binary& elf) {
+        mspLock();
+        mspSBWConnect();
+        mspSBWHalt();
+        
+        // Write the data
+        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+        size_t size, const std::string& name) {
+            printf("[MDCUSBDevice::mspSBWWrite] Writing %22s @ 0x%04jx    size: 0x%04jx    vaddr: 0x%04jx\n",
+                name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+            
+            mspSBWWrite(paddr, data, size);
+        });
+        
+        // Read back data and compare with what we expect
+        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+        size_t size, const std::string& name) {
+            printf("[MDCUSBDevice::mspSBWWrite] Verifying %s @ 0x%jx [size: 0x%jx]\n",
+                name.c_str(), (uintmax_t)paddr, (uintmax_t)size);
+            
+            auto buf = std::make_unique<uint8_t[]>(size);
+            mspSBWRead(paddr, buf.get(), size);
+            
+            if (memcmp(data, buf.get(), size)) {
+                throw Toastbox::RuntimeError("section doesn't match: %s", name.c_str());
+            }
+        });
+        
+        mspSBWReset();
+        mspSBWDisconnect();
+        mspUnlock();
+    }
+    
     void mspSBWDebug(const STM::MSPSBWDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
         assert(_mode == STM::Status::Mode::STMApp);
         
@@ -833,7 +985,6 @@ public:
 //        return buf;
     }
     
-private:
     void _endpointReset(uint8_t ep) {
         namespace USB = Toastbox::USB;
         if ((ep&USB::Endpoint::DirectionMask) == USB::Endpoint::DirectionOut) {

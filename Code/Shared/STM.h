@@ -265,8 +265,22 @@ struct [[gnu::packed]] ImgCaptureStats {
 // This is necessary so that when multiple images are streamed, the
 // transfer continues indefinitely and isn't cut short by a short packet
 // (ie a packet < the MPS).
-static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
-static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
+static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk) == 0);
+static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk) == 0);
+
+struct [[gnu::packed]] USBInitConfig {
+    static constexpr uint32_t SpeedFull             = 0<<0;
+    static constexpr uint32_t SpeedHigh             = 1<<0;
+    static constexpr uint32_t Speed                 = 1<<0; // Mask
+    
+    static constexpr uint32_t PhyTuneDefault        = 0x00000F17;
+    static constexpr uint32_t PhyTuneWorkaround     = 0x0000E043;
+    
+    uint32_t options = 0;
+    uint32_t phyTune = 0;
+};
+
+#define USBInitConfigSection ".USBInitConfig"
 
 struct [[gnu::packed]] BatteryStatus {
     MSP::ChargeStatus chargeStatus = MSP::ChargeStatus::Invalid;

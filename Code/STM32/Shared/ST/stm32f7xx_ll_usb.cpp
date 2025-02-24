@@ -56,7 +56,7 @@
 static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx);
 
 #ifdef USB_HS_PHYC
-static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx);
+static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx, const USB_OTG_CfgTypeDef& cfg);
 #endif
 
 /* Exported functions --------------------------------------------------------*/
@@ -83,7 +83,7 @@ static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx);
   *         the configuration information for the specified USBx peripheral.
   * @retval HAL status
   */
-HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef cfg)
+HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, const USB_OTG_CfgTypeDef& cfg)
 {
   HAL_StatusTypeDef ret;
 
@@ -124,7 +124,7 @@ HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
     USBx->GCCFG |= USB_OTG_GCCFG_PHYHSEN;
 
     /* Enables control of a High Speed USB PHY */
-    if (USB_HS_PHYCInit(USBx) != HAL_OK)
+    if (USB_HS_PHYCInit(USBx, cfg) != HAL_OK)
     {
       return HAL_ERROR;
     }
@@ -305,7 +305,7 @@ HAL_StatusTypeDef USB_SetCurrentMode(USB_OTG_GlobalTypeDef *USBx, USB_OTG_ModeTy
   *         the configuration information for the specified USBx peripheral.
   * @retval HAL status
   */
-HAL_StatusTypeDef USB_DevInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef cfg)
+HAL_StatusTypeDef USB_DevInit(USB_OTG_GlobalTypeDef *USBx, const USB_OTG_CfgTypeDef& cfg)
 {
   HAL_StatusTypeDef ret = HAL_OK;
   uint32_t USBx_BASE = (uint32_t)USBx;
@@ -917,7 +917,6 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
 {
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t epnum = (uint32_t)ep->num;
-  uint16_t pktcnt;
 
   /* IN endpoint */
   if (ep->is_in == 1U)
@@ -938,13 +937,19 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
       */
       USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_XFRSIZ);
       USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_PKTCNT);
-      USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_PKTCNT & (((ep->xfer_len + ep->maxpacket - 1U) / ep->maxpacket) << 19));
+      
+      const uint32_t pktcnt = (ep->xfer_len + ep->maxpacket - 1U) / ep->maxpacket;
+      const uint32_t pktcntShifted = pktcnt << USB_OTG_DIEPTSIZ_PKTCNT_Pos;
+      // Make sure `pktcnt` fits in DIEPTSIZ.PKTCNT
+      Assert(pktcntShifted == (USB_OTG_DIEPTSIZ_PKTCNT & pktcntShifted));
+      
+      USBx_INEP(epnum)->DIEPTSIZ |= pktcntShifted;
       USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_XFRSIZ & ep->xfer_len);
-
+      
       if (ep->type == EP_TYPE_ISOC)
       {
         USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_MULCNT);
-        USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_MULCNT & (1U << 29));
+        USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_MULCNT & (1U << USB_OTG_DIEPTSIZ_MULCNT_Pos));
       }
     }
 
@@ -1014,8 +1019,12 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
     }
     else
     {
-      pktcnt = (uint16_t)((ep->xfer_len + ep->maxpacket - 1U) / ep->maxpacket);
-      USBx_OUTEP(epnum)->DOEPTSIZ |= USB_OTG_DOEPTSIZ_PKTCNT & ((uint32_t)pktcnt << USB_OTG_DOEPTSIZ_PKTCNT_Pos);
+      const uint32_t pktcnt = (ep->xfer_len + ep->maxpacket - 1U) / ep->maxpacket;
+      const uint32_t pktcntShifted = pktcnt << USB_OTG_DOEPTSIZ_PKTCNT_Pos;
+      // Make sure `pktcnt` fits in DOEPTSIZ.PKTCNT
+      Assert(pktcntShifted == (USB_OTG_DOEPTSIZ_PKTCNT & pktcntShifted));
+      
+      USBx_OUTEP(epnum)->DOEPTSIZ |= pktcntShifted;
       USBx_OUTEP(epnum)->DOEPTSIZ |= USB_OTG_DOEPTSIZ_XFRSIZ & (ep->maxpacket * pktcnt);
     }
 
@@ -1551,7 +1560,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
   * @param  USBx  Selected device
   * @retval HAL status
   */
-static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx)
+static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx, const USB_OTG_CfgTypeDef& cfg)
 {
   UNUSED(USBx);
   uint32_t count = 0U;
@@ -1599,7 +1608,7 @@ static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx)
   }
 
   /* Control the tuning interface of the High Speed PHY */
-  USB_HS_PHYC->USB_HS_PHYC_TUNE = USB_HS_PHYC_TUNE_VALUE;
+  USB_HS_PHYC->USB_HS_PHYC_TUNE = cfg.phy_tune;
 
   /* Enable PLL internal PHY */
   USB_HS_PHYC->USB_HS_PHYC_PLL |= USB_HS_PHYC_PLL_PLLEN;
@@ -1619,7 +1628,7 @@ static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx)
   *         the configuration information for the specified USBx peripheral.
   * @retval HAL status
   */
-HAL_StatusTypeDef USB_HostInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef cfg)
+HAL_StatusTypeDef USB_HostInit(USB_OTG_GlobalTypeDef *USBx, const USB_OTG_CfgTypeDef& cfg)
 {
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t i;

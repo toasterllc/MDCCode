@@ -14,7 +14,7 @@ SECTIONS {
     .text : {
         . = ALIGN(4);
         *(.text)
-        *(.text*)
+        *(.text.*)
         *(.glue_7) /* glue arm to thumb code */
         *(.glue_7t) /* glue thumb to arm code */
         *(.eh_frame)
@@ -26,7 +26,7 @@ SECTIONS {
     .rodata : {
         . = ALIGN(4);
         *(.rodata)
-        *(.rodata*)
+        *(.rodata.*)
         . = ALIGN(4);
     } >DTCM_RAM
     
@@ -71,16 +71,22 @@ SECTIONS {
         _sdata_flash = LOADADDR(.data);
         _sdata_ram = .;
         *(.data)
-        *(.data*)
+        *(.data.*)
         . = ALIGN(4);
         _edata_ram = .;
+    } >DTCM_RAM
+    
+    .USBInitConfig : {
+        . = ALIGN(4);
+        *(.USBInitConfig)
+        . = ALIGN(4);
     } >DTCM_RAM
     
     .bss : {
         . = ALIGN(4);
         _sbss = .;
         *(.bss)
-        *(.bss*)
+        *(.bss.*)
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;
@@ -89,7 +95,7 @@ SECTIONS {
     .uninit (NOLOAD) : {
         . = ALIGN(4);
         *(.uninit)
-        *(.uninit*)
+        *(.uninit.*)
         . = ALIGN(4);
     } >DTCM_RAM
     
@@ -103,7 +109,7 @@ SECTIONS {
     .sram1 : {
         . = ALIGN(4);
         *(.sram1)
-        *(.sram1*)
+        *(.sram1.*)
         . = ALIGN(4);
     } >SRAM1
     
@@ -113,7 +119,7 @@ SECTIONS {
     .sram2 (NOLOAD) : {
         . = ALIGN(4);
         *(.sram2)
-        *(.sram2*)
+        *(.sram2.*)
         . = ALIGN(4);
     } >SRAM2
     
