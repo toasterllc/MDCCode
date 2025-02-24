@@ -16,6 +16,13 @@ private:
     };
     
 public:
+    static inline STM::USBInitConfig InitConfig = {
+        .options = STM::USBInitConfig::SpeedLow,    // By default we're always a low-speed device
+        .phyTune = 0xF17,                           // Default value via USB_HS_PHYC_TUNE_VALUE.
+                                                    // Works with Intel Macs, needs to be
+                                                    // overridden for ARM Macs.
+    };
+    
     static constexpr inline uint8_t Endpoints[] = {
         (uint8_t)STM::Endpoint::DataOut,
         (uint8_t)STM::Endpoint::DataIn,

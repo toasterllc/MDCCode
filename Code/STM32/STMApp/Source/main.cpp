@@ -10,7 +10,6 @@
 #include "System.h"
 #include "USB.h"
 #include "QSPI.h"
-#include "USBConfig.h"
 using namespace STM;
 
 static void _Reset();

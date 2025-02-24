@@ -138,10 +138,7 @@ public:
             .SOF                            = Fwd0(SOF),
             .IsoINIncomplete                = Fwd1(IsoINIncomplete, uint8_t),
             .IsoOUTIncomplete               = Fwd1(IsoOUTIncomplete, uint8_t),
-            .GetHSConfigDescriptor          = Fwd1(GetHSConfigDescriptor, uint16_t*),
-            .GetFSConfigDescriptor          = Fwd1(GetFSConfigDescriptor, uint16_t*),
-            .GetOtherSpeedConfigDescriptor  = Fwd1(GetOtherSpeedConfigDescriptor, uint16_t*),
-            .GetDeviceQualifierDescriptor   = Fwd1(GetDeviceQualifierDescriptor, uint16_t*),
+            .GetConfigDescriptor            = Fwd1(GetConfigDescriptor, uint16_t*),
             .GetUsrStrDescriptor            = Fwd2(GetUsrStrDescriptor, uint8_t, uint16_t*),
         };
         
@@ -437,21 +434,9 @@ private:
         return (uint8_t)USBD_OK;
     }
     
-    static uint8_t* _USBD_GetHSConfigDescriptor(uint16_t* len) {
+    static uint8_t* _USBD_GetConfigDescriptor(uint16_t* len) {
         *len = sizeof(T_Config::Descriptor);
         return (uint8_t*)&T_Config::Descriptor;
-    }
-    
-    static uint8_t* _USBD_GetFSConfigDescriptor(uint16_t* len) {
-        return nullptr;
-    }
-    
-    static uint8_t* _USBD_GetOtherSpeedConfigDescriptor(uint16_t* len) {
-        return nullptr;
-    }
-    
-    static uint8_t* _USBD_GetDeviceQualifierDescriptor(uint16_t* len) {
-        return nullptr;
     }
     
     static uint8_t* _USBD_GetUsrStrDescriptor(uint8_t index, uint16_t* len) {

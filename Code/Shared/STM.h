@@ -268,6 +268,16 @@ struct [[gnu::packed]] ImgCaptureStats {
 static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
 static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
 
+struct [[gnu::packed]] USBInitConfig {
+    using Options = uint32_t;
+    static constexpr Options SpeedLow   = 0<<0;
+    static constexpr Options SpeedHigh  = 1<<0;
+    static constexpr Options Speed      = 1<<0; // Mask
+    
+    Options options = 0;
+    uint32_t phyTune = 0;
+};
+
 struct [[gnu::packed]] BatteryStatus {
     MSP::ChargeStatus chargeStatus = MSP::ChargeStatus::Invalid;
     MSP::BatteryLevelMv level = MSP::BatteryLevelMvInvalid;
