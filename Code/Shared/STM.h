@@ -270,7 +270,7 @@ static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacket
 
 struct [[gnu::packed]] USBInitConfig {
     using Options = uint32_t;
-    static constexpr Options SpeedLow   = 0<<0;
+    static constexpr Options SpeedFull  = 0<<0;
     static constexpr Options SpeedHigh  = 1<<0;
     static constexpr Options Speed      = 1<<0; // Mask
     

@@ -101,9 +101,12 @@ public:
     
     // Initialization
     static void Init() {
+        const auto speed = (T_Config::InitConfig.options & STM::USBInitConfig::Speed);
+        
         _PCD.pData = &_Device;
         _PCD.Instance = USB_OTG_HS;
         _PCD.Init.dev_endpoints = 9;
+        _PCD.Init.speed = (speed==STM::USBInitConfig::SpeedHigh ? USBD_HS_SPEED : USBD_HSINFS_SPEED);
         _PCD.Init.dma_enable = T_DMAEn;
         _PCD.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
         _PCD.Init.sof_enable = false;
@@ -112,6 +115,7 @@ public:
         _PCD.Init.vbus_sensing_enable = false;
         _PCD.Init.use_dedicated_ep1 = false;
         _PCD.Init.use_external_vbus = false;
+        _PCD.Init.phy_tune = T_Config::InitConfig.phyTune;
         
         _Device.pData = &_PCD;
         
