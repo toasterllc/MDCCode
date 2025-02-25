@@ -274,7 +274,7 @@ struct [[gnu::packed]] USBInitConfig {
     static constexpr uint32_t Speed                 = 1<<0; // Mask
     
     static constexpr uint32_t PhyTuneDefault        = 0x00000F17;
-    static constexpr uint32_t PhyTuneARMWorkaround  = 0x0000E043;
+    static constexpr uint32_t PhyTuneWorkaround     = 0x0000E043;
     
     uint32_t options = 0;
     uint32_t phyTune = 0;

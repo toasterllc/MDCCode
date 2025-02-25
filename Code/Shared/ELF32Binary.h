@@ -170,8 +170,8 @@ public:
                 const uint32_t paddr = sec.paddr;
                 const uint32_t vaddr = sec.vaddr;
                 const void* data = sectionData(sec);
-                
-                fn(paddr, vaddr, data, size, sec.name.c_str());
+                const std::string& name = sec.name;
+                fn(paddr, vaddr, data, size, name);
             }
         }
     }

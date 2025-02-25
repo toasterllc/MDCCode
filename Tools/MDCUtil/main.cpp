@@ -358,9 +358,9 @@ static void STMRAMWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.STMRAMWrite.filePath.c_str());
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-    size_t size, const char* name) {
+    size_t size, const std::string& name) {
         printf("STMRAMWrite: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
-            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+            name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
         device.stmRAMWrite(paddr, data, size);
     });
@@ -374,9 +374,9 @@ static void STMRAMWriteLegacy(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.STMRAMWriteLegacy.filePath.c_str());
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-    size_t size, const char* name) {
+    size_t size, const std::string& name) {
         printf("STMRAMWriteLegacy: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
-            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+            name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
         device.stmRAMWriteLegacy(paddr, data, size);
     });
@@ -392,9 +392,9 @@ static void STMFlashWrite(const Args& args, MDCUSBDevice& device) {
     device.stmFlashWriteInit();
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-    size_t size, const char* name) {
+    size_t size, const std::string& name) {
         printf("STMFlashWrite: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
-            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+            name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
         device.stmFlashWrite(paddr, data, size);
     });
@@ -560,24 +560,24 @@ static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
     
     // Write the data
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-    size_t size, const char* name) {
+    size_t size, const std::string& name) {
         printf("MSPSBWWrite: Writing %22s @ 0x%04jx    size: 0x%04jx    vaddr: 0x%04jx\n",
-            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+            name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
         device.mspSBWWrite(paddr, data, size);
     });
     
     // Read back data and compare with what we expect
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-    size_t size, const char* name) {
+    size_t size, const std::string& name) {
         printf("MSPSBWWrite: Verifying %s @ 0x%jx [size: 0x%jx]\n",
-            name, (uintmax_t)paddr, (uintmax_t)size);
+            name.c_str(), (uintmax_t)paddr, (uintmax_t)size);
         
         auto buf = std::make_unique<uint8_t[]>(size);
         device.mspSBWRead(paddr, buf.get(), size);
         
         if (memcmp(data, buf.get(), size)) {
-            throw Toastbox::RuntimeError("section doesn't match: %s", name);
+            throw Toastbox::RuntimeError("section doesn't match: %s", name.c_str());
         }
     });
     
