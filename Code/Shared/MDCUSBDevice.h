@@ -282,7 +282,8 @@ public:
     
     static STM::USBInitConfig _USBInitConfig(const USBDevice& dev) {
         return STM::USBInitConfig{
-            .options = STM::USBInitConfig::SpeedHigh,
+//            .options = STM::USBInitConfig::SpeedHigh,
+            .options = STM::USBInitConfig::SpeedFull,
             .phyTune = _PhyTune(dev.service()),
         };
     }

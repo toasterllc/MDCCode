@@ -647,52 +647,52 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     // Reset state
     _Bufs.reset();
     
-    // Trigger the USB DataOut task with the amount of data
-    _TaskUSBDataOut::Start(arg.len);
+    Assert(arg.len < sizeof(_Bufs._items));
+    _USB::Recv(Endpoint::DataOut, (void*)_Bufs._items, arg.len);
     
-    for (;;) {
-        // Wait until we have data to consume
-        _Scheduler::Wait([] { return _Bufs.rok(); });
-        
-        // Write the data over QSPI and wait for completion
-        auto& buf = _Bufs.rget();
-        if (!buf.len) break; // We're done when we receive an empty buffer
-        
-        _QSPI::Write(_QSPICmd::ICEWrite(buf.len), buf.data);
-        _Bufs.rpop();
-    }
-    
-    // Wait for CDONE to be asserted
-    {
-        bool ok = false;
-        for (int i=0; i<10 && !ok; i++) {
-            if (i) _Scheduler::Sleep(_Scheduler::Ms<1>); // Sleep 1 ms
-            ok = _ICE_CDONE::Read();
-        }
-        
-        if (!ok) {
-            _System::USBSendStatus(false);
-            return;
-        }
-    }
-    
-    // Finish
-    {
-        // Supply >=49 additional clocks (8*7=56 clocks), per the
-        // "iCE40 Programming and Configuration" guide.
-        // These clocks apparently reach the user application. Since this
-        // appears unavoidable, prevent the clocks from affecting the user
-        // application by writing 0xFF, which the user application must
-        // consider as a NOP.
-        constexpr uint8_t ClockCount = 7;
-        static int i;
-        for (i=0; i<ClockCount; i++) {
-            _QSPI::Write(_QSPICmd::ICEWrite(sizeof(ff)), &ff);
-        }
-    }
-    
-    // Release chip-select now that we're done
-    _GPIOConfigs::Manual::ICE_STM_SPI_CS_::Write(1);
+//    for (;;) {
+//        // Wait until we have data to consume
+//        _Scheduler::Wait([] { return _Bufs.rok(); });
+//        
+//        // Write the data over QSPI and wait for completion
+//        auto& buf = _Bufs.rget();
+//        if (!buf.len) break; // We're done when we receive an empty buffer
+//        
+//        _QSPI::Write(_QSPICmd::ICEWrite(buf.len), buf.data);
+//        _Bufs.rpop();
+//    }
+//    
+//    // Wait for CDONE to be asserted
+//    {
+//        bool ok = false;
+//        for (int i=0; i<10 && !ok; i++) {
+//            if (i) _Scheduler::Sleep(_Scheduler::Ms<1>); // Sleep 1 ms
+//            ok = _ICE_CDONE::Read();
+//        }
+//        
+//        if (!ok) {
+//            _System::USBSendStatus(false);
+//            return;
+//        }
+//    }
+//    
+//    // Finish
+//    {
+//        // Supply >=49 additional clocks (8*7=56 clocks), per the
+//        // "iCE40 Programming and Configuration" guide.
+//        // These clocks apparently reach the user application. Since this
+//        // appears unavoidable, prevent the clocks from affecting the user
+//        // application by writing 0xFF, which the user application must
+//        // consider as a NOP.
+//        constexpr uint8_t ClockCount = 7;
+//        static int i;
+//        for (i=0; i<ClockCount; i++) {
+//            _QSPI::Write(_QSPICmd::ICEWrite(sizeof(ff)), &ff);
+//        }
+//    }
+//    
+//    // Release chip-select now that we're done
+//    _GPIOConfigs::Manual::ICE_STM_SPI_CS_::Write(1);
     
     _System::USBSendStatus(true);
 }
