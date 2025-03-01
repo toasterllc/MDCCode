@@ -289,17 +289,29 @@ struct T_USB {
         Toastbox::IntState ints(false);
         if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
         
-        Assert(_Ready(eps));
-        _AdvanceStateOut(ep);
+        uint8_t* dst = (uint8_t*)data;
+        size_t recv = 0;
+        size_t rem = len;
+        while (rem) {
+            Assert(_Ready(eps));
+            _AdvanceStateOut(ep);
+            
+            const size_t chunkLen = std::min(_TransferSizeMax(), rem);
+            const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, dst, chunkLen);
+            Assert(us == USBD_OK);
+            
+            _WaitState ws = { .ep = ep };
+            T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
+            T_Scheduler::Wait([] { return _WaitRecv(*T_Scheduler::template Ctx<_WaitState*>()); });
+            if (!ws.ok) return std::nullopt;
+            
+            dst += ws.len;
+            recv += ws.len;
+            rem -= ws.len;
+            if (ws.len < chunkLen) break;
+        }
         
-        const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
-        Assert(us == USBD_OK);
-        
-        _WaitState ws = { .ep = ep };
-        T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
-        T_Scheduler::Wait([] { return _WaitRecv(*T_Scheduler::template Ctx<_WaitState*>()); });
-        if (!ws.ok) return std::nullopt;
-        return ws.len;
+        return recv;
     }
     
     static bool Send(uint8_t ep, const void* data, size_t len) {
@@ -309,31 +321,51 @@ struct T_USB {
         Toastbox::IntState ints(false);
         if (_State != State::Connected) return false; // Short-circuit if we're not Connected
         
-        Assert(_Ready(eps));
-        _AdvanceStateIn(ep);
+        const uint8_t* src = (uint8_t*)data;
+        size_t sent = 0;
+        size_t rem = len;
+        while (rem) {
+            Assert(_Ready(eps));
+            _AdvanceStateIn(ep);
+            
+            const size_t chunkLen = std::min(_TransferSizeMax(), rem);
+            const USBD_StatusTypeDef us = USBD_LL_Transmit(&_Device, ep, src, chunkLen);
+            Assert(us == USBD_OK);
+            
+            _WaitState ws = { .ep = ep };
+            T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
+            T_Scheduler::Wait([] { return _WaitSend(*T_Scheduler::template Ctx<_WaitState*>()); });
+            
+            src += ws.len;
+            sent += ws.len;
+            rem -= ws.len;
+            if (ws.len < chunkLen) break;
+        }
         
-        const USBD_StatusTypeDef us = USBD_LL_Transmit(&_Device, ep, (uint8_t*)data, len);
-        Assert(us == USBD_OK);
-        
-        _WaitState ws = { .ep = ep };
-        T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
-        T_Scheduler::Wait([] { return _WaitSend(*T_Scheduler::template Ctx<_WaitState*>()); });
-        return ws.ok;
+        return sent;
     }
     
     static void ISR() {
         ISR_HAL_PCD(&_PCD);
     }
     
+    static constexpr size_t _TransferSizeMax() {
+        // Verify that the IN-packet-count is the same as the OUT-packet-count,
+        // since we're only defining one function that returns the
+        // max-transfer-size for both IN- and OUT- transfers.
+        static_assert(USB_OTG_DIEPTSIZ_PKTCNT == USB_OTG_DOEPTSIZ_PKTCNT);
+        constexpr size_t PacketCountMax = USB_OTG_DIEPTSIZ_PKTCNT>>USB_OTG_DIEPTSIZ_PKTCNT_Pos;
+        return PacketCountMax*T_Config::MaxPacketSize();
+    }
+    
     static uint8_t _USBD_Init(uint8_t cfgidx) {
         // Open endpoints
         for (uint8_t ep : T_Config::Endpoints) {
-            if (EndpointOut(ep)) {
-                USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, T_Config::MaxPacketSizeOut());
-                _Device.ep_out[EndpointIdx(ep)].is_used = 1U;
+            USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, T_Config::MaxPacketSize());
             
+            if (EndpointOut(ep)) {
+                _Device.ep_out[EndpointIdx(ep)].is_used = 1U;
             } else {
-                USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, T_Config::MaxPacketSizeIn());
                 _Device.ep_in[EndpointIdx(ep)].is_used = 1U;
             }
             

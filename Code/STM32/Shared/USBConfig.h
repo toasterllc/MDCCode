@@ -42,21 +42,12 @@ struct USBConfig {
         (uint8_t)STM::Endpoint::DataIn,
     };
     
-    static size_t MaxPacketSizeIn() {
+    static size_t MaxPacketSize() {
         using namespace Toastbox::USB;
         if (SpeedFull()) {
-            return Endpoint::MaxPacketSizeIn<Endpoint::SpeedFull>(Endpoints);
+            return Endpoint::SpeedFull::MaxPacketSizeBulk;
         } else {
-            return Endpoint::MaxPacketSizeIn<Endpoint::SpeedHigh>(Endpoints);
-        }
-    }
-    
-    static size_t MaxPacketSizeOut() {
-        using namespace Toastbox::USB;
-        if (SpeedFull()) {
-            return Endpoint::MaxPacketSizeOut<Endpoint::SpeedFull>(Endpoints);
-        } else {
-            return Endpoint::MaxPacketSizeOut<Endpoint::SpeedHigh>(Endpoints);
+            return Endpoint::SpeedHigh::MaxPacketSizeBulk;
         }
     }
     
@@ -91,7 +82,7 @@ struct USBConfig {
                         .bDescriptorType        = _LFH_U8(Toastbox::USB::DescriptorType::Endpoint),                 // bDescriptorType: Endpoint
                         .bEndpointAddress       = _LFH_U8(STM::Endpoint::DataOut),                                  // bEndpointAddress
                         .bmAttributes           = _LFH_U8(Toastbox::USB::EndpointAttributes::TransferBulk),         // bmAttributes: Bulk
-                        .wMaxPacketSize         = _LFH_U16(MaxPacketSizeOut()),                                     // wMaxPacketSize
+                        .wMaxPacketSize         = _LFH_U16(MaxPacketSize()),                                        // wMaxPacketSize
                         .bInterval              = _LFH_U8(0x00),                                                    // bInterval: ignore for Bulk transfer
                     },
                     
@@ -100,20 +91,10 @@ struct USBConfig {
                         .bDescriptorType        = _LFH_U8(Toastbox::USB::DescriptorType::Endpoint),                 // bDescriptorType: Endpoint
                         .bEndpointAddress       = _LFH_U8(STM::Endpoint::DataIn),                                   // bEndpointAddress
                         .bmAttributes           = _LFH_U8(Toastbox::USB::EndpointAttributes::TransferBulk),         // bmAttributes: Bulk
-                        .wMaxPacketSize         = _LFH_U16(MaxPacketSizeIn()),                                      // wMaxPacketSize
+                        .wMaxPacketSize         = _LFH_U16(MaxPacketSize()),                                        // wMaxPacketSize
                         .bInterval              = _LFH_U8(0x00),                                                    // bInterval: ignore for Bulk transfer
                     },
         };
-        
-//        Assert(MaxPacketSizeOut() == 64);
-//        Assert(MaxPacketSizeIn() == 64);
-//        Assert(desc.epOut1Desc.wMaxPacketSize == _LFH_U16(MaxPacketSizeOut()));
-//        Assert(desc.epIn1Desc.wMaxPacketSize == _LFH_U16(MaxPacketSizeIn()));
-        
-//        Assert(MaxPacketSizeOut() == 512);
-//        Assert(MaxPacketSizeIn() == 512);
-//        Assert(desc.epOut1Desc.wMaxPacketSize == _LFH_U16(MaxPacketSizeOut()));
-//        Assert(desc.epIn1Desc.wMaxPacketSize == _LFH_U16(MaxPacketSizeIn()));
         
         return &desc;
     }
