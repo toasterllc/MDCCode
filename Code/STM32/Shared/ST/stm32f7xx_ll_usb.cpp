@@ -937,13 +937,19 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
       */
       USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_XFRSIZ);
       USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_PKTCNT);
-      USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_PKTCNT & (((ep->xfer_len + ep->maxpacket - 1U) / ep->maxpacket) << 19));
+      
+      const uint32_t pktcnt = (ep->xfer_len + ep->maxpacket - 1U) / ep->maxpacket;
+      const uint32_t pktcntShifted = pktcnt << USB_OTG_DIEPTSIZ_PKTCNT_Pos;
+      // Make sure `pktcnt` fits in DIEPTSIZ.PKTCNT
+      Assert(pktcntShifted == (USB_OTG_DIEPTSIZ_PKTCNT & pktcntShifted));
+      
+      USBx_INEP(epnum)->DIEPTSIZ |= pktcntShifted;
       USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_XFRSIZ & ep->xfer_len);
-
+      
       if (ep->type == EP_TYPE_ISOC)
       {
         USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_MULCNT);
-        USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_MULCNT & (1U << 29));
+        USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_MULCNT & (1U << USB_OTG_DIEPTSIZ_MULCNT_Pos));
       }
     }
 
@@ -1017,6 +1023,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
       const uint32_t pktcntShifted = pktcnt << USB_OTG_DOEPTSIZ_PKTCNT_Pos;
       // Make sure `pktcnt` fits in DOEPTSIZ.PKTCNT
       Assert(pktcntShifted == (USB_OTG_DOEPTSIZ_PKTCNT & pktcntShifted));
+      
       USBx_OUTEP(epnum)->DOEPTSIZ |= pktcntShifted;
       USBx_OUTEP(epnum)->DOEPTSIZ |= USB_OTG_DOEPTSIZ_XFRSIZ & (ep->maxpacket * pktcnt);
     }
