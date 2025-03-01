@@ -359,7 +359,7 @@ static void STMRAMWrite(const Args& args, MDCUSBDevice& device) {
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
     size_t size, const std::string& name) {
-        if (name != ".sram1") return;
+//        if (name != ".sram1") return;
         
         printf("STMRAMWrite: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
             name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
