@@ -66,6 +66,8 @@ static void _STMRAMWrite(const STM::Cmd& cmd) {
     // Receive USB data
     _USB::Recv(Endpoint::DataOut, (void*)arg.addr, len);
     
+    Assert(false);
+    
     // Send success
     _System::USBSendStatus(true);
 }

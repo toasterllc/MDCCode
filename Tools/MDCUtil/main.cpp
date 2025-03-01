@@ -359,8 +359,18 @@ static void STMRAMWrite(const Args& args, MDCUSBDevice& device) {
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
     size_t size, const std::string& name) {
+        if (name != ".sram1") return;
+        
         printf("STMRAMWrite: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
             name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+        
+//        constexpr size_t ChunkSizeCap = 1024;
+//        size_t rem = size;
+//        for (size_t i=0; i<size; i+=ChunkSizeCap) {
+//            size_t chunkSize = std::min(ChunkSizeCap, rem);
+//            device.stmRAMWrite(paddr+i, (const uint8_t*)data+i, chunkSize);
+//            rem -= chunkSize;
+//        }
         
         device.stmRAMWrite(paddr, data, size);
     });
@@ -393,7 +403,7 @@ static void STMFlashWrite(const Args& args, MDCUSBDevice& device) {
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
     size_t size, const std::string& name) {
-        printf("STMFlashWrite: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
+        printf("STMFlashWrite: Writing %16s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
             name.c_str(), (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
         device.stmFlashWrite(paddr, data, size);
