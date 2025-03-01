@@ -349,6 +349,10 @@ struct T_USB {
         ISR_HAL_PCD(&_PCD);
     }
     
+    // _TransferSizeMax(): returns the maximum bytes that can be transfered without
+    // overflowing the hardware's PKTCNT register.
+    // If we're sending or receiving more than this amount of data, we need to
+    // perform the operation in chunks.
     static constexpr size_t _TransferSizeMax() {
         // Verify that the IN-packet-count is the same as the OUT-packet-count,
         // since we're only defining one function that returns the
