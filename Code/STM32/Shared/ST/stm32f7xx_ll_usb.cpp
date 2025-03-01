@@ -917,7 +917,6 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
 {
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t epnum = (uint32_t)ep->num;
-  uint16_t pktcnt;
 
   /* IN endpoint */
   if (ep->is_in == 1U)
@@ -1014,8 +1013,11 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
     }
     else
     {
-      pktcnt = (uint16_t)((ep->xfer_len + ep->maxpacket - 1U) / ep->maxpacket);
-      USBx_OUTEP(epnum)->DOEPTSIZ |= USB_OTG_DOEPTSIZ_PKTCNT & ((uint32_t)pktcnt << USB_OTG_DOEPTSIZ_PKTCNT_Pos);
+      const uint32_t pktcnt = (ep->xfer_len + ep->maxpacket - 1U) / ep->maxpacket;
+      const uint32_t pktcntShifted = pktcnt << USB_OTG_DOEPTSIZ_PKTCNT_Pos;
+      // Make sure `pktcnt` fits in DOEPTSIZ.PKTCNT
+      Assert(pktcntShifted == (USB_OTG_DOEPTSIZ_PKTCNT & pktcntShifted));
+      USBx_OUTEP(epnum)->DOEPTSIZ |= pktcntShifted;
       USBx_OUTEP(epnum)->DOEPTSIZ |= USB_OTG_DOEPTSIZ_XFRSIZ & (ep->maxpacket * pktcnt);
     }
 
