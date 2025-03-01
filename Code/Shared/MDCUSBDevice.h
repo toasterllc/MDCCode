@@ -269,25 +269,22 @@ public:
 #endif // __arm64__
     }
     
-    static bool _PhyTuneDefault(const _SendRight& service) {
+    static uint32_t _PhyTune(const _SendRight& service) {
         // Use the default PHY tune value is this isn't an ARM Mac, or the device is connected via a hub.
         // Inversely, use the workaround PHY tune value if this is an ARM Mac, and the device is
         // connected directly to a host port.
-        return !_ARMMac() || _USBHub(_Parents(service));
+        if (!_ARMMac() || _USBHub(_Parents(service))) {
+            return STM::USBInitConfig::PhyTuneDefault;
+        } else {
+            return STM::USBInitConfig::PhyTuneWorkaround;
+        }
     }
     
     static STM::USBInitConfig _USBInitConfig(const USBDevice& dev) {
-        if (_PhyTuneDefault(dev.service())) {
-            return STM::USBInitConfig{
-                .options = STM::USBInitConfig::SpeedHigh,
-                .phyTune = STM::USBInitConfig::PhyTuneDefault,
-            };
-        } else {
-            return STM::USBInitConfig{
-                .options = STM::USBInitConfig::SpeedHigh,
-                .phyTune = STM::USBInitConfig::PhyTuneWorkaround,
-            };
-        }
+        return STM::USBInitConfig{
+            .options = STM::USBInitConfig::SpeedHigh,
+            .phyTune = _PhyTune(dev.service()),
+        };
     }
     
     void stmRAMWrite(const ELF32Binary& elf) {
