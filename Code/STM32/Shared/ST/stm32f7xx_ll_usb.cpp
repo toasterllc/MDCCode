@@ -1609,7 +1609,6 @@ static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx, const USB_
 
   /* Control the tuning interface of the High Speed PHY */
   USB_HS_PHYC->USB_HS_PHYC_TUNE = cfg.phy_tune;
-//  USB_HS_PHYC->USB_HS_PHYC_TUNE |= cfg.phy_tune;
 
   /* Enable PLL internal PHY */
   USB_HS_PHYC->USB_HS_PHYC_PLL |= USB_HS_PHYC_PLL_PLLEN;
