@@ -438,87 +438,9 @@ struct MDCDeviceHard : MDCDevice {
     
     static void _Nop(void* ctx, io_iterator_t iter) {}
     
-    // _Parents(): returns the parents for `service`
-    // (IORegistryEntry's can have multiple parents, called 'providers' in the kernel.)
-    static std::vector<_SendRight> _Parents(const _SendRight& service) {
-        _SendRight serviceIter;
-        {
-            io_iterator_t iter = MACH_PORT_NULL;
-            kern_return_t kr = IORegistryEntryGetParentIterator(service, kIOServicePlane, &iter);
-            if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IORegistryEntryGetParentIterator failed: 0x%x", kr);
-            serviceIter = _SendRight(_SendRight::NoRetain, iter);
-        }
-        
-        std::vector<_SendRight> services;
-        for (;;) {
-            _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
-            if (!service) break;
-            services.push_back(std::move(service));
-        }
-        
-        return services;
-    }
-    
-    static bool _USBHub(const _SendRight& service) {
-        return IOObjectConformsTo(service, "AppleUSBHubPort");
-    }
-    
-    static bool _USBHub(const std::vector<_SendRight>& services) {
-        for (const _SendRight& service : services) {
-            if (_USBHub(service)) return true;
-        }
-        return false;
-    }
-    
-    static constexpr bool _ARMMac() {
-#ifdef __arm64__
-        // ARM
-        return true;
-#else
-        // x86
-        return false;
-#endif // __arm64__
-    }
-    
-    static bool _PhyTuneDefault(const _SendRight& service) {
-        // Use the default PHY tune value is this isn't an ARM Mac, or the device is connected via a hub.
-        // Inversely, use the workaround PHY tune value if this is an ARM Mac, and the device is
-        // connected directly to a host port.
-        return !_ARMMac() || _USBHub(_Parents(service));
-    }
-    
-    static STM::USBInitConfig _USBInitConfig(const Toastbox::USBDevice& dev) {
-        if (_PhyTuneDefault(dev.service())) {
-            return STM::USBInitConfig{
-                .options = STM::USBInitConfig::SpeedHigh,
-                .phyTune = STM::USBInitConfig::PhyTuneDefault,
-            };
-        } else {
-            return STM::USBInitConfig{
-                .options = STM::USBInitConfig::SpeedHigh,
-                .phyTune = STM::USBInitConfig::PhyTuneWorkaround,
-            };
-        }
-    }
-    
     static void _DeviceBootload(const _MDCUSBDevicePtr& dev) {
         ELF32Binary elf(_STMAppData, _STMAppDataLen);
-        
-        const STM::USBInitConfig usbInitConfig = _USBInitConfig(dev->dev());
-        printf("[MDCDeviceHard::_DeviceBootload] usbInitConfig.phyTune=0x%08jx\n", (uintmax_t)usbInitConfig.phyTune);
-        
-        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-        size_t size, const std::string& name) {
-            if (name == USBInitConfigSection) {
-                assert(size == sizeof(usbInitConfig));
-                data = &usbInitConfig;
-            }
-            
-            dev->stmRAMWrite(paddr, data, size);
-        });
-        
-        // Reset the device, triggering it to load the program we just wrote
-        dev->stmReset(elf.entryPointAddr());
+        dev->stmRAMWrite(elf);
     }
     
     static void _DeviceModeCheck(const _MDCUSBDevicePtr& dev, STM::Status::Mode mode) {
