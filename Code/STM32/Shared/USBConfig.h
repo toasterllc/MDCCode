@@ -22,15 +22,7 @@ struct USBConfig {
                                                         //   Intel Macs: 0xF17 works
                                                         //   ARM Macs, device connected via hub: 0xF17 works
                                                         //   ARM Macs, device connected directly: 0xF17 doesn't work
-                                                        //     (needs to be overridden)
-        
-        
-//        .options = STM::USBInitConfig::SpeedHigh,       // By default we're a full-speed device
-//        .phyTune = STM::USBInitConfig::PhyTuneDefault,  // Default tune value, via USB_HS_PHYC_TUNE_VALUE
-//                                                        //   Intel Macs: 0xF17 works
-//                                                        //   ARM Macs, device connected via hub: 0xF17 works
-//                                                        //   ARM Macs, device connected directly: 0xF17 doesn't work
-//                                                        //     (needs to be overridden)
+                                                        //     (needs to be overridden by host)
     };
     
     static constexpr inline uint8_t Endpoints[] = {
