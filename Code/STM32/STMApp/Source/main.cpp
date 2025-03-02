@@ -564,12 +564,12 @@ struct _TaskReadout {
         // Reset state
         _Bufs.reset();
         // Start the USB DataIn task
-        _TaskUSBDataIn::Start();
+//        _TaskUSBDataIn::Start();
         
-        // Send the Readout message, which causes us to enter the readout mode until
-        // we release the chip select
-        _GPIOConfigs::Manual::ICE_STM_SPI_CS_::Write(0);
-        _QSPI::Command(_QSPICmd::ICEApp(_ICE::ReadoutMsg(), 0));
+//        // Send the Readout message, which causes us to enter the readout mode until
+//        // we release the chip select
+//        _GPIOConfigs::Manual::ICE_STM_SPI_CS_::Write(0);
+//        _QSPI::Command(_QSPICmd::ICEApp(_ICE::ReadoutMsg(), 0));
         
         // Read data over QSPI and write it to USB, indefinitely
         while (_LenRem.value_or(SIZE_MAX)) {
@@ -584,11 +584,11 @@ struct _TaskReadout {
                 // If the buffer can't fit `lenRead` more bytes, we're done with this buffer
                 if (lenBuf < lenRead) break;
                 
-                // Wait until ICE40 signals that data is ready to be read
-                #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
-                while (!_ICE_STM_SPI_D_READY::Read());
-                
-                _QSPI::Read(_QSPICmd::ICEAppReadOnly(lenRead), buf.data+buf.len);
+//                // Wait until ICE40 signals that data is ready to be read
+//                #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
+//                while (!_ICE_STM_SPI_D_READY::Read());
+//                
+//                _QSPI::Read(_QSPICmd::ICEAppReadOnly(lenRead), buf.data+buf.len);
                 buf.len += lenRead;
                 if (_LenRem) *_LenRem -= lenRead;
             }
@@ -597,8 +597,8 @@ struct _TaskReadout {
             if (buf.len) _Bufs.wpush();
         }
         
-        // Release chip-select to exit readout mode
-        _GPIOConfigs::Manual::ICE_STM_SPI_CS_::Write(1);
+//        // Release chip-select to exit readout mode
+//        _GPIOConfigs::Manual::ICE_STM_SPI_CS_::Write(1);
     }
     
     static inline std::optional<size_t> _LenRem;
@@ -1625,21 +1625,19 @@ void _SDInit(const STM::Cmd& cmd) {
 }
 
 static void _SDRead(const STM::Cmd& cmd) {
-    const auto& arg = cmd.arg.SDRead;
-    
     // Accept command
     _System::USBAcceptCommand(true);
-    
-    // Reset chip select in case a read was in progress
-    _GPIOConfigs::Manual::ICE_STM_SPI_CS_::Write(1);
-    
-    _SD::ReadStart(arg.block);
     
     // Send status
     _System::USBSendStatus(true);
     
+    for (;;) {
+        const bool br = _USB::Send(Endpoint::DataIn, _Bufs._items, 64);
+        Assert(br);
+    }
+    
     // Start the Readout task
-    _TaskReadout::Start(std::nullopt);
+//    _TaskReadout::Start(std::nullopt);
 }
 
 static void _SDErase(const STM::Cmd& cmd) {

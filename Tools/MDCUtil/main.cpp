@@ -633,17 +633,13 @@ static void MSPSBWDebugLog(const Args& args, MDCUSBDevice& device) {
 
 static void SDRead(const Args& args, MDCUSBDevice& device) {
     static_assert(!(SD::BlockLen % Toastbox::USB::Endpoint::SpeedHigh::MaxPacketSizeBulk));
-    const size_t len = (size_t)args.SDRead.count * (size_t)SD::BlockLen;
-    
-    printf("Sending SDInit command...\n");
-    device.sdInit();
-    printf("-> OK\n\n");
+    const size_t len = (size_t)args.SDRead.count;
     
     printf("Sending SDRead command...\n");
     device.sdRead(args.SDRead.addr);
     printf("-> OK\n\n");
     
-    printf("Reading data...\n");
+    printf("Reading data (%ju bytes)...\n", (uintmax_t)len);
     
     auto buf = std::make_unique<uint8_t[]>(len);
     auto timeStart = std::chrono::steady_clock::now();
@@ -685,7 +681,7 @@ static void _ImgRead(MDCUSBDevice& device, const std::string& filePath, SD::Bloc
     device.sdRead(block);
     printf("-> OK\n\n");
     
-    printf("Reading data...\n");
+    printf("Reading data (%ju bytes)...\n", (uintmax_t)len);
     auto buf = std::make_unique<uint8_t[]>(len);
     device.readout(buf.get(), len);
     printf("-> OK\n\n");
