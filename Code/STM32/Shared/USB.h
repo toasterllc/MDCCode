@@ -337,9 +337,9 @@ struct T_USB {
             T_Scheduler::Wait([] { return _WaitSend(*T_Scheduler::template Ctx<_WaitState*>()); });
             if (!ws.ok) return false;
             
-            src += ws.len;
-            sent += ws.len;
-            rem -= ws.len;
+            src += chunkLen;
+            sent += chunkLen;
+            rem -= chunkLen;
         }
         
         return true;
