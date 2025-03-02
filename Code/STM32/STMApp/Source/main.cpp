@@ -1208,6 +1208,8 @@ static void _MSPStateRead(const STM::Cmd& cmd) {
         off += buf.len;
     }
     
+//    Assert(false);
+    
     // Wait for DataIn task to complete
     _Scheduler::Wait([] { return !_Bufs.rok(); });
     // Send status

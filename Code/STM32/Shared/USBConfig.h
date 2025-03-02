@@ -33,14 +33,14 @@ struct USBConfig {
 //                                                        //     (needs to be overridden)
     };
     
-    static bool SpeedFull() {
-        return (InitConfig.options & STM::USBInitConfig::Speed) == STM::USBInitConfig::SpeedFull;
-    }
-    
     static constexpr inline uint8_t Endpoints[] = {
         (uint8_t)STM::Endpoint::DataOut,
         (uint8_t)STM::Endpoint::DataIn,
     };
+    
+    static bool SpeedFull() {
+        return (InitConfig.options & STM::USBInitConfig::Speed) == STM::USBInitConfig::SpeedFull;
+    }
     
     static size_t MaxPacketSize() {
         using namespace Toastbox::USB;

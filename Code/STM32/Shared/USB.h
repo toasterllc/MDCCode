@@ -335,14 +335,14 @@ struct T_USB {
             _WaitState ws = { .ep = ep };
             T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
             T_Scheduler::Wait([] { return _WaitSend(*T_Scheduler::template Ctx<_WaitState*>()); });
+            if (!ws.ok) return false;
             
             src += ws.len;
             sent += ws.len;
             rem -= ws.len;
-            if (ws.len < chunkLen) break;
         }
         
-        return sent;
+        return true;
     }
     
     static void ISR() {
@@ -353,7 +353,7 @@ struct T_USB {
     // overflowing the hardware's PKTCNT register.
     // If we're sending or receiving more than this amount of data, we need to
     // perform the operation in chunks.
-    static constexpr size_t _TransferSizeMax() {
+    static size_t _TransferSizeMax() {
         // Verify that the IN-packet-count is the same as the OUT-packet-count,
         // since we're only defining one function that returns the
         // max-transfer-size for both IN- and OUT- transfers.
