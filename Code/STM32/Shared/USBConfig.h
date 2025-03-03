@@ -31,16 +31,14 @@ struct USBConfig {
     };
     
     static bool SpeedFull() {
+//        return true;
+//        return false;
         return (InitConfig.options & STM::USBInitConfig::Speed) == STM::USBInitConfig::SpeedFull;
     }
     
-    static size_t MaxPacketSize() {
+    static size_t MaxPacketSizeBulk() {
         using namespace Toastbox::USB;
-        if (SpeedFull()) {
-            return Endpoint::SpeedFull::MaxPacketSizeBulk;
-        } else {
-            return Endpoint::SpeedHigh::MaxPacketSizeBulk;
-        }
+        return SpeedFull() ? Endpoint::SpeedFull::MaxPacketSizeBulk : Endpoint::SpeedHigh::MaxPacketSizeBulk;
     }
     
     static const _Data* Descriptor() {
@@ -74,7 +72,7 @@ struct USBConfig {
                         .bDescriptorType        = _LFH_U8(Toastbox::USB::DescriptorType::Endpoint),                 // bDescriptorType: Endpoint
                         .bEndpointAddress       = _LFH_U8(STM::Endpoint::DataOut),                                  // bEndpointAddress
                         .bmAttributes           = _LFH_U8(Toastbox::USB::EndpointAttributes::TransferBulk),         // bmAttributes: Bulk
-                        .wMaxPacketSize         = _LFH_U16(MaxPacketSize()),                                        // wMaxPacketSize
+                        .wMaxPacketSize         = _LFH_U16(MaxPacketSizeBulk()),                                    // wMaxPacketSize
                         .bInterval              = _LFH_U8(0x00),                                                    // bInterval: ignore for Bulk transfer
                     },
                     
@@ -83,7 +81,7 @@ struct USBConfig {
                         .bDescriptorType        = _LFH_U8(Toastbox::USB::DescriptorType::Endpoint),                 // bDescriptorType: Endpoint
                         .bEndpointAddress       = _LFH_U8(STM::Endpoint::DataIn),                                   // bEndpointAddress
                         .bmAttributes           = _LFH_U8(Toastbox::USB::EndpointAttributes::TransferBulk),         // bmAttributes: Bulk
-                        .wMaxPacketSize         = _LFH_U16(MaxPacketSize()),                                        // wMaxPacketSize
+                        .wMaxPacketSize         = _LFH_U16(MaxPacketSizeBulk()),                                    // wMaxPacketSize
                         .bInterval              = _LFH_U8(0x00),                                                    // bInterval: ignore for Bulk transfer
                     },
         };

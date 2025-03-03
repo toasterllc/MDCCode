@@ -15,8 +15,7 @@
 #include "Shared/ELF32Binary.h"
 
 struct MDCUSBDevice; using MDCUSBDevicePtr = std::unique_ptr<MDCUSBDevice>;
-class MDCUSBDevice {
-public:
+struct MDCUSBDevice {
     using USBDevice = Toastbox::USBDevice;
     using USBDevicePtr = Toastbox::USBDevicePtr;
     using _SendRight = Toastbox::SendRight;
@@ -81,8 +80,8 @@ public:
         // Acquire system-wide exclusive access to the device
         _dev->claim();
         
-        printf("[MDCUSBDevice] reset START\n");
         // We don't know what state the device was left in, so reset its state
+        printf("[MDCUSBDevice] reset START\n");
         reset();
         printf("[MDCUSBDevice] reset END\n");
         
@@ -986,7 +985,6 @@ public:
 //        return buf;
     }
     
-private:
     void _endpointReset(uint8_t ep) {
         namespace USB = Toastbox::USB;
         if ((ep&USB::Endpoint::DirectionMask) == USB::Endpoint::DirectionOut) {

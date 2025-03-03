@@ -359,13 +359,13 @@ struct T_USB {
         // max-transfer-size for both IN- and OUT- transfers.
         static_assert(USB_OTG_DIEPTSIZ_PKTCNT == USB_OTG_DOEPTSIZ_PKTCNT);
         constexpr size_t PacketCountMax = USB_OTG_DIEPTSIZ_PKTCNT>>USB_OTG_DIEPTSIZ_PKTCNT_Pos;
-        return PacketCountMax*T_Config::MaxPacketSize();
+        return PacketCountMax*T_Config::MaxPacketSizeBulk();
     }
     
     static uint8_t _USBD_Init(uint8_t cfgidx) {
         // Open endpoints
         for (uint8_t ep : T_Config::Endpoints) {
-            USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, T_Config::MaxPacketSize());
+            USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, T_Config::MaxPacketSizeBulk());
             
             if (EndpointOut(ep)) {
                 _Device.ep_out[EndpointIdx(ep)].is_used = 1U;
