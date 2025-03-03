@@ -11,6 +11,7 @@
 #import "Lib/Toastbox/Defer.h"
 #import "STMApp.elf.h"
 #import "ICEApp.bin.h"
+#import "MetalLibrary.metallib.h"
 using namespace MDCStudio;
 namespace fs = std::filesystem;
 
@@ -221,6 +222,14 @@ int main(int argc, const char* argv[]) {
         printf("==================================================\n");
         printf(ProgramName " started at %s\n", _CurrentDateTimeString().c_str());
         printf("==================================================\n");
+        
+        // Configure Renderer
+        {
+            Toastbox::Renderer::Config.metalLib = {
+                .data = MetalLibrary_metallib,
+                .len = sizeof(MetalLibrary_metallib),
+            };
+        }
         
         // Configure MDCDeviceHard
         {

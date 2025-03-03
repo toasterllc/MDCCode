@@ -14,22 +14,32 @@
 		557815FA2D36EE6A005BBA6F /* libate.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 557815F92D36EE6A005BBA6F /* libate.tbd */; };
 		557816482D36EEB5005BBA6F /* ImageCornerButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557816022D36EEB5005BBA6F /* ImageCornerButton.mm */; };
 		5578164B2D36EEB5005BBA6F /* EstimateIlluminant.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557816102D36EEB5005BBA6F /* EstimateIlluminant.mm */; };
-		5578164C2D36EEB5005BBA6F /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557816122D36EEB5005BBA6F /* ImagePipeline.metal */; };
 		5578164D2D36EEB5005BBA6F /* ImagePipeline.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557816132D36EEB5005BBA6F /* ImagePipeline.mm */; };
-		5578164E2D36EEB5005BBA6F /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557816162D36EEB5005BBA6F /* LocalContrast.metal */; };
-		5578164F2D36EEB5005BBA6F /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557816182D36EEB5005BBA6F /* ReconstructHighlights.metal */; };
-		557816502D36EEB5005BBA6F /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5578161A2D36EEB5005BBA6F /* RenderThumb.metal */; };
-		557816512D36EEB5005BBA6F /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5578161C2D36EEB5005BBA6F /* Saturation.metal */; };
-		557819D12D36EECF005BBA6F /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557819782D36EEC5005BBA6F /* FFCC.metal */; };
 		557819D22D36EECF005BBA6F /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557819792D36EEC5005BBA6F /* FFCC.mm */; };
-		557819D32D36EEDA005BBA6F /* LMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557819872D36EEC5005BBA6F /* LMMSE.metal */; };
 		557819D52D36EF72005BBA6F /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 557819D42D36EF72005BBA6F /* MetalPerformanceShaders.framework */; };
 		557819D62D36EFE7005BBA6F /* ios.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557818D02D36EEC5005BBA6F /* ios.mm */; };
 		557819D72D36EFE7005BBA6F /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 557818D12D36EEC5005BBA6F /* tz.cpp */; };
 		55E393FE2D35C821000C1EFA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E393FD2D35C821000C1EFA /* QuartzCore.framework */; };
 		55E394002D35C82B000C1EFA /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E393FF2D35C82B000C1EFA /* UniformTypeIdentifiers.framework */; };
 		55F273DB2D35B7BC0085D55A /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F273DA2D35B7BC0085D55A /* main.mm */; };
+		55F57AF12D75690C00F231B3 /* LMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557819872D36EEC5005BBA6F /* LMMSE.metal */; };
+		55F57AF22D75690C00F231B3 /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557819782D36EEC5005BBA6F /* FFCC.metal */; };
+		55F57AF32D75690C00F231B3 /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557816122D36EEB5005BBA6F /* ImagePipeline.metal */; };
+		55F57AF42D75690C00F231B3 /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557816162D36EEB5005BBA6F /* LocalContrast.metal */; };
+		55F57AF52D75690C00F231B3 /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5578161C2D36EEB5005BBA6F /* Saturation.metal */; };
+		55F57AF62D75690C00F231B3 /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557816182D36EEB5005BBA6F /* ReconstructHighlights.metal */; };
+		55F57AF72D75690C00F231B3 /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5578161A2D36EEB5005BBA6F /* RenderThumb.metal */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		55F57AF92D75695D00F231B3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 55F273CF2D35B7BC0085D55A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 55F57AEA2D75684100F231B3;
+			remoteInfo = MetalLibrary;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		55F273D52D35B7BC0085D55A /* CopyFiles */ = {
@@ -189,10 +199,8 @@
 		557819D42D36EF72005BBA6F /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 		557819D82D36FF9A005BBA6F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		55781AA32D3715F6005BBA6F /* STMApp.elf */ = {isa = PBXFileReference; lastKnownFileType = file; path = STMApp.elf; sourceTree = "<group>"; };
-		55781C252D3719B6005BBA6F /* STMApp.elf */ = {isa = PBXFileReference; lastKnownFileType = file; path = STMApp.elf; sourceTree = "<group>"; };
 		55781C262D3719B6005BBA6F /* STMApp.elf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STMApp.elf.h; sourceTree = "<group>"; };
 		55781C3B2D3745B5005BBA6F /* MDCDeviceHard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDeviceHard.h; sourceTree = "<group>"; };
-		55781C3C2D374661005BBA6F /* ICEApp.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = ICEApp.bin; sourceTree = "<group>"; };
 		55781C3E2D3746E2005BBA6F /* ICEApp.bin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ICEApp.bin.h; sourceTree = "<group>"; };
 		55781C3F2D374BD2005BBA6F /* JThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JThread.h; sourceTree = "<group>"; };
 		55781C532D377057005BBA6F /* RunLoopStop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RunLoopStop.h; sourceTree = "<group>"; };
@@ -202,6 +210,8 @@
 		55E393FF2D35C82B000C1EFA /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		55F273D72D35B7BC0085D55A /* MDCDownload */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCDownload; sourceTree = BUILT_PRODUCTS_DIR; };
 		55F273DA2D35B7BC0085D55A /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		55F57AEB2D75684100F231B3 /* MetalLibrary.metallib */ = {isa = PBXFileReference; explicitFileType = "archive.metal-library"; includeInIndex = 0; path = MetalLibrary.metallib; sourceTree = BUILT_PRODUCTS_DIR; };
+		55F57AF82D75694C00F231B3 /* MetalLibrary.metallib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalLibrary.metallib.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -579,10 +589,9 @@
 				557816472D36EEB5005BBA6F /* Shared */,
 				557819BC2D36EEC5005BBA6F /* Lib */,
 				55781C162D3715F6005BBA6F /* STM32 */,
-				55781C252D3719B6005BBA6F /* STMApp.elf */,
 				55781C262D3719B6005BBA6F /* STMApp.elf.h */,
-				55781C3C2D374661005BBA6F /* ICEApp.bin */,
 				55781C3E2D3746E2005BBA6F /* ICEApp.bin.h */,
+				55F57AF82D75694C00F231B3 /* MetalLibrary.metallib.h */,
 				557819D82D36FF9A005BBA6F /* Info.plist */,
 				55F273DA2D35B7BC0085D55A /* main.mm */,
 				55F273D82D35B7BC0085D55A /* Products */,
@@ -594,6 +603,7 @@
 			isa = PBXGroup;
 			children = (
 				55F273D72D35B7BC0085D55A /* MDCDownload */,
+				55F57AEB2D75684100F231B3 /* MetalLibrary.metallib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -605,7 +615,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 55F273DE2D35B7BC0085D55A /* Build configuration list for PBXNativeTarget "MDCDownload" */;
 			buildPhases = (
-				55781C242D371648005BBA6F /* Create STMApp.elf.h / ICEApp.bin.h */,
+				55781C242D371648005BBA6F /* Create .h files */,
 				55F273D32D35B7BC0085D55A /* Sources */,
 				55F273D42D35B7BC0085D55A /* Frameworks */,
 				55F273D52D35B7BC0085D55A /* CopyFiles */,
@@ -613,11 +623,29 @@
 			buildRules = (
 			);
 			dependencies = (
+				55F57AFA2D75695D00F231B3 /* PBXTargetDependency */,
 			);
 			name = MDCDownload;
 			productName = MDCDownload;
 			productReference = 55F273D72D35B7BC0085D55A /* MDCDownload */;
 			productType = "com.apple.product-type.tool";
+		};
+		55F57AEA2D75684100F231B3 /* MetalLibrary */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 55F57AEF2D75684100F231B3 /* Build configuration list for PBXNativeTarget "MetalLibrary" */;
+			buildPhases = (
+				55F57AE92D75684100F231B3 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MetalLibrary;
+			packageProductDependencies = (
+			);
+			productName = "MDCDownload-MetalLibrary";
+			productReference = 55F57AEB2D75684100F231B3 /* MetalLibrary.metallib */;
+			productType = "com.apple.product-type.metal-library";
 		};
 /* End PBXNativeTarget section */
 
@@ -630,6 +658,9 @@
 				TargetAttributes = {
 					55F273D62D35B7BC0085D55A = {
 						CreatedOnToolsVersion = 15.4;
+					};
+					55F57AEA2D75684100F231B3 = {
+						CreatedOnToolsVersion = 16.2;
 					};
 				};
 			};
@@ -646,14 +677,16 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				55F57AEA2D75684100F231B3 /* MetalLibrary */,
 				55F273D62D35B7BC0085D55A /* MDCDownload */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		55781C242D371648005BBA6F /* Create STMApp.elf.h / ICEApp.bin.h */ = {
+		55781C242D371648005BBA6F /* Create .h files */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -662,17 +695,16 @@
 			inputPaths = (
 				"$(SRCROOT)/STMApp.elf",
 				"$(SRCROOT)/ICEApp.bin",
+				"$(SRCROOT)/MetalLibrary.metallib",
 			);
-			name = "Create STMApp.elf.h / ICEApp.bin.h";
+			name = "Create .h files";
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(SRCROOT)/STMApp.elf.h",
-				"$(SRCROOT)/ICEApp.bin.h",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "xxd -n `basename \"$SCRIPT_INPUT_FILE_0\"` -i \"$SCRIPT_INPUT_FILE_0\" > \"$SCRIPT_OUTPUT_FILE_0\"\n\nxxd -n `basename \"$SCRIPT_INPUT_FILE_1\"` -i \"$SCRIPT_INPUT_FILE_1\" > \"$SCRIPT_OUTPUT_FILE_1\"\n";
+			shellScript = "for ((i=0; i<SCRIPT_INPUT_FILE_COUNT; i++)); do\n    fname=SCRIPT_INPUT_FILE_$i\n    f=${!fname}\n    xxd -n `basename \"$f\"` -i \"$f\" > \"$f.h\"\ndone\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -683,22 +715,37 @@
 			files = (
 				557819D62D36EFE7005BBA6F /* ios.mm in Sources */,
 				557819D72D36EFE7005BBA6F /* tz.cpp in Sources */,
-				557819D32D36EEDA005BBA6F /* LMMSE.metal in Sources */,
 				5578164B2D36EEB5005BBA6F /* EstimateIlluminant.mm in Sources */,
-				557819D12D36EECF005BBA6F /* FFCC.metal in Sources */,
 				557819D22D36EECF005BBA6F /* FFCC.mm in Sources */,
-				5578164C2D36EEB5005BBA6F /* ImagePipeline.metal in Sources */,
 				5578164D2D36EEB5005BBA6F /* ImagePipeline.mm in Sources */,
-				5578164E2D36EEB5005BBA6F /* LocalContrast.metal in Sources */,
-				557816512D36EEB5005BBA6F /* Saturation.metal in Sources */,
 				557816482D36EEB5005BBA6F /* ImageCornerButton.mm in Sources */,
-				5578164F2D36EEB5005BBA6F /* ReconstructHighlights.metal in Sources */,
-				557816502D36EEB5005BBA6F /* RenderThumb.metal in Sources */,
 				55F273DB2D35B7BC0085D55A /* main.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		55F57AE92D75684100F231B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55F57AF12D75690C00F231B3 /* LMMSE.metal in Sources */,
+				55F57AF22D75690C00F231B3 /* FFCC.metal in Sources */,
+				55F57AF32D75690C00F231B3 /* ImagePipeline.metal in Sources */,
+				55F57AF42D75690C00F231B3 /* LocalContrast.metal in Sources */,
+				55F57AF52D75690C00F231B3 /* Saturation.metal in Sources */,
+				55F57AF62D75690C00F231B3 /* ReconstructHighlights.metal in Sources */,
+				55F57AF72D75690C00F231B3 /* RenderThumb.metal in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		55F57AFA2D75695D00F231B3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 55F57AEA2D75684100F231B3 /* MetalLibrary */;
+			targetProxy = 55F57AF92D75695D00F231B3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		55F273DD2D35B7BC0085D55A /* Release */ = {
@@ -735,9 +782,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5VXGM37B6Z;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = c17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -756,6 +804,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/Source $PROJECT_DIR/../../Code";
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = (
 					$PROJECT_DIR/Source,
@@ -769,13 +818,15 @@
 		55F273E02D35B7BC0085D55A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
-				DEVELOPMENT_TEAM = 5VXGM37B6Z;
-				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				PRODUCT_BUNDLE_IDENTIFIER = llc.toaster.mdcdownload;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		55F57AF02D75684100F231B3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
 			};
 			name = Release;
 		};
@@ -794,6 +845,14 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				55F273E02D35B7BC0085D55A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		55F57AEF2D75684100F231B3 /* Build configuration list for PBXNativeTarget "MetalLibrary" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55F57AF02D75684100F231B3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
