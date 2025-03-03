@@ -765,6 +765,21 @@ int main(int argc, const char* argv[]) {
     }
     
     MDCUSBDevice& device = *(devices[0]);
+    
+//    const size_t LenCap = 1024;
+//    auto buf = std::make_unique<uint8_t[]>(LenCap);
+//    IOUSBDevRequest req = {
+//        .bmRequestType  = USBmakebmRequestType(kUSBIn, kUSBStandard, kUSBDevice),
+//        .bRequest       = kUSBRqGetDescriptor,
+//        .wValue         = kUSBConfDesc<<8,
+//        .wIndex         = 0,
+//        .wLength        = LenCap,
+//        .pData          = buf.get(),
+//    };
+//    
+//    IOReturn ior = device.dev().iokitExec<&IOUSBDeviceInterface::DeviceRequest>(&req);
+//    device.dev()._CheckErr(ior, "DeviceRequest failed");
+    
     try {
         if (args.cmd == lower(ResetCmd))                    Reset(args, device);
         else if (args.cmd == lower(StatusGetCmd))           StatusGet(args, device);
