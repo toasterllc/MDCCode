@@ -53,7 +53,7 @@ static void _STMRAMWrite(const STM::Cmd& cmd) {
     
     // Bail if the region capacity is too small to hold the
     // incoming data length (ceiled to the packet length)
-    const size_t len = Toastbox::Ceil(_USB::Config::MaxPacketSize(), (size_t)arg.len);
+    const size_t len = Toastbox::Ceil(_USB::Config::MaxPacketSizeBulk(), (size_t)arg.len);
     if (len > _STMRegionCapacity((void*)arg.addr)) {
         // Reject command
         _System::USBAcceptCommand(false);
