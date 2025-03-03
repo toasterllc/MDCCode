@@ -20,7 +20,6 @@
 		557819D62D36EFE7005BBA6F /* ios.mm in Sources */ = {isa = PBXBuildFile; fileRef = 557818D02D36EEC5005BBA6F /* ios.mm */; };
 		557819D72D36EFE7005BBA6F /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 557818D12D36EEC5005BBA6F /* tz.cpp */; };
 		55E393FE2D35C821000C1EFA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E393FD2D35C821000C1EFA /* QuartzCore.framework */; };
-		55E394002D35C82B000C1EFA /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E393FF2D35C82B000C1EFA /* UniformTypeIdentifiers.framework */; };
 		55F273DB2D35B7BC0085D55A /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F273DA2D35B7BC0085D55A /* main.mm */; };
 		55F57AF12D75690C00F231B3 /* LMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557819872D36EEC5005BBA6F /* LMMSE.metal */; };
 		55F57AF22D75690C00F231B3 /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 557819782D36EEC5005BBA6F /* FFCC.metal */; };
@@ -223,7 +222,6 @@
 				557815F82D36EE61005BBA6F /* Cocoa.framework in Frameworks */,
 				557815F62D36EE3E005BBA6F /* Accelerate.framework in Frameworks */,
 				55E393FE2D35C821000C1EFA /* QuartzCore.framework in Frameworks */,
-				55E394002D35C82B000C1EFA /* UniformTypeIdentifiers.framework in Frameworks */,
 				557815F22D36EE1F005BBA6F /* IOKit.framework in Frameworks */,
 				557815F42D36EE23005BBA6F /* Metal.framework in Frameworks */,
 				557815FA2D36EE6A005BBA6F /* libate.tbd in Frameworks */,
