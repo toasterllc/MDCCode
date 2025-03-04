@@ -69,6 +69,31 @@ inline const char* _StringForResetReason(uint16_t x) {
     return "unknown";
 }
 
+inline std::string _SDCardProductName(const SD::CardId& cardId) {
+    char tmp[16] = "";
+    std::stringstream ss;
+    const auto& n = cardId.productName;
+    bool empty = true;
+    for (char c : n) {
+        if (isprint(c)) {
+            ss << c;
+            empty = false;
+        } else {
+            break;
+        }
+    }
+    
+    if (!empty) ss << " ";
+    
+    ss << "<";
+    for (char c : n) {
+        snprintf(tmp, sizeof(tmp), "%02jx", (uintmax_t)c);
+        ss << tmp;
+    }
+    ss << ">";
+    return ss.str();
+}
+
 using MSPLineForAddrFn = std::string (*)(uint16_t addr);
 inline std::string StringForState(const MSP::State& x, MSPLineForAddrFn mspLineForAddr=nullptr) {
     char* buf = nullptr;
@@ -87,11 +112,7 @@ inline std::string StringForState(const MSP::State& x, MSPLineForAddrFn mspLineF
     fprintf(f,              "  cardId\n");
     fprintf(f,              "    manufacturerId:        0x%02jx\n",             (uintmax_t)x.sd.cardId.manufacturerId);
     fprintf(f,              "    oemId:                 0x%02jx\n",             (uintmax_t)x.sd.cardId.oemId);
-    fprintf(f,              "    productName:           %c%c%c%c%c\n",          x.sd.cardId.productName[0],
-                                                                            x.sd.cardId.productName[1],
-                                                                            x.sd.cardId.productName[2],
-                                                                            x.sd.cardId.productName[3],
-                                                                            x.sd.cardId.productName[4]);
+    fprintf(f,              "    productName:           %s\n",                  _SDCardProductName(x.sd.cardId).c_str());
     fprintf(f,              "    productRevision:       0x%02jx\n",             (uintmax_t)x.sd.cardId.productRevision);
     fprintf(f,              "    productSerialNumber:   0x%08jx\n",             (uintmax_t)x.sd.cardId.productSerialNumber);
     fprintf(f,              "    manufactureDate:       0x%04jx\n",             (uintmax_t)x.sd.cardId.manufactureDate);
@@ -121,7 +142,7 @@ inline std::string StringForState(const MSP::State& x, MSPLineForAddrFn mspLineF
     
     fprintf(f,              "    repeatEvent\n");
     for (auto it=std::begin(triggers.repeatEvent); it!=std::begin(triggers.repeatEvent)+triggers.repeatEventCount; it++) {
-        fprintf(f,          "      #%ju\n",                                     (uintmax_t)(&*it-triggers.repeatEvent));
+        fprintf(f,          "      #%ju\n",                                 (uintmax_t)(&*it-triggers.repeatEvent));
         fprintf(f,          "        time:              %s\n",              Time::StringForTimeInstant(it->time).c_str());
         fprintf(f,          "        type:              %s\n",              _StringForTriggerEventType(it->type));
         fprintf(f,          "        idx:               %ju\n",             (uintmax_t)it->idx);
@@ -132,7 +153,7 @@ inline std::string StringForState(const MSP::State& x, MSPLineForAddrFn mspLineF
     
     fprintf(f,              "    timeTrigger\n");
     for (auto it=std::begin(triggers.timeTrigger); it!=std::begin(triggers.timeTrigger)+triggers.timeTriggerCount; it++) {
-        fprintf(f,          "      #%ju\n",                                     (uintmax_t)(&*it-triggers.timeTrigger));
+        fprintf(f,          "      #%ju\n",                                 (uintmax_t)(&*it-triggers.timeTrigger));
         fprintf(f,          "        capture\n");
         fprintf(f,          "          delayTicks:      %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         fprintf(f,          "          count:           %ju\n",             (uintmax_t)it->capture.count);
@@ -141,7 +162,7 @@ inline std::string StringForState(const MSP::State& x, MSPLineForAddrFn mspLineF
     
     fprintf(f,              "    motionTrigger\n");
     for (auto it=std::begin(triggers.motionTrigger); it!=std::begin(triggers.motionTrigger)+triggers.motionTriggerCount; it++) {
-        fprintf(f,          "      #%ju\n",                                     (uintmax_t)(&*it-triggers.motionTrigger));
+        fprintf(f,          "      #%ju\n",                                 (uintmax_t)(&*it-triggers.motionTrigger));
         fprintf(f,          "        capture\n");
         fprintf(f,          "          delayTicks:      %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         fprintf(f,          "          count:           %ju\n",             (uintmax_t)it->capture.count);
@@ -153,7 +174,7 @@ inline std::string StringForState(const MSP::State& x, MSPLineForAddrFn mspLineF
     
     fprintf(f,              "    buttonTrigger\n");
     for (auto it=std::begin(triggers.buttonTrigger); it!=std::begin(triggers.buttonTrigger)+triggers.buttonTriggerCount; it++) {
-        fprintf(f,          "      #%ju\n",                                     (uintmax_t)(&*it-triggers.buttonTrigger));
+        fprintf(f,          "      #%ju\n",                                 (uintmax_t)(&*it-triggers.buttonTrigger));
         fprintf(f,          "        capture\n");
         fprintf(f,          "          delayTicks:      %ju (%.1f)\n",      (uintmax_t)it->capture.delayTicks, _SecondsForTicks(it->capture.delayTicks));
         fprintf(f,          "          count:           %ju\n",             (uintmax_t)it->capture.count);
@@ -162,7 +183,7 @@ inline std::string StringForState(const MSP::State& x, MSPLineForAddrFn mspLineF
     
     fprintf(f,              "    dstEvent\n");
     for (auto it=std::begin(triggers.dstEvent); it!=std::begin(triggers.dstEvent)+triggers.dstEventCount; it++) {
-        fprintf(f,          "      #%ju\n",                                     (uintmax_t)(&*it-triggers.dstEvent));
+        fprintf(f,          "      #%ju\n",                                 (uintmax_t)(&*it-triggers.dstEvent));
         fprintf(f,          "        time:              %s\n",              Time::StringForTimeInstant(it->time).c_str());
         fprintf(f,          "        type:              %s\n",              _StringForTriggerEventType(it->type));
         fprintf(f,          "        idx:               %ju\n",             (uintmax_t)it->idx);
