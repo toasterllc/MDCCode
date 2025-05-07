@@ -216,7 +216,7 @@ struct MDCDeviceHard : MDCDevice {
         ss << "\n\n------------------------------\n\n";
         ss << "STM\n\n";
         {
-            auto lock = deviceLock();
+            auto lock = deviceLock(true);
             ss << STM::StringForStatus(_device.device->status());
         }
         ss << "\n------------------------------\n\n";
