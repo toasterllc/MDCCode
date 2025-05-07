@@ -60,7 +60,6 @@
 		552F4BA429AD3ACB000CEAB2 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
 		552F4BA529AD3ACB000CEAB2 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		552F4BA629AD3ACB000CEAB2 /* String.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = String.h; sourceTree = "<group>"; };
-		55781C272D373230005BBA6F /* MemStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MemStream.h; sourceTree = "<group>"; };
 		557ABD2529E61A3D0032619E /* NumForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NumForStr.h; sourceTree = "<group>"; };
 		557ABD8F29EA1BE70032619E /* DurationString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DurationString.h; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* MDCUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCUtil; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -161,7 +160,6 @@
 				552F4B9229AD3ACB000CEAB2 /* RuntimeError.h */,
 				552F4B9329AD3ACB000CEAB2 /* Mac */,
 				552F4B9829AD3ACB000CEAB2 /* FDStream.h */,
-				55781C272D373230005BBA6F /* MemStream.h */,
 				552F4B9929AD3ACB000CEAB2 /* Cast.h */,
 				552F4B9A29AD3ACB000CEAB2 /* FileDescriptor.h */,
 				552F4B9B29AD3ACB000CEAB2 /* USB.h */,

@@ -77,8 +77,9 @@ struct MDCUSBDevice {
     }
     
     MDCUSBDevice(std::unique_ptr<USBDevice>&& dev) : _dev(std::move(dev)) {
+        constexpr uint32_t ClaimAttempts = 5;
         // Acquire system-wide exclusive access to the device
-        _dev->claim();
+        _dev->claim(ClaimAttempts);
         
         // We don't know what state the device was left in, so reset its state
         printf("[MDCUSBDevice] reset START\n");
@@ -269,7 +270,7 @@ struct MDCUSBDevice {
     }
     
     static uint32_t _PhyTune(const _SendRight& service) {
-        // Use the default PHY tune value is this isn't an ARM Mac, or the device is connected via a hub.
+        // Use the default PHY tune value if this isn't an ARM Mac, or the device is connected via a hub.
         // Inversely, use the workaround PHY tune value if this is an ARM Mac, and the device is
         // connected directly to a host port.
         if (!_ARMMac() || _USBHub(_Parents(service))) {
