@@ -412,6 +412,27 @@ struct MDCDeviceHard : MDCDevice {
                     if (!MDCUSBDevice::DeviceMatches(*usbDev)) continue; // Ignore if this isn't an MDC
                     if (usbDev->serialNumber() != serial) continue; // Ignore if the serial doesn't match
                     if (*usbDev == existing) continue; // Ignore if this is the same device as `existing`
+                    
+                    // Claim the device on behalf of the MDCUSBDevice
+                    // We do this here because we need to detect `kIOReturnExclusiveAccess` and retry.
+                    // This error occurs when another app (eg Google Chrome) claims the device before
+                    // we get a chance, before deciding it's not interested in it.
+                    constexpr int ClaimAttemptCount = 5;
+                    constexpr auto ClaimDelay = std::chrono::milliseconds(500);
+                    for (int i=1; i<=ClaimAttemptCount; i++) {
+                        try {
+                            usbDev->claim();
+                        
+                        } catch (const Toastbox::KernError& e) {
+                            if (e.kr==kIOReturnExclusiveAccess && i<ClaimAttemptCount) {
+                                printf("[MDCDevice : _WaitForDevice] Couldn't claim USBDevice; trying again (%s)\n", e.what());
+                                std::this_thread::sleep_for(ClaimDelay);
+                            } else {
+                                throw;
+                            }
+                        }
+                    }
+                    
                     dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
                 
                 } catch (const std::exception& e) {

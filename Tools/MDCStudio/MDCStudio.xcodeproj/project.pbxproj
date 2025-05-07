@@ -220,6 +220,7 @@
 		55496F5E278E3E6800BCA739 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		554F194E2DCB1CB800C31FB6 /* KernError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KernError.h; sourceTree = "<group>"; };
 		5557260A2B5F677C00B32710 /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
 		555883CC2CE5BA8D00DF115B /* Bail.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bail.h; sourceTree = "<group>"; };
 		5568449A2BB22951008F59AE /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
@@ -585,6 +586,7 @@
 				5544AE2227B5E58F006AB473 /* RefCounted.h */,
 				5544AE2627B5E58F006AB473 /* RingBuffer.h */,
 				5544AE1B27B5E58F006AB473 /* RuntimeError.h */,
+				554F194E2DCB1CB800C31FB6 /* KernError.h */,
 				5544AE2827B5E58F006AB473 /* SendRight.h */,
 				55F755C929C2CA4000241672 /* Signal.h */,
 				55F755CA29C2CA4000241672 /* SignalQueue.h */,
