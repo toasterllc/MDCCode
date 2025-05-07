@@ -191,7 +191,7 @@ struct [[gnu::packed]] Status {
 
 constexpr Status::Header StatusHeader = {
     .magic   = 0xCAFEBABE,
-    .version = 0,
+    .version = 1,
 };
 
 struct [[gnu::packed]] MSPSBWDebugCmd {

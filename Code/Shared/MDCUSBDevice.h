@@ -139,7 +139,7 @@ struct MDCUSBDevice {
                 (uintmax_t)STM::StatusHeader.magic, (uintmax_t)status.header.magic);
         }
         
-        if (status.header.version != STM::StatusHeader.version) {
+        if (status.header.version > STM::StatusHeader.version) {
             throw IncompatibleVersion("invalid STM version (expected:%ju got:%ju)",
                 (uintmax_t)STM::StatusHeader.version, (uintmax_t)status.header.version);
         }

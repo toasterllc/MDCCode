@@ -436,7 +436,7 @@ static_assert(sizeof(State) == 1018); // Debug
 
 constexpr State::Header StateHeader = {
     .magic   = 0xDECAFBAD,
-    .version = 1,
+    .version = 2,
     .length  = sizeof(State),
 };
 
