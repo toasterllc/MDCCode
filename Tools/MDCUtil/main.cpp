@@ -9,6 +9,7 @@
 #include "Lib/Toastbox/String.h"
 #include "Lib/Toastbox/Cast.h"
 #include "Shared/STM.h"
+#include "Shared/STMDebug.h"
 #include "Shared/ChecksumFletcher32.h"
 #include "Shared/Img.h"
 #include "Shared/SD.h"
@@ -294,25 +295,10 @@ static void Reset(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
 }
 
-static const char* _StringForStatusMode(const STM::Status::Mode mode) {
-    using namespace STM;
-    switch (mode) {
-    case STM::Status::Mode::STMLoader:  return "STMLoader";
-    case STM::Status::Mode::STMApp:     return "STMApp";
-    default:                            return "<Invalid>";
-    }
-}
-
 static void StatusGet(const Args& args, MDCUSBDevice& device) {
     using namespace STM;
     Status status = device.statusGet();
-    printf("Status:\n");
-    printf("  header:\n");
-    printf("    magic:    0x%08jx\n", (uintmax_t)status.header.magic);
-    printf("    version:  %ju\n", (uintmax_t)status.header.version);
-    printf("  mspVersion: %ju\n", (uintmax_t)status.mspVersion);
-    printf("  mode:       %s\n", _StringForStatusMode(status.mode));
-    printf("\n");
+    std::cout << STM::StringForStatus(status) << "\n";
 }
 
 static const char* _StringForChargeStatus(MSP::ChargeStatus status) {

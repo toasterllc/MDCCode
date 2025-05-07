@@ -1,4 +1,5 @@
 #import "MDCDevice.h"
+#import "Shared/STMDebug.h"
 #import "Shared/MSPDebug.h"
 #import "Shared/MDCUSBDevice.h"
 #import <IOKit/IOKitLib.h>
@@ -210,10 +211,19 @@ struct MDCDeviceHard : MDCDevice {
     
     std::string diagnosticData() override {
         std::stringstream ss;
-        ss << "MDCDeviceHard serial " << _serial << "\n";
+        ss << "MDCDeviceHard\n\n";
+        ss << "serial " << _serial;
+        ss << "\n\n------------------------------\n\n";
+        ss << "STM\n\n";
+        {
+            auto lock = deviceLock();
+            ss << STM::StringForStatus(_device.device->status());
+        }
+        ss << "\n------------------------------\n\n";
+        ss << "MSP\n\n";
         {
             auto lock = std::unique_lock(_status.lock);
-            ss << MSP::StringForState(_status.status.mspState) << "\n";
+            ss << MSP::StringForState(_status.status.mspState);
         }
         return ss.str();
     }
@@ -445,9 +455,9 @@ struct MDCDeviceHard : MDCDevice {
     }
     
     static void _DeviceModeCheck(const _MDCUSBDevicePtr& dev, STM::Status::Mode mode) {
-        if (dev->mode() != mode) {
+        if (dev->status().mode != mode) {
             throw Toastbox::RuntimeError("invalid mode (expected %ju, got %ju)",
-                (uintmax_t)mode, (uintmax_t)dev->mode());
+                (uintmax_t)mode, (uintmax_t)dev->status().mode);
         }
     }
     

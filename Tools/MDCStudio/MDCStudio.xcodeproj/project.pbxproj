@@ -221,6 +221,7 @@
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		554F194E2DCB1CB800C31FB6 /* KernError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KernError.h; sourceTree = "<group>"; };
+		554F19F22DCB447F00C31FB6 /* STMDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STMDebug.h; sourceTree = "<group>"; };
 		5557260A2B5F677C00B32710 /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
 		555883CC2CE5BA8D00DF115B /* Bail.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bail.h; sourceTree = "<group>"; };
 		5568449A2BB22951008F59AE /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
@@ -932,6 +933,7 @@
 				55E393E32D35C5D4000C1EFA /* SD.h */,
 				55E393E42D35C5D4000C1EFA /* SDCard.h */,
 				55E393E52D35C5D4000C1EFA /* STM.h */,
+				554F19F22DCB447F00C31FB6 /* STMDebug.h */,
 				55E393E62D35C5D4000C1EFA /* Time.h */,
 				55E393E72D35C5D4000C1EFA /* TimeAdjustment.h */,
 				55E393E82D35C5D4000C1EFA /* TimeConstants.h */,

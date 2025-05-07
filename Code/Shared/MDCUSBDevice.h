@@ -87,8 +87,7 @@ struct MDCUSBDevice {
         printf("[MDCUSBDevice] reset END\n");
         
         _serial = _dev->serialNumber();
-        const STM::Status status = statusGet();
-        _mode = status.mode;
+        _status = statusGet();
     }
     
     // Copy
@@ -107,7 +106,7 @@ struct MDCUSBDevice {
     // MARK: - Accessors
     
     const std::string& serial() const { return _serial; }
-    const STM::Status::Mode mode() const { return _mode; }
+    const STM::Status status() const { return _status; }
     
     // MARK: - Common Commands
     void reset() {
@@ -201,7 +200,7 @@ struct MDCUSBDevice {
     
     // MARK: - STMLoader Commands
     void stmRAMWrite(uintptr_t addr, const void* data, size_t len) {
-        assert(_mode == STM::Status::Mode::STMLoader);
+        assert(_status.mode == STM::Status::Mode::STMLoader);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -315,7 +314,7 @@ struct MDCUSBDevice {
     }
     
     void stmRAMWriteLegacy(uintptr_t addr, const void* data, size_t len) {
-        assert(_mode == STM::Status::Mode::STMLoader);
+        assert(_status.mode == STM::Status::Mode::STMLoader);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -353,7 +352,7 @@ struct MDCUSBDevice {
     }
     
     void stmReset(uintptr_t entryPointAddr) {
-        assert(_mode == STM::Status::Mode::STMLoader);
+        assert(_status.mode == STM::Status::Mode::STMLoader);
         
         if (entryPointAddr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)entryPointAddr);
@@ -367,14 +366,14 @@ struct MDCUSBDevice {
     
     // MARK: - STMApp Commands
     void stmFlashWriteInit() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::STMFlashWriteInit };
         _sendCmd(cmd);
         _checkStatus("STMFlashWriteInit command failed");
     }
     
     void stmFlashWrite(uintptr_t addr, const void* data, size_t len) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -418,7 +417,7 @@ struct MDCUSBDevice {
     }
     
     void hostModeSet(bool en) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
             .op = STM::Op::HostModeSet,
             .arg = { .HostModeSet = { .en = en } },
@@ -428,7 +427,7 @@ struct MDCUSBDevice {
     }
     
     void iceRAMWrite(const void* data, size_t len) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         if (len >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
         
@@ -443,7 +442,7 @@ struct MDCUSBDevice {
     }
     
     void iceFlashRead(uintptr_t addr, void* data, size_t len) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -467,7 +466,7 @@ struct MDCUSBDevice {
     }
     
     void iceFlashWrite(uintptr_t addr, const void* data, size_t len) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -525,7 +524,7 @@ struct MDCUSBDevice {
     }
     
 //    MSP::State::Header mspStateHeaderRead() {
-//        assert(_mode == STM::Status::Mode::STMApp);
+//        assert(_status.mode == STM::Status::Mode::STMApp);
 //        
 //        const STM::Cmd cmd = {
 //            .op = STM::Op::MSPStateRead,
@@ -543,7 +542,7 @@ struct MDCUSBDevice {
 //    }
     
     MSP::State mspStateRead() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::MSPStateRead,
@@ -561,7 +560,7 @@ struct MDCUSBDevice {
     }
     
     void mspStateWrite(const MSP::State& state) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::MSPStateWrite,
@@ -576,7 +575,7 @@ struct MDCUSBDevice {
     }
     
     MSP::TimeState mspTimeGet() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPTimeGet };
         _sendCmd(cmd);
         _checkStatus("MSPTimeGet command failed");
@@ -587,7 +586,7 @@ struct MDCUSBDevice {
     }
     
     MSP::TimeState mspTimeInit() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         const Time::Instant now = Time::Clock::TimeInstantFromTimePoint(Time::Clock::now());
         const MSP::TimeState state = {
@@ -606,7 +605,7 @@ struct MDCUSBDevice {
     }
     
     void mspTimeAdjust(const MSP::TimeAdjustment& adj) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
             .op = STM::Op::MSPTimeAdjust,
             .arg = { .MSPTimeAdjust = { .adjustment = adj } },
@@ -674,49 +673,49 @@ struct MDCUSBDevice {
     }
     
     void mspLock() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPLock };
         _sendCmd(cmd);
         _checkStatus("MSPLock command failed");
     }
     
     void mspUnlock() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPUnlock };
         _sendCmd(cmd);
         _checkStatus("MSPUnlock command failed");
     }
     
     void mspSBWConnect() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWConnect };
         _sendCmd(cmd);
         _checkStatus("MSPSBWConnect command failed");
     }
     
     void mspSBWDisconnect() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWDisconnect };
         _sendCmd(cmd);
         _checkStatus("MSPSBWDisconnect command failed");
     }
     
     void mspSBWHalt() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWHalt };
         _sendCmd(cmd);
         _checkStatus("MSPSBWHalt command failed");
     }
     
     void mspSBWReset() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWReset };
         _sendCmd(cmd);
         _checkStatus("MSPSBWReset command failed");
     }
     
     void mspSBWRead(uintptr_t addr, void* data, size_t len) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -740,7 +739,7 @@ struct MDCUSBDevice {
     }
     
     void mspSBWWrite(uintptr_t addr, const void* data, size_t len) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -764,14 +763,14 @@ struct MDCUSBDevice {
     }
     
     void mspSBWErase() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWErase };
         _sendCmd(cmd);
         _checkStatus("MSPSBWErase command failed");
     }
     
     void mspSBWDebugLog() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWDebugLog };
         _sendCmd(cmd);
     }
@@ -810,7 +809,7 @@ struct MDCUSBDevice {
     }
     
     void mspSBWDebug(const STM::MSPSBWDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         if (cmdsLen >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)cmdsLen);
@@ -843,7 +842,7 @@ struct MDCUSBDevice {
     }
     
     STM::SDCardInfo sdInit() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = { .op = STM::Op::SDInit };
         _sendCmd(cmd);
@@ -855,7 +854,7 @@ struct MDCUSBDevice {
     }
     
     void sdRead(SD::Block block) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::SDRead,
@@ -870,7 +869,7 @@ struct MDCUSBDevice {
     }
     
     void sdErase(SD::Block first, SD::Block last) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::SDErase,
@@ -886,7 +885,7 @@ struct MDCUSBDevice {
     }
     
     void imgInit() {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = { .op = STM::Op::ImgInit, };
         _sendCmd(cmd);
@@ -900,7 +899,7 @@ struct MDCUSBDevice {
     };
     
     void imgExposureSet(const ImgExposure& exp) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
             .op = STM::Op::ImgExposureSet,
             .arg = {
@@ -916,7 +915,7 @@ struct MDCUSBDevice {
     }
     
     STM::ImgCaptureStats imgCapture(uint8_t dstRAMBlock, uint8_t skipCount, Img::Size imgSize) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::ImgCapture,
@@ -938,7 +937,7 @@ struct MDCUSBDevice {
     }
     
     std::unique_ptr<uint8_t[]> imgReadout(Img::Size size) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         const size_t imageLen = (size==Img::Size::Full ? ImgSD::Full::ImagePaddedLen : ImgSD::Thumb::ImagePaddedLen);
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(imageLen);
         const size_t lenGot = _dev->read(STM::Endpoint::DataIn, buf.get(), imageLen);
@@ -959,7 +958,7 @@ struct MDCUSBDevice {
     }
     
     size_t readout(void* dst, size_t len) {
-        assert(_mode == STM::Status::Mode::STMApp);
+        assert(_status.mode == STM::Status::Mode::STMApp);
         if (!len) return 0; // Short-circuit if there's no data to read
         
         const size_t mps = _dev->maxPacketSize(STM::Endpoint::DataIn);
@@ -1044,5 +1043,5 @@ struct MDCUSBDevice {
     
     std::unique_ptr<USBDevice> _dev;
     std::string _serial = {};
-    STM::Status::Mode _mode = STM::Status::Mode::None;
+    STM::Status _status;
 };
