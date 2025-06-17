@@ -15,10 +15,10 @@
 #import "Lib/Toastbox/DurationString.h"
 #import "Shared/Calendar.h"
 #import "Shared/Clock.h"
+#import "Shared/NibViewInit.h"
 #import "DeviceSettings.h"
 #import "BatteryLifeSimulator.h"
 #import "DeviceSettings/BatteryLifeView/BatteryLifeView.h"
-#import "NibViewInit.h"
 using namespace MDCStudio;
 using namespace DeviceSettings;
 

@@ -1,8 +1,6 @@
 #import <Cocoa/Cocoa.h>
-#import <filesystem>
 #import "Shared/TmpDir.h"
 #import "Shared/MDCDeviceHard.h"
-#import "Shared/PrefsUtil.h"
 
 static std::vector<uint8_t> _FileRead(const std::filesystem::path& path) {
     std::vector<uint8_t> data;
@@ -34,16 +32,6 @@ int main(int argc, const char* argv[]) {
         if (ir) Toastbox::Bail("setrlimit failed: %s", strerror(errno));
     }
     
-    // Keep using "extra large" thumbnails if they were already being used by an
-    // old version of MDCStudio.
-    // Otherwise, use the default thumbnail size defined by PrefsUtil.
-    if (!PrefsUtil::ImageLibraryDescriptorMigrated()) {
-        PrefsUtil::ImageLibraryDescriptorMigrated(true);
-        if (MDCDevice::DevicesExist()) {
-            PrefsUtil::ImageLibraryDescriptor(ImageLibrary::Descriptors::ExtraLarge);
-        }
-    }
-    
     // Configure MDCDeviceHard
     std::vector<uint8_t> stmapp =
         _FileRead([[[NSBundle mainBundle] pathForResource:@"STMApp" ofType:@"elf"] UTF8String]);
@@ -53,8 +41,6 @@ int main(int argc, const char* argv[]) {
         MDCDeviceHard::Config(stmapp.data(), stmapp.size(), iceapp.data(), iceapp.size());
     }
     
-//    std::filesystem::remove_all("/Users/dave/Library/Containers/llc.toaster.photon-transfer/Data/Library/Application Support/llc.toaster.photon-transfer");
-//    std::filesystem::remove_all("/Users/dave/Desktop/DemoImageSource");
     try {
         return NSApplicationMain(argc, argv);
     

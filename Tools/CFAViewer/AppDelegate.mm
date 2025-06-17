@@ -17,14 +17,13 @@
 #import "Code/Lib/Toastbox/Mac/CFA.h"
 #import "Code/Lib/Toastbox/Mac/Mat.h"
 #import "Code/Lib/Toastbox/Mac/Color.h"
+#import "Code/Shared/MDCUSBDevice.h"
 #import "Util.h"
 #import "MainView.h"
 #import "HistogramView.h"
 #import "ColorChecker.h"
-#import "Tools/Shared/MDCUSBDevice.h"
 #import "IOServiceMatcher.h"
 #import "IOServiceWatcher.h"
-#import "Assert.h"
 #import "ImagePipelineTypes.h"
 #import "PixelSampler.h"
 #import "Img.h"
@@ -157,7 +156,7 @@ struct RawImage {
     Renderer::Txt _txt;
     
     MDCStudio::Object::ObserverPtr _mdcDevicesOb;
-    MDCStudio::MDCDeviceRealPtr _mdcDevice;
+    MDCStudio::MDCDeviceHardPtr _mdcDevice;
     
     struct {
         Img::Pixel pixels[2200*2200];
@@ -272,8 +271,8 @@ struct RawImage {
     // Ensure that all devices are out of host mode when we exit, by acquiring each device's
     // device lock and stashing the locks in our global DeviceLocks.
     MDCStudio::MDCDevicesManagerPtr devicesManager = MDCStudio::MDCDevicesManagerGlobal();
-    const std::vector<MDCStudio::MDCDeviceRealPtr> devices = devicesManager->devices();
-    for (MDCStudio::MDCDeviceRealPtr device : devices) {
+    const std::set<MDCStudio::MDCDeviceHardPtr> devices = devicesManager->devices();
+    for (MDCStudio::MDCDeviceHardPtr device : devices) {
         DeviceLocks.push_back(device->deviceLock(true));
     }
     printf("applicationShouldTerminate\n");
@@ -427,8 +426,6 @@ static bool isCFAFile(const fs::path& path) {
 
 // MARK: - MDCUSBDevice
 
-static void _nop(void* ctx, io_iterator_t iter) {}
-
 static void _configureDevice(MDCUSBDevice& dev) {
     {
         const char* ICEBinPath = "/Users/dave/repos/MDCCode/Code/ICE40/ICEAppImgCaptureSTM/Synth/Top.bin";
@@ -470,14 +467,14 @@ static void _configureDevice(MDCUSBDevice& dev) {
 }
 
 - (void)_handleMDCDevicesChanged {
-    std::vector<MDCStudio::MDCDeviceRealPtr> devices = MDCStudio::MDCDevicesManagerGlobal()->devices();
+    std::set<MDCStudio::MDCDeviceHardPtr> devices = MDCStudio::MDCDevicesManagerGlobal()->devices();
     assert(devices.size()==0 || devices.size()==1);
-    MDCStudio::MDCDeviceRealPtr device = (!devices.empty() ? devices.at(0) : nullptr);
+    MDCStudio::MDCDeviceHardPtr device = (!devices.empty() ? *devices.begin() : nullptr);
     [self _setMDCDevice:device];
     
 }
 
-- (void)_setMDCDevice:(MDCStudio::MDCDeviceRealPtr)dev {
+- (void)_setMDCDevice:(MDCStudio::MDCDeviceHardPtr)dev {
     [self _streamImagesStop];
     
     _mdcDevice = dev;
@@ -503,7 +500,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
     [self _render];
 }
 
-- (void)_threadStreamImages:(MDCStudio::MDCDeviceRealPtr)device {
+- (void)_threadStreamImages:(MDCStudio::MDCDeviceHardPtr)device {
     assert(device);
     
 //    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
@@ -712,45 +709,45 @@ Mat<double,H,W> _matFromString(NSString* nsstr) {
 
 // MARK: - Sample
 
-static Mat<double,3,1> _averageRaw(const SampleRect& rect, const CFADesc& cfaDesc, id<MTLBuffer> buf) {
-    const simd::float3* vals = (simd::float3*)[buf contents];
-    assert([buf length] >= rect.count()*sizeof(simd::float3));
-    
-    size_t i = 0;
-    Mat<double,3,1> r;
-    uint32_t count[3] = {};
-    for (size_t y=rect.top; y<rect.bottom; y++) {
-        for (size_t x=rect.left; x<rect.right; x++, i++) {
-            const CFAColor c = cfaDesc.color(x, y);
-            const simd::float3& val = vals[i];
-            if (c == CFAColor::Red)     count[0]++;
-            if (c == CFAColor::Green)   count[1]++;
-            if (c == CFAColor::Blue)    count[2]++;
-            r += {(double)val[0], (double)val[1], (double)val[2]};
-        }
-    }
-    
-    if (count[0]) r[0] /= count[0];
-    if (count[1]) r[1] /= count[1];
-    if (count[2]) r[2] /= count[2];
-    return r;
-}
-
-static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
-    const simd::float3* vals = (simd::float3*)[buf contents];
-    assert([buf length] >= rect.count()*sizeof(simd::float3));
-    
-    Mat<double,3,1> r;
-    size_t i = 0;
-    for (size_t y=rect.top; y<rect.bottom; y++) {
-        for (size_t x=rect.left; x<rect.right; x++, i++) {
-            const simd::float3& val = vals[i];
-            r += {(double)val[0], (double)val[1], (double)val[2]};
-        }
-    }
-    if (i) r /= i;
-    return r;
-}
+//static Mat<double,3,1> _averageRaw(const SampleRect& rect, const CFADesc& cfaDesc, id<MTLBuffer> buf) {
+//    const simd::float3* vals = (simd::float3*)[buf contents];
+//    assert([buf length] >= rect.count()*sizeof(simd::float3));
+//    
+//    size_t i = 0;
+//    Mat<double,3,1> r;
+//    uint32_t count[3] = {};
+//    for (size_t y=rect.top; y<rect.bottom; y++) {
+//        for (size_t x=rect.left; x<rect.right; x++, i++) {
+//            const CFAColor c = cfaDesc.color(x, y);
+//            const simd::float3& val = vals[i];
+//            if (c == CFAColor::Red)     count[0]++;
+//            if (c == CFAColor::Green)   count[1]++;
+//            if (c == CFAColor::Blue)    count[2]++;
+//            r += {(double)val[0], (double)val[1], (double)val[2]};
+//        }
+//    }
+//    
+//    if (count[0]) r[0] /= count[0];
+//    if (count[1]) r[1] /= count[1];
+//    if (count[2]) r[2] /= count[2];
+//    return r;
+//}
+//
+//static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
+//    const simd::float3* vals = (simd::float3*)[buf contents];
+//    assert([buf length] >= rect.count()*sizeof(simd::float3));
+//    
+//    Mat<double,3,1> r;
+//    size_t i = 0;
+//    for (size_t y=rect.top; y<rect.bottom; y++) {
+//        for (size_t x=rect.left; x<rect.right; x++, i++) {
+//            const simd::float3& val = vals[i];
+//            r += {(double)val[0], (double)val[1], (double)val[2]};
+//        }
+//    }
+//    if (i) r /= i;
+//    return r;
+//}
 
 static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int y, int radius) {
     const int left      = std::clamp(x-radius, 0, (int)img.width -1  )   ;
@@ -790,7 +787,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
     
     } else if (ext == "png") {
         id img = _renderer.imageCreate(_txt);
-        Assert(img, return);
+        assert(img);
         
         id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
             (CFURLRef)[NSURL fileURLWithPath:path], kUTTypePNG, 1, nullptr));
@@ -813,9 +810,9 @@ static Color<ColorSpace::Raw> sampleImageCircle(const RawImage& img, int x, int 
         if (result != NSModalResponseOK) return;
         
         auto panel = weakPanel;
-        Assert(panel, return);
+        if (!panel) return;
         auto strongSelf = weakSelf;
-        Assert(strongSelf, return);
+        if (!strongSelf) return;
         
         NSString* path = [[panel URL] path];
         

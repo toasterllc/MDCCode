@@ -1,11 +1,11 @@
 #import "DeviceImageGridContainerView.h"
-#import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
-#import "ImageLibraryStatus.h"
+#import "Shared/NibViewInit.h"
+#import "Shared/Calendar.h"
 #import "date/date.h"
 #import "date/tz.h"
-#import "NibViewInit.h"
+#import "DeviceImageGridHeaderView/DeviceImageGridHeaderView.h"
+#import "ImageLibraryStatus.h"
 #import "ImageGridView/ImageGridView.h"
-#import "Shared/Calendar.h"
 using namespace MDCStudio;
 
 @implementation DeviceImageGridContainerView {

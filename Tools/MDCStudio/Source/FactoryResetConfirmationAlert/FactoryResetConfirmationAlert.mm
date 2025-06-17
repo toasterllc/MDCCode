@@ -1,6 +1,4 @@
 #import "FactoryResetConfirmationAlert.h"
-#import "NibViewInit.h"
-using namespace MDCStudio;
 
 NSString* ConfirmationPhrase = @"nuke it";
 

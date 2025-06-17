@@ -1,5 +1,5 @@
 #import "ImageExportSaveDialog.h"
-#import "NibViewInit.h"
+#import "Shared/NibViewInit.h"
 #import "Shared/ImageExporter/ImageExporter.h"
 #import "Shared/PrefsUtil.h"
 using namespace MDCStudio;

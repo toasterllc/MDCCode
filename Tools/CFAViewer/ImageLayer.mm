@@ -1,15 +1,8 @@
 #import "ImageLayer.h"
 #import <Metal/Metal.h>
-#import "Assert.h"
 #import "Util.h"
 #import "Code/Lib/Toastbox/Mac/Renderer.h"
 using namespace CFAViewer;
-
-// _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
-// To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
-// and we opt-in to color matching by setting the colorspace on our CAMetalLayer via -setColorspace:.
-// (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 static CGColorSpaceRef _LinearSRGBColorSpace() {
     static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
@@ -69,7 +62,8 @@ static CGColorSpaceRef _LinearSRGBColorSpace() {
     [self setDrawableSize:{(CGFloat)w, (CGFloat)h}];
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
-    Assert(drawable, return);
+    assert(drawable);
+    
     id<MTLTexture> drawableTxt = [drawable texture];
     
     _renderer.copy(_txt, drawableTxt);

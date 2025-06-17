@@ -2,9 +2,9 @@
 #import <vector>
 #import "Util.h"
 #import "Shared/MDCDevicesManager.h"
+#import "Shared/NibViewInit.h"
 #import "Lib/Toastbox/Mac/Util.h"
 #import "ImageLibraryStatus.h"
-#import "NibViewInit.h"
 @class SourceListView;
 using namespace MDCStudio;
 

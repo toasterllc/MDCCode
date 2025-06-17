@@ -177,22 +177,21 @@ static ColorCheckerPositions _ColorCheckerPositionsDefault() {
         CGPoint{ 0.89101558461649033, 0.91726391687117403 },
     };
 
-    
-    const size_t ColorCheckerWidth = 6;
-    const size_t ColorCheckerHeight = 4;
-    const CGFloat ColorCheckerSpacingX = 30./2304;
-    const CGFloat ColorCheckerSpacingY = 30./1296;
-    ColorCheckerPositions r;
-    size_t i = 0;
-    for (size_t y=0; y<ColorCheckerHeight; y++) {
-        for (size_t x=0; x<ColorCheckerWidth; x++, i++) {
-            r[i] = CGPoint{
-                .9 + x*ColorCheckerSpacingX,
-                .8 + y*ColorCheckerSpacingY
-            };
-        }
-    }
-    return r;
+//    const size_t ColorCheckerWidth = 6;
+//    const size_t ColorCheckerHeight = 4;
+//    const CGFloat ColorCheckerSpacingX = 30./2304;
+//    const CGFloat ColorCheckerSpacingY = 30./1296;
+//    ColorCheckerPositions r;
+//    size_t i = 0;
+//    for (size_t y=0; y<ColorCheckerHeight; y++) {
+//        for (size_t x=0; x<ColorCheckerWidth; x++, i++) {
+//            r[i] = CGPoint{
+//                .9 + x*ColorCheckerSpacingX,
+//                .8 + y*ColorCheckerSpacingY
+//            };
+//        }
+//    }
+//    return r;
 }
 
 - (void)resetColorCheckerPositions {

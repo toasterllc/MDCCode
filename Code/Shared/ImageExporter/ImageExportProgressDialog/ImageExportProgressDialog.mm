@@ -1,5 +1,5 @@
 #import "ImageExportProgressDialog.h"
-#import "NibViewInit.h"
+#import "Shared/NibViewInit.h"
 using namespace MDCStudio;
 
 @implementation ImageExportProgressDialog {

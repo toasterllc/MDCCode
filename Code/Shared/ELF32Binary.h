@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <iostream>
+#include <cassert>
 #include "Lib/Toastbox/Mmap.h"
 #include "Lib/Toastbox/RuntimeError.h"
 
@@ -79,6 +80,9 @@ public:
     }
     
     void _init(const void* data, size_t len) {
+        assert(data);
+        assert(len);
+        
         _data = (const uint8_t*)data;
         _len = len;
         

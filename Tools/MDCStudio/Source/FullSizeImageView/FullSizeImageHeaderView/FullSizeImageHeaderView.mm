@@ -1,5 +1,5 @@
 #import "FullSizeImageHeaderView.h"
-#import "NibViewInit.h"
+#import "Shared/NibViewInit.h"
 using namespace MDCStudio;
 
 @implementation FullSizeImageHeaderView {

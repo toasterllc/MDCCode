@@ -1,5 +1,5 @@
 #import "DeviceImageGridHeaderView.h"
-#import "NibViewInit.h"
+#import "Shared/NibViewInit.h"
 #import "ProgressBar.h"
 using namespace MDCStudio;
 

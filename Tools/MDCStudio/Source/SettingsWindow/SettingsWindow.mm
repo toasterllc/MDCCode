@@ -1,5 +1,4 @@
 #import "SettingsWindow.h"
-#import "NibViewInit.h"
 #import "Shared/ImageCorner/ImageCornerButton.h"
 #import "Shared/PrefsUtil.h"
 
