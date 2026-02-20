@@ -3,6 +3,7 @@
 #include <cstring>
 
 extern "C" void __libc_init_array();
+extern "C" void _StackInit();
 
 class Startup {
 public:
@@ -37,14 +38,8 @@ void _ISR_RESET() {
     extern uint8_t _sbss[];
     extern uint8_t _ebss[];
     
-    // Load stack pointer
-    if constexpr (sizeof(void*) == 2) {
-        // Small memory model
-        asm volatile("mov #_StartupStack, sp" : : : );
-    } else {
-        // Large memory model
-        asm volatile("mov.a #_StartupStack, sp" : : : );
-    }
+    // Initialize our stack; necessary before we make any (non-inlined) function calls
+    _StackInit();
     
     // Disable watchdog since we don't know how long our startup code takes
     WDTCTL = WDTPW | WDTHOLD;

@@ -1816,6 +1816,13 @@ void Abort(uintptr_t addr) {
 }
 
 // MARK: - Main
+
+// Called via Startup.cpp
+extern "C" [[gnu::always_inline, gnu::used]]
+inline void _StackInit() {
+    _Scheduler::StackInit();
+}
+
 int main() {
     _Scheduler::Run();
     return 0;
