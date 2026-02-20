@@ -25,6 +25,10 @@
 #include "date/date.h"
 #include "date/tz.h"
 
+#if __APPLE__
+#include <mach-o/dyld.h> // For _NSGetExecutablePath()
+#endif
+
 using CmdStr = std::string;
 
 // Common Commands
@@ -407,10 +411,25 @@ static void ICEFlashWrite(const Args& args, MDCUSBDevice& device) {
     }
 }
 
+static std::filesystem::path _ExecutableDir() {
+#if __APPLE__
+    uint32_t size = 0;
+    _NSGetExecutablePath(nullptr, &size);
+    std::string exePath(size, 0);
+    _NSGetExecutablePath(exePath.data(), &size);
+
+#elif __linux__
+    char exePath[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath)-1);
+    if (len < 0) throw Toastbox::RuntimeError("readlink failed: %s", strerror(errno));
+    exePath[len] = 0;
+#endif
+    
+    return std::filesystem::path(exePath).parent_path();
+}
+
 static std::filesystem::path _MSPAppPath() {
-    using namespace std::filesystem;
-    path home = getenv("HOME");
-    return home / "repos/MDCCode/Code/MSP430/MSPApp/Release/MSPApp.out";
+    return _ExecutableDir() / "../../../../Code/MSP430/MSPApp/Build/MSPApp.elf";
 }
 
 static std::string _Run(const char* cmd) {
@@ -430,7 +449,8 @@ static std::string _Run(const char* cmd) {
 static std::string _MSPLineForAddr(uint16_t addr) {
     const std::filesystem::path mspAppPath = _MSPAppPath();
     char cmd[256];
-    const int ir = snprintf(cmd, sizeof(cmd), "dwarfdump %s --lookup 0x%jx 2>&1", mspAppPath.c_str(), (uintmax_t)addr);
+    const int ir = snprintf(cmd, sizeof(cmd),
+        "dwarfdump %s --lookup 0x%jx 2>&1 | grep -e DW_AT_call | xargs", mspAppPath.c_str(), (uintmax_t)addr);
     if (ir<0 || ir>=sizeof(cmd)) throw std::runtime_error("snprintf failed");
     auto lines = Toastbox::String::Split(Toastbox::String::Trim(_Run(cmd)), "\n");
     if (lines.empty()) throw std::runtime_error("dwarfdump returned no output");
