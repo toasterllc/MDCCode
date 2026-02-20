@@ -280,14 +280,6 @@ struct _TaskLED {
 
 // MARK: - _TaskPower
 
-#define _TaskPowerStackSize 128
-
-SchedulerStack(".stack._TaskPower")
-uint8_t _TaskPowerStack[_TaskPowerStackSize];
-
-asm(".global _StartupStack");
-asm(".equ _StartupStack, _TaskPowerStack+" Stringify(_TaskPowerStackSize));
-
 struct _TaskPower {
     static void Run() {
         // Disable interrupts because _Init() and _Wired require it
@@ -595,7 +587,8 @@ struct _TaskPower {
     static inline T_Property<bool,_LEDFlickerEnabledChanged> _LEDFlickerEnabled;
     
     // Task stack
-    static constexpr auto& Stack = _TaskPowerStack;
+    SchedulerStack(".stack._TaskPower")
+    static inline uint8_t Stack[128];
 };
 
 // MARK: - _TaskI2C
@@ -1727,6 +1720,12 @@ void _ISR_SYSNMI() {
 //        for (volatile uint16_t i=0; i<50000; i++);
 //    }
 //}
+
+// Called via Startup.h
+extern "C" [[gnu::always_inline, gnu::used]]
+inline void _StackInit() {
+    _Scheduler::StackInit();
+}
 
 int main() {
     // If our previous reset wasn't because we explicitly reset ourself (a 'software BOR'),

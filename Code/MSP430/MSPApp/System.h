@@ -57,7 +57,6 @@ using _Scheduler = Toastbox::Scheduler<
     
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
     _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
-    nullptr,                                    // T_StackInterrupt: unused
     
     // T_Tasks: list of tasks
     _TaskPower,
