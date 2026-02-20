@@ -12,7 +12,7 @@
 .align 9
 .type VectorTable, %object
 VectorTable:
-    .word _StartupStackInterrupt
+    .word 0 // Stack pointer; unneeded because we manually initialize the stack via Scheduler::StackInit()
     .word ISR_Reset
     .word ISR_NMI
     .word ISR_HardFault

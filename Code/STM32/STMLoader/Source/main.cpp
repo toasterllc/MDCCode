@@ -115,6 +115,12 @@ extern "C" [[gnu::section(".isr")]] void ISR_I2C1_ER() {
 
 // MARK: - Main
 
+// Called via Startup.cpp
+extern "C" [[gnu::always_inline, gnu::used]]
+inline void _StackInit() {
+    _Scheduler::StackInit();
+}
+
 static void _JumpToAppIfNeeded() {
     // Stash and reset `_AppEntryPoint` so that we only attempt to start the app once
     // after each software reset.
@@ -138,8 +144,7 @@ static void _JumpToAppIfNeeded() {
 }
 
 // MARK: - Abort
-extern "C"
-[[noreturn]]
+extern "C" [[noreturn]]
 void Abort(uintptr_t addr) {
     _System::Abort();
 }

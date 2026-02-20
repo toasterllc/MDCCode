@@ -4,31 +4,12 @@
 #warning TODO: if RAM gets tight, STMApp and STMLoader could share the same stacks (such as _StackInterrupt and the task stacks) instead of having their own stacks
 
 extern "C" void __libc_init_array();
-
-[[gnu::always_inline]]
-static inline void _StackInit() {
-    // Set the MSP+PSP stack pointers
-    // Hardware typically initializes MSP to the SP value at the start of the vector table, but we
-    // still need to set MSP here (in addition to PSP) because in the STMApp case, we're executing
-    // because the bootloader invoked our ISR_Reset() directly (not via hardware). Therefore in
-    // that case, hardware didn't initialize MSP, so we need to initialize it manually here.
-    asm volatile("ldr r0, =_StartupStackInterrupt" : : : ); // r0  = _StackInterrupt
-    asm volatile("msr msp, r0" : : : );                     // msp = r0
-    asm volatile("ldr r0, =_StartupStack" : : : );          // r0  = _Stack
-    asm volatile("msr psp, r0" : : : );                     // psp = r0
-    
-    // Make PSP the active stack
-    asm volatile("mrs r0, control" : : : );             // r0 = control
-    asm volatile("orrs r0, r0, #2" : : : );             // Set SPSEL bit (enable using PSP stack)
-    asm volatile("msr control, r0" : : : );             // control = r0
-    asm volatile("isb" : : : );                         // Instruction Synchronization Barrier
-}
+extern "C" void _StackInit();
 
 // Startup() needs to be in the .isr section so that it's near ISR_Reset,
 // otherwise we can get a linker error.
-extern "C"
-[[noreturn, gnu::naked, gnu::section(".isr")]]
-void _Startup() {
+[[noreturn, gnu::always_inline]]
+static inline void _Startup() {
     extern uint8_t _sdata_flash[];
     extern uint8_t _sdata_ram[];
     extern uint8_t _edata_ram[];
@@ -39,7 +20,7 @@ void _Startup() {
     // Disable interrupts so that they don't occur until we enter our first Scheduler task.
     __disable_irq();
     
-    // Initialize our stack
+    // Initialize our stack; necessary before we make any (non-inlined) function calls
     _StackInit();
     
     // Copy .data section from flash to RAM

@@ -15,28 +15,6 @@
 #include "USBConfig.h"
 #include "MSP430JTAG.h"
 
-// MARK: - Interrupt Stack
-// This is the stack that's used to handle interrupts.
-// It's large because STM's USB code is large and executes in the interrupt context.
-
-#define _StackInterruptSize 1024
-
-[[gnu::section(".stack.interrupt")]]
-alignas(void*)
-uint8_t _StackInterrupt[_StackInterruptSize];
-
-asm(".global _StartupStackInterrupt");
-asm(".equ _StartupStackInterrupt, _StackInterrupt+" Stringify(_StackInterruptSize));
-
-#define _TaskCmdRecvStackSize 512
-
-[[gnu::section(".stack._TaskCmdRecv")]]
-alignas(void*)
-uint8_t _TaskCmdRecvStack[_TaskCmdRecvStackSize];
-
-asm(".global _StartupStack");
-asm(".equ _StartupStack, _TaskCmdRecvStack+" Stringify(_TaskCmdRecvStackSize));
-
 // MARK: - System
 
 // This crazniness is necessary to allow System to accept 2 parameter packs (T_Pins and T_Tasks).
@@ -120,8 +98,6 @@ public:
         
         _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
         _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
-        _StackInterrupt,                            // T_StackInterrupt: stack used for handling interrupts;
-                                                    //                   Scheduler only uses this to detect stack overflow
         
         _TaskCmdRecv,                               // T_Tasks: list of tasks
         _TaskCmdHandle,
@@ -212,7 +188,15 @@ private:
         }
         
         // Task stack
-        static constexpr auto& Stack = _TaskCmdRecvStack;
+        [[gnu::section(".stack._TaskCmdRecv")]]
+        alignas(void*)
+        static inline uint8_t Stack[512];
+        
+        // Interrupt stack: the stack that's used during interrupt handling
+        // It's large because STM's USB code is large, and executes in the interrupt context.
+        [[gnu::section(".stack.interrupt")]]
+        alignas(void*)
+        static inline uint8_t StackInterrupt[1024];
     };
     
     struct _TaskCmdHandle {
