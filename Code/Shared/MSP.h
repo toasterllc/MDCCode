@@ -161,12 +161,13 @@ struct [[gnu::packed]] ImgRingBuf {
     }
 };
 
-// Reset: records history of a type of reset (either abort or an unexpected reset)
+// Reset: records history of a type of reset
 struct [[gnu::packed]] Reset {
     enum class Type : uint8_t {
         Reset,
         Abort,
         StackOverflow,
+        Debug,
     };
     
     Type type;
@@ -184,6 +185,10 @@ struct [[gnu::packed]] Reset {
         struct [[gnu::packed]] {
             uint16_t taskIdx;
         } StackOverflow;
+        
+        struct [[gnu::packed]] {
+            uint16_t info;
+        } Debug;
         
         uint16_t u16;
     } ctx;

@@ -41,6 +41,7 @@ inline const char* _StringForResetType(MSP::Reset::Type x) {
     case MSP::Reset::Type::Reset:         return "reset";
     case MSP::Reset::Type::Abort:         return "abort";
     case MSP::Reset::Type::StackOverflow: return "stack overflow";
+    case MSP::Reset::Type::Debug:         return "debug";
     }
     return "unknown";
 }
@@ -228,6 +229,9 @@ inline std::string StringForState(const MSP::State& x, MSPLineForAddrFn mspLineF
             break;
         case MSP::Reset::Type::StackOverflow:
             fprintf(f,      "    taskIdx:               %ju\n",                 (uintmax_t)reset.ctx.StackOverflow.taskIdx);
+            break;
+        case MSP::Reset::Type::Debug:
+            fprintf(f,      "    info:                  0x%04jx\n",             (uintmax_t)reset.ctx.Debug.info);
             break;
         }
         fprintf(f,          "    count:                 %ju\n",                 (uintmax_t)reset.count);

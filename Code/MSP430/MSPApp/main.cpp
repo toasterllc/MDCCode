@@ -175,6 +175,12 @@ void _SchedulerStackOverflow(size_t taskIdx) {
     _Reset(MSP::Reset::Type::StackOverflow, taskIdx);
 }
 
+extern "C"
+[[noreturn, gnu::noinline]]
+void ResetDebug(uint16_t ctx) {
+    _Reset(MSP::Reset::Type::Debug, ctx);
+}
+
 // Abort(): called by Assert() with the address that aborted
 extern "C"
 [[noreturn, gnu::used]]
