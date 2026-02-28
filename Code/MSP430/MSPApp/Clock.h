@@ -74,7 +74,7 @@ public:
         //
         // We can't use T_Scheduler::Delay() here because it calls our Sleep(), which stops the FLL, and we
         // need the FLL to be running to acquire a lock.
-        __delay_cycles(10*(T_MCLKFreqHz/_REFOCLKFreqHz));
+        __delay_cycles(((uint64_t)10*T_MCLKFreqHz)/_REFOCLKFreqHz);
         while (!_FLLLocked());
         
         // Cache _CSCTL0Compensated now that the FLL has locked, so we can get good reading of CSCTL0.
