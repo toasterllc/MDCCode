@@ -12,11 +12,16 @@ uint32_t T_FlickerSlowOnDurationMs,
 uint32_t T_FlickerFastPeriodMs
 >
 struct T_LED {
+    // Signal pin disabled
     using _SignalInactivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1>;
+    // Signal pin controlled by timer (TA0)
     using _SignalActivePin = typename T_SignalPin::template Opts<GPIO::Option::Output1, GPIO::Option::Sel10>;
     
+    // Select pin oscillates by outputting ACLK, effectively enabling both red and green leds
     using _SelectGreenRedPin = typename T_SelectPin::template Opts<GPIO::Option::Output0, GPIO::Option::Sel10>;
+    // Select pin selects green LED (0)
     using _SelectGreenPin    = typename T_SelectPin::template Opts<GPIO::Option::Output0>;
+    // Select pin selects red LED (1)
     using _SelectRedPin      = typename T_SelectPin::template Opts<GPIO::Option::Output1>;
     
     struct Pin {
