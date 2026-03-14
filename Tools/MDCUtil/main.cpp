@@ -55,6 +55,7 @@ const CmdStr MSPTimeInitCmd         = "MSPTimeInit";
 const CmdStr MSPTimeAdjustCmd       = "MSPTimeAdjust";
 const CmdStr MSPSBWReadCmd          = "MSPSBWRead";
 const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
+const CmdStr MSPSBWResetCmd         = "MSPSBWReset";
 const CmdStr MSPSBWEraseCmd         = "MSPSBWErase";
 const CmdStr MSPSBWDebugLogCmd      = "MSPSBWDebugLog";
 const CmdStr SDReadCmd              = "SDRead";
@@ -95,6 +96,7 @@ static void printUsage() {
     
     cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
     cout << "  " << MSPSBWWriteCmd          << " <file>\n";
+    cout << "  " << MSPSBWResetCmd          << "\n";
     cout << "  " << MSPSBWEraseCmd          << "\n";
     cout << "  " << MSPSBWDebugLogCmd       << "\n";
     
@@ -256,6 +258,8 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == lower(MSPSBWWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.MSPSBWWrite.filePath = strs[1];
+    
+    } else if (args.cmd == lower(MSPSBWResetCmd)) {
     
     } else if (args.cmd == lower(MSPSBWEraseCmd)) {
     
@@ -525,6 +529,17 @@ static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
 static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.MSPSBWWrite.filePath.c_str());
     device.mspSBWWrite(elf);
+}
+
+static void MSPSBWReset(const Args& args, MDCUSBDevice& device) {
+    std::cout << "MSPSBWReset\n";
+    device.mspLock();
+    device.mspSBWConnect();
+    device.mspSBWHalt();
+    device.mspSBWReset();
+    device.mspSBWDisconnect();
+    device.mspUnlock();
+    std::cout << "-> OK\n\n";
 }
 
 static void MSPSBWErase(const Args& args, MDCUSBDevice& device) {
@@ -806,6 +821,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPTimeAdjustCmd))       MSPTimeAdjust(args, device);
         else if (args.cmd == lower(MSPSBWReadCmd))          MSPSBWRead(args, device);
         else if (args.cmd == lower(MSPSBWWriteCmd))         MSPSBWWrite(args, device);
+        else if (args.cmd == lower(MSPSBWResetCmd))         MSPSBWReset(args, device);
         else if (args.cmd == lower(MSPSBWEraseCmd))         MSPSBWErase(args, device);
         else if (args.cmd == lower(MSPSBWDebugLogCmd))      MSPSBWDebugLog(args, device);
         else if (args.cmd == lower(SDReadCmd))              SDRead(args, device);
