@@ -355,8 +355,32 @@ struct _TaskPower {
     
     static void VDDBEnabled(bool en) {
         _Pin::VDD_B_EN::Write(en);
-        // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms<2>);
+        if (en) {
+            // Rails take ~1.5ms to turn on
+            _Scheduler::Sleep(_Scheduler::Ms<2>);
+        } else {
+            // Rails take ~1.5ms to turn off, but we've encountered an issue where turning the
+            // rails back on too soon after we turned them off leaves ICE40 in an indeterminant
+            // state. Specifically, if we don't leave the rails off for long enough, we've
+            // observed ICE40 in a state where it claims it's ready (ReadyResp.ready()==1),
+            // but our SDController commands are silently ignored. (In addition, the external
+            // sd_clk isn't running -- as observed via a scope on sd_clk net -- suggesting
+            // SDController is in the reset state / init_state==0.)
+            //
+            // We don't fully understand what state ICE40 is in in this situation. Strangely,
+            // even if we wait long periods of time (200ms) before issuing SDController commands
+            // (plenty of time for ICE_IMG_CLK16MHZ to be working), the commands are still
+            // ignored.
+            //
+            // We need to investigate further to root cause this issue. Luckily we can reproduce
+            // the issue by hooking a wavegen to the motion detector interrupt and applying a
+            // [100,1000] Hz signal.
+            //
+            // For now we can workaround this issue by sleeping longer after turning the rails
+            // off. Using the wavegen technique, we can reproduce the issue if we sleep <=4ms,
+            // but cannot reproduce it if we sleep 5ms, so for now we're sleeping 6ms.
+            _Scheduler::Sleep(_Scheduler::Ms<6>);
+        }
     }
     
     static void VDDIMGSDEnabled(bool en) {
