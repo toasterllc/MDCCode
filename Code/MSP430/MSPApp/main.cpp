@@ -87,6 +87,20 @@ using _Watchdog = T_Watchdog<_ACLKFreqHz, (Time::TicksU64)_RTC::InterruptInterva
 [[gnu::section(".persistent")]]
 static MSP::State _State = {
     .header = MSP::StateHeader,
+    .settings = {
+        .triggers = {
+            .buttonTrigger = {
+                {
+                    .capture = {
+                        .delayTicks = 80,
+                        .count      = 1,
+                        .ledFlash   = true,
+                    },
+                },
+            },
+            .buttonTriggerCount = 1,
+        },
+    },
 };
 
 static void _EventsEnabledUpdate();
@@ -209,12 +223,15 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 
 static void _ICEInit() {
     bool ok = false;
-    for (int i=0; i<100 && !ok; i++) {
+    for (int i=0; i<1000 && !ok; i++) {
         _Scheduler::Sleep(_Scheduler::Ms<1>);
         // Reset ICE comms (by asserting SPI CLK for some length of time)
         _SPI::ICEReset();
         // Init ICE comms
         ok = _ICE::Init();
+        if (ok) {
+            ResetDebug(i);
+        }
     }
     Assert(ok);
 }
@@ -357,6 +374,14 @@ struct _TaskPower {
         _Pin::VDD_B_EN::Write(en);
         // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
         _Scheduler::Sleep(_Scheduler::Ms<2>);
+        
+//        if (en) {
+//            // Rails take ~1.5ms to turn on
+//            _Scheduler::Sleep(_Scheduler::Ms<2>);
+//        } else {
+//            // Rails take ~1.5ms to turn off, but we've encountered an issue where turning the rails back on too soon after we turned them off leaves ICE40 in an indeterminant state. Specifically, ICE40 claims it's ready (ReadyResp.ready()==1, and therefore ICE40 has gotten at least a single pulse on `sd_clk_int`) but
+//            _Scheduler::Sleep(_Scheduler::Ms<100>);
+//        }
     }
     
     static void VDDIMGSDEnabled(bool en) {
@@ -1182,19 +1207,25 @@ struct _TaskEvent {
         // We specify (within the bitstream itself, via icepack) that ICE40 should load
         // the bitstream at high-frequency (40 MHz).
         // According to the datasheet, this takes 70ms.
-        _Scheduler::Sleep(_Scheduler::Ms<30>);
-        _ICEInit();
+        _Scheduler::Sleep(_Scheduler::Ms<200>);
+        
+        _TaskPower::VDDBEnabled(false);
+        _Scheduler::Sleep(_Scheduler::Ms<1>);
+        _TaskPower::VDDBEnabled(true);
         
         // Reset SD nets before we turn on SD power
         _TaskSD::CardReset();
         _TaskSD::Wait();
         
-        // Turn on IMG/SD power
-        _TaskPower::VDDIMGSDEnabled(true);
-        
-        // Init image sensor / SD card
-        _TaskImg::SensorInit();
+        // We'll crash here due to a timeout, because SDController's clock isn't running yet
+        // due to the VDDBEnabled glitch that we caused, so SDController didn't notice the
+        // _ConfigReset / _ConfigSlowOpenDrain / CMD0 commands
         _TaskSD::CardInit();
+        _TaskSD::Wait();
+        
+        for (;;) {
+            _Scheduler::Sleep(_Scheduler::Ms<100>);
+        }
         
         // Capture an image
         {
