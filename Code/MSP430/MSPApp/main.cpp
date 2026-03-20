@@ -223,15 +223,15 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 
 static void _ICEInit() {
     bool ok = false;
-    for (int i=0; i<1000 && !ok; i++) {
+    for (int i=0; i<100 && !ok; i++) {
         _Scheduler::Sleep(_Scheduler::Ms<1>);
         // Reset ICE comms (by asserting SPI CLK for some length of time)
         _SPI::ICEReset();
         // Init ICE comms
         ok = _ICE::Init();
-        if (ok) {
-            ResetDebug(i);
-        }
+//        if (ok) {
+//            ResetDebug(i);
+//        }
     }
     Assert(ok);
 }
@@ -1210,8 +1210,9 @@ struct _TaskEvent {
         _Scheduler::Sleep(_Scheduler::Ms<200>);
         
         _TaskPower::VDDBEnabled(false);
-        _Scheduler::Sleep(_Scheduler::Ms<1>);
+//        _Scheduler::Sleep(_Scheduler::Ms<1>);
         _TaskPower::VDDBEnabled(true);
+        _ICEInit();
         
         // Reset SD nets before we turn on SD power
         _TaskSD::CardReset();
