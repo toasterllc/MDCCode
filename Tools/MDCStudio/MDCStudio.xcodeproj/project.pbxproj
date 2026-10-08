@@ -1251,7 +1251,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "llc.toaster.photon-transfer";
 				PRODUCT_NAME = "Photon Transfer";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
