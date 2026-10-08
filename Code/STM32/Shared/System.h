@@ -307,14 +307,14 @@ private:
             constexpr uint32_t ResampleBatteryIntervalCount = ResampleBatteryIntervalMs / UpdateIntervalMs;
             constexpr auto UpdateInterval = Scheduler::template Ms<UpdateIntervalMs>;
             
-            // Wait until we detect a battery
-            for (;;) {
-                _BatteryStatus = _BatteryStatusGet();
-                if (_BatteryStatus.level != MSP::BatteryLevelMvInvalid) break;
-                Scheduler::Sleep(UpdateInterval);
-            }
+            // Initialize our battery status
+            _BatteryStatus = _BatteryStatusGet();
             
             // Turn on battery charger
+            // We used to wait until we detected a battery before turning on the charger,
+            // but we've seen cases where the battery level was too low to register
+            // (< BatteryLevelMvMin), keeping the battery stuck in a discharged state.
+            // So now we unconditionally start charging.
             _BAT_CHRG_EN_::Write(0);
             Scheduler::Sleep(Scheduler::template Ms<10>);
             
